@@ -1,0 +1,44 @@
+# Segredos — nunca comitar. Ver CLAUDE.md secção 5 ("nunca escrever segredos").
+.env
+.env.local
+.env.*.local
+!.env.example
+!*/.env.example
+
+# Frontend
+frontend/node_modules
+frontend/dist
+frontend/dist-ssr
+*.local
+
+# npm é o único gestor de pacotes deste projecto (ver CLAUDE.md secção 13) —
+# lockfiles de outros gestores nunca devem ser comitados, mesmo por engano.
+bun.lock
+bun.lockb
+yarn.lock
+pnpm-lock.yaml
+
+# API (Python)
+api/.venv
+api/*.egg-info
+api/__pycache__
+api/**/__pycache__
+api/.pytest_cache
+api/.ruff_cache
+*.pyc
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Editor / SO
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

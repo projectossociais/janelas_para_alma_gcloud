@@ -1,0 +1,648 @@
+<title>Tracker Janelas Para a Alma</title>
+<style id="app-style">
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+:root{
+  --paper:#f6f3ec; --raised:#ffffff; --ink:#182226; --soft:#4c5a5f; --line:#dcd5c6;
+  --navy:#0f2b3d; --teal:#1f7a72; --teal-bg:#e4efec; --gold:#a97a2f; --gold-bg:#f3e6cf;
+  --danger:#a4432f; --danger-bg:#f5e4de; --done:#8a9296;
+  --serif:"Source Serif 4",Georgia,serif;
+  --sans:"IBM Plex Sans","Segoe UI",Arial,sans-serif;
+  --mono:"IBM Plex Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121a1f; --raised:#182226; --ink:#e9e4d8; --soft:#a9b6ba; --line:#2c3a3f;
+    --navy:#dce8ee; --teal:#5fc4b8; --teal-bg:#1a3230; --gold:#e0b064; --gold-bg:#332a17;
+    --danger:#e08a72; --danger-bg:#3a231c; --done:#6b7679;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121a1f; --raised:#182226; --ink:#e9e4d8; --soft:#a9b6ba; --line:#2c3a3f;
+  --navy:#dce8ee; --teal:#5fc4b8; --teal-bg:#1a3230; --gold:#e0b064; --gold-bg:#332a17;
+  --danger:#e08a72; --danger-bg:#3a231c; --done:#6b7679;
+}
+
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.5}
+.wrap{max-width:900px;margin:0 auto;padding:40px 20px 80px;position:relative}
+
+header{border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:22px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--teal);margin:0 0 6px}
+h1{font-family:var(--serif);font-size:clamp(25px,4vw,34px);font-weight:700;margin:0 0 14px;color:var(--navy);text-wrap:balance}
+
+.geral{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.barra{flex:1;min-width:180px;height:8px;background:var(--line);border-radius:99px;overflow:hidden}
+.barra i{display:block;height:100%;background:var(--teal);border-radius:99px;transition:width .25s ease}
+.contagem{font-family:var(--mono);font-size:13px;color:var(--soft);font-variant-numeric:tabular-nums}
+
+.controlos{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:20px 0 26px}
+.filtro{font-family:var(--sans);font-size:13px;font-weight:500;padding:6px 14px;border-radius:99px;
+  border:1px solid var(--line);background:var(--raised);color:var(--soft);cursor:pointer}
+.filtro[aria-pressed="true"]{background:var(--navy);color:var(--paper);border-color:var(--navy)}
+.filtro:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.estado-guardar{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--soft)}
+
+.sprint{margin-bottom:22px;border:1px solid var(--line);border-radius:11px;background:var(--raised);overflow:hidden}
+.sprint-topo{padding:16px 18px 14px;border-bottom:1px solid var(--line)}
+.sprint-titulo{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:5px}
+.sprint-titulo h2{font-family:var(--serif);font-size:18px;font-weight:700;margin:0;color:var(--navy)}
+.sprint-obj{font-size:13.5px;color:var(--soft);margin:0;max-width:62ch}
+.sprint-prog{display:flex;align-items:center;gap:10px;margin-top:10px}
+.sprint-prog .barra{height:5px}
+.sprint-prog .contagem{font-size:11.5px}
+
+.pill{font-family:var(--mono);font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:99px;
+  background:var(--teal-bg);color:var(--teal);white-space:nowrap}
+.pill.d{background:var(--danger-bg);color:var(--danger)}
+
+/* botoes que se comportam como texto clicavel — reset total */
+.btn-texto{background:none;border:none;padding:0;margin:0;font:inherit;color:inherit;
+  text-align:left;cursor:pointer;display:inline}
+.btn-texto:focus-visible{outline:2px solid var(--teal);outline-offset:2px;border-radius:3px}
+.dica-editar{opacity:.35;margin-left:6px;font-size:.75em}
+.btn-texto:hover .dica-editar,.btn-texto:focus-visible .dica-editar{opacity:.9}
+
+ul.tarefas{list-style:none;margin:0;padding:0}
+li.tarefa{display:flex;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line);align-items:flex-start}
+li.tarefa:last-child{border-bottom:none}
+li.tarefa.oculta{display:none}
+li.tarefa input[type=checkbox]{margin-top:3px;width:16px;height:16px;accent-color:var(--teal);cursor:pointer;flex-shrink:0}
+li.tarefa input[type=checkbox]:disabled{cursor:not-allowed;opacity:.5}
+.corpo{flex:1;min-width:0}
+.linha1{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
+.cod{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--soft);flex-shrink:0}
+.tit{font-size:14.5px;font-weight:500}
+.det{font-size:13px;color:var(--soft);margin-top:3px;max-width:66ch}
+li.feita .tit{text-decoration:line-through;color:var(--done)}
+li.feita .det{color:var(--done)}
+.pt{width:7px;height:7px;border-radius:2px;flex-shrink:0;margin-top:7px}
+.pt.W{background:var(--teal)} .pt.L{background:var(--gold)}
+.pt.WL{background:linear-gradient(135deg,var(--teal) 50%,var(--gold) 50%)}
+
+.legenda{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--soft);margin-bottom:18px}
+.legenda span{display:inline-flex;align-items:center;gap:6px}
+.legenda i{width:8px;height:8px;border-radius:2px;display:inline-block}
+
+/* formularios de edicao/criacao */
+.form-editar{padding:14px 18px;display:flex;flex-direction:column;gap:9px;
+  background:var(--teal-bg);border-bottom:1px solid var(--line)}
+li.tarefa.form-editar{border-bottom:1px solid var(--line)}
+.campo{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:7px;
+  background:var(--raised);color:var(--ink);font-family:inherit;font-size:14px}
+.campo:focus-visible{outline:2px solid var(--teal);outline-offset:1px}
+textarea.campo{min-height:60px;resize:vertical;line-height:1.5}
+.campo-linha{display:flex;gap:8px;flex-wrap:wrap}
+.campo-linha .campo{flex:1;min-width:100px}
+select.campo{flex:0 0 auto;min-width:auto;padding-right:26px}
+label.campo-check{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--soft);cursor:pointer}
+.form-acoes{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{font-family:var(--sans);font-size:12.5px;font-weight:600;padding:6px 13px;border-radius:7px;
+  border:1px solid transparent;cursor:pointer}
+.btn:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.btn-primario{background:var(--teal);color:#fff}
+.btn-secundario{background:transparent;border-color:var(--line);color:var(--soft)}
+.btn-perigo{background:var(--danger-bg);color:var(--danger);margin-left:auto}
+
+.btn-adicionar{display:block;width:100%;padding:11px 18px;background:transparent;
+  border:none;border-top:1px dashed var(--line);color:var(--soft);font-family:var(--sans);
+  font-size:13px;text-align:left;cursor:pointer}
+.btn-adicionar:hover{color:var(--teal);background:var(--teal-bg)}
+.btn-adicionar:focus-visible{outline:2px solid var(--teal);outline-offset:-2px}
+.btn-nova-seccao{width:100%;padding:14px 18px;border:1px dashed var(--line);border-radius:11px;
+  background:transparent;color:var(--soft);font-family:var(--sans);font-size:13.5px;
+  text-align:left;cursor:pointer;margin-bottom:22px}
+.btn-nova-seccao:hover{color:var(--teal);border-color:var(--teal)}
+.form-nova-seccao{border:1px solid var(--line);border-radius:11px;padding:16px 18px;
+  background:var(--raised);margin-bottom:22px;display:flex;flex-direction:column;gap:9px}
+
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);
+  background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:99px;
+  display:flex;gap:14px;align-items:center;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.28);
+  z-index:50;max-width:calc(100vw - 40px)}
+.toast button{background:none;border:none;color:var(--paper);font-weight:700;
+  text-decoration:underline;cursor:pointer;font:inherit;padding:0;white-space:nowrap}
+
+h3.sec{font-family:var(--serif);font-size:20px;font-weight:700;color:var(--navy);
+  margin:36px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);font-weight:600}
+.tw{overflow-x:auto}
+
+textarea#notas{width:100%;min-height:110px;padding:12px 14px;border:1px solid var(--line);border-radius:9px;
+  background:var(--raised);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.55;resize:vertical}
+textarea#notas:focus-visible{outline:2px solid var(--teal);outline-offset:1px}
+textarea#notas:disabled{opacity:.6}
+
+footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--line);
+  font-family:var(--mono);font-size:11.5px;color:var(--soft);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+code{font-family:var(--mono);font-size:.88em;background:var(--teal-bg);color:var(--teal);padding:1px 5px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Tracker vivo · edita directamente e fica guardado para os dois</p>
+    <h1>Janelas Para a Alma</h1>
+    <div class="geral">
+      <div class="barra"><i id="barra-geral"></i></div>
+      <span class="contagem" id="contagem-geral"></span>
+    </div>
+  </header>
+
+  <div class="legenda">
+    <span><i style="background:var(--teal)"></i> Wilson</span>
+    <span><i style="background:var(--gold)"></i> Lukeny</span>
+    <span><i style="background:linear-gradient(135deg,var(--teal) 50%,var(--gold) 50%)"></i> Os dois</span>
+  </div>
+
+  <div class="controlos">
+    <button class="filtro" data-f="todos" aria-pressed="true">Todos</button>
+    <button class="filtro" data-f="W" aria-pressed="false">Só Wilson</button>
+    <button class="filtro" data-f="L" aria-pressed="false">Só Lukeny</button>
+    <button class="filtro" data-f="abertas" aria-pressed="false">Só por fazer</button>
+    <span class="estado-guardar" id="estado-guardar"></span>
+  </div>
+
+  <div id="lista"></div>
+  <div id="toast-area"></div>
+
+  <h3 class="sec">Bloqueios em aberto</h3>
+  <div class="tw"><table id="bloqueios"></table></div>
+
+  <h3 class="sec">O que não fazer agora</h3>
+  <div class="tw"><table id="nao-fazer"></table></div>
+
+  <h3 class="sec">Notas da equipa</h3>
+  <p style="font-size:13.5px;color:var(--soft);margin:0 0 10px">
+    Escreve aqui o que for surgindo. Guarda sozinho e o outro vê da próxima vez que abrir.
+  </p>
+  <textarea id="notas" placeholder="Decisões, dúvidas, o que ficou a meio…"></textarea>
+
+  <footer>
+    <span>Este tracker é agora a fonte viva das tarefas — <code>docs/BACKLOG.md</code> guarda o raciocínio e o histórico</span>
+    <span id="ultima"></span>
+  </footer>
+</div>
+
+<script id="estado" type="application/json">{"v":1,"feitas":["L-02"],"notas":"Podes deixar aqui as tuas notas.\n","actualizado":"2026-09-07T22:33:49.153Z"}</script>
+
+<script id="app-script">
+// Modelo por omissao — usado so para SEMEAR a primeira publicacao ou migrar
+// de uma versao anterior do tracker. Depois disso, estado.sprints manda.
+const DEFAULT_SPRINTS = [
+  { nome:"Sprint 0 — Parar de mentir", etiqueta:"dias, não semanas", urgente:true,
+    obj:"Nenhuma funcionalidade afirma ao utilizador algo que não é verdade. Não depende de infraestrutura nova.",
+    tarefas:[
+      {id:"W-01",dono:"W",tit:"Remover o bypass do Premium",det:"⚠️ Sem W-11 ninguém consegue aceder, incluindo quem pagou. Verificar primeiro se há Premium pago."},
+      {id:"W-02",dono:"W",tit:"Mudar palavra-passe passa a mudar mesmo a palavra-passe",det:"Hoje nunca chama o Supabase. Reautenticar + updateUser. Testes dos dois caminhos."},
+      {id:"W-03",dono:"W",tit:"Eliminar conta passa a eliminar mesmo a conta",det:"A Política de Privacidade publicada promete isto. Compromisso legal já assumido."},
+      {id:"W-04",dono:"W",tit:"Scanner deixa de inventar diagnósticos",det:"Retirar ou reclassificar como sinais observados, sem esperar pela API."},
+      {id:"W-05",dono:"W",tit:"Tirar o .env do controlo de versões",det:"Hoje não é fuga: as vars são VITE_, públicas por design. É armadilha para quando a API precisar de service_role."}
+    ]},
+  { nome:"Sprint 0 — Parar de parecer partido", etiqueta:"em paralelo",
+    obj:"Um visitante, ou uma clínica a avaliar a parceria, não encontra nada visivelmente avariado. Nada toca base de dados nem paywall.",
+    tarefas:[
+      {id:"L-01",dono:"L",tit:"Repor as 8 imagens perdidas no export da Lovable",det:"Apontam para /__l5e/. Quatro têm equivalente local; as outras precisam de imagem nova — usar fotografias reais angolanas resolve também o ponto 7.2 do relatório UX."},
+      {id:"L-02",dono:"L",tit:"Vídeos dos exercícios",det:"public/videos não existe. Decisão de produto: produzir os 4 vídeos ou remover o player."},
+      {id:"L-03",dono:"L",tit:"Modal Últimas Referências faz scroll até ao fim",det:"Altura máxima com overflow-y auto."},
+      {id:"L-04",dono:"L",tit:"Correcções de navegação",det:"Scroll ao topo nos links rápidos, 3º link partido, Google Maps em novo separador."},
+      {id:"L-05",dono:"L",tit:"Dois ajustes visuais",det:"Botão Voltar pouco visível; botão de perfil colado ao logótipo."},
+      {id:"L-06",dono:"L",tit:"Levantamento completo de botões e links",det:"Não é corrigir tudo — é saber o tamanho do problema."}
+    ]},
+  { nome:"Sprint 1 — Fundação da API", etiqueta:"bloqueante",
+    obj:"Nenhuma funcionalidade visível. É fundação — mais barata agora do que depois da loja e dos relatórios estarem construídos por cima.",
+    tarefas:[
+      {id:"W-06",dono:"W",tit:"Serviço FastAPI publicado no Cloud Run",det:"Estrutura em camadas: routers / services / repositories / schemas / core."},
+      {id:"W-07",dono:"W",tit:"Validação de JWT e reencaminhamento do login",det:"A API fala com o Postgres em nome do utilizador. Duas fechaduras, não uma trocada pela outra."},
+      {id:"W-08",dono:"W",tit:"CI",det:"pytest + build Docker na API; lint + test + build no frontend."},
+      {id:"W-09",dono:"W",tit:"Motor de análise — assunção: parte-se do zero",det:"Não existe código do scanner. O que já existe é a extracção de pontos no browser."}
+    ]},
+  { nome:"Sprint 1 — Conteúdo e estrutura", etiqueta:"em paralelo",
+    obj:"O que o relatório UX apontou e não é bug: falta de conteúdo, ordem da informação e linguagem.",
+    tarefas:[
+      {id:"L-07",dono:"L",tit:"Termos de Uso",det:"A página intitula-se 'e Termos de Uso' mas só tem privacidade. Incluir o aviso de que o rastreio não substitui diagnóstico médico."},
+      {id:"L-08",dono:"L",tit:"Ordem da informação segue o menu",det:"Serviços abre com 'A Nossa Visão'; o mesmo em Produtos."},
+      {id:"L-09",dono:"L",tit:"Separar planos de exercícios",det:"⚠️ Depende de W-01 estar fechado — mesma página."},
+      {id:"L-10",dono:"L",tit:"Linguagem",det:"'Três tiers' mistura inglês com português."}
+    ]},
+  { nome:"Sprint 2 — Premium real e candidaturas", etiqueta:"",
+    obj:"O caminho que hoje não entrega o que promete: pagar não dá acesso a nada. É também o ensaio da migração para a API.",
+    tarefas:[
+      {id:"W-11",dono:"W",tit:"Confirmação de pagamento activa o Premium",det:"Único ponto com service_role, justificado e auditado. Testes obrigatórios: é dinheiro e acesso."},
+      {id:"L-11",dono:"L",tit:"Botão 'Aprovar pagamento' no painel",det:"Distinto do 'Contactado' já existente. Depende de W-11."},
+      {id:"L-12",dono:"L",tit:"Ecrã 'a aguardar aprovação'",det:"Reutiliza LockedVideoOverlay e PremiumPaywallModal."},
+      {id:"W-12",dono:"W",tit:"Candidaturas: tabela, RLS e máquina de estados",det:"Seguir as 10 boas práticas do README."},
+      {id:"L-13",dono:"L",tit:"Candidaturas: formulários e gestão no painel",det:"Padrão de AdminInbox.tsx."}
+    ]},
+  { nome:"Sprint 3 — Scanner clínico", etiqueta:"o mais difícil",
+    obj:"Extrair pontos faciais é a parte fácil e já está feita. Transformá-los num número clinicamente defensável é investigação aplicada, não programação.",
+    tarefas:[
+      {id:"W-13",dono:"W",tit:"Escolher e documentar o método de medição",det:"Hirschberg é o candidato. Precisa de validação clínica — não é decisão de programador."},
+      {id:"W-14",dono:"W",tit:"Calibração",det:"Compensar distância e inclinação, ou impor as condições de captura."},
+      {id:"W-15",dono:"W",tit:"Serviço de análise na API",det:"Recebe coordenadas, devolve medição + confiança real. Testes com casos de referência."},
+      {id:"W-16",dono:"W",tit:"Validação contra casos reais",det:"É isto que separa um produto clínico de uma demonstração. Precisa de um parceiro clínico."},
+      {id:"W-17",dono:"W",tit:"Política de não guardar imagens",det:"Processar e descartar. São imagens faciais de crianças."},
+      {id:"L-14",dono:"L",tit:"Ecrã de resultados ligado ao relatório real",det:"Só depois de W-16. Até lá, o ecrã mitigado de W-04 é o correcto."}
+    ]},
+  { nome:"Sprint 4 — Rede clínica e agendamentos", etiqueta:"",
+    obj:"Fecha a distância entre o que o pitch deck promete às clínicas e o que o código faz. É o que desbloqueia a primeira parceria a sério.",
+    tarefas:[
+      {id:"L-15",dono:"L",tit:"Tabela agendamentos",det:"Migração aditiva, padrão de sessoes_exercicio."},
+      {id:"W-18",dono:"W",tit:"Endpoints de criação e decisão",det:""},
+      {id:"L-16",dono:"L",tit:"Ligar ClinicalPartners.tsx à API",det:"Hoje o formulário não persiste nada."},
+      {id:"L-17",dono:"L",tit:"Página AdminAgendamentos.tsx",det:"Padrão de AdminInbox.tsx."},
+      {id:"W-19",dono:"W",tit:"Notificação à equipa e à clínica",det:""}
+    ]},
+  { nome:"Sprint 5 — Unificação de papéis", etiqueta:"",
+    obj:"profiles.papel e user_roles são duas fontes de verdade paralelas. Cada papel novo antes disto agrava o problema.",
+    tarefas:[
+      {id:"W-20",dono:"W",tit:"Decidir a lista oficial de papéis",det:"Decisão de negócio antes de código."},
+      {id:"W-21",dono:"W",tit:"Migração de unificação",det:"Actualizar todos os pontos de leitura."}
+    ]},
+  { nome:"Sprint 6 — Produto", etiqueta:"",
+    obj:"Só depois da fundação estar posta. Assentam todos no que foi construído acima.",
+    tarefas:[
+      {id:"L-18",dono:"L",tit:"Histórico de exames com evolução",det:""},
+      {id:"L-19",dono:"L",tit:"Painel pessoal com dados reais",det:"Hoje '4 exercícios' e 'próxima teleconsulta' são valores fixos."},
+      {id:"L-20",dono:"L",tit:"Exercícios premium restantes",det:"Sobre BaseExercise."},
+      {id:"WL-01",dono:"WL",tit:"Loja de óculos com carrinho e pagamento",det:""},
+      {id:"WL-02",dono:"WL",tit:"Conteúdo editável pelo administrador",det:""}
+    ]}
+];
+
+const BLOQUEIOS = [
+  ["1","Motor de análise do scanner","Assunção fixada — não existe código. Parte-se do zero","—","ok"],
+  ["2","Bypass do Premium é teste interno?","Não é. Fica como tarefa atribuída (W-01)","—","ok"],
+  ["3","Existe algum utilizador com Premium pago?","Decide se W-01 sai sozinho ou junto de W-11","Wilson","aberto"],
+  ["4","Cloud Run exige cartão registado","Mesmo sem cobrar nada","Wilson","aberto"],
+  ["5","Consentimento parental para menores","Nunca abordado, nem no código nem nos documentos","Wilson + jurídico","aberto"],
+  ["6","Recuperar palavra-passe","Falha de configuração no Supabase, não de código","Wilson","aberto"],
+  ["7","Expiração do crédito Google Cloud","Anotar a data antes que surpreenda","Wilson","aberto"],
+  ["8","Parceiro clínico para validar o scanner","Bloqueia W-16. Sem ele não há produto clínico defensável","Wilson","aberto"]
+];
+
+const NAO_FAZER = [
+  ["Gateway de pagamento automático","Depende de contrato comercial. O ciclo manual do Sprint 2 chega"],
+  ["Login com Google","Conveniência, não bloqueia ninguém"],
+  ["Versão em inglês","O público é angolano"],
+  ["Mapa de clínicas parceiras","Uma lista resolve, enquanto houver poucas clínicas"],
+  ["Notificações push e modo offline","Custo alto, nenhum utilizador bloqueado hoje"],
+  ["Migrar as 37 chamadas de uma vez","Por domínio, não big bang. É assim que as reescritas morrem"]
+];
+
+// Capturados ANTES de qualquer renderizacao: sao o molde autorado, nao estado vivo.
+const FONTE_SCRIPT = document.getElementById("app-script").textContent;
+const FONTE_ESTILO = document.getElementById("app-style").textContent;
+const FONTE_MOLDE  = document.querySelector(".wrap").outerHTML;
+
+function semear() {
+  return DEFAULT_SPRINTS.map(s => ({
+    ...s, tarefas: s.tarefas.map(t => ({ ...t, feita:false }))
+  }));
+}
+
+function migrar(bruto) {
+  if (bruto && bruto.v === 2 && Array.isArray(bruto.sprints)) {
+    return {
+      v:2, sprints:bruto.sprints,
+      notas: typeof bruto.notas === "string" ? bruto.notas : "",
+      actualizado: bruto.actualizado || null
+    };
+  }
+  // v1 (so guardava ids concluidos) ou vazio: semeia do modelo, herdando marcacoes antigas
+  const feitasAntigas = new Set(Array.isArray(bruto && bruto.feitas) ? bruto.feitas : []);
+  const sprints = DEFAULT_SPRINTS.map(s => ({
+    ...s, tarefas: s.tarefas.map(t => ({ ...t, feita: feitasAntigas.has(t.id) }))
+  }));
+  return { v:2, sprints, notas:(bruto && bruto.notas) || "", actualizado:(bruto && bruto.actualizado) || null };
+}
+
+let estado = migrar(JSON.parse(document.getElementById("estado").textContent));
+
+let filtro = "todos";
+let podeEscrever = false;
+let api = null;
+let temporizador = null;
+let edicao = null;        // {si} cabecalho | {si,ti} tarefa
+let novaTarefaEm = null;  // si do sprint com formulario de nova tarefa aberto
+let novaSeccaoAberta = false;
+let desfazer = null;      // {tipo:'tarefa'|'sprint', si, ti, item, timer}
+
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function proximoCodigo(dono) {
+  let max = 0;
+  estado.sprints.forEach(s => s.tarefas.forEach(t => {
+    const m = /^([A-Z]+)-(\d+)$/.exec(t.id || "");
+    if (m && m[1] === dono && +m[2] > max) max = +m[2];
+  }));
+  return dono + "-" + String(max + 1).padStart(2, "0");
+}
+
+function renderTarefaNormal(s, si, t, ti) {
+  let oculta = false;
+  if (filtro === "W" && t.dono !== "W" && t.dono !== "WL") oculta = true;
+  if (filtro === "L" && t.dono !== "L" && t.dono !== "WL") oculta = true;
+  if (filtro === "abertas" && t.feita) oculta = true;
+  return `<li class="tarefa${t.feita ? " feita" : ""}${oculta ? " oculta" : ""}">
+    <input type="checkbox" class="chk-tarefa" data-si="${si}" data-ti="${ti}" ${t.feita ? "checked" : ""}
+           ${podeEscrever ? "" : "disabled"} aria-label="${esc(t.tit)}">
+    <span class="pt ${esc(t.dono)}" aria-hidden="true"></span>
+    <span class="corpo">
+      <span class="linha1">
+        ${t.id ? `<span class="cod">${esc(t.id)}</span>` : ""}
+        ${podeEscrever
+          ? `<button type="button" class="btn-texto tit" data-editar-tarefa data-si="${si}" data-ti="${ti}"
+               title="Clicar para editar">${esc(t.tit)}<span class="dica-editar">✎</span></button>`
+          : `<span class="tit">${esc(t.tit)}</span>`}
+      </span>
+      ${t.det ? `<div class="det">${esc(t.det)}</div>` : ""}
+    </span></li>`;
+}
+
+function renderTarefaEdicao(s, si, t, ti) {
+  return `<li class="tarefa form-editar" data-form-tarefa data-si="${si}" data-ti="${ti}">
+    <div class="campo-linha">
+      <input class="campo campo-codigo" style="max-width:110px" value="${esc(t.id)}" placeholder="Código (opcional)">
+      <select class="campo campo-dono">
+        <option value="W" ${t.dono==="W"?"selected":""}>Wilson</option>
+        <option value="L" ${t.dono==="L"?"selected":""}>Lukeny</option>
+        <option value="WL" ${t.dono==="WL"?"selected":""}>Os dois</option>
+      </select>
+    </div>
+    <input class="campo campo-tit" value="${esc(t.tit)}" placeholder="Título da tarefa">
+    <textarea class="campo campo-det" placeholder="Detalhe (opcional)">${esc(t.det)}</textarea>
+    <div class="form-acoes">
+      <button type="button" class="btn btn-primario" data-guardar-tarefa data-si="${si}" data-ti="${ti}">Guardar</button>
+      <button type="button" class="btn btn-secundario" data-cancelar-tarefa>Cancelar</button>
+      <button type="button" class="btn btn-perigo" data-remover-tarefa data-si="${si}" data-ti="${ti}">Remover tarefa</button>
+    </div></li>`;
+}
+
+function renderNovaTarefaForm(si) {
+  const sug = proximoCodigo("W");
+  return `<li class="tarefa form-editar" data-form-nova-tarefa data-si="${si}">
+    <div class="campo-linha">
+      <input class="campo campo-codigo" style="max-width:110px" value="${esc(sug)}" placeholder="Código (opcional)">
+      <select class="campo campo-dono">
+        <option value="W">Wilson</option><option value="L">Lukeny</option><option value="WL">Os dois</option>
+      </select>
+    </div>
+    <input class="campo campo-tit" placeholder="Título da tarefa" autofocus>
+    <textarea class="campo campo-det" placeholder="Detalhe (opcional)"></textarea>
+    <div class="form-acoes">
+      <button type="button" class="btn btn-primario" data-guardar-nova-tarefa data-si="${si}">Adicionar</button>
+      <button type="button" class="btn btn-secundario" data-cancelar-nova-tarefa>Cancelar</button>
+    </div></li>`;
+}
+
+function renderCabecalho(s, si) {
+  const emEdicao = edicao && edicao.si === si && edicao.ti === undefined;
+  if (emEdicao) {
+    return `<div class="sprint-topo form-editar" data-form-cabecalho data-si="${si}">
+      <input class="campo" data-campo="nome" value="${esc(s.nome)}" placeholder="Nome do sprint">
+      <textarea class="campo" data-campo="obj" placeholder="Objectivo">${esc(s.obj)}</textarea>
+      <div class="campo-linha">
+        <input class="campo" data-campo="etiqueta" style="max-width:220px" value="${esc(s.etiqueta)}" placeholder="Etiqueta (opcional)">
+        <label class="campo-check"><input type="checkbox" data-campo="urgente" ${s.urgente ? "checked" : ""}> marcar como urgente</label>
+      </div>
+      <div class="form-acoes">
+        <button type="button" class="btn btn-primario" data-guardar-cabecalho data-si="${si}">Guardar</button>
+        <button type="button" class="btn btn-secundario" data-cancelar-cabecalho>Cancelar</button>
+        <button type="button" class="btn btn-perigo" data-remover-seccao data-si="${si}">Remover secção</button>
+      </div></div>`;
+  }
+  const et = s.etiqueta ? `<span class="pill ${s.urgente ? "d" : ""}">${esc(s.etiqueta)}</span>` : "";
+  const total = s.tarefas.length, fx = s.tarefas.filter(t => t.feita).length;
+  const pct = total ? Math.round(fx / total * 100) : 0;
+  return `<div class="sprint-topo">
+    <div class="sprint-titulo">
+      <h2>${podeEscrever
+        ? `<button type="button" class="btn-texto" data-editar-cabecalho data-si="${si}" title="Clicar para editar">${esc(s.nome)}<span class="dica-editar">✎</span></button>`
+        : esc(s.nome)}</h2>${et}
+    </div>
+    <p class="sprint-obj">${s.obj ? esc(s.obj) : ""}</p>
+    <div class="sprint-prog"><div class="barra"><i style="width:${pct}%"></i></div>
+      <span class="contagem">${fx}/${total}</span></div>
+  </div>`;
+}
+
+function render() {
+  const lista = document.getElementById("lista");
+  lista.innerHTML = estado.sprints.map((s, si) => {
+    const linhas = s.tarefas.map((t, ti) =>
+      (edicao && edicao.si === si && edicao.ti === ti) ? renderTarefaEdicao(s, si, t, ti) : renderTarefaNormal(s, si, t, ti)
+    ).join("") + (novaTarefaEm === si ? renderNovaTarefaForm(si) : "");
+    const botaoAdicionar = podeEscrever && novaTarefaEm !== si
+      ? `<button type="button" class="btn-adicionar" data-nova-tarefa data-si="${si}">+ nova tarefa</button>` : "";
+    return `<section class="sprint">${renderCabecalho(s, si)}<ul class="tarefas">${linhas}</ul>${botaoAdicionar}</section>`;
+  }).join("");
+
+  if (podeEscrever) {
+    lista.insertAdjacentHTML("beforeend", novaSeccaoAberta ? `
+      <div class="form-nova-seccao" data-form-nova-seccao>
+        <input class="campo" data-campo="nome" placeholder="Nome do novo sprint" autofocus>
+        <textarea class="campo" data-campo="obj" placeholder="Objectivo deste sprint"></textarea>
+        <div class="campo-linha">
+          <input class="campo" data-campo="etiqueta" style="max-width:220px" placeholder="Etiqueta (opcional)">
+          <label class="campo-check"><input type="checkbox" data-campo="urgente"> marcar como urgente</label>
+        </div>
+        <div class="form-acoes">
+          <button type="button" class="btn btn-primario" data-guardar-nova-seccao>Adicionar sprint</button>
+          <button type="button" class="btn btn-secundario" data-cancelar-nova-seccao>Cancelar</button>
+        </div>
+      </div>` : `<button type="button" class="btn-nova-seccao" data-nova-seccao>+ nova secção / sprint</button>`);
+  }
+
+  const todas = estado.sprints.flatMap(s => s.tarefas);
+  const fx = todas.filter(t => t.feita).length;
+  document.getElementById("barra-geral").style.width = (todas.length ? fx / todas.length * 100 : 0) + "%";
+  document.getElementById("contagem-geral").textContent = `${fx} de ${todas.length} tarefas concluídas`;
+  document.getElementById("ultima").textContent = estado.actualizado
+    ? "Actualizado " + new Date(estado.actualizado).toLocaleString("pt-PT")
+    : "Ainda sem alterações";
+
+  renderToast();
+  if (novaTarefaEm !== null) {
+    const campo = lista.querySelector(`[data-form-nova-tarefa][data-si="${novaTarefaEm}"] .campo-tit`);
+    if (campo) campo.focus();
+  }
+  if (novaSeccaoAberta) {
+    const campo = lista.querySelector(`[data-form-nova-seccao] [data-campo="nome"]`);
+    if (campo) campo.focus();
+  }
+}
+
+function renderTabelas() {
+  document.getElementById("bloqueios").innerHTML =
+    "<tr><th>#</th><th>Bloqueio</th><th>Estado</th><th>Quem</th></tr>" +
+    BLOQUEIOS.map(b => `<tr><td>${esc(b[0])}</td><td><b>${esc(b[1])}</b></td>
+      <td>${b[4] === "ok" ? "✅ " : "⏳ "}${esc(b[2])}</td><td>${esc(b[3])}</td></tr>`).join("");
+  document.getElementById("nao-fazer").innerHTML =
+    "<tr><th>Adiado</th><th>Porquê</th></tr>" +
+    NAO_FAZER.map(n => `<tr><td><b>${esc(n[0])}</b></td><td>${esc(n[1])}</td></tr>`).join("");
+}
+
+function renderToast() {
+  const area = document.getElementById("toast-area");
+  if (!desfazer) { area.innerHTML = ""; return; }
+  const msg = desfazer.tipo === "sprint" ? "Secção removida" : "Tarefa removida";
+  area.innerHTML = `<div class="toast">${msg} <button type="button" data-desfazer>Desfazer</button></div>`;
+}
+
+function limparDesfazer() {
+  if (desfazer && desfazer.timer) clearTimeout(desfazer.timer);
+  desfazer = null;
+}
+
+function construirDocumento() {
+  const dados = JSON.stringify(estado).replace(/<\//g, "<\\/");
+  return "<!doctype html>\n<html lang=\"pt\">\n<head>\n<meta charset=\"utf-8\">\n" +
+    "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n" +
+    "<title>Tracker Janelas Para a Alma</title>\n" +
+    "<style id=\"app-style\">" + FONTE_ESTILO + "</style>\n</head>\n<body>\n" +
+    FONTE_MOLDE +
+    "\n<script id=\"estado\" type=\"application/json\">" + dados + "<\/script>\n" +
+    "<script id=\"app-script\">" + FONTE_SCRIPT + "<\/script>\n</body>\n</html>";
+}
+
+function agendarGravacao() {
+  if (!podeEscrever || !api) return;
+  clearTimeout(temporizador);
+  marcar("A guardar…");
+  temporizador = setTimeout(gravar, 700);
+}
+
+async function gravar() {
+  estado.actualizado = new Date().toISOString();
+  try {
+    await api.publish(construirDocumento());
+    marcar("Guardado");
+  } catch (e) {
+    marcar(e && e.code === "conflict" ? "Alguém guardou primeiro — a recarregar" : "Não foi possível guardar");
+  }
+}
+
+function marcar(txt) { document.getElementById("estado-guardar").textContent = txt; }
+
+// --- delegacao de eventos: tudo dentro de #lista passa por aqui ---
+
+document.getElementById("lista").addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-si], button[data-editar-cabecalho], button[data-nova-seccao], " +
+    "button[data-guardar-nova-seccao], button[data-cancelar-nova-seccao], button[data-cancelar-tarefa], " +
+    "button[data-cancelar-nova-tarefa], button[data-cancelar-cabecalho]");
+  if (!btn) return;
+  const si = btn.dataset.si !== undefined ? +btn.dataset.si : null;
+  const ti = btn.dataset.ti !== undefined ? +btn.dataset.ti : null;
+
+  if (btn.hasAttribute("data-editar-tarefa")) { edicao = { si, ti }; novaTarefaEm = null; novaSeccaoAberta = false; render(); }
+  else if (btn.hasAttribute("data-editar-cabecalho")) { edicao = { si }; novaTarefaEm = null; novaSeccaoAberta = false; render(); }
+  else if (btn.hasAttribute("data-cancelar-tarefa") || btn.hasAttribute("data-cancelar-cabecalho")) { edicao = null; render(); }
+  else if (btn.hasAttribute("data-nova-tarefa")) { novaTarefaEm = si; edicao = null; render(); }
+  else if (btn.hasAttribute("data-cancelar-nova-tarefa")) { novaTarefaEm = null; render(); }
+  else if (btn.hasAttribute("data-nova-seccao")) { novaSeccaoAberta = true; render(); }
+  else if (btn.hasAttribute("data-cancelar-nova-seccao")) { novaSeccaoAberta = false; render(); }
+
+  else if (btn.hasAttribute("data-guardar-tarefa")) {
+    const li = btn.closest("[data-form-tarefa]");
+    const t = estado.sprints[si].tarefas[ti];
+    t.id = li.querySelector(".campo-codigo").value.trim();
+    t.dono = li.querySelector(".campo-dono").value;
+    t.tit = li.querySelector(".campo-tit").value.trim() || t.tit;
+    t.det = li.querySelector(".campo-det").value.trim();
+    edicao = null; render(); agendarGravacao();
+  }
+  else if (btn.hasAttribute("data-remover-tarefa")) {
+    limparDesfazer();
+    const item = estado.sprints[si].tarefas.splice(ti, 1)[0];
+    edicao = null;
+    desfazer = { tipo:"tarefa", si, ti, item, timer: setTimeout(() => { desfazer = null; renderToast(); }, 6000) };
+    render(); agendarGravacao();
+  }
+  else if (btn.hasAttribute("data-guardar-nova-tarefa")) {
+    const li = btn.closest("[data-form-nova-tarefa]");
+    const tit = li.querySelector(".campo-tit").value.trim();
+    if (!tit) { li.querySelector(".campo-tit").focus(); return; }
+    estado.sprints[si].tarefas.push({
+      id: li.querySelector(".campo-codigo").value.trim(),
+      dono: li.querySelector(".campo-dono").value,
+      tit, det: li.querySelector(".campo-det").value.trim(), feita:false
+    });
+    novaTarefaEm = null; render(); agendarGravacao();
+  }
+
+  else if (btn.hasAttribute("data-guardar-cabecalho")) {
+    const box = btn.closest("[data-form-cabecalho]");
+    const s = estado.sprints[si];
+    s.nome = box.querySelector('[data-campo="nome"]').value.trim() || s.nome;
+    s.obj = box.querySelector('[data-campo="obj"]').value.trim();
+    s.etiqueta = box.querySelector('[data-campo="etiqueta"]').value.trim();
+    s.urgente = box.querySelector('[data-campo="urgente"]').checked;
+    edicao = null; render(); agendarGravacao();
+  }
+  else if (btn.hasAttribute("data-remover-seccao")) {
+    limparDesfazer();
+    const item = estado.sprints.splice(si, 1)[0];
+    edicao = null;
+    desfazer = { tipo:"sprint", si, item, timer: setTimeout(() => { desfazer = null; renderToast(); }, 6000) };
+    render(); agendarGravacao();
+  }
+  else if (btn.hasAttribute("data-guardar-nova-seccao")) {
+    const box = btn.closest("[data-form-nova-seccao]");
+    const nome = box.querySelector('[data-campo="nome"]').value.trim();
+    if (!nome) { box.querySelector('[data-campo="nome"]').focus(); return; }
+    estado.sprints.push({
+      nome, obj: box.querySelector('[data-campo="obj"]').value.trim(),
+      etiqueta: box.querySelector('[data-campo="etiqueta"]').value.trim(),
+      urgente: box.querySelector('[data-campo="urgente"]').checked,
+      tarefas: []
+    });
+    novaSeccaoAberta = false; render(); agendarGravacao();
+  }
+});
+
+document.getElementById("lista").addEventListener("change", (e) => {
+  const cx = e.target.closest(".chk-tarefa");
+  if (!cx) return;
+  const si = +cx.dataset.si, ti = +cx.dataset.ti;
+  estado.sprints[si].tarefas[ti].feita = cx.checked;
+  render(); agendarGravacao();
+});
+
+document.getElementById("toast-area").addEventListener("click", (e) => {
+  if (!e.target.closest("[data-desfazer]") || !desfazer) return;
+  if (desfazer.tipo === "sprint") estado.sprints.splice(desfazer.si, 0, desfazer.item);
+  else estado.sprints[desfazer.si].tarefas.splice(desfazer.ti, 0, desfazer.item);
+  limparDesfazer();
+  render(); agendarGravacao();
+});
+
+document.querySelectorAll(".filtro").forEach(b => {
+  b.addEventListener("click", () => {
+    filtro = b.dataset.f;
+    document.querySelectorAll(".filtro").forEach(o => o.setAttribute("aria-pressed", String(o === b)));
+    render();
+  });
+});
+
+const notas = document.getElementById("notas");
+notas.value = estado.notas;
+notas.addEventListener("input", () => { estado.notas = notas.value; agendarGravacao(); });
+
+renderTabelas();
+render();
+marcar("Modo leitura — as alterações não ficam guardadas");
+notas.disabled = true;
+
+claude.use("artifact").then(a => {
+  if (!a) return;
+  api = a;
+  podeEscrever = true;
+  notas.disabled = false;
+  marcar("Pronto — as alterações ficam guardadas");
+  render();
+}).catch(() => {});
+</script>
