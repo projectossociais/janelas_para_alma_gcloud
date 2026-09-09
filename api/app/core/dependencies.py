@@ -42,6 +42,24 @@ def obter_utilizador_atual(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
 
 
+def obter_utilizador_admin(
+    utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
+) -> UtilizadorRegisto:
+    """Protege rotas que só um administrador pode tocar (CRUD de banners,
+    aprovação de pagamentos, decisão de candidaturas). Assenta em
+    `obter_utilizador_atual` — sem sessão válida é 401 antes de chegar aqui;
+    com sessão de um papel que não `admin`, 403.
+
+    A verificação de papel vive só neste sítio, nunca repetida endpoint a
+    endpoint (ver CLAUDE.md, "has_role deve ter uma única implementação")."""
+    if utilizador.papel != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="requer papel de administrador",
+        )
+    return utilizador
+
+
 def obter_utilizador_atual_opcional(
     access_token: str | None = Cookie(default=None),
     service: AuthService = Depends(obter_auth_service),

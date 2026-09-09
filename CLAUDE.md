@@ -178,8 +178,10 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
 
 - **`has_role`/verificação de papel deve ter uma única implementação.**
   O projecto antigo teve duas versões sobrepostas de uma função SQL `has_role()` e isso
-  causou `PGRST203`. Aqui a verificação de papel vive em Python, num único sítio
-  (`core/security.py` ou um dependency de FastAPI) — não duplicar a lógica por endpoint.
+  causou `PGRST203`. Aqui a verificação de papel vive em Python, num único sítio —
+  a dependency `obter_utilizador_admin` em `api/app/core/dependencies.py` (401 sem
+  sessão, 403 se `papel != "admin"`). Rotas de admin declaram
+  `Depends(obter_utilizador_admin)`; não duplicar a comparação de papel por endpoint.
 
 ### React / estado
 

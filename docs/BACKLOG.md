@@ -286,7 +286,7 @@ item abaixo depende de uma decisão que não é minha para tomar sozinho:
 | Storage de ficheiros (avatares, comprovativos) | Credenciais reais do Cloudflare R2 |
 | Migração Alembic contra Postgres real | Docker Desktop a correr nesta máquina |
 | Deploy no Cloud Run | Conta GCloud, projecto, credenciais |
-| CRUD de admin (banners, notifications, site_content) | Verificação de papel/admin na API — ainda não construída, é trabalho novo, não migração |
+| CRUD de admin (banners, notifications, site_content) | ~~Verificação de papel/admin na API~~ — já construída (`obter_utilizador_admin`, ver abaixo); falta o CRUD autenticado por admin em si |
 | Fluxo financeiro de doações (upload de comprovativo) | Email + storage, os dois primeiros itens desta lista |
 | `sessoes_exercicio`, Scanner, Premium | Módulos maiores, cada um merece o mesmo tratamento cuidadoso — próximos sprints |
 
@@ -313,6 +313,21 @@ Estado do gate em todos os 6 sprints: API sempre 100% verde (64/64 no fim), fron
 sempre 100% verde (26/26 no fim), lint da API sempre limpo, lint do frontend a chegar a
 zero erros, `tsc --noEmit` só com dívida pré-existente documentada e a diminuir (8 → 6
 erros), nunca a aumentar.
+
+### Verificação de papel de administrador na API (2026-09-10 — branch `api/verificacao-admin`)
+
+Trabalho novo (não migração), feito em paralelo enquanto o bug da página do frontend
+era investigado noutra frente. É pré-requisito de vários sprints por vir (CRUD de
+banners no painel — Sprint 4 abaixo, `W-11` Premium, decisão de candidaturas).
+
+- `obter_utilizador_admin` em `api/app/core/dependencies.py` — assenta em
+  `obter_utilizador_atual` (401 sem sessão válida), devolve 403 se `papel != "admin"`.
+  Implementação única da comparação de papel, nunca repetida endpoint a endpoint
+  (CLAUDE.md §6, "has_role numa só implementação").
+- 3 testes (`api/tests/test_dependencies_admin.py`): sem sessão → 401, papel comum →
+  403, admin → 200. **70/70 `pytest`**, `ruff check app tests` limpo.
+- Ainda não há router de admin que a use — o primeiro consumidor real
+  (`AdminBanners` CRUD) herda esta garantia sem a reescrever.
 
 ---
 
