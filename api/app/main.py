@@ -6,16 +6,19 @@ from app.routers import auth, banners, conta, doacoes, feedback, perfil
 
 app = FastAPI(title="Janelas Para a Alma — API")
 
-# allow_credentials=True é obrigatório para os cookies de sessão chegarem em
-# pedidos cross-origin (dev sem Docker: frontend em :8080, API em :8000) —
-# e, com allow_credentials=True, o browser exige uma origem explícita em
-# allow_origins, nunca "*".
+# O caminho normal é mesma-origem: o browser chama `/api/*`, servido pelo proxy
+# do Vite em dev e pelo NGINX nos containers — aí o CORS nem é exercitado. Este
+# middleware é a rede de segurança para pedidos cross-origin legítimos (dev a
+# apontar `VITE_API_URL` a uma API remota, ferramentas de teste): origem tem de
+# estar em `frontend_origins` (lista fechada, nunca "*"), e `allow_credentials`
+# obriga a origem explícita para os cookies de sessão passarem. Métodos e
+# cabeçalhos limitados ao que o cliente (`apiClient.ts`) usa de facto.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=obter_settings().frontend_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PATCH", "DELETE"],
+    allow_headers=["Content-Type"],
 )
 
 app.include_router(auth.router)

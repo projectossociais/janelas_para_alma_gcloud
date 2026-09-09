@@ -1,0 +1,76 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+
+// Este ficheiro NÃO mocka o apiClient — testa o próprio cliente contra um
+// `fetch` falso. O que importa aqui: o cliente fala com a mesma origem
+// (prefixo `/api`), leva sempre `credentials: "include"`, e nunca mostra
+// sucesso a partir de uma resposta não-ok (lança `ApiError` com o status).
+
+function respostaFalsa(corpo: unknown, init: { ok: boolean; status: number }): Response {
+  return {
+    ok: init.ok,
+    status: init.status,
+    json: async () => corpo,
+  } as Response;
+}
+
+describe("apiClient — mesma origem", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.unstubAllEnvs();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("chama /api/... na mesma origem, com credentials: include", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(respostaFalsa({ id: "u1" }, { ok: true, status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { authApi } = await import("./apiClient");
+    await authApi.eu();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, opcoes] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/auth/eu");
+    expect(opcoes.credentials).toBe("include");
+    expect(opcoes.headers["Content-Type"]).toBe("application/json");
+  });
+
+  it("respeita VITE_API_URL quando definida (dev a apontar a uma API remota)", async () => {
+    vi.stubEnv("VITE_API_URL", "https://api.exemplo.com");
+    const fetchMock = vi.fn().mockResolvedValue(respostaFalsa({ id: "u1" }, { ok: true, status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { authApi } = await import("./apiClient");
+    await authApi.eu();
+
+    expect(fetchMock.mock.calls[0][0]).toBe("https://api.exemplo.com/auth/eu");
+  });
+
+  it("lança ApiError com o status quando a resposta não é ok — nunca devolve sucesso", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(respostaFalsa({ detail: "Sessão inválida" }, { ok: false, status: 401 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { authApi, ApiError } = await import("./apiClient");
+
+    await expect(authApi.eu()).rejects.toMatchObject({ status: 401, message: "Sessão inválida" });
+    await expect(authApi.eu()).rejects.toBeInstanceOf(ApiError);
+  });
+
+  it("204 sem corpo não tenta fazer parse de JSON", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 204,
+      json: async () => {
+        throw new Error("não devia ser chamado");
+      },
+    } as unknown as Response);
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { authApi } = await import("./apiClient");
+    await expect(authApi.sair()).resolves.toBeUndefined();
+  });
+});

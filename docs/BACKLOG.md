@@ -299,13 +299,15 @@ conhece depois do primeiro deploy no Cloud Run. `frontend.Dockerfile` copia agor
 `.template` para `/etc/nginx/templates/`; `docker-compose.yml` passa `API_URL=http://api:8000`
 ao serviço `frontend`.
 
-**Ainda por fazer (não é esta mudança):** o browser continua a falar com a API
-**cross-origin** via `VITE_API_URL` (build-time) + CORS — o bloco `location /api/` do
-NGINX está pronto mas ninguém o usa. Migrar o frontend para chamar `/api/*` na mesma
-origem exige: trocar o default de `API_URL` em `apiClient.ts` (`?? ""` → `?? "/api"`),
-um proxy de dev em `vite.config.ts` (para `npm run dev` sem Docker), e então restringir
-`allow_origins` em `api/app/main.py`. Toca a auth/cookies (§3b) e infra — pacote próprio,
-com revisão humana.
+**Frontend na mesma origem (feito — branch `refactor/frontend-mesma-origem-api`):**
+`apiClient.ts` passa a usar `/api` por omissão (era `""`), o browser deixa de falar
+cross-origin com a API. `vite.config.ts` ganha um proxy `/api → http://localhost:8000`
+para `npm run dev` sem Docker. `docker-compose.yml`/`frontend.Dockerfile` já não fazem
+baked de `VITE_API_URL`. `api/app/main.py`: CORS passa a rede de segurança (métodos e
+cabeçalhos limitados ao que o cliente usa; origens já eram lista fechada). Testes novos:
+`frontend/src/lib/apiClient.test.ts` (prefixo `/api`, `credentials: include`, caminho de
+erro) e `api/tests/test_cors.py` (origem permitida vs. desconhecida no preflight).
+Verificação do `docker build` do frontend continua pendente (Docker/WSL a instalar).
 
 Estado do gate em todos os 6 sprints: API sempre 100% verde (64/64 no fim), frontend
 sempre 100% verde (26/26 no fim), lint da API sempre limpo, lint do frontend a chegar a

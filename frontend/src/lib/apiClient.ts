@@ -10,7 +10,11 @@
  * migração módulo-a-módulo não chega lá.
  */
 
-const API_URL = import.meta.env.VITE_API_URL ?? "";
+// Mesma origem por omissão: `/api/*` é servido pelo NGINX nos containers e
+// pelo proxy do Vite em `npm run dev` (ver vite.config.ts), ambos a reencaminhar
+// para a API. É o que torna o cookie `httpOnly` de sessão utilizável sem CORS.
+// `VITE_API_URL` só é preciso para apontar o dev a uma API remota.
+const API_URL = import.meta.env.VITE_API_URL ?? "/api";
 
 export class ApiError extends Error {
   status: number;

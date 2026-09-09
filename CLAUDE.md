@@ -84,14 +84,15 @@ desenvolvimento do dia-a-dia do frontend, continua a fazer mais sentido `npm run
 dentro de `frontend/` — mais rápido, com hot reload real. Docker garante que "funciona na
 minha máquina" bate certo com o Cloud Run, não substitui o ciclo rápido de edição.
 
-O container do frontend serve o build estático com NGINX a partir de
-`infra/nginx/default.conf.template`: a imagem oficial do NGINX corre `envsubst` no
-arranque e substitui `${API_URL}` (o alvo do proxy `/api/`) por uma variável de ambiente
-**de run-time** — no compose é `http://api:8000`, em produção é o URL público do serviço
-da API, só conhecido depois do primeiro deploy. Não confundir com `VITE_API_URL`, que é
-build-time e é o que o browser usa hoje para falar com a API (cross-origin, via CORS).
-Migrar o frontend para chamar `/api/*` na mesma origem (e então apertar o CORS) é
-trabalho à parte — ver `docs/BACKLOG.md`.
+O browser fala **sempre com `/api/*` na mesma origem** — nunca com um URL absoluto da
+API. Em dev (`npm run dev`) o proxy do Vite (`vite.config.ts`) reencaminha `/api/*` para
+`http://localhost:8000`; nos containers, o NGINX faz o mesmo a partir de
+`infra/nginx/default.conf.template` — a imagem oficial corre `envsubst` no arranque e
+substitui `${API_URL}` (alvo do proxy) por uma variável de **run-time**: `http://api:8000`
+no compose, o URL público da API em produção (só conhecido depois do primeiro deploy).
+Nada de URL de API baked no bundle; `VITE_API_URL` só existe para apontar o dev a uma API
+remota. É esta partilha de origem que torna o cookie `httpOnly` de sessão viável (§3b) —
+o CORS na API fica como rede de segurança para o caso remoto, com lista fechada de origens.
 
 ---
 

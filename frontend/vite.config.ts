@@ -7,6 +7,16 @@ export default defineConfig({
   server: {
     host: "::",
     port: 8080,
+    // Em `npm run dev` (sem Docker) o browser vê tudo na mesma origem (:8080).
+    // `/api/*` é reencaminhado para a API (uvicorn em :8000), como o NGINX faz
+    // nos containers — o cookie httpOnly de sessão passa a funcionar sem CORS.
+    proxy: {
+      "/api": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+        rewrite: (caminho) => caminho.replace(/^\/api/, ""),
+      },
+    },
     hmr: {
       overlay: false,
     },
