@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tracker Janelas Para a Alma</title>
 <style id="app-style">
 @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
@@ -141,10 +146,11 @@ footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--line);
 code{font-family:var(--mono);font-size:.88em;background:var(--teal-bg);color:var(--teal);padding:1px 5px;border-radius:4px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
-
+</head>
+<body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Tracker vivo · edita directamente e fica guardado para os dois</p>
+    <p class="eyebrow">Tracker vivo · janelasparaalma-nova · edita directamente e fica guardado para os dois</p>
     <h1>Janelas Para a Alma</h1>
     <div class="geral">
       <div class="barra"><i id="barra-geral"></i></div>
@@ -182,115 +188,113 @@ code{font-family:var(--mono);font-size:.88em;background:var(--teal-bg);color:var
   <textarea id="notas" placeholder="Decisões, dúvidas, o que ficou a meio…"></textarea>
 
   <footer>
-    <span>Este tracker é agora a fonte viva das tarefas — <code>docs/BACKLOG.md</code> guarda o raciocínio e o histórico</span>
+    <span>Fonte viva das tarefas — <code>janelasparaalma-nova/docs/BACKLOG.md</code> guarda o raciocínio e o histórico completo de cada sprint</span>
     <span id="ultima"></span>
   </footer>
 </div>
-
-<script id="estado" type="application/json">{"v":1,"feitas":["L-02"],"notas":"Podes deixar aqui as tuas notas.\n","actualizado":"2026-09-07T22:33:49.153Z"}</script>
-
+<script id="estado" type="application/json">{"v":2,"sprints":[{"nome":"Sprint 0 — Fundação da infraestrutura nova","etiqueta":"concluído","urgente":false,"obj":"Sair do Supabase e do Vercel por completo. Monorepo novo (janelasparaalma-nova), sem importar dados de utilizadores — só a estrutura é espelhada.","tarefas":[{"id":"W-01","dono":"W","tit":"Monorepo criado: frontend/, api/, infra/","det":"Docker Compose + Dockerfiles (NGINX no frontend, uvicorn na API) + CI (lint+test+build).","feita":true},{"id":"W-02","dono":"W","tit":"Esquema de dados espelhado, com duas correcções deliberadas","det":"utilizadores funde identidade+perfil (sem Supabase Auth, a separação deixou de ter razão de ser); papel passa a ser uma única coluna, não profiles.papel + user_roles em paralelo.","feita":true},{"id":"W-03","dono":"W","tit":"Repositório novo no GitHub, histórico alinhado","det":"janelasparaalma (antigo) fica intacto como arquivo. janelasparaalma-nova é o activo daqui em diante.","feita":true}]},{"nome":"Sprint 1 — Autenticação de ponta a ponta","etiqueta":"concluído","urgente":false,"obj":"Serviço de autenticação próprio (argon2 + JWT em cookies httpOnly), a substituir o Supabase Auth e o sistema de login paralelo em localStorage que coexistia com ele.","tarefas":[{"id":"W-04","dono":"W","tit":"/auth/registar, /entrar, /eu, /sair, /atualizar-token","det":"Sessão em cookies httpOnly, nunca em localStorage nem no corpo JSON — um XSS não consegue roubar a sessão.","feita":true},{"id":"W-05","dono":"W","tit":"Papel auto-registável validado no schema","det":"comum/estrabico/profissional só — um pedido a forjar papel=admin é rejeitado com 422, não só escondido no formulário.","feita":true},{"id":"W-06","dono":"W","tit":"AuthContext.tsx e Auth.tsx reescritos","det":"Sai o Supabase Auth E o sistema de login paralelo em localStorage. 'Esqueceu a password' avisa honestamente que ainda não está disponível.","feita":true}]},{"nome":"Sprint 2 — Perfil","etiqueta":"concluído","urgente":false,"obj":"Expor o resto dos dados do utilizador (nome, biografia, contacto) que já viviam na tabela unificada.","tarefas":[{"id":"W-07","dono":"W","tit":"GET/PATCH /perfil","det":"Nunca aceita mudar papel nem email por aqui, mesmo que enviados no corpo.","feita":true},{"id":"W-08","dono":"W","tit":"ProfileContext.tsx e EditarPerfil.tsx migrados","det":"Upload de avatar desligado com mensagem honesta — depende de credenciais reais do Cloudflare R2, que ainda não existem.","feita":true}]},{"nome":"Sprint 3 — Conta: password e eliminação","etiqueta":"concluído","urgente":false,"obj":"Reaproveitar o desenho da carência de 30 dias já feito no repositório antigo, contra a base de dados nova.","tarefas":[{"id":"W-09","dono":"W","tit":"Mudar password","det":"POST /conta/mudar-password, verifica a password actual antes de mudar.","feita":true},{"id":"W-10","dono":"W","tit":"Eliminar conta com 30 dias de carência","det":"Nunca elimina na hora. Voltar a entrar cancela o pedido automaticamente.","feita":true},{"id":"W-11","dono":"W","tit":"Configuracoes.tsx migrado por completo","det":"Password, eliminar conta e preferências de notificação — já não fala com o Supabase.","feita":true}]},{"nome":"Sprint 4 — Banners","etiqueta":"concluído","urgente":false,"obj":"Conteúdo público, leitura directa ao repository — sem regras de negócio.","tarefas":[{"id":"W-12","dono":"W","tit":"GET /banners/ativo + bug corrigido","det":"SiteBanner.tsx lia colunas que nunca existiram na tabela real (title/active/color) — o banner nunca apareceu a um utilizador real. Corrigido ao migrar.","feita":true}]},{"nome":"Sprint 5 — Doações (materiais)","etiqueta":"concluído","urgente":false,"obj":"O fluxo com o pior bug do projecto — construído desta vez com a lição como regra estrutural.","tarefas":[{"id":"W-13","dono":"W","tit":"POST /doacoes/materiais","det":"Recibo gerado no servidor, não confiado ao Date.now() do browser.","feita":true},{"id":"W-14","dono":"W","tit":"O bug mais grave do projecto, agora um teste","det":"test_nunca_engole_uma_falha_de_gravacao — nunca mostra sucesso quando o insert falha.","feita":true},{"id":"W-15","dono":"W","tit":"Apoiar.tsx (materiais) migrado","det":"Fluxo financeiro (upload de comprovativo) fica no Supabase por agora — depende de storage e de um fornecedor de email.","feita":true}]},{"nome":"Sprint 6 — Feedback","etiqueta":"concluído","urgente":false,"obj":"Último dos 6 sprints autónomos — feedback público, com ou sem sessão.","tarefas":[{"id":"W-16","dono":"W","tit":"POST /feedback","det":"Funciona com ou sem sessão; identifica o utilizador quando há cookie válido, nunca exige.","feita":true},{"id":"W-17","dono":"W","tit":"FeedbackWidget.tsx migrado","det":"Notificação por email ao admin fica pendente — o feedback em si já fica gravado.","feita":true}]},{"nome":"Sprint 7 — Exercícios e Scanner na API","etiqueta":"próximo","urgente":false,"obj":"profile.id já vem da API nova, não do Supabase — as páginas de exercícios continuam a gravar sessoes_exercicio directo no Supabase, com um id que já não bate certo com nada lá.","tarefas":[{"id":"W-18","dono":"W","tit":"sessoes_exercicio na API","det":"Endpoint novo + ligar as 5 páginas de exercícios que hoje gravam directo no Supabase.","feita":false},{"id":"W-19","dono":"W","tit":"Decidir o motor de análise do Scanner","det":"Continua por decidir desde sempre. Hirschberg como candidato — precisa de validação clínica, não é decisão de programador.","feita":false},{"id":"L-01","dono":"L","tit":"Testar os exercícios de ponta a ponta depois da migração","det":"","feita":false}]},{"nome":"Sprint 8 — Premium e candidaturas","etiqueta":"próximo","urgente":false,"obj":"Dinheiro e acesso — o ponto mais sensível a seguir às doações.","tarefas":[{"id":"W-20","dono":"W","tit":"premium_requests na API + activação de Premium","det":"Continua a exigir o mesmo cuidado do serviço de doações: nunca mostrar sucesso sem confirmar.","feita":false},{"id":"L-02","dono":"L","tit":"Formulário de candidatura a Premium ligado à API","det":"","feita":false}]},{"nome":"Sprint 9 — Painel administrativo","etiqueta":"próximo","urgente":false,"obj":"Nada de CRUD de admin migra sem isto primeiro — construir por cima de uma fronteira de autorização que não existe seria pior do que esperar.","tarefas":[{"id":"W-21","dono":"W","tit":"Verificação de papel/admin na API","det":"Não existe ainda — dependency nova, testada, antes de qualquer rota de admin.","feita":false},{"id":"W-22","dono":"W","tit":"CRUD de banners, notifications, site_content","det":"","feita":false},{"id":"W-23","dono":"W","tit":"Corrigir AdminInbox: 'Aprovar' passa a activar mesmo o papel","det":"Hoje só marca status — dívida antiga, carregada do repositório anterior.","feita":false}]},{"nome":"Sprint 10 — Storage e fluxo financeiro","etiqueta":"bloqueado — precisa de ti","urgente":true,"obj":"Nada aqui é código por fazer — é código à espera de credenciais e de uma decisão tua.","tarefas":[{"id":"W-24","dono":"W","tit":"Endpoint de upload para Cloudflare R2","det":"Precisa das credenciais reais do R2 (conta + bucket).","feita":false},{"id":"W-25","dono":"W","tit":"Ligar avatar (EditarPerfil) e comprovativo (Apoiar financeiro) à API","det":"","feita":false}]},{"nome":"Sprint 11 — Deploy real","etiqueta":"bloqueado — precisa de ti","urgente":true,"obj":"O trabalho de código está pronto para isto; falta o acesso.","tarefas":[{"id":"W-26","dono":"W","tit":"Validar a migração Alembic contra Postgres real","det":"Precisa do Docker Desktop a correr nesta máquina.","feita":false},{"id":"W-27","dono":"W","tit":"docker compose up local, de ponta a ponta","det":"","feita":false},{"id":"W-28","dono":"W","tit":"Deploy no Cloud Run","det":"Precisa de conta e projecto GCloud (e cartão registado, mesmo sem cobrar nada).","feita":false}]}],"notas":"9 de Setembro — pivot grande: saímos do Supabase e do Vercel por completo. Nova infraestrutura em janelasparaalma-nova (FastAPI + Postgres próprio + Cloudflare R2 + Cloud Run), sem importar dados de utilizadores. As tarefas antigas sobre corrigir o repositório Supabase deixaram de fazer sentido e foram substituídas por este plano — o raciocínio completo de cada sprint está em janelasparaalma-nova/docs/BACKLOG.md.\n\n6 sprints feitos de forma autónoma (auth, perfil, conta, banners, doações-materiais, feedback), cada um com testes a passar antes de avançar para o seguinte. Preciso de ti para destravar o resto: fornecedor de email, credenciais Cloudflare R2, ligar o Docker Desktop, e uma conta GCloud para o deploy.","actualizado":"2026-09-09T06:00:00.000Z"}</script>
 <script id="app-script">
 // Modelo por omissao — usado so para SEMEAR a primeira publicacao ou migrar
 // de uma versao anterior do tracker. Depois disso, estado.sprints manda.
 const DEFAULT_SPRINTS = [
-  { nome:"Sprint 0 — Parar de mentir", etiqueta:"dias, não semanas", urgente:true,
-    obj:"Nenhuma funcionalidade afirma ao utilizador algo que não é verdade. Não depende de infraestrutura nova.",
+  { nome:"Sprint 0 — Fundação da infraestrutura nova", etiqueta:"concluído", urgente:false,
+    obj:"Sair do Supabase e do Vercel por completo. Monorepo novo (janelasparaalma-nova), sem importar dados de utilizadores — só a estrutura é espelhada.",
     tarefas:[
-      {id:"W-01",dono:"W",tit:"Remover o bypass do Premium",det:"⚠️ Sem W-11 ninguém consegue aceder, incluindo quem pagou. Verificar primeiro se há Premium pago."},
-      {id:"W-02",dono:"W",tit:"Mudar palavra-passe passa a mudar mesmo a palavra-passe",det:"Hoje nunca chama o Supabase. Reautenticar + updateUser. Testes dos dois caminhos."},
-      {id:"W-03",dono:"W",tit:"Eliminar conta passa a eliminar mesmo a conta",det:"A Política de Privacidade publicada promete isto. Compromisso legal já assumido."},
-      {id:"W-04",dono:"W",tit:"Scanner deixa de inventar diagnósticos",det:"Retirar ou reclassificar como sinais observados, sem esperar pela API."},
-      {id:"W-05",dono:"W",tit:"Tirar o .env do controlo de versões",det:"Hoje não é fuga: as vars são VITE_, públicas por design. É armadilha para quando a API precisar de service_role."}
+      {id:"W-01",dono:"W",tit:"Monorepo criado: frontend/, api/, infra/",det:"Docker Compose + Dockerfiles (NGINX no frontend, uvicorn na API) + CI (lint+test+build)."},
+      {id:"W-02",dono:"W",tit:"Esquema de dados espelhado, com duas correcções deliberadas",det:"utilizadores funde identidade+perfil (sem Supabase Auth, a separação deixou de ter razão de ser); papel passa a ser uma única coluna, não profiles.papel + user_roles em paralelo."},
+      {id:"W-03",dono:"W",tit:"Repositório novo no GitHub, histórico alinhado",det:"janelasparaalma (antigo) fica intacto como arquivo. janelasparaalma-nova é o activo daqui em diante."}
     ]},
-  { nome:"Sprint 0 — Parar de parecer partido", etiqueta:"em paralelo",
-    obj:"Um visitante, ou uma clínica a avaliar a parceria, não encontra nada visivelmente avariado. Nada toca base de dados nem paywall.",
+  { nome:"Sprint 1 — Autenticação de ponta a ponta", etiqueta:"concluído", urgente:false,
+    obj:"Serviço de autenticação próprio (argon2 + JWT em cookies httpOnly), a substituir o Supabase Auth e o sistema de login paralelo em localStorage que coexistia com ele.",
     tarefas:[
-      {id:"L-01",dono:"L",tit:"Repor as 8 imagens perdidas no export da Lovable",det:"Apontam para /__l5e/. Quatro têm equivalente local; as outras precisam de imagem nova — usar fotografias reais angolanas resolve também o ponto 7.2 do relatório UX."},
-      {id:"L-02",dono:"L",tit:"Vídeos dos exercícios",det:"public/videos não existe. Decisão de produto: produzir os 4 vídeos ou remover o player."},
-      {id:"L-03",dono:"L",tit:"Modal Últimas Referências faz scroll até ao fim",det:"Altura máxima com overflow-y auto."},
-      {id:"L-04",dono:"L",tit:"Correcções de navegação",det:"Scroll ao topo nos links rápidos, 3º link partido, Google Maps em novo separador."},
-      {id:"L-05",dono:"L",tit:"Dois ajustes visuais",det:"Botão Voltar pouco visível; botão de perfil colado ao logótipo."},
-      {id:"L-06",dono:"L",tit:"Levantamento completo de botões e links",det:"Não é corrigir tudo — é saber o tamanho do problema."}
+      {id:"W-04",dono:"W",tit:"/auth/registar, /entrar, /eu, /sair, /atualizar-token",det:"Sessão em cookies httpOnly, nunca em localStorage nem no corpo JSON — um XSS não consegue roubar a sessão."},
+      {id:"W-05",dono:"W",tit:"Papel auto-registável validado no schema",det:"comum/estrabico/profissional só — um pedido a forjar papel=admin é rejeitado com 422, não só escondido no formulário."},
+      {id:"W-06",dono:"W",tit:"AuthContext.tsx e Auth.tsx reescritos",det:"Sai o Supabase Auth E o sistema de login paralelo em localStorage. 'Esqueceu a password' avisa honestamente que ainda não está disponível."}
     ]},
-  { nome:"Sprint 1 — Fundação da API", etiqueta:"bloqueante",
-    obj:"Nenhuma funcionalidade visível. É fundação — mais barata agora do que depois da loja e dos relatórios estarem construídos por cima.",
+  { nome:"Sprint 2 — Perfil", etiqueta:"concluído", urgente:false,
+    obj:"Expor o resto dos dados do utilizador (nome, biografia, contacto) que já viviam na tabela unificada.",
     tarefas:[
-      {id:"W-06",dono:"W",tit:"Serviço FastAPI publicado no Cloud Run",det:"Estrutura em camadas: routers / services / repositories / schemas / core."},
-      {id:"W-07",dono:"W",tit:"Validação de JWT e reencaminhamento do login",det:"A API fala com o Postgres em nome do utilizador. Duas fechaduras, não uma trocada pela outra."},
-      {id:"W-08",dono:"W",tit:"CI",det:"pytest + build Docker na API; lint + test + build no frontend."},
-      {id:"W-09",dono:"W",tit:"Motor de análise — assunção: parte-se do zero",det:"Não existe código do scanner. O que já existe é a extracção de pontos no browser."}
+      {id:"W-07",dono:"W",tit:"GET/PATCH /perfil",det:"Nunca aceita mudar papel nem email por aqui, mesmo que enviados no corpo."},
+      {id:"W-08",dono:"W",tit:"ProfileContext.tsx e EditarPerfil.tsx migrados",det:"Upload de avatar desligado com mensagem honesta — depende de credenciais reais do Cloudflare R2, que ainda não existem."}
     ]},
-  { nome:"Sprint 1 — Conteúdo e estrutura", etiqueta:"em paralelo",
-    obj:"O que o relatório UX apontou e não é bug: falta de conteúdo, ordem da informação e linguagem.",
+  { nome:"Sprint 3 — Conta: password e eliminação", etiqueta:"concluído", urgente:false,
+    obj:"Reaproveitar o desenho da carência de 30 dias já feito no repositório antigo, contra a base de dados nova.",
     tarefas:[
-      {id:"L-07",dono:"L",tit:"Termos de Uso",det:"A página intitula-se 'e Termos de Uso' mas só tem privacidade. Incluir o aviso de que o rastreio não substitui diagnóstico médico."},
-      {id:"L-08",dono:"L",tit:"Ordem da informação segue o menu",det:"Serviços abre com 'A Nossa Visão'; o mesmo em Produtos."},
-      {id:"L-09",dono:"L",tit:"Separar planos de exercícios",det:"⚠️ Depende de W-01 estar fechado — mesma página."},
-      {id:"L-10",dono:"L",tit:"Linguagem",det:"'Três tiers' mistura inglês com português."}
+      {id:"W-09",dono:"W",tit:"Mudar password",det:"POST /conta/mudar-password, verifica a password actual antes de mudar."},
+      {id:"W-10",dono:"W",tit:"Eliminar conta com 30 dias de carência",det:"Nunca elimina na hora. Voltar a entrar cancela o pedido automaticamente."},
+      {id:"W-11",dono:"W",tit:"Configuracoes.tsx migrado por completo",det:"Password, eliminar conta e preferências de notificação — já não fala com o Supabase."}
     ]},
-  { nome:"Sprint 2 — Premium real e candidaturas", etiqueta:"",
-    obj:"O caminho que hoje não entrega o que promete: pagar não dá acesso a nada. É também o ensaio da migração para a API.",
+  { nome:"Sprint 4 — Banners", etiqueta:"concluído", urgente:false,
+    obj:"Conteúdo público, leitura directa ao repository — sem regras de negócio.",
     tarefas:[
-      {id:"W-11",dono:"W",tit:"Confirmação de pagamento activa o Premium",det:"Único ponto com service_role, justificado e auditado. Testes obrigatórios: é dinheiro e acesso."},
-      {id:"L-11",dono:"L",tit:"Botão 'Aprovar pagamento' no painel",det:"Distinto do 'Contactado' já existente. Depende de W-11."},
-      {id:"L-12",dono:"L",tit:"Ecrã 'a aguardar aprovação'",det:"Reutiliza LockedVideoOverlay e PremiumPaywallModal."},
-      {id:"W-12",dono:"W",tit:"Candidaturas: tabela, RLS e máquina de estados",det:"Seguir as 10 boas práticas do README."},
-      {id:"L-13",dono:"L",tit:"Candidaturas: formulários e gestão no painel",det:"Padrão de AdminInbox.tsx."}
+      {id:"W-12",dono:"W",tit:"GET /banners/ativo + bug corrigido",det:"SiteBanner.tsx lia colunas que nunca existiram na tabela real (title/active/color) — o banner nunca apareceu a um utilizador real. Corrigido ao migrar."}
     ]},
-  { nome:"Sprint 3 — Scanner clínico", etiqueta:"o mais difícil",
-    obj:"Extrair pontos faciais é a parte fácil e já está feita. Transformá-los num número clinicamente defensável é investigação aplicada, não programação.",
+  { nome:"Sprint 5 — Doações (materiais)", etiqueta:"concluído", urgente:false,
+    obj:"O fluxo com o pior bug do projecto — construído desta vez com a lição como regra estrutural.",
     tarefas:[
-      {id:"W-13",dono:"W",tit:"Escolher e documentar o método de medição",det:"Hirschberg é o candidato. Precisa de validação clínica — não é decisão de programador."},
-      {id:"W-14",dono:"W",tit:"Calibração",det:"Compensar distância e inclinação, ou impor as condições de captura."},
-      {id:"W-15",dono:"W",tit:"Serviço de análise na API",det:"Recebe coordenadas, devolve medição + confiança real. Testes com casos de referência."},
-      {id:"W-16",dono:"W",tit:"Validação contra casos reais",det:"É isto que separa um produto clínico de uma demonstração. Precisa de um parceiro clínico."},
-      {id:"W-17",dono:"W",tit:"Política de não guardar imagens",det:"Processar e descartar. São imagens faciais de crianças."},
-      {id:"L-14",dono:"L",tit:"Ecrã de resultados ligado ao relatório real",det:"Só depois de W-16. Até lá, o ecrã mitigado de W-04 é o correcto."}
+      {id:"W-13",dono:"W",tit:"POST /doacoes/materiais",det:"Recibo gerado no servidor, não confiado ao Date.now() do browser."},
+      {id:"W-14",dono:"W",tit:"O bug mais grave do projecto, agora um teste",det:"test_nunca_engole_uma_falha_de_gravacao — nunca mostra sucesso quando o insert falha."},
+      {id:"W-15",dono:"W",tit:"Apoiar.tsx (materiais) migrado",det:"Fluxo financeiro (upload de comprovativo) fica no Supabase por agora — depende de storage e de um fornecedor de email."}
     ]},
-  { nome:"Sprint 4 — Rede clínica e agendamentos", etiqueta:"",
-    obj:"Fecha a distância entre o que o pitch deck promete às clínicas e o que o código faz. É o que desbloqueia a primeira parceria a sério.",
+  { nome:"Sprint 6 — Feedback", etiqueta:"concluído", urgente:false,
+    obj:"Último dos 6 sprints autónomos — feedback público, com ou sem sessão.",
     tarefas:[
-      {id:"L-15",dono:"L",tit:"Tabela agendamentos",det:"Migração aditiva, padrão de sessoes_exercicio."},
-      {id:"W-18",dono:"W",tit:"Endpoints de criação e decisão",det:""},
-      {id:"L-16",dono:"L",tit:"Ligar ClinicalPartners.tsx à API",det:"Hoje o formulário não persiste nada."},
-      {id:"L-17",dono:"L",tit:"Página AdminAgendamentos.tsx",det:"Padrão de AdminInbox.tsx."},
-      {id:"W-19",dono:"W",tit:"Notificação à equipa e à clínica",det:""}
+      {id:"W-16",dono:"W",tit:"POST /feedback",det:"Funciona com ou sem sessão; identifica o utilizador quando há cookie válido, nunca exige."},
+      {id:"W-17",dono:"W",tit:"FeedbackWidget.tsx migrado",det:"Notificação por email ao admin fica pendente — o feedback em si já fica gravado."}
     ]},
-  { nome:"Sprint 5 — Unificação de papéis", etiqueta:"",
-    obj:"profiles.papel e user_roles são duas fontes de verdade paralelas. Cada papel novo antes disto agrava o problema.",
+  { nome:"Sprint 7 — Exercícios e Scanner na API", etiqueta:"próximo", urgente:false,
+    obj:"profile.id já vem da API nova, não do Supabase — as páginas de exercícios continuam a gravar sessoes_exercicio directo no Supabase, com um id que já não bate certo com nada lá.",
     tarefas:[
-      {id:"W-20",dono:"W",tit:"Decidir a lista oficial de papéis",det:"Decisão de negócio antes de código."},
-      {id:"W-21",dono:"W",tit:"Migração de unificação",det:"Actualizar todos os pontos de leitura."}
+      {id:"W-18",dono:"W",tit:"sessoes_exercicio na API",det:"Endpoint novo + ligar as 5 páginas de exercícios que hoje gravam directo no Supabase."},
+      {id:"W-19",dono:"W",tit:"Decidir o motor de análise do Scanner",det:"Continua por decidir desde sempre. Hirschberg como candidato — precisa de validação clínica, não é decisão de programador."},
+      {id:"L-01",dono:"L",tit:"Testar os exercícios de ponta a ponta depois da migração",det:""}
     ]},
-  { nome:"Sprint 6 — Produto", etiqueta:"",
-    obj:"Só depois da fundação estar posta. Assentam todos no que foi construído acima.",
+  { nome:"Sprint 8 — Premium e candidaturas", etiqueta:"próximo", urgente:false,
+    obj:"Dinheiro e acesso — o ponto mais sensível a seguir às doações.",
     tarefas:[
-      {id:"L-18",dono:"L",tit:"Histórico de exames com evolução",det:""},
-      {id:"L-19",dono:"L",tit:"Painel pessoal com dados reais",det:"Hoje '4 exercícios' e 'próxima teleconsulta' são valores fixos."},
-      {id:"L-20",dono:"L",tit:"Exercícios premium restantes",det:"Sobre BaseExercise."},
-      {id:"WL-01",dono:"WL",tit:"Loja de óculos com carrinho e pagamento",det:""},
-      {id:"WL-02",dono:"WL",tit:"Conteúdo editável pelo administrador",det:""}
+      {id:"W-20",dono:"W",tit:"premium_requests na API + activação de Premium",det:"Continua a exigir o mesmo cuidado do serviço de doações: nunca mostrar sucesso sem confirmar."},
+      {id:"L-02",dono:"L",tit:"Formulário de candidatura a Premium ligado à API",det:""}
+    ]},
+  { nome:"Sprint 9 — Painel administrativo", etiqueta:"próximo", urgente:false,
+    obj:"Nada de CRUD de admin migra sem isto primeiro — construir por cima de uma fronteira de autorização que não existe seria pior do que esperar.",
+    tarefas:[
+      {id:"W-21",dono:"W",tit:"Verificação de papel/admin na API",det:"Não existe ainda — dependency nova, testada, antes de qualquer rota de admin."},
+      {id:"W-22",dono:"W",tit:"CRUD de banners, notifications, site_content",det:""},
+      {id:"W-23",dono:"W",tit:"Corrigir AdminInbox: 'Aprovar' passa a activar mesmo o papel",det:"Hoje só marca status — dívida antiga, carregada do repositório anterior."}
+    ]},
+  { nome:"Sprint 10 — Storage e fluxo financeiro", etiqueta:"bloqueado — precisa de ti", urgente:true,
+    obj:"Nada aqui é código por fazer — é código à espera de credenciais e de uma decisão tua.",
+    tarefas:[
+      {id:"W-24",dono:"W",tit:"Endpoint de upload para Cloudflare R2",det:"Precisa das credenciais reais do R2 (conta + bucket)."},
+      {id:"W-25",dono:"W",tit:"Ligar avatar (EditarPerfil) e comprovativo (Apoiar financeiro) à API",det:""}
+    ]},
+  { nome:"Sprint 11 — Deploy real", etiqueta:"bloqueado — precisa de ti", urgente:true,
+    obj:"O trabalho de código está pronto para isto; falta o acesso.",
+    tarefas:[
+      {id:"W-26",dono:"W",tit:"Validar a migração Alembic contra Postgres real",det:"Precisa do Docker Desktop a correr nesta máquina."},
+      {id:"W-27",dono:"W",tit:"docker compose up local, de ponta a ponta",det:""},
+      {id:"W-28",dono:"W",tit:"Deploy no Cloud Run",det:"Precisa de conta e projecto GCloud (e cartão registado, mesmo sem cobrar nada)."}
     ]}
 ];
 
 const BLOQUEIOS = [
-  ["1","Motor de análise do scanner","Assunção fixada — não existe código. Parte-se do zero","—","ok"],
-  ["2","Bypass do Premium é teste interno?","Não é. Fica como tarefa atribuída (W-01)","—","ok"],
-  ["3","Existe algum utilizador com Premium pago?","Decide se W-01 sai sozinho ou junto de W-11","Wilson","aberto"],
-  ["4","Cloud Run exige cartão registado","Mesmo sem cobrar nada","Wilson","aberto"],
+  ["1","Fornecedor de email transaccional","Recuperação de password, confirmação de doação e de feedback dependem disto","Wilson","aberto"],
+  ["2","Credenciais reais do Cloudflare R2","Sem isto, avatar e comprovativo de doação continuam desligados","Wilson","aberto"],
+  ["3","Docker Desktop não está a correr nesta máquina","A migração Alembic nunca foi validada contra Postgres real","Wilson","aberto"],
+  ["4","Conta e projecto GCloud para o Cloud Run","Exige cartão registado, mesmo sem cobrar nada","Wilson","aberto"],
   ["5","Consentimento parental para menores","Nunca abordado, nem no código nem nos documentos","Wilson + jurídico","aberto"],
-  ["6","Recuperar palavra-passe","Falha de configuração no Supabase, não de código","Wilson","aberto"],
-  ["7","Expiração do crédito Google Cloud","Anotar a data antes que surpreenda","Wilson","aberto"],
-  ["8","Parceiro clínico para validar o scanner","Bloqueia W-16. Sem ele não há produto clínico defensável","Wilson","aberto"]
+  ["6","Parceiro clínico para validar o scanner","Bloqueia qualquer motor de análise clinicamente defensável","Wilson","aberto"]
 ];
 
 const NAO_FAZER = [
-  ["Gateway de pagamento automático","Depende de contrato comercial. O ciclo manual do Sprint 2 chega"],
+  ["Gateway de pagamento automático","Depende de contrato comercial. O ciclo manual chega por agora"],
   ["Login com Google","Conveniência, não bloqueia ninguém"],
   ["Versão em inglês","O público é angolano"],
   ["Mapa de clínicas parceiras","Uma lista resolve, enquanto houver poucas clínicas"],
   ["Notificações push e modo offline","Custo alto, nenhum utilizador bloqueado hoje"],
-  ["Migrar as 37 chamadas de uma vez","Por domínio, não big bang. É assim que as reescritas morrem"]
+  ["CRUD de admin antes de existir verificação de papel na API","Construir por cima de uma fronteira de autorização que ainda não existe seria pior do que esperar"],
+  ["Fluxo financeiro de doações antes de resolver storage e email","Migrar só metade seria pior do que não tocar"],
+  ["Migrar os ~30 pontos de Supabase restantes de uma vez","Por módulo, não big bang — é assim que as reescritas morrem"]
 ];
 
 // Capturados ANTES de qualquer renderizacao: sao o molde autorado, nao estado vivo.
@@ -646,3 +650,5 @@ claude.use("artifact").then(a => {
   render();
 }).catch(() => {});
 </script>
+</body>
+</html>
