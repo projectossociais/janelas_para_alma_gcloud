@@ -62,7 +62,7 @@ const AdminOverview = () => {
         const key = d.toISOString().slice(0, 10);
         buckets[key] = { registos: 0, analises: 0, pedidos: 0 };
       }
-      const bump = (rows: any[], field: keyof (typeof buckets)[string]) => {
+      const bump = (rows: { created_at: string }[], field: keyof (typeof buckets)[string]) => {
         rows?.forEach((r) => {
           const k = r.created_at.slice(0, 10);
           if (buckets[k]) buckets[k][field]++;

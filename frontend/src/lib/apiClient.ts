@@ -163,3 +163,22 @@ export interface BannerPublico {
 export const bannersApi = {
   obterAtivo: () => pedido<BannerPublico | null>("/banners/ativo"),
 };
+
+export interface DoacaoPublica {
+  id: string;
+  recibo_id: string;
+  tipo: string;
+  email: string;
+  materiais: string[] | null;
+  detalhes: string | null;
+  status: string;
+  created_at: string;
+}
+
+export const doacoesApi = {
+  registarMateriais: (email: string, materiais: string[], detalhes?: string | null) =>
+    pedido<DoacaoPublica>("/doacoes/materiais", {
+      method: "POST",
+      body: JSON.stringify({ email, materiais, detalhes: detalhes || null }),
+    }),
+};

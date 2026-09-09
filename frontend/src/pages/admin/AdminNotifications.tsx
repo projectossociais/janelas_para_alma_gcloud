@@ -9,19 +9,31 @@ import { Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+type NotificationRow = {
+  id: string;
+  title: string;
+  body?: string | null;
+  target_role?: string | null;
+  created_at: string;
+};
+
 const AdminNotifications = () => {
   const [form, setForm] = useState({ title: "", body: "", link: "", target: "all" });
-  const [recent, setRecent] = useState<any[]>([]);
+  const [recent, setRecent] = useState<NotificationRow[]>([]);
 
   const load = async () => {
     const { data } = await supabase.from("notifications").select("*").order("created_at", { ascending: false }).limit(20);
-    setRecent(data ?? []);
+    setRecent((data ?? []) as unknown as NotificationRow[]);
   };
   useEffect(() => { load(); }, []);
 
   const send = async () => {
     if (!form.title) { toast.error("Título obrigatório."); return; }
-    const payload: any = { title: form.title, body: form.body, link: form.link || null };
+    const payload: { title: string; body: string; link: string | null; target_role?: string } = {
+      title: form.title,
+      body: form.body,
+      link: form.link || null,
+    };
     if (form.target !== "all") payload.target_role = form.target;
     const { error } = await supabase.from("notifications").insert(payload);
     if (error) toast.error(error.message);

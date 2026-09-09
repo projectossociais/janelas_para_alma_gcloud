@@ -42,9 +42,9 @@ const AdminAdmins = () => {
 
   const load = async () => {
     const { data: perms, error } = await supabase
-      .from("admin_permissions" as any)
+      .from("admin_permissions")
       .select("*")
-      .order("created_at" as any, { ascending: true });
+      .order("created_at", { ascending: true });
     if (error) { toast.error(error.message); return; }
     const list = (perms ?? []) as unknown as Row[];
     const ids = list.map((r) => r.user_id);
@@ -82,18 +82,18 @@ const AdminAdmins = () => {
       }
       const { error: rErr } = await supabase
         .from("user_roles")
-        .insert({ user_id: prof.id, role: "admin" as any });
+        .insert({ user_id: prof.id, role: "admin" });
       if (rErr && !String(rErr.message).includes("duplicate")) throw rErr;
       await supabase.from("profiles").update({ papel: "admin" }).eq("id", prof.id);
       const { error: pErr } = await supabase
-        .from("admin_permissions" as any)
+        .from("admin_permissions")
         .insert({ user_id: prof.id, is_super: false, can_overview: true });
       if (pErr && !String(pErr.message).includes("duplicate")) throw pErr;
       toast.success("Admin adicionado.");
       setEmail("");
       load();
-    } catch (e: any) {
-      toast.error(e.message);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro inesperado.");
     } finally {
       setBusy(false);
     }
@@ -103,7 +103,7 @@ const AdminAdmins = () => {
     if (!canManage) return;
     if (row.is_super) { toast.error("Super admin tem sempre todas as permissões."); return; }
     const { error } = await supabase
-      .from("admin_permissions" as any)
+      .from("admin_permissions")
       .update({ [key]: value })
       .eq("user_id", row.user_id);
     if (error) { toast.error(error.message); return; }
@@ -114,8 +114,8 @@ const AdminAdmins = () => {
     if (!canManage) return;
     if (row.is_super) { toast.error("Não é possível remover um super admin."); return; }
     if (!confirm(`Remover admin ${row.profile?.email ?? row.user_id}?`)) return;
-    await supabase.from("admin_permissions" as any).delete().eq("user_id", row.user_id);
-    await supabase.from("user_roles").delete().eq("user_id", row.user_id).eq("role", "admin" as any);
+    await supabase.from("admin_permissions").delete().eq("user_id", row.user_id);
+    await supabase.from("user_roles").delete().eq("user_id", row.user_id).eq("role", "admin");
     await supabase.from("profiles").update({ papel: "comum" }).eq("id", row.user_id);
     toast.success("Admin removido.");
     load();

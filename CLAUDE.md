@@ -326,7 +326,6 @@ Não imitar estes padrões enquanto a migração módulo-a-módulo decorre (ver 
 | `ClinicalPartners.tsx` | Formulário de agendamento não persiste nada — só mostra um toast |
 | `DashboardUser.tsx` | Parte dos números são valores fixos, não dados reais |
 | `Produto.tsx` | Catálogo de óculos é mock — sem carrinho nem checkout |
-| Lint do frontend | ~23 erros pré-existentes (`no-explicit-any`, principalmente em `pages/admin/*`) — não introduzidos por esta reescrita, mas por corrigir |
 
 ---
 

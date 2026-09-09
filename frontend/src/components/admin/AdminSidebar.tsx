@@ -39,7 +39,7 @@ const AdminSidebar = () => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { scope } = useAdminScope();
-  const items = allItems.filter((i) => !scope || scope.is_super || (scope as any)[i.scope]);
+  const items = allItems.filter((i) => !scope || scope.is_super || scope[i.scope]);
 
 
   const handleLogout = async () => {

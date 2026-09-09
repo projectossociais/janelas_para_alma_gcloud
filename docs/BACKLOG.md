@@ -207,6 +207,46 @@ verificação de papel/admin na API nova). Fica para um sprint de painel adminis
 
 ---
 
+## Sprint 5 — Doações: o fluxo com o pior bug do projecto (2026-09-09)
+
+O bug mais grave que este projecto já teve foi aqui: o fluxo antigo mostrava "Doação
+registada!" mesmo quando o `insert` falhava. Esta sprint constrói o serviço de doações
+com essa lição como regra estrutural, não como cuidado a lembrar.
+
+**Feito:**
+
+- [x] `POST /doacoes/materiais` — só o fluxo de materiais (o financeiro depende de upload
+  de ficheiro + email, infra ainda não decidida — ver abaixo). Recibo (`recibo_id`)
+  **gerado no servidor**, não confiado ao `Date.now()` do browser como estava antes.
+- [x] `DoacaoService.registar_doacao_materiais` **nunca apanha uma falha de gravação** —
+  o repository não tem `try/except` nenhum à volta do `commit()`; se falhar, a excepção
+  propaga até ao router (500) e o frontend nunca vê sucesso. Testado explicitamente:
+  `test_nunca_engole_uma_falha_de_gravacao` — o teste mais importante desta sprint.
+- [x] 6 testes de API (service + router, incluindo o cenário de falha ao nível HTTP:
+  nunca 201 quando o repository falha) — **60/60 testes `pytest`**, ruff limpo.
+- [x] `Apoiar.tsx` (fluxo de materiais) migrado para a API nova. Email de confirmação
+  fica pendente (dependia de uma Edge Function do Supabase) — mensagem nenhuma finge
+  que foi enviado.
+- [x] **`Apoiar.test.tsx` (novo)** — o mesmo teste-exemplo do CLAUDE.md secção 8, ao
+  nível do componente: "nunca mostra sucesso quando a API falha ao registar a doação".
+  2 testes — **23/23 testes vitest**, lint sem regressões.
+
+**Fora de âmbito, deliberadamente:** o fluxo financeiro (`handleConcluirDoacao`) não foi
+tocado — o comprovativo de transferência é enviado através da mesma Edge Function que
+manda o email, sem upload separado para storage nenhum. Migrar isto a sério precisa de
+resolver R2 (upload do ficheiro) e um fornecedor de email ao mesmo tempo; fazer só metade
+seria pior do que não tocar.
+
+**Nota sobre o ambiente:** ao correr `npm run lint`/`tsc` nesta sprint, reparei que vários
+ficheiros do painel de administração (`AdminAdmins.tsx`, `AdminSidebar.tsx`,
+`command.tsx`, `textarea.tsx`, `tailwind.config.ts`, etc.) tinham sido corrigidos
+automaticamente (remoção de `as any`, `require()` → `import`) — não fui eu que fiz essas
+edições deliberadamente; o ambiente parece ter ESLint fix-on-save activo. Confirmei que
+`npm run build` continua bem depois disso. Não é trabalho desta sprint, mas fica
+registado para não parecer um commit misterioso.
+
+---
+
 ## Como está organizado
 
 O trabalho está separado em **duas correntes que não se cruzam**, para os dois poderem

@@ -36,6 +36,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { doacoesApi, mensagemDeErroApi } from "@/lib/apiClient";
 import { DEFAULT_BANK_DATA, fileToBase64, ofuscarValor } from "@/lib/pagamento";
 
 type Mode = "materiais" | "financeiro";
@@ -196,57 +197,28 @@ const Apoiar = () => {
 
     if (mode === "materiais") {
       setSubmitting(true);
-      const reciboId = `JPA-${Date.now().toString(36).toUpperCase()}`;
       try {
-        // O registo na tabela `doacoes` é o que realmente conta como "doação
-        // recebida" -- se isto falhar, a UI de sucesso não pode avançar.
-        const { error: insertError } = await supabase.from("doacoes").insert([
-          {
-            recibo_id: reciboId,
-            tipo: "materiais",
-            email,
-            materiais: selectedMaterials,
-            detalhes: materialNotes.trim() || null,
-            status: "pendente",
-          },
-        ]);
-        if (insertError) throw insertError;
+        // O registo na API é o que realmente conta como "doação recebida"
+        // -- se isto falhar, a UI de sucesso não pode avançar. O recibo é
+        // gerado pelo servidor, não pelo browser (ver DoacaoService).
+        const doacao = await doacoesApi.registarMateriais(email, selectedMaterials, materialNotes.trim());
 
         setReceipt({
-          id: reciboId,
+          id: doacao.recibo_id,
           email,
           materials: [...selectedMaterials],
           notes: materialNotes,
         });
         setStep("recolha");
-        toast.success("Doação registada! Enviámos os detalhes por email.");
+        toast.success("Doação registada!");
         setSelectedMaterials([]);
         setMaterialNotes("");
-
-        // O email é uma confirmação, não o registo em si -- se a Edge
-        // Function falhar, a doação já está guardada, por isso só regista o
-        // aviso em vez de incomodar o doador com um erro depois de já ver o
-        // ecrã de sucesso.
-        try {
-          await supabase.functions.invoke("enviar-email-doacao", {
-            body: {
-              tipo: "materiais",
-              email,
-              recibo_id: reciboId,
-              materiais: selectedMaterials,
-              detalhes: materialNotes.trim() || undefined,
-            },
-          });
-        } catch (emailErr) {
-          console.warn("Doação registada, mas o email de confirmação falhou:", emailErr);
-        }
+        // Confirmação por email fica pendente de escolher um fornecedor de
+        // email para a infra nova (ver docs/BACKLOG.md) -- nada aqui finge
+        // que foi enviada.
       } catch (err) {
         console.error("Falha ao registar doação:", err);
-        toast.error(
-          err instanceof Error
-            ? err.message
-            : "Não foi possível registar a doação. Tente novamente.",
-        );
+        toast.error(mensagemDeErroApi(err, "Não foi possível registar a doação. Tente novamente."));
       } finally {
         setSubmitting(false);
       }

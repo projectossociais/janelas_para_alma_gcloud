@@ -31,7 +31,7 @@ export async function sendToEdgeFunction<T = unknown>(
     );
   }
 
-  let data: any = null;
+  let data: Record<string, unknown> | null = null;
   try {
     data = await res.json();
   } catch {

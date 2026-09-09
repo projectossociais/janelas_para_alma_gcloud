@@ -7,17 +7,40 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Check, Mail, Phone } from "lucide-react";
 
+type ContactRow = {
+  id: string;
+  name: string;
+  source: string;
+  status: string;
+  email?: string | null;
+  phone?: string | null;
+  subject?: string | null;
+  message: string;
+  created_at: string;
+};
+
+type PremiumRow = {
+  id: string;
+  name: string;
+  status: string;
+  email: string;
+  phone: string;
+  for_whom?: string | null;
+  diagnosis?: string | null;
+  created_at: string;
+};
+
 const AdminInbox = () => {
-  const [msgs, setMsgs] = useState<any[]>([]);
-  const [premium, setPremium] = useState<any[]>([]);
+  const [msgs, setMsgs] = useState<ContactRow[]>([]);
+  const [premium, setPremium] = useState<PremiumRow[]>([]);
 
   const load = async () => {
     const [m, p] = await Promise.all([
       supabase.from("contact_messages").select("*").order("created_at", { ascending: false }),
       supabase.from("premium_requests").select("*").order("created_at", { ascending: false }),
     ]);
-    setMsgs(m.data ?? []);
-    setPremium(p.data ?? []);
+    setMsgs((m.data ?? []) as unknown as ContactRow[]);
+    setPremium((p.data ?? []) as unknown as PremiumRow[]);
   };
   useEffect(() => { load(); }, []);
 

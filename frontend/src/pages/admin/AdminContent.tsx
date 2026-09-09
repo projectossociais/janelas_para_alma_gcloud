@@ -44,7 +44,8 @@ const AdminContent = () => {
   const load = async () => {
     const { data } = await supabase.from("site_content").select("*");
     const map: Record<string, Record<string, string>> = {};
-    (data ?? []).forEach((r: any) => { map[r.key] = r.value || {}; });
+    const rows = (data ?? []) as unknown as { key: string; value: Record<string, string> | null }[];
+    rows.forEach((r) => { map[r.key] = r.value || {}; });
     setValues(map);
   };
   useEffect(() => { load(); }, []);

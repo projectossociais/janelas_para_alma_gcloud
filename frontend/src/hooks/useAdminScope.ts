@@ -38,7 +38,7 @@ export function useAdminScope() {
         return;
       }
       const { data } = await supabase
-        .from("admin_permissions" as any)
+        .from("admin_permissions")
         .select("*")
         .eq("user_id", uid)
         .maybeSingle();

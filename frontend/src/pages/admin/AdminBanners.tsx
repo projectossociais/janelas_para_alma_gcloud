@@ -12,13 +12,21 @@ import { toast } from "sonner";
 
 const COLORS = ["teal", "navy", "gold", "green", "red"];
 
+type BannerRow = {
+  id: string;
+  title: string;
+  message: string;
+  color: string;
+  active: boolean;
+};
+
 const AdminBanners = () => {
-  const [rows, setRows] = useState<any[]>([]);
+  const [rows, setRows] = useState<BannerRow[]>([]);
   const [form, setForm] = useState({ title: "", message: "", link: "", color: "teal", active: true });
 
   const load = async () => {
     const { data } = await supabase.from("banners").select("*").order("created_at", { ascending: false });
-    setRows(data ?? []);
+    setRows((data ?? []) as unknown as BannerRow[]);
   };
   useEffect(() => { load(); }, []);
 
