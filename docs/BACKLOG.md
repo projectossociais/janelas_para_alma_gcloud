@@ -177,6 +177,36 @@ lado da API; falta só o teste de integração da página, se/quando fizer falta
 
 ---
 
+## Sprint 4 — Banners, e uma correcção de âmbito (2026-09-09)
+
+Antes de construir, investiguei os próximos candidatos óbvios (`pontos_recolha`,
+`contact_messages`, `site_content`) e descobri que **não são realmente consumidos**:
+`PontosRecolha.tsx` é conteúdo estático (nada a ver com a tabela do mesmo nome);
+`ContactSection.tsx` envia email por uma Edge Function, não grava em
+`contact_messages` — depende de escolher um fornecedor de email, decisão que não é
+minha para tomar às 2h da manhã; `site_content` só tem um CMS de admin, sem nenhum
+consumidor público. Ajustei o sprint para o que é real.
+
+**Feito:**
+
+- [x] `GET /banners/ativo` — leitura pública directa ao repository, sem `service`
+  (ver CLAUDE.md secção 3: ler conteúdo público não decide acesso, dinheiro nem
+  resultado clínico). 2 testes com `TestClient` — **53/53 testes `pytest`**, ruff limpo.
+- [x] **Corrigido um bug genuíno herdado do repositório antigo:** `SiteBanner.tsx`
+  lia `title`/`active`/`color`, colunas que nunca existiram na tabela real
+  (`titulo`/`mensagem`/`ativo`, sem `color`) — o banner nunca apareceu a um utilizador
+  real, mesmo com um banner activo na base de dados. Corrigido ao migrar para a API
+  nova, que devolve a forma real. Dois dos erros de tipo pré-existentes desaparecem
+  de vez (não só se movem) — **4 erros pré-existentes**, a descer de 8.
+- [x] 21/21 testes vitest, lint sem regressões, build ok.
+
+**Dívida identificada, não corrigida (fora de âmbito):** `AdminBanners.tsx` (criar/editar
+banners no painel de administração) tem o mesmo bug de nomes de campo, e continua no
+Supabase — precisa de CRUD autenticado por admin na API, que ainda não existe (não há
+verificação de papel/admin na API nova). Fica para um sprint de painel administrativo.
+
+---
+
 ## Como está organizado
 
 O trabalho está separado em **duas correntes que não se cruzam**, para os dois poderem

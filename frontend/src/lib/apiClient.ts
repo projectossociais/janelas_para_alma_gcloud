@@ -4,10 +4,10 @@
  * pedido leva `credentials: "include"`, e não há "access token" nenhum para
  * este módulo tocar.
  *
- * Ver CLAUDE.md secção 0 — autenticação e perfil já estão migrados. O resto
- * dos dados (sessões de exercício, scanner, doações, ...) continua a vir de
- * `src/integrations/supabase/client.ts` enquanto a migração módulo-a-módulo
- * não chega lá.
+ * Ver CLAUDE.md secção 0 — autenticação, perfil e banners já estão
+ * migrados. O resto dos dados (sessões de exercício, scanner, doações, ...)
+ * continua a vir de `src/integrations/supabase/client.ts` enquanto a
+ * migração módulo-a-módulo não chega lá.
  */
 
 const API_URL = import.meta.env.VITE_API_URL ?? "";
@@ -150,4 +150,16 @@ export const contaApi = {
 
   /** Nunca elimina na hora — agenda para daqui a 30 dias e termina a sessão. */
   eliminar: () => pedido<EliminacaoAgendada>("/conta/eliminar", { method: "POST" }),
+};
+
+export interface BannerPublico {
+  id: string;
+  titulo: string;
+  mensagem: string;
+  link: string | null;
+  created_at: string;
+}
+
+export const bannersApi = {
+  obterAtivo: () => pedido<BannerPublico | null>("/banners/ativo"),
 };

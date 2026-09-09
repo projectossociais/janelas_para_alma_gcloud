@@ -1,42 +1,23 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { bannersApi, type BannerPublico } from "@/lib/apiClient";
 import { X } from "lucide-react";
 import { Link } from "react-router-dom";
 
-interface Banner {
-  id: string;
-  title: string;
-  message: string;
-  link: string | null;
-  color: string;
-  active: boolean;
-}
-
-const colorMap: Record<string, string> = {
-  teal: "bg-teal text-teal-foreground",
-  navy: "bg-navy text-primary-foreground",
-  gold: "bg-gold text-navy",
-  green: "bg-green-600 text-white",
-  red: "bg-red-600 text-white",
-};
-
 const SiteBanner = () => {
-  const [banner, setBanner] = useState<Banner | null>(null);
+  const [banner, setBanner] = useState<BannerPublico | null>(null);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    supabase
-      .from("banners")
-      .select("*")
-      .eq("active", true)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle()
-      .then(({ data }) => {
+    bannersApi
+      .obterAtivo()
+      .then((data) => {
         if (data) {
           const stored = localStorage.getItem(`banner_dismissed_${data.id}`);
-          if (!stored) setBanner(data as Banner);
+          if (!stored) setBanner(data);
         }
+      })
+      .catch(() => {
+        // Sem banner é um estado normal — nunca deve quebrar o resto da página.
       });
   }, []);
 
@@ -47,17 +28,15 @@ const SiteBanner = () => {
     setDismissed(true);
   };
 
-  const cls = colorMap[banner.color] || colorMap.teal;
-
   const inner = (
     <div className="container flex items-center justify-center gap-2 py-2 px-4 text-sm text-center">
-      <span className="font-semibold">{banner.title}</span>
-      <span className="opacity-90">— {banner.message}</span>
+      <span className="font-semibold">{banner.titulo}</span>
+      <span className="opacity-90">— {banner.mensagem}</span>
     </div>
   );
 
   return (
-    <div className={`w-full ${cls} relative`}>
+    <div className="w-full bg-teal text-teal-foreground relative">
       {banner.link ? (
         <Link to={banner.link} className="block hover:underline">{inner}</Link>
       ) : inner}
