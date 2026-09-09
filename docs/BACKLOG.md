@@ -200,10 +200,10 @@ consumidor público. Ajustei o sprint para o que é real.
   de vez (não só se movem) — **4 erros pré-existentes**, a descer de 8.
 - [x] 21/21 testes vitest, lint sem regressões, build ok.
 
-**Dívida identificada, não corrigida (fora de âmbito):** `AdminBanners.tsx` (criar/editar
-banners no painel de administração) tem o mesmo bug de nomes de campo, e continua no
-Supabase — precisa de CRUD autenticado por admin na API, que ainda não existe (não há
-verificação de papel/admin na API nova). Fica para um sprint de painel administrativo.
+**Dívida identificada nesta sprint, resolvida a 2026-09-10** (ver "CRUD de banners de
+admin" mais abaixo): `AdminBanners.tsx` tinha o mesmo bug de nomes de campo
+(`title`/`message`/`active`/`color`) e continuava no Supabase — agora migrado para a
+API, protegido por `obter_utilizador_admin`.
 
 ---
 
@@ -286,7 +286,7 @@ item abaixo depende de uma decisão que não é minha para tomar sozinho:
 | Storage de ficheiros (avatares, comprovativos) | Credenciais reais do Cloudflare R2 |
 | Migração Alembic contra Postgres real | Docker Desktop a correr nesta máquina |
 | Deploy no Cloud Run | Conta GCloud, projecto, credenciais |
-| CRUD de admin (banners, notifications, site_content) | ~~Verificação de papel/admin na API~~ — já construída (`obter_utilizador_admin`, ver abaixo); falta o CRUD autenticado por admin em si |
+| CRUD de admin (notifications, site_content) | ~~Verificação de papel/admin na API~~ já construída (`obter_utilizador_admin`); ~~banners~~ feito a 2026-09-10 (ver abaixo). Falta `notifications`/`site_content` — mesmo padrão |
 | Fluxo financeiro de doações (upload de comprovativo) | Email + storage, os dois primeiros itens desta lista |
 | `sessoes_exercicio`, Scanner, Premium | Módulos maiores, cada um merece o mesmo tratamento cuidadoso — próximos sprints |
 
@@ -326,8 +326,33 @@ banners no painel — Sprint 4 abaixo, `W-11` Premium, decisão de candidaturas)
   (CLAUDE.md §6, "has_role numa só implementação").
 - 3 testes (`api/tests/test_dependencies_admin.py`): sem sessão → 401, papel comum →
   403, admin → 200. **70/70 `pytest`**, `ruff check app tests` limpo.
-- Ainda não há router de admin que a use — o primeiro consumidor real
-  (`AdminBanners` CRUD) herda esta garantia sem a reescrever.
+- Primeiro consumidor real: o CRUD de banners de admin, logo a seguir.
+
+### CRUD de banners de admin (2026-09-10 — mesma branch)
+
+Primeiro uso real de `obter_utilizador_admin`, e fecho da dívida da Sprint 4.
+
+- `api/app/routers/banners.py` ganha `GET /banners` (listar todos), `POST /banners`,
+  `PATCH /banners/{id}`, `DELETE /banners/{id}` — todos com
+  `dependencies=[Depends(obter_utilizador_admin)]`. Sem `service`: gerir conteúdo de
+  banner não decide acesso, dinheiro nem resultado clínico (CLAUDE.md §3); o router
+  fala directo com o repository, tal como a leitura pública já fazia.
+- `banners_repository.py`: `BannersRepository` (Protocol) cresce com `listar`, `criar`,
+  `atualizar` (via `BannerPatch`, `None` = "não mexer", como `PerfilPatch`) e `apagar`.
+  `BannerRegisto` ganha `ativo`.
+- `AdminBanners.tsx` migrado de `supabase.from("banners")` para `bannersApi` — e com
+  isso desaparece o bug de nomes de campo herdado (`title`/`message`/`active`/`color`
+  contra os reais `titulo`/`mensagem`/`ativo`, sem `color`). A coluna `color` nunca
+  existiu na tabela real; o seletor de cor foi removido, não inventada uma coluna.
+  Cada gravação verifica o erro antes de mostrar sucesso (CLAUDE.md §6).
+- Testes: 8 de router (`test_banners_router.py` reescrito — 401 sem sessão, 403 papel
+  comum, criar/listar/apagar como admin, `PATCH` desativa, 404 em id inexistente) +
+  2 de página (`AdminBanners.test.tsx` — nunca mostra sucesso quando a API falha).
+  **76/76 `pytest`**, **33/33 vitest**, ruff limpo, lint do frontend a zero erros,
+  `tsc --noEmit` e `npm run build` sem regressões.
+- Fora de âmbito: `AdminBanners.tsx` não tinha teste próprio antes; ganhou só o do
+  caminho do erro na criação. `notifications`/`site_content` seguem o mesmo padrão
+  quando fizerem falta.
 
 ---
 

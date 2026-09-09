@@ -164,8 +164,38 @@ export interface BannerPublico {
   created_at: string;
 }
 
+/** O banner como o painel de administração o vê — inclui `ativo`. */
+export interface BannerAdmin extends BannerPublico {
+  ativo: boolean;
+}
+
+export interface BannerCriarInput {
+  titulo: string;
+  mensagem: string;
+  link?: string | null;
+  ativo?: boolean;
+}
+
+export interface BannerAtualizarInput {
+  titulo?: string;
+  mensagem?: string;
+  link?: string | null;
+  ativo?: boolean;
+}
+
 export const bannersApi = {
   obterAtivo: () => pedido<BannerPublico | null>("/banners/ativo"),
+
+  /** Gestão — exige sessão com papel `admin` (a API devolve 403 caso contrário). */
+  listar: () => pedido<BannerAdmin[]>("/banners"),
+
+  criar: (dados: BannerCriarInput) =>
+    pedido<BannerAdmin>("/banners", { method: "POST", body: JSON.stringify(dados) }),
+
+  atualizar: (id: string, dados: BannerAtualizarInput) =>
+    pedido<BannerAdmin>(`/banners/${id}`, { method: "PATCH", body: JSON.stringify(dados) }),
+
+  remover: (id: string) => pedido<void>(`/banners/${id}`, { method: "DELETE" }),
 };
 
 export interface DoacaoPublica {
