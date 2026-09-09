@@ -121,6 +121,16 @@ activa; verificar e testar isso explicitamente.**
    `api/app/core/security.py`.
 3. **JWT: access token de vida curta, refresh token separado.** Nunca um token só, de vida
    longa, a fazer os dois papéis.
+3b. **A sessão viaja em cookies `httpOnly`, nunca no corpo JSON nem em `localStorage`.**
+   Decisão da Sprint 1, possível porque o NGINX já faz proxy de `/api/*` (frontend e API
+   partilham origem aos olhos do browser). Um token que o JavaScript nunca consegue ler
+   não pode ser roubado por XSS — relevante com público infantil. Ver
+   `api/app/routers/auth.py`.
+3c. **Um papel que o utilizador escolhe para si próprio (registo) é validado no schema
+   Pydantic contra uma lista fechada de papéis permitidos** (`PAPEIS_AUTO_REGISTAVEIS` em
+   `schemas/auth.py`) — nunca confiar que a interface (`<Select>`) é o único caminho para
+   chegar ao endpoint. Um pedido forjado a enviar `papel: "admin"` tem de ser rejeitado
+   pela API, não só escondido no formulário.
 4. **Nunca guardar fotografias do scanner a longo prazo.** Processar → extrair medições →
    descartar a imagem. São imagens faciais de crianças: não guardar é sempre mais
    defensável do que guardar bem.
@@ -169,6 +179,16 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   estava a escrever. Ver `EditarPerfil.tsx` e `Configuracoes.tsx`.
 
 - **Contextos, não hooks por componente**, para estado partilhado entre páginas e Navbar.
+
+### Testes (Vitest)
+
+- **`vi.mock` factories: nunca referenciar um `const`/`class` externo directamente** —
+  `vi.mock(...)` é hoisted para o topo do ficheiro, por isso qualquer binding declarado
+  fora dele ainda está em TDZ quando a factory corre. Funções: envolver em arrow function
+  (`getX: () => getX()`). Classes usadas para `instanceof` (ex.: uma classe de erro):
+  evitar `instanceof` através de um módulo mockado por completo — usar duck-typing (ex.:
+  verificar uma propriedade como `status`) no código de produção, para o teste nem
+  precisar de reconstruir a classe real. Ver `AuthContext.tsx`/`AuthContext.test.tsx`.
 
 ### Animação / exercícios
 

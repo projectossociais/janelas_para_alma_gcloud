@@ -11,7 +11,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from app.core.security import criar_refresh_token, hash_password
+from app.core.security import criar_access_token, criar_refresh_token, hash_password
 from app.repositories.utilizadores_repository import UtilizadorRegisto
 from app.services.auth_service import (
     AuthService,
@@ -34,12 +34,23 @@ class RepositorioFalso:
     def obter_por_id(self, utilizador_id: str) -> UtilizadorRegisto | None:
         return next((u for u in self._utilizadores.values() if u.id == utilizador_id), None)
 
-    def criar(self, email: str, password_hash: str) -> UtilizadorRegisto:
+    def criar(
+        self,
+        email: str,
+        password_hash: str,
+        papel: str = "comum",
+        nome: str | None = None,
+        provincia: str | None = None,
+        genero: str | None = None,
+    ) -> UtilizadorRegisto:
         registo = UtilizadorRegisto(
             id=f"id-{len(self._utilizadores) + 1}",
             email=email,
             password_hash=password_hash,
-            papel="comum",
+            papel=papel,
+            nome=nome,
+            provincia=provincia,
+            genero=genero,
             criado_em=datetime.now(UTC),
         )
         self._utilizadores[email] = registo
@@ -53,16 +64,39 @@ def service() -> AuthService:
 
 class TestRegistar:
     def test_regista_um_utilizador_novo(self, service: AuthService) -> None:
-        registo = service.registar("ana@example.com", "password-forte-123")
+        sessao = service.registar("ana@example.com", "password-forte-123")
 
-        assert registo.email == "ana@example.com"
-        assert registo.papel == "comum"
+        assert sessao.utilizador.email == "ana@example.com"
+        assert sessao.utilizador.papel == "comum"
+
+    def test_regista_com_os_dados_de_perfil_recolhidos_no_formulario(self, service: AuthService) -> None:
+        sessao = service.registar(
+            "ana@example.com",
+            "password-forte-123",
+            papel="estrabico",
+            nome="Ana Teste",
+            provincia="Luanda",
+            genero="feminino",
+        )
+
+        assert sessao.utilizador.nome == "Ana Teste"
+        assert sessao.utilizador.provincia == "Luanda"
+        assert sessao.utilizador.genero == "feminino"
+        assert sessao.utilizador.papel == "estrabico"
+
+    def test_registar_ja_devolve_uma_sessao_iniciada(self, service: AuthService) -> None:
+        # Registar é entrar — ninguém espera preencher o formulário de
+        # registo e depois ter de fazer login outra vez a seguir.
+        sessao = service.registar("ana@example.com", "password-forte-123")
+
+        assert sessao.tokens.access_token
+        assert sessao.tokens.refresh_token
 
     def test_nunca_guarda_a_password_em_texto_simples(self, service: AuthService) -> None:
-        registo = service.registar("ana@example.com", "password-forte-123")
+        sessao = service.registar("ana@example.com", "password-forte-123")
 
-        assert registo.password_hash != "password-forte-123"
-        assert registo.password_hash.startswith("$argon2")
+        assert sessao.utilizador.password_hash != "password-forte-123"
+        assert sessao.utilizador.password_hash.startswith("$argon2")
 
     def test_rejeita_email_duplicado(self, service: AuthService) -> None:
         service.registar("ana@example.com", "password-forte-123")
@@ -75,11 +109,12 @@ class TestAutenticar:
     def test_autentica_com_credenciais_certas(self, service: AuthService) -> None:
         service.registar("ana@example.com", "password-forte-123")
 
-        tokens = service.autenticar("ana@example.com", "password-forte-123")
+        sessao = service.autenticar("ana@example.com", "password-forte-123")
 
-        assert tokens.access_token
-        assert tokens.refresh_token
-        assert tokens.access_token != tokens.refresh_token
+        assert sessao.utilizador.email == "ana@example.com"
+        assert sessao.tokens.access_token
+        assert sessao.tokens.refresh_token
+        assert sessao.tokens.access_token != sessao.tokens.refresh_token
 
     def test_recusa_password_errada(self, service: AuthService) -> None:
         service.registar("ana@example.com", "password-forte-123")
@@ -113,8 +148,8 @@ class TestAutenticar:
 
 class TestRenovarAccessToken:
     def test_emite_novo_access_token_para_refresh_valido(self, service: AuthService) -> None:
-        registo = service.registar("ana@example.com", "password-forte-123")
-        refresh = criar_refresh_token(registo.id)
+        sessao = service.registar("ana@example.com", "password-forte-123")
+        refresh = criar_refresh_token(sessao.utilizador.id)
 
         novo_access_token = service.renovar_access_token(refresh)
 
@@ -135,13 +170,41 @@ class TestRenovarAccessToken:
     def test_rejeita_um_access_token_usado_como_refresh_token(self, service: AuthService) -> None:
         # Um access token não deve servir para pedir um access token novo —
         # confundir os dois tipos de token é uma escalada de privilégio.
-        from app.core.security import criar_access_token
-
-        registo = service.registar("ana@example.com", "password-forte-123")
-        access_token = criar_access_token(registo.id)
+        sessao = service.registar("ana@example.com", "password-forte-123")
+        access_token = criar_access_token(sessao.utilizador.id)
 
         with pytest.raises(RefreshTokenInvalidoError):
             service.renovar_access_token(access_token)
+
+
+class TestUtilizadorAPartirDoAccessToken:
+    """A dependency que protege qualquer rota autenticada (ver
+    routers/auth.py::obter_utilizador_atual) delega tudo nisto."""
+
+    def test_devolve_o_utilizador_para_um_access_token_valido(self, service: AuthService) -> None:
+        sessao = service.registar("ana@example.com", "password-forte-123")
+
+        utilizador = service.utilizador_a_partir_do_access_token(sessao.tokens.access_token)
+
+        assert utilizador.email == "ana@example.com"
+
+    def test_rejeita_um_token_invalido(self, service: AuthService) -> None:
+        with pytest.raises(CredenciaisInvalidasError):
+            service.utilizador_a_partir_do_access_token("isto-nao-e-um-jwt")
+
+    def test_rejeita_um_refresh_token_usado_como_access_token(self, service: AuthService) -> None:
+        # O inverso do teste em TestRenovarAccessToken — os dois tipos de
+        # token nunca podem servir um pelo outro, em nenhum dos sentidos.
+        sessao = service.registar("ana@example.com", "password-forte-123")
+
+        with pytest.raises(CredenciaisInvalidasError):
+            service.utilizador_a_partir_do_access_token(sessao.tokens.refresh_token)
+
+    def test_rejeita_token_de_utilizador_que_deixou_de_existir(self, service: AuthService) -> None:
+        token_de_ninguem = criar_access_token("id-fantasma")
+
+        with pytest.raises(CredenciaisInvalidasError):
+            service.utilizador_a_partir_do_access_token(token_de_ninguem)
 
 
 def test_hash_password_produz_hashes_diferentes_para_a_mesma_password() -> None:

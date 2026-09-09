@@ -17,21 +17,21 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useAuth, PROVINCES, UserRole, ROLE_LABEL } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 
 const Auth = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { signIn, registerUser } = useAuth();
 
-  // Where to return after auth (e.g. the MCP OAuth consent page). Same-origin relative paths only.
+  // Para onde voltar depois de autenticar (ex.: uma página que exigiu login
+  // primeiro, ver Scanner.tsx). Só caminhos relativos, nunca um URL externo.
   const rawNext = searchParams.get("next") ?? "";
   const nextPath = /^\/(?!\/)/.test(rawNext) ? rawNext : "/";
-  const afterAuthUrl = `${window.location.origin}${nextPath}`;
 
   // Login state
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
 
   // Register state
   const [name, setName] = useState("");
@@ -40,6 +40,9 @@ const Auth = () => {
   const [province, setProvince] = useState("");
   const [role, setRole] = useState<UserRole | "">("");
   const [gender, setGender] = useState("");
+  const [registerLoading, setRegisterLoading] = useState(false);
+
+  const irParaProximo = () => navigate(nextPath);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,96 +50,53 @@ const Auth = () => {
       toast.error("Preencha email e palavra-passe.");
       return;
     }
-    // Try Supabase auth (needed for admin / cloud features).
-    const { data: sbData, error: sbErr } = await supabase.auth.signInWithPassword({
-      email: loginEmail.trim(),
-      password: loginPassword,
-    });
-
-    // Local fallback (legacy accounts).
-    const local = signIn(loginEmail.trim(), loginPassword);
-
-    if (sbErr && !local.ok) {
-      toast.error("Email ou palavra-passe incorretos.");
-      return;
+    setLoginLoading(true);
+    try {
+      const resultado = await signIn(loginEmail.trim(), loginPassword);
+      if (!resultado.ok) {
+        toast.error(resultado.error || "Email ou palavra-passe incorretos.");
+        return;
+      }
+      toast.success("Sessão iniciada.");
+      irParaProximo();
+    } finally {
+      setLoginLoading(false);
     }
-
-    toast.success("Sessão iniciada.");
-    if (nextPath !== "/") {
-      window.location.href = afterAuthUrl;
-      return;
-    }
-    navigate("/");
   };
 
-
-  const handleForgotPassword = async () => {
-    const email = loginEmail.trim();
-    if (!email) {
-      toast.error("Introduza o seu email primeiro.");
-      return;
-    }
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/atualizar-password`,
-    });
-
-    if (error) {
-      toast.error(error.message || "Não foi possível enviar o email de recuperação.");
-      return;
-    }
-    toast.success("Enviámos um link de recuperação para o seu email.");
+  const handleForgotPassword = () => {
+    // A recuperação de password dependia do envio de email pelo Supabase
+    // Auth — infraestrutura que este projecto deixou de usar (ver CLAUDE.md
+    // secção 0). A API própria ainda não tem um fornecedor de email
+    // configurado para isto. Mensagem honesta em vez de fingir que funciona.
+    toast.info("A recuperação de password ainda não está disponível nesta infraestrutura nova. Contacte o suporte.");
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email || !password || !province || !gender || !role) {
       toast.error("Por favor, preencha todos os campos.");
       return;
     }
-    const res = registerUser({
-      name: name.trim(),
-      email: email.trim(),
-      password,
-      province,
-      gender,
-      role: role as UserRole,
-    });
-    if (!res.ok) {
-      toast.error(res.error || "Não foi possível criar a conta.");
-      return;
-    }
-    // Optimistic UI: show success immediately, then sync to Lovable Cloud in the background.
-    toast.success(`Bem-vindo(a), ${name.split(" ")[0]}!`);
-    if (nextPath !== "/") {
-      window.location.href = afterAuthUrl;
-    } else {
-      navigate("/");
-    }
-
-    // Background: persist to backend (profiles table auto-populated via trigger).
-    void (async () => {
-      try {
-        const redirectUrl = afterAuthUrl;
-        const { error } = await supabase.auth.signUp({
-          email: email.trim(),
-          password,
-          options: {
-            emailRedirectTo: redirectUrl,
-            data: {
-              name: name.trim(),
-              province,
-              gender,
-              role,
-            },
-          },
-        });
-        if (error && !/already/i.test(error.message)) {
-          console.warn("[signup] backend sync warning:", error.message);
-        }
-      } catch (err) {
-        console.warn("[signup] backend sync failed", err);
+    setRegisterLoading(true);
+    try {
+      const resultado = await registerUser({
+        name: name.trim(),
+        email: email.trim(),
+        password,
+        province,
+        gender,
+        role: role as UserRole,
+      });
+      if (!resultado.ok) {
+        toast.error(resultado.error || "Não foi possível criar a conta.");
+        return;
       }
-    })();
+      toast.success(`Bem-vindo(a), ${name.trim().split(" ")[0]}!`);
+      irParaProximo();
+    } finally {
+      setRegisterLoading(false);
+    }
   };
 
 
@@ -185,8 +145,12 @@ const Auth = () => {
                       Esqueceu a palavra-passe?
                     </button>
                   </div>
-                  <Button type="submit" size="lg" className="w-full">
-                    Entrar <ArrowRight className="w-4 h-4 ml-2" />
+                  <Button type="submit" size="lg" className="w-full" disabled={loginLoading}>
+                    {loginLoading ? "A entrar…" : (
+                      <>
+                        Entrar <ArrowRight className="w-4 h-4 ml-2" />
+                      </>
+                    )}
                   </Button>
                 </form>
               </TabsContent>
@@ -263,8 +227,12 @@ const Auth = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <Button type="submit" size="lg" className="w-full">
-                    Criar Conta <ArrowRight className="w-4 h-4 ml-2" />
+                  <Button type="submit" size="lg" className="w-full" disabled={registerLoading}>
+                    {registerLoading ? "A criar conta…" : (
+                      <>
+                        Criar Conta <ArrowRight className="w-4 h-4 ml-2" />
+                      </>
+                    )}
                   </Button>
                 </form>
               </TabsContent>

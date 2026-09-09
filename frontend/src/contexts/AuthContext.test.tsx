@@ -1,129 +1,177 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, waitFor, act } from "@testing-library/react";
+import { renderHook, waitFor, act } from "@testing-library/react";
 
-// --- mocks: controlamos manualmente o "evento" de login do Supabase ---
-// Nota: o import de AuthContext tem de vir DEPOIS destes mocks (mais abaixo
-// neste ficheiro) — o Vitest executa os módulos por ordem de aparição no
-// ficheiro, não pela ordem "ESM pura"; um import no topo executaria o
-// AuthContext.tsx (e a sua própria importação do cliente Supabase) antes
-// destas consts existirem.
+// --- mocks: controlamos as respostas da API sem tocar em fetch nenhum ---
+// O import de AuthContext vem DEPOIS do vi.mock (mais abaixo neste
+// ficheiro) — ver a nota equivalente em Configuracoes.test.tsx sobre a
+// ordem de execução dos módulos no Vitest.
 
-const getSession = vi.fn();
-let authStateCallback: ((event: string, session: unknown) => void) | null = null;
-const onAuthStateChange = vi.fn((cb: (event: string, session: unknown) => void) => {
-  authStateCallback = cb;
-  return { data: { subscription: { unsubscribe: () => {} } } };
-});
+const eu = vi.fn();
+const entrar = vi.fn();
+const registar = vi.fn();
+const sair = vi.fn();
 
-const profilesSelectEqMaybeSingle = vi.fn();
-const profilesUpdateEq = vi.fn();
-const toastSuccess = vi.fn();
-
-vi.mock("sonner", () => ({
-  toast: { success: (...a: unknown[]) => toastSuccess(...a), error: vi.fn() },
-}));
-
-vi.mock("@/integrations/supabase/client", () => ({
-  supabase: {
-    auth: {
-      // Referenciar como funções-seta (não a forma abreviada { getSession })
-      // é o que importa aqui: a forma abreviada avalia a variável já na
-      // construção do objecto (quando a factory corre), não quando a função
-      // é chamada — e nessa altura ainda estamos em TDZ.
-      getSession: () => getSession(),
-      onAuthStateChange: (cb: (event: string, session: unknown) => void) => onAuthStateChange(cb),
-    },
-    from: (table: string) => {
-      if (table !== "profiles") return { select: () => ({ eq: async () => ({ data: [], error: null }) }) };
-      return {
-        select: () => ({
-          eq: () => ({ maybeSingle: async () => profilesSelectEqMaybeSingle() }),
-        }),
-        update: (payload: unknown) => ({
-          eq: async () => profilesUpdateEq(payload),
-        }),
-      };
-    },
+vi.mock("@/lib/apiClient", () => ({
+  authApi: {
+    eu: () => eu(),
+    entrar: (email: string, password: string) => entrar(email, password),
+    registar: (dados: unknown) => registar(dados),
+    sair: () => sair(),
   },
 }));
 
-import { AuthProvider } from "./AuthContext";
+import { AuthProvider, useAuth } from "./AuthContext";
 
-const SESSION_COM_LOGIN = {
-  user: { id: "user-1", email: "ana@example.com", user_metadata: {} },
+// AuthContext.tsx distingue "a API respondeu com uma mensagem específica" de
+// "algo mais correu mal" por duck-typing (propriedade `status`), não por
+// `instanceof ApiError` — não há nenhuma classe real para construir aqui.
+const erroApi = (status: number, message: string) => Object.assign(new Error(message), { status });
+
+const UTILIZADOR_API = {
+  id: "user-1",
+  email: "ana@example.com",
+  papel: "comum",
+  nome: "Ana Teste",
+  provincia: "Luanda",
+  genero: "feminino",
+  criado_em: "2026-01-01T00:00:00.000Z",
 };
 
-describe("AuthContext — cancela eliminação agendada ao voltar a entrar", () => {
+function renderAuth() {
+  return renderHook(() => useAuth(), { wrapper: AuthProvider });
+}
+
+describe("AuthContext", () => {
   beforeEach(() => {
-    getSession.mockReset();
-    getSession.mockResolvedValue({ data: { session: null } });
-    profilesSelectEqMaybeSingle.mockReset();
-    profilesUpdateEq.mockReset();
-    profilesUpdateEq.mockResolvedValue({ error: null });
-    toastSuccess.mockReset();
-    authStateCallback = null;
+    eu.mockReset();
+    entrar.mockReset();
+    registar.mockReset();
+    sair.mockReset();
+    sair.mockResolvedValue(undefined);
   });
 
-  it("cancela e avisa quando a conta tinha uma eliminação agendada", async () => {
-    profilesSelectEqMaybeSingle.mockResolvedValue({
-      data: { eliminar_agendado_para: "2026-12-01T00:00:00.000Z" },
-      error: null,
-    });
+  it("começa com loading=true e sem utilizador", () => {
+    eu.mockReturnValue(new Promise(() => {})); // nunca resolve neste teste
+    const { result } = renderAuth();
 
-    render(
-      <AuthProvider>
-        <div />
-      </AuthProvider>
-    );
-
-    await waitFor(() => expect(authStateCallback).not.toBeNull());
-    await act(async () => { authStateCallback!("SIGNED_IN", SESSION_COM_LOGIN); });
-
-    await waitFor(() =>
-      expect(profilesUpdateEq).toHaveBeenCalledWith({ eliminar_agendado_para: null })
-    );
-    expect(toastSuccess).toHaveBeenCalledWith(
-      "A eliminação da sua conta foi cancelada. Bem-vindo de volta."
-    );
+    expect(result.current.loading).toBe(true);
+    expect(result.current.isLoggedIn).toBe(false);
   });
 
-  it("não faz nada (nem toast) quando não há eliminação agendada", async () => {
-    profilesSelectEqMaybeSingle.mockResolvedValue({
-      data: { eliminar_agendado_para: null },
-      error: null,
-    });
+  it("recupera a sessão existente ao abrir a app, via /auth/eu", async () => {
+    eu.mockResolvedValue(UTILIZADOR_API);
+    const { result } = renderAuth();
 
-    render(
-      <AuthProvider>
-        <div />
-      </AuthProvider>
-    );
+    await waitFor(() => expect(result.current.loading).toBe(false));
 
-    await waitFor(() => expect(authStateCallback).not.toBeNull());
-    await act(async () => { authStateCallback!("SIGNED_IN", SESSION_COM_LOGIN); });
-
-    // dá tempo à promise correr, sem haver nada para esperar por "toHaveBeenCalled"
-    await new Promise((r) => setTimeout(r, 20));
-    expect(profilesUpdateEq).not.toHaveBeenCalled();
-    expect(toastSuccess).not.toHaveBeenCalled();
+    expect(result.current.isLoggedIn).toBe(true);
+    expect(result.current.user?.email).toBe("ana@example.com");
+    expect(result.current.user?.name).toBe("Ana Teste");
   });
 
-  it("nunca impede o login de continuar se a consulta ao perfil falhar", async () => {
-    profilesSelectEqMaybeSingle.mockResolvedValue({ data: null, error: { message: "boom" } });
+  it("sem sessão (/auth/eu falha), fica por não-autenticado — nunca lança", async () => {
+    eu.mockRejectedValue(erroApi(401, "sem sessão"));
+    const { result } = renderAuth();
 
-    render(
-      <AuthProvider>
-        <div />
-      </AuthProvider>
-    );
+    await waitFor(() => expect(result.current.loading).toBe(false));
 
-    await waitFor(() => expect(authStateCallback).not.toBeNull());
-    // não deve lançar nem rejeitar de forma não apanhada
+    expect(result.current.isLoggedIn).toBe(false);
+    expect(result.current.user).toBeNull();
+  });
+
+  it("signIn com credenciais certas autentica o utilizador", async () => {
+    eu.mockRejectedValue(erroApi(401, "sem sessão"));
+    entrar.mockResolvedValue(UTILIZADOR_API);
+    const { result } = renderAuth();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    let resultado: { ok: boolean; error?: string } | undefined;
     await act(async () => {
-      expect(() => authStateCallback!("SIGNED_IN", SESSION_COM_LOGIN)).not.toThrow();
+      resultado = await result.current.signIn("ana@example.com", "password-forte-123");
     });
 
-    await new Promise((r) => setTimeout(r, 20));
-    expect(profilesUpdateEq).not.toHaveBeenCalled();
+    expect(resultado).toEqual({ ok: true });
+    expect(result.current.isLoggedIn).toBe(true);
+  });
+
+  it("signIn com credenciais erradas devolve o erro e nunca autentica", async () => {
+    eu.mockRejectedValue(erroApi(401, "sem sessão"));
+    entrar.mockRejectedValue(erroApi(401, "email ou password incorretos"));
+    const { result } = renderAuth();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    let resultado: { ok: boolean; error?: string } | undefined;
+    await act(async () => {
+      resultado = await result.current.signIn("ana@example.com", "errada");
+    });
+
+    expect(resultado).toEqual({ ok: false, error: "email ou password incorretos" });
+    expect(result.current.isLoggedIn).toBe(false);
+  });
+
+  it("registerUser cria conta e já entra com a sessão devolvida", async () => {
+    eu.mockRejectedValue(erroApi(401, "sem sessão"));
+    registar.mockResolvedValue(UTILIZADOR_API);
+    const { result } = renderAuth();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    let resultado: { ok: boolean; error?: string } | undefined;
+    await act(async () => {
+      resultado = await result.current.registerUser({
+        name: "Ana Teste",
+        email: "ana@example.com",
+        password: "password-forte-123",
+        province: "Luanda",
+        gender: "feminino",
+        role: "comum",
+      });
+    });
+
+    expect(resultado).toEqual({ ok: true });
+    expect(result.current.isLoggedIn).toBe(true);
+    expect(registar).toHaveBeenCalledWith({
+      email: "ana@example.com",
+      password: "password-forte-123",
+      nome: "Ana Teste",
+      provincia: "Luanda",
+      genero: "feminino",
+      papel: "comum",
+    });
+  });
+
+  it("registerUser com email já registado devolve o erro sem autenticar", async () => {
+    eu.mockRejectedValue(erroApi(401, "sem sessão"));
+    registar.mockRejectedValue(erroApi(409, "o email já está registado"));
+    const { result } = renderAuth();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    let resultado: { ok: boolean; error?: string } | undefined;
+    await act(async () => {
+      resultado = await result.current.registerUser({
+        name: "Ana Teste",
+        email: "ana@example.com",
+        password: "password-forte-123",
+        province: "Luanda",
+        gender: "feminino",
+        role: "comum",
+      });
+    });
+
+    expect(resultado).toEqual({ ok: false, error: "o email já está registado" });
+    expect(result.current.isLoggedIn).toBe(false);
+  });
+
+  it("logout limpa o utilizador localmente mesmo que o pedido à API falhe", async () => {
+    eu.mockResolvedValue(UTILIZADOR_API);
+    sair.mockRejectedValue(new Error("rede em baixo"));
+    const { result } = renderAuth();
+    await waitFor(() => expect(result.current.isLoggedIn).toBe(true));
+
+    act(() => {
+      result.current.logout();
+    });
+
+    expect(result.current.isLoggedIn).toBe(false);
+    expect(result.current.user).toBeNull();
   });
 });

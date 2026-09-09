@@ -44,18 +44,63 @@ Run. Sem importação de dados de utilizadores; a base de dados nasce vazia, só
 1. **Correr a migração Alembic contra um Postgres real** (`docker compose up -d db &&
    alembic upgrade head`) e confirmar com `alembic check` — foi escrita à mão porque o
    Docker Desktop não estava disponível no momento; validada só offline (`--sql`) até aqui.
-2. **Migração módulo-a-módulo do frontend**, Supabase → API própria. Ordem sugerida, do
-   mais isolado ao mais entrelaçado: autenticação (`AuthContext.tsx`, `Auth.tsx`) primeiro
-   — sem sessão não há nada para testar a sério a seguir — depois perfil
-   (`Configuracoes.tsx`, `EditarPerfil.tsx`), depois os fluxos de negócio (doações,
-   Premium, scanner).
-3. **Storage:** endpoint na API para emitir URLs assinadas do Cloudflare R2 (avatares) —
+   Continua bloqueado — Docker Desktop ainda não está a correr nesta máquina.
+2. **Storage:** endpoint na API para emitir URLs assinadas do Cloudflare R2 (avatares) —
    ainda não construído.
-4. **Deploy no Cloud Run** — build das imagens, Cloud SQL, variáveis de ambiente de
+3. **Deploy no Cloud Run** — build das imagens, Cloud SQL, variáveis de ambiente de
    produção, domínio.
 
 O que se segue abaixo desta secção é o backlog de produto herdado do repositório antigo —
 continua válido *depois* de a API existir para o suportar.
+
+---
+
+## Sprint 1 — Autenticação de ponta a ponta (2026-09-09)
+
+**Feito:**
+
+- [x] Sessão por **cookie `httpOnly`**, não token em `localStorage` — decisão nova,
+  possível porque o NGINX já faz proxy de `/api/*` (frontend e API partilham origem aos
+  olhos do browser). Um XSS já não consegue roubar a sessão lendo `localStorage`.
+- [x] `api/app/routers/auth.py`: `/auth/registar`, `/auth/entrar`, `/auth/eu`,
+  `/auth/sair`, `/auth/atualizar-token` — 28 testes `pytest` (12 do service + 16 novos:
+  8 de service para o registo com perfil, 8 de router com `TestClient` cobrindo cookies,
+  401/409/422 e a dependency `obter_utilizador_atual` que protege rotas).
+- [x] Registo recolhe nome/província/género/papel (o formulário já os pedia) —
+  `papel` validado no schema Pydantic contra uma lista de papéis auto-registáveis
+  (`comum`, `estrabico`, `profissional`); "admin" enviado directamente à API é
+  rejeitado com 422, não só escondido no `<Select>` do formulário.
+- [x] `frontend/src/lib/apiClient.ts` (novo) — cliente fino, `credentials: "include"`
+  sempre, sem tocar em tokens.
+- [x] `AuthContext.tsx` reescrito por completo: sai o Supabase Auth **e** o sistema de
+  autenticação paralelo em `localStorage` que coexistia com ele (dívida já identificada
+  antes desta reescrita) — fica um único caminho de autenticação. 8 testes novos.
+- [x] `Auth.tsx` reescrito: um único fluxo real (antes tentava Supabase e o fallback
+  local ao mesmo tempo, aceitando qualquer um dos dois). "Esqueceu a password" mostra
+  agora uma mensagem honesta de indisponível, em vez de chamar um Supabase Auth que as
+  contas novas nunca vão ter (nenhuma conta nova existe lá) — recuperação de password
+  fica pendente de uma decisão de fornecedor de email.
+- [x] `tsc --noEmit` corrido explicitamente (não fazia parte do gate antes) — confirmado
+  que os 8 erros de tipos que aparecem são **pré-existentes**, idênticos byte-a-byte aos
+  do repositório antigo, não introduzidos por este trabalho.
+
+**Gap conhecido, importante:** autenticar pela API nova **não torna o resto da app
+funcional**. `ProfileContext.tsx`, `DashboardUser.tsx`, `Scanner.tsx` e outros continuam
+a chamar `supabase.auth.getSession()` directamente para saber quem é o utilizador actual,
+independentemente do `AuthContext`. Uma conta criada pela API nova não existe no Supabase,
+por isso essas páginas vão continuar a comportar-se como "sem sessão" até serem migradas.
+Isto não é um bug desta sprint — é o próximo passo.
+
+**Por fazer, nesta ordem:**
+
+1. **`ProfileContext.tsx`** — precisa de um `perfil_service`/router na API (a tabela
+   `utilizadores` já tem todos os campos; falta expor CRUD deles) antes de poder deixar
+   de depender da sessão Supabase.
+2. **`Configuracoes.tsx`** (mudar password, eliminar conta) — migrar para a API nova,
+   reaproveitando o desenho dos 30 dias de carência já feito no repositório antigo.
+3. **`Scanner.tsx`**, doações, Premium — o resto dos ~37 pontos de chamada directa ao
+   Supabase, módulo a módulo.
+4. Storage (R2) e deploy no Cloud Run — como já estava no Sprint 0.
 
 ---
 
