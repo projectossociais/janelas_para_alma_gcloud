@@ -1,0 +1,43 @@
+# Serve o build estático do frontend (SPA — qualquer rota desconhecida cai
+# em index.html, o React Router é que decide) e reencaminha /api/ para o
+# serviço da API.
+#
+# `.template` + directório `templates/`: a imagem oficial do NGINX substitui
+# `${API_URL}` por uma variável de ambiente REAL do container no arranque
+# (envsubst), antes de gerar o /etc/nginx/conf.d/default.conf definitivo.
+# Isto existe porque o URL da API só se conhece depois do PRIMEIRO deploy —
+# não pode estar escrito à mão no ficheiro (ver infra/docker/frontend.Dockerfile
+# e infra/gcloud/04-deploy.sh). As outras variáveis com `$` aqui ($host,
+# $remote_addr, $scheme, $uri) são do NGINX, não do sistema — o envsubst da
+# imagem oficial só troca nomes que existam mesmo como variável de ambiente,
+# por isso não lhes toca.
+#
+# Em desenvolvimento (docker-compose), API_URL=http://api:8000 (nome do
+# serviço na rede do compose). Em produção (Cloud Run), API_URL é o URL
+# público do serviço da API, definido no deploy.
+
+server {
+    listen 80;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    location /api/ {
+        proxy_pass ${API_URL}/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location / {
+        try_files $uri /index.html;
+    }
+
+    # Ficheiros com hash no nome (Vite) podem ser cacheados de forma agressiva.
+    location ~* \.(?:js|css|woff2?|png|jpg|jpeg|svg|ico)$ {
+        try_files $uri =404;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+}

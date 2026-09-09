@@ -84,6 +84,15 @@ desenvolvimento do dia-a-dia do frontend, continua a fazer mais sentido `npm run
 dentro de `frontend/` — mais rápido, com hot reload real. Docker garante que "funciona na
 minha máquina" bate certo com o Cloud Run, não substitui o ciclo rápido de edição.
 
+O container do frontend serve o build estático com NGINX a partir de
+`infra/nginx/default.conf.template`: a imagem oficial do NGINX corre `envsubst` no
+arranque e substitui `${API_URL}` (o alvo do proxy `/api/`) por uma variável de ambiente
+**de run-time** — no compose é `http://api:8000`, em produção é o URL público do serviço
+da API, só conhecido depois do primeiro deploy. Não confundir com `VITE_API_URL`, que é
+build-time e é o que o browser usa hoje para falar com a API (cross-origin, via CORS).
+Migrar o frontend para chamar `/api/*` na mesma origem (e então apertar o CORS) é
+trabalho à parte — ver `docs/BACKLOG.md`.
+
 ---
 
 ## 3. Regra de ouro: onde vive cada lógica

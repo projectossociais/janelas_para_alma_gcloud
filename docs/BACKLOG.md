@@ -290,6 +290,23 @@ item abaixo depende de uma decisão que não é minha para tomar sozinho:
 | Fluxo financeiro de doações (upload de comprovativo) | Email + storage, os dois primeiros itens desta lista |
 | `sessoes_exercicio`, Scanner, Premium | Módulos maiores, cada um merece o mesmo tratamento cuidadoso — próximos sprints |
 
+### Infra do NGINX — alvo do proxy parametrizado (2026-09-09)
+
+O `infra/nginx/nginx.conf` (com `proxy_pass http://api:8000/` fixo) deu lugar a
+`infra/nginx/default.conf.template`: a imagem oficial do NGINX corre `envsubst` no
+arranque e injecta `${API_URL}` de uma variável de **run-time** — o URL da API só se
+conhece depois do primeiro deploy no Cloud Run. `frontend.Dockerfile` copia agora o
+`.template` para `/etc/nginx/templates/`; `docker-compose.yml` passa `API_URL=http://api:8000`
+ao serviço `frontend`.
+
+**Ainda por fazer (não é esta mudança):** o browser continua a falar com a API
+**cross-origin** via `VITE_API_URL` (build-time) + CORS — o bloco `location /api/` do
+NGINX está pronto mas ninguém o usa. Migrar o frontend para chamar `/api/*` na mesma
+origem exige: trocar o default de `API_URL` em `apiClient.ts` (`?? ""` → `?? "/api"`),
+um proxy de dev em `vite.config.ts` (para `npm run dev` sem Docker), e então restringir
+`allow_origins` em `api/app/main.py`. Toca a auth/cookies (§3b) e infra — pacote próprio,
+com revisão humana.
+
 Estado do gate em todos os 6 sprints: API sempre 100% verde (64/64 no fim), frontend
 sempre 100% verde (26/26 no fim), lint da API sempre limpo, lint do frontend a chegar a
 zero erros, `tsc --noEmit` só com dívida pré-existente documentada e a diminuir (8 → 6
