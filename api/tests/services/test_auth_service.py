@@ -39,7 +39,7 @@ class RepositorioFalso:
         email: str,
         password_hash: str,
         papel: str = "comum",
-        nome: str | None = None,
+        nome_completo: str | None = None,
         provincia: str | None = None,
         genero: str | None = None,
     ) -> UtilizadorRegisto:
@@ -48,7 +48,7 @@ class RepositorioFalso:
             email=email,
             password_hash=password_hash,
             papel=papel,
-            nome=nome,
+            nome_completo=nome_completo,
             provincia=provincia,
             genero=genero,
             criado_em=datetime.now(UTC),
@@ -74,12 +74,12 @@ class TestRegistar:
             "ana@example.com",
             "password-forte-123",
             papel="estrabico",
-            nome="Ana Teste",
+            nome_completo="Ana Teste",
             provincia="Luanda",
             genero="feminino",
         )
 
-        assert sessao.utilizador.nome == "Ana Teste"
+        assert sessao.utilizador.nome_completo == "Ana Teste"
         assert sessao.utilizador.provincia == "Luanda"
         assert sessao.utilizador.genero == "feminino"
         assert sessao.utilizador.papel == "estrabico"

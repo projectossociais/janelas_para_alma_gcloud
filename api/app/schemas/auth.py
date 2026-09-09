@@ -18,7 +18,7 @@ PAPEIS_AUTO_REGISTAVEIS = {"comum", "estrabico", "profissional"}
 class UtilizadorCriar(BaseModel):
     email: EmailStr
     password: str
-    nome: str | None = None
+    nome_completo: str | None = None
     provincia: str | None = None
     genero: str | None = None
     papel: str = "comum"
@@ -47,7 +47,7 @@ class UtilizadorPublico(BaseModel):
     id: str
     email: str
     papel: str
-    nome: str | None = None
+    nome_completo: str | None = None
     provincia: str | None = None
     genero: str | None = None
     criado_em: datetime

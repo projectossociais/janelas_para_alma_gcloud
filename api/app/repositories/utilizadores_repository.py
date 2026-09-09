@@ -29,7 +29,7 @@ class UtilizadorRegisto:
     email: str
     password_hash: str
     papel: str
-    nome: str | None
+    nome_completo: str | None
     provincia: str | None
     genero: str | None
     criado_em: datetime
@@ -45,7 +45,7 @@ class UtilizadoresRepository(Protocol):
         email: str,
         password_hash: str,
         papel: str = "comum",
-        nome: str | None = None,
+        nome_completo: str | None = None,
         provincia: str | None = None,
         genero: str | None = None,
     ) -> UtilizadorRegisto: ...
@@ -64,7 +64,7 @@ class SQLAlchemyUtilizadoresRepository:
             email=row.email,
             password_hash=row.password_hash,
             papel=row.papel.value,
-            nome=row.nome,
+            nome_completo=row.nome_completo,
             provincia=row.provincia,
             genero=row.genero,
             criado_em=row.created_at,
@@ -83,7 +83,7 @@ class SQLAlchemyUtilizadoresRepository:
         email: str,
         password_hash: str,
         papel: str = "comum",
-        nome: str | None = None,
+        nome_completo: str | None = None,
         provincia: str | None = None,
         genero: str | None = None,
     ) -> UtilizadorRegisto:
@@ -91,7 +91,7 @@ class SQLAlchemyUtilizadoresRepository:
             email=email,
             password_hash=password_hash,
             papel=AppRole(papel),
-            nome=nome,
+            nome_completo=nome_completo,
             provincia=provincia,
             genero=genero,
         )

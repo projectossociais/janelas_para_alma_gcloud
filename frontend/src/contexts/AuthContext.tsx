@@ -49,7 +49,7 @@ interface AuthContextValue {
 
 const paraAuthUser = (u: UtilizadorPublico): AuthUser => ({
   id: u.id,
-  name: u.nome ?? u.email.split("@")[0],
+  name: u.nome_completo ?? u.email.split("@")[0],
   email: u.email,
   province: u.provincia ?? "",
   role: (u.papel as UserRole) || "comum",
@@ -93,7 +93,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const utilizador = await authApi.registar({
         email: input.email,
         password: input.password,
-        nome: input.name,
+        nome_completo: input.name,
         provincia: input.province,
         genero: input.gender,
         papel: input.role,

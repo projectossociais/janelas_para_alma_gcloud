@@ -8,14 +8,10 @@ nunca no corpo JSON — ver nota em app/schemas/auth.py.
 """
 
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
-from sqlalchemy.orm import Session
 
 from app.core.config import obter_settings
-from app.db import obter_sessao
-from app.repositories.utilizadores_repository import (
-    SQLAlchemyUtilizadoresRepository,
-    UtilizadorRegisto,
-)
+from app.core.dependencies import obter_auth_service, obter_utilizador_atual
+from app.repositories.utilizadores_repository import UtilizadorRegisto
 from app.schemas.auth import UtilizadorCriar, UtilizadorLogin, UtilizadorPublico
 from app.services.auth_service import (
     AuthService,
@@ -29,10 +25,6 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 COOKIE_ACCESS = "access_token"
 COOKIE_REFRESH = "refresh_token"
-
-
-def obter_auth_service(sessao: Session = Depends(obter_sessao)) -> AuthService:
-    return AuthService(SQLAlchemyUtilizadoresRepository(sessao))
 
 
 def _definir_cookie_acesso(response: Response, access_token: str) -> None:
@@ -72,27 +64,11 @@ def _utilizador_publico(utilizador: UtilizadorRegisto) -> UtilizadorPublico:
         id=utilizador.id,
         email=utilizador.email,
         papel=utilizador.papel,
-        nome=utilizador.nome,
+        nome_completo=utilizador.nome_completo,
         provincia=utilizador.provincia,
         genero=utilizador.genero,
         criado_em=utilizador.criado_em,
     )
-
-
-def obter_utilizador_atual(
-    access_token: str | None = Cookie(default=None),
-    service: AuthService = Depends(obter_auth_service),
-) -> UtilizadorRegisto:
-    """Dependency que protege qualquer rota autenticada — noutros routers,
-    basta declarar `Depends(obter_utilizador_atual)`. Sem cookie válido,
-    401 antes de a rota sequer correr."""
-    if access_token is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="sem sessão")
-
-    try:
-        return service.utilizador_a_partir_do_access_token(access_token)
-    except CredenciaisInvalidasError as exc:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
 
 
 @router.post("/registar", response_model=UtilizadorPublico, status_code=status.HTTP_201_CREATED)
@@ -104,7 +80,7 @@ def registar(
             dados.email,
             dados.password,
             papel=dados.papel,
-            nome=dados.nome,
+            nome_completo=dados.nome_completo,
             provincia=dados.provincia,
             genero=dados.genero,
         )

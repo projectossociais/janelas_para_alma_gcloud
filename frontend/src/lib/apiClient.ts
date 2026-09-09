@@ -4,10 +4,10 @@
  * pedido leva `credentials: "include"`, e não há "access token" nenhum para
  * este módulo tocar.
  *
- * Ver CLAUDE.md secção 0 — só a autenticação foi migrada para aqui até
- * agora. O resto dos dados (perfil completo, sessões de exercício, scanner,
- * ...) continua a vir de `src/integrations/supabase/client.ts` enquanto a
- * migração módulo-a-módulo não chega lá.
+ * Ver CLAUDE.md secção 0 — autenticação e perfil já estão migrados. O resto
+ * dos dados (sessões de exercício, scanner, doações, ...) continua a vir de
+ * `src/integrations/supabase/client.ts` enquanto a migração módulo-a-módulo
+ * não chega lá.
  */
 
 const API_URL = import.meta.env.VITE_API_URL ?? "";
@@ -58,7 +58,7 @@ export interface UtilizadorPublico {
   id: string;
   email: string;
   papel: string;
-  nome: string | null;
+  nome_completo: string | null;
   provincia: string | null;
   genero: string | null;
   criado_em: string;
@@ -67,7 +67,7 @@ export interface UtilizadorPublico {
 export interface RegistarInput {
   email: string;
   password: string;
-  nome?: string;
+  nome_completo?: string;
   provincia?: string;
   genero?: string;
   papel?: string;
@@ -85,4 +85,40 @@ export const authApi = {
   sair: () => pedido<void>("/auth/sair", { method: "POST" }),
 
   atualizarToken: () => pedido<void>("/auth/atualizar-token", { method: "POST" }),
+};
+
+export interface PerfilPublico {
+  id: string;
+  email: string;
+  papel: string;
+  nome_completo: string | null;
+  biografia: string | null;
+  telefone: string | null;
+  data_nascimento: string | null;
+  genero: string | null;
+  provincia: string | null;
+  avatar_url: string | null;
+  notificacoes_projetos: boolean;
+  notificacoes_lembretes: boolean;
+  notificacoes_comunidade: boolean;
+  criado_em: string;
+}
+
+export interface PerfilAtualizarInput {
+  nome_completo?: string;
+  biografia?: string | null;
+  telefone?: string | null;
+  data_nascimento?: string | null;
+  genero?: string | null;
+  provincia?: string | null;
+  notificacoes_projetos?: boolean;
+  notificacoes_lembretes?: boolean;
+  notificacoes_comunidade?: boolean;
+}
+
+export const perfilApi = {
+  obter: () => pedido<PerfilPublico>("/perfil"),
+
+  atualizar: (dados: PerfilAtualizarInput) =>
+    pedido<PerfilPublico>("/perfil", { method: "PATCH", body: JSON.stringify(dados) }),
 };

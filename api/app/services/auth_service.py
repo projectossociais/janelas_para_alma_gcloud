@@ -60,7 +60,7 @@ class AuthService:
         email: str,
         password: str,
         papel: str = "comum",
-        nome: str | None = None,
+        nome_completo: str | None = None,
         provincia: str | None = None,
         genero: str | None = None,
     ) -> SessaoIniciada:
@@ -76,7 +76,7 @@ class AuthService:
             email=email,
             password_hash=hash_password(password),
             papel=papel,
-            nome=nome,
+            nome_completo=nome_completo,
             provincia=provincia,
             genero=genero,
         )

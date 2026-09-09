@@ -54,7 +54,6 @@ def upgrade() -> None:
         sa.Column("id", postgresql.UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True),
         sa.Column("email", sa.String(length=320), nullable=False),
         sa.Column("password_hash", sa.Text(), nullable=False),
-        sa.Column("nome", sa.Text()),
         sa.Column("nome_completo", sa.Text()),
         sa.Column("avatar_url", sa.Text()),
         sa.Column("biografia", sa.Text()),

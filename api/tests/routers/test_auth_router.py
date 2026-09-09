@@ -44,7 +44,7 @@ def test_registar_recolhe_os_dados_de_perfil_do_formulario(client: TestClient) -
         json={
             "email": "ana@example.com",
             "password": "password-forte-123",
-            "nome": "Ana Teste",
+            "nome_completo": "Ana Teste",
             "provincia": "Luanda",
             "genero": "feminino",
             "papel": "estrabico",
@@ -53,7 +53,7 @@ def test_registar_recolhe_os_dados_de_perfil_do_formulario(client: TestClient) -
 
     assert resposta.status_code == 201
     corpo = resposta.json()
-    assert corpo["nome"] == "Ana Teste"
+    assert corpo["nome_completo"] == "Ana Teste"
     assert corpo["provincia"] == "Luanda"
     assert corpo["papel"] == "estrabico"
 

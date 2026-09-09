@@ -91,16 +91,48 @@ independentemente do `AuthContext`. Uma conta criada pela API nova não existe n
 por isso essas páginas vão continuar a comportar-se como "sem sessão" até serem migradas.
 Isto não é um bug desta sprint — é o próximo passo.
 
-**Por fazer, nesta ordem:**
+**Por fazer, nesta ordem:** ver Sprint 2, já feito abaixo.
 
-1. **`ProfileContext.tsx`** — precisa de um `perfil_service`/router na API (a tabela
-   `utilizadores` já tem todos os campos; falta expor CRUD deles) antes de poder deixar
-   de depender da sessão Supabase.
-2. **`Configuracoes.tsx`** (mudar password, eliminar conta) — migrar para a API nova,
-   reaproveitando o desenho dos 30 dias de carência já feito no repositório antigo.
-3. **`Scanner.tsx`**, doações, Premium — o resto dos ~37 pontos de chamada directa ao
-   Supabase, módulo a módulo.
-4. Storage (R2) e deploy no Cloud Run — como já estava no Sprint 0.
+---
+
+## Sprint 2 — Perfil (2026-09-09)
+
+**Feito:**
+
+- [x] Renomeada uma inconsistência introduzida na Sprint 1 antes de ela se espalhar:
+  o registo gravava em `utilizadores.nome`, mas todo o resto da app já lia
+  `nome_completo` (a tabela antiga tinha as duas colunas, paralelas — dívida nunca
+  corrigida). Consolidado numa só coluna, `nome_completo`, em toda a cadeia
+  (`orm_models`, migração baseline, schemas, service, router, frontend).
+- [x] `api/app/repositories/perfil_repository.py` + `services/perfil_service.py` +
+  `routers/perfil.py` — `GET /perfil`, `PATCH /perfil` (parcial: campo omitido não
+  muda). Nunca aceita mudar `papel` nem `email` por aqui — só `PerfilAtualizar` chega
+  ao service, `papel`/`email` enviados no corpo são ignorados pelo schema, nem chegam à
+  base de dados. 10 testes novos (service com repositório falso + router com
+  `TestClient`) — **38/38 testes `pytest`**, ruff limpo.
+- [x] `obter_utilizador_atual` extraída de `routers/auth.py` para
+  `app/core/dependencies.py` — deixou de ser só do router de autenticação a partir do
+  momento em que um segundo router também precisa dela.
+- [x] `ProfileContext.tsx` reescrito: `GET /perfil` em vez de
+  `supabase.auth.getSession()` + `profiles` directo. Só pede o perfil depois de
+  `AuthContext` terminar de verificar a sessão (evita um pedido destinado a falhar).
+- [x] `EditarPerfil.tsx`: guardar nome/biografia/data de nascimento/género/telefone/
+  província passa a usar `PATCH /perfil`. **Upload de avatar desligado com mensagem
+  honesta** — dependia do Supabase Storage; o substituto (Cloudflare R2) ainda não tem
+  endpoint. Continuar a chamá-lo silenciosamente falharia contra dados que já não
+  existem.
+- [x] 5 testes novos (`ProfileContext.test.tsx`) — **19/19 testes vitest**, lint e
+  `tsc --noEmit` sem regressões (os mesmos 8 erros pré-existentes de sempre).
+
+**Gap que se torna mais preciso com este sprint:** `profile.id` agora vem da tabela
+`utilizadores` da API nova, não da sessão Supabase. Páginas de exercícios
+(`TrackingExercise.tsx`, `CerebroExercise.tsx`, `ConvergenciaExercise.tsx`,
+`RelaxamentoExercise.tsx`, `AmbliopiaExercise.tsx`) gravam `sessoes_exercicio`
+directamente no Supabase usando `profile.id` como `user_id` — com uma conta da API
+nova, esse id não corresponde a nada no Supabase; essas gravações continuam a falhar
+(RLS rejeita, ou pior, falha silenciosa). Não é novo — já era um "sem sessão
+reconhecida" na Sprint 1 — mas agora é precisamente "grava com um id estranho" em vez
+de "não grava". Fica para quando `sessoes_exercicio` migrar para a API.
 
 ---
 

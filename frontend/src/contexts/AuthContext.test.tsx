@@ -31,7 +31,7 @@ const UTILIZADOR_API = {
   id: "user-1",
   email: "ana@example.com",
   papel: "comum",
-  nome: "Ana Teste",
+  nome_completo: "Ana Teste",
   provincia: "Luanda",
   genero: "feminino",
   criado_em: "2026-01-01T00:00:00.000Z",
@@ -132,7 +132,7 @@ describe("AuthContext", () => {
     expect(registar).toHaveBeenCalledWith({
       email: "ana@example.com",
       password: "password-forte-123",
-      nome: "Ana Teste",
+      nome_completo: "Ana Teste",
       provincia: "Luanda",
       genero: "feminino",
       papel: "comum",

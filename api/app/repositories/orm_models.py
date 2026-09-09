@@ -62,7 +62,8 @@ class Utilizador(Base):
     email: Mapped[str] = mapped_column(String(320), unique=True, nullable=False, index=True)
     password_hash: Mapped[str] = mapped_column(Text, nullable=False)
 
-    nome: Mapped[str | None] = mapped_column(Text)
+    # O esquema antigo tinha `nome` e `nome_completo` como colunas paralelas
+    # (dívida nunca resolvida). Ao começar do zero, só uma sobrevive.
     nome_completo: Mapped[str | None] = mapped_column(Text)
     avatar_url: Mapped[str | None] = mapped_column(Text)
     biografia: Mapped[str | None] = mapped_column(Text)

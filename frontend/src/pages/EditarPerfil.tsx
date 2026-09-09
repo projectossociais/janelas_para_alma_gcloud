@@ -20,7 +20,7 @@ import {
 import { Camera, Loader2, User as UserIcon, Mail, Phone, MapPin, Cake } from "lucide-react";
 import { useAuth, PROVINCES } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
-import { supabase } from "@/integrations/supabase/client";
+import { perfilApi, ApiError } from "@/lib/apiClient";
 
 const EditarPerfil = () => {
   const navigate = useNavigate();
@@ -63,53 +63,13 @@ const EditarPerfil = () => {
     }
   }, [profile, user?.avatarUrl]);
 
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.target.value = ""; // permite escolher o mesmo ficheiro outra vez
-    if (!file || !user || !profile) return;
-
-    if (!["image/png", "image/jpeg"].includes(file.type)) {
-      toast.error("Envie uma imagem em JPG ou PNG.");
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("A imagem deve ter no máximo 2MB.");
-      return;
-    }
-
-    setUploadingAvatar(true);
-    try {
-      const caminho = `${profile.id}/avatar.png`;
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(caminho, file, { upsert: true, contentType: file.type });
-      if (uploadError) throw uploadError;
-
-      const { data: publicUrlData } = supabase.storage.from("avatars").getPublicUrl(caminho);
-      // Cache-busting: o caminho é sempre o mesmo (avatar.png com upsert), por
-      // isso sem isto o browser/CDN continuaria a mostrar a imagem antiga.
-      const novoAvatarUrl = `${publicUrlData.publicUrl}?t=${Date.now()}`;
-
-      const { data, error: updateError } = await supabase
-        .from("profiles")
-        .update({ avatar_url: novoAvatarUrl })
-        .eq("id", profile.id)
-        .select()
-        .single();
-      if (updateError) throw updateError;
-
-      setProfile(data);
-      setAvatarUrl(data.avatar_url ?? undefined);
-      updateUserProfile({ avatarUrl: data.avatar_url ?? undefined });
-      toast.success("Foto de perfil atualizada!");
-    } catch (err) {
-      console.error("Falha ao enviar o avatar:", err);
-      toast.error(
-        err instanceof Error ? err.message : "Não foi possível enviar a foto. Tente novamente.",
-      );
-    } finally {
-      setUploadingAvatar(false);
-    }
+    // O upload de avatar dependia do Supabase Storage — infraestrutura que
+    // este projecto deixou de usar (ver CLAUDE.md secção 0). O substituto
+    // (Cloudflare R2) ainda não tem endpoint na API. Mensagem honesta em
+    // vez de tentar um upload que ia falhar contra dados que já não existem.
+    toast.info("O envio de foto de perfil ainda não está disponível nesta infraestrutura nova.");
   };
 
   const initials = (name || "U")
@@ -125,27 +85,20 @@ const EditarPerfil = () => {
 
     setSaving(true);
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .update({
-          nome_completo: name.trim() || profile.nome_completo,
-          biografia: bio || null,
-          data_nascimento: birthdate || null,
-          genero: gender || null,
-          telefone: phone || null,
-          provincia: province || null,
-        })
-        .eq("id", profile.id)
-        .select()
-        .single();
+      const data = await perfilApi.atualizar({
+        nome_completo: name.trim() || profile.nome_completo,
+        biografia: bio || null,
+        data_nascimento: birthdate || null,
+        genero: gender || null,
+        telefone: phone || null,
+        provincia: province || null,
+      });
 
-      if (error) throw error;
-
-      setProfile(data);
+      setProfile({ ...profile, ...data, nome_completo: data.nome_completo ?? "" });
       // Ponte para a UI legada que ainda lê o AuthContext directamente
       // (ex.: consumidores fora do que este pedido cobriu explicitamente).
       updateUserProfile({
-        name: data.nome_completo,
+        name: data.nome_completo ?? "",
         province: data.provincia ?? "",
         biografia: data.biografia ?? "",
         telefone: data.telefone ?? "",
@@ -155,9 +108,7 @@ const EditarPerfil = () => {
       toast.success("O seu perfil foi atualizado com sucesso!");
     } catch (err) {
       console.error("Falha ao guardar o perfil:", err);
-      toast.error(
-        err instanceof Error ? err.message : "Não foi possível guardar as alterações. Tente novamente.",
-      );
+      toast.error(err instanceof ApiError ? err.message : "Não foi possível guardar as alterações. Tente novamente.");
     } finally {
       setSaving(false);
     }
