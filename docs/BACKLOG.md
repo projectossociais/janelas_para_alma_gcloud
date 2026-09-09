@@ -247,6 +247,56 @@ registado para não parecer um commit misterioso.
 
 ---
 
+## Sprint 6 — Feedback (2026-09-09)
+
+Confirmei antes de construir: `notifications` só tem consumidor no painel de admin (sem
+leitura pública do lado do utilizador) — mesma situação de `site_content`, fica de fora.
+`user_feedback`, via `FeedbackWidget.tsx`, é genuinamente público (funciona com ou sem
+sessão) e usado no site inteiro — candidato real.
+
+**Feito:**
+
+- [x] `POST /feedback` — público de propósito (não exige sessão), identifica o utilizador
+  quando há cookie válido via `obter_utilizador_atual_opcional` (novo em
+  `core/dependencies.py`: nunca 401, um cookie ausente ou inválido só significa "sem
+  identidade conhecida"). Validação de forma só (rating 1–5, comentário ≤500), sem
+  `service` — não decide acesso, dinheiro nem resultado clínico.
+- [x] 4 testes de router (com sessão, sem sessão, rating fora do intervalo, comentário
+  opcional) — **64/64 testes `pytest`**, ruff limpo.
+- [x] `FeedbackWidget.tsx` migrado: usa `feedbackApi` em vez de
+  `supabase.auth.getSession()` + `user_feedback` directo. Notificação por email ao admin
+  fica pendente (mesma razão de sempre — fornecedor de email por decidir) — o feedback em
+  si já fica gravado, o que importa não se perde.
+- [x] `FeedbackWidget.test.tsx` (novo) — 3 testes, incluindo o caminho do erro (nunca
+  mostra sucesso quando a API falha) — **26/26 testes vitest**, lint a **zero erros**
+  (só os 13 avisos `react-refresh` de sempre, inofensivos). `tsc --noEmit`: 6 erros
+  pré-existentes, todos no painel de administração (fora de âmbito, ver Sprint 4).
+
+---
+
+## Fim dos 6 sprints autónomos — o que ficou por fazer, por decisão consciente
+
+Seis sprints em sequência (implementar → testar → seguinte, sem pausar para autorização,
+por pedido explícito do dono do projecto). O que ficou de fora não foi esquecido — cada
+item abaixo depende de uma decisão que não é minha para tomar sozinho:
+
+| Item | Depende de |
+|---|---|
+| Fornecedor de email transacional | Escolha de serviço (SES, Resend, Postmark, ...) e custo |
+| Storage de ficheiros (avatares, comprovativos) | Credenciais reais do Cloudflare R2 |
+| Migração Alembic contra Postgres real | Docker Desktop a correr nesta máquina |
+| Deploy no Cloud Run | Conta GCloud, projecto, credenciais |
+| CRUD de admin (banners, notifications, site_content) | Verificação de papel/admin na API — ainda não construída, é trabalho novo, não migração |
+| Fluxo financeiro de doações (upload de comprovativo) | Email + storage, os dois primeiros itens desta lista |
+| `sessoes_exercicio`, Scanner, Premium | Módulos maiores, cada um merece o mesmo tratamento cuidadoso — próximos sprints |
+
+Estado do gate em todos os 6 sprints: API sempre 100% verde (64/64 no fim), frontend
+sempre 100% verde (26/26 no fim), lint da API sempre limpo, lint do frontend a chegar a
+zero erros, `tsc --noEmit` só com dívida pré-existente documentada e a diminuir (8 → 6
+erros), nunca a aumentar.
+
+---
+
 ## Como está organizado
 
 O trabalho está separado em **duas correntes que não se cruzam**, para os dois poderem

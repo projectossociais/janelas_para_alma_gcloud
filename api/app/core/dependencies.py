@@ -40,3 +40,18 @@ def obter_utilizador_atual(
         return service.utilizador_a_partir_do_access_token(access_token)
     except CredenciaisInvalidasError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
+
+
+def obter_utilizador_atual_opcional(
+    access_token: str | None = Cookie(default=None),
+    service: AuthService = Depends(obter_auth_service),
+) -> UtilizadorRegisto | None:
+    """Para rotas públicas que identificam o utilizador quando ele tem
+    sessão, sem exigir uma (ex.: feedback anónimo). Nunca 401 -- um cookie
+    ausente ou inválido só significa "sem identidade conhecida", não erro."""
+    if access_token is None:
+        return None
+    try:
+        return service.utilizador_a_partir_do_access_token(access_token)
+    except CredenciaisInvalidasError:
+        return None

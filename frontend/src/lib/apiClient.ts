@@ -182,3 +182,19 @@ export const doacoesApi = {
       body: JSON.stringify({ email, materiais, detalhes: detalhes || null }),
     }),
 };
+
+export interface FeedbackPublico {
+  id: string;
+  avaliacao: number;
+  comentario: string | null;
+  created_at: string;
+}
+
+export const feedbackApi = {
+  /** Funciona sem sessão -- a API associa ao utilizador quando há cookie válido. */
+  registar: (avaliacao: number, comentario?: string) =>
+    pedido<FeedbackPublico>("/feedback", {
+      method: "POST",
+      body: JSON.stringify({ avaliacao, comentario: comentario || undefined }),
+    }),
+};

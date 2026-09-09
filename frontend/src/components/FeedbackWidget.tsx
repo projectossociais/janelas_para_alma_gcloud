@@ -4,8 +4,7 @@ import { MessageSquare, Star, X, Send, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { feedbackApi, mensagemDeErroApi } from "@/lib/apiClient";
 import { useFeedback } from "@/contexts/FeedbackContext";
 
 const feedbackSchema = z.object({
@@ -15,7 +14,6 @@ const feedbackSchema = z.object({
 
 const FeedbackWidget = () => {
   const { isOpen, options, openFeedback, closeFeedback } = useFeedback();
-  const { user } = useAuth();
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
   const [comment, setComment] = useState("");
@@ -23,7 +21,6 @@ const FeedbackWidget = () => {
   const [submitting, setSubmitting] = useState(false);
 
   const question = options.question ?? "Como avalia a sua experiência hoje?";
-  const context = options.context ?? "geral";
 
   const resetForm = () => {
     setRating(0);
@@ -48,44 +45,19 @@ const FeedbackWidget = () => {
 
     setSubmitting(true);
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const authUser = sessionData.session?.user;
-
-      // A tabela `user_feedback` só tem avaliacao/comentario/user_id -- não
-      // existem colunas `context`/`user_email` (confirmado directamente via
-      // REST, não assumido). `context` continua a ir para o email abaixo,
-      // só não é persistido nesta tabela.
-      const { error: insertError } = await supabase.from("user_feedback").insert({
-        avaliacao: rating,
-        comentario: comment.trim() || null,
-        user_id: authUser?.id ?? null,
-      });
-
-      if (insertError) throw insertError;
-
-      // Notify admin by email (best-effort; do not block success on this).
-      supabase.functions
-        .invoke("send-feedback-email", {
-          body: {
-            rating,
-            comment: comment.trim(),
-            context,
-            userEmail: authUser?.email ?? user?.email ?? "",
-            userId: authUser?.id ?? "",
-          },
-        })
-        .catch((err) => console.warn("send-feedback-email failed:", err));
+      // A API associa o feedback a quem tem sessão automaticamente (cookie
+      // httpOnly) -- funciona também sem sessão nenhuma, de propósito.
+      await feedbackApi.registar(rating, comment.trim());
 
       setSubmitted(true);
       toast.success("Obrigado pelo seu feedback!");
       setTimeout(handleClose, 1600);
+      // Notificação por email ao admin fica pendente de um fornecedor de
+      // email para a infra nova (ver docs/BACKLOG.md) -- o feedback em si
+      // já está gravado, o que importa não se perde.
     } catch (err) {
       console.error("Feedback submission failed:", err);
-      const message =
-        err && typeof err === "object" && "message" in err && typeof err.message === "string"
-          ? err.message
-          : "Não foi possível registar o feedback. Tente novamente.";
-      toast.error(message);
+      toast.error(mensagemDeErroApi(err, "Não foi possível registar o feedback. Tente novamente."));
     } finally {
       setSubmitting(false);
     }
