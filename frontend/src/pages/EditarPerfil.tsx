@@ -20,7 +20,7 @@ import {
 import { Camera, Loader2, User as UserIcon, Mail, Phone, MapPin, Cake } from "lucide-react";
 import { useAuth, PROVINCES } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
-import { perfilApi, ApiError } from "@/lib/apiClient";
+import { perfilApi, mensagemDeErroApi } from "@/lib/apiClient";
 
 const EditarPerfil = () => {
   const navigate = useNavigate();
@@ -108,7 +108,7 @@ const EditarPerfil = () => {
       toast.success("O seu perfil foi atualizado com sucesso!");
     } catch (err) {
       console.error("Falha ao guardar o perfil:", err);
-      toast.error(err instanceof ApiError ? err.message : "Não foi possível guardar as alterações. Tente novamente.");
+      toast.error(mensagemDeErroApi(err, "Não foi possível guardar as alterações. Tente novamente."));
     } finally {
       setSaving(false);
     }

@@ -9,9 +9,11 @@ os códigos de erro".
 import pytest
 from fastapi.testclient import TestClient
 
+from app.core.dependencies import obter_conta_service
 from app.main import app
 from app.routers import auth as auth_router
 from app.services.auth_service import AuthService
+from app.services.conta_service import ContaService
 from tests.services.test_auth_service import RepositorioFalso
 
 
@@ -19,6 +21,10 @@ from tests.services.test_auth_service import RepositorioFalso
 def client():
     repo = RepositorioFalso()
     app.dependency_overrides[auth_router.obter_auth_service] = lambda: AuthService(repo)
+    # entrar() também chama o ContaService (para cancelar uma eliminação
+    # agendada) -- sem isto cairia no repositório real (Postgres inexistente
+    # em testes).
+    app.dependency_overrides[obter_conta_service] = lambda: ContaService(repo)
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()

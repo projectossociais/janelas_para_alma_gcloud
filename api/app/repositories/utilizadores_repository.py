@@ -50,6 +50,14 @@ class UtilizadoresRepository(Protocol):
         genero: str | None = None,
     ) -> UtilizadorRegisto: ...
 
+    def atualizar_password_hash(self, utilizador_id: str, password_hash: str) -> None: ...
+
+    def agendar_eliminacao(self, utilizador_id: str, quando: datetime) -> None: ...
+
+    def cancelar_eliminacao_se_agendada(self, utilizador_id: str) -> bool: ...
+
+    def apagar(self, utilizador_id: str) -> None: ...
+
 
 class SQLAlchemyUtilizadoresRepository:
     """Implementação real, usada pela API. Ver app/db.py para a sessão."""
@@ -99,3 +107,32 @@ class SQLAlchemyUtilizadoresRepository:
         self._sessao.commit()
         self._sessao.refresh(row)
         return self._para_registo(row)
+
+    def atualizar_password_hash(self, utilizador_id: str, password_hash: str) -> None:
+        row = self._sessao.get(Utilizador, uuid.UUID(utilizador_id))
+        if row is None:
+            return
+        row.password_hash = password_hash
+        self._sessao.commit()
+
+    def agendar_eliminacao(self, utilizador_id: str, quando: datetime) -> None:
+        row = self._sessao.get(Utilizador, uuid.UUID(utilizador_id))
+        if row is None:
+            return
+        row.eliminar_agendado_para = quando
+        self._sessao.commit()
+
+    def cancelar_eliminacao_se_agendada(self, utilizador_id: str) -> bool:
+        row = self._sessao.get(Utilizador, uuid.UUID(utilizador_id))
+        if row is None or row.eliminar_agendado_para is None:
+            return False
+        row.eliminar_agendado_para = None
+        self._sessao.commit()
+        return True
+
+    def apagar(self, utilizador_id: str) -> None:
+        row = self._sessao.get(Utilizador, uuid.UUID(utilizador_id))
+        if row is None:
+            return
+        self._sessao.delete(row)
+        self._sessao.commit()

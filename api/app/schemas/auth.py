@@ -15,6 +15,12 @@ PASSWORD_MIN_LEN = 8
 PAPEIS_AUTO_REGISTAVEIS = {"comum", "estrabico", "profissional"}
 
 
+def validar_password_forte(v: str) -> str:
+    if len(v) < PASSWORD_MIN_LEN:
+        raise ValueError(f"a password precisa de pelo menos {PASSWORD_MIN_LEN} caracteres")
+    return v
+
+
 class UtilizadorCriar(BaseModel):
     email: EmailStr
     password: str
@@ -23,12 +29,7 @@ class UtilizadorCriar(BaseModel):
     genero: str | None = None
     papel: str = "comum"
 
-    @field_validator("password")
-    @classmethod
-    def password_forte(cls, v: str) -> str:
-        if len(v) < PASSWORD_MIN_LEN:
-            raise ValueError(f"a password precisa de pelo menos {PASSWORD_MIN_LEN} caracteres")
-        return v
+    _valida_password = field_validator("password")(validar_password_forte)
 
     @field_validator("papel")
     @classmethod
@@ -51,6 +52,9 @@ class UtilizadorPublico(BaseModel):
     provincia: str | None = None
     genero: str | None = None
     criado_em: datetime
+    # true só na resposta de /auth/entrar, quando voltar a entrar cancelou
+    # um pedido de eliminação de conta agendado. Ver routers/conta.py.
+    eliminacao_cancelada: bool = False
 
     model_config = {"from_attributes": True}
 

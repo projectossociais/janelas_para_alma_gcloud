@@ -7,6 +7,7 @@ como o do sucesso — errar a autenticação é o pior sítio possível para um
 bug silencioso.
 """
 
+from dataclasses import replace
 from datetime import UTC, datetime
 
 import pytest
@@ -27,6 +28,11 @@ class RepositorioFalso:
 
     def __init__(self) -> None:
         self._utilizadores: dict[str, UtilizadorRegisto] = {}
+        # Fora do UtilizadorRegisto de propósito -- o real também não guarda
+        # isto na mesma dataclass (ver PerfilRegisto/eliminar_agendado_para
+        # na coluna ORM). Chave é o id, não o email, para bater certo com
+        # como ContaService chama estes métodos.
+        self._eliminacoes_agendadas: dict[str, datetime] = {}
 
     def obter_por_email(self, email: str) -> UtilizadorRegisto | None:
         return self._utilizadores.get(email)
@@ -55,6 +61,23 @@ class RepositorioFalso:
         )
         self._utilizadores[email] = registo
         return registo
+
+    def atualizar_password_hash(self, utilizador_id: str, password_hash: str) -> None:
+        for email, u in self._utilizadores.items():
+            if u.id == utilizador_id:
+                self._utilizadores[email] = replace(u, password_hash=password_hash)
+                return
+
+    def agendar_eliminacao(self, utilizador_id: str, quando: datetime) -> None:
+        self._eliminacoes_agendadas[utilizador_id] = quando
+
+    def cancelar_eliminacao_se_agendada(self, utilizador_id: str) -> bool:
+        return self._eliminacoes_agendadas.pop(utilizador_id, None) is not None
+
+    def apagar(self, utilizador_id: str) -> None:
+        email = next((e for e, u in self._utilizadores.items() if u.id == utilizador_id), None)
+        if email:
+            del self._utilizadores[email]
 
 
 @pytest.fixture

@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { authApi, type UtilizadorPublico } from "@/lib/apiClient";
+import { toast } from "sonner";
+import { authApi, mensagemDeErroApi, type UtilizadorPublico } from "@/lib/apiClient";
 
 export type UserRole = "admin" | "comum" | "voluntario" | "oftalmologista" | "profissional" | "estrabico";
 
@@ -56,16 +57,7 @@ const paraAuthUser = (u: UtilizadorPublico): AuthUser => ({
   gender: u.genero ?? undefined,
 });
 
-// Duck-typing em vez de `instanceof ApiError` de propósito: este ficheiro é
-// mockado nos testes (ver AuthContext.test.tsx), e uma classe importada de
-// um módulo mockado não passa fiavelmente num `instanceof` — a propriedade
-// `status` é o suficiente para distinguir "a API respondeu com uma
-// mensagem específica" de "algo mais correu mal" (rede em baixo, etc.).
-function ehErroDaApi(err: unknown): err is { status: number; message: string } {
-  return !!err && typeof err === "object" && typeof (err as { status?: unknown }).status === "number";
-}
-
-const mensagemDeFalha = (err: unknown, fallback: string): string => (ehErroDaApi(err) ? err.message : fallback);
+const mensagemDeFalha = mensagemDeErroApi;
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
@@ -109,6 +101,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const utilizador = await authApi.entrar(email, password);
       setUser(paraAuthUser(utilizador));
+      // Ver Configuracoes.tsx: eliminar a conta agenda para 30 dias, não
+      // apaga na hora. Voltar a entrar dentro do prazo cancela o pedido.
+      if (utilizador.eliminacao_cancelada) {
+        toast.success("A eliminação da sua conta foi cancelada. Bem-vindo de volta.");
+      }
       return { ok: true };
     } catch (err) {
       return { ok: false, error: mensagemDeFalha(err, "Email ou palavra-passe incorretos.") };

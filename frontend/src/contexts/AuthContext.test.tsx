@@ -10,6 +10,7 @@ const eu = vi.fn();
 const entrar = vi.fn();
 const registar = vi.fn();
 const sair = vi.fn();
+const toastSuccess = vi.fn();
 
 vi.mock("@/lib/apiClient", () => ({
   authApi: {
@@ -18,6 +19,17 @@ vi.mock("@/lib/apiClient", () => ({
     registar: (dados: unknown) => registar(dados),
     sair: () => sair(),
   },
+  // Implementação real (não é preciso mockar) -- duck-typing puro, sem
+  // depender de nenhuma classe do módulo real.
+  mensagemDeErroApi: (err: unknown, fallback: string) => {
+    const status = (err as { status?: unknown } | null)?.status;
+    const message = (err as { message?: unknown } | null)?.message;
+    return typeof status === "number" && typeof message === "string" ? message : fallback;
+  },
+}));
+
+vi.mock("sonner", () => ({
+  toast: { success: (...a: unknown[]) => toastSuccess(...a), error: vi.fn(), info: vi.fn() },
 }));
 
 import { AuthProvider, useAuth } from "./AuthContext";
@@ -35,6 +47,7 @@ const UTILIZADOR_API = {
   provincia: "Luanda",
   genero: "feminino",
   criado_em: "2026-01-01T00:00:00.000Z",
+  eliminacao_cancelada: false,
 };
 
 function renderAuth() {
@@ -48,6 +61,7 @@ describe("AuthContext", () => {
     registar.mockReset();
     sair.mockReset();
     sair.mockResolvedValue(undefined);
+    toastSuccess.mockReset();
   });
 
   it("começa com loading=true e sem utilizador", () => {
@@ -92,6 +106,22 @@ describe("AuthContext", () => {
 
     expect(resultado).toEqual({ ok: true });
     expect(result.current.isLoggedIn).toBe(true);
+    expect(toastSuccess).not.toHaveBeenCalled();
+  });
+
+  it("signIn avisa quando entrar cancelou uma eliminação de conta agendada", async () => {
+    eu.mockRejectedValue(erroApi(401, "sem sessão"));
+    entrar.mockResolvedValue({ ...UTILIZADOR_API, eliminacao_cancelada: true });
+    const { result } = renderAuth();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.signIn("ana@example.com", "password-forte-123");
+    });
+
+    expect(toastSuccess).toHaveBeenCalledWith(
+      "A eliminação da sua conta foi cancelada. Bem-vindo de volta."
+    );
   });
 
   it("signIn com credenciais erradas devolve o erro e nunca autentica", async () => {

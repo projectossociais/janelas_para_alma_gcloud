@@ -3,50 +3,41 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
-// --- mocks: isolamos Configuracoes.tsx dos providers reais (Supabase/Context) ---
+// --- mocks: isolamos Configuracoes.tsx da API real e do resto da app ---
 
-const signInWithPassword = vi.fn();
-const updateUser = vi.fn();
-// Controla a resposta de supabase.from("profiles").update(payload).eq(...) —
-// usado tanto por handleToggle (preferências) como por handleDelete (agendar
-// eliminação). Devolve {data, error}; por omissão, sucesso sem dados.
-const profilesUpdateMock = vi.fn(() => ({ data: null, error: null as { message: string } | null }));
+class ApiErrorFalso extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+  }
+}
 
-// Mock genérico o suficiente para o resto da página (Navbar usa useSupabaseRole,
-// que chama getSession/onAuthStateChange/from independentemente do que estamos
-// a testar aqui) — sem isto, qualquer componente à volta do que testamos parte.
-vi.mock("@/integrations/supabase/client", () => ({
-  supabase: {
-    auth: {
-      signInWithPassword: (...a: unknown[]) => signInWithPassword(...a),
-      updateUser: (...a: unknown[]) => updateUser(...a),
-      getSession: async () => ({ data: { session: null } }),
-      onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
-    },
-    from: (table: string) => {
-      if (table === "profiles") {
-        return {
-          update: (payload: unknown) => ({
-            eq: (_col: string, _val: string) => {
-              const result = profilesUpdateMock(payload);
-              // Precisa de ser awaitable directamente (handleDelete faz
-              // `await ....eq(...)`) e também suportar `.select().single()`
-              // (handleToggle) — daí anexar `select` a uma Promise normal.
-              const thenable = Promise.resolve(result) as Promise<typeof result> & {
-                select: () => { single: () => Promise<typeof result> };
-              };
-              thenable.select = () => ({ single: async () => result });
-              return thenable;
-            },
-          }),
-        };
-      }
-      return {
-        select: () => ({ eq: async () => ({ data: [], error: null }) }),
-        update: () => ({ eq: () => ({ select: () => ({ single: async () => ({ data: null, error: null }) }) }) }),
-      };
-    },
+const mudarPassword = vi.fn();
+const eliminar = vi.fn();
+const atualizarPerfil = vi.fn();
+
+// mensagemDeErroApi é duck-typing puro (propriedade `status`) -- não precisa
+// de ApiError real nem mockado para funcionar correctamente aqui.
+vi.mock("@/lib/apiClient", () => ({
+  contaApi: {
+    mudarPassword: (a: string, b: string) => mudarPassword(a, b),
+    eliminar: () => eliminar(),
   },
+  perfilApi: {
+    atualizar: (dados: unknown) => atualizarPerfil(dados),
+  },
+  mensagemDeErroApi: (err: unknown, fallback: string) => {
+    const status = (err as { status?: unknown } | null)?.status;
+    const message = (err as { message?: unknown } | null)?.message;
+    return typeof status === "number" && typeof message === "string" ? message : fallback;
+  },
+}));
+
+// Navbar chama isto directamente (ainda não migrado para a API nova) —
+// sem mockar, tentaria falar com o Supabase de verdade.
+vi.mock("@/hooks/useSupabaseRole", () => ({
+  useSupabaseRole: () => ({ isAdmin: false }),
 }));
 
 const mockProfile = {
@@ -59,14 +50,16 @@ const mockProfile = {
   telefone: null,
   provincia: null,
   avatar_url: null,
-  papel: "paciente",
+  papel: "comum",
   notificacoes_projetos: false,
   notificacoes_lembretes: false,
   notificacoes_comunidade: false,
+  created_at: "2026-01-01T00:00:00.000Z",
 };
 
+const setProfile = vi.fn();
 vi.mock("@/contexts/ProfileContext", () => ({
-  useProfile: () => ({ profile: mockProfile, loading: false, refetch: vi.fn(), setProfile: vi.fn() }),
+  useProfile: () => ({ profile: mockProfile, loading: false, refetch: vi.fn(), setProfile }),
 }));
 
 const logout = vi.fn();
@@ -95,14 +88,13 @@ async function abrirDialogoPassword(user: ReturnType<typeof userEvent.setup>) {
 
 describe("Configuracoes — mudar palavra-passe", () => {
   beforeEach(() => {
-    signInWithPassword.mockReset();
-    updateUser.mockReset();
+    mudarPassword.mockReset();
     toastError.mockReset();
     toastSuccess.mockReset();
   });
 
-  it("recusa quando a palavra-passe actual está errada, e NUNCA chama updateUser", async () => {
-    signInWithPassword.mockResolvedValue({ data: null, error: { message: "Invalid login credentials" } });
+  it("recusa quando a palavra-passe actual está errada, e o dialogo continua aberto", async () => {
+    mudarPassword.mockRejectedValue(new ApiErrorFalso(401, "password atual incorreta"));
     const user = userEvent.setup();
     render(<Configuracoes />, { wrapper: MemoryRouter });
 
@@ -112,20 +104,15 @@ describe("Configuracoes — mudar palavra-passe", () => {
     await user.type(confirmar, "novaSenha123");
     await user.click(guardar);
 
-    await waitFor(() => expect(signInWithPassword).toHaveBeenCalledWith({
-      email: "ana@example.com",
-      password: "palavra-errada",
-    }));
-    expect(updateUser).not.toHaveBeenCalled();
-    expect(toastError).toHaveBeenCalledWith("Palavra-passe atual incorreta.");
+    await waitFor(() => expect(mudarPassword).toHaveBeenCalledWith("palavra-errada", "novaSenha123"));
+    expect(toastError).toHaveBeenCalledWith("password atual incorreta");
     expect(toastSuccess).not.toHaveBeenCalled();
     // o dialogo continua aberto — o utilizador nunca viu "sucesso" para algo que falhou
     expect(screen.getByLabelText("Palavra-passe atual")).toBeInTheDocument();
   });
 
-  it("só chama updateUser depois de confirmar a palavra-passe actual, e mostra sucesso real", async () => {
-    signInWithPassword.mockResolvedValue({ data: { user: {} }, error: null });
-    updateUser.mockResolvedValue({ data: { user: {} }, error: null });
+  it("mostra sucesso real só depois de a API confirmar a mudança", async () => {
+    mudarPassword.mockResolvedValue(undefined);
     const user = userEvent.setup();
     render(<Configuracoes />, { wrapper: MemoryRouter });
 
@@ -135,12 +122,12 @@ describe("Configuracoes — mudar palavra-passe", () => {
     await user.type(confirmar, "novaSenha123");
     await user.click(guardar);
 
-    await waitFor(() => expect(updateUser).toHaveBeenCalledWith({ password: "novaSenha123" }));
+    await waitFor(() => expect(mudarPassword).toHaveBeenCalledWith("senhaCerta1", "novaSenha123"));
     expect(toastError).not.toHaveBeenCalled();
     expect(toastSuccess).toHaveBeenCalledWith("Palavra-passe atualizada com sucesso.");
   });
 
-  it("nunca chama o Supabase se as novas palavras-passe não coincidirem", async () => {
+  it("nunca chama a API se as novas palavras-passe não coincidirem", async () => {
     const user = userEvent.setup();
     render(<Configuracoes />, { wrapper: MemoryRouter });
 
@@ -150,9 +137,22 @@ describe("Configuracoes — mudar palavra-passe", () => {
     await user.type(confirmar, "outraCoisa");
     await user.click(guardar);
 
-    expect(signInWithPassword).not.toHaveBeenCalled();
-    expect(updateUser).not.toHaveBeenCalled();
+    expect(mudarPassword).not.toHaveBeenCalled();
     expect(toastError).toHaveBeenCalledWith("Verifique os campos da palavra-passe.");
+  });
+
+  it("nunca chama a API se a nova palavra-passe for demasiado curta", async () => {
+    const user = userEvent.setup();
+    render(<Configuracoes />, { wrapper: MemoryRouter });
+
+    const { actual, nova, confirmar, guardar } = await abrirDialogoPassword(user);
+    await user.type(actual, "senhaCerta1");
+    await user.type(nova, "curta12");
+    await user.type(confirmar, "curta12");
+    await user.click(guardar);
+
+    expect(mudarPassword).not.toHaveBeenCalled();
+    expect(toastError).toHaveBeenCalledWith("A nova palavra-passe deve ter pelo menos 8 caracteres.");
   });
 });
 
@@ -167,30 +167,30 @@ async function abrirDialogoEliminar(user: ReturnType<typeof userEvent.setup>) {
 
 describe("Configuracoes — eliminar conta (agendada a 30 dias)", () => {
   beforeEach(() => {
-    profilesUpdateMock.mockReset();
-    profilesUpdateMock.mockReturnValue({ data: null, error: null });
+    eliminar.mockReset();
     logout.mockReset();
     toastError.mockReset();
     toastSuccess.mockReset();
   });
 
   it("nunca faz logout nem mostra sucesso se agendar falhar", async () => {
-    profilesUpdateMock.mockReturnValue({ data: null, error: { message: "boom" } });
+    eliminar.mockRejectedValue(new ApiErrorFalso(500, "boom"));
     const user = userEvent.setup();
     render(<Configuracoes />, { wrapper: MemoryRouter });
 
     const { confirmar } = await abrirDialogoEliminar(user);
     await user.click(confirmar);
 
-    await waitFor(() => expect(profilesUpdateMock).toHaveBeenCalled());
+    await waitFor(() => expect(eliminar).toHaveBeenCalled());
     expect(logout).not.toHaveBeenCalled();
     expect(toastSuccess).not.toHaveBeenCalled();
-    expect(toastError).toHaveBeenCalledWith("Não foi possível agendar a eliminação. Tente novamente.");
+    expect(toastError).toHaveBeenCalledWith("boom");
     // o dialogo de confirmação continua visível — não fechou sozinho
     expect(screen.getByRole("button", { name: /^Agendar eliminação$/ })).toBeInTheDocument();
   });
 
   it("agenda para daqui a 30 dias, faz logout e mostra sucesso — nunca apaga na hora", async () => {
+    eliminar.mockResolvedValue({ agendada_para: "2026-10-09T00:00:00.000Z" });
     const user = userEvent.setup();
     render(<Configuracoes />, { wrapper: MemoryRouter });
 
@@ -202,15 +202,7 @@ describe("Configuracoes — eliminar conta (agendada a 30 dias)", () => {
     expect(toastSuccess).toHaveBeenCalledWith(
       "Conta agendada para eliminação dentro de 30 dias. Iniciar sessão de novo antes dessa data cancela o pedido."
     );
-
-    // Nunca chama uma função de eliminação imediata — só agenda uma data.
-    expect(profilesUpdateMock).toHaveBeenCalledTimes(1);
-    const payload = profilesUpdateMock.mock.calls[0][0] as { eliminar_agendado_para: string };
-    expect(payload.eliminar_agendado_para).toBeTypeOf("string");
-    const agendadaPara = new Date(payload.eliminar_agendado_para).getTime();
-    const daqui29Dias = Date.now() + 29 * 24 * 60 * 60 * 1000;
-    const daqui31Dias = Date.now() + 31 * 24 * 60 * 60 * 1000;
-    expect(agendadaPara).toBeGreaterThan(daqui29Dias);
-    expect(agendadaPara).toBeLessThan(daqui31Dias);
+    // Nunca chama uma função de eliminação imediata — só agenda.
+    expect(eliminar).toHaveBeenCalledTimes(1);
   });
 });

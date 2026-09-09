@@ -9,57 +9,22 @@ nunca no corpo JSON — ver nota em app/schemas/auth.py.
 
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
 
-from app.core.config import obter_settings
-from app.core.dependencies import obter_auth_service, obter_utilizador_atual
+from app.core.cookies import definir_cookie_acesso, definir_cookies_sessao, limpar_cookies_sessao
+from app.core.dependencies import obter_auth_service, obter_conta_service, obter_utilizador_atual
 from app.repositories.utilizadores_repository import UtilizadorRegisto
 from app.schemas.auth import UtilizadorCriar, UtilizadorLogin, UtilizadorPublico
 from app.services.auth_service import (
     AuthService,
     CredenciaisInvalidasError,
     EmailJaRegistadoError,
-    ParDeTokens,
     RefreshTokenInvalidoError,
 )
+from app.services.conta_service import ContaService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-COOKIE_ACCESS = "access_token"
-COOKIE_REFRESH = "refresh_token"
 
-
-def _definir_cookie_acesso(response: Response, access_token: str) -> None:
-    settings = obter_settings()
-    response.set_cookie(
-        COOKIE_ACCESS,
-        access_token,
-        max_age=settings.access_token_expira_minutos * 60,
-        httponly=True,
-        secure=settings.cookie_seguro,
-        samesite="lax",
-        path="/",
-    )
-
-
-def _definir_cookies_sessao(response: Response, tokens: ParDeTokens) -> None:
-    settings = obter_settings()
-    _definir_cookie_acesso(response, tokens.access_token)
-    response.set_cookie(
-        COOKIE_REFRESH,
-        tokens.refresh_token,
-        max_age=settings.refresh_token_expira_dias * 86400,
-        httponly=True,
-        secure=settings.cookie_seguro,
-        samesite="lax",
-        path="/",
-    )
-
-
-def _limpar_cookies_sessao(response: Response) -> None:
-    response.delete_cookie(COOKIE_ACCESS, path="/")
-    response.delete_cookie(COOKIE_REFRESH, path="/")
-
-
-def _utilizador_publico(utilizador: UtilizadorRegisto) -> UtilizadorPublico:
+def _utilizador_publico(utilizador: UtilizadorRegisto, eliminacao_cancelada: bool = False) -> UtilizadorPublico:
     return UtilizadorPublico(
         id=utilizador.id,
         email=utilizador.email,
@@ -68,6 +33,7 @@ def _utilizador_publico(utilizador: UtilizadorRegisto) -> UtilizadorPublico:
         provincia=utilizador.provincia,
         genero=utilizador.genero,
         criado_em=utilizador.criado_em,
+        eliminacao_cancelada=eliminacao_cancelada,
     )
 
 
@@ -87,21 +53,27 @@ def registar(
     except EmailJaRegistadoError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
 
-    _definir_cookies_sessao(response, sessao.tokens)
+    definir_cookies_sessao(response, sessao.tokens)
     return _utilizador_publico(sessao.utilizador)
 
 
 @router.post("/entrar", response_model=UtilizadorPublico)
 def entrar(
-    dados: UtilizadorLogin, response: Response, service: AuthService = Depends(obter_auth_service)
+    dados: UtilizadorLogin,
+    response: Response,
+    service: AuthService = Depends(obter_auth_service),
+    conta_service: ContaService = Depends(obter_conta_service),
 ) -> UtilizadorPublico:
     try:
         sessao = service.autenticar(dados.email, dados.password)
     except CredenciaisInvalidasError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
 
-    _definir_cookies_sessao(response, sessao.tokens)
-    return _utilizador_publico(sessao.utilizador)
+    definir_cookies_sessao(response, sessao.tokens)
+    # Voltar a entrar dentro do período de carência cancela um pedido de
+    # eliminação — é o sinal mais claro possível de "mudei de ideias".
+    cancelada = conta_service.cancelar_eliminacao_se_agendada(sessao.utilizador.id)
+    return _utilizador_publico(sessao.utilizador, eliminacao_cancelada=cancelada)
 
 
 @router.get("/eu", response_model=UtilizadorPublico)
@@ -114,7 +86,7 @@ def sair(response: Response) -> None:
     # Sem verificar sessão de propósito — sair nunca deve poder falhar por
     # já não haver sessão válida; o objectivo (cookies limpos) é sempre
     # alcançado.
-    _limpar_cookies_sessao(response)
+    limpar_cookies_sessao(response)
 
 
 @router.post("/atualizar-token", status_code=status.HTTP_204_NO_CONTENT)
@@ -131,4 +103,4 @@ def atualizar_token(
     except RefreshTokenInvalidoError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
 
-    _definir_cookie_acesso(response, novo_access_token)
+    definir_cookie_acesso(response, novo_access_token)

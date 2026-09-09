@@ -15,10 +15,15 @@ from app.repositories.utilizadores_repository import (
     UtilizadorRegisto,
 )
 from app.services.auth_service import AuthService, CredenciaisInvalidasError
+from app.services.conta_service import ContaService
 
 
 def obter_auth_service(sessao: Session = Depends(obter_sessao)) -> AuthService:
     return AuthService(SQLAlchemyUtilizadoresRepository(sessao))
+
+
+def obter_conta_service(sessao: Session = Depends(obter_sessao)) -> ContaService:
+    return ContaService(SQLAlchemyUtilizadoresRepository(sessao))
 
 
 def obter_utilizador_atual(

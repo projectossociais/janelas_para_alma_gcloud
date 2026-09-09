@@ -136,6 +136,47 @@ de "não grava". Fica para quando `sessoes_exercicio` migrar para a API.
 
 ---
 
+## Sprint 3 — Conta: mudar password, eliminar (30 dias) (2026-09-09)
+
+**Feito:**
+
+- [x] `app/core/cookies.py` (novo) — cookies de sessão extraídos de `routers/auth.py`
+  porque `routers/conta.py` também precisa de os limpar ao eliminar a conta.
+- [x] `api/app/services/conta_service.py` + `repositories/utilizadores_repository.py`
+  ganha `atualizar_password_hash`, `agendar_eliminacao`, `cancelar_eliminacao_se_agendada`,
+  `apagar` (usada pelo futuro trabalho de purga, ainda não construído) —
+  `POST /conta/mudar-password`, `POST /conta/eliminar`.
+- [x] **Nunca elimina na hora** — agenda para daqui a 30 dias (reaproveitando a coluna
+  `eliminar_agendado_para` já existente) e termina a sessão actual. Voltar a entrar
+  dentro do prazo cancela o pedido: `POST /auth/entrar` chama agora também o
+  `ContaService`, e `UtilizadorPublico` ganha `eliminacao_cancelada: bool` para o
+  frontend mostrar o aviso certo.
+- [x] `mudar-password` reutiliza o validador de password forte do registo
+  (`validar_password_forte`, extraído para ser partilhado) — mesma regra, um só sítio.
+- [x] 15 testes novos (service com repositório falso + router com `TestClient`,
+  incluindo o cenário completo "eliminar → voltar a entrar → cancelado") —
+  **51/51 testes `pytest`**, ruff limpo.
+- [x] `Configuracoes.tsx` migrado por completo: mudar password e eliminar conta
+  passam a chamar a API nova (`contaApi`), não o Supabase. Preferências de
+  notificação também migradas (`perfilApi.atualizar`) — era a última chamada directa
+  ao Supabase nesta página.
+- [x] **Refactor que vale a pena registar:** três páginas (`AuthContext`,
+  `Configuracoes`, `EditarPerfil`) tinham cada uma a sua própria versão de "extrair a
+  mensagem de erro da API". Consolidado em `mensagemDeErroApi` (`apiClient.ts`), por
+  duck-typing (propriedade `status`) — não `instanceof ApiError`, que não sobrevive a
+  um módulo mockado nos testes (ver CLAUDE.md, "Testes (Vitest)"). Menos código, e o
+  padrão de teste deixa de precisar de reconstruir a classe de erro real.
+- [x] 6 testes reescritos (`Configuracoes.test.tsx`, agora contra `apiClient`, não
+  Supabase) — **21/21 testes vitest**, lint sem regressões. `tsc --noEmit`: **6 erros
+  pré-existentes**, dois a menos que antes (o rewrite eliminou de raiz dois erros de
+  tipos que só existiam no mock antigo do Supabase).
+
+**Por fazer:** `EditarPerfil.tsx` não ganhou teste próprio nesta sprint — a lógica de
+negócio que importa (validação, sucesso/erro de `PATCH /perfil`) já está coberta do
+lado da API; falta só o teste de integração da página, se/quando fizer falta.
+
+---
+
 ## Como está organizado
 
 O trabalho está separado em **duas correntes que não se cruzam**, para os dois poderem

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { perfilApi, contaApi, mensagemDeErroApi } from "@/lib/apiClient";
 import { useProfile } from "@/contexts/ProfileContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -78,22 +78,14 @@ const Configuracoes = () => {
     const novoValor = !notif[key];
     setNotif((p) => ({ ...p, [key]: novoValor })); // optimista
 
-    const payload: Partial<Record<keyof typeof notif, boolean>> = { [key]: novoValor };
-    const { data, error } = await supabase
-      .from("profiles")
-      .update(payload)
-      .eq("id", profile.id)
-      .select()
-      .single();
-
-    if (error) {
+    try {
+      const data = await perfilApi.atualizar({ [key]: novoValor });
+      setProfile({ ...profile, ...data, nome_completo: data.nome_completo ?? "" });
+      toast.success("Preferência guardada", { duration: 1800 });
+    } catch {
       setNotif((p) => ({ ...p, [key]: !novoValor })); // reverte
       toast.error("Não foi possível guardar. Tente novamente.");
-      return;
     }
-
-    setProfile(data);
-    toast.success("Preferência guardada", { duration: 1800 });
   };
 
   const handlePublicToggle = () => {
@@ -106,40 +98,24 @@ const Configuracoes = () => {
       toast.error("Verifique os campos da palavra-passe.");
       return;
     }
-    if (newPw.length < 6) {
-      toast.error("A nova palavra-passe deve ter pelo menos 6 caracteres.");
-      return;
-    }
-    if (!profile?.email) {
-      toast.error("Não foi possível confirmar a sua conta. Tente novamente mais tarde.");
+    if (newPw.length < 8) {
+      toast.error("A nova palavra-passe deve ter pelo menos 8 caracteres.");
       return;
     }
 
     setPasswordLoading(true);
     try {
-      // Reautentica com a palavra-passe actual antes de a mudar. Sem isto,
-      // qualquer valor no campo "actual" passava sem ser verificado — era
-      // exactamente esse o problema apontado na avaliação de UX.
-      const { error: reauthError } = await supabase.auth.signInWithPassword({
-        email: profile.email,
-        password: currentPw,
-      });
-      if (reauthError) {
-        toast.error("Palavra-passe atual incorreta.");
-        return;
-      }
-
-      const { error: updateError } = await supabase.auth.updateUser({ password: newPw });
-      if (updateError) {
-        toast.error("Não foi possível atualizar a palavra-passe. Tente novamente.");
-        return;
-      }
+      // A API verifica a palavra-passe atual antes de a mudar — nunca
+      // avança para sucesso sem essa confirmação (ver ContaService).
+      await contaApi.mudarPassword(currentPw, newPw);
 
       setPasswordOpen(false);
       setCurrentPw("");
       setNewPw("");
       setConfirmPw("");
       toast.success("Palavra-passe atualizada com sucesso.");
+    } catch (err) {
+      toast.error(mensagemDeErroApi(err, "Não foi possível atualizar a palavra-passe. Tente novamente."));
     } finally {
       setPasswordLoading(false);
     }
@@ -157,22 +133,10 @@ const Configuracoes = () => {
 
     setDeleteLoading(true);
     try {
-      // Não apaga já — agenda para daqui a 30 dias. Voltar a entrar antes
-      // dessa data cancela o pedido automaticamente (ver AuthContext.tsx).
-      // A eliminação de facto é feita pelo trabalho diário
-      // purgar-contas-agendadas, não por este ecrã.
-      const daqui30Dias = new Date();
-      daqui30Dias.setDate(daqui30Dias.getDate() + 30);
-
-      const { error } = await supabase
-        .from("profiles")
-        .update({ eliminar_agendado_para: daqui30Dias.toISOString() })
-        .eq("id", profile.id);
-
-      if (error) {
-        toast.error("Não foi possível agendar a eliminação. Tente novamente.");
-        return;
-      }
+      // Não apaga já — a API agenda para daqui a 30 dias e termina a
+      // sessão. Voltar a entrar antes dessa data cancela o pedido
+      // automaticamente (ver AuthContext.tsx).
+      await contaApi.eliminar();
 
       setDeleteOpen(false);
       logout();
@@ -180,6 +144,8 @@ const Configuracoes = () => {
         "Conta agendada para eliminação dentro de 30 dias. Iniciar sessão de novo antes dessa data cancela o pedido."
       );
       navigate("/");
+    } catch (err) {
+      toast.error(mensagemDeErroApi(err, "Não foi possível agendar a eliminação. Tente novamente."));
     } finally {
       setDeleteLoading(false);
     }

@@ -21,6 +21,19 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Extrai uma mensagem apresentável de um erro vindo daqui — por duck-typing
+ * (propriedade `status`), não `instanceof ApiError`. Este módulo é mockado
+ * em quase todos os testes de página/contexto; uma classe importada de um
+ * módulo mockado não passa fiavelmente num `instanceof` do lado de quem a
+ * usa. Ver CLAUDE.md, secção "Testes (Vitest)".
+ */
+export function mensagemDeErroApi(err: unknown, fallback: string): string {
+  const status = (err as { status?: unknown } | null)?.status;
+  const message = (err as { message?: unknown } | null)?.message;
+  return typeof status === "number" && typeof message === "string" ? message : fallback;
+}
+
 interface CorpoDeErro {
   detail?: string | { msg?: string }[];
 }
@@ -62,6 +75,7 @@ export interface UtilizadorPublico {
   provincia: string | null;
   genero: string | null;
   criado_em: string;
+  eliminacao_cancelada: boolean;
 }
 
 export interface RegistarInput {
@@ -121,4 +135,19 @@ export const perfilApi = {
 
   atualizar: (dados: PerfilAtualizarInput) =>
     pedido<PerfilPublico>("/perfil", { method: "PATCH", body: JSON.stringify(dados) }),
+};
+
+export interface EliminacaoAgendada {
+  agendada_para: string;
+}
+
+export const contaApi = {
+  mudarPassword: (passwordAtual: string, passwordNova: string) =>
+    pedido<void>("/conta/mudar-password", {
+      method: "POST",
+      body: JSON.stringify({ password_atual: passwordAtual, password_nova: passwordNova }),
+    }),
+
+  /** Nunca elimina na hora — agenda para daqui a 30 dias e termina a sessão. */
+  eliminar: () => pedido<EliminacaoAgendada>("/conta/eliminar", { method: "POST" }),
 };
