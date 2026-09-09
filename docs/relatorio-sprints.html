@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<title>Janelas Para a Alma — Relatório dos 6 Sprints</title>
+<style>
+@page { size: A4; margin: 20mm 18mm; }
+* { box-sizing: border-box; }
+body {
+  font-family: "Georgia", "Source Serif 4", serif;
+  color: #182226;
+  line-height: 1.55;
+  font-size: 11.5pt;
+  max-width: 720px;
+  margin: 0 auto;
+}
+h1, h2, h3 { font-family: "Segoe UI", "IBM Plex Sans", Arial, sans-serif; color: #0f2b3d; }
+h1 { font-size: 22pt; margin: 0 0 4px; }
+.subtitulo { font-family: "IBM Plex Mono", Consolas, monospace; font-size: 9.5pt; text-transform: uppercase;
+  letter-spacing: .06em; color: #1f7a72; margin: 0 0 18px; }
+h2 { font-size: 15pt; margin: 30px 0 4px; padding-bottom: 5px; border-bottom: 1.5px solid #182226;
+  page-break-after: avoid; }
+h3 { font-size: 12.5pt; margin: 16px 0 4px; color: #1f7a72; page-break-after: avoid; }
+p { margin: 6px 0; }
+.lead { font-size: 12.5pt; color: #4c5a5f; margin-bottom: 4px; }
+table { width: 100%; border-collapse: collapse; font-size: 10.5pt; margin: 10px 0 18px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #dcd5c6; vertical-align: top; }
+th { font-family: "IBM Plex Mono", Consolas, monospace; font-size: 8.5pt; text-transform: uppercase;
+  letter-spacing: .04em; color: #4c5a5f; }
+.badge { display: inline-block; font-family: "IBM Plex Mono", Consolas, monospace; font-size: 8.5pt;
+  font-weight: 600; padding: 1px 7px; border-radius: 99px; background: #e4efec; color: #1f7a72; }
+.badge.done { background: #e4efec; color: #1f7a72; }
+.badge.next { background: #f3e6cf; color: #a97a2f; }
+.badge.blocked { background: #f5e4de; color: #a4432f; }
+.sprint { margin-bottom: 14px; page-break-inside: avoid; }
+.sprint .num { font-family: "IBM Plex Mono", Consolas, monospace; font-size: 9pt; color: #4c5a5f; }
+.sprint .obj { color: #4c5a5f; font-size: 10.5pt; margin: 2px 0 5px; }
+ul.feitos { margin: 4px 0 0; padding-left: 18px; font-size: 10.5pt; }
+ul.feitos li { margin-bottom: 3px; }
+.destaque { background: #f6f3ec; border-left: 3px solid #a97a2f; padding: 10px 14px; margin: 12px 0;
+  font-size: 10.5pt; }
+.numeros { display: flex; gap: 22px; margin: 14px 0 22px; flex-wrap: wrap; }
+.numero { text-align: center; }
+.numero .n { font-family: "Segoe UI", sans-serif; font-size: 22pt; font-weight: 700; color: #0f2b3d; display: block; }
+.numero .l { font-size: 9pt; color: #4c5a5f; }
+footer { margin-top: 30px; padding-top: 10px; border-top: 1px solid #dcd5c6; font-size: 9pt; color: #4c5a5f;
+  font-family: "IBM Plex Mono", Consolas, monospace; }
+code { font-family: "IBM Plex Mono", Consolas, monospace; font-size: .92em; background: #e4efec; color: #1f7a72;
+  padding: 1px 4px; border-radius: 3px; }
+a { color: #1f7a72; }
+.pagebreak { page-break-before: always; }
+</style>
+</head>
+<body>
+
+<h1>Janelas Para a Alma</h1>
+<p class="subtitulo">Relatório de trabalho autónomo · 6 sprints · 9 de Setembro de 2026</p>
+<p class="lead">Reescrita completa da infraestrutura — do Supabase/Vercel para uma API própria, Postgres próprio e Cloudflare R2, executada de forma autónoma ao longo de 6 sprints, cada um implementado, testado e commitado antes de avançar para o seguinte.</p>
+
+<div class="numeros">
+  <div class="numero"><span class="n">64/64</span><span class="l">testes da API (pytest)</span></div>
+  <div class="numero"><span class="n">26/26</span><span class="l">testes do frontend (vitest)</span></div>
+  <div class="numero"><span class="n">0</span><span class="l">erros de lint (frontend e API)</span></div>
+  <div class="numero"><span class="n">8→6</span><span class="l">erros de tipos pré-existentes, a descer</span></div>
+</div>
+
+<h2>Porque esta reescrita</h2>
+<p>Decisão explícita: sair do Supabase e do Vercel por completo. API própria em FastAPI, Postgres próprio, storage em Cloudflare R2, tudo em containers no Google Cloud Run. Sem importação de dados de utilizadores — a base de dados nasce vazia, só a <em>estrutura</em> (tabelas, colunas, tipos) é espelhada do repositório antigo.</p>
+<p>Duas correcções deliberadas em relação ao esquema antigo, decididas ao começar do zero em vez de arrastadas como dívida: <strong>identidade e perfil fundem-se numa só tabela</strong> (sem Supabase Auth, a separação deixou de fazer sentido), e <strong>o papel do utilizador passa a ser uma única coluna</strong>, não duas fontes paralelas como estava.</p>
+
+<h2>Os 6 sprints, um a um</h2>
+
+<div class="sprint">
+  <span class="num">SPRINT 0</span> <span class="badge done">concluído</span>
+  <h3>Fundação da infraestrutura nova</h3>
+  <p class="obj">Monorepo (frontend/api/infra), Docker Compose, CI, esquema de dados espelhado.</p>
+</div>
+
+<div class="sprint">
+  <span class="num">SPRINT 1</span> <span class="badge done">concluído</span>
+  <h3>Autenticação de ponta a ponta</h3>
+  <p class="obj">Serviço de autenticação próprio — argon2 + JWT em cookies <code>httpOnly</code>, nunca em <code>localStorage</code>. Substitui o Supabase Auth <strong>e</strong> um sistema de login paralelo que coexistia com ele.</p>
+</div>
+
+<div class="sprint">
+  <span class="num">SPRINT 2</span> <span class="badge done">concluído</span>
+  <h3>Perfil</h3>
+  <p class="obj"><code>GET</code>/<code>PATCH /perfil</code>. Upload de avatar desligado com mensagem honesta — depende de credenciais do Cloudflare R2 que ainda não existem.</p>
+</div>
+
+<div class="sprint">
+  <span class="num">SPRINT 3</span> <span class="badge done">concluído</span>
+  <h3>Conta: mudar password e eliminar (30 dias de carência)</h3>
+  <p class="obj">Nunca elimina na hora — agenda para daqui a 30 dias. Voltar a entrar cancela o pedido automaticamente.</p>
+</div>
+
+<div class="sprint">
+  <span class="num">SPRINT 4</span> <span class="badge done">concluído</span>
+  <h3>Banners</h3>
+  <p class="obj">Leitura pública directa ao repository. De caminho, corrigido um bug real do repositório antigo: o banner do site lia colunas que nunca existiram na tabela real — nunca apareceu a um utilizador, mesmo com um banner activo.</p>
+</div>
+
+<div class="sprint">
+  <span class="num">SPRINT 5</span> <span class="badge done">concluído</span>
+  <h3>Doações (materiais)</h3>
+  <p class="obj">O fluxo com o pior bug histórico do projecto — a doação a mostrar sucesso mesmo quando a gravação falhava. Reconstruído com essa lição como regra estrutural, não cuidado a lembrar.</p>
+</div>
+
+<div class="sprint">
+  <span class="num">SPRINT 6</span> <span class="badge done">concluído</span>
+  <h3>Feedback</h3>
+  <p class="obj">Endpoint público (funciona com ou sem sessão). Último dos 6 sprints autónomos.</p>
+</div>
+
+<div class="destaque">
+  <strong>O momento mais importante desta série:</strong> o serviço de doações tem um teste chamado
+  <code>test_nunca_engole_uma_falha_de_gravacao</code>. É a tradução directa, em código, do pior bug
+  que este projecto já teve — a doação a mostrar "sucesso" mesmo quando não foi gravada. Da próxima vez
+  que alguém tocar neste código, esse teste falha primeiro se o mesmo erro se repetir.
+</div>
+
+<div class="pagebreak"></div>
+
+<h2>O que ficou por fazer — e porquê</h2>
+<p>Nada abaixo foi esquecido. Cada item depende de uma decisão ou de um acesso que não é meu para tomar sozinho.</p>
+
+<table>
+<tr><th>Precisa de</th><th>Bloqueia</th></tr>
+<tr><td>Fornecedor de email transaccional (SES, Resend, Postmark…)</td><td>Recuperação de password, confirmação de doação e de feedback</td></tr>
+<tr><td>Credenciais reais do Cloudflare R2</td><td>Avatar e comprovativo de doação</td></tr>
+<tr><td>Docker Desktop a correr nesta máquina</td><td>Validar a migração Alembic contra Postgres real</td></tr>
+<tr><td>Conta e projecto GCloud</td><td>Deploy no Cloud Run</td></tr>
+<tr><td>Consentimento parental para menores (decisão jurídica)</td><td>Continua nunca abordado, herdado do repositório antigo</td></tr>
+<tr><td>Parceiro clínico para validar o scanner</td><td>Qualquer motor de análise clinicamente defensável</td></tr>
+</table>
+
+<h3>Próximos sprints, já ordenados por dependência</h3>
+<ul class="feitos">
+  <li><span class="badge next">próximo</span> <strong>Sprint 7</strong> — Exercícios e Scanner na API (as páginas de exercícios ainda gravam directo no Supabase, com um id que já não bate certo com nada lá)</li>
+  <li><span class="badge next">próximo</span> <strong>Sprint 8</strong> — Premium e candidaturas (dinheiro e acesso — o ponto mais sensível a seguir às doações)</li>
+  <li><span class="badge next">próximo</span> <strong>Sprint 9</strong> — Painel administrativo (precisa primeiro de verificação de papel/admin na API, que ainda não existe)</li>
+  <li><span class="badge blocked">bloqueado</span> <strong>Sprint 10</strong> — Storage e fluxo financeiro de doações (precisa das credenciais R2 acima)</li>
+  <li><span class="badge blocked">bloqueado</span> <strong>Sprint 11</strong> — Deploy real (precisa do Docker Desktop e da conta GCloud acima)</li>
+</ul>
+
+<h2>Onde encontrar tudo</h2>
+<p>
+<strong>Repositório:</strong> <code>janelasparaalma-nova</code> (GitHub) — o antigo <code>janelasparaalma</code> fica intacto como arquivo.<br>
+<strong>Raciocínio completo de cada sprint:</strong> <code>docs/BACKLOG.md</code> no repositório novo.<br>
+<strong>Regras de desenvolvimento vivas:</strong> <code>CLAUDE.md</code> no repositório novo.<br>
+<strong>Tracker interactivo</strong> (editável por ti e pelo Lukeny, guarda sozinho): a mesma hiperligação que já tinhas.
+</p>
+
+<footer>
+Janelas Para a Alma — relatório gerado automaticamente a partir do trabalho commitado em <code>janelasparaalma-nova</code>, 9 de Setembro de 2026.
+</footer>
+
+</body>
+</html>
