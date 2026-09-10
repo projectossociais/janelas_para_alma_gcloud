@@ -94,6 +94,10 @@ Nada de URL de API baked no bundle; `VITE_API_URL` só existe para apontar o dev
 remota. É esta partilha de origem que torna o cookie `httpOnly` de sessão viável (§3b) —
 o CORS na API fica como rede de segurança para o caso remoto, com lista fechada de origens.
 
+Produção (Cloud Run): scripts de provisionamento e deploy em `infra/gcloud/` (ver o
+`README.md` lá). **Nenhum corre no `git push`** — o deploy é sempre manual. O CI
+(`.github/workflows/ci.yml`) só faz lint, testes e build, nunca deploy.
+
 ---
 
 ## 3. Regra de ouro: onde vive cada lógica

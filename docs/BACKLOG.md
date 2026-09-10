@@ -49,8 +49,12 @@ Run. Sem importação de dados de utilizadores; a base de dados nasce vazia, só
    Feito a 2026-09-10 (ver "Upload de avatar via R2" mais abaixo). O código está escrito
    e testado contra um `Presigner` falso; falta só ligar credenciais reais do R2 e
    `R2_PUBLIC_BASE_URL` quando o bucket existir.
-3. **Deploy no Cloud Run** — build das imagens, Cloud SQL, variáveis de ambiente de
-   produção, domínio.
+3. **Deploy no Cloud Run** — scripts de provisionamento e deploy escritos em
+   `infra/gcloud/` (activação de APIs, Artifact Registry, Cloud SQL, Secret Manager,
+   deploy dos dois serviços, migração via Cloud Run Job com confirmação humana). Falta:
+   conta/projecto GCloud com facturação, e resolver o proxy NGINX → upstream HTTPS do
+   Cloud Run (ou pôr frontend e API atrás de um domínio único) — ver
+   `infra/gcloud/README.md`.
 
 O que se segue abaixo desta secção é o backlog de produto herdado do repositório antigo —
 continua válido *depois* de a API existir para o suportar.
@@ -296,7 +300,7 @@ item abaixo depende de uma decisão que não é minha para tomar sozinho:
 | Fornecedor de email transacional | Escolha de serviço (SES, Resend, Postmark, ...) e custo |
 | Storage de ficheiros (avatares ~~feito~~, comprovativos) | Avatar: só falta credenciais reais do R2 + `R2_PUBLIC_BASE_URL` (código feito 2026-09-10). Comprovativos: ainda por construir |
 | Migração Alembic contra Postgres real | Docker Desktop a correr nesta máquina |
-| Deploy no Cloud Run | Conta GCloud, projecto, credenciais |
+| Deploy no Cloud Run | Scripts feitos em `infra/gcloud/`. Falta conta/projecto GCloud com facturação + resolver o proxy NGINX→HTTPS do Cloud Run (`infra/gcloud/README.md`) |
 | CRUD de admin (notifications, site_content) | ~~Verificação de papel/admin na API~~ já construída (`obter_utilizador_admin`); ~~banners~~ feito a 2026-09-10 (ver abaixo). Falta `notifications`/`site_content` — mesmo padrão |
 | Fluxo financeiro de doações (upload de comprovativo) | Email + storage, os dois primeiros itens desta lista |
 | ~~`sessoes_exercicio`~~ (feito 2026-09-10), Scanner, Premium | Scanner e Premium continuam módulos maiores, cada um merece o mesmo tratamento cuidadoso — próximos sprints |

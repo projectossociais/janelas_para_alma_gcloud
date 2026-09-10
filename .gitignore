@@ -5,6 +5,10 @@
 !.env.example
 !*/.env.example
 
+# Config real do deploy GCloud (tem PROJECT_ID e passa por passwords) — só o
+# 00-config.example.sh é versionado.
+infra/gcloud/00-config.sh
+
 # Frontend
 frontend/node_modules
 frontend/dist
