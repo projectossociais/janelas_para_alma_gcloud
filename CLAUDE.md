@@ -89,9 +89,11 @@ API. Em dev (`npm run dev`) o proxy do Vite (`vite.config.ts`) reencaminha `/api
 `http://localhost:8000`; nos containers, o NGINX faz o mesmo a partir de
 `infra/nginx/default.conf.template` — a imagem oficial corre `envsubst` no arranque e
 substitui `${API_URL}` (alvo do proxy) por uma variável de **run-time**: `http://api:8000`
-no compose, o URL público da API em produção (só conhecido depois do primeiro deploy).
-Nada de URL de API baked no bundle; `VITE_API_URL` só existe para apontar o dev a uma API
-remota. É esta partilha de origem que torna o cookie `httpOnly` de sessão viável (§3b) —
+no compose, o URL público `https://` da API em produção (só conhecido depois do primeiro
+deploy). O bloco `location /api/` já lida com um upstream HTTPS do Cloud Run —
+`proxy_ssl_server_name on` (SNI) e `Host: $proxy_host` (o Cloud Run encaminha pelo Host),
+com o host público em `X-Forwarded-Host`. Nada de URL de API baked no bundle;
+`VITE_API_URL` só existe para apontar o dev a uma API remota. É esta partilha de origem que torna o cookie `httpOnly` de sessão viável (§3b) —
 o CORS na API fica como rede de segurança para o caso remoto, com lista fechada de origens.
 
 Produção (Cloud Run): scripts de provisionamento e deploy em `infra/gcloud/` (ver o

@@ -54,18 +54,18 @@ utilizador ─HTTPS─> jpa-frontend (Cloud Run, NGINX + build estático)
 
 ## Por resolver antes do primeiro deploy real a sério
 
-1. **NGINX → upstream HTTPS do Cloud Run.** `infra/nginx/default.conf.template` faz
-   `proxy_pass ${API_URL}/` com `Host $host`. Contra um `*.run.app` isto precisa de
-   `proxy_ssl_server_name on;` **e** `proxy_set_header Host` com o hostname da API
-   (o Cloud Run encaminha pelo Host). Alternativa mais robusta: pôr frontend e API
-   atrás de **um único domínio** com um External HTTPS Load Balancer e regras de
-   caminho (`/api/*` → API, resto → frontend) — aí o NGINX do frontend deixa de
-   precisar de fazer proxy nenhum. Decisão de arquitectura, ainda por tomar.
-2. **Domínio próprio + certificado** (`gcloud run domain-mappings` ou o LB acima).
-3. **Cloudflare R2** — o `03-secrets.sh` salta os segredos de R2 se não houver
+1. **Domínio próprio + certificado** (`gcloud run domain-mappings`, ou um External
+   HTTPS Load Balancer com regras de caminho se um dia se quiser um único domínio a
+   servir os dois). Sem isto o site fica nos URLs `*.run.app`.
+2. **Cloudflare R2** — o `03-secrets.sh` salta os segredos de R2 se não houver
    credenciais; enquanto isso, avatares e comprovativos ficam por migrar.
-4. **`--allow-unauthenticated`** está ligado nos dois serviços (é um site público).
+3. **`--allow-unauthenticated`** está ligado nos dois serviços (é um site público).
    Rever se algum dia houver endpoints que não devam ser expostos directamente.
+
+> **NGINX → upstream HTTPS do Cloud Run: resolvido.** O `default.conf.template` já
+> faz `proxy_ssl_server_name on` (SNI) e manda `Host: $proxy_host` (o Cloud Run
+> encaminha pelo Host), com o host público em `X-Forwarded-Host`. Funciona igual
+> contra `http://api:8000` (compose) e `https://<serviço>.run.app` (produção).
 
 ## Custo
 
