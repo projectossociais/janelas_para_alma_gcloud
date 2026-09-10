@@ -1,0 +1,70 @@
+id,area,tarefa,prioridade,estado,responsavel,sprint,atualizado,notas
+INF-01,infra,Monorepo + esquema espelhado + docker-compose + CI base,P0,feito,W,infra-0,2026-09-09,16 tabelas em orm_models; migracao baseline
+INF-02,api,"Autenticacao ponta-a-ponta (cookie httpOnly, JWT, argon2)",P0,feito,W,infra-1,2026-09-09,sai o Supabase Auth e o login paralelo em localStorage
+INF-03,api,Perfil: GET/PATCH /perfil + ProfileContext migrado,P0,feito,W,infra-2,2026-09-09,papel e email nunca mudam por aqui
+INF-04,api,Conta: mudar password + eliminar conta (agendada a 30 dias),P0,feito,W,infra-3,2026-09-09,voltar a entrar dentro do prazo cancela a eliminacao
+INF-05,api,Banners: leitura publica + fix do bug de nomes de campo,P1,feito,W,infra-4,2026-09-09,SiteBanner lia colunas que nunca existiram na tabela
+INF-06,api,Doacoes (materiais) via API,P0,feito,W,infra-5,2026-09-09,nunca 201 quando a gravacao falha (teste dedicado)
+INF-07,api,Feedback publico,P2,feito,W,infra-6,2026-09-09,funciona com ou sem sessao
+INF-08,api,Verificacao de papel admin (obter_utilizador_admin),P1,feito,W,infra-extra,2026-09-10,401 sem sessao / 403 se papel != admin; uma so implementacao
+INF-09,api,CRUD de banners de admin,P1,feito,W,infra-extra,2026-09-10,fecha a divida da Sprint 4; AdminBanners.tsx sai do Supabase
+INF-10,api,Upload de avatar via R2 (URLs assinadas em 3 passos),P1,feito,W,infra-extra,2026-09-10,os bytes nunca passam pela API; credenciais R2 de producao ligadas a 2026-09-10
+INF-11,api,Sessoes de exercicio via API,P1,feito,W,infra-extra,2026-09-10,"user_id vem do JWT, nunca do corpo; 5 exercicios migrados"
+INF-12,api,Formulario de contacto via API + leitura de admin,P1,feito,W,infra-extra,2026-09-10,guardar e separavel de enviar email; o envio fica pendente
+INF-13,infra,NGINX: proxy /api parametrizado (envsubst da var API_URL),P1,feito,W,deploy,2026-09-09,o alvo do proxy so se sabe depois do primeiro deploy
+INF-14,frontend,Browser fala com /api na mesma origem + CORS de seguranca,P1,feito,W,infra-extra,2026-09-10,apiClient default /api; proxy do Vite em dev
+INF-15,frontend,Fix: cliente Supabase nao derruba a app quando falta o env,P0,feito,W,infra-extra,2026-09-10,pagina em branco; placeholders quando VITE_SUPABASE_* faltam
+INF-16,infra,Scripts de deploy Cloud Run (infra/gcloud/ 01-05 + README),P1,feito,W,deploy,2026-09-10,"APIs, Artifact Registry, Cloud SQL, Secret Manager, deploy, migracao"
+INF-17,infra,NGINX: proxy para upstream HTTPS do Cloud Run,P1,feito,W,deploy,2026-09-10,proxy_ssl_server_name on + Host $proxy_host
+INF-18,infra,R2: bucket + credenciais + URL publico + CORS,P1,feito,W,deploy,2026-09-10,bucket janelasparaalma; pub dev URL; scripts passam R2_PUBLIC_BASE_URL
+INF-19,ci,CI: docker build das 2 imagens + nginx -t; alembic upgrade head contra Postgres real,P1,feito,W,deploy,2026-09-10,por validar na 1a corrida do CI
+DEP-01,infra,git push origin main (commits locais 3777321 + d8a7d1d),P0,a-fazer,W,deploy,2026-09-10,o push a main esta bloqueado para o Claude
+DEP-02,infra,Projecto GCloud + facturacao; correr infra/gcloud/01-05,P0,bloqueado,W,deploy,2026-09-10,precisa conta e cartao registado (bloqueio #4)
+DEP-03,infra,Migracao Alembic contra Postgres real (local),P1,bloqueado,W,deploy,2026-09-10,Docker/WSL ou role jpa local; o CI ja cobre isto
+DEP-04,infra,docker compose build local - validar o container,P2,bloqueado,W,deploy,2026-09-10,WSL/reboot pendente; o CI ja cobre isto
+DEP-05,infra,Dominio proprio + certificado; trocar R2_PUBLIC_BASE_URL para custom domain,P2,a-fazer,W,deploy,2026-09-10,gcloud run domain-mappings
+W-11,api,Confirmacao de pagamento activa o Premium (paywall + auditoria),P0,em-curso,W,S2,2026-09-10,branch api/premium-w11; toca paywall e papeis -> revisao humana (CLAUDE.md 10)
+W-01,frontend,Remover o bypass do Premium,P0,a-fazer,W,S0,2026-09-10,Exercicios.tsx / BaseExercise.tsx; depende de W-11 (ver armadilha de sequencia no BACKLOG)
+L-11,frontend,Botao Aprovar pagamento no AdminInbox,P1,em-curso,L,S2,2026-09-10,ja em curso no AdminInbox.tsx; consome o endpoint de W-11
+L-12,frontend,Ecra a aguardar aprovacao,P2,a-fazer,L,S2,2026-09-10,reutiliza LockedVideoOverlay / PremiumPaywallModal
+W-02,api,Mudar password passa a mudar mesmo a password,P0,feito,W,S0,2026-09-09,feito via INF-04
+W-03,api,Eliminar conta passa a eliminar mesmo a conta,P0,feito,W,S0,2026-09-09,feito via INF-04 (agendada a 30 dias)
+W-04,frontend,Scanner deixa de inventar diagnosticos,P0,a-fazer,W,S0,2026-09-10,mitigacao (sinais observados) ate ao Scanner real da S3
+W-05,infra,Tirar o .env do controlo de versoes,P1,feito,W,S0,2026-09-09,.env no .gitignore desde o 1o commit deste repo
+L-01,frontend,Repor as 8 imagens perdidas no export Lovable + fotos reais angolanas,P1,a-fazer,L,S0,2026-09-10,grep __l5e nao pode devolver nada
+L-02,frontend,Videos dos exercicios: produzir ou esconder o player,P2,a-fazer,L,S0,2026-09-10,decisao de produto primeiro
+L-03,frontend,Modal Ultimas Referencias faz scroll ate ao fim,P2,a-fazer,L,S0,2026-09-10,max-height + overflow-y auto
+L-04,frontend,Correccoes de navegacao (links rapidos; Maps target _blank),P2,a-fazer,L,S0,2026-09-10,
+L-05,frontend,2 ajustes visuais (botao Voltar; botao de perfil colado ao logo),P3,a-fazer,L,S0,2026-09-10,
+L-06,frontend,Levantamento completo de botoes e links partidos,P2,a-fazer,L,S0,2026-09-10,"fechar a lista, nao e corrigir tudo"
+L-07,frontend,Termos de Uso (Politicas.tsx),P1,a-fazer,L,S1,2026-09-10,inclui o aviso: o rastreio nao substitui diagnostico medico
+L-08,frontend,Ordem da informacao segue o menu (Servicos; Produtos),P2,a-fazer,L,S1,2026-09-10,
+L-09,frontend,Separar planos de exercicios,P2,a-fazer,L,S1,2026-09-10,depende de W-01
+L-10,frontend,Linguagem: tirar o ingles do texto visivel,P2,a-fazer,L,S1,2026-09-10,
+W-12,api,Sistema de candidaturas (voluntarios; clinicas): tabela + maquina de estados,P2,a-fazer,W,S2,2026-09-10,a tabela voluntarios nao existe; e trabalho novo
+L-13,frontend,Formularios + pagina de gestao de candidaturas,P2,a-fazer,L,S2,2026-09-10,depende de W-12; segue o padrao do AdminInbox
+W-13,api,Scanner: escolher e documentar o metodo de medicao,P1,bloqueado,W,S3,2026-09-10,"Hirschberg provavel; precisa validacao clinica, nao e decisao de programador"
+W-14,frontend,Scanner: calibracao (distancia a camara; inclinacao da cabeca),P1,a-fazer,W,S3,2026-09-10,Scanner.tsx ja guia 3 poses
+W-15,api,Scanner: servico de analise (coordenadas -> medicao + confianca real),P1,a-fazer,W,S3,2026-09-10,logica de resultado clinico -> testes obrigatorios
+W-16,api,Scanner: validacao contra casos reais,P0,bloqueado,W+L,S3,2026-09-10,bloqueio #8; sem parceiro clinico nao ha produto defensavel
+W-17,api,Scanner: politica de nao guardar imagens,P1,a-fazer,W,S3,2026-09-10,processar -> extrair medicoes -> descartar
+L-14,frontend,Scanner: ecra de resultados ligado ao relatorio real,P1,bloqueado,L,S3,2026-09-10,so depois de W-16; ate la fica sinais observados
+S4-01,api,Agendamentos: tabela + endpoints de criacao e decisao,P2,a-fazer,W,S4,2026-09-10,ClinicalPartners.tsx nao persiste nada hoje
+S4-02,frontend,Ligar ClinicalPartners.tsx a API + pagina AdminAgendamentos,P2,a-fazer,L,S4,2026-09-10,depende de S4-01
+S5-01,api,Unificacao de papeis (profiles.papel vs user_roles),P2,a-fazer,W,S5,2026-09-10,decisao de negocio: definir a lista oficial de papeis primeiro
+S6-01,frontend,Historico de exames com evolucao ao longo do tempo,P3,a-fazer,L,S6,2026-09-10,
+S6-02,frontend,DashboardUser com dados reais,P2,a-fazer,L,S6,2026-09-10,hoje sao valores fixos; ler sessoes_exercicio (ja na API)
+S6-03,frontend,Exercicios premium restantes sobre BaseExercise,P3,a-fazer,L,S6,2026-09-10,
+S6-04,frontend,Loja de oculos: carrinho + pagamento,P3,a-fazer,W+L,S6,2026-09-10,Produto.tsx e mock
+S6-05,api,Conteudo editavel pelo admin (notifications; site_content CRUD),P2,a-fazer,W+L,S6,2026-09-10,mesmo padrao do CRUD de banners de admin
+CROSS-01,api,Escolher fornecedor de email transacional,P1,bloqueado,W,transversal,2026-09-10,"bloqueia: recuperacao de password, confirmacao de doacao/feedback/contacto"
+CROSS-02,api,Fluxo financeiro de doacoes (upload de comprovativo),P2,bloqueado,W,transversal,2026-09-10,precisa de email + storage
+CROSS-03,frontend,Migrar as restantes chamadas Supabase (Scanner; Dashboard; oculos; candidaturas),P2,a-fazer,W,transversal,2026-09-10,"modulo a modulo, nunca big bang"
+CROSS-04,infra,Recuperacao de palavra-passe,P1,bloqueado,W,transversal,2026-09-10,depende de CROSS-01 (fornecedor de email)
+CROSS-05,legal,Consentimento parental para menores,P1,bloqueado,W,transversal,2026-09-10,bloqueio #5; precisa de apoio juridico
+CROSS-06,infra,Confirmar o prazo do credito GCloud trial,P2,a-fazer,W,transversal,2026-09-10,bloqueio #7
+NAO-01,-,Gateway de pagamento automatico (EMIS/AppyPay),-,nao-fazer-agora,-,-,2026-09-10,o ciclo manual da S2 chega; depende de contrato comercial
+NAO-02,-,Login com Google,-,nao-fazer-agora,-,-,2026-09-10,decidido: sprint proprio; falta escolher fornecedor de email
+NAO-03,-,Versao em ingles,-,nao-fazer-agora,-,-,2026-09-10,o publico e angolano
+NAO-04,-,Mapa de clinicas parceiras,-,nao-fazer-agora,-,-,2026-09-10,uma lista chega enquanto houver poucas clinicas
+NAO-05,-,Notificacoes push + modo offline,-,nao-fazer-agora,-,-,2026-09-10,"custo alto, ninguem bloqueado hoje"
