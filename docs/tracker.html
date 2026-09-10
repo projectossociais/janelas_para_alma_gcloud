@@ -3,652 +3,119 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tracker Janelas Para a Alma</title>
-<style id="app-style">
-@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
-
-:root{
-  --paper:#f6f3ec; --raised:#ffffff; --ink:#182226; --soft:#4c5a5f; --line:#dcd5c6;
-  --navy:#0f2b3d; --teal:#1f7a72; --teal-bg:#e4efec; --gold:#a97a2f; --gold-bg:#f3e6cf;
-  --danger:#a4432f; --danger-bg:#f5e4de; --done:#8a9296;
-  --serif:"Source Serif 4",Georgia,serif;
-  --sans:"IBM Plex Sans","Segoe UI",Arial,sans-serif;
-  --mono:"IBM Plex Mono",Consolas,monospace;
-}
-@media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){
-    --paper:#121a1f; --raised:#182226; --ink:#e9e4d8; --soft:#a9b6ba; --line:#2c3a3f;
-    --navy:#dce8ee; --teal:#5fc4b8; --teal-bg:#1a3230; --gold:#e0b064; --gold-bg:#332a17;
-    --danger:#e08a72; --danger-bg:#3a231c; --done:#6b7679;
+<title>Tracker — Janelas Para a Alma</title>
+<style>
+  :root {
+    --tinta:#182226; --titulo:#0f2b3d; --teal:#1f7a72; --creme:#f6f3ec;
+    --linha:#e2ddd0; --suave:#5c6a6f;
   }
-}
-:root[data-theme="dark"]{
-  --paper:#121a1f; --raised:#182226; --ink:#e9e4d8; --soft:#a9b6ba; --line:#2c3a3f;
-  --navy:#dce8ee; --teal:#5fc4b8; --teal-bg:#1a3230; --gold:#e0b064; --gold-bg:#332a17;
-  --danger:#e08a72; --danger-bg:#3a231c; --done:#6b7679;
-}
-
-*{box-sizing:border-box}
-body{background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.5}
-.wrap{max-width:900px;margin:0 auto;padding:40px 20px 80px;position:relative}
-
-header{border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:22px}
-.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--teal);margin:0 0 6px}
-h1{font-family:var(--serif);font-size:clamp(25px,4vw,34px);font-weight:700;margin:0 0 14px;color:var(--navy);text-wrap:balance}
-
-.geral{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-.barra{flex:1;min-width:180px;height:8px;background:var(--line);border-radius:99px;overflow:hidden}
-.barra i{display:block;height:100%;background:var(--teal);border-radius:99px;transition:width .25s ease}
-.contagem{font-family:var(--mono);font-size:13px;color:var(--soft);font-variant-numeric:tabular-nums}
-
-.controlos{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:20px 0 26px}
-.filtro{font-family:var(--sans);font-size:13px;font-weight:500;padding:6px 14px;border-radius:99px;
-  border:1px solid var(--line);background:var(--raised);color:var(--soft);cursor:pointer}
-.filtro[aria-pressed="true"]{background:var(--navy);color:var(--paper);border-color:var(--navy)}
-.filtro:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
-.estado-guardar{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--soft)}
-
-.sprint{margin-bottom:22px;border:1px solid var(--line);border-radius:11px;background:var(--raised);overflow:hidden}
-.sprint-topo{padding:16px 18px 14px;border-bottom:1px solid var(--line)}
-.sprint-titulo{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:5px}
-.sprint-titulo h2{font-family:var(--serif);font-size:18px;font-weight:700;margin:0;color:var(--navy)}
-.sprint-obj{font-size:13.5px;color:var(--soft);margin:0;max-width:62ch}
-.sprint-prog{display:flex;align-items:center;gap:10px;margin-top:10px}
-.sprint-prog .barra{height:5px}
-.sprint-prog .contagem{font-size:11.5px}
-
-.pill{font-family:var(--mono);font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:99px;
-  background:var(--teal-bg);color:var(--teal);white-space:nowrap}
-.pill.d{background:var(--danger-bg);color:var(--danger)}
-
-/* botoes que se comportam como texto clicavel — reset total */
-.btn-texto{background:none;border:none;padding:0;margin:0;font:inherit;color:inherit;
-  text-align:left;cursor:pointer;display:inline}
-.btn-texto:focus-visible{outline:2px solid var(--teal);outline-offset:2px;border-radius:3px}
-.dica-editar{opacity:.35;margin-left:6px;font-size:.75em}
-.btn-texto:hover .dica-editar,.btn-texto:focus-visible .dica-editar{opacity:.9}
-
-ul.tarefas{list-style:none;margin:0;padding:0}
-li.tarefa{display:flex;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line);align-items:flex-start}
-li.tarefa:last-child{border-bottom:none}
-li.tarefa.oculta{display:none}
-li.tarefa input[type=checkbox]{margin-top:3px;width:16px;height:16px;accent-color:var(--teal);cursor:pointer;flex-shrink:0}
-li.tarefa input[type=checkbox]:disabled{cursor:not-allowed;opacity:.5}
-.corpo{flex:1;min-width:0}
-.linha1{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
-.cod{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--soft);flex-shrink:0}
-.tit{font-size:14.5px;font-weight:500}
-.det{font-size:13px;color:var(--soft);margin-top:3px;max-width:66ch}
-li.feita .tit{text-decoration:line-through;color:var(--done)}
-li.feita .det{color:var(--done)}
-.pt{width:7px;height:7px;border-radius:2px;flex-shrink:0;margin-top:7px}
-.pt.W{background:var(--teal)} .pt.L{background:var(--gold)}
-.pt.WL{background:linear-gradient(135deg,var(--teal) 50%,var(--gold) 50%)}
-
-.legenda{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--soft);margin-bottom:18px}
-.legenda span{display:inline-flex;align-items:center;gap:6px}
-.legenda i{width:8px;height:8px;border-radius:2px;display:inline-block}
-
-/* formularios de edicao/criacao */
-.form-editar{padding:14px 18px;display:flex;flex-direction:column;gap:9px;
-  background:var(--teal-bg);border-bottom:1px solid var(--line)}
-li.tarefa.form-editar{border-bottom:1px solid var(--line)}
-.campo{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:7px;
-  background:var(--raised);color:var(--ink);font-family:inherit;font-size:14px}
-.campo:focus-visible{outline:2px solid var(--teal);outline-offset:1px}
-textarea.campo{min-height:60px;resize:vertical;line-height:1.5}
-.campo-linha{display:flex;gap:8px;flex-wrap:wrap}
-.campo-linha .campo{flex:1;min-width:100px}
-select.campo{flex:0 0 auto;min-width:auto;padding-right:26px}
-label.campo-check{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--soft);cursor:pointer}
-.form-acoes{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.btn{font-family:var(--sans);font-size:12.5px;font-weight:600;padding:6px 13px;border-radius:7px;
-  border:1px solid transparent;cursor:pointer}
-.btn:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
-.btn-primario{background:var(--teal);color:#fff}
-.btn-secundario{background:transparent;border-color:var(--line);color:var(--soft)}
-.btn-perigo{background:var(--danger-bg);color:var(--danger);margin-left:auto}
-
-.btn-adicionar{display:block;width:100%;padding:11px 18px;background:transparent;
-  border:none;border-top:1px dashed var(--line);color:var(--soft);font-family:var(--sans);
-  font-size:13px;text-align:left;cursor:pointer}
-.btn-adicionar:hover{color:var(--teal);background:var(--teal-bg)}
-.btn-adicionar:focus-visible{outline:2px solid var(--teal);outline-offset:-2px}
-.btn-nova-seccao{width:100%;padding:14px 18px;border:1px dashed var(--line);border-radius:11px;
-  background:transparent;color:var(--soft);font-family:var(--sans);font-size:13.5px;
-  text-align:left;cursor:pointer;margin-bottom:22px}
-.btn-nova-seccao:hover{color:var(--teal);border-color:var(--teal)}
-.form-nova-seccao{border:1px solid var(--line);border-radius:11px;padding:16px 18px;
-  background:var(--raised);margin-bottom:22px;display:flex;flex-direction:column;gap:9px}
-
-.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);
-  background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:99px;
-  display:flex;gap:14px;align-items:center;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.28);
-  z-index:50;max-width:calc(100vw - 40px)}
-.toast button{background:none;border:none;color:var(--paper);font-weight:700;
-  text-decoration:underline;cursor:pointer;font:inherit;padding:0;white-space:nowrap}
-
-h3.sec{font-family:var(--serif);font-size:20px;font-weight:700;color:var(--navy);
-  margin:36px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
-
-table{width:100%;border-collapse:collapse;font-size:13.5px}
-th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
-th{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);font-weight:600}
-.tw{overflow-x:auto}
-
-textarea#notas{width:100%;min-height:110px;padding:12px 14px;border:1px solid var(--line);border-radius:9px;
-  background:var(--raised);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.55;resize:vertical}
-textarea#notas:focus-visible{outline:2px solid var(--teal);outline-offset:1px}
-textarea#notas:disabled{opacity:.6}
-
-footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--line);
-  font-family:var(--mono);font-size:11.5px;color:var(--soft);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
-code{font-family:var(--mono);font-size:.88em;background:var(--teal-bg);color:var(--teal);padding:1px 5px;border-radius:4px}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+  * { box-sizing:border-box; }
+  body { font-family:"Georgia","Source Serif 4",serif; color:var(--tinta);
+    margin:0; padding:28px 22px 60px; max-width:1100px; margin:0 auto;
+    line-height:1.5; background:#fff; }
+  h1 { font-family:"Segoe UI","IBM Plex Sans",Arial,sans-serif; color:var(--titulo);
+    font-size:20pt; margin:0 0 2px; }
+  .meta { font-family:"IBM Plex Mono",Consolas,monospace; font-size:8.5pt;
+    text-transform:uppercase; letter-spacing:.06em; color:var(--teal); margin:0 0 4px; }
+  .aviso { font-size:9pt; color:var(--suave); margin:0 0 16px; }
+  .barra { height:8px; background:var(--linha); border-radius:99px; overflow:hidden; margin:10px 0 4px; }
+  .barra i { display:block; height:100%; background:var(--teal); width:31%; }
+  .barra-l { font-size:9pt; color:var(--suave); margin-bottom:18px; }
+  .filtros { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:6px; }
+  .filtros .grupo-l { font-family:"IBM Plex Mono",monospace; font-size:8pt;
+    text-transform:uppercase; color:var(--suave); align-self:center; margin-right:2px; }
+  .chip { font-family:"IBM Plex Mono",Consolas,monospace; font-size:8.5pt; cursor:pointer;
+    border:1px solid var(--linha); background:#fff; color:var(--tinta);
+    padding:3px 9px; border-radius:99px; }
+  .chip b { color:var(--suave); }
+  .chip.on { background:var(--titulo); color:#fff; border-color:var(--titulo); }
+  .chip.on b { color:#cfe0dd; }
+  #busca { font:inherit; font-size:10pt; padding:5px 10px; border:1px solid var(--linha);
+    border-radius:6px; margin:8px 0 14px; width:260px; max-width:100%; }
+  table { width:100%; border-collapse:collapse; font-size:10pt; }
+  th, td { text-align:left; padding:6px 9px; border-bottom:1px solid var(--linha); vertical-align:top; }
+  th { font-family:"IBM Plex Mono",Consolas,monospace; font-size:8pt; text-transform:uppercase;
+    letter-spacing:.04em; color:var(--suave); position:sticky; top:0; background:#fff; }
+  td.id { font-family:"IBM Plex Mono",Consolas,monospace; font-size:8.5pt; white-space:nowrap; color:var(--suave); }
+  .tag { font-family:"IBM Plex Mono",Consolas,monospace; font-size:7.5pt; font-weight:600;
+    padding:1px 6px; border-radius:99px; white-space:nowrap; }
+  .est-feito { background:#e4efec; color:var(--teal); }
+  .est-em-curso { background:#dbe9f6; color:#1f5f8f; }
+  .est-a-fazer { background:#f3e6cf; color:#a97a2f; }
+  .est-bloqueado { background:#f5e0da; color:#a4432f; }
+  .est-nao-fazer-agora { background:#eee; color:#777; }
+  .p0 { color:#a4432f; font-weight:700; }
+  .p1 { color:#a97a2f; font-weight:600; }
+  .nota { color:var(--suave); font-size:9pt; }
+  tr.oculta { display:none; }
+  footer { margin-top:26px; font-family:"IBM Plex Mono",monospace; font-size:8pt; color:var(--suave); }
+  @media print {
+    .filtros, #busca { display:none; }
+    body { padding:0; } th { position:static; }
+  }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <p class="eyebrow">Tracker vivo · janelasparaalma-nova · edita directamente e fica guardado para os dois</p>
-    <h1>Janelas Para a Alma</h1>
-    <div class="geral">
-      <div class="barra"><i id="barra-geral"></i></div>
-      <span class="contagem" id="contagem-geral"></span>
-    </div>
-  </header>
+<h1>Janelas Para a Alma — Tracker</h1>
+<p class="meta">gerado de docs/tarefas.csv · 2026-09-10</p>
+<p class="aviso">Vista só-leitura. Não editar aqui — a fonte é o <code>docs/tarefas.csv</code>
+(<code>python docs/gerar_tracker.py</code> volta a gerar este ficheiro).</p>
 
-  <div class="legenda">
-    <span><i style="background:var(--teal)"></i> Wilson</span>
-    <span><i style="background:var(--gold)"></i> Lukeny</span>
-    <span><i style="background:linear-gradient(135deg,var(--teal) 50%,var(--gold) 50%)"></i> Os dois</span>
-  </div>
+<div class="barra"><i></i></div>
+<p class="barra-l">22/71 feitas (31%)</p>
 
-  <div class="controlos">
-    <button class="filtro" data-f="todos" aria-pressed="true">Todos</button>
-    <button class="filtro" data-f="W" aria-pressed="false">Só Wilson</button>
-    <button class="filtro" data-f="L" aria-pressed="false">Só Lukeny</button>
-    <button class="filtro" data-f="abertas" aria-pressed="false">Só por fazer</button>
-    <span class="estado-guardar" id="estado-guardar"></span>
-  </div>
-
-  <div id="lista"></div>
-  <div id="toast-area"></div>
-
-  <h3 class="sec">Bloqueios em aberto</h3>
-  <div class="tw"><table id="bloqueios"></table></div>
-
-  <h3 class="sec">O que não fazer agora</h3>
-  <div class="tw"><table id="nao-fazer"></table></div>
-
-  <h3 class="sec">Notas da equipa</h3>
-  <p style="font-size:13.5px;color:var(--soft);margin:0 0 10px">
-    Escreve aqui o que for surgindo. Guarda sozinho e o outro vê da próxima vez que abrir.
-  </p>
-  <textarea id="notas" placeholder="Decisões, dúvidas, o que ficou a meio…"></textarea>
-
-  <footer>
-    <span>Fonte viva das tarefas — <code>janelasparaalma-nova/docs/BACKLOG.md</code> guarda o raciocínio e o histórico completo de cada sprint</span>
-    <span id="ultima"></span>
-  </footer>
+<div class="filtros">
+  <span class="grupo-l">estado</span><button class="chip e-em-curso" data-filtro="em-curso">em-curso <b>2</b></button><button class="chip e-a-fazer" data-filtro="a-fazer">a-fazer <b>31</b></button><button class="chip e-bloqueado" data-filtro="bloqueado">bloqueado <b>11</b></button><button class="chip e-feito" data-filtro="feito">feito <b>22</b></button><button class="chip e-nao-fazer-agora" data-filtro="nao-fazer-agora">nao-fazer-agora <b>5</b></button>
 </div>
-<script id="estado" type="application/json">{"v":2,"sprints":[{"nome":"Sprint 0 — Fundação da infraestrutura nova","etiqueta":"concluído","urgente":false,"obj":"Sair do Supabase e do Vercel por completo. Monorepo novo (janelasparaalma-nova), sem importar dados de utilizadores — só a estrutura é espelhada.","tarefas":[{"id":"W-01","dono":"W","tit":"Monorepo criado: frontend/, api/, infra/","det":"Docker Compose + Dockerfiles (NGINX no frontend, uvicorn na API) + CI (lint+test+build).","feita":true},{"id":"W-02","dono":"W","tit":"Esquema de dados espelhado, com duas correcções deliberadas","det":"utilizadores funde identidade+perfil (sem Supabase Auth, a separação deixou de ter razão de ser); papel passa a ser uma única coluna, não profiles.papel + user_roles em paralelo.","feita":true},{"id":"W-03","dono":"W","tit":"Repositório novo no GitHub, histórico alinhado","det":"janelasparaalma (antigo) fica intacto como arquivo. janelasparaalma-nova é o activo daqui em diante.","feita":true}]},{"nome":"Sprint 1 — Autenticação de ponta a ponta","etiqueta":"concluído","urgente":false,"obj":"Serviço de autenticação próprio (argon2 + JWT em cookies httpOnly), a substituir o Supabase Auth e o sistema de login paralelo em localStorage que coexistia com ele.","tarefas":[{"id":"W-04","dono":"W","tit":"/auth/registar, /entrar, /eu, /sair, /atualizar-token","det":"Sessão em cookies httpOnly, nunca em localStorage nem no corpo JSON — um XSS não consegue roubar a sessão.","feita":true},{"id":"W-05","dono":"W","tit":"Papel auto-registável validado no schema","det":"comum/estrabico/profissional só — um pedido a forjar papel=admin é rejeitado com 422, não só escondido no formulário.","feita":true},{"id":"W-06","dono":"W","tit":"AuthContext.tsx e Auth.tsx reescritos","det":"Sai o Supabase Auth E o sistema de login paralelo em localStorage. 'Esqueceu a password' avisa honestamente que ainda não está disponível.","feita":true}]},{"nome":"Sprint 2 — Perfil","etiqueta":"concluído","urgente":false,"obj":"Expor o resto dos dados do utilizador (nome, biografia, contacto) que já viviam na tabela unificada.","tarefas":[{"id":"W-07","dono":"W","tit":"GET/PATCH /perfil","det":"Nunca aceita mudar papel nem email por aqui, mesmo que enviados no corpo.","feita":true},{"id":"W-08","dono":"W","tit":"ProfileContext.tsx e EditarPerfil.tsx migrados","det":"Upload de avatar desligado com mensagem honesta — depende de credenciais reais do Cloudflare R2, que ainda não existem.","feita":true}]},{"nome":"Sprint 3 — Conta: password e eliminação","etiqueta":"concluído","urgente":false,"obj":"Reaproveitar o desenho da carência de 30 dias já feito no repositório antigo, contra a base de dados nova.","tarefas":[{"id":"W-09","dono":"W","tit":"Mudar password","det":"POST /conta/mudar-password, verifica a password actual antes de mudar.","feita":true},{"id":"W-10","dono":"W","tit":"Eliminar conta com 30 dias de carência","det":"Nunca elimina na hora. Voltar a entrar cancela o pedido automaticamente.","feita":true},{"id":"W-11","dono":"W","tit":"Configuracoes.tsx migrado por completo","det":"Password, eliminar conta e preferências de notificação — já não fala com o Supabase.","feita":true}]},{"nome":"Sprint 4 — Banners","etiqueta":"concluído","urgente":false,"obj":"Conteúdo público, leitura directa ao repository — sem regras de negócio.","tarefas":[{"id":"W-12","dono":"W","tit":"GET /banners/ativo + bug corrigido","det":"SiteBanner.tsx lia colunas que nunca existiram na tabela real (title/active/color) — o banner nunca apareceu a um utilizador real. Corrigido ao migrar.","feita":true}]},{"nome":"Sprint 5 — Doações (materiais)","etiqueta":"concluído","urgente":false,"obj":"O fluxo com o pior bug do projecto — construído desta vez com a lição como regra estrutural.","tarefas":[{"id":"W-13","dono":"W","tit":"POST /doacoes/materiais","det":"Recibo gerado no servidor, não confiado ao Date.now() do browser.","feita":true},{"id":"W-14","dono":"W","tit":"O bug mais grave do projecto, agora um teste","det":"test_nunca_engole_uma_falha_de_gravacao — nunca mostra sucesso quando o insert falha.","feita":true},{"id":"W-15","dono":"W","tit":"Apoiar.tsx (materiais) migrado","det":"Fluxo financeiro (upload de comprovativo) fica no Supabase por agora — depende de storage e de um fornecedor de email.","feita":true}]},{"nome":"Sprint 6 — Feedback","etiqueta":"concluído","urgente":false,"obj":"Último dos 6 sprints autónomos — feedback público, com ou sem sessão.","tarefas":[{"id":"W-16","dono":"W","tit":"POST /feedback","det":"Funciona com ou sem sessão; identifica o utilizador quando há cookie válido, nunca exige.","feita":true},{"id":"W-17","dono":"W","tit":"FeedbackWidget.tsx migrado","det":"Notificação por email ao admin fica pendente — o feedback em si já fica gravado.","feita":true}]},{"nome":"Sprint 7 — Exercícios e Scanner na API","etiqueta":"próximo","urgente":false,"obj":"profile.id já vem da API nova, não do Supabase — as páginas de exercícios continuam a gravar sessoes_exercicio directo no Supabase, com um id que já não bate certo com nada lá.","tarefas":[{"id":"W-18","dono":"W","tit":"sessoes_exercicio na API","det":"Endpoint novo + ligar as 5 páginas de exercícios que hoje gravam directo no Supabase.","feita":false},{"id":"W-19","dono":"W","tit":"Decidir o motor de análise do Scanner","det":"Continua por decidir desde sempre. Hirschberg como candidato — precisa de validação clínica, não é decisão de programador.","feita":false},{"id":"L-01","dono":"L","tit":"Testar os exercícios de ponta a ponta depois da migração","det":"","feita":false}]},{"nome":"Sprint 8 — Premium e candidaturas","etiqueta":"próximo","urgente":false,"obj":"Dinheiro e acesso — o ponto mais sensível a seguir às doações.","tarefas":[{"id":"W-20","dono":"W","tit":"premium_requests na API + activação de Premium","det":"Continua a exigir o mesmo cuidado do serviço de doações: nunca mostrar sucesso sem confirmar.","feita":false},{"id":"L-02","dono":"L","tit":"Formulário de candidatura a Premium ligado à API","det":"","feita":false}]},{"nome":"Sprint 9 — Painel administrativo","etiqueta":"próximo","urgente":false,"obj":"Nada de CRUD de admin migra sem isto primeiro — construir por cima de uma fronteira de autorização que não existe seria pior do que esperar.","tarefas":[{"id":"W-21","dono":"W","tit":"Verificação de papel/admin na API","det":"Não existe ainda — dependency nova, testada, antes de qualquer rota de admin.","feita":false},{"id":"W-22","dono":"W","tit":"CRUD de banners, notifications, site_content","det":"","feita":false},{"id":"W-23","dono":"W","tit":"Corrigir AdminInbox: 'Aprovar' passa a activar mesmo o papel","det":"Hoje só marca status — dívida antiga, carregada do repositório anterior.","feita":false}]},{"nome":"Sprint 10 — Storage e fluxo financeiro","etiqueta":"bloqueado — precisa de ti","urgente":true,"obj":"Nada aqui é código por fazer — é código à espera de credenciais e de uma decisão tua.","tarefas":[{"id":"W-24","dono":"W","tit":"Endpoint de upload para Cloudflare R2","det":"Precisa das credenciais reais do R2 (conta + bucket).","feita":false},{"id":"W-25","dono":"W","tit":"Ligar avatar (EditarPerfil) e comprovativo (Apoiar financeiro) à API","det":"","feita":false}]},{"nome":"Sprint 11 — Deploy real","etiqueta":"bloqueado — precisa de ti","urgente":true,"obj":"O trabalho de código está pronto para isto; falta o acesso.","tarefas":[{"id":"W-26","dono":"W","tit":"Validar a migração Alembic contra Postgres real","det":"Precisa do Docker Desktop a correr nesta máquina.","feita":false},{"id":"W-27","dono":"W","tit":"docker compose up local, de ponta a ponta","det":"","feita":false},{"id":"W-28","dono":"W","tit":"Deploy no Cloud Run","det":"Precisa de conta e projecto GCloud (e cartão registado, mesmo sem cobrar nada).","feita":false}]}],"notas":"9 de Setembro — pivot grande: saímos do Supabase e do Vercel por completo. Nova infraestrutura em janelasparaalma-nova (FastAPI + Postgres próprio + Cloudflare R2 + Cloud Run), sem importar dados de utilizadores. As tarefas antigas sobre corrigir o repositório Supabase deixaram de fazer sentido e foram substituídas por este plano — o raciocínio completo de cada sprint está em janelasparaalma-nova/docs/BACKLOG.md.\n\n6 sprints feitos de forma autónoma (auth, perfil, conta, banners, doações-materiais, feedback), cada um com testes a passar antes de avançar para o seguinte. Preciso de ti para destravar o resto: fornecedor de email, credenciais Cloudflare R2, ligar o Docker Desktop, e uma conta GCloud para o deploy.","actualizado":"2026-09-09T06:00:00.000Z"}</script>
-<script id="app-script">
-// Modelo por omissao — usado so para SEMEAR a primeira publicacao ou migrar
-// de uma versao anterior do tracker. Depois disso, estado.sprints manda.
-const DEFAULT_SPRINTS = [
-  { nome:"Sprint 0 — Fundação da infraestrutura nova", etiqueta:"concluído", urgente:false,
-    obj:"Sair do Supabase e do Vercel por completo. Monorepo novo (janelasparaalma-nova), sem importar dados de utilizadores — só a estrutura é espelhada.",
-    tarefas:[
-      {id:"W-01",dono:"W",tit:"Monorepo criado: frontend/, api/, infra/",det:"Docker Compose + Dockerfiles (NGINX no frontend, uvicorn na API) + CI (lint+test+build)."},
-      {id:"W-02",dono:"W",tit:"Esquema de dados espelhado, com duas correcções deliberadas",det:"utilizadores funde identidade+perfil (sem Supabase Auth, a separação deixou de ter razão de ser); papel passa a ser uma única coluna, não profiles.papel + user_roles em paralelo."},
-      {id:"W-03",dono:"W",tit:"Repositório novo no GitHub, histórico alinhado",det:"janelasparaalma (antigo) fica intacto como arquivo. janelasparaalma-nova é o activo daqui em diante."}
-    ]},
-  { nome:"Sprint 1 — Autenticação de ponta a ponta", etiqueta:"concluído", urgente:false,
-    obj:"Serviço de autenticação próprio (argon2 + JWT em cookies httpOnly), a substituir o Supabase Auth e o sistema de login paralelo em localStorage que coexistia com ele.",
-    tarefas:[
-      {id:"W-04",dono:"W",tit:"/auth/registar, /entrar, /eu, /sair, /atualizar-token",det:"Sessão em cookies httpOnly, nunca em localStorage nem no corpo JSON — um XSS não consegue roubar a sessão."},
-      {id:"W-05",dono:"W",tit:"Papel auto-registável validado no schema",det:"comum/estrabico/profissional só — um pedido a forjar papel=admin é rejeitado com 422, não só escondido no formulário."},
-      {id:"W-06",dono:"W",tit:"AuthContext.tsx e Auth.tsx reescritos",det:"Sai o Supabase Auth E o sistema de login paralelo em localStorage. 'Esqueceu a password' avisa honestamente que ainda não está disponível."}
-    ]},
-  { nome:"Sprint 2 — Perfil", etiqueta:"concluído", urgente:false,
-    obj:"Expor o resto dos dados do utilizador (nome, biografia, contacto) que já viviam na tabela unificada.",
-    tarefas:[
-      {id:"W-07",dono:"W",tit:"GET/PATCH /perfil",det:"Nunca aceita mudar papel nem email por aqui, mesmo que enviados no corpo."},
-      {id:"W-08",dono:"W",tit:"ProfileContext.tsx e EditarPerfil.tsx migrados",det:"Upload de avatar desligado com mensagem honesta — depende de credenciais reais do Cloudflare R2, que ainda não existem."}
-    ]},
-  { nome:"Sprint 3 — Conta: password e eliminação", etiqueta:"concluído", urgente:false,
-    obj:"Reaproveitar o desenho da carência de 30 dias já feito no repositório antigo, contra a base de dados nova.",
-    tarefas:[
-      {id:"W-09",dono:"W",tit:"Mudar password",det:"POST /conta/mudar-password, verifica a password actual antes de mudar."},
-      {id:"W-10",dono:"W",tit:"Eliminar conta com 30 dias de carência",det:"Nunca elimina na hora. Voltar a entrar cancela o pedido automaticamente."},
-      {id:"W-11",dono:"W",tit:"Configuracoes.tsx migrado por completo",det:"Password, eliminar conta e preferências de notificação — já não fala com o Supabase."}
-    ]},
-  { nome:"Sprint 4 — Banners", etiqueta:"concluído", urgente:false,
-    obj:"Conteúdo público, leitura directa ao repository — sem regras de negócio.",
-    tarefas:[
-      {id:"W-12",dono:"W",tit:"GET /banners/ativo + bug corrigido",det:"SiteBanner.tsx lia colunas que nunca existiram na tabela real (title/active/color) — o banner nunca apareceu a um utilizador real. Corrigido ao migrar."}
-    ]},
-  { nome:"Sprint 5 — Doações (materiais)", etiqueta:"concluído", urgente:false,
-    obj:"O fluxo com o pior bug do projecto — construído desta vez com a lição como regra estrutural.",
-    tarefas:[
-      {id:"W-13",dono:"W",tit:"POST /doacoes/materiais",det:"Recibo gerado no servidor, não confiado ao Date.now() do browser."},
-      {id:"W-14",dono:"W",tit:"O bug mais grave do projecto, agora um teste",det:"test_nunca_engole_uma_falha_de_gravacao — nunca mostra sucesso quando o insert falha."},
-      {id:"W-15",dono:"W",tit:"Apoiar.tsx (materiais) migrado",det:"Fluxo financeiro (upload de comprovativo) fica no Supabase por agora — depende de storage e de um fornecedor de email."}
-    ]},
-  { nome:"Sprint 6 — Feedback", etiqueta:"concluído", urgente:false,
-    obj:"Último dos 6 sprints autónomos — feedback público, com ou sem sessão.",
-    tarefas:[
-      {id:"W-16",dono:"W",tit:"POST /feedback",det:"Funciona com ou sem sessão; identifica o utilizador quando há cookie válido, nunca exige."},
-      {id:"W-17",dono:"W",tit:"FeedbackWidget.tsx migrado",det:"Notificação por email ao admin fica pendente — o feedback em si já fica gravado."}
-    ]},
-  { nome:"Sprint 7 — Exercícios e Scanner na API", etiqueta:"próximo", urgente:false,
-    obj:"profile.id já vem da API nova, não do Supabase — as páginas de exercícios continuam a gravar sessoes_exercicio directo no Supabase, com um id que já não bate certo com nada lá.",
-    tarefas:[
-      {id:"W-18",dono:"W",tit:"sessoes_exercicio na API",det:"Endpoint novo + ligar as 5 páginas de exercícios que hoje gravam directo no Supabase."},
-      {id:"W-19",dono:"W",tit:"Decidir o motor de análise do Scanner",det:"Continua por decidir desde sempre. Hirschberg como candidato — precisa de validação clínica, não é decisão de programador."},
-      {id:"L-01",dono:"L",tit:"Testar os exercícios de ponta a ponta depois da migração",det:""}
-    ]},
-  { nome:"Sprint 8 — Premium e candidaturas", etiqueta:"próximo", urgente:false,
-    obj:"Dinheiro e acesso — o ponto mais sensível a seguir às doações.",
-    tarefas:[
-      {id:"W-20",dono:"W",tit:"premium_requests na API + activação de Premium",det:"Continua a exigir o mesmo cuidado do serviço de doações: nunca mostrar sucesso sem confirmar."},
-      {id:"L-02",dono:"L",tit:"Formulário de candidatura a Premium ligado à API",det:""}
-    ]},
-  { nome:"Sprint 9 — Painel administrativo", etiqueta:"próximo", urgente:false,
-    obj:"Nada de CRUD de admin migra sem isto primeiro — construir por cima de uma fronteira de autorização que não existe seria pior do que esperar.",
-    tarefas:[
-      {id:"W-21",dono:"W",tit:"Verificação de papel/admin na API",det:"Não existe ainda — dependency nova, testada, antes de qualquer rota de admin."},
-      {id:"W-22",dono:"W",tit:"CRUD de banners, notifications, site_content",det:""},
-      {id:"W-23",dono:"W",tit:"Corrigir AdminInbox: 'Aprovar' passa a activar mesmo o papel",det:"Hoje só marca status — dívida antiga, carregada do repositório anterior."}
-    ]},
-  { nome:"Sprint 10 — Storage e fluxo financeiro", etiqueta:"bloqueado — precisa de ti", urgente:true,
-    obj:"Nada aqui é código por fazer — é código à espera de credenciais e de uma decisão tua.",
-    tarefas:[
-      {id:"W-24",dono:"W",tit:"Endpoint de upload para Cloudflare R2",det:"Precisa das credenciais reais do R2 (conta + bucket)."},
-      {id:"W-25",dono:"W",tit:"Ligar avatar (EditarPerfil) e comprovativo (Apoiar financeiro) à API",det:""}
-    ]},
-  { nome:"Sprint 11 — Deploy real", etiqueta:"bloqueado — precisa de ti", urgente:true,
-    obj:"O trabalho de código está pronto para isto; falta o acesso.",
-    tarefas:[
-      {id:"W-26",dono:"W",tit:"Validar a migração Alembic contra Postgres real",det:"Precisa do Docker Desktop a correr nesta máquina."},
-      {id:"W-27",dono:"W",tit:"docker compose up local, de ponta a ponta",det:""},
-      {id:"W-28",dono:"W",tit:"Deploy no Cloud Run",det:"Precisa de conta e projecto GCloud (e cartão registado, mesmo sem cobrar nada)."}
-    ]}
-];
+<div class="filtros">
+  <span class="grupo-l">quem</span><button class="chip r" data-filtro="-">- <b>5</b></button><button class="chip r" data-filtro="L">L <b>18</b></button><button class="chip r" data-filtro="W">W <b>45</b></button><button class="chip r" data-filtro="W+L">W+L <b>3</b></button>
+</div>
+<input id="busca" type="search" placeholder="procurar tarefa, id, nota…">
 
-const BLOQUEIOS = [
-  ["1","Fornecedor de email transaccional","Recuperação de password, confirmação de doação e de feedback dependem disto","Wilson","aberto"],
-  ["2","Credenciais reais do Cloudflare R2","Sem isto, avatar e comprovativo de doação continuam desligados","Wilson","aberto"],
-  ["3","Docker Desktop não está a correr nesta máquina","A migração Alembic nunca foi validada contra Postgres real","Wilson","aberto"],
-  ["4","Conta e projecto GCloud para o Cloud Run","Exige cartão registado, mesmo sem cobrar nada","Wilson","aberto"],
-  ["5","Consentimento parental para menores","Nunca abordado, nem no código nem nos documentos","Wilson + jurídico","aberto"],
-  ["6","Parceiro clínico para validar o scanner","Bloqueia qualquer motor de análise clinicamente defensável","Wilson","aberto"]
-];
+<table id="t">
+  <thead><tr>
+    <th>id</th><th>tarefa</th><th>prio</th><th>estado</th><th>quem</th><th>sprint</th><th>actualizado</th><th>notas</th>
+  </tr></thead>
+  <tbody></tbody>
+</table>
 
-const NAO_FAZER = [
-  ["Gateway de pagamento automático","Depende de contrato comercial. O ciclo manual chega por agora"],
-  ["Login com Google","Conveniência, não bloqueia ninguém"],
-  ["Versão em inglês","O público é angolano"],
-  ["Mapa de clínicas parceiras","Uma lista resolve, enquanto houver poucas clínicas"],
-  ["Notificações push e modo offline","Custo alto, nenhum utilizador bloqueado hoje"],
-  ["CRUD de admin antes de existir verificação de papel na API","Construir por cima de uma fronteira de autorização que ainda não existe seria pior do que esperar"],
-  ["Fluxo financeiro de doações antes de resolver storage e email","Migrar só metade seria pior do que não tocar"],
-  ["Migrar os ~30 pontos de Supabase restantes de uma vez","Por módulo, não big bang — é assim que as reescritas morrem"]
-];
+<footer>Janelas Para a Alma · reescrita de infraestrutura</footer>
 
-// Capturados ANTES de qualquer renderizacao: sao o molde autorado, nao estado vivo.
-const FONTE_SCRIPT = document.getElementById("app-script").textContent;
-const FONTE_ESTILO = document.getElementById("app-style").textContent;
-const FONTE_MOLDE  = document.querySelector(".wrap").outerHTML;
+<script>
+const DADOS = [{"id": "W-11", "area": "api", "tarefa": "Confirmacao de pagamento activa o Premium (paywall + auditoria)", "prioridade": "P0", "estado": "em-curso", "responsavel": "W", "sprint": "S2", "atualizado": "2026-09-10", "notas": "branch api/premium-w11; toca paywall e papeis -> revisao humana (CLAUDE.md 10)"}, {"id": "L-11", "area": "frontend", "tarefa": "Botao Aprovar pagamento no AdminInbox", "prioridade": "P1", "estado": "em-curso", "responsavel": "L", "sprint": "S2", "atualizado": "2026-09-10", "notas": "ja em curso no AdminInbox.tsx; consome o endpoint de W-11"}, {"id": "AUTH-01", "area": "api", "tarefa": "Registo: politica de password mais forte + campo de confirmacao no formulario", "prioridade": "P0", "estado": "a-fazer", "responsavel": "W", "sprint": "S0", "atualizado": "2026-09-10", "notas": "hoje so valida >=8 chars (validar_password_forte em schemas/auth.py); definir regra minima real (maiuscula/digito/etc). Confirmacao e so no <form>, nunca vai ao servidor. Desbloqueado."}, {"id": "DEP-01", "area": "infra", "tarefa": "git push origin main (commits locais 3777321 + d8a7d1d)", "prioridade": "P0", "estado": "a-fazer", "responsavel": "W", "sprint": "deploy", "atualizado": "2026-09-10", "notas": "o push a main esta bloqueado para o Claude"}, {"id": "W-01", "area": "frontend", "tarefa": "Remover o bypass do Premium", "prioridade": "P0", "estado": "a-fazer", "responsavel": "W", "sprint": "S0", "atualizado": "2026-09-10", "notas": "Exercicios.tsx / BaseExercise.tsx; depende de W-11 (ver armadilha de sequencia no BACKLOG)"}, {"id": "W-04", "area": "frontend", "tarefa": "Scanner deixa de inventar diagnosticos", "prioridade": "P0", "estado": "a-fazer", "responsavel": "W", "sprint": "S0", "atualizado": "2026-09-10", "notas": "mitigacao (sinais observados) ate ao Scanner real da S3"}, {"id": "L-01", "area": "frontend", "tarefa": "Repor as 8 imagens perdidas no export Lovable + fotos reais angolanas", "prioridade": "P1", "estado": "a-fazer", "responsavel": "L", "sprint": "S0", "atualizado": "2026-09-10", "notas": "grep __l5e nao pode devolver nada"}, {"id": "L-07", "area": "frontend", "tarefa": "Termos de Uso (Politicas.tsx)", "prioridade": "P1", "estado": "a-fazer", "responsavel": "L", "sprint": "S1", "atualizado": "2026-09-10", "notas": "inclui o aviso: o rastreio nao substitui diagnostico medico"}, {"id": "W-14", "area": "frontend", "tarefa": "Scanner: calibracao (distancia a camara; inclinacao da cabeca)", "prioridade": "P1", "estado": "a-fazer", "responsavel": "W", "sprint": "S3", "atualizado": "2026-09-10", "notas": "Scanner.tsx ja guia 3 poses"}, {"id": "W-15", "area": "api", "tarefa": "Scanner: servico de analise (coordenadas -> medicao + confianca real)", "prioridade": "P1", "estado": "a-fazer", "responsavel": "W", "sprint": "S3", "atualizado": "2026-09-10", "notas": "logica de resultado clinico -> testes obrigatorios"}, {"id": "W-17", "area": "api", "tarefa": "Scanner: politica de nao guardar imagens", "prioridade": "P1", "estado": "a-fazer", "responsavel": "W", "sprint": "S3", "atualizado": "2026-09-10", "notas": "processar -> extrair medicoes -> descartar"}, {"id": "CROSS-03", "area": "frontend", "tarefa": "Migrar as restantes chamadas Supabase (Scanner; Dashboard; oculos; candidaturas)", "prioridade": "P2", "estado": "a-fazer", "responsavel": "W", "sprint": "transversal", "atualizado": "2026-09-10", "notas": "modulo a modulo, nunca big bang"}, {"id": "CROSS-06", "area": "infra", "tarefa": "Confirmar o prazo do credito GCloud trial", "prioridade": "P2", "estado": "a-fazer", "responsavel": "W", "sprint": "transversal", "atualizado": "2026-09-10", "notas": "bloqueio #7"}, {"id": "DEP-05", "area": "infra", "tarefa": "Dominio proprio + certificado; trocar R2_PUBLIC_BASE_URL para custom domain", "prioridade": "P2", "estado": "a-fazer", "responsavel": "W", "sprint": "deploy", "atualizado": "2026-09-10", "notas": "gcloud run domain-mappings"}, {"id": "L-02", "area": "frontend", "tarefa": "Videos dos exercicios: produzir ou esconder o player", "prioridade": "P2", "estado": "a-fazer", "responsavel": "L", "sprint": "S0", "atualizado": "2026-09-10", "notas": "decisao de produto primeiro"}, {"id": "L-03", "area": "frontend", "tarefa": "Modal Ultimas Referencias faz scroll ate ao fim", "prioridade": "P2", "estado": "a-fazer", "responsavel": "L", "sprint": "S0", "atualizado": "2026-09-10", "notas": "max-height + overflow-y auto"}, {"id": "L-04", "area": "frontend", "tarefa": "Correccoes de navegacao (links rapidos; Maps target _blank)", "prioridade": "P2", "estado": "a-fazer", "responsavel": "L", "sprint": "S0", "atualizado": "2026-09-10", "notas": ""}, {"id": "L-06", "area": "frontend", "tarefa": "Levantamento completo de botoes e links partidos", "prioridade": "P2", "estado": "a-fazer", "responsavel": "L", "sprint": "S0", "atualizado": "2026-09-10", "notas": "fechar a lista, nao e corrigir tudo"}, {"id": "L-08", "area": "frontend", "tarefa": "Ordem da informacao segue o menu (Servicos; Produtos)", "prioridade": "P2", "estado": "a-fazer", "responsavel": "L", "sprint": "S1", "atualizado": "2026-09-10", "notas": ""}, {"id": "L-09", "area": "frontend", "tarefa": "Separar planos de exercicios", "prioridade": "P2", "estado": "a-fazer", "responsavel": "L", "sprint": "S1", "atualizado": "2026-09-10", "notas": "depende de W-01"}, {"id": "L-10", "area": "frontend", "tarefa": "Linguagem: tirar o ingles do texto visivel", "prioridade": "P2", "estado": "a-fazer", "responsavel": "L", "sprint": "S1", "atualizado": "2026-09-10", "notas": ""}, {"id": "L-12", "area": "frontend", "tarefa": "Ecra a aguardar aprovacao", "prioridade": "P2", "estado": "a-fazer", "responsavel": "L", "sprint": "S2", "atualizado": "2026-09-10", "notas": "reutiliza LockedVideoOverlay / PremiumPaywallModal"}, {"id": "L-13", "area": "frontend", "tarefa": "Formularios + pagina de gestao de candidaturas", "prioridade": "P2", "estado": "a-fazer", "responsavel": "L", "sprint": "S2", "atualizado": "2026-09-10", "notas": "depende de W-12; segue o padrao do AdminInbox"}, {"id": "S4-01", "area": "api", "tarefa": "Agendamentos: tabela + endpoints de criacao e decisao", "prioridade": "P2", "estado": "a-fazer", "responsavel": "W", "sprint": "S4", "atualizado": "2026-09-10", "notas": "ClinicalPartners.tsx nao persiste nada hoje"}, {"id": "S4-02", "area": "frontend", "tarefa": "Ligar ClinicalPartners.tsx a API + pagina AdminAgendamentos", "prioridade": "P2", "estado": "a-fazer", "responsavel": "L", "sprint": "S4", "atualizado": "2026-09-10", "notas": "depende de S4-01"}, {"id": "S5-01", "area": "api", "tarefa": "Unificacao de papeis (profiles.papel vs user_roles)", "prioridade": "P2", "estado": "a-fazer", "responsavel": "W", "sprint": "S5", "atualizado": "2026-09-10", "notas": "decisao de negocio: definir a lista oficial de papeis primeiro"}, {"id": "S6-02", "area": "frontend", "tarefa": "DashboardUser com dados reais", "prioridade": "P2", "estado": "a-fazer", "responsavel": "L", "sprint": "S6", "atualizado": "2026-09-10", "notas": "hoje sao valores fixos; ler sessoes_exercicio (ja na API)"}, {"id": "S6-05", "area": "api", "tarefa": "Conteudo editavel pelo admin (notifications; site_content CRUD)", "prioridade": "P2", "estado": "a-fazer", "responsavel": "W+L", "sprint": "S6", "atualizado": "2026-09-10", "notas": "mesmo padrao do CRUD de banners de admin"}, {"id": "W-12", "area": "api", "tarefa": "Sistema de candidaturas (voluntarios; clinicas): tabela + maquina de estados", "prioridade": "P2", "estado": "a-fazer", "responsavel": "W", "sprint": "S2", "atualizado": "2026-09-10", "notas": "a tabela voluntarios nao existe; e trabalho novo"}, {"id": "L-05", "area": "frontend", "tarefa": "2 ajustes visuais (botao Voltar; botao de perfil colado ao logo)", "prioridade": "P3", "estado": "a-fazer", "responsavel": "L", "sprint": "S0", "atualizado": "2026-09-10", "notas": ""}, {"id": "S6-01", "area": "frontend", "tarefa": "Historico de exames com evolucao ao longo do tempo", "prioridade": "P3", "estado": "a-fazer", "responsavel": "L", "sprint": "S6", "atualizado": "2026-09-10", "notas": ""}, {"id": "S6-03", "area": "frontend", "tarefa": "Exercicios premium restantes sobre BaseExercise", "prioridade": "P3", "estado": "a-fazer", "responsavel": "L", "sprint": "S6", "atualizado": "2026-09-10", "notas": ""}, {"id": "S6-04", "area": "frontend", "tarefa": "Loja de oculos: carrinho + pagamento", "prioridade": "P3", "estado": "a-fazer", "responsavel": "W+L", "sprint": "S6", "atualizado": "2026-09-10", "notas": "Produto.tsx e mock"}, {"id": "AUTH-02", "area": "api", "tarefa": "Registo: verificacao por email antes do 1o login (nunca redirecionar como se logado)", "prioridade": "P0", "estado": "bloqueado", "responsavel": "W", "sprint": "S0", "atualizado": "2026-09-10", "notas": "Auth.tsx redireciona logo apos registar; nao existe email_verificado no esquema. /auth/entrar tem de recusar conta nao verificada. Depende de CROSS-01 (fornecedor de email); toca esquema + auth -> migracao Alembic + revisao humana (CLAUDE.md 5/10/12)"}, {"id": "DEP-02", "area": "infra", "tarefa": "Projecto GCloud + facturacao; correr infra/gcloud/01-05", "prioridade": "P0", "estado": "bloqueado", "responsavel": "W", "sprint": "deploy", "atualizado": "2026-09-10", "notas": "precisa conta e cartao registado (bloqueio #4)"}, {"id": "W-16", "area": "api", "tarefa": "Scanner: validacao contra casos reais", "prioridade": "P0", "estado": "bloqueado", "responsavel": "W+L", "sprint": "S3", "atualizado": "2026-09-10", "notas": "bloqueio #8; sem parceiro clinico nao ha produto defensavel"}, {"id": "CROSS-01", "area": "api", "tarefa": "Escolher fornecedor de email transacional", "prioridade": "P1", "estado": "bloqueado", "responsavel": "W", "sprint": "transversal", "atualizado": "2026-09-10", "notas": "bloqueia: recuperacao de password, confirmacao de doacao/feedback/contacto"}, {"id": "CROSS-04", "area": "infra", "tarefa": "Recuperacao de palavra-passe", "prioridade": "P1", "estado": "bloqueado", "responsavel": "W", "sprint": "transversal", "atualizado": "2026-09-10", "notas": "depende de CROSS-01 (fornecedor de email)"}, {"id": "CROSS-05", "area": "legal", "tarefa": "Consentimento parental para menores", "prioridade": "P1", "estado": "bloqueado", "responsavel": "W", "sprint": "transversal", "atualizado": "2026-09-10", "notas": "bloqueio #5; precisa de apoio juridico"}, {"id": "DEP-03", "area": "infra", "tarefa": "Migracao Alembic contra Postgres real (local)", "prioridade": "P1", "estado": "bloqueado", "responsavel": "W", "sprint": "deploy", "atualizado": "2026-09-10", "notas": "Docker/WSL ou role jpa local; o CI ja cobre isto"}, {"id": "L-14", "area": "frontend", "tarefa": "Scanner: ecra de resultados ligado ao relatorio real", "prioridade": "P1", "estado": "bloqueado", "responsavel": "L", "sprint": "S3", "atualizado": "2026-09-10", "notas": "so depois de W-16; ate la fica sinais observados"}, {"id": "W-13", "area": "api", "tarefa": "Scanner: escolher e documentar o metodo de medicao", "prioridade": "P1", "estado": "bloqueado", "responsavel": "W", "sprint": "S3", "atualizado": "2026-09-10", "notas": "Hirschberg provavel; precisa validacao clinica, nao e decisao de programador"}, {"id": "CROSS-02", "area": "api", "tarefa": "Fluxo financeiro de doacoes (upload de comprovativo)", "prioridade": "P2", "estado": "bloqueado", "responsavel": "W", "sprint": "transversal", "atualizado": "2026-09-10", "notas": "precisa de email + storage"}, {"id": "DEP-04", "area": "infra", "tarefa": "docker compose build local - validar o container", "prioridade": "P2", "estado": "bloqueado", "responsavel": "W", "sprint": "deploy", "atualizado": "2026-09-10", "notas": "WSL/reboot pendente; o CI ja cobre isto"}, {"id": "INF-01", "area": "infra", "tarefa": "Monorepo + esquema espelhado + docker-compose + CI base", "prioridade": "P0", "estado": "feito", "responsavel": "W", "sprint": "infra-0", "atualizado": "2026-09-09", "notas": "16 tabelas em orm_models; migracao baseline"}, {"id": "INF-02", "area": "api", "tarefa": "Autenticacao ponta-a-ponta (cookie httpOnly, JWT, argon2)", "prioridade": "P0", "estado": "feito", "responsavel": "W", "sprint": "infra-1", "atualizado": "2026-09-09", "notas": "sai o Supabase Auth e o login paralelo em localStorage"}, {"id": "INF-03", "area": "api", "tarefa": "Perfil: GET/PATCH /perfil + ProfileContext migrado", "prioridade": "P0", "estado": "feito", "responsavel": "W", "sprint": "infra-2", "atualizado": "2026-09-09", "notas": "papel e email nunca mudam por aqui"}, {"id": "INF-04", "area": "api", "tarefa": "Conta: mudar password + eliminar conta (agendada a 30 dias)", "prioridade": "P0", "estado": "feito", "responsavel": "W", "sprint": "infra-3", "atualizado": "2026-09-09", "notas": "voltar a entrar dentro do prazo cancela a eliminacao"}, {"id": "INF-06", "area": "api", "tarefa": "Doacoes (materiais) via API", "prioridade": "P0", "estado": "feito", "responsavel": "W", "sprint": "infra-5", "atualizado": "2026-09-09", "notas": "nunca 201 quando a gravacao falha (teste dedicado)"}, {"id": "INF-15", "area": "frontend", "tarefa": "Fix: cliente Supabase nao derruba a app quando falta o env", "prioridade": "P0", "estado": "feito", "responsavel": "W", "sprint": "infra-extra", "atualizado": "2026-09-10", "notas": "pagina em branco; placeholders quando VITE_SUPABASE_* faltam"}, {"id": "W-02", "area": "api", "tarefa": "Mudar password passa a mudar mesmo a password", "prioridade": "P0", "estado": "feito", "responsavel": "W", "sprint": "S0", "atualizado": "2026-09-09", "notas": "feito via INF-04"}, {"id": "W-03", "area": "api", "tarefa": "Eliminar conta passa a eliminar mesmo a conta", "prioridade": "P0", "estado": "feito", "responsavel": "W", "sprint": "S0", "atualizado": "2026-09-09", "notas": "feito via INF-04 (agendada a 30 dias)"}, {"id": "INF-05", "area": "api", "tarefa": "Banners: leitura publica + fix do bug de nomes de campo", "prioridade": "P1", "estado": "feito", "responsavel": "W", "sprint": "infra-4", "atualizado": "2026-09-09", "notas": "SiteBanner lia colunas que nunca existiram na tabela"}, {"id": "INF-08", "area": "api", "tarefa": "Verificacao de papel admin (obter_utilizador_admin)", "prioridade": "P1", "estado": "feito", "responsavel": "W", "sprint": "infra-extra", "atualizado": "2026-09-10", "notas": "401 sem sessao / 403 se papel != admin; uma so implementacao"}, {"id": "INF-09", "area": "api", "tarefa": "CRUD de banners de admin", "prioridade": "P1", "estado": "feito", "responsavel": "W", "sprint": "infra-extra", "atualizado": "2026-09-10", "notas": "fecha a divida da Sprint 4; AdminBanners.tsx sai do Supabase"}, {"id": "INF-10", "area": "api", "tarefa": "Upload de avatar via R2 (URLs assinadas em 3 passos)", "prioridade": "P1", "estado": "feito", "responsavel": "W", "sprint": "infra-extra", "atualizado": "2026-09-10", "notas": "os bytes nunca passam pela API; credenciais R2 de producao ligadas a 2026-09-10"}, {"id": "INF-11", "area": "api", "tarefa": "Sessoes de exercicio via API", "prioridade": "P1", "estado": "feito", "responsavel": "W", "sprint": "infra-extra", "atualizado": "2026-09-10", "notas": "user_id vem do JWT, nunca do corpo; 5 exercicios migrados"}, {"id": "INF-12", "area": "api", "tarefa": "Formulario de contacto via API + leitura de admin", "prioridade": "P1", "estado": "feito", "responsavel": "W", "sprint": "infra-extra", "atualizado": "2026-09-10", "notas": "guardar e separavel de enviar email; o envio fica pendente"}, {"id": "INF-13", "area": "infra", "tarefa": "NGINX: proxy /api parametrizado (envsubst da var API_URL)", "prioridade": "P1", "estado": "feito", "responsavel": "W", "sprint": "deploy", "atualizado": "2026-09-09", "notas": "o alvo do proxy so se sabe depois do primeiro deploy"}, {"id": "INF-14", "area": "frontend", "tarefa": "Browser fala com /api na mesma origem + CORS de seguranca", "prioridade": "P1", "estado": "feito", "responsavel": "W", "sprint": "infra-extra", "atualizado": "2026-09-10", "notas": "apiClient default /api; proxy do Vite em dev"}, {"id": "INF-16", "area": "infra", "tarefa": "Scripts de deploy Cloud Run (infra/gcloud/ 01-05 + README)", "prioridade": "P1", "estado": "feito", "responsavel": "W", "sprint": "deploy", "atualizado": "2026-09-10", "notas": "APIs, Artifact Registry, Cloud SQL, Secret Manager, deploy, migracao"}, {"id": "INF-17", "area": "infra", "tarefa": "NGINX: proxy para upstream HTTPS do Cloud Run", "prioridade": "P1", "estado": "feito", "responsavel": "W", "sprint": "deploy", "atualizado": "2026-09-10", "notas": "proxy_ssl_server_name on + Host $proxy_host"}, {"id": "INF-18", "area": "infra", "tarefa": "R2: bucket + credenciais + URL publico + CORS", "prioridade": "P1", "estado": "feito", "responsavel": "W", "sprint": "deploy", "atualizado": "2026-09-10", "notas": "bucket janelasparaalma; pub dev URL; scripts passam R2_PUBLIC_BASE_URL"}, {"id": "INF-19", "area": "ci", "tarefa": "CI: docker build das 2 imagens + nginx -t; alembic upgrade head contra Postgres real", "prioridade": "P1", "estado": "feito", "responsavel": "W", "sprint": "deploy", "atualizado": "2026-09-10", "notas": "por validar na 1a corrida do CI"}, {"id": "W-05", "area": "infra", "tarefa": "Tirar o .env do controlo de versoes", "prioridade": "P1", "estado": "feito", "responsavel": "W", "sprint": "S0", "atualizado": "2026-09-09", "notas": ".env no .gitignore desde o 1o commit deste repo"}, {"id": "INF-07", "area": "api", "tarefa": "Feedback publico", "prioridade": "P2", "estado": "feito", "responsavel": "W", "sprint": "infra-6", "atualizado": "2026-09-09", "notas": "funciona com ou sem sessao"}, {"id": "NAO-01", "area": "-", "tarefa": "Gateway de pagamento automatico (EMIS/AppyPay)", "prioridade": "-", "estado": "nao-fazer-agora", "responsavel": "-", "sprint": "-", "atualizado": "2026-09-10", "notas": "o ciclo manual da S2 chega; depende de contrato comercial"}, {"id": "NAO-02", "area": "-", "tarefa": "Login com Google", "prioridade": "-", "estado": "nao-fazer-agora", "responsavel": "-", "sprint": "-", "atualizado": "2026-09-10", "notas": "decidido: sprint proprio; falta escolher fornecedor de email"}, {"id": "NAO-03", "area": "-", "tarefa": "Versao em ingles", "prioridade": "-", "estado": "nao-fazer-agora", "responsavel": "-", "sprint": "-", "atualizado": "2026-09-10", "notas": "o publico e angolano"}, {"id": "NAO-04", "area": "-", "tarefa": "Mapa de clinicas parceiras", "prioridade": "-", "estado": "nao-fazer-agora", "responsavel": "-", "sprint": "-", "atualizado": "2026-09-10", "notas": "uma lista chega enquanto houver poucas clinicas"}, {"id": "NAO-05", "area": "-", "tarefa": "Notificacoes push + modo offline", "prioridade": "-", "estado": "nao-fazer-agora", "responsavel": "-", "sprint": "-", "atualizado": "2026-09-10", "notas": "custo alto, ninguem bloqueado hoje"}];
+const tbody = document.querySelector('#t tbody');
+const filtros = new Set();
 
-function semear() {
-  return DEFAULT_SPRINTS.map(s => ({
-    ...s, tarefas: s.tarefas.map(t => ({ ...t, feita:false }))
-  }));
-}
-
-function migrar(bruto) {
-  if (bruto && bruto.v === 2 && Array.isArray(bruto.sprints)) {
-    return {
-      v:2, sprints:bruto.sprints,
-      notas: typeof bruto.notas === "string" ? bruto.notas : "",
-      actualizado: bruto.actualizado || null
-    };
-  }
-  // v1 (so guardava ids concluidos) ou vazio: semeia do modelo, herdando marcacoes antigas
-  const feitasAntigas = new Set(Array.isArray(bruto && bruto.feitas) ? bruto.feitas : []);
-  const sprints = DEFAULT_SPRINTS.map(s => ({
-    ...s, tarefas: s.tarefas.map(t => ({ ...t, feita: feitasAntigas.has(t.id) }))
-  }));
-  return { v:2, sprints, notas:(bruto && bruto.notas) || "", actualizado:(bruto && bruto.actualizado) || null };
-}
-
-let estado = migrar(JSON.parse(document.getElementById("estado").textContent));
-
-let filtro = "todos";
-let podeEscrever = false;
-let api = null;
-let temporizador = null;
-let edicao = null;        // {si} cabecalho | {si,ti} tarefa
-let novaTarefaEm = null;  // si do sprint com formulario de nova tarefa aberto
-let novaSeccaoAberta = false;
-let desfazer = null;      // {tipo:'tarefa'|'sprint', si, ti, item, timer}
-
-const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-
-function proximoCodigo(dono) {
-  let max = 0;
-  estado.sprints.forEach(s => s.tarefas.forEach(t => {
-    const m = /^([A-Z]+)-(\d+)$/.exec(t.id || "");
-    if (m && m[1] === dono && +m[2] > max) max = +m[2];
-  }));
-  return dono + "-" + String(max + 1).padStart(2, "0");
-}
-
-function renderTarefaNormal(s, si, t, ti) {
-  let oculta = false;
-  if (filtro === "W" && t.dono !== "W" && t.dono !== "WL") oculta = true;
-  if (filtro === "L" && t.dono !== "L" && t.dono !== "WL") oculta = true;
-  if (filtro === "abertas" && t.feita) oculta = true;
-  return `<li class="tarefa${t.feita ? " feita" : ""}${oculta ? " oculta" : ""}">
-    <input type="checkbox" class="chk-tarefa" data-si="${si}" data-ti="${ti}" ${t.feita ? "checked" : ""}
-           ${podeEscrever ? "" : "disabled"} aria-label="${esc(t.tit)}">
-    <span class="pt ${esc(t.dono)}" aria-hidden="true"></span>
-    <span class="corpo">
-      <span class="linha1">
-        ${t.id ? `<span class="cod">${esc(t.id)}</span>` : ""}
-        ${podeEscrever
-          ? `<button type="button" class="btn-texto tit" data-editar-tarefa data-si="${si}" data-ti="${ti}"
-               title="Clicar para editar">${esc(t.tit)}<span class="dica-editar">✎</span></button>`
-          : `<span class="tit">${esc(t.tit)}</span>`}
-      </span>
-      ${t.det ? `<div class="det">${esc(t.det)}</div>` : ""}
-    </span></li>`;
-}
-
-function renderTarefaEdicao(s, si, t, ti) {
-  return `<li class="tarefa form-editar" data-form-tarefa data-si="${si}" data-ti="${ti}">
-    <div class="campo-linha">
-      <input class="campo campo-codigo" style="max-width:110px" value="${esc(t.id)}" placeholder="Código (opcional)">
-      <select class="campo campo-dono">
-        <option value="W" ${t.dono==="W"?"selected":""}>Wilson</option>
-        <option value="L" ${t.dono==="L"?"selected":""}>Lukeny</option>
-        <option value="WL" ${t.dono==="WL"?"selected":""}>Os dois</option>
-      </select>
-    </div>
-    <input class="campo campo-tit" value="${esc(t.tit)}" placeholder="Título da tarefa">
-    <textarea class="campo campo-det" placeholder="Detalhe (opcional)">${esc(t.det)}</textarea>
-    <div class="form-acoes">
-      <button type="button" class="btn btn-primario" data-guardar-tarefa data-si="${si}" data-ti="${ti}">Guardar</button>
-      <button type="button" class="btn btn-secundario" data-cancelar-tarefa>Cancelar</button>
-      <button type="button" class="btn btn-perigo" data-remover-tarefa data-si="${si}" data-ti="${ti}">Remover tarefa</button>
-    </div></li>`;
-}
-
-function renderNovaTarefaForm(si) {
-  const sug = proximoCodigo("W");
-  return `<li class="tarefa form-editar" data-form-nova-tarefa data-si="${si}">
-    <div class="campo-linha">
-      <input class="campo campo-codigo" style="max-width:110px" value="${esc(sug)}" placeholder="Código (opcional)">
-      <select class="campo campo-dono">
-        <option value="W">Wilson</option><option value="L">Lukeny</option><option value="WL">Os dois</option>
-      </select>
-    </div>
-    <input class="campo campo-tit" placeholder="Título da tarefa" autofocus>
-    <textarea class="campo campo-det" placeholder="Detalhe (opcional)"></textarea>
-    <div class="form-acoes">
-      <button type="button" class="btn btn-primario" data-guardar-nova-tarefa data-si="${si}">Adicionar</button>
-      <button type="button" class="btn btn-secundario" data-cancelar-nova-tarefa>Cancelar</button>
-    </div></li>`;
-}
-
-function renderCabecalho(s, si) {
-  const emEdicao = edicao && edicao.si === si && edicao.ti === undefined;
-  if (emEdicao) {
-    return `<div class="sprint-topo form-editar" data-form-cabecalho data-si="${si}">
-      <input class="campo" data-campo="nome" value="${esc(s.nome)}" placeholder="Nome do sprint">
-      <textarea class="campo" data-campo="obj" placeholder="Objectivo">${esc(s.obj)}</textarea>
-      <div class="campo-linha">
-        <input class="campo" data-campo="etiqueta" style="max-width:220px" value="${esc(s.etiqueta)}" placeholder="Etiqueta (opcional)">
-        <label class="campo-check"><input type="checkbox" data-campo="urgente" ${s.urgente ? "checked" : ""}> marcar como urgente</label>
-      </div>
-      <div class="form-acoes">
-        <button type="button" class="btn btn-primario" data-guardar-cabecalho data-si="${si}">Guardar</button>
-        <button type="button" class="btn btn-secundario" data-cancelar-cabecalho>Cancelar</button>
-        <button type="button" class="btn btn-perigo" data-remover-seccao data-si="${si}">Remover secção</button>
-      </div></div>`;
-  }
-  const et = s.etiqueta ? `<span class="pill ${s.urgente ? "d" : ""}">${esc(s.etiqueta)}</span>` : "";
-  const total = s.tarefas.length, fx = s.tarefas.filter(t => t.feita).length;
-  const pct = total ? Math.round(fx / total * 100) : 0;
-  return `<div class="sprint-topo">
-    <div class="sprint-titulo">
-      <h2>${podeEscrever
-        ? `<button type="button" class="btn-texto" data-editar-cabecalho data-si="${si}" title="Clicar para editar">${esc(s.nome)}<span class="dica-editar">✎</span></button>`
-        : esc(s.nome)}</h2>${et}
-    </div>
-    <p class="sprint-obj">${s.obj ? esc(s.obj) : ""}</p>
-    <div class="sprint-prog"><div class="barra"><i style="width:${pct}%"></i></div>
-      <span class="contagem">${fx}/${total}</span></div>
-  </div>`;
-}
+function esc(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
 
 function render() {
-  const lista = document.getElementById("lista");
-  lista.innerHTML = estado.sprints.map((s, si) => {
-    const linhas = s.tarefas.map((t, ti) =>
-      (edicao && edicao.si === si && edicao.ti === ti) ? renderTarefaEdicao(s, si, t, ti) : renderTarefaNormal(s, si, t, ti)
-    ).join("") + (novaTarefaEm === si ? renderNovaTarefaForm(si) : "");
-    const botaoAdicionar = podeEscrever && novaTarefaEm !== si
-      ? `<button type="button" class="btn-adicionar" data-nova-tarefa data-si="${si}">+ nova tarefa</button>` : "";
-    return `<section class="sprint">${renderCabecalho(s, si)}<ul class="tarefas">${linhas}</ul>${botaoAdicionar}</section>`;
-  }).join("");
-
-  if (podeEscrever) {
-    lista.insertAdjacentHTML("beforeend", novaSeccaoAberta ? `
-      <div class="form-nova-seccao" data-form-nova-seccao>
-        <input class="campo" data-campo="nome" placeholder="Nome do novo sprint" autofocus>
-        <textarea class="campo" data-campo="obj" placeholder="Objectivo deste sprint"></textarea>
-        <div class="campo-linha">
-          <input class="campo" data-campo="etiqueta" style="max-width:220px" placeholder="Etiqueta (opcional)">
-          <label class="campo-check"><input type="checkbox" data-campo="urgente"> marcar como urgente</label>
-        </div>
-        <div class="form-acoes">
-          <button type="button" class="btn btn-primario" data-guardar-nova-seccao>Adicionar sprint</button>
-          <button type="button" class="btn btn-secundario" data-cancelar-nova-seccao>Cancelar</button>
-        </div>
-      </div>` : `<button type="button" class="btn-nova-seccao" data-nova-seccao>+ nova secção / sprint</button>`);
-  }
-
-  const todas = estado.sprints.flatMap(s => s.tarefas);
-  const fx = todas.filter(t => t.feita).length;
-  document.getElementById("barra-geral").style.width = (todas.length ? fx / todas.length * 100 : 0) + "%";
-  document.getElementById("contagem-geral").textContent = `${fx} de ${todas.length} tarefas concluídas`;
-  document.getElementById("ultima").textContent = estado.actualizado
-    ? "Actualizado " + new Date(estado.actualizado).toLocaleString("pt-PT")
-    : "Ainda sem alterações";
-
-  renderToast();
-  if (novaTarefaEm !== null) {
-    const campo = lista.querySelector(`[data-form-nova-tarefa][data-si="${novaTarefaEm}"] .campo-tit`);
-    if (campo) campo.focus();
-  }
-  if (novaSeccaoAberta) {
-    const campo = lista.querySelector(`[data-form-nova-seccao] [data-campo="nome"]`);
-    if (campo) campo.focus();
-  }
+  const q = (document.querySelector('#busca').value || '').toLowerCase();
+  tbody.innerHTML = DADOS.map(r => {
+    const passaFiltro = [...filtros].every(f => r.estado === f || r.responsavel === f);
+    const alvo = (r.id + ' ' + r.tarefa + ' ' + r.notas + ' ' + r.sprint).toLowerCase();
+    const oculta = (!passaFiltro || (q && !alvo.includes(q))) ? ' class="oculta"' : '';
+    const prioCls = r.prioridade === 'P0' ? 'p0' : r.prioridade === 'P1' ? 'p1' : '';
+    return `<tr${oculta}>
+      <td class="id">${esc(r.id)}</td>
+      <td>${esc(r.tarefa)}</td>
+      <td class="${prioCls}">${esc(r.prioridade)}</td>
+      <td><span class="tag est-${esc(r.estado)}">${esc(r.estado)}</span></td>
+      <td>${esc(r.responsavel)}</td>
+      <td>${esc(r.sprint)}</td>
+      <td>${esc(r.atualizado)}</td>
+      <td class="nota">${esc(r.notas)}</td>
+    </tr>`;
+  }).join('');
 }
 
-function renderTabelas() {
-  document.getElementById("bloqueios").innerHTML =
-    "<tr><th>#</th><th>Bloqueio</th><th>Estado</th><th>Quem</th></tr>" +
-    BLOQUEIOS.map(b => `<tr><td>${esc(b[0])}</td><td><b>${esc(b[1])}</b></td>
-      <td>${b[4] === "ok" ? "✅ " : "⏳ "}${esc(b[2])}</td><td>${esc(b[3])}</td></tr>`).join("");
-  document.getElementById("nao-fazer").innerHTML =
-    "<tr><th>Adiado</th><th>Porquê</th></tr>" +
-    NAO_FAZER.map(n => `<tr><td><b>${esc(n[0])}</b></td><td>${esc(n[1])}</td></tr>`).join("");
-}
-
-function renderToast() {
-  const area = document.getElementById("toast-area");
-  if (!desfazer) { area.innerHTML = ""; return; }
-  const msg = desfazer.tipo === "sprint" ? "Secção removida" : "Tarefa removida";
-  area.innerHTML = `<div class="toast">${msg} <button type="button" data-desfazer>Desfazer</button></div>`;
-}
-
-function limparDesfazer() {
-  if (desfazer && desfazer.timer) clearTimeout(desfazer.timer);
-  desfazer = null;
-}
-
-function construirDocumento() {
-  const dados = JSON.stringify(estado).replace(/<\//g, "<\\/");
-  return "<!doctype html>\n<html lang=\"pt\">\n<head>\n<meta charset=\"utf-8\">\n" +
-    "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n" +
-    "<title>Tracker Janelas Para a Alma</title>\n" +
-    "<style id=\"app-style\">" + FONTE_ESTILO + "</style>\n</head>\n<body>\n" +
-    FONTE_MOLDE +
-    "\n<script id=\"estado\" type=\"application/json\">" + dados + "<\/script>\n" +
-    "<script id=\"app-script\">" + FONTE_SCRIPT + "<\/script>\n</body>\n</html>";
-}
-
-function agendarGravacao() {
-  if (!podeEscrever || !api) return;
-  clearTimeout(temporizador);
-  marcar("A guardar…");
-  temporizador = setTimeout(gravar, 700);
-}
-
-async function gravar() {
-  estado.actualizado = new Date().toISOString();
-  try {
-    await api.publish(construirDocumento());
-    marcar("Guardado");
-  } catch (e) {
-    marcar(e && e.code === "conflict" ? "Alguém guardou primeiro — a recarregar" : "Não foi possível guardar");
-  }
-}
-
-function marcar(txt) { document.getElementById("estado-guardar").textContent = txt; }
-
-// --- delegacao de eventos: tudo dentro de #lista passa por aqui ---
-
-document.getElementById("lista").addEventListener("click", (e) => {
-  const btn = e.target.closest("button[data-si], button[data-editar-cabecalho], button[data-nova-seccao], " +
-    "button[data-guardar-nova-seccao], button[data-cancelar-nova-seccao], button[data-cancelar-tarefa], " +
-    "button[data-cancelar-nova-tarefa], button[data-cancelar-cabecalho]");
-  if (!btn) return;
-  const si = btn.dataset.si !== undefined ? +btn.dataset.si : null;
-  const ti = btn.dataset.ti !== undefined ? +btn.dataset.ti : null;
-
-  if (btn.hasAttribute("data-editar-tarefa")) { edicao = { si, ti }; novaTarefaEm = null; novaSeccaoAberta = false; render(); }
-  else if (btn.hasAttribute("data-editar-cabecalho")) { edicao = { si }; novaTarefaEm = null; novaSeccaoAberta = false; render(); }
-  else if (btn.hasAttribute("data-cancelar-tarefa") || btn.hasAttribute("data-cancelar-cabecalho")) { edicao = null; render(); }
-  else if (btn.hasAttribute("data-nova-tarefa")) { novaTarefaEm = si; edicao = null; render(); }
-  else if (btn.hasAttribute("data-cancelar-nova-tarefa")) { novaTarefaEm = null; render(); }
-  else if (btn.hasAttribute("data-nova-seccao")) { novaSeccaoAberta = true; render(); }
-  else if (btn.hasAttribute("data-cancelar-nova-seccao")) { novaSeccaoAberta = false; render(); }
-
-  else if (btn.hasAttribute("data-guardar-tarefa")) {
-    const li = btn.closest("[data-form-tarefa]");
-    const t = estado.sprints[si].tarefas[ti];
-    t.id = li.querySelector(".campo-codigo").value.trim();
-    t.dono = li.querySelector(".campo-dono").value;
-    t.tit = li.querySelector(".campo-tit").value.trim() || t.tit;
-    t.det = li.querySelector(".campo-det").value.trim();
-    edicao = null; render(); agendarGravacao();
-  }
-  else if (btn.hasAttribute("data-remover-tarefa")) {
-    limparDesfazer();
-    const item = estado.sprints[si].tarefas.splice(ti, 1)[0];
-    edicao = null;
-    desfazer = { tipo:"tarefa", si, ti, item, timer: setTimeout(() => { desfazer = null; renderToast(); }, 6000) };
-    render(); agendarGravacao();
-  }
-  else if (btn.hasAttribute("data-guardar-nova-tarefa")) {
-    const li = btn.closest("[data-form-nova-tarefa]");
-    const tit = li.querySelector(".campo-tit").value.trim();
-    if (!tit) { li.querySelector(".campo-tit").focus(); return; }
-    estado.sprints[si].tarefas.push({
-      id: li.querySelector(".campo-codigo").value.trim(),
-      dono: li.querySelector(".campo-dono").value,
-      tit, det: li.querySelector(".campo-det").value.trim(), feita:false
-    });
-    novaTarefaEm = null; render(); agendarGravacao();
-  }
-
-  else if (btn.hasAttribute("data-guardar-cabecalho")) {
-    const box = btn.closest("[data-form-cabecalho]");
-    const s = estado.sprints[si];
-    s.nome = box.querySelector('[data-campo="nome"]').value.trim() || s.nome;
-    s.obj = box.querySelector('[data-campo="obj"]').value.trim();
-    s.etiqueta = box.querySelector('[data-campo="etiqueta"]').value.trim();
-    s.urgente = box.querySelector('[data-campo="urgente"]').checked;
-    edicao = null; render(); agendarGravacao();
-  }
-  else if (btn.hasAttribute("data-remover-seccao")) {
-    limparDesfazer();
-    const item = estado.sprints.splice(si, 1)[0];
-    edicao = null;
-    desfazer = { tipo:"sprint", si, item, timer: setTimeout(() => { desfazer = null; renderToast(); }, 6000) };
-    render(); agendarGravacao();
-  }
-  else if (btn.hasAttribute("data-guardar-nova-seccao")) {
-    const box = btn.closest("[data-form-nova-seccao]");
-    const nome = box.querySelector('[data-campo="nome"]').value.trim();
-    if (!nome) { box.querySelector('[data-campo="nome"]').focus(); return; }
-    estado.sprints.push({
-      nome, obj: box.querySelector('[data-campo="obj"]').value.trim(),
-      etiqueta: box.querySelector('[data-campo="etiqueta"]').value.trim(),
-      urgente: box.querySelector('[data-campo="urgente"]').checked,
-      tarefas: []
-    });
-    novaSeccaoAberta = false; render(); agendarGravacao();
-  }
-});
-
-document.getElementById("lista").addEventListener("change", (e) => {
-  const cx = e.target.closest(".chk-tarefa");
-  if (!cx) return;
-  const si = +cx.dataset.si, ti = +cx.dataset.ti;
-  estado.sprints[si].tarefas[ti].feita = cx.checked;
-  render(); agendarGravacao();
-});
-
-document.getElementById("toast-area").addEventListener("click", (e) => {
-  if (!e.target.closest("[data-desfazer]") || !desfazer) return;
-  if (desfazer.tipo === "sprint") estado.sprints.splice(desfazer.si, 0, desfazer.item);
-  else estado.sprints[desfazer.si].tarefas.splice(desfazer.ti, 0, desfazer.item);
-  limparDesfazer();
-  render(); agendarGravacao();
-});
-
-document.querySelectorAll(".filtro").forEach(b => {
-  b.addEventListener("click", () => {
-    filtro = b.dataset.f;
-    document.querySelectorAll(".filtro").forEach(o => o.setAttribute("aria-pressed", String(o === b)));
-    render();
-  });
-});
-
-const notas = document.getElementById("notas");
-notas.value = estado.notas;
-notas.addEventListener("input", () => { estado.notas = notas.value; agendarGravacao(); });
-
-renderTabelas();
-render();
-marcar("Modo leitura — as alterações não ficam guardadas");
-notas.disabled = true;
-
-claude.use("artifact").then(a => {
-  if (!a) return;
-  api = a;
-  podeEscrever = true;
-  notas.disabled = false;
-  marcar("Pronto — as alterações ficam guardadas");
+document.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => {
+  const f = c.dataset.filtro;
+  if (filtros.has(f)) { filtros.delete(f); c.classList.remove('on'); }
+  else { filtros.add(f); c.classList.add('on'); }
   render();
-}).catch(() => {});
+}));
+document.querySelector('#busca').addEventListener('input', render);
+render();
 </script>
 </body>
 </html>
