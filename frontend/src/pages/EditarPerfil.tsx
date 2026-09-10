@@ -20,7 +20,12 @@ import {
 import { Camera, Loader2, User as UserIcon, Mail, Phone, MapPin, Cake } from "lucide-react";
 import { useAuth, PROVINCES } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
-import { perfilApi, mensagemDeErroApi } from "@/lib/apiClient";
+import {
+  perfilApi,
+  uploadsApi,
+  mensagemDeErroApi,
+  TIPOS_DE_AVATAR_ACEITES,
+} from "@/lib/apiClient";
 
 const EditarPerfil = () => {
   const navigate = useNavigate();
@@ -63,13 +68,40 @@ const EditarPerfil = () => {
     }
   }, [profile, user?.avatarUrl]);
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const ficheiro = e.target.files?.[0];
     e.target.value = ""; // permite escolher o mesmo ficheiro outra vez
-    // O upload de avatar dependia do Supabase Storage — infraestrutura que
-    // este projecto deixou de usar (ver CLAUDE.md secção 0). O substituto
-    // (Cloudflare R2) ainda não tem endpoint na API. Mensagem honesta em
-    // vez de tentar um upload que ia falhar contra dados que já não existem.
-    toast.info("O envio de foto de perfil ainda não está disponível nesta infraestrutura nova.");
+    if (!ficheiro || !profile) return;
+
+    if (!(TIPOS_DE_AVATAR_ACEITES as readonly string[]).includes(ficheiro.type)) {
+      toast.error("Use uma imagem PNG, JPEG ou WebP.");
+      return;
+    }
+    if (ficheiro.size > 5 * 1024 * 1024) {
+      toast.error("A imagem não pode ter mais de 5 MB.");
+      return;
+    }
+
+    // Três passos: a API assina o URL, o browser envia ao R2 directamente,
+    // a API confirma e grava. Nunca mostrar sucesso sem cada passo ter
+    // corrido bem (ver CLAUDE.md, "Nunca mostrar sucesso antes de verificar
+    // error/excepção").
+    setUploadingAvatar(true);
+    try {
+      const preparado = await uploadsApi.prepararAvatar(ficheiro.type);
+      await uploadsApi.enviarParaStorage(preparado.url_de_upload, ficheiro);
+      const { avatar_url } = await uploadsApi.confirmarAvatar(preparado.chave);
+
+      setAvatarUrl(avatar_url);
+      setProfile({ ...profile, avatar_url });
+      updateUserProfile({ avatarUrl: avatar_url });
+      toast.success("Foto de perfil atualizada!");
+    } catch (err) {
+      console.error("Falha ao enviar a foto de perfil:", err);
+      toast.error(mensagemDeErroApi(err, "Não foi possível enviar a foto. Tente novamente."));
+    } finally {
+      setUploadingAvatar(false);
+    }
   };
 
   const initials = (name || "U")
@@ -165,8 +197,9 @@ const EditarPerfil = () => {
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept="image/png,image/jpeg"
+                      accept="image/png,image/jpeg,image/webp"
                       className="hidden"
+                      aria-label="Carregar foto de perfil"
                       onChange={handleAvatarChange}
                       disabled={uploadingAvatar}
                     />

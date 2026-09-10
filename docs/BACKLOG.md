@@ -45,8 +45,10 @@ Run. Sem importação de dados de utilizadores; a base de dados nasce vazia, só
    alembic upgrade head`) e confirmar com `alembic check` — foi escrita à mão porque o
    Docker Desktop não estava disponível no momento; validada só offline (`--sql`) até aqui.
    Continua bloqueado — Docker Desktop ainda não está a correr nesta máquina.
-2. **Storage:** endpoint na API para emitir URLs assinadas do Cloudflare R2 (avatares) —
-   ainda não construído.
+2. ~~**Storage:** endpoint na API para emitir URLs assinadas do Cloudflare R2 (avatares).~~
+   Feito a 2026-09-10 (ver "Upload de avatar via R2" mais abaixo). O código está escrito
+   e testado contra um `Presigner` falso; falta só ligar credenciais reais do R2 e
+   `R2_PUBLIC_BASE_URL` quando o bucket existir.
 3. **Deploy no Cloud Run** — build das imagens, Cloud SQL, variáveis de ambiente de
    produção, domínio.
 
@@ -283,7 +285,7 @@ item abaixo depende de uma decisão que não é minha para tomar sozinho:
 | Item | Depende de |
 |---|---|
 | Fornecedor de email transacional | Escolha de serviço (SES, Resend, Postmark, ...) e custo |
-| Storage de ficheiros (avatares, comprovativos) | Credenciais reais do Cloudflare R2 |
+| Storage de ficheiros (avatares ~~feito~~, comprovativos) | Avatar: só falta credenciais reais do R2 + `R2_PUBLIC_BASE_URL` (código feito 2026-09-10). Comprovativos: ainda por construir |
 | Migração Alembic contra Postgres real | Docker Desktop a correr nesta máquina |
 | Deploy no Cloud Run | Conta GCloud, projecto, credenciais |
 | CRUD de admin (notifications, site_content) | ~~Verificação de papel/admin na API~~ já construída (`obter_utilizador_admin`); ~~banners~~ feito a 2026-09-10 (ver abaixo). Falta `notifications`/`site_content` — mesmo padrão |
@@ -353,6 +355,44 @@ Primeiro uso real de `obter_utilizador_admin`, e fecho da dívida da Sprint 4.
 - Fora de âmbito: `AdminBanners.tsx` não tinha teste próprio antes; ganhou só o do
   caminho do erro na criação. `notifications`/`site_content` seguem o mesmo padrão
   quando fizerem falta.
+
+### Upload de avatar via R2 (2026-09-10 — mesma branch)
+
+Fecha o item 2 do "por fazer" do Sprint 0 e reactiva o upload de foto de perfil que
+estava desligado desde a Sprint 2 (dependia do Supabase Storage).
+
+**Fluxo em três passos, os bytes nunca passam pela API** (CLAUDE.md §4b):
+
+1. `POST /uploads/avatar {content_type}` → a API valida o tipo (PNG/JPEG/WebP),
+   escolhe a chave `avatares/{utilizador_id}/{uuid}.{ext}` e devolve um URL de `PUT`
+   assinado do R2 + o URL público final.
+2. O browser faz `PUT` do ficheiro directamente ao R2 (`uploadsApi.enviarParaStorage`,
+   fora do `apiClient` — outra origem, sem cookies, corpo binário).
+3. `POST /uploads/avatar/confirmar {chave}` → a API confirma que a chave começa pelo
+   prefixo do próprio utilizador (403 se não) e grava em `utilizadores.avatar_url`.
+
+- **É um `service` com regras e testes** (`services/upload_service.py`), não um router
+  fino: o utilizador podia mentir sobre o tipo do ficheiro e sobre a dona da chave
+  (CLAUDE.md §3). Ambas recusadas — `TipoDeFicheiroNaoPermitidoError` (422),
+  `ChaveDeAvatarInvalidaError` (403).
+- `repositories/storage.py` — `Presigner` (Protocol) + `R2Presigner` (boto3, `s3v4`).
+  A implementação real **não é exercitada pelos testes** (não há bucket nem
+  credenciais); a garantia está nos testes do service contra um `Presigner` falso —
+  mesmo padrão de `auth_service`.
+- `config.py` ganha `r2_public_base_url` e `r2_upload_url_expira_segundos` (300s).
+- `SQLAlchemyPerfilRepository.definir_avatar_url` — fora de `PerfilPatch` de propósito:
+  `avatar_url` não é campo que o utilizador escreve no formulário, é resultado de um
+  upload já validado.
+- Frontend: `EditarPerfil.tsx` reactiva o botão (validação de tipo e tamanho ≤5 MB do
+  lado do cliente como segunda linha de defesa); cada passo verifica o erro antes de
+  mostrar sucesso.
+- Testes: 10 de service (`test_upload_service.py`) + 5 de router
+  (`test_uploads_router.py`) + 3 de página (`EditarPerfil.test.tsx`, novo — caminhos do
+  erro no envio e na confirmação). **88/88 `pytest`**, **36/36 vitest**, ruff limpo,
+  lint do frontend a zero erros, `tsc --noEmit` e `npm run build` sem regressões.
+- **Ainda por fazer para funcionar em produção:** credenciais reais do R2, um bucket, e
+  `R2_PUBLIC_BASE_URL` a apontar para o domínio público do bucket. Até lá o endpoint
+  responde mas o `PUT` assinado não tem destino real.
 
 ---
 

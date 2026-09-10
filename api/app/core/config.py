@@ -29,6 +29,13 @@ class Settings(BaseSettings):
     r2_bucket: str = "janelasparaalma"
     r2_access_key_id: str = ""
     r2_secret_access_key: str = ""
+    # Base pública por onde os ficheiros do bucket são servidos (domínio
+    # ligado ao bucket, ou o `https://pub-xxxx.r2.dev` do R2). O URL final
+    # de um objecto é `{r2_public_base_url}/{chave}`. Vazio até haver bucket.
+    r2_public_base_url: str = ""
+    # Segundos de validade do URL de upload assinado — curto de propósito:
+    # é entregue ao browser mesmo antes de ele escolher o ficheiro.
+    r2_upload_url_expira_segundos: int = 300
 
     # CORS — origens do frontend com permissão para pedidos com cookies.
     # Em dev sem Docker, frontend (npm run dev, porta 8080) e API (porta

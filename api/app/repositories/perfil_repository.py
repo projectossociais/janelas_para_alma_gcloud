@@ -83,6 +83,16 @@ class SQLAlchemyPerfilRepository:
         row = self._sessao.get(Utilizador, uuid.UUID(utilizador_id))
         return self._para_registo(row) if row else None
 
+    def definir_avatar_url(self, utilizador_id: str, url: str | None) -> None:
+        """Fora de `atualizar`/`PerfilPatch` de propósito: `avatar_url` não
+        é um campo que o utilizador escreve à mão no formulário — é o
+        resultado de um upload já validado pelo `UploadService`."""
+        row = self._sessao.get(Utilizador, uuid.UUID(utilizador_id))
+        if row is None:
+            return
+        row.avatar_url = url
+        self._sessao.commit()
+
     def atualizar(self, utilizador_id: str, patch: PerfilPatch) -> PerfilRegisto | None:
         row = self._sessao.get(Utilizador, uuid.UUID(utilizador_id))
         if row is None:

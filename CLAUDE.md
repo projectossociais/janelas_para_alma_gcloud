@@ -144,6 +144,12 @@ activa; verificar e testar isso explicitamente.**
 4. **Nunca guardar fotografias do scanner a longo prazo.** Processar → extrair medições →
    descartar a imagem. São imagens faciais de crianças: não guardar é sempre mais
    defensável do que guardar bem.
+4b. **Ficheiros que o utilizador envia (avatar) vão directos ao R2, nunca através da API.**
+   A API só assina um URL de `PUT` temporário (`repositories/storage.py` +
+   `services/upload_service.py`); o browser envia os bytes ao R2 e depois pede à API para
+   confirmar. A API valida que a chave a confirmar pertence ao próprio utilizador
+   (`avatares/{utilizador_id}/...`) antes de a gravar. Menos uma cópia de imagens de
+   crianças a passar pelos nossos servidores e logs.
 5. **Nunca escrever segredos no frontend nem os comitar em `.env`.** O repositório antigo
    teve `.env` rastreado em `main` durante meses (chave pública do Supabase — não crítico
    por ser uma chave `anon`, mas errado de qualquer forma). Este repositório nasce com

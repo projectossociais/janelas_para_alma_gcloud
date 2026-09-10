@@ -198,6 +198,45 @@ export const bannersApi = {
   remover: (id: string) => pedido<void>(`/banners/${id}`, { method: "DELETE" }),
 };
 
+export interface AvatarUploadPreparado {
+  url_de_upload: string;
+  chave: string;
+  url_publico: string;
+}
+
+export const TIPOS_DE_AVATAR_ACEITES = ["image/png", "image/jpeg", "image/webp"] as const;
+
+export const uploadsApi = {
+  /** Passo 1: a API assina um URL de PUT para o browser enviar o ficheiro
+   *  directamente ao R2. Os bytes nunca passam pela nossa API. */
+  prepararAvatar: (contentType: string) =>
+    pedido<AvatarUploadPreparado>("/uploads/avatar", {
+      method: "POST",
+      body: JSON.stringify({ content_type: contentType }),
+    }),
+
+  /** Passo 2: envio directo ao storage — fora do `apiClient` de propósito
+   *  (outra origem, sem cookies, corpo binário e não JSON). */
+  enviarParaStorage: async (urlDeUpload: string, ficheiro: File): Promise<void> => {
+    const resposta = await fetch(urlDeUpload, {
+      method: "PUT",
+      body: ficheiro,
+      headers: { "Content-Type": ficheiro.type },
+    });
+    if (!resposta.ok) {
+      throw new ApiError(resposta.status, "Não foi possível enviar a imagem para o storage.");
+    }
+  },
+
+  /** Passo 3: confirma a chave (a API valida que é do próprio utilizador)
+   *  e grava-a em `avatar_url`. */
+  confirmarAvatar: (chave: string) =>
+    pedido<{ avatar_url: string }>("/uploads/avatar/confirmar", {
+      method: "POST",
+      body: JSON.stringify({ chave }),
+    }),
+};
+
 export interface DoacaoPublica {
   id: string;
   recibo_id: string;
