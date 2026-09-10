@@ -316,8 +316,10 @@ chore(infra): adiciona docker-compose para desenvolvimento local
 
 **Portão de entrada para `main`:**
 1. PR obrigatório — nunca commit directo em `main`
-2. CI verde: `npm run lint` + `npm run test` + `npm run build` (frontend) e
-   `ruff check` + `pytest` (api) — ver `.github/workflows/ci.yml`
+2. CI verde: `npm run lint` + `npm run test` + `npm run build` (frontend);
+   `ruff check` + `pytest` + `alembic upgrade head` contra um Postgres real (api);
+   `docker build` das duas imagens + `nginx -t` no `default.conf.template`
+   renderizado (imagens) — ver `.github/workflows/ci.yml`
 3. **Testes novos para a lógica nova** — CI verde não chega
 4. Revisão humana obrigatória em tudo o que toque: esquema de dados (`orm_models.py` +
    migração Alembic), autenticação, paywall, papéis de utilizador
