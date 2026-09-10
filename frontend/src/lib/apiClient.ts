@@ -4,9 +4,9 @@
  * pedido leva `credentials: "include"`, e não há "access token" nenhum para
  * este módulo tocar.
  *
- * Ver CLAUDE.md secção 0 — autenticação, perfil, banners, doações, feedback
- * e sessões de exercício já estão migrados. O resto dos dados (scanner,
- * dashboard, óculos, ...) continua a vir de
+ * Ver CLAUDE.md secção 0 — autenticação, perfil, banners, doações, feedback,
+ * sessões de exercício e o formulário de contacto já estão migrados. O resto
+ * dos dados (scanner, dashboard, óculos, candidaturas, ...) continua a vir de
  * `src/integrations/supabase/client.ts` enquanto a migração módulo-a-módulo
  * não chega lá.
  */
@@ -284,6 +284,26 @@ export const doacoesApi = {
     pedido<DoacaoPublica>("/doacoes/materiais", {
       method: "POST",
       body: JSON.stringify({ email, materiais, detalhes: detalhes || null }),
+    }),
+};
+
+export interface ContactMessagePublico {
+  id: string;
+  nome: string;
+  email: string;
+  assunto: string | null;
+  mensagem: string;
+  created_at: string;
+}
+
+export const contactMessagesApi = {
+  /** Formulário de contacto do site — público, não exige sessão. A
+   *  notificação por email à equipa fica pendente (fornecedor por decidir);
+   *  a mensagem em si já fica guardada. */
+  enviar: (nome: string, email: string, mensagem: string, assunto?: string) =>
+    pedido<ContactMessagePublico>("/contact-messages", {
+      method: "POST",
+      body: JSON.stringify({ nome, email, mensagem, assunto: assunto || undefined }),
     }),
 };
 

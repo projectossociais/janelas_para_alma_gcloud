@@ -6,6 +6,7 @@ from app.routers import (
     auth,
     banners,
     conta,
+    contact_messages,
     doacoes,
     feedback,
     perfil,
@@ -38,6 +39,7 @@ app.include_router(doacoes.router)
 app.include_router(feedback.router)
 app.include_router(uploads.router)
 app.include_router(sessoes_exercicio.router)
+app.include_router(contact_messages.router)
 
 
 @app.get("/saude")

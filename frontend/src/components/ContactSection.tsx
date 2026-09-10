@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { sendToEdgeFunction } from "@/lib/edgeFunction";
+import { contactMessagesApi, mensagemDeErroApi } from "@/lib/apiClient";
 import {
   Dialog,
   DialogContent,
@@ -77,11 +78,13 @@ const ContactSection = () => {
 
     setLoading(true);
     try {
-      const resp = await sendToEdgeFunction("send-contact-email", result.data);
-      if (resp?.error) throw new Error(resp.error);
+      // Grava na API própria. A notificação por email à equipa fica
+      // pendente (fornecedor de email por decidir) — mas a mensagem já não
+      // se perde, e nunca mostramos "enviado" sem a gravação confirmar.
+      await contactMessagesApi.enviar(result.data.name, result.data.email, result.data.message);
       toast({
-        title: "Mensagem enviada com sucesso!",
-        description: "Obrigado pelo contacto. Responderemos em breve.",
+        title: "Mensagem registada!",
+        description: "Obrigado pelo contacto. A nossa equipa vai analisar e responder-lhe.",
       });
       setContactOpen(false);
       (e.target as HTMLFormElement).reset();
@@ -89,7 +92,7 @@ const ContactSection = () => {
       console.error("Contact form error:", err);
       toast({
         title: "Erro ao enviar",
-        description: err instanceof Error ? err.message : "Verifique a sua ligação à internet e tente novamente.",
+        description: mensagemDeErroApi(err, "Verifique a sua ligação à internet e tente novamente."),
         variant: "destructive",
       });
     } finally {

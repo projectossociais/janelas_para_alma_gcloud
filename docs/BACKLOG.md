@@ -193,6 +193,11 @@ Antes de construir, investiguei os próximos candidatos óbvios (`pontos_recolha
 minha para tomar às 2h da manhã; `site_content` só tem um CMS de admin, sem nenhum
 consumidor público. Ajustei o sprint para o que é real.
 
+> **Revisto a 2026-09-10** — a parte de *guardar* a mensagem de contacto é separável da
+> parte de *enviar email*, e foi feita (ver "Formulário de contacto via API" mais
+> abaixo). O envio de email continua pendente. `site_content` continua sem consumidor
+> público — fica de fora.
+
 **Feito:**
 
 - [x] `GET /banners/ativo` — leitura pública directa ao repository, sem `service`
@@ -427,6 +432,31 @@ Fecha o gap identificado nos Sprints 2 e 3: os cinco exercícios gravavam
 - **Ainda por fazer:** ler estas sessões (histórico de exercícios, números reais no
   `DashboardUser`) — hoje esse ecrã ainda usa valores fixos (ver secção 11 da
   `CLAUDE.md`). É trabalho de leitura, para um sprint próprio.
+
+### Formulário de contacto via API (2026-09-10 — mesma branch)
+
+O formulário de contacto do site (`ContactSection.tsx`) só enviava um email por Edge
+Function — a mensagem em si não ficava guardada em lado nenhum, apesar de o
+`AdminInbox.tsx` a tentar listar. Guardar é separável de enviar email, e é o que não
+pode perder-se.
+
+- `POST /contact-messages` — público (não exige sessão), mesmo padrão de `/feedback`:
+  sem service, só validação de forma (nome, email válido, mensagem ≤1000). Repository
+  sem `try/except` à volta do `commit()` — nunca um "enviado" falso.
+- 8 testes de router (201, público sem sessão, 4 casos de 422, nunca 201 quando a
+  gravação falha).
+- Frontend: o `handleSubmit` do contacto passa a chamar `contactMessagesApi.enviar` em
+  vez da Edge Function. O toast de sucesso passou de "Mensagem enviada" para "Mensagem
+  registada" — honesto: o email à equipa ainda não sai. A candidatura a **voluntário**,
+  no mesmo componente, **não foi tocada** — não tem tabela (`voluntarios` não existe no
+  esquema; é trabalho novo, não migração) e continua na Edge Function.
+- `ContactSection.test.tsx` (novo) — 2 testes, incluindo o caminho do erro.
+- **100/100 `pytest`**, **40/40 vitest**, ruff limpo, lint do frontend a zero erros,
+  `tsc --noEmit` e `npm run build` sem regressões.
+- **Ainda por fazer:** `AdminInbox.tsx` e `AdminOverview.tsx` continuam a ler
+  `contact_messages` directo do Supabase — a leitura de admin migra quando houver
+  verificação de admin aplicada a um router de leitura (a dependency já existe). Envio
+  de email à equipa: pendente do fornecedor de email.
 
 ---
 
