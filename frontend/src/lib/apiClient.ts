@@ -5,10 +5,10 @@
  * este módulo tocar.
  *
  * Ver CLAUDE.md secção 0 — autenticação, perfil, banners, doações, feedback,
- * sessões de exercício e o formulário de contacto já estão migrados. O resto
- * dos dados (scanner, dashboard, óculos, candidaturas, ...) continua a vir de
- * `src/integrations/supabase/client.ts` enquanto a migração módulo-a-módulo
- * não chega lá.
+ * sessões de exercício, formulário de contacto, Premium (W-11) e gestão de
+ * admins já estão migrados. O resto dos dados (scanner, dashboard, óculos,
+ * candidaturas, ...) continua a vir de `src/integrations/supabase/client.ts`
+ * enquanto a migração módulo-a-módulo não chega lá.
  */
 
 // Mesma origem por omissão: `/api/*` é servido pelo NGINX nos containers e
@@ -117,6 +117,9 @@ export interface PerfilPublico {
   genero: string | null;
   provincia: string | null;
   avatar_url: string | null;
+  /** Já vem com a validade verificada pela API — não é preciso comparar datas. */
+  premium_ativo: boolean;
+  premium_expira_em: string | null;
   notificacoes_projetos: boolean;
   notificacoes_lembretes: boolean;
   notificacoes_comunidade: boolean;
@@ -334,4 +337,75 @@ export const feedbackApi = {
       method: "POST",
       body: JSON.stringify({ avaliacao, comentario: comentario || undefined }),
     }),
+};
+
+// --- Premium (W-11) --------------------------------------------------------
+
+export interface PedidoPremioInput {
+  nome: string;
+  email: string;
+  telefone?: string | null;
+  plano?: string | null;
+}
+
+export interface PedidoPremiumPublico {
+  id: string;
+  nome: string;
+  email: string;
+  telefone: string | null;
+  plano: string | null;
+  status: string;
+  created_at: string;
+}
+
+export interface PedidoPremiumAdmin extends PedidoPremiumPublico {
+  user_id: string | null;
+  aprovado_por: string | null;
+  aprovado_em: string | null;
+}
+
+export const premiumApi = {
+  /** Formulário `RegistoPremium` — funciona com ou sem sessão; a API liga
+   *  a conta quando há cookie. */
+  pedir: (dados: PedidoPremioInput) =>
+    pedido<PedidoPremiumPublico>("/premium-requests", {
+      method: "POST",
+      body: JSON.stringify(dados),
+    }),
+
+  /** Só admin. */
+  listar: () => pedido<PedidoPremiumAdmin[]>("/premium-requests"),
+
+  aprovar: (id: string) =>
+    pedido<PedidoPremiumAdmin>(`/premium-requests/${id}/aprovar`, { method: "POST" }),
+
+  revogar: (id: string) =>
+    pedido<PedidoPremiumAdmin>(`/premium-requests/${id}/revogar`, { method: "POST" }),
+};
+
+// --- Administração de contas (W-11) --------------------------------------
+
+export interface AdminUtilizador {
+  id: string;
+  email: string;
+  nome_completo: string | null;
+  papel: string;
+  premium_ativo: boolean;
+  criado_em: string;
+}
+
+export const adminApi = {
+  listarUtilizadores: (papel?: string) =>
+    pedido<AdminUtilizador[]>(`/admin/utilizadores${papel ? `?papel=${papel}` : ""}`),
+
+  /** Promove a conta com este email a `admin`. O primeiro admin cria-se por
+   *  linha de comando (`python -m app.criar_admin`). */
+  promover: (email: string) =>
+    pedido<AdminUtilizador>("/admin/utilizadores/promover", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    }),
+
+  removerAdmin: (id: string) =>
+    pedido<AdminUtilizador>(`/admin/utilizadores/${id}/remover-admin`, { method: "POST" }),
 };

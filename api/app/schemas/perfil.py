@@ -14,6 +14,8 @@ class PerfilPublico(BaseModel):
     genero: str | None = None
     provincia: str | None = None
     avatar_url: str | None = None
+    premium_ativo: bool = False
+    premium_expira_em: datetime | None = None
     notificacoes_projetos: bool
     notificacoes_lembretes: bool
     notificacoes_comunidade: bool

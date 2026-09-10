@@ -3,28 +3,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { contactMessagesApi, mensagemDeErroApi, type ContactMessageAdmin } from "@/lib/apiClient";
+import {
+  contactMessagesApi,
+  premiumApi,
+  mensagemDeErroApi,
+  type ContactMessageAdmin,
+  type PedidoPremiumAdmin,
+} from "@/lib/apiClient";
 import { toast } from "sonner";
-import { Check, Mail, Phone } from "lucide-react";
-
-type PremiumRow = {
-  id: string;
-  name: string;
-  status: string;
-  email: string;
-  phone: string;
-  for_whom?: string | null;
-  diagnosis?: string | null;
-  created_at: string;
-};
+import { Check, Mail, Phone, X } from "lucide-react";
 
 const AdminInbox = () => {
   const [msgs, setMsgs] = useState<ContactMessageAdmin[]>([]);
-  // Pedidos Premium ainda vêm do Supabase — a activação do Premium (W-11)
-  // toca paywall e papéis, trabalho que exige revisão humana; até lá, este
-  // separador fica como estava.
-  const [premium, setPremium] = useState<PremiumRow[]>([]);
+  const [premium, setPremium] = useState<PedidoPremiumAdmin[]>([]);
+  const [ocupado, setOcupado] = useState<string | null>(null);
 
   const carregarMensagens = async () => {
     try {
@@ -35,11 +27,11 @@ const AdminInbox = () => {
   };
 
   const carregarPremium = async () => {
-    const { data } = await supabase
-      .from("premium_requests")
-      .select("*")
-      .order("created_at", { ascending: false });
-    setPremium((data ?? []) as unknown as PremiumRow[]);
+    try {
+      setPremium(await premiumApi.listar());
+    } catch (err) {
+      toast.error(mensagemDeErroApi(err, "Não foi possível carregar os pedidos Premium."));
+    }
   };
 
   useEffect(() => {
@@ -57,15 +49,29 @@ const AdminInbox = () => {
     }
   };
 
-  const marcarPremiumContactado = async (id: string) => {
-    const { error } = await supabase
-      .from("premium_requests")
-      .update({ status: "contacted" })
-      .eq("id", id);
-    if (error) toast.error(error.message);
-    else {
-      toast.success("Marcado como contactado.");
-      carregarPremium();
+  const aprovarPagamento = async (id: string) => {
+    setOcupado(id);
+    try {
+      await premiumApi.aprovar(id);
+      toast.success("Pagamento aprovado — Premium activo por 30 dias.");
+      await carregarPremium();
+    } catch (err) {
+      toast.error(mensagemDeErroApi(err, "Não foi possível aprovar o pagamento."));
+    } finally {
+      setOcupado(null);
+    }
+  };
+
+  const revogarPremium = async (id: string) => {
+    setOcupado(id);
+    try {
+      await premiumApi.revogar(id);
+      toast.success("Acesso Premium revogado.");
+      await carregarPremium();
+    } catch (err) {
+      toast.error(mensagemDeErroApi(err, "Não foi possível revogar o acesso."));
+    } finally {
+      setOcupado(null);
     }
   };
 
@@ -129,43 +135,67 @@ const AdminInbox = () => {
                   <div className="flex items-start justify-between gap-3 flex-wrap">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold">{p.name}</span>
+                        <span className="font-semibold">{p.nome}</span>
                         <Badge
-                          variant={p.status === "pending" ? "default" : "secondary"}
+                          variant={
+                            p.status === "aprovado"
+                              ? "default"
+                              : p.status === "revogado"
+                                ? "destructive"
+                                : "secondary"
+                          }
                           className="text-xs"
                         >
                           {p.status}
                         </Badge>
+                        {!p.user_id && (
+                          <Badge variant="outline" className="text-xs">sem conta ligada</Badge>
+                        )}
                       </div>
                       <div className="text-xs text-muted-foreground flex gap-3 mt-1 flex-wrap">
                         <span className="inline-flex items-center gap-1">
                           <Mail className="w-3 h-3" />
                           {p.email}
                         </span>
-                        <span className="inline-flex items-center gap-1">
-                          <Phone className="w-3 h-3" />
-                          {p.phone}
-                        </span>
+                        {p.telefone && (
+                          <span className="inline-flex items-center gap-1">
+                            <Phone className="w-3 h-3" />
+                            {p.telefone}
+                          </span>
+                        )}
                       </div>
                       <div className="text-sm mt-2">
-                        <span className="text-muted-foreground">Para: </span>
-                        {p.for_whom || "—"} ·{" "}
-                        <span className="text-muted-foreground">Diagnóstico: </span>
-                        {p.diagnosis || "—"}
+                        <span className="text-muted-foreground">Plano: </span>
+                        {p.plano || "—"}
                       </div>
                       <div className="text-xs text-muted-foreground mt-2">
                         {new Date(p.created_at).toLocaleString("pt-PT")}
+                        {p.aprovado_em &&
+                          ` · decidido ${new Date(p.aprovado_em).toLocaleString("pt-PT")}`}
                       </div>
                     </div>
-                    {p.status === "pending" && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => marcarPremiumContactado(p.id)}
-                      >
-                        <Check className="w-3 h-3" /> Contactado
-                      </Button>
-                    )}
+                    <div className="flex flex-col gap-2 shrink-0">
+                      {p.status !== "aprovado" && (
+                        <Button
+                          size="sm"
+                          onClick={() => aprovarPagamento(p.id)}
+                          disabled={ocupado === p.id || !p.user_id}
+                          title={!p.user_id ? "O pedido não está ligado a uma conta" : undefined}
+                        >
+                          <Check className="w-3 h-3" /> Aprovar pagamento
+                        </Button>
+                      )}
+                      {p.status === "aprovado" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => revogarPremium(p.id)}
+                          disabled={ocupado === p.id}
+                        >
+                          <X className="w-3 h-3" /> Revogar
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>

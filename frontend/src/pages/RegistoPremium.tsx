@@ -27,6 +27,7 @@ import FileDropzone from "@/components/FileDropzone";
 import CopyRow from "@/components/CopyRow";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { premiumApi } from "@/lib/apiClient";
 import { DEFAULT_BANK_DATA, fileToBase64, ofuscarValor } from "@/lib/pagamento";
 
 const doctorImage = "/registo-premium-doctor.webp";
@@ -182,21 +183,13 @@ const RegistoPremium = () => {
         .filter(Boolean)
         .join(" | ");
 
-      // O registo em `premium_requests` é o que realmente conta como
-      // "pedido recebido" -- se isto falhar, não avançamos para a
-      // Conclusão. A Edge Function abaixo é também o único sítio para onde
-      // o comprovativo é enviado (não há upload separado para o Storage),
-      // por isso conta como falha real também, e não como um simples aviso.
-      const { error: insertError } = await supabase.from("premium_requests").insert([
-        {
-          nome,
-          email,
-          telefone,
-          plano,
-          status: "pendente",
-        },
-      ]);
-      if (insertError) throw insertError;
+      // O registo do pedido é o que realmente conta como "pedido recebido"
+      // -- se isto falhar, não avançamos para a Conclusão (W-11: já grava
+      // na API própria). A Edge Function abaixo continua a ser o único
+      // sítio para onde o comprovativo é enviado (não há upload separado
+      // para o Storage enquanto o R2 não tiver credenciais), por isso conta
+      // como falha real também.
+      await premiumApi.pedir({ nome, email, telefone, plano });
 
       const { error: invokeError } = await supabase.functions.invoke("enviar-email-doacao", {
         body: {
