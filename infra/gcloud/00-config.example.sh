@@ -31,6 +31,10 @@ export R2_ENDPOINT_URL="${R2_ENDPOINT_URL:-}"
 export R2_BUCKET="janelasparaalma"
 export R2_ACCESS_KEY_ID="${R2_ACCESS_KEY_ID:-}"
 export R2_SECRET_ACCESS_KEY="${R2_SECRET_ACCESS_KEY:-}"
+# Base pública por onde o bucket é servido (domínio ligado ao bucket, ou o
+# https://pub-xxxx.r2.dev). URL final de um ficheiro = {base}/{chave}. Não é
+# segredo — vai como env var normal, não pelo Secret Manager.
+export R2_PUBLIC_BASE_URL="${R2_PUBLIC_BASE_URL:-}"
 
 # --- Derivados (não editar) --------------------------------------------
 export SQL_CONNECTION_NAME="${PROJECT_ID}:${REGION}:${SQL_INSTANCE}"

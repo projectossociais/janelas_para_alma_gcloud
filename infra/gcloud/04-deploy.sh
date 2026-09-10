@@ -34,6 +34,7 @@ if gcloud secrets describe jpa-r2-access-key-id >/dev/null 2>&1; then
 fi
 if [ -n "${R2_ENDPOINT_URL:-}" ]; then
   API_ENV="${API_ENV},R2_ENDPOINT_URL=${R2_ENDPOINT_URL},R2_BUCKET=${R2_BUCKET}"
+  [ -n "${R2_PUBLIC_BASE_URL:-}" ] && API_ENV="${API_ENV},R2_PUBLIC_BASE_URL=${R2_PUBLIC_BASE_URL}"
 fi
 
 echo "==> Deploy da API ('${API_SERVICE}')"
