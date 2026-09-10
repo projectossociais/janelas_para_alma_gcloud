@@ -113,6 +113,7 @@ const FileDropzone = ({ file, onFileChange }: FileDropzoneProps) => {
         onChange={handleFileSelect}
         aria-hidden="true"
         tabIndex={-1}
+        data-testid="file-input"
       />
       <div className="rounded-full bg-navy/10 p-3 text-navy">
         <UploadCloud className="h-6 w-6" />

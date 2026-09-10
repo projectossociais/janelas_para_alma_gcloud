@@ -76,6 +76,13 @@ class Utilizador(Base):
         Enum(AppRole, name="app_role"), nullable=False, server_default=AppRole.comum.value
     )
 
+    # Acesso Premium — estado de subscrição, ortogonal ao `papel` (um
+    # `estrabico` pode ter Premium). Activado por `PremiumService` ao aprovar
+    # um pagamento; a expiração é sempre verificada na leitura, não há job a
+    # desligar nada. Ver docs/BACKLOG.md, W-11.
+    premium_ativo: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    premium_expira_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
     notificacoes_projetos: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     notificacoes_lembretes: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     notificacoes_comunidade: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
@@ -206,7 +213,13 @@ class PremiumRequest(Base):
     email: Mapped[str] = mapped_column(Text, nullable=False)
     telefone: Mapped[str | None] = mapped_column(Text)
     plano: Mapped[str | None] = mapped_column(Text)
+    # "pendente" | "aprovado" | "revogado". Auditoria de quem decidiu e
+    # quando — preenchido por `PremiumService`. Ver docs/BACKLOG.md, W-11.
     status: Mapped[str | None] = mapped_column(Text, server_default="pendente")
+    aprovado_por: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="SET NULL")
+    )
+    aprovado_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 

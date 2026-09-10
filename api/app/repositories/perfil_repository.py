@@ -6,7 +6,7 @@ conhece as colunas que lhe dizem respeito.
 
 import uuid
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from typing import Protocol
 
 from sqlalchemy.orm import Session
@@ -26,6 +26,11 @@ class PerfilRegisto:
     genero: str | None
     provincia: str | None
     avatar_url: str | None
+    # `premium_ativo` já vem com a validade verificada — o frontend não
+    # precisa de comparar datas. `premium_expira_em` fica para mostrar
+    # "expira em X dias".
+    premium_ativo: bool
+    premium_expira_em: datetime | None
     notificacoes_projetos: bool
     notificacoes_lembretes: bool
     notificacoes_comunidade: bool
@@ -62,6 +67,8 @@ class SQLAlchemyPerfilRepository:
 
     @staticmethod
     def _para_registo(row: Utilizador) -> PerfilRegisto:
+        expira = row.premium_expira_em
+        premium_ativo = bool(row.premium_ativo) and expira is not None and expira > datetime.now(UTC)
         return PerfilRegisto(
             id=str(row.id),
             email=row.email,
@@ -73,6 +80,8 @@ class SQLAlchemyPerfilRepository:
             genero=row.genero,
             provincia=row.provincia,
             avatar_url=row.avatar_url,
+            premium_ativo=premium_ativo,
+            premium_expira_em=expira,
             notificacoes_projetos=row.notificacoes_projetos,
             notificacoes_lembretes=row.notificacoes_lembretes,
             notificacoes_comunidade=row.notificacoes_comunidade,

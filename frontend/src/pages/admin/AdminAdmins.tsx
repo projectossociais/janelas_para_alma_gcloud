@@ -2,147 +2,84 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { supabase } from "@/integrations/supabase/client";
+import { adminApi, mensagemDeErroApi, type AdminUtilizador } from "@/lib/apiClient";
 import { toast } from "sonner";
 import { Trash2, ShieldPlus } from "lucide-react";
-import { useAdminScope } from "@/hooks/useAdminScope";
 
-type Row = {
-  user_id: string;
-  is_super: boolean;
-  can_overview: boolean;
-  can_users: boolean;
-  can_inbox: boolean;
-  can_banners: boolean;
-  can_notifications: boolean;
-  can_content: boolean;
-  can_manage_admins: boolean;
-  profile?: { nome_completo: string | null; email: string };
-};
-
-const SCOPES: { key: keyof Row; label: string }[] = [
-  { key: "can_overview", label: "Visão Geral" },
-  { key: "can_users", label: "Utilizadores" },
-  { key: "can_inbox", label: "Mensagens" },
-  { key: "can_banners", label: "Banners" },
-  { key: "can_notifications", label: "Notificações" },
-  { key: "can_content", label: "Conteúdo" },
-  { key: "can_manage_admins", label: "Gerir Admins" },
-];
+// W-11: no modelo novo "admin" é binário (uma coluna `papel`), não uma
+// matriz de permissões. Saíram o `is_super`, os `can_*` e o `useAdminScope`
+// (que liam a tabela `admin_permissions` do Supabase). O primeiro admin
+// cria-se por linha de comando: `python -m app.criar_admin <email>`.
 
 const AdminAdmins = () => {
-  const { scope } = useAdminScope();
-  const canManage = !!(scope?.is_super || scope?.can_manage_admins);
-  const [rows, setRows] = useState<Row[]>([]);
+  const [rows, setRows] = useState<AdminUtilizador[]>([]);
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
 
   const load = async () => {
-    const { data: perms, error } = await supabase
-      .from("admin_permissions")
-      .select("*")
-      .order("created_at", { ascending: true });
-    if (error) { toast.error(error.message); return; }
-    const list = (perms ?? []) as unknown as Row[];
-    const ids = list.map((r) => r.user_id);
-    if (ids.length) {
-      const { data: profs } = await supabase
-        .from("profiles")
-        .select("id,nome_completo,email")
-        .in("id", ids);
-      const map = new Map((profs ?? []).map((p) => [p.id, p]));
-      list.forEach((r) => {
-        const p = map.get(r.user_id);
-        if (p) r.profile = { nome_completo: p.nome_completo, email: p.email };
-      });
+    try {
+      setRows(await adminApi.listarUtilizadores("admin"));
+    } catch (err) {
+      toast.error(mensagemDeErroApi(err, "Não foi possível carregar os administradores."));
     }
-    setRows(list);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   const addAdmin = async () => {
-    if (!canManage) return;
-    const clean = email.trim().toLowerCase();
+    const clean = email.trim();
     if (!clean) return;
     setBusy(true);
     try {
-      const { data: prof, error } = await supabase
-        .from("profiles")
-        .select("id,email")
-        .ilike("email", clean)
-        .maybeSingle();
-      if (error) throw error;
-      if (!prof) {
-        toast.error("Utilizador não encontrado. Peça-lhe para criar conta primeiro.");
-        return;
-      }
-      const { error: rErr } = await supabase
-        .from("user_roles")
-        .insert({ user_id: prof.id, role: "admin" });
-      if (rErr && !String(rErr.message).includes("duplicate")) throw rErr;
-      await supabase.from("profiles").update({ papel: "admin" }).eq("id", prof.id);
-      const { error: pErr } = await supabase
-        .from("admin_permissions")
-        .insert({ user_id: prof.id, is_super: false, can_overview: true });
-      if (pErr && !String(pErr.message).includes("duplicate")) throw pErr;
+      await adminApi.promover(clean);
       toast.success("Admin adicionado.");
       setEmail("");
-      load();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erro inesperado.");
+      await load();
+    } catch (err) {
+      toast.error(mensagemDeErroApi(err, "Não foi possível adicionar o administrador."));
     } finally {
       setBusy(false);
     }
   };
 
-  const toggleScope = async (row: Row, key: keyof Row, value: boolean) => {
-    if (!canManage) return;
-    if (row.is_super) { toast.error("Super admin tem sempre todas as permissões."); return; }
-    const { error } = await supabase
-      .from("admin_permissions")
-      .update({ [key]: value })
-      .eq("user_id", row.user_id);
-    if (error) { toast.error(error.message); return; }
-    setRows((prev) => prev.map((r) => r.user_id === row.user_id ? { ...r, [key]: value } as Row : r));
-  };
-
-  const removeAdmin = async (row: Row) => {
-    if (!canManage) return;
-    if (row.is_super) { toast.error("Não é possível remover um super admin."); return; }
-    if (!confirm(`Remover admin ${row.profile?.email ?? row.user_id}?`)) return;
-    await supabase.from("admin_permissions").delete().eq("user_id", row.user_id);
-    await supabase.from("user_roles").delete().eq("user_id", row.user_id).eq("role", "admin");
-    await supabase.from("profiles").update({ papel: "comum" }).eq("id", row.user_id);
-    toast.success("Admin removido.");
-    load();
+  const removeAdmin = async (row: AdminUtilizador) => {
+    if (!confirm(`Remover o acesso de admin de ${row.email}?`)) return;
+    try {
+      await adminApi.removerAdmin(row.id);
+      toast.success("Admin removido.");
+      await load();
+    } catch (err) {
+      toast.error(mensagemDeErroApi(err, "Não foi possível remover o administrador."));
+    }
   };
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><ShieldPlus className="w-5 h-5" /> Adicionar administrador</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <ShieldPlus className="w-5 h-5" /> Adicionar administrador
+          </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col sm:flex-row gap-3">
           <Input
             placeholder="email@exemplo.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            disabled={!canManage || busy}
+            disabled={busy}
           />
-          <Button onClick={addAdmin} disabled={!canManage || busy || !email.trim()}>
+          <Button onClick={addAdmin} disabled={busy || !email.trim()}>
             Adicionar
           </Button>
         </CardContent>
-        {!canManage && (
-          <CardContent className="pt-0 text-sm text-muted-foreground">
-            Precisas da permissão "Gerir Admins" para adicionar ou editar administradores.
-          </CardContent>
-        )}
+        <CardContent className="pt-0 text-sm text-muted-foreground">
+          A conta tem de já existir. Para criar o primeiro admin, corra na API{" "}
+          <code>python -m app.criar_admin &lt;email&gt;</code>.
+        </CardContent>
       </Card>
 
       <Card>
@@ -155,46 +92,33 @@ const AdminAdmins = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Utilizador</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  {SCOPES.map((s) => <TableHead key={s.key} className="text-center">{s.label}</TableHead>)}
-                  <TableHead></TableHead>
+                  <TableHead>Desde</TableHead>
+                  <TableHead />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {rows.map((r) => (
-                  <TableRow key={r.user_id}>
+                  <TableRow key={r.id}>
                     <TableCell>
-                      <div className="font-medium">{r.profile?.nome_completo || "—"}</div>
-                      <div className="text-xs text-muted-foreground">{r.profile?.email || r.user_id}</div>
+                      <div className="font-medium">{r.nome_completo || "—"}</div>
+                      <div className="text-xs text-muted-foreground">{r.email}</div>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {new Date(r.criado_em).toLocaleDateString("pt-PT")}
                     </TableCell>
                     <TableCell>
-                      {r.is_super
-                        ? <Badge>Super</Badge>
-                        : <Badge variant="secondary">Admin</Badge>}
-                    </TableCell>
-                    {SCOPES.map((s) => (
-                      <TableCell key={s.key} className="text-center">
-                        <Checkbox
-                          checked={r.is_super || Boolean(r[s.key])}
-                          disabled={!canManage || r.is_super}
-                          onCheckedChange={(v) => toggleScope(r, s.key, Boolean(v))}
-                        />
-                      </TableCell>
-                    ))}
-                    <TableCell>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        disabled={!canManage || r.is_super}
-                        onClick={() => removeAdmin(r)}
-                      >
+                      <Button size="icon" variant="ghost" onClick={() => removeAdmin(r)}>
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
                     </TableCell>
                   </TableRow>
                 ))}
                 {!rows.length && (
-                  <TableRow><TableCell colSpan={SCOPES.length + 3} className="text-center text-muted-foreground py-6">Sem administradores.</TableCell></TableRow>
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center text-muted-foreground py-6">
+                      <Badge variant="outline">Sem administradores</Badge>
+                    </TableCell>
+                  </TableRow>
                 )}
               </TableBody>
             </Table>

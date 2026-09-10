@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import obter_settings
 from app.routers import (
+    admin,
     auth,
     banners,
     conta,
@@ -10,6 +11,7 @@ from app.routers import (
     doacoes,
     feedback,
     perfil,
+    premium,
     sessoes_exercicio,
     uploads,
 )
@@ -40,6 +42,8 @@ app.include_router(feedback.router)
 app.include_router(uploads.router)
 app.include_router(sessoes_exercicio.router)
 app.include_router(contact_messages.router)
+app.include_router(premium.router)
+app.include_router(admin.router)
 
 
 @app.get("/saude")

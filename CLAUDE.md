@@ -34,7 +34,11 @@ em vez de arrastadas como dívida (ver `api/app/repositories/orm_models.py`):
    separação deixou de ter razão de ser.
 2. **`papel` é uma única coluna enum.** O projecto antigo tinha `profiles.papel` (texto) e
    `user_roles` (enum) como duas fontes paralelas — dívida conhecida, nunca corrigida.
-   Ao começar do zero, a correcção certa é não a reproduzir.
+   Ao começar do zero, a correcção certa é não a reproduzir. **Premium não é um papel:**
+   é um estado de subscrição (`utilizadores.premium_ativo` + `premium_expira_em`),
+   ortogonal ao `papel` — um `estrabico` pode ter Premium sem deixar de ser `estrabico`.
+   Activado por `PremiumService` ao aprovar um pagamento (W-11); a validade é sempre
+   verificada na leitura, não há job a desligar nada.
 
 Foi também removida toda a integração específica do Lovable.dev (`src/lib/mcp/`,
 `@lovable.dev/*`, `lovable-tagger`, a rota `/.lovable/oauth/consent`) — glue da IDE cloud
@@ -194,6 +198,9 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   a dependency `obter_utilizador_admin` em `api/app/core/dependencies.py` (401 sem
   sessão, 403 se `papel != "admin"`). Rotas de admin declaram
   `Depends(obter_utilizador_admin)`; não duplicar a comparação de papel por endpoint.
+  A base de dados nasce sem admins e o registo não deixa ninguém escolher `admin`
+  (§3c) — o primeiro cria-se por linha de comando (`python -m app.criar_admin <email>`);
+  a partir daí um admin promove outros por `POST /admin/utilizadores/promover`.
 
 ### React / estado
 
@@ -347,8 +354,7 @@ Não imitar estes padrões enquanto a migração módulo-a-módulo decorre (ver 
 |---|---|
 | `frontend/src/integrations/supabase/*` | Ainda chama o Supabase directamente — a substituir por um cliente da API própria, módulo a módulo |
 | `Scanner.tsx` | O "diagnóstico" é `Math.random()` — não é calculado a partir de medições |
-| `Exercicios.tsx`, `BaseExercise.tsx` | Paywall Premium desligado por bypass temporário |
-| `AdminInbox.tsx` | "Aprovar" apenas marca `status`; nunca activa o papel do utilizador |
+| `Exercicios.tsx`, `BaseExercise.tsx` | Paywall Premium ainda desligado por bypass (`temAcessoPremium = true`) — a activação já existe (W-11), falta só virar a chave, num PR isolado |
 | `ClinicalPartners.tsx` | Formulário de agendamento não persiste nada — só mostra um toast |
 | `DashboardUser.tsx` | Parte dos números são valores fixos, não dados reais |
 | `Produto.tsx` | Catálogo de óculos é mock — sem carrinho nem checkout |

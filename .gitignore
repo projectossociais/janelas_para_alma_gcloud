@@ -46,3 +46,6 @@ npm-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+# Override local do Compose (porta da DB, etc.) — por máquina, nunca versionado
+docker-compose.override.yml
