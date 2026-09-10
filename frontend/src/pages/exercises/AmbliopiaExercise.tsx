@@ -8,8 +8,7 @@ import BaseExercise, { useExerciseSession } from "@/components/exercises/BaseExe
 import { useEyeTracking } from "@/hooks/useEyeTracking";
 import { useFeedback } from "@/contexts/FeedbackContext";
 import { useProfile } from "@/contexts/ProfileContext";
-import { supabase } from "@/integrations/supabase/client";
-import type { Json } from "@/integrations/supabase/types";
+import { sessoesExercicioApi } from "@/lib/apiClient";
 import FeedbackWidget from "@/components/FeedbackWidget";
 
 const EXERCICIO_ID = "ambliopia";
@@ -380,7 +379,7 @@ const AmbliopiaGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: AmbliopiaGam
           )
         : 0;
 
-    const detalhes: Json = {
+    const detalhes = {
       tempo_reacao_medio_ms: tempoReacaoMedioMs,
       taxa_erro: taxaErro,
       dificuldade: dificuldadeRef.current.label,
@@ -389,17 +388,13 @@ const AmbliopiaGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: AmbliopiaGam
     const registarSessao = async () => {
       if (!profile?.id) return;
       try {
-        const { error: insertError } = await supabase.from("sessoes_exercicio").insert([
-          {
-            user_id: profile.id,
-            exercicio_id: EXERCICIO_ID,
-            pontuacao: score,
-            precisao_percentual: precisaoPercentual,
-            duracao_segundos: duracaoAtivaSegundos,
-            detalhes,
-          },
-        ]);
-        if (insertError) throw insertError;
+        await sessoesExercicioApi.registar({
+          exercicio_id: EXERCICIO_ID,
+          pontuacao: score,
+          precisao_percentual: precisaoPercentual,
+          duracao_segundos: duracaoAtivaSegundos,
+          detalhes,
+        });
       } catch (err) {
         console.error("Falha ao registar sessão de exercício:", err);
       }

@@ -4,10 +4,11 @@
  * pedido leva `credentials: "include"`, e não há "access token" nenhum para
  * este módulo tocar.
  *
- * Ver CLAUDE.md secção 0 — autenticação, perfil e banners já estão
- * migrados. O resto dos dados (sessões de exercício, scanner, doações, ...)
- * continua a vir de `src/integrations/supabase/client.ts` enquanto a
- * migração módulo-a-módulo não chega lá.
+ * Ver CLAUDE.md secção 0 — autenticação, perfil, banners, doações, feedback
+ * e sessões de exercício já estão migrados. O resto dos dados (scanner,
+ * dashboard, óculos, ...) continua a vir de
+ * `src/integrations/supabase/client.ts` enquanto a migração módulo-a-módulo
+ * não chega lá.
  */
 
 // Mesma origem por omissão: `/api/*` é servido pelo NGINX nos containers e
@@ -234,6 +235,36 @@ export const uploadsApi = {
     pedido<{ avatar_url: string }>("/uploads/avatar/confirmar", {
       method: "POST",
       body: JSON.stringify({ chave }),
+    }),
+};
+
+export interface SessaoExercicioInput {
+  exercicio_id: string;
+  duracao_segundos: number;
+  pontuacao?: number;
+  precisao_percentual?: number;
+  detalhes?: Record<string, unknown> | null;
+}
+
+export interface SessaoExercicioPublica {
+  id: string;
+  user_id: string;
+  exercicio_id: string;
+  duracao_segundos: number;
+  pontuacao: number;
+  precisao_percentual: number;
+  detalhes: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export const sessoesExercicioApi = {
+  /** Grava uma sessão terminada. Nunca envia `user_id` — a API tira-o do
+   *  cookie de sessão (o `profile.id` do browser deixou de ser fonte de
+   *  verdade para isto). */
+  registar: (dados: SessaoExercicioInput) =>
+    pedido<SessaoExercicioPublica>("/sessoes-exercicio", {
+      method: "POST",
+      body: JSON.stringify(dados),
     }),
 };
 

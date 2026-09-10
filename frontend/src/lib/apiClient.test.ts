@@ -60,6 +60,39 @@ describe("apiClient — mesma origem", () => {
     await expect(authApi.eu()).rejects.toBeInstanceOf(ApiError);
   });
 
+  it("sessoesExercicioApi.registar faz POST a /api/sessoes-exercicio sem nunca enviar user_id", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(respostaFalsa({ id: "s1" }, { ok: true, status: 201 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { sessoesExercicioApi } = await import("./apiClient");
+    await sessoesExercicioApi.registar({
+      exercicio_id: "tracking",
+      duracao_segundos: 90,
+      pontuacao: 10,
+    });
+
+    const [url, opcoes] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/sessoes-exercicio");
+    expect(opcoes.method).toBe("POST");
+    const corpo = JSON.parse(opcoes.body as string);
+    expect(corpo).toMatchObject({ exercicio_id: "tracking", duracao_segundos: 90, pontuacao: 10 });
+    expect(corpo).not.toHaveProperty("user_id");
+  });
+
+  it("sessoesExercicioApi.registar propaga o erro quando a API falha — nunca silencioso", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(respostaFalsa({ detail: "Sessão inválida" }, { ok: false, status: 401 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { sessoesExercicioApi } = await import("./apiClient");
+    await expect(
+      sessoesExercicioApi.registar({ exercicio_id: "x", duracao_segundos: 1 }),
+    ).rejects.toMatchObject({ status: 401 });
+  });
+
   it("204 sem corpo não tenta fazer parse de JSON", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,

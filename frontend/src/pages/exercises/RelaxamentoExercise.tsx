@@ -8,7 +8,7 @@ import BaseExercise, { useExerciseSession } from "@/components/exercises/BaseExe
 import { useEyeTracking } from "@/hooks/useEyeTracking";
 import { useFeedback } from "@/contexts/FeedbackContext";
 import { useProfile } from "@/contexts/ProfileContext";
-import { supabase } from "@/integrations/supabase/client";
+import { sessoesExercicioApi } from "@/lib/apiClient";
 import FeedbackWidget from "@/components/FeedbackWidget";
 
 const EXERCICIO_ID = "relax";
@@ -143,14 +143,10 @@ const RelaxamentoGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: Relaxament
     const registarSessao = async () => {
       if (!profile?.id) return; // sem sessão de utilizador -- nada a registar
       try {
-        const { error: insertError } = await supabase.from("sessoes_exercicio").insert([
-          {
-            user_id: profile.id,
-            exercicio_id: EXERCICIO_ID,
-            duracao_segundos: duracaoSegundos,
-          },
-        ]);
-        if (insertError) throw insertError;
+        await sessoesExercicioApi.registar({
+          exercicio_id: EXERCICIO_ID,
+          duracao_segundos: duracaoSegundos,
+        });
       } catch (err) {
         // Falha de rede/autenticação não pode bloquear o ecrã de feedback
         // final -- o utilizador já terminou o exercício e quer ver o resultado.

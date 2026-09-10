@@ -2,7 +2,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import obter_settings
-from app.routers import auth, banners, conta, doacoes, feedback, perfil, uploads
+from app.routers import (
+    auth,
+    banners,
+    conta,
+    doacoes,
+    feedback,
+    perfil,
+    sessoes_exercicio,
+    uploads,
+)
 
 app = FastAPI(title="Janelas Para a Alma — API")
 
@@ -28,6 +37,7 @@ app.include_router(banners.router)
 app.include_router(doacoes.router)
 app.include_router(feedback.router)
 app.include_router(uploads.router)
+app.include_router(sessoes_exercicio.router)
 
 
 @app.get("/saude")

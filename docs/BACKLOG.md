@@ -136,6 +136,10 @@ nova, esse id não corresponde a nada no Supabase; essas gravações continuam a
 reconhecida" na Sprint 1 — mas agora é precisamente "grava com um id estranho" em vez
 de "não grava". Fica para quando `sessoes_exercicio` migrar para a API.
 
+> **Resolvido a 2026-09-10** — ver "Sessões de exercício via API" mais abaixo. Os cinco
+> exercícios gravam agora em `POST /sessoes-exercicio`, com o `user_id` tirado do
+> cookie de sessão, não do `profile.id` do browser.
+
 ---
 
 ## Sprint 3 — Conta: mudar password, eliminar (30 dias) (2026-09-09)
@@ -290,7 +294,7 @@ item abaixo depende de uma decisão que não é minha para tomar sozinho:
 | Deploy no Cloud Run | Conta GCloud, projecto, credenciais |
 | CRUD de admin (notifications, site_content) | ~~Verificação de papel/admin na API~~ já construída (`obter_utilizador_admin`); ~~banners~~ feito a 2026-09-10 (ver abaixo). Falta `notifications`/`site_content` — mesmo padrão |
 | Fluxo financeiro de doações (upload de comprovativo) | Email + storage, os dois primeiros itens desta lista |
-| `sessoes_exercicio`, Scanner, Premium | Módulos maiores, cada um merece o mesmo tratamento cuidadoso — próximos sprints |
+| ~~`sessoes_exercicio`~~ (feito 2026-09-10), Scanner, Premium | Scanner e Premium continuam módulos maiores, cada um merece o mesmo tratamento cuidadoso — próximos sprints |
 
 ### Infra do NGINX — alvo do proxy parametrizado (2026-09-09)
 
@@ -393,6 +397,36 @@ estava desligado desde a Sprint 2 (dependia do Supabase Storage).
 - **Ainda por fazer para funcionar em produção:** credenciais reais do R2, um bucket, e
   `R2_PUBLIC_BASE_URL` a apontar para o domínio público do bucket. Até lá o endpoint
   responde mas o `PUT` assinado não tem destino real.
+
+### Sessões de exercício via API (2026-09-10 — mesma branch)
+
+Fecha o gap identificado nos Sprints 2 e 3: os cinco exercícios gravavam
+`sessoes_exercicio` directamente no Supabase, usando o `profile.id` da API nova como
+`user_id` — um id que no Supabase não corresponde a nada.
+
+- `POST /sessoes-exercicio` — router fino, direto ao repository, **sem service**:
+  gravar uma sessão é escrita simples e não decide acesso, dinheiro nem resultado
+  clínico (CLAUDE.md §3, a tabela lista exactamente este caso do lado do router fino).
+- **O `user_id` vem do JWT, nunca do corpo.** O schema `SessaoExercicioCriar` nem tem
+  campo `user_id`; um pedido forjado com `user_id` no corpo é ignorado pelo Pydantic e
+  a API grava sempre o dono do cookie. Testado explicitamente.
+- `sessoes_exercicio_repository.py` — sem `try/except` à volta do `commit()` (mesmo
+  padrão de `doacoes_repository.py`): se a gravação falhar, a excepção propaga (500),
+  nunca um 201 fabricado. Teste: `test_nunca_201_quando_a_gravacao_falha`.
+- `pontuacao`/`precisao_percentual`/`detalhes` são opcionais (o exercício de
+  relaxamento não pontua); `duracao_segundos` entre 1 e 24 h.
+- Frontend: `TrackingExercise`, `CerebroExercise`, `ConvergenciaExercise`,
+  `RelaxamentoExercise`, `AmbliopiaExercise` deixam de importar `supabase` — passam a
+  `sessoesExercicioApi.registar`. Mantido o comportamento existente de **não** bloquear
+  o ecrã de feedback final se a gravação falhar (só `console.error`): o utilizador já
+  terminou o exercício e a sessão é telemetria, não há UI de sucesso presa a ela.
+- Testes: 5 de router (`test_sessoes_exercicio_router.py`) + 2 de `apiClient`
+  (`apiClient.test.ts` — payload sem `user_id`, erro propagado). **93/93 `pytest`**,
+  **38/38 vitest**, ruff limpo, lint do frontend a zero erros, `tsc --noEmit` e
+  `npm run build` sem regressões.
+- **Ainda por fazer:** ler estas sessões (histórico de exercícios, números reais no
+  `DashboardUser`) — hoje esse ecrã ainda usa valores fixos (ver secção 11 da
+  `CLAUDE.md`). É trabalho de leitura, para um sprint próprio.
 
 ---
 
