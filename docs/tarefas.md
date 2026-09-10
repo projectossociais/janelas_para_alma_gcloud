@@ -22,13 +22,17 @@ quem faz o quê, com que prioridade, e em que estado.
 
 1. Ao **fechar** uma tarefa (ou combinar uma nova, ou eu sugerir uma
    funcionalidade/implementação): actualiza-se a linha no `tarefas.csv` **no
-   mesmo commit** que a fecha. O `git log docs/tarefas.csv` passa a ser o
-   registo de quem fez o quê e quando.
+   mesmo commit** que a fecha, e volta-se a gerar o tracker
+   (`python docs/gerar_tracker.py`). O `git log docs/tarefas.csv` passa a ser
+   o registo de quem fez o quê e quando.
 2. Reimportar no Google Sheets: *Ficheiro → Importar → Carregar* o
    `tarefas.csv` → **Substituir folha atual**. Fica sempre a versão de agora.
 3. Edições feitas só no Sheets (comentários, colunas extra do Lukeny) **não
    voltam** para o CSV — o CSV é a fonte, o Sheets é a vista partilhada.
 
-Este CSV substitui o `tracker.html` (que ficava editável em `localStorage` e
-andava sempre desactualizado). O `tracker.html` continua no repo até se
-decidir apagá-lo ou passar a gerá-lo a partir deste CSV.
+## `tracker.html` — vista só-leitura
+
+`docs/tracker.html` é **gerado** a partir do CSV por `docs/gerar_tracker.py`
+(só biblioteca padrão do Python). Abre em qualquer browser sem servidor:
+tabela ordenada por estado, com filtros por estado/responsável, procura e
+barra de progresso. Não editar à mão — editar o CSV e voltar a gerar.
