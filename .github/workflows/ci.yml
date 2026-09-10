@@ -76,5 +76,9 @@ jobs:
       - name: Build da imagem do frontend
         run: docker build -f infra/docker/frontend.Dockerfile -t jpa-frontend:ci .
       # Renderiza o template (envsubst da imagem oficial) e valida com nginx -t.
+      # O `proxy_pass` leva um host literal (sem variável nem `resolver`), por
+      # isso o `nginx -t` resolve-o já no parse — tem de ser um host que exista
+      # sempre. `localhost` chega: o que este passo valida é a RENDERIZAÇÃO do
+      # template e a SINTAXE do config, não a alcançabilidade da API.
       - name: NGINX — config renderiza e passa no nginx -t
-        run: docker run --rm -e API_URL=http://api.exemplo:8000 jpa-frontend:ci nginx -t
+        run: docker run --rm -e API_URL=http://localhost:8000 jpa-frontend:ci nginx -t
