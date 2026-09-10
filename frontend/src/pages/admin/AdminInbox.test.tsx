@@ -4,27 +4,24 @@ import userEvent from "@testing-library/user-event";
 
 const listar = vi.fn();
 const marcarLida = vi.fn();
+const premiumListar = vi.fn();
+const premiumAprovar = vi.fn();
+const premiumRevogar = vi.fn();
 
 vi.mock("@/lib/apiClient", () => ({
   contactMessagesApi: {
     listar: (...a: unknown[]) => listar(...a),
     marcarLida: (...a: unknown[]) => marcarLida(...a),
   },
+  premiumApi: {
+    listar: (...a: unknown[]) => premiumListar(...a),
+    aprovar: (...a: unknown[]) => premiumAprovar(...a),
+    revogar: (...a: unknown[]) => premiumRevogar(...a),
+  },
   mensagemDeErroApi: (err: unknown, fallback: string) => {
     const status = (err as { status?: unknown } | null)?.status;
     const message = (err as { message?: unknown } | null)?.message;
     return typeof status === "number" && typeof message === "string" ? message : fallback;
-  },
-}));
-
-// O separador de Pedidos Premium continua no Supabase — mockado só para não
-// sair pela rede neste teste.
-vi.mock("@/integrations/supabase/client", () => ({
-  supabase: {
-    from: () => ({
-      select: () => ({ order: () => Promise.resolve({ data: [] }) }),
-      update: () => ({ eq: () => Promise.resolve({ error: null }) }),
-    }),
   },
 }));
 
@@ -39,6 +36,10 @@ vi.mock("sonner", () => ({
 
 import AdminInbox from "./AdminInbox";
 
+async function abrirSeparadorPremium(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(await screen.findByRole("tab", { name: /Pedidos Premium/i }));
+}
+
 const umaMensagem = {
   id: "msg-1",
   nome: "Ana Silva",
@@ -49,10 +50,26 @@ const umaMensagem = {
   created_at: "2026-01-01T10:00:00.000Z",
 };
 
+const umPedido = {
+  id: "ped-1",
+  nome: "Rui Premium",
+  email: "rui@example.com",
+  telefone: null,
+  plano: "mensal",
+  status: "pendente",
+  created_at: "2026-01-02T10:00:00.000Z",
+  user_id: "user-9",
+  aprovado_por: null,
+  aprovado_em: null,
+};
+
 describe("AdminInbox — mensagens de contacto", () => {
   beforeEach(() => {
-    listar.mockReset();
+    listar.mockReset().mockResolvedValue([]);
     marcarLida.mockReset();
+    premiumListar.mockReset().mockResolvedValue([]);
+    premiumAprovar.mockReset();
+    premiumRevogar.mockReset();
     toastSuccess.mockReset();
     toastError.mockReset();
   });
@@ -89,5 +106,44 @@ describe("AdminInbox — mensagens de contacto", () => {
 
     await waitFor(() => expect(toastError).toHaveBeenCalledWith("Falhou"));
     expect(toastSuccess).not.toHaveBeenCalled();
+  });
+
+  it("aprova um pagamento Premium e recarrega os pedidos", async () => {
+    premiumListar
+      .mockResolvedValueOnce([umPedido])
+      .mockResolvedValueOnce([{ ...umPedido, status: "aprovado" }]);
+    premiumAprovar.mockResolvedValue({ ...umPedido, status: "aprovado" });
+    const user = userEvent.setup();
+    render(<AdminInbox />);
+
+    await abrirSeparadorPremium(user);
+    await user.click(await screen.findByRole("button", { name: /Aprovar pagamento/i }));
+
+    await waitFor(() => expect(premiumAprovar).toHaveBeenCalledWith("ped-1"));
+    expect(toastSuccess).toHaveBeenCalledWith("Pagamento aprovado — Premium activo por 30 dias.");
+    await waitFor(() => expect(premiumListar).toHaveBeenCalledTimes(2));
+  });
+
+  it("nunca mostra sucesso se aprovar o pagamento falhar", async () => {
+    premiumListar.mockResolvedValue([umPedido]);
+    premiumAprovar.mockRejectedValue(Object.assign(new Error("já aprovado"), { status: 409 }));
+    const user = userEvent.setup();
+    render(<AdminInbox />);
+
+    await abrirSeparadorPremium(user);
+    await user.click(await screen.findByRole("button", { name: /Aprovar pagamento/i }));
+
+    await waitFor(() => expect(toastError).toHaveBeenCalledWith("já aprovado"));
+    expect(toastSuccess).not.toHaveBeenCalled();
+  });
+
+  it("desactiva o botão de aprovar quando o pedido não tem conta ligada", async () => {
+    premiumListar.mockResolvedValue([{ ...umPedido, user_id: null }]);
+    const user = userEvent.setup();
+    render(<AdminInbox />);
+
+    await abrirSeparadorPremium(user);
+    const botao = await screen.findByRole("button", { name: /Aprovar pagamento/i });
+    expect(botao).toBeDisabled();
   });
 });

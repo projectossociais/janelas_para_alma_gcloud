@@ -43,6 +43,8 @@ def _registar_e_ligar_perfil(client_tuple: tuple[TestClient, RepositorioPerfilFa
         genero=None,
         provincia=None,
         avatar_url=None,
+        premium_ativo=False,
+        premium_expira_em=None,
         notificacoes_projetos=False,
         notificacoes_lembretes=False,
         notificacoes_comunidade=False,

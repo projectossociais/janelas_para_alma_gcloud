@@ -41,10 +41,13 @@ Run. Sem importação de dados de utilizadores; a base de dados nasce vazia, só
 
 **Por fazer, nesta ordem:**
 
-1. **Correr a migração Alembic contra um Postgres real** (`docker compose up -d db &&
-   alembic upgrade head`) e confirmar com `alembic check` — foi escrita à mão porque o
-   Docker Desktop não estava disponível no momento; validada só offline (`--sql`) até aqui.
-   Continua bloqueado — Docker Desktop ainda não está a correr nesta máquina.
+1. ~~**Correr a migração Alembic contra um Postgres real**~~ — feito a 2026-09-10 (Docker
+   disponível). `alembic upgrade head` + `alembic check` contra Postgres a sério
+   revelaram **drift** da baseline escrita à mão (ver "Baseline alinhada com o ORM" mais
+   abaixo); corrigido numa migração aditiva, `alembic check` agora verde.
+   > Nota de ambiente: nesta máquina há um PostgreSQL 18 do sistema no 5432. O
+   > `docker-compose.override.yml` (não versionado) publica o container no 5433 e o
+   > `api/.env` local aponta para lá. O `.gitignore` passou a ignorar o override.
 2. ~~**Storage:** endpoint na API para emitir URLs assinadas do Cloudflare R2 (avatares).~~
    Feito a 2026-09-10 (ver "Upload de avatar via R2" mais abaixo). O código está escrito
    e testado contra um `Presigner` falso; falta só ligar credenciais reais do R2 e
@@ -480,6 +483,74 @@ pode perder-se.
 - **Ainda por fazer:** envio de email à equipa (fornecedor por decidir);
   `AdminOverview` KPIs; candidaturas de voluntário (sem tabela).
 
+### Baseline alinhada com o ORM (2026-09-10 — branch `api/premium-w11`)
+
+Ao correr a migração baseline contra Postgres real pela primeira vez (Docker finalmente
+disponível), `alembic check` apanhou duas diferenças que a baseline escrita à mão tinha
+em relação a `orm_models.py`:
+
+- `admin_permissions.user_id` estava nullable; o ORM diz `NOT NULL`.
+- `utilizadores.email`: o ORM pede um único índice único; a baseline tinha um índice
+  não-único + uma `UniqueConstraint` separada.
+
+Corrigido em `6318271fa98f_alinha_a_baseline_com_os_modelos_orm.py` (aditiva, base vazia).
+Migração baseline nunca editada — a correcção é uma migração nova por cima.
+`alembic upgrade head` + `alembic check` verdes, downgrade testado.
+
+### W-11 · Confirmação de pagamento activa o Premium (2026-09-10 — branch `api/premium-w11`)
+
+Decisão do dono do projecto (2026-09-10): **A** (Premium é estado próprio, não papel) ·
+**2a** (o bypass dos exercícios NÃO se mexe neste lote) · **30 dias** de validade ·
+migração validada contra Postgres real.
+
+**Esquema** (migração `0becabba3bad`, aditiva): `utilizadores.premium_ativo` +
+`premium_expira_em`; `premium_requests.aprovado_por` (FK) + `aprovado_em`.
+
+**API**
+- `services/premium_service.py` — `aprovar_pagamento(pedido_id, admin_id)`: pedido
+  inexistente → 404, já aprovado → 409 (não estica a validade sem novo pagamento), sem
+  conta ligada → 422. `revogar(...)` desliga o acesso. `admin_id` vem sempre do JWT.
+- `repositories/premium_repository.py` — `aprovar_pagamento` / `revogar` tocam
+  `premium_requests` **e** `utilizadores` numa só transacção (um `commit`): estado do
+  pedido e acesso do utilizador nunca dessincronizam.
+- `routers/premium.py` — `POST /premium-requests` (público, liga a conta se houver
+  cookie), `GET /premium-requests` (admin), `POST /premium-requests/{id}/aprovar` e
+  `/revogar` (admin).
+- `PerfilPublico` / `GET /perfil` expõem `premium_ativo` (já com a validade verificada)
+  e `premium_expira_em`.
+- **Criação de admins:** `python -m app.criar_admin <email>` (arranque a frio — a base
+  nasce sem admins e o registo não deixa escolher `admin`). Depois, `routers/admin.py`:
+  `GET /admin/utilizadores`, `POST /admin/utilizadores/promover` (por email),
+  `POST /admin/utilizadores/{id}/remover-admin` — `admin_service.py` impede despromover
+  a própria conta e o último admin.
+
+**Frontend**
+- `RegistoPremium.tsx` — o pedido passa a gravar via `premiumApi.pedir` (antes não
+  gravava nada de útil). O envio do comprovativo continua pela Edge Function (único
+  caminho até o R2 ter credenciais).
+- `AdminInbox.tsx` — separador Premium via `premiumApi`, com **"Aprovar pagamento"**
+  (activa 30 dias) e **"Revogar"**, distintos. Botão de aprovar desactivado se o pedido
+  não tem conta ligada.
+- `AdminAdmins.tsx` — reescrito: sai a matriz de permissões `admin_permissions`/
+  `is_super`/`can_*` (não existe no modelo de `papel` único) e o `useAdminScope`; fica
+  listar admins + promover por email + remover.
+- **Bypass do paywall NÃO tocado** (decisão 2a) — `Exercicios.tsx:154`
+  `temAcessoPremium = true` fica; virar a chave é um PR isolado (bloqueio #3).
+
+**Testes** — 33 novos de API (`test_premium_service`, `test_admin_service`,
+`test_premium_router`, `test_admin_router`, `test_criar_admin`) + 5 de frontend
+(`AdminInbox` premium, `AdminAdmins`). **137/137 `pytest`**, **48/48 vitest**, ruff
+limpo, lint do frontend a zero erros, `tsc --noEmit` e `npm run build` sem regressões.
+`alembic upgrade head` + `alembic check` verdes contra Postgres real.
+- Sem teste de componente para o wizard de `RegistoPremium` — a navegação multi-passo
+  esbarra nas lacunas do jsdom com o Radix Select; a lógica que importa (gravar o
+  pedido, não avançar em caso de erro) espelha o padrão já testado de `Apoiar.tsx` e
+  está coberta do lado da API.
+- `src/test/setup.ts` ganhou polyfills de `ResizeObserver` e Pointer Capture (Radix).
+
+**Ainda por fazer:** virar o bypass do paywall (bloqueio #3); notificar o utilizador
+por email quando o Premium é activado (fornecedor de email por decidir).
+
 ---
 
 ## Como está organizado
@@ -650,11 +721,12 @@ visivelmente avariado. Nenhuma destas tarefas toca base de dados, RLS ou paywall
 
 ## SPRINT 2 — Premium real · Wilson ∥ Candidaturas · Lukeny
 
-### W-11 · Confirmação de pagamento activa o Premium
-- Endpoint na API — **o único ponto com `service_role`**, justificado e auditado
-- Transacção: `status → aprovado` + `profiles.papel → premium` + regista quem aprovou e quando
-- Hoje `AdminInbox.tsx` só marca "Contactado", que não activa nada
-- **Testes obrigatórios:** é lógica de dinheiro e acesso
+### W-11 · Confirmação de pagamento activa o Premium — ✅ **FEITO a 2026-09-10**
+Ver secção "W-11 · Confirmação de pagamento activa o Premium" no bloco de trabalho
+concluído, mais acima. Nota de infra: já não há `service_role` (não há Supabase); a
+autorização é a dependency `obter_utilizador_admin`. O Premium é `utilizadores.premium_ativo`,
+não `papel → premium` (ver `CLAUDE.md` §0). A transacção `status → aprovado` +
+activação do utilizador + auditoria está no `PremiumService`, com testes.
 
 ### L-11 · Botão "Aprovar pagamento" no painel
 - Em `AdminInbox.tsx`, distinto do "Contactado" já existente
@@ -769,6 +841,43 @@ acrescentado antes disto agrava o problema.
 
 ---
 
+## Sprint planeado — Identidade externa e email (decidido 2026-09-10, não iniciado)
+
+Discussão tida a 2026-09-10 (ver também [[gcloud-trial-google-auth-platform]] na memória).
+Decisão do dono do projecto: **fazer**, num sprint próprio, mais para a frente. Não é
+para hoje. Três peças que andam juntas porque partilham a mesma infra de email:
+
+1. **Autenticação com a Google (Sign in with Google).**
+   - OAuth2/OIDC via Google Identity Services — *OAuth client ID* criado na consola GCP
+     (APIs & Services → Credenciais). Grátis, sem dependência gerida nova.
+   - Implementa-se **dentro do `auth_service.py`**: verificar o ID token da Google no
+     servidor, criar/ligar uma linha em `utilizadores`. Mantém o modelo JWT + cookie
+     `httpOnly` já existente.
+   - Esquema: coluna `google_sub` (unique) em `utilizadores`, `password_hash` passa a
+     nullable (contas só-Google não têm password). Migração Alembic aditiva.
+   - **Não** reintroduzir Firebase Auth / Identity Platform — é o tipo de auth gerido
+     que a reescrita passou 6 sprints a remover do Supabase.
+
+2. **Recuperação de palavra-passe por email.**
+   - Substitui o recado fixo de `Auth.tsx` ("ainda não está disponível"). Fluxo:
+     pedir → token de uso único com validade curta guardado (hash) → email com link →
+     `AtualizarPassword.tsx` (já existe, hoje ligado ao Supabase) reescrito para a API.
+   - **Bloqueado por:** escolher o fornecedor de email (ver abaixo).
+
+3. **Confirmação de conta por email no registo.**
+   - O registo passa a criar a conta como *não confirmada*; email com link de
+     confirmação; até confirmar, sessão limitada ou bloqueada (decidir o grau).
+   - Esquema: `email_confirmado bool` + token de confirmação (mesma tabela/mecanismo
+     do ponto 2).
+   - **Bloqueado por:** o mesmo fornecedor de email.
+
+**Decisão que falta (bloqueia 2 e 3):** qual o fornecedor de email transacional. O
+GCloud não tem serviço nativo. Candidatos: **Resend** (mais simples), **SendGrid**
+(tier grátis no marketplace GCP), **AWS SES** (mais barato a volume). Chamada por API
+HTTP a partir do FastAPI (o Cloud Run bloqueia SMTP), chave no Secret Manager.
+
+---
+
 ## O que NÃO fazer agora
 
 Isto é tão importante como a lista acima. Somos duas pessoas, uma delas ainda a aprender.
@@ -778,7 +887,7 @@ desenvolvimento?"* — a resposta honesta condiciona o que cabe.
 | Adiado | Porquê |
 |---|---|
 | Gateway de pagamento automático | Depende de contrato comercial (EMIS/AppyPay). O ciclo manual do Sprint 2 chega |
-| Login com Google | Conveniência, não bloqueia ninguém |
+| ~~Login com Google~~ | **Repriorizado a 2026-09-10** — passa a sprint próprio (ver "Identidade externa e email" acima), junto com a recuperação e confirmação por email |
 | Versão em inglês | O público é angolano |
 | Mapa de clínicas parceiras | Uma lista resolve, enquanto houver poucas clínicas |
 | Notificações push e modo offline | Boa ideia, custo alto, nenhum utilizador bloqueado hoje |
@@ -792,11 +901,12 @@ desenvolvimento?"* — a resposta honesta condiciona o que cabe.
 |---|---|---|---|
 | 1 | Motor de análise do scanner | ✅ **Assunção fixada** — não existe código nem base. Parte-se do zero (W-09, Sprint 3) | — |
 | 2 | Bypass do Premium é teste interno? | ✅ **Resolvido** — não é. Fica como tarefa atribuída (W-01), não se remove fora do sprint | — |
-| 3 | Existe algum utilizador com Premium pago? | ⏳ **Aberto** — decide se W-01 sai sozinho ou junto de W-11 | Wilson (verificar no Supabase) |
+| 3 | Existe algum utilizador com Premium pago? | ⏳ **Aberto** — W-11 já está feito, mas o bypass do paywall (`Exercicios.tsx:154`) só se remove depois de saber isto: sem pagantes, remove-se já; com pagantes, aprova-se-lhes o Premium no mesmo momento | Wilson |
 | 8 | Parceiro clínico disposto a validar o scanner com casos reais | ⏳ **Aberto** — bloqueia W-16, e sem ele não há produto clínico defensável | Wilson (parcerias) |
 | 4 | Cloud Run exige cartão registado, mesmo sem cobrar | ⏳ Aberto | Wilson (administrativo) |
 | 5 | Consentimento parental para menores — nunca abordado, nem no código nem nos documentos | ⏳ Aberto | Wilson + apoio jurídico |
-| 6 | Recuperação de palavra-passe: falha de **configuração** no Supabase, não de código | ⏳ Aberto | Wilson (painel Supabase) |
+| 6 | Recuperação de palavra-passe | ⏳ **Reenquadrado 2026-09-10** — já não é config do Supabase; entra no sprint "Identidade externa e email", bloqueado por escolher fornecedor de email | Wilson (escolher fornecedor) |
+| 9 | Fornecedor de email transacional (Resend / SendGrid / SES) | ⏳ **Aberto** — bloqueia recuperação de password, confirmação de conta, e as notificações pendentes de doações/feedback/contacto/Premium | Wilson |
 | 7 | Data de expiração do crédito Google Cloud trial — anotar | ⏳ Aberto | Wilson |
 
 ---
