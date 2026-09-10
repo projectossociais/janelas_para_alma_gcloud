@@ -453,10 +453,28 @@ pode perder-se.
 - `ContactSection.test.tsx` (novo) — 2 testes, incluindo o caminho do erro.
 - **100/100 `pytest`**, **40/40 vitest**, ruff limpo, lint do frontend a zero erros,
   `tsc --noEmit` e `npm run build` sem regressões.
-- **Ainda por fazer:** `AdminInbox.tsx` e `AdminOverview.tsx` continuam a ler
-  `contact_messages` directo do Supabase — a leitura de admin migra quando houver
-  verificação de admin aplicada a um router de leitura (a dependency já existe). Envio
-  de email à equipa: pendente do fornecedor de email.
+
+#### Leitura de admin das mensagens de contacto (2026-09-10 — mesma branch, logo a seguir)
+
+- `GET /contact-messages` e `PATCH /contact-messages/{id}` (`{lida: bool}`) — ambos
+  protegidos por `Depends(obter_utilizador_admin)` (401 sem sessão, 403 sem papel
+  admin). Primeiro uso real da dependency de admin numa rota de **leitura**.
+- `AdminInbox.tsx` — o separador de Mensagens passa a usar `contactMessagesApi`
+  (`listar` / `marcarLida`), e larga colunas que o esquema real nunca teve
+  (`source`, `phone`, `status` de texto) — o estado agora é o booleano `lida`. O
+  separador de **Pedidos Premium continua no Supabase**: a activação do Premium (W-11)
+  toca paywall e papéis, trabalho que exige revisão humana.
+- `AdminOverview.tsx` (KPIs) não foi tocado — conta `contact_messages`, `profiles`,
+  `scanner_analyses` e `premium_requests` de uma vez, é um painel de analytics inteiro
+  e metade das fontes ainda está bloqueada (Scanner). Fica para um sprint próprio; até
+  lá a contagem de mensagens nesse ecrã fica desalinhada (já entrava na dívida "números
+  fixos" da secção 11 da `CLAUDE.md`).
+- `AdminInbox.test.tsx` (novo) — 3 testes (listagem falha não rebenta, marcar tratada
+  recarrega, nunca sucesso quando marcar falha).
+- **104/104 `pytest`**, **43/43 vitest**, ruff limpo, lint do frontend a zero erros,
+  `tsc --noEmit` e `npm run build` sem regressões.
+- **Ainda por fazer:** envio de email à equipa (fornecedor por decidir);
+  `AdminOverview` KPIs; candidaturas de voluntário (sem tabela).
 
 ---
 

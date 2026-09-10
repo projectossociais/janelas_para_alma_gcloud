@@ -19,3 +19,13 @@ class ContactMessagePublico(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class ContactMessageAdmin(ContactMessagePublico):
+    """O que o painel de administração vê — inclui o estado `lida`."""
+
+    lida: bool
+
+
+class ContactMessageMarcar(BaseModel):
+    lida: bool

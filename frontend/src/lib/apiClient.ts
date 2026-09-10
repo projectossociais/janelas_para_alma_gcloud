@@ -296,6 +296,10 @@ export interface ContactMessagePublico {
   created_at: string;
 }
 
+export interface ContactMessageAdmin extends ContactMessagePublico {
+  lida: boolean;
+}
+
 export const contactMessagesApi = {
   /** Formulário de contacto do site — público, não exige sessão. A
    *  notificação por email à equipa fica pendente (fornecedor por decidir);
@@ -304,6 +308,15 @@ export const contactMessagesApi = {
     pedido<ContactMessagePublico>("/contact-messages", {
       method: "POST",
       body: JSON.stringify({ nome, email, mensagem, assunto: assunto || undefined }),
+    }),
+
+  /** Leitura de admin — a API devolve 403 sem papel `admin`. */
+  listar: () => pedido<ContactMessageAdmin[]>("/contact-messages"),
+
+  marcarLida: (id: string, lida = true) =>
+    pedido<ContactMessageAdmin>(`/contact-messages/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ lida }),
     }),
 };
 
