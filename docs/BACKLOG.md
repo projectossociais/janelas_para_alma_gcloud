@@ -769,6 +769,43 @@ acrescentado antes disto agrava o problema.
 
 ---
 
+## Sprint planeado — Identidade externa e email (decidido 2026-09-10, não iniciado)
+
+Discussão tida a 2026-09-10 (ver também [[gcloud-trial-google-auth-platform]] na memória).
+Decisão do dono do projecto: **fazer**, num sprint próprio, mais para a frente. Não é
+para hoje. Três peças que andam juntas porque partilham a mesma infra de email:
+
+1. **Autenticação com a Google (Sign in with Google).**
+   - OAuth2/OIDC via Google Identity Services — *OAuth client ID* criado na consola GCP
+     (APIs & Services → Credenciais). Grátis, sem dependência gerida nova.
+   - Implementa-se **dentro do `auth_service.py`**: verificar o ID token da Google no
+     servidor, criar/ligar uma linha em `utilizadores`. Mantém o modelo JWT + cookie
+     `httpOnly` já existente.
+   - Esquema: coluna `google_sub` (unique) em `utilizadores`, `password_hash` passa a
+     nullable (contas só-Google não têm password). Migração Alembic aditiva.
+   - **Não** reintroduzir Firebase Auth / Identity Platform — é o tipo de auth gerido
+     que a reescrita passou 6 sprints a remover do Supabase.
+
+2. **Recuperação de palavra-passe por email.**
+   - Substitui o recado fixo de `Auth.tsx` ("ainda não está disponível"). Fluxo:
+     pedir → token de uso único com validade curta guardado (hash) → email com link →
+     `AtualizarPassword.tsx` (já existe, hoje ligado ao Supabase) reescrito para a API.
+   - **Bloqueado por:** escolher o fornecedor de email (ver abaixo).
+
+3. **Confirmação de conta por email no registo.**
+   - O registo passa a criar a conta como *não confirmada*; email com link de
+     confirmação; até confirmar, sessão limitada ou bloqueada (decidir o grau).
+   - Esquema: `email_confirmado bool` + token de confirmação (mesma tabela/mecanismo
+     do ponto 2).
+   - **Bloqueado por:** o mesmo fornecedor de email.
+
+**Decisão que falta (bloqueia 2 e 3):** qual o fornecedor de email transacional. O
+GCloud não tem serviço nativo. Candidatos: **Resend** (mais simples), **SendGrid**
+(tier grátis no marketplace GCP), **AWS SES** (mais barato a volume). Chamada por API
+HTTP a partir do FastAPI (o Cloud Run bloqueia SMTP), chave no Secret Manager.
+
+---
+
 ## O que NÃO fazer agora
 
 Isto é tão importante como a lista acima. Somos duas pessoas, uma delas ainda a aprender.
@@ -778,7 +815,7 @@ desenvolvimento?"* — a resposta honesta condiciona o que cabe.
 | Adiado | Porquê |
 |---|---|
 | Gateway de pagamento automático | Depende de contrato comercial (EMIS/AppyPay). O ciclo manual do Sprint 2 chega |
-| Login com Google | Conveniência, não bloqueia ninguém |
+| ~~Login com Google~~ | **Repriorizado a 2026-09-10** — passa a sprint próprio (ver "Identidade externa e email" acima), junto com a recuperação e confirmação por email |
 | Versão em inglês | O público é angolano |
 | Mapa de clínicas parceiras | Uma lista resolve, enquanto houver poucas clínicas |
 | Notificações push e modo offline | Boa ideia, custo alto, nenhum utilizador bloqueado hoje |
@@ -796,7 +833,8 @@ desenvolvimento?"* — a resposta honesta condiciona o que cabe.
 | 8 | Parceiro clínico disposto a validar o scanner com casos reais | ⏳ **Aberto** — bloqueia W-16, e sem ele não há produto clínico defensável | Wilson (parcerias) |
 | 4 | Cloud Run exige cartão registado, mesmo sem cobrar | ⏳ Aberto | Wilson (administrativo) |
 | 5 | Consentimento parental para menores — nunca abordado, nem no código nem nos documentos | ⏳ Aberto | Wilson + apoio jurídico |
-| 6 | Recuperação de palavra-passe: falha de **configuração** no Supabase, não de código | ⏳ Aberto | Wilson (painel Supabase) |
+| 6 | Recuperação de palavra-passe | ⏳ **Reenquadrado 2026-09-10** — já não é config do Supabase; entra no sprint "Identidade externa e email", bloqueado por escolher fornecedor de email | Wilson (escolher fornecedor) |
+| 9 | Fornecedor de email transacional (Resend / SendGrid / SES) | ⏳ **Aberto** — bloqueia recuperação de password, confirmação de conta, e as notificações pendentes de doações/feedback/contacto/Premium | Wilson |
 | 7 | Data de expiração do crédito Google Cloud trial — anotar | ⏳ Aberto | Wilson |
 
 ---
