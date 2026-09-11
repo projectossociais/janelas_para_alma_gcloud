@@ -32,7 +32,7 @@ W-03,api,Eliminar conta passa a eliminar mesmo a conta,P0,feito,W,S0,2026-09-09,
 W-04,frontend,Scanner deixa de inventar diagnosticos,P0,a-fazer,W,S0,2026-09-10,mitigacao (sinais observados) ate ao Scanner real da S3
 W-05,infra,Tirar o .env do controlo de versoes,P1,feito,W,S0,2026-09-09,.env no .gitignore desde o 1o commit deste repo
 L-01,frontend,Repor as 8 imagens perdidas no export Lovable + fotos reais angolanas,P1,a-fazer,L,S0,2026-09-10,grep __l5e nao pode devolver nada
-L-02,frontend,Videos dos exercicios: produzir ou esconder o player,P2,a-fazer,L,S0,2026-09-10,decisao de produto primeiro
+L-02,frontend,Videos dos exercicios: produzir ou esconder o player,P2,feito,L,S0,2026-09-11,decisao de produto primeiro
 L-03,frontend,Modal Ultimas Referencias faz scroll ate ao fim,P2,a-fazer,L,S0,2026-09-10,max-height + overflow-y auto
 L-04,frontend,Correccoes de navegacao (links rapidos; Maps target _blank),P2,a-fazer,L,S0,2026-09-10,
 L-05,frontend,2 ajustes visuais (botao Voltar; botao de perfil colado ao logo),P3,a-fazer,L,S0,2026-09-10,

@@ -13,6 +13,10 @@ import {
   Layers,
   GitMerge,
   Radar,
+  Infinity as InfinityIcon,
+  Minimize2,
+  Target,
+  Wind,
   type LucideIcon,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -20,7 +24,6 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
 import { Button } from "@/components/ui/button";
-import CustomVideoPlayer from "@/components/CustomVideoPlayer";
 import LockedVideoOverlay from "@/components/LockedVideoOverlay";
 import PremiumPaywallModal from "@/components/PremiumPaywallModal";
 import FeedbackWidget from "@/components/FeedbackWidget";
@@ -36,13 +39,21 @@ import { useProfile } from "@/contexts/ProfileContext";
  */
 const PAPEIS_COM_ACESSO_PREMIUM = ["profissional", "admin", "premium"];
 
-const exerciciosBase = [
+interface ExercicioBase {
+  id: string;
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  route: string;
+}
+
+const exerciciosBase: ExercicioBase[] = [
   {
     id: "figure8",
     title: "Acompanhamento Ocular em Oito",
     description:
       "Siga o ponto com os olhos o mais suavemente possível, sem mover a cabeça. Ajuda a fortalecer a musculatura ocular.",
-    video: "/videos/exercicio-acompanhamento.mp4",
+    icon: InfinityIcon,
     route: "/exercicios/tracking",
   },
   {
@@ -50,7 +61,7 @@ const exerciciosBase = [
     title: "Treino de Convergência",
     description:
       "Foque nos pontos enquanto eles se unem no centro. Tente manter a imagem única o máximo de tempo possível.",
-    video: "/videos/exercicio-convergencia.mp4",
+    icon: Minimize2,
     route: "/exercicios/convergencia",
   },
   {
@@ -58,7 +69,7 @@ const exerciciosBase = [
     title: "Foco Dinâmico",
     description:
       "Encontre e fixe o olhar na forma que pulsa entre as restantes, treinando o foco e a atenção visual.",
-    video: "/videos/exercicio-foco.mp4",
+    icon: Target,
     route: "/exercicios/cerebro",
   },
   {
@@ -66,7 +77,7 @@ const exerciciosBase = [
     title: "Relaxamento e Respiração",
     description:
       "Sincronize a sua respiração com a orbe. Pode cobrir os olhos a qualquer momento (Palming) para relaxar ainda mais.",
-    video: "/videos/exercicio-relaxamento.mp4",
+    icon: Wind,
     route: "/exercicios/relaxamento",
   },
 ];
@@ -182,27 +193,32 @@ const Exercicios = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {exerciciosBase.map((ex) => (
-                  <div
-                    key={ex.id}
-                    className="rounded-xl border border-border bg-card shadow-card overflow-hidden flex flex-col"
-                  >
-                    <CustomVideoPlayer src={ex.video} title={ex.title} />
-                    <div className="p-6 flex flex-col flex-1">
-                      <h3 className="text-lg font-semibold text-foreground mb-2">
-                        {ex.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mb-4 flex-1">
-                        {ex.description}
-                      </p>
-                      <Button onClick={() => navigate(ex.route)} className="self-start">
-                        <Play className="w-4 h-4" />
-                        Iniciar Exercício Interativo
-                        <ArrowRight className="w-4 h-4" />
-                      </Button>
+                {exerciciosBase.map((ex) => {
+                  const Icon = ex.icon;
+                  return (
+                    <div
+                      key={ex.id}
+                      className="rounded-xl border border-border bg-card shadow-card overflow-hidden flex flex-col"
+                    >
+                      <div className="aspect-video flex items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900">
+                        <Icon className="w-12 h-12 text-white/80" />
+                      </div>
+                      <div className="p-6 flex flex-col flex-1">
+                        <h3 className="text-lg font-semibold text-foreground mb-2">
+                          {ex.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-4 flex-1">
+                          {ex.description}
+                        </p>
+                        <Button onClick={() => navigate(ex.route)} className="self-start">
+                          <Play className="w-4 h-4" />
+                          Iniciar Exercício Interativo
+                          <ArrowRight className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
