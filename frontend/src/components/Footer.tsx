@@ -78,7 +78,7 @@ const Footer = () => {
 
           {/* Column 3: Pilares */}
           <div className="flex flex-col gap-4">
-            <h3 className="font-bold text-base text-slate-900">Os Nossos Pilares</h3>
+            <h3 className="font-bold text-base text-slate-900">Nossos Serviços</h3>
             <ul className="flex flex-col gap-2.5 text-sm">
               {[
                 { label: "Scanner de Estrabismo", to: "/scanner" },
