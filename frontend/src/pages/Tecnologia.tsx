@@ -58,7 +58,7 @@ const Tecnologia = () => {
           </div>
         </section>
 
-        <BackButton to="/produto" />
+        <BackButton to="/" />
 
         {/* Funcionalidades */}
         <section className="py-20 bg-background">

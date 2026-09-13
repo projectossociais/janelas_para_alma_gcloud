@@ -168,7 +168,7 @@ const Exercicios = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-1">
-        <BackButton to="/produto" className="pt-20 md:pt-24" />
+        <BackButton to="/" className="pt-20 md:pt-24" />
         <section className="pt-8 pb-12 bg-background">
           <div className="container text-center max-w-2xl mx-auto">
             <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">

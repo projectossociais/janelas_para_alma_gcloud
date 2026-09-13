@@ -362,7 +362,7 @@ const ScannerContent = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
-      <BackButton to="/produto" />
+      <BackButton to="/" />
       <main className="flex-1">
         <section className="container py-10 md:py-16">
           <div className="max-w-3xl mx-auto text-center animate-fade-in">

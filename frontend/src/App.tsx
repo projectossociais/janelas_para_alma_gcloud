@@ -15,7 +15,6 @@ import Parceiros from "./pages/Parceiros";
 import Tecnologia from "./pages/Tecnologia";
 import Circular from "./pages/Circular";
 import Suporte from "./pages/Suporte";
-import Produto from "./pages/Produto";
 import Exercicios from "./pages/Exercicios";
 import Scanner from "./pages/Scanner";
 import ScannerResultados from "./pages/ScannerResultados";
@@ -71,7 +70,6 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/sobre" element={<Sobre />} />
                 <Route path="/equipa" element={<Equipa />} />
-                <Route path="/produto" element={<Produto />} />
                 <Route path="/kamba" element={<Kamba />} />
                 <Route path="/meu-kamba/campanha-gamek" element={<CampanhaGamek />} />
                 <Route path="/parceiros" element={<Parceiros />} />
