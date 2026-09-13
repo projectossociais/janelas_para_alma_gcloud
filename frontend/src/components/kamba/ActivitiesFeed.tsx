@@ -45,8 +45,6 @@ const ActivitiesFeed = () => {
 
             <Link
               to="/meu-kamba/campanha-gamek"
-              target="_blank"
-              rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-teal text-teal-foreground font-bold shadow-elevated transition-all hover:opacity-90 hover:translate-y-[-2px]"
             >
               <PlayCircle className="w-5 h-5" />

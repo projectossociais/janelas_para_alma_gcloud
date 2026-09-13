@@ -4,28 +4,34 @@ import BackButton from "@/components/BackButton";
 
 interface CampaignVideo {
   src: string;
-  description: string;
+  title: string;
+  summary: string;
 }
 
 const campaignVideos: CampaignVideo[] = [
   {
     src: "https://yjzqnjatrdngzfixrxcg.supabase.co/storage/v1/object/public/kamba-media/Campanha%20de%20conscientizacao.mp4",
-    description:
-      "🚶🏾‍♂️📢✨ Hoje, jovens agentes de mudança saem às ruas para falar sobre uma causa que, muitas das vezes, é ignorada, mas é mais frequente do que nós podemos pensar. Sim, este é o estrabismo. E nós estamos aqui voluntários, kambas estrábicos e embaixadores de inclusão visual, saem às ruas para falar e mostrar que esta causa não deve ser mais ignorada. E um dos primeiros passos para conseguirmos resolver este problema é comunicar. Então, venha conosco, se torne um voluntário.",
+    title: "Vozes da Mudança nas Ruas da Gamek 🚶🏾‍♂️📢",
+    summary:
+      "Voluntários e embaixadores de inclusão visual abordam a comunidade sobre o estrabismo, partilham soluções acessíveis e convidam novos jovens a juntarem-se à causa.",
   },
   {
     src: "https://yjzqnjatrdngzfixrxcg.supabase.co/storage/v1/object/public/kamba-media/Dalva%20Introducao%20ao%20Projecto.mp4",
-    description:
-      "🌍A transformação acontece quando nós conseguimos identificar qual problema e qual comunidade servimos, e envolver pessoas que possam realmente fazer com que ela aconteça. Parte do conhecimento, parte da identificação e parte da consciência de mudar e identificar o que é que nos aflige. É por isso que hoje nós saímos às ruas para conscientizar e realizar a nossa campanha sobre o estrabismo. Muitas das pessoas que vivem e convivem com o estrabismo, além das suas famílias, não têm informação precisa a qualquer hora e a qualquer momento, e têm sempre dúvidas. Algumas sofrem por estigma e outras, sem saber o que sofrem, recebem diagnósticos que não são os que deviam receber. Por isso, nós vamos às ruas para conscientizar, alertar e despertar para mais conhecimento sobre o estrabismo e podermos erradicar a ignorância a nível do estrabismo. Por isso, venha connosco e vamos juntos!",
+    title: "Missão e Propósito Social 💡🌍",
+    summary:
+      "A Dalva explica a importância de levar informação precisa às famílias, combater diagnósticos errados e erradicar o estigma associado ao estrabismo.",
   },
   {
     src: "https://yjzqnjatrdngzfixrxcg.supabase.co/storage/v1/object/public/kamba-media/Kambas.mp4",
-    description:
-      "💙👀🫂 Eu decidi participar desta iniciativa porque o estrabismo também faz parte da minha história. Eu sou uma pessoa estrábica, mas pouco se nota porque eu comecei o acompanhamento cedo. Então, participar deste projeto é dar oportunidade com que mais pessoas recebam informações importantes sobre esta condição e comecem o acompanhamento cedo, porque faz total diferença.\n\nOlá, eu sou a Josefina Afonso. Eu vim apoiar esta campanha porque eu tenho a noção que informação é poder. E trazendo esta informação para a rua vai ajudar muita gente que sofre com autoestima baixa por ter o estrabismo.\n\nSaudações! Chamo-me Welton Vieira Dias e sou voluntário do Janelas Para a Alma. A princípio, eu não tinha muito conhecimento sobre estrabismo, mas com a ajuda com os meus amigos dos meus amigos, eu pude entender que o estrabismo não é só uma questão visual, mas que impacta também a qualidade de vida e a saúde dos indivíduos. É bem sabido que muitas pessoas com a condição de estrabismo sofrem bullying e preconceito por parte da sociedade. E e é por isso que eu participei nessa campanha, porque informar a sociedade também é uma forma de promover a empatia, a inclusão e o respeito a todos. Muito obrigado!",
+    title: "Histórias Reais e Superação 💙👀",
+    summary:
+      "Testemunhos inspiradores de quem convive com a condição desde cedo e o impacto transformador da empatia e do apoio mútuo na autoestima.",
   },
   {
     src: "https://yjzqnjatrdngzfixrxcg.supabase.co/storage/v1/object/public/kamba-media/JPA%20Grupo.mov",
-    description: "🚀🔥 Líder: Janelas Para a Alma!\nGrupo: Um olhar alinhado, uma vida transformada!",
+    title: "Grito de Esperança e União 🚀🙌🏾",
+    summary:
+      "O encerramento marcante da nossa equipa celebrando o compromisso conjunto: Um olhar alinhado, uma vida transformada!",
   },
 ];
 
@@ -46,7 +52,7 @@ const CampanhaGamek = () => {
               </h1>
             </header>
 
-            <div className="flex flex-col items-center gap-6">
+            <div className="flex flex-col items-center gap-6 bg-slate-50 border border-slate-200 rounded-2xl p-6 sm:p-8">
               <img
                 src="/assets/kamba/campanha-gamek-poster.jpg"
                 alt="Cartaz da Campanha de Conscientização sobre o Estrabismo na Gamek"
@@ -60,10 +66,25 @@ const CampanhaGamek = () => {
               </p>
             </div>
 
+            <div className="flex flex-col gap-6">
+              <hr className="border-slate-200" />
+              <h2 className="text-xl md:text-2xl font-bold text-center">
+                Cobertura em Vídeo da Ação no Terreno
+              </h2>
+            </div>
+
             {campaignVideos.map((video) => (
-              <div key={video.src} className="flex flex-col gap-3">
-                <video controls preload="metadata" className="w-full rounded-lg" src={video.src} />
-                <p className="text-muted-foreground whitespace-pre-line">{video.description}</p>
+              <div key={video.src} className="bg-white shadow-sm border border-slate-100 rounded-xl p-6 flex flex-col gap-4">
+                <video
+                  controls
+                  preload="metadata"
+                  className="max-h-[480px] w-auto mx-auto rounded-lg object-contain bg-black/5"
+                  src={video.src}
+                />
+                <div>
+                  <p className="font-bold">{video.title}</p>
+                  <p className="text-muted-foreground">{video.summary}</p>
+                </div>
               </div>
             ))}
           </div>
