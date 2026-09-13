@@ -8,6 +8,7 @@ import EyeLandmarkOverlay from "@/components/EyeLandmarkOverlay";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { submeterRastreioMultiGaze, type ScreeningResponse } from "@/services/api/screeningApi";
 
 
 const DIAGNOSES = ["Esotropia", "Exotropia", "Hipertropia", "Hipotropia"] as const;
@@ -182,11 +183,32 @@ const Scanner = () => {
   }, [cameraOn, checkVideoQuality]);
 
 
-  const finishScan = useCallback((url: string | null, analysisId?: string | null) => {
+  const finishScan = useCallback((
+    url: string | null,
+    analysisId?: string | null,
+    apiResult?: ScreeningResponse | null
+  ) => {
     setPreviewUrl(url);
     setScanning(true);
-    const diagnosis = DIAGNOSES[Math.floor(Math.random() * DIAGNOSES.length)];
-    const confidence = Math.floor(78 + Math.random() * 17); // 78-94
+
+    // Determina o diagnóstico e confiança a partir do retorno da API
+    let diagnosis = "Alinhamento Fisiológico Normal";
+    let confidence = 92;
+
+    if (apiResult) {
+      if (apiResult.incomitante || apiResult.requer_avaliacao_humana) {
+        diagnosis = apiResult.recomendacao || "Necessária Avaliação Oftalmológica";
+      }
+      // Calcula uma pontuação de confiança com base na qualidade da captura
+      const posCentro = apiResult.posicoes?.find(p => p.posicao.toUpperCase() === "CENTRO");
+      if (posCentro?.qualidade_captura?.pontuacao) {
+        confidence = Math.round(posCentro.qualidade_captura.pontuacao * 100);
+      }
+    } else {
+      diagnosis = DIAGNOSES[Math.floor(Math.random() * DIAGNOSES.length)];
+      confidence = Math.floor(78 + Math.random() * 17);
+    }
+
     window.setTimeout(() => {
       sessionStorage.setItem(
         "scanResult",
@@ -194,11 +216,11 @@ const Scanner = () => {
           diagnosis,
           confidence,
           date: new Date().toISOString(),
+          apiData: apiResult || null, // Guarda todos os dados clínicos reais da API
         })
       );
       navigate(analysisId ? `/scanner/resultados?id=${analysisId}` : "/scanner/resultados");
-
-    }, 3000);
+    }, 2500);
   }, [navigate]);
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -290,22 +312,56 @@ const Scanner = () => {
           const payload = payloadRef.current;
           const center = payload.find((s) => s.pose === "center")?.imageBase64 ?? null;
 
-          if (!user) {
-            // Utilizador anónimo: avança e mostra o resultado, sem gravar no Supabase.
-            stopCamera();
-            finishScan(center, null);
-            return;
-          }
-
           setUploading(true);
           setUploadError(null);
+
           try {
-            const analysisId = await submitScan(payload);
-            setAnalysisId(analysisId);
+            // 1. Converte as 3 poses para Blob
+            const centerShot = payload.find((s) => s.pose === "center");
+            const leftShot = payload.find((s) => s.pose === "left");
+            const rightShot = payload.find((s) => s.pose === "right");
+
+            const blobCentro = centerShot ? dataUrlToBlob(centerShot.imageBase64) : null;
+            const blobEsquerda = leftShot ? dataUrlToBlob(leftShot.imageBase64) : null;
+            const blobDireita = rightShot ? dataUrlToBlob(rightShot.imageBase64) : null;
+
+            if (!blobCentro || !blobEsquerda || !blobDireita) {
+              throw new Error("Falha ao preparar as imagens das 3 posições.");
+            }
+
+            // 2. Obtém token da sessão Supabase (se o utilizador estiver autenticado)
+            let token: string | undefined = undefined;
+            if (user) {
+              const { data: sessionData } = await supabase.auth.getSession();
+              token = sessionData.session?.access_token;
+            }
+
+            // 3. Executa o cálculo matemático no FastAPI (Python)
+            toast.info("A calcular alinhamento ocular na IA...");
+            const apiResult = await submeterRastreioMultiGaze(
+              {
+                centro: blobCentro,
+                esquerda: blobEsquerda,
+                direita: blobDireita,
+              },
+              token
+            );
+
+            // 4. Se estiver autenticado, persiste o histórico completo no Supabase
+            let savedAnalysisId: string | null = null;
+            if (user) {
+              try {
+                savedAnalysisId = await submitScan(payload);
+                setAnalysisId(savedAnalysisId);
+              } catch (persistErr) {
+                console.warn("Aviso ao guardar no Supabase:", persistErr);
+              }
+            }
+
             setUploading(false);
-            toast.success("Exame enviado com sucesso!");
             stopCamera();
-            finishScan(center, analysisId);
+            finishScan(center, savedAnalysisId, apiResult);
+
           } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
             setUploading(false);
@@ -313,7 +369,6 @@ const Scanner = () => {
             setCaptureStep("IDLE");
             toast.error(message);
             if (err instanceof Error && err.name === "SessionExpiredError") {
-              // Keep scanPayload/payloadRef intact so nothing captured is lost.
               window.setTimeout(() => navigate("/auth?next=/scanner"), 1200);
             }
           }
