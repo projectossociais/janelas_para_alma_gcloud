@@ -286,104 +286,100 @@ const Scanner = () => {
     [snapshotBase64]
   );
 
-  const startGuidedCapture = useCallback(() => {
-    if (captureStep !== "IDLE" || lowLight) return;
-    setUploadError(null);
-    clearTimers();
+  /** Máquina de estados da captura manual: cada clique avança um passo. */
+  const handleNextStep = useCallback(() => {
+    if (lowLight) return;
 
-    payloadRef.current = [];
-    setScanPayload([]);
-    setCaptureStep("CENTER");
+    if (captureStep === "IDLE") {
+      setUploadError(null);
+      clearTimers(); // cancela os avisos iniciais de "A procurar rosto…", se ainda pendentes
+      payloadRef.current = [];
+      setScanPayload([]);
+      setCaptureStep("CENTER");
+      return;
+    }
 
-    timersRef.current.push(
-      window.setTimeout(() => {
-        recordPose("center");
-        setCaptureStep("RIGHT");
-      }, 4000)
-    );
-    timersRef.current.push(
-      window.setTimeout(() => {
-        recordPose("right");
-        setCaptureStep("LEFT");
-      }, 8000)
-    );
-    timersRef.current.push(
-      window.setTimeout(() => {
-        void (async () => {
-          recordPose("left");
-          setCaptureStep("PROCESSING");
-          const payload = payloadRef.current;
-          const center = payload.find((s) => s.pose === "center")?.imageBase64 ?? null;
+    if (captureStep === "CENTER") {
+      recordPose("center");
+      setCaptureStep("RIGHT");
+      return;
+    }
 
-          setUploading(true);
-          setUploadError(null);
+    if (captureStep === "RIGHT") {
+      recordPose("right");
+      setCaptureStep("LEFT");
+      return;
+    }
 
-          try {
-            // 1. Converte as 3 poses para Blob
-            const centerShot = payload.find((s) => s.pose === "center");
-            const leftShot = payload.find((s) => s.pose === "left");
-            const rightShot = payload.find((s) => s.pose === "right");
+    if (captureStep === "LEFT") {
+      recordPose("left");
+      setCaptureStep("PROCESSING");
+      const payload = payloadRef.current;
+      const center = payload.find((s) => s.pose === "center")?.imageBase64 ?? null;
 
-            const blobCentro = centerShot ? dataUrlToBlob(centerShot.imageBase64) : null;
-            const blobEsquerda = leftShot ? dataUrlToBlob(leftShot.imageBase64) : null;
-            const blobDireita = rightShot ? dataUrlToBlob(rightShot.imageBase64) : null;
+      void (async () => {
+        setUploading(true);
+        setUploadError(null);
 
-            if (!blobCentro || !blobEsquerda || !blobDireita) {
-              throw new Error("Falha ao preparar as imagens das 3 posições.");
-            }
+        try {
+          // 1. Converte as 3 poses para Blob
+          const centerShot = payload.find((s) => s.pose === "center");
+          const leftShot = payload.find((s) => s.pose === "left");
+          const rightShot = payload.find((s) => s.pose === "right");
 
-            // 2. Obtém token da sessão Supabase (se o utilizador estiver autenticado)
-            let token: string | undefined = undefined;
-            if (user) {
-              const { data: sessionData } = await supabase.auth.getSession();
-              token = sessionData.session?.access_token;
-            }
+          const blobCentro = centerShot ? dataUrlToBlob(centerShot.imageBase64) : null;
+          const blobEsquerda = leftShot ? dataUrlToBlob(leftShot.imageBase64) : null;
+          const blobDireita = rightShot ? dataUrlToBlob(rightShot.imageBase64) : null;
 
-            // 3. Executa o cálculo matemático no FastAPI (Python)
-            toast.info("A calcular alinhamento ocular na IA...");
-            const apiResult = await submeterRastreioMultiGaze(
-              {
-                centro: blobCentro,
-                esquerda: blobEsquerda,
-                direita: blobDireita,
-              },
-              token
-            );
+          if (!blobCentro || !blobEsquerda || !blobDireita) {
+            throw new Error("Falha ao preparar as imagens das 3 posições.");
+          }
 
-            // 4. Se estiver autenticado, persiste o histórico completo no Supabase
-            let savedAnalysisId: string | null = null;
-            if (user) {
-              try {
-                savedAnalysisId = await submitScan(payload);
-                setAnalysisId(savedAnalysisId);
-              } catch (persistErr) {
-                console.warn("Aviso ao guardar no Supabase:", persistErr);
-              }
-            }
+          // 2. Obtém token da sessão Supabase (se o utilizador estiver autenticado)
+          let token: string | undefined = undefined;
+          if (user) {
+            const { data: sessionData } = await supabase.auth.getSession();
+            token = sessionData.session?.access_token;
+          }
 
-            setUploading(false);
-            stopCamera();
-            finishScan(center, savedAnalysisId, apiResult);
+          // 3. Executa o cálculo matemático no FastAPI (Python)
+          toast.info("A calcular alinhamento ocular na IA...");
+          const apiResult = await submeterRastreioMultiGaze(
+            {
+              centro: blobCentro,
+              esquerda: blobEsquerda,
+              direita: blobDireita,
+            },
+            token
+          );
 
-          } catch (err) {
-            const message = err instanceof Error ? err.message : String(err);
-            setUploading(false);
-            setUploadError(message);
-            setCaptureStep("IDLE");
-            toast.error(message);
-            if (err instanceof Error && err.name === "SessionExpiredError") {
-              window.setTimeout(() => navigate("/auth?next=/scanner"), 1200);
+          // 4. Se estiver autenticado, persiste o histórico completo no Supabase
+          let savedAnalysisId: string | null = null;
+          if (user) {
+            try {
+              savedAnalysisId = await submitScan(payload);
+              setAnalysisId(savedAnalysisId);
+            } catch (persistErr) {
+              console.warn("Aviso ao guardar no Supabase:", persistErr);
             }
           }
 
-        })();
-      }, 12000)
-    );
+          setUploading(false);
+          stopCamera();
+          finishScan(center, savedAnalysisId, apiResult);
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          setUploading(false);
+          setUploadError(message);
+          setCaptureStep("IDLE");
+          toast.error(message);
+          if (err instanceof Error && err.name === "SessionExpiredError") {
+            window.setTimeout(() => navigate("/auth?next=/scanner"), 1200);
+          }
+        }
+      })();
+    }
   }, [captureStep, lowLight, recordPose, stopCamera, finishScan, navigate, user]);
-
-
-
-  const takePhoto = () => { void startGuidedCapture(); };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -483,13 +479,25 @@ const Scanner = () => {
                 </div>
                 <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                   <button
-                    onClick={takePhoto}
-                    disabled={lowLight || captureStep !== "IDLE"}
+                    onClick={handleNextStep}
+                    disabled={lowLight || captureStep === "PROCESSING" || uploading}
                     className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-teal text-teal-foreground font-semibold text-sm hover:bg-teal/90 transition-all shadow-elevated disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-teal"
                   >
                     {captureStep === "IDLE" ? (
                       <>
-                        <Camera className="w-4 h-4" /> Capturar agora
+                        <Camera className="w-4 h-4" /> Iniciar Captura
+                      </>
+                    ) : captureStep === "CENTER" ? (
+                      <>
+                        <Camera className="w-4 h-4" /> Capturar Frente (1/3)
+                      </>
+                    ) : captureStep === "RIGHT" ? (
+                      <>
+                        <Camera className="w-4 h-4" /> Capturar Direita (2/3)
+                      </>
+                    ) : captureStep === "LEFT" ? (
+                      <>
+                        <Camera className="w-4 h-4" /> Capturar Esquerda (3/3)
                       </>
                     ) : uploading ? (
                       <>
