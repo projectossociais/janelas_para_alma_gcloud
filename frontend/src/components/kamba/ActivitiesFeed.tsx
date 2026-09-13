@@ -15,47 +15,43 @@ const ActivitiesFeed = () => {
           </h2>
         </div>
 
-        <Card className="max-w-5xl mx-auto overflow-hidden shadow-elevated">
-          <CardContent className="p-0 grid md:grid-cols-2">
-            <div className="p-8 md:p-10 space-y-4 flex flex-col justify-center">
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <span className="inline-flex items-center gap-1.5">
-                  <CalendarDays className="w-4 h-4" />
-                  12 de Setembro
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <MapPin className="w-4 h-4" />
-                  Gamek, Luanda
-                </span>
-              </div>
-              <h3 className="text-xl font-bold">
-                Campanha de Conscientização sobre o Estrabismo
-              </h3>
-              <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
-                Hoje realizou-se a campanha de conscientização sobre o estrabismo pelas ruas da Gamek, na cidade de Luanda.{"\n\n"}
-                A comunidade Meu Kamba Estrábico, pertencente ao Janelas para a Alma, efectivou hoje, pelas 9h30 a campanha de conscientização e sensibilização cujo objectivo principal foi transmitir às pessoas informações importantes sobre a condição e apresentar a nossa proposta de valor, a plataforma Janelas para a Alma, onde foi possível abordar diversas pessoas portadoras da condição ou ainda próximos à pessoas com a condição.{"\n\n"}
-                Reafirmamos o nosso compromisso com a difusão da informação sobre o estrabismo e saúde visual.{"\n\n"}
-                Janelas para a alma - Um olhar alinhado, uma vida transformada.
-              </p>
+        <Card className="max-w-3xl mx-auto overflow-hidden shadow-elevated">
+          <CardContent className="p-8 md:p-10 flex flex-col items-center text-center gap-6">
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5">
+                <CalendarDays className="w-4 h-4" />
+                12 de Setembro
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <MapPin className="w-4 h-4" />
+                Gamek, Luanda
+              </span>
             </div>
 
-            <div className="relative bg-navy/5 flex items-center justify-center p-4 md:p-6">
-              <img
-                src="/assets/kamba/campanha-gamek-poster.jpg"
-                alt="Cartaz da Campanha de Conscientização sobre o Estrabismo na Gamek"
-                className="w-full h-auto max-h-[420px] object-contain rounded-lg"
-                loading="lazy"
-              />
-              <Link
-                to="/meu-kamba/campanha-gamek"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="absolute bottom-8 inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-teal text-teal-foreground font-bold shadow-elevated transition-all hover:opacity-90 hover:translate-y-[-2px]"
-              >
-                <PlayCircle className="w-5 h-5" />
-                Ver Campanha Completa
-              </Link>
-            </div>
+            <h3 className="text-2xl font-bold">
+              Campanha de Conscientização sobre o Estrabismo
+            </h3>
+
+            <p className="text-muted-foreground leading-relaxed max-w-xl">
+              Acompanhe de perto a nossa ação nas ruas da Gamek, onde os nossos jovens embaixadores partilharam informação, combateram o estigma e apresentaram a plataforma Janelas Para a Alma à comunidade. Clique abaixo para viver esta experiência!
+            </p>
+
+            <img
+              src="/assets/kamba/campanha-gamek-poster.jpg"
+              alt="Cartaz da Campanha de Conscientização sobre o Estrabismo na Gamek"
+              className="w-full max-w-xl mx-auto rounded-xl object-contain"
+              loading="lazy"
+            />
+
+            <Link
+              to="/meu-kamba/campanha-gamek"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-teal text-teal-foreground font-bold shadow-elevated transition-all hover:opacity-90 hover:translate-y-[-2px]"
+            >
+              <PlayCircle className="w-5 h-5" />
+              Ver Campanha Completa
+            </Link>
           </CardContent>
         </Card>
       </div>
