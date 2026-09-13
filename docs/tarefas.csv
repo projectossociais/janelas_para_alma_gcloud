@@ -24,7 +24,7 @@ DEP-03,infra,Migracao Alembic contra Postgres real (local),P1,bloqueado,W,deploy
 DEP-04,infra,docker compose build local - validar o container,P2,bloqueado,W,deploy,2026-09-10,WSL/reboot pendente; o CI ja cobre isto
 DEP-05,infra,Dominio proprio + certificado; trocar R2_PUBLIC_BASE_URL para custom domain,P2,a-fazer,W,deploy,2026-09-10,gcloud run domain-mappings
 W-11,api,Confirmacao de pagamento activa o Premium (paywall + auditoria),P0,feito,W,S2,2026-09-11,confirmado no main: premium_service.py + premium.py + 16 testes a passar
-W-01,frontend,Remover o bypass do Premium,P0,a-fazer,W,S0,2026-09-11,"Exercicios.tsx:165 (temAcessoPremium = true) confirmado ainda activo; W-11 feito, sem bloqueio -- pronto a atacar"
+W-01,frontend,Remover o bypass do Premium,P0,feito,W,S0,2026-09-13,"Exercicios.tsx/BaseExercise.tsx passam a usar profile.premium_ativo (+ admin); 4 testes novos em Exercicios.test.tsx; branch rebase contra main e a passar lint/test/build"
 L-11,frontend,Botao Aprovar pagamento no AdminInbox,P1,em-curso,L,S2,2026-09-10,ja em curso no AdminInbox.tsx; consome o endpoint de W-11
 L-12,frontend,Ecra a aguardar aprovacao,P2,a-fazer,L,S2,2026-09-10,reutiliza LockedVideoOverlay / PremiumPaywallModal
 W-02,api,Mudar password passa a mudar mesmo a password,P0,feito,W,S0,2026-09-09,feito via INF-04
