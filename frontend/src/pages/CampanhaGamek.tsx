@@ -46,7 +46,7 @@ const CampanhaGamek = () => {
               </h1>
             </header>
 
-            <div className="flex flex-col items-center gap-6">
+            <div className="flex flex-col items-center gap-6 bg-slate-50 border border-slate-200 rounded-2xl p-6 sm:p-8">
               <img
                 src="/assets/kamba/campanha-gamek-poster.jpg"
                 alt="Cartaz da Campanha de Conscientização sobre o Estrabismo na Gamek"
@@ -60,9 +60,21 @@ const CampanhaGamek = () => {
               </p>
             </div>
 
+            <div className="flex flex-col gap-6">
+              <hr className="border-slate-200" />
+              <h2 className="text-xl md:text-2xl font-bold text-center">
+                Cobertura em Vídeo da Ação no Terreno
+              </h2>
+            </div>
+
             {campaignVideos.map((video) => (
-              <div key={video.src} className="flex flex-col gap-3">
-                <video controls preload="metadata" className="w-full rounded-lg" src={video.src} />
+              <div key={video.src} className="bg-white shadow-sm border border-slate-100 rounded-xl p-6 flex flex-col gap-4">
+                <video
+                  controls
+                  preload="metadata"
+                  className="max-h-[480px] w-auto mx-auto rounded-lg object-contain bg-black/5"
+                  src={video.src}
+                />
                 <p className="text-muted-foreground whitespace-pre-line">{video.description}</p>
               </div>
             ))}
