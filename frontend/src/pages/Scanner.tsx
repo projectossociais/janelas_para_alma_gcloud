@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
 import EyeLandmarkOverlay from "@/components/EyeLandmarkOverlay";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 
@@ -101,44 +102,10 @@ const submitScan = async (shots: ScanShot[]): Promise<string> => {
 
 
 
-/** Route guard: no scanner UI, camera or capture state exists before a session is confirmed. */
 const Scanner = () => {
-  const navigate = useNavigate();
-  const [status, setStatus] = useState<"checking" | "ok">("checking");
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const { data } = await supabase.auth.getSession();
-      if (cancelled) return;
-      if (!data.session) {
-        navigate("/auth?next=/scanner", { replace: true });
-        return;
-      }
-      setStatus("ok");
-    })();
-    return () => { cancelled = true; };
-  }, [navigate]);
-
-  if (status !== "ok") {
-    return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <Navbar />
-        <div className="flex-1 flex items-center justify-center gap-3 text-foreground/70">
-          <Loader2 className="w-5 h-5 animate-spin" />
-          <span className="text-sm font-medium">A verificar a sua sessão…</span>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
-  return <ScannerContent />;
-};
-
-const ScannerContent = () => {
 
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const [cameraOn, setCameraOn] = useState(false);
@@ -294,15 +261,8 @@ const ScannerContent = () => {
     [snapshotBase64]
   );
 
-  const startGuidedCapture = useCallback(async () => {
+  const startGuidedCapture = useCallback(() => {
     if (captureStep !== "IDLE" || lowLight) return;
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      const msg = "Precisa de iniciar sessão antes de fazer o teste.";
-      setUploadError(msg);
-      toast.error(msg);
-      return;
-    }
     setUploadError(null);
     clearTimers();
 
@@ -327,10 +287,18 @@ const ScannerContent = () => {
         void (async () => {
           recordPose("left");
           setCaptureStep("PROCESSING");
-          setUploading(true);
-          setUploadError(null);
           const payload = payloadRef.current;
           const center = payload.find((s) => s.pose === "center")?.imageBase64 ?? null;
+
+          if (!user) {
+            // Utilizador anónimo: avança e mostra o resultado, sem gravar no Supabase.
+            stopCamera();
+            finishScan(center, null);
+            return;
+          }
+
+          setUploading(true);
+          setUploadError(null);
           try {
             const analysisId = await submitScan(payload);
             setAnalysisId(analysisId);
@@ -353,7 +321,7 @@ const ScannerContent = () => {
         })();
       }, 12000)
     );
-  }, [captureStep, lowLight, recordPose, stopCamera, finishScan, navigate]);
+  }, [captureStep, lowLight, recordPose, stopCamera, finishScan, navigate, user]);
 
 
 
