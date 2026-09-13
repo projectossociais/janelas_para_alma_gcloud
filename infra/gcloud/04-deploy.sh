@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
-# Build das imagens (Cloud Build) e deploy dos dois serviços no Cloud Run.
+# Build da imagem (Cloud Build) e deploy do serviço da API no Cloud Run.
 # NÃO corre migrações Alembic — ver 05-migrate.sh.
 #
-# Ordem: API primeiro (para lhe apanhar o URL), depois o frontend com
-# API_URL a apontar para a API. O NGINX do frontend faz proxy de /api/*
-# para lá em run-time (envsubst sobre infra/nginx/default.conf.template).
+# O frontend não faz parte deste script: é servido pelo Vercel (conta e
+# CI/CD próprios, domínio janelasparaalma.com), com deploy automático a cada
+# push/merge em `main` — ver CLAUDE.md §0/§2. O browser continua a falar
+# sempre com /api/* na mesma origem: quem faz esse proxy agora é o `rewrite`
+# em frontend/vercel.json, não o NGINX (removido). Depois de correr este
+# script, se o URL da API mudar (primeiro deploy, ou serviço recriado),
+# actualizar esse rewrite em frontend/vercel.json e voltar a fazer deploy do
+# frontend no Vercel.
 set -euo pipefail
 cd "$(dirname "$0")"
 source ./00-config.sh
@@ -12,22 +17,20 @@ source ./00-config.sh
 REPO_ROOT="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
 TAG="$(git -C "$REPO_ROOT" rev-parse --short HEAD)"
 API_IMAGE="${IMAGE_BASE}/api:${TAG}"
-FRONTEND_IMAGE="${IMAGE_BASE}/frontend:${TAG}"
 
-echo "==> Build das imagens (tag ${TAG}) via Cloud Build"
+echo "==> Build da imagem da API (tag ${TAG}) via Cloud Build"
 gcloud builds submit "$REPO_ROOT" --config=- <<EOF
 steps:
   - name: gcr.io/cloud-builders/docker
     args: ["build", "-f", "infra/docker/api.Dockerfile", "-t", "${API_IMAGE}", "."]
-  - name: gcr.io/cloud-builders/docker
-    args: ["build", "-f", "infra/docker/frontend.Dockerfile", "-t", "${FRONTEND_IMAGE}", "."]
 images:
   - "${API_IMAGE}"
-  - "${FRONTEND_IMAGE}"
 EOF
 
 # --- Env vars e secrets da API -------------------------------------------
-API_ENV="AMBIENTE=producao"
+# FRONTEND_ORIGINS é só a rede de segurança do CORS (ver api/app/main.py) —
+# o caminho normal é mesma-origem, via rewrite do Vercel, e nem a exercita.
+API_ENV="AMBIENTE=producao,FRONTEND_ORIGINS=[\"https://${FRONTEND_DOMAIN}\"]"
 API_SECRETS="DATABASE_URL=jpa-database-url:latest,JWT_SECRET_KEY=jpa-jwt-secret-key:latest"
 if gcloud secrets describe jpa-r2-access-key-id >/dev/null 2>&1; then
   API_SECRETS="${API_SECRETS},R2_ACCESS_KEY_ID=jpa-r2-access-key-id:latest,R2_SECRET_ACCESS_KEY=jpa-r2-secret-access-key:latest"
@@ -48,21 +51,11 @@ gcloud run deploy "$API_SERVICE" \
   --set-secrets="$API_SECRETS"
 
 API_URL="$(gcloud run services describe "$API_SERVICE" --region="$REGION" --format='value(status.url)')"
+
+echo
+echo "==> Deploy da API feito."
 echo "    API_URL = ${API_URL}"
-
-echo "==> Deploy do frontend ('${FRONTEND_SERVICE}')"
-gcloud run deploy "$FRONTEND_SERVICE" \
-  --image="$FRONTEND_IMAGE" \
-  --region="$REGION" \
-  --port=80 \
-  --allow-unauthenticated \
-  --set-env-vars="API_URL=${API_URL}"
-
-FRONTEND_URL="$(gcloud run services describe "$FRONTEND_SERVICE" --region="$REGION" --format='value(status.url)')"
-
 echo
-echo "==> Deploy feito."
-echo "    Frontend: ${FRONTEND_URL}"
-echo "    API:      ${API_URL}  (o browser fala com ela por ${FRONTEND_URL}/api/*)"
-echo
+echo "    Confirmar que frontend/vercel.json tem este URL no rewrite de /api/*"
+echo "    (o browser em janelasparaalma.com fala com a API só através dele)."
 echo "    Se a base de dados ainda não tem esquema, corre agora (com confirmação): ./05-migrate.sh"

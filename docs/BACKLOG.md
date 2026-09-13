@@ -332,6 +332,31 @@ sempre 100% verde (26/26 no fim), lint da API sempre limpo, lint do frontend a c
 zero erros, `tsc --noEmit` só com dívida pré-existente documentada e a diminuir (8 → 6
 erros), nunca a aumentar.
 
+### Frontend passa do Cloud Run (NGINX próprio) para o Vercel (2026-09-13)
+
+Decisão do dono do projecto: o Lukeny já tinha conta paga no Vercel com CI/CD ligado ao
+frontend, deploy automático a cada push/merge em `main`, e o domínio `janelasparaalma.com`
+já apontado lá. Manter um container NGINX próprio no Cloud Run só para servir ficheiros
+estáticos deixou de fazer sentido quando já havia infra paga e a funcionar a fazer
+exactamente isso — não é reverter a saída do Supabase/Vercel da Sprint 0 (essa continua
+válida para auth, base de dados e storage), é só trocar quem serve o build.
+
+O que mudou:
+- `frontend/vercel.json` ganha o `rewrite` de `/api/*` para o URL da API no Cloud Run —
+  o mesmo papel que o `default.conf.template` do NGINX tinha, só que resolvido do lado
+  do Vercel em vez de um container nosso. Preserva a mesma-origem de que depende o
+  cookie `httpOnly` de sessão (CLAUDE.md §3b) sem precisar de CORS a sério.
+- Saem: `infra/nginx/`, `infra/docker/frontend.Dockerfile`, o serviço `frontend` do
+  `docker-compose.yml`, o job `imagens` do CI deixa de construir a imagem do frontend e
+  de correr `nginx -t`.
+- `infra/gcloud/04-deploy.sh` deixa de fazer deploy do frontend — só a API.
+  `00-config.example.sh` ganha `FRONTEND_DOMAIN` (para o `FRONTEND_ORIGINS`/CORS da API,
+  que continua só como rede de segurança).
+- **Pendente:** o `rewrite` de `frontend/vercel.json` está com um placeholder
+  (`SUBSTITUIR-PELO-URL-DA-API.run.app`) até a API ter o primeiro deploy real no Cloud
+  Run — nessa altura, substituir pelo URL verdadeiro e voltar a fazer deploy do frontend.
+  Sem isso, `/api/*` em produção não funciona.
+
 ### Verificação de papel de administrador na API (2026-09-10 — branch `api/verificacao-admin`)
 
 Trabalho novo (não migração), feito em paralelo enquanto o bug da página do frontend

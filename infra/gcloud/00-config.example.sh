@@ -23,8 +23,14 @@ export SQL_USER="jpa"
 export SQL_PASSWORD="${SQL_PASSWORD:-}"
 
 # --- Serviços Cloud Run --------------------------------------------------
+# Só a API tem serviço Cloud Run — o frontend é servido pelo Vercel (ver
+# CLAUDE.md §0/§2), fora destes scripts.
 export API_SERVICE="jpa-api"
-export FRONTEND_SERVICE="jpa-frontend"
+
+# Domínio público do frontend no Vercel — vai para FRONTEND_ORIGINS da API
+# (rede de segurança do CORS; o caminho normal é mesma-origem via o rewrite
+# de frontend/vercel.json, que nem chega a exercitar isto).
+export FRONTEND_DOMAIN="janelasparaalma.com"
 
 # --- Cloudflare R2 (storage de ficheiros) — preencher quando existir -----
 export R2_ENDPOINT_URL="${R2_ENDPOINT_URL:-}"

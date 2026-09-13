@@ -1,5 +1,9 @@
 {
   "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://SUBSTITUIR-PELO-URL-DA-API.run.app/:path*"
+    },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

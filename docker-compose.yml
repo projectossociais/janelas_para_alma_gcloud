@@ -1,6 +1,9 @@
-# Ambiente de desenvolvimento local. Em produção, cada serviço (db via Cloud
-# SQL, api e frontend via Cloud Run) é implantado separadamente — este
-# ficheiro nunca é usado em produção, só espelha a topologia para dev.
+# Ambiente de desenvolvimento local. Em produção, o `db` vive no Cloud SQL e a
+# `api` num container próprio no Cloud Run — este ficheiro nunca é usado em
+# produção, só espelha essa topologia para dev. O frontend não tem serviço
+# aqui: em produção é o Vercel que o serve (ver CLAUDE.md §0/§2), e em dev
+# usa-se sempre `npm run dev` dentro de `frontend/` (hot reload real; o proxy
+# do Vite já reencaminha /api/* tal como o Vercel faz em produção).
 services:
   db:
     image: postgres:16-alpine
@@ -34,21 +37,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-
-  frontend:
-    build:
-      context: .
-      dockerfile: infra/docker/frontend.Dockerfile
-    environment:
-      # Lida em run-time pelo envsubst da imagem NGINX (default.conf.template):
-      # alvo do proxy /api/. Aqui é o nome do serviço na rede do compose; em
-      # produção (Cloud Run) é o URL público da API, definido no deploy.
-      # O browser fala com /api/ na mesma origem — não há VITE_API_URL a baked.
-      API_URL: http://api:8000
-    ports:
-      - "8080:80"
-    depends_on:
-      - api
 
 volumes:
   jpa_db_data:
