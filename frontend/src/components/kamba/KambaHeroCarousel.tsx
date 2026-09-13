@@ -100,7 +100,7 @@ const KambaHeroCarousel = ({ onOpenForm, onOpenProgram }: KambaHeroCarouselProps
                 <div className="rounded-2xl overflow-hidden shadow-elevated border border-navy-foreground/10 aspect-[4/5] md:aspect-square">
                   <video
                     className="w-full h-full object-cover"
-                    src="/assets/kamba/jpa-grupo.mp4"
+                    src="https://yjzqnjatrdngzfixrxcg.supabase.co/storage/v1/object/public/kamba-media/JPA%20Grupo.mov"
                     poster="/assets/kamba/campanha-gamek-poster.jpg"
                     autoPlay
                     muted
