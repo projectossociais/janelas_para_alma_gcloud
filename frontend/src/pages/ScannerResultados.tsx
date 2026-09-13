@@ -309,107 +309,110 @@ const Resultados = () => {
     const navy: [number, number, number] = [11, 27, 59];
     const teal: [number, number, number] = [31, 178, 158];
     const gold: [number, number, number] = [217, 175, 84];
+    const green: [number, number, number] = [38, 115, 89];
+    const blue: [number, number, number] = [37, 99, 235];
+    const red: [number, number, number] = [220, 38, 38];
     const ink: [number, number, number] = [30, 41, 59];
     const muted: [number, number, number] = [100, 116, 139];
     const soft: [number, number, number] = [241, 245, 249];
+    const corDiagnostico = isNormal ? green : red;
 
-    // Header — logótipo oficial (o glifo geométrico deixou de existir).
-    const headerH = 96;
-    doc.setFillColor(255, 255, 255);
-    doc.rect(0, 0, W, headerH, "F");
-    doc.setFillColor(...teal);
-    doc.rect(0, headerH, W, 4, "F");
-
+    // Header — logótipo oficial, centrado, seguido de uma barra divisória.
+    let y = 24;
     if (logo) {
-      const logoH = 44;
-      const logoW = (logo.width / logo.height) * logoH;
-      doc.addImage(logo.dataUrl, "PNG", M, (headerH - logoH) / 2, logoW, logoH);
+      const boxW = 180, boxH = 60;
+      const ratio = logo.width / logo.height;
+      const logoW = ratio > boxW / boxH ? boxW : boxH * ratio;
+      const logoH = ratio > boxW / boxH ? boxW / ratio : boxH;
+      doc.addImage(logo.dataUrl, "PNG", (W - logoW) / 2, y, logoW, logoH);
+      y += boxH + 14;
+    } else {
+      y += 20;
     }
+    doc.setFillColor(...navy);
+    doc.rect(0, y, W, 4, "F");
+    y += 26;
 
-    doc.setTextColor(...navy);
+    // Introdução institucional (texto centrado, como no modelo oficial)
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.text("Relatório de Triagem Visual Automática", W - M, 40, { align: "right" });
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.setTextColor(...muted);
-    doc.text(`Emitido em ${formatted}`, W - M, 54, { align: "right" });
-
-    // Introdução institucional
-    let y = headerH + 26;
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
+    doc.setFontSize(11);
     doc.setTextColor(...teal);
-    doc.text("SOBRE A PLATAFORMA", M, y);
-    y += 14;
+    doc.text("SOBRE A PLATAFORMA", W / 2, y, { align: "center" });
+    y += 18;
+
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9.5);
     doc.setTextColor(...ink);
-    const introLines = doc.splitTextToSize(
-      "O Janelas Para a Alma realiza uma triagem visual geométrica. Este relatório fornece uma " +
-        "orientação com base no alinhamento detetado, não constituindo um diagnóstico clínico.",
+    const introP1 = doc.splitTextToSize(
+      "O Janelas para a Alma é uma startup angolana direccionada a pessoas com estrabismo – " +
+        "condição que afecta o alinhamento dos olhos, podendo causar visão dupla, ambliopia ou cegueira.",
       W - M * 2
     );
-    doc.text(introLines, M, y);
-    y += introLines.length * 12 + 24;
+    doc.text(introP1, W / 2, y, { align: "center" });
+    y += introP1.length * 13 + 10;
 
-    // Diagnosis card with deviation glyph
-    doc.setFillColor(...soft);
-    doc.roundedRect(M, y, W - M * 2, 110, 12, 12, "F");
+    const introP2 = doc.splitTextToSize(
+      "Este relatório fornece uma orientação com base no alinhamento detectado, por meio de cálculos " +
+        "computacionais geométricos, para averiguar de forma prévia um possível desalinhamento ocular, " +
+        "não constituindo um diagnóstico clínico.",
+      W - M * 2
+    );
+    doc.text(introP2, W / 2, y, { align: "center" });
+    y += introP2.length * 13 + 22;
 
-    const gx = M + 60, gy = y + 55;
-    doc.setDrawColor(...navy);
-    doc.setLineWidth(1.2);
-    doc.setFillColor(255, 255, 255);
-    doc.ellipse(gx, gy, 26, 16, "FD");
-    const offsets: Record<string, [number, number]> = {
-      Esotropia: [8, 0],
-      Exotropia: [-8, 0],
-      Hipertropia: [0, -6],
-      Hipotropia: [0, 6],
-    };
-    const [ox, oy] = offsets[result.diagnosis] || [0, 0];
-    doc.setFillColor(...teal);
-    doc.circle(gx + ox, gy + oy, 7, "F");
-    doc.setFillColor(...navy);
-    doc.circle(gx + ox, gy + oy, 3, "F");
-    doc.setDrawColor(...gold);
-    doc.setLineWidth(1.5);
-    doc.line(gx, gy, gx + ox * 1.6, gy + oy * 1.6);
-
-    doc.setTextColor(...muted);
+    // Bloco "Relatório de Triagem..." / "Emitido em...", alinhado à direita
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
-    doc.text("DIAGNÓSTICO ORIENTADOR", M + 110, y + 28);
-
+    doc.setFontSize(9.5);
     doc.setTextColor(...navy);
-    doc.setFontSize(22);
-    doc.text(result.diagnosis, M + 110, y + 54);
+    doc.text("Relatório de Triagem Visual Automática", W - M, y, { align: "right" });
+    y += 13;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...muted);
+    doc.text(`Emitido em ${formatted}`, W - M, y, { align: "right" });
+    y += 24;
+
+    // Cartão de diagnóstico — compacto, sem glifo do olho.
+    const cardH = 92;
+    if (y > H - cardH - 40) { doc.addPage(); y = M; }
+    doc.setFillColor(...soft);
+    doc.roundedRect(M, y, W - M * 2, cardH, 12, 12, "F");
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(...teal);
+    doc.text("DIAGNÓSTICO ORIENTADOR", M + 18, y + 24);
+
+    doc.setFontSize(16);
+    doc.setTextColor(...corDiagnostico);
+    doc.text(result.diagnosis, M + 18, y + 46);
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.setTextColor(...ink);
-    const shortLines = doc.splitTextToSize(info.short, W - M * 2 - 130);
-    doc.text(shortLines, M + 110, y + 72);
+    const shortLines = doc.splitTextToSize(info.short, W - M * 2 - 140);
+    doc.text(shortLines, M + 18, y + 66);
 
-    doc.setFillColor(...teal);
-    doc.roundedRect(W - M - 110, y + 18, 90, 28, 14, 14, "F");
+    // Badge de confiança, discreto, alinhado à direita
+    const badgeW = 74, badgeH = 34, badgeX = W - M - 18 - badgeW, badgeY = y + 14;
+    doc.setFillColor(...green);
+    doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 8, 8, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text(`Confiança ${result.confidence}%`, W - M - 65, y + 36, { align: "center" });
+    doc.setFontSize(8);
+    doc.text("Confiança", badgeX + badgeW / 2, badgeY + 13, { align: "center" });
+    doc.setFontSize(12);
+    doc.text(`${result.confidence}%`, badgeX + badgeW / 2, badgeY + 27, { align: "center" });
 
-    y += 134;
+    y += cardH + 24;
 
-    const section = (title: string, color: [number, number, number]) => {
+    const heading = (title: string, color: [number, number, number]) => {
       if (y > H - 120) { doc.addPage(); y = M; }
-      doc.setFillColor(...color);
-      doc.rect(M, y, 4, 16, "F");
-      doc.setTextColor(...navy);
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.text(title, M + 12, y + 12);
-      y += 24;
+      doc.setFontSize(13);
+      doc.setTextColor(...color);
+      doc.text(title, M, y);
+      y += 18;
     };
 
     const bullets = (items: readonly string[]) => {
@@ -419,37 +422,32 @@ const Resultados = () => {
       items.forEach((t) => {
         if (y > H - 80) { doc.addPage(); y = M; }
         const wrapped = doc.splitTextToSize(t, W - M * 2 - 18);
-        doc.setFillColor(...teal);
-        doc.circle(M + 6, y + 4, 1.8, "F");
+        doc.setFillColor(...ink);
+        doc.circle(M + 6, y + 4, 1.6, "F");
         doc.text(wrapped, M + 16, y + 6);
         y += wrapped.length * 13 + 4;
       });
       y += 6;
     };
 
-    section("O Seu Resultado", teal);
+    heading("Resultado", red);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.setTextColor(...ink);
     const desc = doc.splitTextToSize(info.description, W - M * 2);
-    doc.text(desc, M, y + 6);
+    doc.text(desc, M, y);
     y += desc.length * 13 + 16;
 
     if (!isNormal) {
-      if (y > H - 100) { doc.addPage(); y = M; }
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(9.5);
-      doc.setTextColor(...navy);
-      doc.text("Sintomas frequentes", M, y);
-      y += 16;
+      heading("Sinais frequentes de estrabismo", gold);
       bullets(info.symptoms);
     }
 
-    section("O que recomendamos", teal);
+    heading("Recomendações", green);
     bullets(info.treatments);
 
     if (!isNormal) {
-      section("Clínicas Recomendadas em Angola", navy);
+      heading("Clínicas Recomendadas em Angola", ink);
       recommendedClinics.forEach((c) => {
         if (y > H - 110) { doc.addPage(); y = M; }
         doc.setFillColor(...soft);
@@ -477,7 +475,7 @@ const Resultados = () => {
       });
     }
 
-    section("Recomendações Gerais", gold);
+    heading("Recomendações Gerais", blue);
     bullets(
       isNormal
         ? [
@@ -495,56 +493,66 @@ const Resultados = () => {
           ]
     );
 
+    // "AVISO IMPORTANTE" como badge centrado, com a caixa de texto por baixo
+    if (y > H - 160) { doc.addPage(); y = M; }
+    y += 10;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    const avisoLabel = "AVISO IMPORTANTE";
+    const avisoW = doc.getTextWidth(avisoLabel) + 32;
+    const avisoH = 26;
+    doc.setFillColor(...soft);
+    doc.roundedRect(W / 2 - avisoW / 2, y, avisoW, avisoH, avisoH / 2, avisoH / 2, "F");
+    doc.setTextColor(...red);
+    doc.text(avisoLabel, W / 2, y + avisoH / 2 + 4, { align: "center" });
+    y += avisoH + 16;
+
     const discTexto =
       "Os resultados desta triagem são informativos, baseados em biometria facial, e não substituem " +
       "uma avaliação oftalmológica presencial. A plataforma Janelas Para a Alma isenta-se de " +
       "responsabilidade por diagnósticos ou ações médicas tomadas com base neste documento. Em caso " +
       "de desconforto visual, consulte imediatamente um especialista.";
-    const disc = doc.splitTextToSize(discTexto, W - M * 2 - 24);
-    const discBoxH = 34 + disc.length * 11;
+    const disc = doc.splitTextToSize(discTexto, W - M * 2 - 48);
+    const discBoxH = 32 + disc.length * 15;
     if (y > H - discBoxH - 20) { doc.addPage(); y = M; }
-    doc.setFillColor(255, 247, 224);
-    doc.roundedRect(M, y, W - M * 2, discBoxH, 8, 8, "F");
-    doc.setTextColor(...navy);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
-    doc.text("AVISO IMPORTANTE", M + 12, y + 18);
+    doc.setFillColor(...soft);
+    doc.roundedRect(M, y, W - M * 2, discBoxH, 10, 10, "F");
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
+    doc.setFontSize(10);
     doc.setTextColor(...ink);
-    doc.text(disc, M + 12, y + 32);
+    doc.text(disc, M + 24, y + 24, { lineHeightFactor: 1.35 });
+    y += discBoxH + 20;
 
+    // Rodapé — logótipo pequeno à esquerda, contactos ao centro, paginação à direita.
+    const footerH = 64;
     const pageCount = doc.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
       doc.setFillColor(...navy);
-      doc.rect(0, H - 36, W, 36, "F");
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(8);
-      doc.text("Janelas Para a Alma", M, H - 20);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(180, 220, 215);
-      doc.text("Um Olhar Alinhado, Uma Vida Transformada", M, H - 10);
+      doc.rect(0, H - footerH, W, footerH, "F");
 
-      const emailTexto = "janelasparaalma18@gmail.com";
       if (logo) {
-        const smallH = 14;
-        const smallW = (logo.width / logo.height) * smallH;
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(8);
-        const emailW = doc.getTextWidth(emailTexto);
-        const groupW = smallW + 6 + emailW;
-        const startX = W / 2 - groupW / 2;
-        doc.addImage(logo.dataUrl, "PNG", startX, H - 14 - smallH / 2, smallW, smallH);
-        doc.setTextColor(255, 255, 255);
-        doc.text(emailTexto, startX + smallW + 6, H - 14);
-      } else {
-        doc.setTextColor(255, 255, 255);
-        doc.text(emailTexto, W / 2, H - 14, { align: "center" });
+        const fLogoH = 30;
+        const fLogoW = (logo.width / logo.height) * fLogoH;
+        doc.addImage(logo.dataUrl, "PNG", M, H - footerH + (footerH - fLogoH) / 2, fLogoW, fLogoH);
       }
-      doc.setTextColor(180, 220, 215);
-      doc.text(`Página ${i} de ${pageCount}`, W - M, H - 14, { align: "right" });
+
+      const contatoX = M + 130;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(255, 255, 255);
+      doc.text("Contactos", contatoX, H - footerH + 18);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(200, 220, 235);
+      doc.text("•  Luanda, Angola", contatoX, H - footerH + 31);
+      doc.text("•  +244 926 969 819", contatoX, H - footerH + 42);
+      doc.text("•  janelasparaalma18@gmail.com", contatoX, H - footerH + 53);
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.text(`Página ${i} de ${pageCount}`, W - M, H - footerH / 2 + 3, { align: "right" });
     }
 
     doc.save(`relatorio-janelas-${result.diagnosis.toLowerCase()}-${date.toISOString().slice(0, 10)}.pdf`);
