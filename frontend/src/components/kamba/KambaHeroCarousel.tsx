@@ -130,11 +130,47 @@ const KambaHeroCarousel = ({ onOpenForm, onOpenProgram }: KambaHeroCarouselProps
               </div>
             </div>
           </CarouselItem>
+          {/* Slide 3: A Nossa Equipa */}
+          <CarouselItem className="pl-0">
+            <div className="container">
+              <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-8 items-center py-4">
+                <div className="text-center md:text-left space-y-5">
+                  <span className="text-sm font-medium tracking-widest uppercase text-teal">
+                    A Nossa Equipa
+                  </span>
+                  <h2 className="text-3xl md:text-4xl font-bold leading-tight">
+                    Kambas Unidos pela Mesma Causa
+                  </h2>
+                  <p className="text-lg text-navy-foreground/70">
+                    Voluntários, embaixadores e parceiros que dão vida ao
+                    programa Meu Kamba Estrábico, em cada acção e em cada
+                    encontro pela inclusão visual.
+                  </p>
+                  <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4">
+                    <button
+                      onClick={onOpenForm}
+                      className="inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-teal text-teal-foreground font-bold transition-all hover:opacity-90 hover:translate-y-[-2px] hover:shadow-2xl shadow-elevated"
+                    >
+                      <HeartHandshake className="w-5 h-5" />
+                      Quero ser um Kamba
+                    </button>
+                  </div>
+                </div>
+                <div className="rounded-2xl overflow-hidden shadow-elevated border border-navy-foreground/10 aspect-[4/5] md:aspect-square">
+                  <img
+                    src="/assets/kamba/equipa-auditorio.jpg"
+                    alt="Equipa Meu Kamba Estrábico reunida num auditório"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+            </div>
+          </CarouselItem>
         </CarouselContent>
       </Carousel>
 
       <div className="flex items-center justify-center gap-2 mt-8">
-        {[0, 1].map((index) => (
+        {[0, 1, 2].map((index) => (
           <button
             key={index}
             aria-label={`Ir para o slide ${index + 1}`}
