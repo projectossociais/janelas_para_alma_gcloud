@@ -58,9 +58,20 @@ const CampanhaGamek = () => {
                 alt="Cartaz da Campanha de Conscientização sobre o Estrabismo na Gamek"
                 className="w-full max-w-xl mx-auto rounded-xl object-contain"
               />
-              <p className="text-muted-foreground leading-relaxed">
-                No dia 12 de Setembro, realizou-se a campanha de conscientização sobre o estrabismo pelas ruas da Gamek, na cidade de Luanda. A comunidade Meu Kamba Estrábico, pertencente ao Janelas para a Alma, efectivou a campanha de conscientização e sensibilização cujo objectivo principal foi transmitir às pessoas informações importantes sobre a condição e apresentar a nossa proposta de valor, a plataforma Janelas para a Alma. Durante a acção, foi possível abordar diversas pessoas portadoras da condição ou ainda pessoas próximas a quem tem a condição. Reafirmamos o nosso compromisso com a difusão da informação sobre o estrabismo e saúde visual. Janelas para a alma - Um olhar alinhado, uma vida transformada.
-              </p>
+              <div className="text-muted-foreground leading-relaxed space-y-4">
+                <p>
+                  No dia 12 de Setembro, realizamos a campanha de conscientização sobre o estrabismo pelas ruas da Gamek, na cidade de Luanda.
+                </p>
+                <p>
+                  A comunidade Meu Kamba Estrábico, pertencente ao Janelas para a Alma, efectivou, pelas 9h30, a campanha de conscientização e sensibilização cujo objectivo principal foi transmitir às pessoas informações importantes sobre a condição e apresentar a nossa proposta de valor, a plataforma Janelas para a Alma, onde foi possível abordar diversas pessoas portadoras da condição ou ainda próximos a pessoas com a condição.
+                </p>
+                <p>
+                  Reafirmamos o nosso compromisso com a difusão da informação sobre o estrabismo e saúde visual.
+                </p>
+                <p>
+                  Janelas para a alma - Um olhar alinhado, uma vida transformada.
+                </p>
+              </div>
             </div>
 
             <div className="flex flex-col gap-6">
