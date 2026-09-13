@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Sobre from "./pages/Sobre";
 import Equipa from "./pages/Equipa";
 import Kamba from "./pages/Kamba";
+import CampanhaGamek from "./pages/CampanhaGamek";
 import Parceiros from "./pages/Parceiros";
 import Tecnologia from "./pages/Tecnologia";
 import Circular from "./pages/Circular";
@@ -72,6 +73,7 @@ const App = () => (
                 <Route path="/equipa" element={<Equipa />} />
                 <Route path="/produto" element={<Produto />} />
                 <Route path="/kamba" element={<Kamba />} />
+                <Route path="/meu-kamba/campanha-gamek" element={<CampanhaGamek />} />
                 <Route path="/parceiros" element={<Parceiros />} />
                 <Route path="/tecnologia" element={<Tecnologia />} />
                 <Route path="/circular" element={<Circular />} />

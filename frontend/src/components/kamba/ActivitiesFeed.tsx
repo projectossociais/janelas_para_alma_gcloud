@@ -1,41 +1,8 @@
-import { useState } from "react";
+import { Link } from "react-router-dom";
 import { CalendarDays, MapPin, PlayCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-
-interface GalleryVideo {
-  src: string;
-  description: string;
-}
-
-const galleryVideos: GalleryVideo[] = [
-  {
-    src: "/assets/kamba/campanha-conscientizacao.mp4",
-    description: "Resumo da Campanha de Conscientização nas ruas da Gamek.",
-  },
-  {
-    src: "/assets/kamba/dalva-introducao.mp4",
-    description: "Dalva apresenta o impacto e a missão do projeto.",
-  },
-  {
-    src: "/assets/kamba/jpa-grupo.mp4",
-    description: "A nossa equipa unida pela causa Janelas Para a Alma.",
-  },
-  {
-    src: "/assets/kamba/kambas.mp4",
-    description: "Os nossos Kambas em ação no terreno.",
-  },
-];
 
 const ActivitiesFeed = () => {
-  const [galleryOpen, setGalleryOpen] = useState(false);
-
   return (
     <section id="acoes-recentes" className="py-20 md:py-28 bg-background">
       <div className="container">
@@ -79,37 +46,19 @@ const ActivitiesFeed = () => {
                 className="w-full h-auto max-h-[420px] object-contain rounded-lg"
                 loading="lazy"
               />
-              <button
-                onClick={() => setGalleryOpen(true)}
+              <Link
+                to="/meu-kamba/campanha-gamek"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="absolute bottom-8 inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-teal text-teal-foreground font-bold shadow-elevated transition-all hover:opacity-90 hover:translate-y-[-2px]"
               >
                 <PlayCircle className="w-5 h-5" />
                 Ver Campanha Completa
-              </button>
+              </Link>
             </div>
           </CardContent>
         </Card>
       </div>
-
-      <Dialog open={galleryOpen} onOpenChange={setGalleryOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Campanha de Conscientização sobre o Estrabismo</DialogTitle>
-            <DialogDescription>
-              Reviva os momentos da campanha na Gamek através dos vídeos abaixo.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-            {galleryVideos.map((video) => (
-              <div key={video.src} className="space-y-2">
-                <video controls preload="metadata" className="w-full rounded-lg" src={video.src} />
-                <p className="text-sm text-muted-foreground">{video.description}</p>
-              </div>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
     </section>
   );
 };
