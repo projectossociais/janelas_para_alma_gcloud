@@ -19,7 +19,15 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
 
-type DiagnosisKey = "Esotropia" | "Exotropia" | "Hipertropia" | "Hipotropia";
+type DiagnosisKey =
+  | "Esotropia"
+  | "Exotropia"
+  | "Hipertropia"
+  | "Hipotropia"
+  | "Alinhamento Fisiológico Normal"
+  | "Necessária Avaliação Oftalmológica";
+
+const DIAGNOSIS_FALLBACK: DiagnosisKey = "Necessária Avaliação Oftalmológica";
 
 type TabKey = "condicao" | "clinicas" | "exercicios" | "comunidade";
 
@@ -99,6 +107,36 @@ const DIAGNOSIS_DATA: Record<DiagnosisKey, DiagnosisInfo> = {
       "Cirurgia muscular corretiva",
     ],
   },
+  "Alinhamento Fisiológico Normal": {
+    short: "Eixos visuais simétricos e alinhamento dentro dos parâmetros normais",
+    description:
+      "A análise das três posições do olhar não detetou desvios manifestos nem assimetrias corneanas significativas. Os eixos visuais mantêm-se paralelos e com boa resposta de fixação.",
+    symptoms: [
+      "Boa coordenação binocular",
+      "Ausência de diplopia (visão dupla)",
+      "Conforto visual nas posições de fixação",
+    ],
+    treatments: [
+      "Manter consultas oftalmológicas de rotina anuais",
+      "Praticar pausas visuais regulares durante o trabalho com ecrãs",
+      "Utilizar proteção UV ao ar livre",
+    ],
+  },
+  "Necessária Avaliação Oftalmológica": {
+    short: "Assimetria de reflexos ou padrão de incomitância detetado",
+    description:
+      "A triagem automatizada identificou variações no alinhamento ocular entre as posições de fixação ou qualidade insuficiente para descartar desalinhamento. Recomenda-se exame clínico presencial.",
+    symptoms: [
+      "Possível desvio intermitente nas posições laterais",
+      "Desconforto ou fadiga visual ao mudar o foco",
+      "Dificuldade de fixação prolongada",
+    ],
+    treatments: [
+      "Consulta de oftalmologia ou ortóptica presencial",
+      "Exame de motilidade ocular extrínseca e cover test",
+      "Avaliação de acuidade visual e refração sob cicloplegia",
+    ],
+  },
 };
 
 const tabs: { key: TabKey; label: string; icon: typeof Info }[] = [
@@ -164,6 +202,14 @@ const CLINIC_RECOMMENDATIONS: Record<DiagnosisKey, ClinicRec[]> = {
   Hipotropia: [
     { ...ALL_CLINICS.girassol, subtitle: "Unidade Avançada de Neuroftalmologia Vertical" },
   ],
+  "Alinhamento Fisiológico Normal": [
+    { ...ALL_CLINICS.optico, subtitle: "Exames de rotina & cuidados preventivos" },
+    { ...ALL_CLINICS.sagrada, subtitle: "Check-up oftalmológico anual" },
+  ],
+  "Necessária Avaliação Oftalmológica": [
+    { ...ALL_CLINICS.sagrada, subtitle: "Avaliação ortóptica e estrabismo" },
+    { ...ALL_CLINICS.multiperfil, subtitle: "Diagnóstico diferencial especializado" },
+  ],
 };
 
 const exercises = [
@@ -176,7 +222,12 @@ const exercises = [
 const Resultados = () => {
   const navigate = useNavigate();
   const [tab, setTab] = useState<TabKey>("condicao");
-  const [result, setResult] = useState<{ diagnosis: DiagnosisKey; confidence: number; date: string } | null>(null);
+  const [result, setResult] = useState<{
+    diagnosis: DiagnosisKey;
+    confidence: number;
+    date: string;
+    apiData?: { recomendacao?: string; aviso?: string } | null;
+  } | null>(null);
 
   useEffect(() => {
     const raw = sessionStorage.getItem("scanResult");
@@ -191,9 +242,16 @@ const Resultados = () => {
     }
   }, [navigate]);
 
-  const info = useMemo(() => (result ? DIAGNOSIS_DATA[result.diagnosis] : null), [result]);
+  // `result` vem de sessionStorage sem validação de esquema — a API pode, no
+  // limite, ter sido chamada antes de os dicionários abaixo serem
+  // atualizados. O fallback garante que o ecrã nunca fica preso em
+  // "A carregar resultados…" por uma chave desconhecida.
+  const info = useMemo(
+    () => (result ? DIAGNOSIS_DATA[result.diagnosis] ?? DIAGNOSIS_DATA[DIAGNOSIS_FALLBACK] : null),
+    [result]
+  );
   const recommendedClinics = useMemo<ClinicRec[]>(
-    () => (result ? CLINIC_RECOMMENDATIONS[result.diagnosis] : []),
+    () => (result ? CLINIC_RECOMMENDATIONS[result.diagnosis] ?? CLINIC_RECOMMENDATIONS[DIAGNOSIS_FALLBACK] : []),
     [result]
   );
 
@@ -249,13 +307,13 @@ const Resultados = () => {
     doc.setLineWidth(1.2);
     doc.setFillColor(255, 255, 255);
     doc.ellipse(gx, gy, 26, 16, "FD");
-    const offsets: Record<DiagnosisKey, [number, number]> = {
+    const offsets: Record<string, [number, number]> = {
       Esotropia: [8, 0],
       Exotropia: [-8, 0],
       Hipertropia: [0, -6],
       Hipotropia: [0, 6],
     };
-    const [ox, oy] = offsets[result.diagnosis];
+    const [ox, oy] = offsets[result.diagnosis] || [0, 0];
     doc.setFillColor(...teal);
     doc.circle(gx + ox, gy + oy, 7, "F");
     doc.setFillColor(...navy);
@@ -421,7 +479,10 @@ const Resultados = () => {
             <h1 className="mt-3 text-3xl md:text-4xl font-bold leading-tight">
               Diagnóstico: <span className="text-gold">{result.diagnosis}</span>
             </h1>
-            <p className="mt-3 text-sm md:text-base text-white/80 max-w-2xl">{info.short}. Recomenda-se consulta oftalmológica para confirmação e plano terapêutico personalizado.</p>
+            <p className="mt-3 text-sm md:text-base text-white/80 max-w-2xl">
+              {result.apiData?.recomendacao || info.short}. Recomenda-se consulta oftalmológica para confirmação e
+              plano terapêutico personalizado.
+            </p>
 
             <div className="mt-6 grid sm:grid-cols-3 gap-3">
               {[

@@ -197,7 +197,10 @@ const Scanner = () => {
 
     if (apiResult) {
       if (apiResult.incomitante || apiResult.requer_avaliacao_humana) {
-        diagnosis = apiResult.recomendacao || "Necessária Avaliação Oftalmológica";
+        // Categoria fixa — o texto livre de `recomendacao` vai em `apiData`,
+        // para o ecrã de resultados o mostrar à parte (nunca como chave de
+        // diagnóstico: DIAGNOSIS_DATA só conhece um conjunto fechado de chaves).
+        diagnosis = "Necessária Avaliação Oftalmológica";
       }
       // Calcula uma pontuação de confiança com base na qualidade da captura
       const posCentro = apiResult.posicoes?.find(p => p.posicao.toUpperCase() === "CENTRO");
