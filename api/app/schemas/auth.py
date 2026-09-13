@@ -44,6 +44,17 @@ class UtilizadorLogin(BaseModel):
     password: str
 
 
+class SolicitarRecuperacaoPassword(BaseModel):
+    email: EmailStr
+
+
+class RedefinirPassword(BaseModel):
+    token: str
+    password_nova: str
+
+    _valida_password = field_validator("password_nova")(validar_password_forte)
+
+
 class UtilizadorPublico(BaseModel):
     id: str
     email: str

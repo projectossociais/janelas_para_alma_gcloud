@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useAuth, PROVINCES, UserRole, ROLE_LABEL } from "@/contexts/AuthContext";
+import { authApi, mensagemDeErroApi } from "@/lib/apiClient";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -32,6 +33,7 @@ const Auth = () => {
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
+  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
 
   // Register state
   const [name, setName] = useState("");
@@ -64,12 +66,25 @@ const Auth = () => {
     }
   };
 
-  const handleForgotPassword = () => {
-    // A recuperação de password dependia do envio de email pelo Supabase
-    // Auth — infraestrutura que este projecto deixou de usar (ver CLAUDE.md
-    // secção 0). A API própria ainda não tem um fornecedor de email
-    // configurado para isto. Mensagem honesta em vez de fingir que funciona.
-    toast.info("A recuperação de password ainda não está disponível nesta infraestrutura nova. Contacte o suporte.");
+  const handleForgotPassword = async () => {
+    if (!loginEmail.trim()) {
+      toast.error("Escreva o seu email no campo acima primeiro.");
+      return;
+    }
+    setForgotPasswordLoading(true);
+    try {
+      // A resposta é sempre a mesma exista ou não conta com este email — a
+      // API nunca revela isso (ver auth/recuperar-password). Um "sucesso"
+      // aqui só significa "o pedido foi aceite", nunca "o email existe".
+      await authApi.recuperarPassword(loginEmail.trim());
+      toast.success("Se existir uma conta com este email, foi enviado um link de recuperação.");
+    } catch (err) {
+      // Aqui sim pode ser um erro real (API em baixo, Resend a falhar) —
+      // nunca mostrar a mensagem de sucesso acima a partir de um catch.
+      toast.error(mensagemDeErroApi(err, "Não foi possível pedir a recuperação. Tente novamente mais tarde."));
+    } finally {
+      setForgotPasswordLoading(false);
+    }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -140,9 +155,10 @@ const Auth = () => {
                     <button
                       type="button"
                       onClick={handleForgotPassword}
-                      className="text-xs text-muted-foreground hover:text-primary hover:underline transition-colors block ml-auto"
+                      disabled={forgotPasswordLoading}
+                      className="text-xs text-muted-foreground hover:text-primary hover:underline transition-colors block ml-auto disabled:opacity-60"
                     >
-                      Esqueceu a palavra-passe?
+                      {forgotPasswordLoading ? "A enviar..." : "Esqueceu a palavra-passe?"}
                     </button>
                   </div>
                   <Button type="submit" size="lg" className="w-full" disabled={loginLoading}>

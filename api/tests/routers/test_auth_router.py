@@ -9,23 +9,37 @@ os códigos de erro".
 import pytest
 from fastapi.testclient import TestClient
 
-from app.core.dependencies import obter_conta_service
+from app.core.dependencies import obter_conta_service, obter_recuperacao_password_service
 from app.main import app
 from app.routers import auth as auth_router
 from app.services.auth_service import AuthService
 from app.services.conta_service import ContaService
+from app.services.recuperacao_password_service import RecuperacaoPasswordService
 from tests.services.test_auth_service import RepositorioFalso
+from tests.services.test_recuperacao_password_service import (
+    EmailSenderFalso,
+    TokensRepositorioFalso,
+)
 
 
 @pytest.fixture
 def client():
     repo = RepositorioFalso()
+    tokens_repo = TokensRepositorioFalso()
+    email_sender = EmailSenderFalso()
     app.dependency_overrides[auth_router.obter_auth_service] = lambda: AuthService(repo)
     # entrar() também chama o ContaService (para cancelar uma eliminação
     # agendada) -- sem isto cairia no repositório real (Postgres inexistente
     # em testes).
     app.dependency_overrides[obter_conta_service] = lambda: ContaService(repo)
+    # Mesma instância de tokens_repo/email_sender entre pedidos (fecho sobre
+    # a variável, não uma nova a cada chamada) -- um teste que solicita a
+    # recuperação numa chamada e redefine noutra precisa de ver o mesmo token.
+    app.dependency_overrides[obter_recuperacao_password_service] = lambda: RecuperacaoPasswordService(
+        repo, tokens_repo, email_sender
+    )
     with TestClient(app) as c:
+        c.email_sender = email_sender  # type: ignore[attr-defined]
         yield c
     app.dependency_overrides.clear()
 
@@ -140,3 +154,79 @@ def test_atualizar_token_renova_o_acesso_sem_precisar_de_reautenticar(client: Te
     assert "access_token" in resposta.cookies
 
     assert client.get("/auth/eu").status_code == 200
+
+
+def _extrair_token_do_email(client: TestClient) -> str:
+    corpo_html = client.email_sender.enviados[-1]["corpo_html"]  # type: ignore[attr-defined]
+    return corpo_html.split("token=")[1].split('"')[0]
+
+
+def test_recuperar_password_devolve_202_com_ou_sem_conta(client: TestClient) -> None:
+    # A resposta é idêntica nos dois casos de propósito — nunca confirmar a
+    # um atacante se um email está registado.
+    client.post("/auth/registar", json={"email": "ana@example.com", "password": "password-forte-123"})
+    client.cookies.clear()
+
+    resposta_com_conta = client.post("/auth/recuperar-password", json={"email": "ana@example.com"})
+    resposta_sem_conta = client.post("/auth/recuperar-password", json={"email": "ninguem@example.com"})
+
+    assert resposta_com_conta.status_code == 202
+    assert resposta_sem_conta.status_code == 202
+    assert resposta_com_conta.json() == resposta_sem_conta.json()
+    assert len(client.email_sender.enviados) == 1  # type: ignore[attr-defined]
+
+
+def test_fluxo_completo_recuperar_e_redefinir_password(client: TestClient) -> None:
+    client.post("/auth/registar", json={"email": "ana@example.com", "password": "password-forte-123"})
+    client.cookies.clear()
+
+    client.post("/auth/recuperar-password", json={"email": "ana@example.com"})
+    token = _extrair_token_do_email(client)
+
+    resposta_redefinir = client.post(
+        "/auth/redefinir-password", json={"token": token, "password_nova": "password-nova-456"}
+    )
+    assert resposta_redefinir.status_code == 204
+
+    # A password antiga deixou de funcionar, a nova sim.
+    assert client.post("/auth/entrar", json={"email": "ana@example.com", "password": "password-forte-123"}).status_code == 401
+    resposta_entrar = client.post("/auth/entrar", json={"email": "ana@example.com", "password": "password-nova-456"})
+    assert resposta_entrar.status_code == 200
+
+
+def test_redefinir_password_com_token_invalido_devolve_400_e_nao_muda_nada(client: TestClient) -> None:
+    client.post("/auth/registar", json={"email": "ana@example.com", "password": "password-forte-123"})
+    client.cookies.clear()
+
+    resposta = client.post(
+        "/auth/redefinir-password", json={"token": "token-forjado", "password_nova": "password-nova-456"}
+    )
+
+    assert resposta.status_code == 400
+    # A password original continua a funcionar -- a tentativa falhada não mudou nada.
+    assert client.post("/auth/entrar", json={"email": "ana@example.com", "password": "password-forte-123"}).status_code == 200
+
+
+def test_redefinir_password_com_token_ja_usado_devolve_400(client: TestClient) -> None:
+    client.post("/auth/registar", json={"email": "ana@example.com", "password": "password-forte-123"})
+    client.cookies.clear()
+    client.post("/auth/recuperar-password", json={"email": "ana@example.com"})
+    token = _extrair_token_do_email(client)
+    client.post("/auth/redefinir-password", json={"token": token, "password_nova": "password-nova-456"})
+
+    resposta_reuso = client.post(
+        "/auth/redefinir-password", json={"token": token, "password_nova": "outra-password-789"}
+    )
+
+    assert resposta_reuso.status_code == 400
+
+
+def test_redefinir_password_recusa_password_fraca(client: TestClient) -> None:
+    client.post("/auth/registar", json={"email": "ana@example.com", "password": "password-forte-123"})
+    client.cookies.clear()
+    client.post("/auth/recuperar-password", json={"email": "ana@example.com"})
+    token = _extrair_token_do_email(client)
+
+    resposta = client.post("/auth/redefinir-password", json={"token": token, "password_nova": "curta"})
+
+    assert resposta.status_code == 422

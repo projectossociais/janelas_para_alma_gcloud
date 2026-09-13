@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -8,69 +8,39 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { authApi, mensagemDeErroApi } from "@/lib/apiClient";
 
-/** Quanto tempo esperar por uma sessão de recuperação antes de desistir e mandar para /auth. */
-const JANELA_VALIDACAO_MS = 2500;
+const PASSWORD_MIN_LEN = 8;
 
 /**
  * Ecrã de "Definir nova palavra-passe", aberto a partir do link de
- * recuperação enviado por email (ver `handleForgotPassword` em Auth.tsx).
- *
- * O Supabase JS deteta o token de recuperação na URL e cria uma sessão
- * automaticamente -- por isso esta página não pede a palavra-passe antiga,
- * só a nova. A intercepção que força a navegação até aqui (evento
- * `PASSWORD_RECOVERY`) vive em `AuthContext.tsx`; esta página só cuida do
- * formulário e faz a sua própria verificação de sessão como segunda linha
- * de defesa (rota seguida directamente, sem token válido, etc.).
+ * recuperação enviado por email (ver `handleForgotPassword` em Auth.tsx e
+ * `POST /auth/recuperar-password`). O token vem na própria URL
+ * (?token=...), gerado pela API -- não há sessão nenhuma envolvida aqui,
+ * ao contrário do fluxo antigo do Supabase: o token é de uso único e
+ * validado directamente por `POST /auth/redefinir-password`.
  */
 const AtualizarPassword = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("token") ?? "";
+
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    let resolvido = false;
-
-    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
-      if (resolvido) return;
-      if (event === "PASSWORD_RECOVERY" || (session && event === "SIGNED_IN")) {
-        resolvido = true;
-        setReady(true);
-      }
-    });
-
-    supabase.auth.getSession().then(({ data }) => {
-      if (resolvido) return;
-      if (data.session) {
-        resolvido = true;
-        setReady(true);
-        return;
-      }
-      // Dá uma janela curta ao evento PASSWORD_RECOVERY para chegar (o
-      // Supabase JS ainda pode estar a processar o token da URL) antes de
-      // concluir que não há sessão válida.
-      setTimeout(() => {
-        if (resolvido) return;
-        resolvido = true;
-        toast.error("Este link de recuperação é inválido ou expirou. Peça um novo.");
-        navigate("/auth", { replace: true });
-      }, JANELA_VALIDACAO_MS);
-    });
-
-    return () => sub.subscription.unsubscribe();
-  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!token) {
+      toast.error("Este link de recuperação é inválido. Peça um novo.");
+      return;
+    }
     if (!password || !confirm) {
       toast.error("Preencha os dois campos.");
       return;
     }
-    if (password.length < 6) {
-      toast.error("A palavra-passe deve ter pelo menos 6 caracteres.");
+    if (password.length < PASSWORD_MIN_LEN) {
+      toast.error(`A palavra-passe deve ter pelo menos ${PASSWORD_MIN_LEN} caracteres.`);
       return;
     }
     if (password !== confirm) {
@@ -80,19 +50,15 @@ const AtualizarPassword = () => {
 
     setLoading(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password });
-      if (error) throw error;
-
+      await authApi.redefinirPassword(token, password);
       toast.success("Palavra-passe atualizada com sucesso!");
-      // Termina a sessão de recuperação -- o utilizador faz login limpo com
-      // a palavra-passe nova a seguir, em vez de ficar "meio autenticado".
-      await supabase.auth.signOut();
+      // Sem sessão nenhuma para terminar aqui (o token de recuperação nunca
+      // autentica, só troca a password) — segue directo para o login limpo.
       navigate("/auth", { replace: true });
     } catch (err) {
-      console.error("Falha ao atualizar a palavra-passe:", err);
-      toast.error(
-        err instanceof Error ? err.message : "Não foi possível atualizar a palavra-passe. Tente novamente.",
-      );
+      // Nunca mostrar sucesso a partir daqui — um token inválido, expirado
+      // ou já usado devolve erro, e é isto que aparece ao utilizador.
+      toast.error(mensagemDeErroApi(err, "Este link de recuperação é inválido ou expirou. Peça um novo."));
     } finally {
       setLoading(false);
     }
@@ -106,9 +72,7 @@ const AtualizarPassword = () => {
           <CardHeader className="text-center space-y-2">
             <CardTitle className="text-2xl md:text-3xl font-bold">Definir Nova Palavra-passe</CardTitle>
             <CardDescription>
-              {ready
-                ? "Escolha uma nova palavra-passe para a sua conta."
-                : "A validar o link de recuperação..."}
+              {token ? "Escolha uma nova palavra-passe para a sua conta." : "Este link de recuperação é inválido."}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -122,7 +86,7 @@ const AtualizarPassword = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   autoComplete="new-password"
-                  disabled={!ready || loading}
+                  disabled={!token || loading}
                 />
               </div>
               <div className="space-y-2">
@@ -134,10 +98,10 @@ const AtualizarPassword = () => {
                   onChange={(e) => setConfirm(e.target.value)}
                   placeholder="••••••••"
                   autoComplete="new-password"
-                  disabled={!ready || loading}
+                  disabled={!token || loading}
                 />
               </div>
-              <Button type="submit" size="lg" className="w-full" disabled={loading || !ready}>
+              <Button type="submit" size="lg" className="w-full" disabled={loading || !token}>
                 {loading ? (
                   "A guardar..."
                 ) : (

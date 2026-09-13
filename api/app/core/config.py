@@ -39,9 +39,24 @@ class Settings(BaseSettings):
 
     # CORS — origens do frontend com permissão para pedidos com cookies.
     # Em dev sem Docker, frontend (npm run dev, porta 8080) e API (porta
-    # 8000) são origens diferentes; com docker-compose, o NGINX já faz
-    # proxy de /api/* e isto nem chega a ser exercitado.
+    # 8000) são origens diferentes; em produção, o rewrite de
+    # frontend/vercel.json já resolve isto por mesma-origem, e isto nem
+    # chega a ser exercitado.
     frontend_origins: list[str] = ["http://localhost:8080"]
+
+    # URL base do frontend — usado só para montar o link de recuperação de
+    # password que vai por email (nunca para navegação nem CORS, isso é
+    # `frontend_origins`). Em produção é "https://janelasparaalma.com".
+    frontend_base_url: str = "http://localhost:8080"
+
+    # Resend (email transacional) — ver api/app/core/email.py. Vazio em dev:
+    # o EmailSender real não é construído sem chave (ver dependencies.py),
+    # os testes usam sempre um EmailSender falso.
+    resend_api_key: str = ""
+    # Remetente das mensagens. Em produção tem de ser um domínio verificado
+    # no Resend (ver docs/BACKLOG.md); "onboarding@resend.dev" é o remetente
+    # de testes do Resend, só entrega à própria conta.
+    email_remetente: str = "onboarding@resend.dev"
 
     @property
     def cookie_seguro(self) -> bool:

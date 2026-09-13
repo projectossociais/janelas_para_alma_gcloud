@@ -104,6 +104,19 @@ export const authApi = {
   sair: () => pedido<void>("/auth/sair", { method: "POST" }),
 
   atualizarToken: () => pedido<void>("/auth/atualizar-token", { method: "POST" }),
+
+  /** Resposta idêntica exista ou não conta com este email — a API nunca
+   *  revela isso (ver api/app/services/recuperacao_password_service.py). */
+  recuperarPassword: (email: string) =>
+    pedido<{ mensagem: string }>("/auth/recuperar-password", { method: "POST", body: JSON.stringify({ email }) }),
+
+  /** `token` vem do link recebido por email. Um token inválido, expirado
+   *  ou já usado devolve 400 — nunca sucesso fabricado. */
+  redefinirPassword: (token: string, passwordNova: string) =>
+    pedido<void>("/auth/redefinir-password", {
+      method: "POST",
+      body: JSON.stringify({ token, password_nova: passwordNova }),
+    }),
 };
 
 export interface PerfilPublico {

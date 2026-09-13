@@ -7,6 +7,7 @@
 #   jpa-jwt-secret-key        segredo de assinatura dos JWT (gerado se não for fornecido)
 #   jpa-r2-access-key-id      Cloudflare R2 (só se R2_ACCESS_KEY_ID estiver definida)
 #   jpa-r2-secret-access-key  Cloudflare R2 (idem)
+#   jpa-resend-api-key        Resend (só se RESEND_API_KEY estiver definida)
 set -euo pipefail
 cd "$(dirname "$0")"
 source ./00-config.sh
@@ -38,10 +39,16 @@ else
   echo "    R2 sem credenciais — a saltar (storage fica por configurar)."
 fi
 
+if [ -n "${RESEND_API_KEY:-}" ]; then
+  upsert_secret jpa-resend-api-key "$RESEND_API_KEY"
+else
+  echo "    Resend sem chave — a saltar (recuperação de password fica por activar)."
+fi
+
 echo "==> Acesso do service account de runtime aos segredos"
 PROJECT_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
 RUNTIME_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
-for s in jpa-database-url jpa-jwt-secret-key jpa-r2-access-key-id jpa-r2-secret-access-key; do
+for s in jpa-database-url jpa-jwt-secret-key jpa-r2-access-key-id jpa-r2-secret-access-key jpa-resend-api-key; do
   gcloud secrets describe "$s" >/dev/null 2>&1 || continue
   gcloud secrets add-iam-policy-binding "$s" \
     --member="serviceAccount:${RUNTIME_SA}" \
