@@ -18,7 +18,7 @@ from app.repositories.orm_models import Screening
 
 # Identifica o método de cálculo usado — permite distinguir resultados de
 # versões futuras do algoritmo sem ambiguidade. Ver `screening_service.py`.
-VERSAO_ANALISE = "geometria-iris-v1-experimental"
+VERSAO_ANALISE = "geometria-canto-iris-huang2021-v2-experimental"
 
 
 @dataclass(frozen=True)

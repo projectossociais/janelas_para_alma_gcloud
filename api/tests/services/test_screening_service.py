@@ -1,12 +1,20 @@
 """Testes do cálculo geométrico experimental (W-13/W-15).
 
+O eixo horizontal implementa o método publicado em Huang et al. (2021,
+PLOS ONE 16(8):e0255643): razão, por olho, entre a distância da íris ao
+canto medial e ao canto lateral. O eixo vertical é uma extensão própria,
+sem equivalente publicado -- ver docstring de `screening_service.py` e
+`docs/SCANNER-METODO.md`.
+
 O que importa provar aqui: o número calculado é sempre uma função
 determinística das coordenadas recebidas (nunca aleatório), que falta de
 dados degrada honestamente (estado + qualidade baixa, nunca um valor
-fabricado), e que `requer_avaliacao_humana` nunca é `False` -- não existe,
-ainda, nenhum limiar validado (W-16 continua bloqueado).
+fabricado), que a qualidade capta tanto inclinação (roll) como desvio de
+eixo (yaw) da cabeça, e que `requer_avaliacao_humana` nunca é `False` --
+não existe, ainda, nenhum limiar validado (W-16 continua bloqueado).
 """
 
+import math
 from datetime import UTC, datetime
 
 import pytest
@@ -14,6 +22,7 @@ import pytest
 from app.repositories.screening_repository import ScreeningCalculado, ScreeningRegisto
 from app.services.screening_service import (
     LIMIAR_QUALIDADE_FIAVEL,
+    LIMITE_DESVIO_YAW,
     LIMITE_INCLINACAO_GRAUS,
     Ponto,
     PoseCapturada,
@@ -21,34 +30,66 @@ from app.services.screening_service import (
     calcular_screening,
 )
 
-_OLHO_A = {"outer": 33, "inner": 133, "top": 159, "bottom": 145, "iris": 468}
-_OLHO_B = {"outer": 362, "inner": 263, "top": 386, "bottom": 374, "iris": 473}
+# Índices verificados independentemente (ver comentário em
+# screening_service.py): olho 1 = lateral 33 / medial 133 / íris 468;
+# olho 2 = medial 362 / lateral 263 / íris 473.
+_EYE_1 = {"lateral": 33, "medial": 133, "iris": 468}
+_EYE_2 = {"medial": 362, "lateral": 263, "iris": 473}
 
 
-def _landmarks(overrides: dict[int, tuple[float, float]], tamanho: int = 480) -> list[Ponto]:
+def _landmarks(
+    overrides: dict[int, tuple[float, float] | tuple[float, float, float]],
+    tamanho: int = 480,
+) -> list[Ponto]:
     pontos = [Ponto(x=0.0, y=0.0) for _ in range(tamanho)]
-    for indice, (x, y) in overrides.items():
-        pontos[indice] = Ponto(x=x, y=y)
+    for indice, valores in overrides.items():
+        if len(valores) == 3:
+            x, y, z = valores
+            pontos[indice] = Ponto(x=x, y=y, z=z)
+        else:
+            x, y = valores
+            pontos[indice] = Ponto(x=x, y=y)
     return pontos
 
 
-def _landmarks_centrados(*, iris_b_x: float = 0.65, outer_b_y: float = 0.50) -> list[Ponto]:
-    """Dois olhos bem formados; por omissão, simétricos (íris no centro de
-    cada abertura, olhos ao mesmo nível)."""
-    return _landmarks(
-        {
-            _OLHO_A["outer"]: (0.30, 0.50),
-            _OLHO_A["inner"]: (0.40, 0.50),
-            _OLHO_A["top"]: (0.35, 0.48),
-            _OLHO_A["bottom"]: (0.35, 0.52),
-            _OLHO_A["iris"]: (0.35, 0.50),
-            _OLHO_B["outer"]: (0.70, outer_b_y),
-            _OLHO_B["inner"]: (0.60, 0.50),
-            _OLHO_B["top"]: (0.65, 0.48),
-            _OLHO_B["bottom"]: (0.65, 0.52),
-            _OLHO_B["iris"]: (iris_b_x, 0.50),
-        }
+def _landmarks_centrados(
+    *,
+    iris_2_x: float = 0.65,
+    iris_2_y: float = 0.50,
+    lateral_2_y: float = 0.50,
+    lateral_2_z: float | None = None,
+    lateral_1_z: float | None = None,
+) -> list[Ponto]:
+    """Dois olhos bem formados; por omissão, simétricos (íris a meio da
+    distância entre os dois cantos, olhos ao mesmo nível, de frente)."""
+    overrides: dict[int, tuple] = {
+        _EYE_1["lateral"]: (0.30, 0.50) if lateral_1_z is None else (0.30, 0.50, lateral_1_z),
+        _EYE_1["medial"]: (0.40, 0.50),
+        _EYE_1["iris"]: (0.35, 0.50),
+        _EYE_2["medial"]: (0.60, 0.50),
+        _EYE_2["iris"]: (iris_2_x, iris_2_y),
+    }
+    overrides[_EYE_2["lateral"]] = (
+        (0.70, lateral_2_y) if lateral_2_z is None else (0.70, lateral_2_y, lateral_2_z)
     )
+    return _landmarks(overrides)
+
+
+def _rodar_pontos(
+    pontos: dict[int, tuple[float, float]], angulo_graus: float, pivot: tuple[float, float]
+) -> dict[int, tuple[float, float]]:
+    """Rotação rígida em torno de `pivot` -- preserva todas as distâncias
+    entre pontos (por isso não deve alterar nenhum ratio medial/lateral),
+    só muda o ângulo entre eles (o que a inclinação deve, de facto, captar).
+    """
+    rad = math.radians(angulo_graus)
+    cos_a, sin_a = math.cos(rad), math.sin(rad)
+    px, py = pivot
+    rodados: dict[int, tuple[float, float]] = {}
+    for indice, (x, y) in pontos.items():
+        dx, dy = x - px, y - py
+        rodados[indice] = (px + dx * cos_a - dy * sin_a, py + dx * sin_a + dy * cos_a)
+    return rodados
 
 
 def _poses_completas(landmarks_center: list[Ponto]) -> list[PoseCapturada]:
@@ -71,16 +112,28 @@ class TestCalculoGeometrico:
         assert resultado.qualidade_fiavel is True
         assert resultado.qualidade_motivos == []
 
-    def test_assimetria_reflete_a_posicao_real_da_iris_com_sinal_correto(self) -> None:
-        landmarks = _landmarks_centrados(iris_b_x=0.68)  # íris B desviada para o lado externo
+    def test_assimetria_horizontal_segue_a_razao_medial_lateral_de_huang_2021(self) -> None:
+        # íris do olho 2 desviada para o canto medial (0.60): ratio_2 =
+        # dist(0.68,0.60)/dist(0.68,0.70) = 0.08/0.02 = 4.0; ratio_1 = 1.0
+        landmarks = _landmarks_centrados(iris_2_x=0.68)
         resultado = calcular_screening(_poses_completas(landmarks), False)
 
-        # ratio_b.x = (0.68-0.60)/0.10 = 0.8; ratio_a.x = 0.5 -> diferença 0.3
-        assert resultado.assimetria_horizontal == pytest.approx(0.3)
+        assert resultado.assimetria_horizontal == pytest.approx(3.0)
         assert resultado.assimetria_vertical == pytest.approx(0.0, abs=1e-9)
+        # a estatística comparável ao artigo original (S = max/min) fica
+        # disponível em `medicoes`, mesmo não sendo o valor principal aqui.
+        assert resultado.medicoes["estatistica_s_huang2021"] == pytest.approx(4.0)
+
+    def test_assimetria_vertical_usa_a_linha_intercantal_como_referencia(self) -> None:
+        # íris do olho 2 desviada verticalmente; a do olho 1 mantém-se.
+        landmarks = _landmarks_centrados(iris_2_y=0.45)
+        resultado = calcular_screening(_poses_completas(landmarks), False)
+
+        assert resultado.assimetria_horizontal == pytest.approx(0.0, abs=1e-9)
+        assert resultado.assimetria_vertical == pytest.approx(-0.125)
 
     def test_e_deterministico_mesmas_coordenadas_mesmo_resultado(self) -> None:
-        landmarks = _landmarks_centrados(iris_b_x=0.72)
+        landmarks = _landmarks_centrados(iris_2_x=0.72)
         r1 = calcular_screening(_poses_completas(landmarks), False)
         r2 = calcular_screening(_poses_completas(landmarks), False)
         assert r1.assimetria_horizontal == r2.assimetria_horizontal
@@ -125,22 +178,46 @@ class TestFaltaDeDados:
 
 
 class TestQualidade:
-    def test_cabeca_inclinada_reduz_qualidade_e_regista_o_motivo(self) -> None:
-        import math
-
-        # dx entre os cantos externos = 0.70-0.30 = 0.40; escolhe dy para um
-        # ângulo claramente acima do limite.
-        dx = 0.40
+    def test_cabeca_inclinada_reduz_qualidade_sem_afetar_os_ratios(self) -> None:
+        # Rotação rígida de todos os pontos dos dois olhos: preserva as
+        # distâncias internas (ratios inalterados), só muda o ângulo entre
+        # os cantos laterais -- é isto que a inclinação deve captar.
+        base = {
+            _EYE_1["lateral"]: (0.30, 0.50),
+            _EYE_1["medial"]: (0.40, 0.50),
+            _EYE_1["iris"]: (0.35, 0.50),
+            _EYE_2["medial"]: (0.60, 0.50),
+            _EYE_2["lateral"]: (0.70, 0.50),
+            _EYE_2["iris"]: (0.65, 0.50),
+        }
         angulo_alvo_graus = LIMITE_INCLINACAO_GRAUS + 5
-        dy = dx * math.tan(math.radians(angulo_alvo_graus))
-        landmarks = _landmarks_centrados(outer_b_y=0.50 + dy)
+        rodados = _rodar_pontos(base, angulo_alvo_graus, pivot=(0.30, 0.50))
+        landmarks = _landmarks(rodados)
 
         resultado = calcular_screening(_poses_completas(landmarks), False)
 
         assert resultado.qualidade_captura < 1.0
         assert any("inclinada" in m for m in resultado.qualidade_motivos)
-        # a inclinação não deve alterar o cálculo da assimetria (índices distintos)
-        assert resultado.assimetria_horizontal == pytest.approx(0.0, abs=1e-9)
+        # rotação rígida preserva todas as distâncias -- os ratios (e por
+        # isso a assimetria horizontal e vertical) não devem mudar
+        assert resultado.assimetria_horizontal == pytest.approx(0.0, abs=1e-6)
+        assert resultado.assimetria_vertical == pytest.approx(0.0, abs=1e-6)
+
+    def test_cabeca_virada_yaw_reduz_qualidade_e_regista_o_motivo(self) -> None:
+        # dx = 0.40; dz suficiente para ultrapassar LIMITE_DESVIO_YAW (0.15)
+        dz = LIMITE_DESVIO_YAW * 0.40 * 2
+        landmarks = _landmarks_centrados(lateral_1_z=0.0, lateral_2_z=dz)
+
+        resultado = calcular_screening(_poses_completas(landmarks), False)
+
+        assert resultado.qualidade_captura < 1.0
+        assert any("virada" in m for m in resultado.qualidade_motivos)
+
+    def test_sem_z_nos_landmarks_nao_penaliza_por_yaw(self) -> None:
+        # `z` é opcional (o browser pode não o enviar) -- sem ele, não se
+        # pode avaliar o yaw, e não se penaliza por não se saber.
+        resultado = calcular_screening(_poses_completas(_landmarks_centrados()), False)
+        assert not any("virada" in m for m in resultado.qualidade_motivos)
 
     def test_ambiente_escuro_reduz_qualidade_e_regista_o_motivo(self) -> None:
         resultado = calcular_screening(_poses_completas(_landmarks_centrados()), True)
@@ -160,7 +237,7 @@ class TestQualidade:
         assert "pose 'left' não foi capturada" in resultado.qualidade_motivos
 
     def test_qualidade_fiavel_fica_falso_quando_varios_problemas_se_acumulam(self) -> None:
-        landmarks = _landmarks_centrados(outer_b_y=0.90)  # inclinação extrema
+        landmarks = _landmarks_centrados(lateral_2_y=0.90)  # inclinação extrema
         poses = [PoseCapturada(pose="center", landmarks=landmarks)]  # sem right/left
 
         resultado = calcular_screening(poses, True)  # + ambiente escuro
@@ -186,7 +263,7 @@ class _RepositorioScreeningFalso:
             qualidade_captura=calculado.qualidade_captura,
             qualidade_fiavel=calculado.qualidade_fiavel,
             qualidade_motivos=calculado.qualidade_motivos,
-            versao_analise="geometria-iris-v1-experimental",
+            versao_analise="geometria-canto-iris-huang2021-v2-experimental",
             criado_em=datetime.now(UTC),
         )
 
