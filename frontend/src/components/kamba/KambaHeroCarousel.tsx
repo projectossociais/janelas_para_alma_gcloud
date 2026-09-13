@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Autoplay from "embla-carousel-autoplay";
 import { HeartHandshake, BookOpen, Images } from "lucide-react";
 import {
@@ -17,6 +17,7 @@ interface KambaHeroCarouselProps {
 const KambaHeroCarousel = ({ onOpenForm, onOpenProgram }: KambaHeroCarouselProps) => {
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
+  const groupVideoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (!api) return;
@@ -24,6 +25,22 @@ const KambaHeroCarousel = ({ onOpenForm, onOpenProgram }: KambaHeroCarouselProps
     setCurrent(api.selectedScrollSnap());
     api.on("select", () => setCurrent(api.selectedScrollSnap()));
   }, [api]);
+
+  useEffect(() => {
+    const videoEl = groupVideoRef.current;
+    if (!videoEl || current !== 1) return;
+
+    videoEl.play().catch(() => {
+      // Autoplay pode ser bloqueado pelo browser; o utilizador pode dar play manualmente.
+    });
+
+    // Enquanto este slide estiver ativo, retoma a reprodução caso seja pausada inesperadamente.
+    const handlePause = () => {
+      if (current === 1) videoEl.play().catch(() => {});
+    };
+    videoEl.addEventListener("pause", handlePause);
+    return () => videoEl.removeEventListener("pause", handlePause);
+  }, [current]);
 
   const scrollToAcoes = () => {
     document.getElementById("acoes-recentes")?.scrollIntoView({ behavior: "smooth" });
@@ -99,6 +116,7 @@ const KambaHeroCarousel = ({ onOpenForm, onOpenProgram }: KambaHeroCarouselProps
                 </div>
                 <div className="rounded-2xl overflow-hidden shadow-elevated border border-navy-foreground/10 aspect-[4/5] md:aspect-square">
                   <video
+                    ref={groupVideoRef}
                     className="w-full h-full object-cover"
                     src="https://yjzqnjatrdngzfixrxcg.supabase.co/storage/v1/object/public/kamba-media/JPA%20Grupo.mov"
                     poster="/assets/kamba/campanha-gamek-poster.jpg"
@@ -106,6 +124,7 @@ const KambaHeroCarousel = ({ onOpenForm, onOpenProgram }: KambaHeroCarouselProps
                     muted
                     loop
                     playsInline
+                    preload="auto"
                   />
                 </div>
               </div>
