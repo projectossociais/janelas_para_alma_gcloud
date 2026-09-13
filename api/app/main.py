@@ -12,6 +12,7 @@ from app.routers import (
     feedback,
     perfil,
     premium,
+    screening,
     sessoes_exercicio,
     uploads,
 )
@@ -44,6 +45,7 @@ app.include_router(sessoes_exercicio.router)
 app.include_router(contact_messages.router)
 app.include_router(premium.router)
 app.include_router(admin.router)
+app.include_router(screening.router)
 
 
 @app.get("/saude")

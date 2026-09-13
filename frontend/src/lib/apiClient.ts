@@ -271,6 +271,47 @@ export const sessoesExercicioApi = {
     }),
 };
 
+export interface LandmarkPonto {
+  x: number;
+  y: number;
+  z?: number;
+}
+
+export interface PoseLandmarksInput {
+  pose: "center" | "right" | "left";
+  landmarks: LandmarkPonto[];
+}
+
+export interface ScreeningInput {
+  poses: PoseLandmarksInput[];
+  ambiente_escuro_em_algum_momento: boolean;
+}
+
+/** Sinal geométrico experimental (W-13/W-15) — nunca um diagnóstico.
+ *  `requer_avaliacao_humana` é sempre `true`: não existe, hoje, nenhum
+ *  limiar validado (W-16 continua bloqueado). Ver docs/SCANNER-METODO.md. */
+export interface ScreeningPublica {
+  id: string;
+  user_id: string;
+  estado: string;
+  rosto_detetado: boolean;
+  requer_avaliacao_humana: boolean;
+  assimetria_horizontal: number | null;
+  assimetria_vertical: number | null;
+  qualidade_captura: number | null;
+  qualidade_fiavel: boolean | null;
+  qualidade_motivos: string[];
+  versao_analise: string;
+  criado_em: string;
+}
+
+export const screeningsApi = {
+  criar: (dados: ScreeningInput) =>
+    pedido<ScreeningPublica>("/screenings", { method: "POST", body: JSON.stringify(dados) }),
+
+  obter: (id: string) => pedido<ScreeningPublica>(`/screenings/${id}`),
+};
+
 export interface DoacaoPublica {
   id: string;
   recibo_id: string;

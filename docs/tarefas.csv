@@ -29,7 +29,7 @@ L-11,frontend,Botao Aprovar pagamento no AdminInbox,P1,em-curso,L,S2,2026-09-10,
 L-12,frontend,Ecra a aguardar aprovacao,P2,a-fazer,L,S2,2026-09-10,reutiliza LockedVideoOverlay / PremiumPaywallModal
 W-02,api,Mudar password passa a mudar mesmo a password,P0,feito,W,S0,2026-09-09,feito via INF-04
 W-03,api,Eliminar conta passa a eliminar mesmo a conta,P0,feito,W,S0,2026-09-09,feito via INF-04 (agendada a 30 dias)
-W-04,frontend,Scanner deixa de inventar diagnosticos,P0,a-fazer,W,S0,2026-09-10,mitigacao (sinais observados) ate ao Scanner real da S3
+W-04,frontend,Scanner deixa de inventar diagnosticos,P0,feito,W,S0,2026-09-12,"Math.random() removido; ecra passa a sinais observados/sujeitos a confirmacao clinica. Foi mais longe que a mitigacao: ver W-13/W-15"
 W-05,infra,Tirar o .env do controlo de versoes,P1,feito,W,S0,2026-09-09,.env no .gitignore desde o 1o commit deste repo
 L-01,frontend,Repor as 8 imagens perdidas no export Lovable + fotos reais angolanas,P1,a-fazer,L,S0,2026-09-10,grep __l5e nao pode devolver nada
 L-02,frontend,Videos dos exercicios: produzir ou esconder o player,P2,feito,L,S0,2026-09-11,decisao de produto primeiro
@@ -43,11 +43,11 @@ L-09,frontend,Separar planos de exercicios,P2,a-fazer,L,S1,2026-09-10,depende de
 L-10,frontend,Linguagem: tirar o ingles do texto visivel,P2,a-fazer,L,S1,2026-09-10,
 W-12,api,Sistema de candidaturas (voluntarios; clinicas): tabela + maquina de estados,P2,a-fazer,W,S2,2026-09-10,a tabela voluntarios nao existe; e trabalho novo
 L-13,frontend,Formularios + pagina de gestao de candidaturas,P2,a-fazer,L,S2,2026-09-10,depende de W-12; segue o padrao do AdminInbox
-W-13,api,Scanner: escolher e documentar o metodo de medicao,P1,bloqueado,W,S3,2026-09-10,"Hirschberg provavel; precisa validacao clinica, nao e decisao de programador"
-W-14,frontend,Scanner: calibracao (distancia a camara; inclinacao da cabeca),P1,a-fazer,W,S3,2026-09-10,Scanner.tsx ja guia 3 poses
-W-15,api,Scanner: servico de analise (coordenadas -> medicao + confianca real),P1,a-fazer,W,S3,2026-09-10,logica de resultado clinico -> testes obrigatorios
-W-16,api,Scanner: validacao contra casos reais,P0,bloqueado,W+L,S3,2026-09-10,bloqueio #8; sem parceiro clinico nao ha produto defensavel
-W-17,api,Scanner: politica de nao guardar imagens,P1,a-fazer,W,S3,2026-09-10,processar -> extrair medicoes -> descartar
+W-13,api,Scanner: escolher e documentar o metodo de medicao,P1,feito,W,S3,2026-09-12,"docs/SCANNER-METODO.md: proxy de Hirschberg via posicao da iris na abertura ocular (pose center); limites documentados. Sem validacao clinica -- ver W-16"
+W-14,frontend,Scanner: calibracao (distancia a camara; inclinacao da cabeca),P1,em-curso,W,S3,2026-09-12,"Inclinacao da cabeca e ambiente escuro ja penalizam qualidade_captura (screening_service.py), nunca bloqueiam a captura. Falta: impedir a captura em si quando fora dos limites; multiplos frames por pose"
+W-15,api,Scanner: servico de analise (coordenadas -> medicao + confianca real),P1,feito,W,S3,2026-09-12,"screening_service.py + screening_repository.py + router /screenings, service puro e testado (12 testes) + router (11 testes). requer_avaliacao_humana sempre true -- nenhum limiar classifica normal/desvio"
+W-16,api,Scanner: validacao contra casos reais,P0,bloqueado,W+L,S3,2026-09-12,bloqueio #8; sem parceiro clinico nao ha produto defensavel. assimetria_horizontal/vertical ja calculadas e persistidas (W-15) -- falta so a validacao contra diagnostico conhecido
+W-17,api,Scanner: politica de nao guardar imagens,P1,feito,W,S3,2026-09-12,"Scanner.tsx deixou de enviar imagens ao Supabase Storage -- so landmarks (coordenadas) chegam a API. Corrige tambem uma violacao real do CLAUDE.md 4b que existia antes desta mudanca"
 L-14,frontend,Scanner: ecra de resultados ligado ao relatorio real,P1,bloqueado,L,S3,2026-09-10,so depois de W-16; ate la fica sinais observados
 S4-01,api,Agendamentos: tabela + endpoints de criacao e decisao,P2,a-fazer,W,S4,2026-09-10,ClinicalPartners.tsx nao persiste nada hoje
 S4-02,frontend,Ligar ClinicalPartners.tsx a API + pagina AdminAgendamentos,P2,a-fazer,L,S4,2026-09-10,depende de S4-01

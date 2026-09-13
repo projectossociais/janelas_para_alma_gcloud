@@ -5,11 +5,10 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
 import EyeLandmarkOverlay from "@/components/EyeLandmarkOverlay";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { screeningsApi, mensagemDeErroApi, type PoseLandmarksInput } from "@/lib/apiClient";
 import { toast } from "sonner";
 
-
-const DIAGNOSES = ["Esotropia", "Exotropia", "Hipertropia", "Hipotropia"] as const;
 
 type TrackingStage = 0 | 1 | 2;
 const TRACKING_STAGES = [
@@ -20,8 +19,10 @@ const TRACKING_STAGES = [
 
 type CaptureStep = "IDLE" | "CENTER" | "RIGHT" | "LEFT" | "PROCESSING";
 
+type Pose = "center" | "right" | "left";
+
 interface ScanShot {
-  pose: string;
+  pose: Pose;
   landmarks: Array<{ x: number; y: number; z?: number }>;
   imageBase64: string;
 }
@@ -30,72 +31,38 @@ const GUIDED_LABELS: Record<Exclude<CaptureStep, "IDLE">, string> = {
   CENTER: "1/3: Olhe fixamente para a frente…",
   RIGHT: "2/3: Olhe para o seu lado direito…",
   LEFT: "3/3: Olhe para o seu lado esquerdo…",
-  PROCESSING: "A processar diagnóstico clínico…",
+  PROCESSING: "A preparar o resumo da sessão…",
 };
+
+/** Resultado honesto de uma sessão: nenhum campo aqui é um diagnóstico nem uma
+ * métrica de confiança calculada — apenas o que foi de facto capturado. Ver
+ * CLAUDE.md secção 11 (W-04): "nenhum ecrã apresenta um resultado clínico que
+ * não tenha sido calculado a partir de medições reais". */
+interface ScanResult {
+  capturedAt: string;
+  method: "camera" | "upload";
+  posesCapturadas: string[];
+  analysisId: string | null;
+}
 
 const MIN_LUMINANCE = 55; // 0-255 average luma threshold
 
-const dataUrlToBlob = (dataUrl: string): Blob | null => {
-  const [head, b64] = dataUrl.split(",");
-  if (!b64) return null;
-  const mime = /:(.*?);/.exec(head)?.[1] ?? "image/jpeg";
-  const bin = atob(b64);
-  const bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  return new Blob([bytes], { type: mime });
-};
-
-class SessionExpiredError extends Error {
-  constructor() {
-    super("A tua sessão expirou, por favor inicia sessão novamente.");
-    this.name = "SessionExpiredError";
-  }
-}
-
-/** Uploads the 3 guided snapshots to storage and persists the clinical record. Returns the new row id. */
-const submitScan = async (shots: ScanShot[]): Promise<string> => {
-  // Ensure a fresh token right before the uploads so RLS never fails mid-flight.
-  const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
-  let session = refreshed?.session ?? null;
-  if (refreshError || !session) {
-    const { data } = await supabase.auth.getSession();
-    session = data.session ?? null;
-    const expMs = (session?.expires_at ?? 0) * 1000;
-    if (!session || (expMs && expMs <= Date.now())) throw new SessionExpiredError();
-  }
-  const userId = session.user?.id;
-  if (!userId) throw new SessionExpiredError();
-
-  const ts = Date.now();
-  const paths: Record<string, string> = {};
-
-  for (const shot of shots) {
-    const blob = dataUrlToBlob(shot.imageBase64);
-    if (!blob) throw new Error(`Falha ao converter a imagem (${shot.pose}).`);
-    const path = `${userId}/${ts}_${shot.pose}.png`;
-    const { error } = await supabase.storage
-      .from("exames")
-      .upload(path, blob, { contentType: blob.type, upsert: true });
-    if (error) throw new Error(error.message);
-    paths[shot.pose] = path;
-  }
-
-  const { data: inserted, error: insertError } = await supabase
-    .from("scanner_analyses")
-    .insert({
-      user_id: userId,
-      diagnostico: "A processar análise clínica",
-      dados_clinicos: {
-        landmarks: shots.map((s) => ({ pose: s.pose, landmarks: s.landmarks })),
-        images: paths,
-        captured_at: new Date().toISOString(),
-      },
-    })
-    .select()
-    .single();
-  if (insertError) throw new Error(insertError.message);
-  if (!inserted?.id) throw new Error("O exame não foi registado corretamente (id ausente). Tente novamente.");
-  return inserted.id as string;
+/** Envia só coordenadas (landmarks) à API — nunca a imagem em si (CLAUDE.md
+ * secção 4b). A API calcula o sinal geométrico experimental e devolve o
+ * `id` do registo (ver `docs/SCANNER-METODO.md`, W-13/W-15). */
+const submitScreening = async (
+  shots: ScanShot[],
+  ambienteEscuroEmAlgumMomento: boolean
+): Promise<string> => {
+  const poses: PoseLandmarksInput[] = shots.map((shot) => ({
+    pose: shot.pose,
+    landmarks: shot.landmarks,
+  }));
+  const resultado = await screeningsApi.criar({
+    poses,
+    ambiente_escuro_em_algum_momento: ambienteEscuroEmAlgumMomento,
+  });
+  return resultado.id;
 };
 
 
@@ -104,23 +71,15 @@ const submitScan = async (shots: ScanShot[]): Promise<string> => {
 /** Route guard: no scanner UI, camera or capture state exists before a session is confirmed. */
 const Scanner = () => {
   const navigate = useNavigate();
-  const [status, setStatus] = useState<"checking" | "ok">("checking");
+  const { isLoggedIn, loading } = useAuth();
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const { data } = await supabase.auth.getSession();
-      if (cancelled) return;
-      if (!data.session) {
-        navigate("/auth?next=/scanner", { replace: true });
-        return;
-      }
-      setStatus("ok");
-    })();
-    return () => { cancelled = true; };
-  }, [navigate]);
+    if (!loading && !isLoggedIn) {
+      navigate("/auth?next=/scanner", { replace: true });
+    }
+  }, [loading, isLoggedIn, navigate]);
 
-  if (status !== "ok") {
+  if (loading || !isLoggedIn) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Navbar />
@@ -158,6 +117,7 @@ const ScannerContent = () => {
   const landmarksRef = useRef<Array<{ x: number; y: number; z?: number }> | null>(null);
   const qualityCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const payloadRef = useRef<ScanShot[]>([]);
+  const escureceuDuranteCapturaRef = useRef(false);
 
   const clearTimers = () => {
     timersRef.current.forEach((id) => window.clearTimeout(id));
@@ -214,30 +174,39 @@ const ScannerContent = () => {
     return () => window.clearInterval(id);
   }, [cameraOn, checkVideoQuality]);
 
+  // Sinal de qualidade honesto reportado à API (ver `screening_service.py`):
+  // regista se o ambiente ficou escuro em qualquer momento da captura
+  // guiada, não só no instante do envio.
+  useEffect(() => {
+    if (captureStep !== "IDLE" && lowLight) {
+      escureceuDuranteCapturaRef.current = true;
+    }
+  }, [captureStep, lowLight]);
 
-  const finishScan = useCallback((url: string | null, analysisId?: string | null) => {
-    setPreviewUrl(url);
-    setScanning(true);
-    const diagnosis = DIAGNOSES[Math.floor(Math.random() * DIAGNOSES.length)];
-    const confidence = Math.floor(78 + Math.random() * 17); // 78-94
-    window.setTimeout(() => {
-      sessionStorage.setItem(
-        "scanResult",
-        JSON.stringify({
-          diagnosis,
-          confidence,
-          date: new Date().toISOString(),
-        })
-      );
-      navigate(analysisId ? `/scanner/resultados?id=${analysisId}` : "/scanner/resultados");
 
-    }, 3000);
-  }, [navigate]);
+  const finishScan = useCallback(
+    (url: string | null, options: { method: ScanResult["method"]; poses: string[]; analysisId?: string | null }) => {
+      setPreviewUrl(url);
+      setScanning(true);
+      const { method, poses, analysisId = null } = options;
+      window.setTimeout(() => {
+        const result: ScanResult = {
+          capturedAt: new Date().toISOString(),
+          method,
+          posesCapturadas: poses,
+          analysisId,
+        };
+        sessionStorage.setItem("scanResult", JSON.stringify(result));
+        navigate(analysisId ? `/scanner/resultados?id=${analysisId}` : "/scanner/resultados");
+      }, 3000);
+    },
+    [navigate]
+  );
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    finishScan(URL.createObjectURL(file));
+    finishScan(URL.createObjectURL(file), { method: "upload", poses: [] });
   };
 
 
@@ -281,7 +250,7 @@ const ScannerContent = () => {
   }, []);
 
   const recordPose = useCallback(
-    (pose: string) => {
+    (pose: Pose) => {
       const shot: ScanShot = {
         pose,
         landmarks: (landmarksRef.current ?? []).map((l) => ({ x: l.x, y: l.y, z: l.z })),
@@ -294,20 +263,14 @@ const ScannerContent = () => {
     [snapshotBase64]
   );
 
-  const startGuidedCapture = useCallback(async () => {
+  const startGuidedCapture = useCallback(() => {
     if (captureStep !== "IDLE" || lowLight) return;
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      const msg = "Precisa de iniciar sessão antes de fazer o teste.";
-      setUploadError(msg);
-      toast.error(msg);
-      return;
-    }
     setUploadError(null);
     clearTimers();
 
     payloadRef.current = [];
     setScanPayload([]);
+    escureceuDuranteCapturaRef.current = false;
     setCaptureStep("CENTER");
 
     timersRef.current.push(
@@ -332,20 +295,25 @@ const ScannerContent = () => {
           const payload = payloadRef.current;
           const center = payload.find((s) => s.pose === "center")?.imageBase64 ?? null;
           try {
-            const analysisId = await submitScan(payload);
+            const analysisId = await submitScreening(payload, escureceuDuranteCapturaRef.current);
             setAnalysisId(analysisId);
             setUploading(false);
-            toast.success("Exame enviado com sucesso!");
+            toast.success("Sessão de rastreio registada.");
             stopCamera();
-            finishScan(center, analysisId);
+            finishScan(center, {
+              method: "camera",
+              poses: payload.map((s) => s.pose),
+              analysisId,
+            });
           } catch (err) {
-            const message = err instanceof Error ? err.message : String(err);
+            const message = mensagemDeErroApi(err, "Não foi possível registar a sessão. Tente novamente.");
             setUploading(false);
             setUploadError(message);
             setCaptureStep("IDLE");
             toast.error(message);
-            if (err instanceof Error && err.name === "SessionExpiredError") {
-              // Keep scanPayload/payloadRef intact so nothing captured is lost.
+            if ((err as { status?: number } | null)?.status === 401) {
+              // Mantém scanPayload/payloadRef intactos -- nada do que foi
+              // capturado se perde só porque a sessão expirou a meio.
               window.setTimeout(() => navigate("/auth?next=/scanner"), 1200);
             }
           }
@@ -357,7 +325,7 @@ const ScannerContent = () => {
 
 
 
-  const takePhoto = () => { void startGuidedCapture(); };
+  const takePhoto = () => startGuidedCapture();
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -367,18 +335,19 @@ const ScannerContent = () => {
         <section className="container py-10 md:py-16">
           <div className="max-w-3xl mx-auto text-center animate-fade-in">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal/10 text-teal text-xs font-semibold tracking-wide uppercase mb-5">
-              <Sparkles className="w-3.5 h-3.5" /> Scanner de Estrabismo · IA
+              <Sparkles className="w-3.5 h-3.5" /> Rastreio de Sinais Visuais · IA
             </div>
             <h1 className="text-3xl md:text-5xl font-bold text-foreground leading-tight">
-              Área de Diagnóstico Inteligente
+              Área de Rastreio Visual
             </h1>
             <p className="mt-4 text-base md:text-lg text-muted-foreground">
-              Carregue uma fotografia ou utilize a câmara para uma análise visual assistida por
-              inteligência artificial. Resultados em segundos — confidenciais e seguros.
+              Carregue uma fotografia ou utilize a câmara para registar sinais visuais oculares.
+              Este rastreio não calcula um diagnóstico — ajuda a decidir se vale a pena procurar
+              avaliação clínica.
             </p>
             <div className="mt-4 inline-flex items-center gap-2 text-xs text-muted-foreground">
               <ShieldCheck className="w-4 h-4 text-green" />
-              Esta é uma simulação demonstrativa. Não substitui diagnóstico clínico.
+              Sinais observados — sujeitos a confirmação clínica. Não é um diagnóstico.
             </div>
           </div>
 
@@ -467,11 +436,11 @@ const ScannerContent = () => {
                       </>
                     ) : uploading ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin" /> A enviar imagens para o Supabase… Não feche a página
+                        <Loader2 className="w-4 h-4 animate-spin" /> A registar a sessão… Não feche a página
                       </>
                     ) : (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin" /> A analisar…
+                        <Loader2 className="w-4 h-4 animate-spin" /> A preparar resumo…
                       </>
                     )}
                   </button>
@@ -487,7 +456,7 @@ const ScannerContent = () => {
                   <div className="mt-4 max-w-2xl mx-auto p-4 rounded-2xl bg-yellow-400/15 border border-yellow-400/40 text-sm text-yellow-700 dark:text-yellow-300 flex items-start gap-2">
                     <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
                     Ambiente muito escuro. Por favor, vá para um local mais iluminado para garantir a
-                    precisão do diagnóstico.
+                    qualidade dos sinais captados.
                   </div>
                 )}
 
@@ -503,7 +472,7 @@ const ScannerContent = () => {
                   {captureStep === "IDLE"
                     ? "A captura guiada tem 3 fases (frente, direita, esquerda). Mantenha o rosto centrado."
                     : captureStep === "PROCESSING"
-                      ? "A processar diagnóstico clínico…"
+                      ? "A preparar o resumo da sessão…"
                       : "Siga as instruções no ecrã. A IA extrai os pontos oculares em cada fase."}
                 </p>
 
@@ -571,8 +540,8 @@ const ScannerContent = () => {
             <div className="mt-12 max-w-3xl mx-auto grid sm:grid-cols-3 gap-4 text-center">
               {[
                 { n: "01", t: "Captura", d: "Imagem nítida do rosto" },
-                { n: "02", t: "Análise IA", d: "Processamento em segundos" },
-                { n: "03", t: "Resultado", d: "Diagnóstico orientador" },
+                { n: "02", t: "Extração de Pontos", d: "Rastreio ocular em tempo real" },
+                { n: "03", t: "Resumo", d: "Sinais observados, a confirmar com um profissional" },
               ].map((s) => (
                 <div key={s.n} className="p-5 rounded-2xl bg-card border border-border shadow-card">
                   <div className="text-xs font-bold text-teal tracking-widest">{s.n}</div>
@@ -619,16 +588,17 @@ const ScanningView = ({ previewUrl }: { previewUrl: string | null }) => {
 
         <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 rounded-full bg-black/40 backdrop-blur text-white text-xs font-medium">
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          A analisar pontos oculares…
+          A organizar os dados capturados…
         </div>
       </div>
 
       <div className="mt-6 max-w-md mx-auto text-center">
         <div className="inline-flex items-center gap-2 text-teal text-sm font-semibold">
-          <ScanLine className="w-4 h-4 animate-pulse" /> Processamento IA em curso
+          <ScanLine className="w-4 h-4 animate-pulse" /> A preparar o resumo da sessão
         </div>
         <p className="text-xs text-muted-foreground mt-2">
-          A detetar alinhamento ocular, simetria pupilar e reflexo corneano…
+          Nenhum diagnóstico é calculado aqui — os sinais registados ficam disponíveis para
+          partilhar com um profissional de saúde.
         </p>
       </div>
 
