@@ -10,25 +10,25 @@ interface CampaignVideo {
 
 const campaignVideos: CampaignVideo[] = [
   {
-    src: "https://yjzqnjatrdngzfixrxcg.supabase.co/storage/v1/object/public/kamba-media/Campanha%20de%20conscientizacao.mp4",
+    src: "https://yjzqnjatrdngzfixrxcg.supabase.co/storage/v1/object/public/kamba-media/Campanha%20de%20conscientizacao.mp4#t=0.001",
     title: "Vozes da Mudança nas Ruas da Gamek 🚶🏾‍♂️📢",
     summary:
       "Voluntários e embaixadores de inclusão visual abordam a comunidade sobre o estrabismo, partilham soluções acessíveis e convidam novos jovens a juntarem-se à causa.",
   },
   {
-    src: "https://yjzqnjatrdngzfixrxcg.supabase.co/storage/v1/object/public/kamba-media/Dalva%20Introducao%20ao%20Projecto.mp4",
+    src: "https://yjzqnjatrdngzfixrxcg.supabase.co/storage/v1/object/public/kamba-media/Dalva%20Introducao%20ao%20Projecto.mp4#t=0.001",
     title: "Missão e Propósito Social 💡🌍",
     summary:
       "A Dalva explica a importância de levar informação precisa às famílias, combater diagnósticos errados e erradicar o estigma associado ao estrabismo.",
   },
   {
-    src: "https://yjzqnjatrdngzfixrxcg.supabase.co/storage/v1/object/public/kamba-media/Kambas.mp4",
+    src: "https://yjzqnjatrdngzfixrxcg.supabase.co/storage/v1/object/public/kamba-media/Kambas.mp4#t=0.001",
     title: "Histórias Reais e Superação 💙👀",
     summary:
       "Testemunhos inspiradores de quem convive com a condição desde cedo e o impacto transformador da empatia e do apoio mútuo na autoestima.",
   },
   {
-    src: "https://yjzqnjatrdngzfixrxcg.supabase.co/storage/v1/object/public/kamba-media/JPA%20Grupo.mov",
+    src: "https://yjzqnjatrdngzfixrxcg.supabase.co/storage/v1/object/public/kamba-media/JPA%20Grupo.mov#t=0.001",
     title: "Grito de Esperança e União 🚀🙌🏾",
     summary:
       "O encerramento marcante da nossa equipa celebrando o compromisso conjunto: Um olhar alinhado, uma vida transformada!",
