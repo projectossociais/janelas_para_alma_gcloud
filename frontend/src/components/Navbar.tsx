@@ -147,10 +147,10 @@ interface NavItem {
 
 const baseLinks: NavItem[] = [
   { label: "Sobre o Estrabismo", route: "/sobre" },
-  { label: "Conheça o Janelas para a Alma", route: "/impacto" },
+  { label: "Conheça-nos", route: "/impacto" },
   { label: "A Nossa Equipa", route: "/equipa" },
   { label: "Triagem Ocular", route: "/scanner" },
-  { label: "Meu Kamba", route: "/kamba" },
+  { label: "MEU KAMBA ESTRÁBICO", route: "/kamba" },
   { label: "Exercícios Visuais", route: "/exercicios" },
   { label: "Portal Clínico", route: "/parceiros" },
   { label: "Contactos", route: "/junte-se" },
@@ -160,20 +160,20 @@ const estrabicoLinks: NavItem[] = [
   { label: "Sobre o Estrabismo", route: "/sobre" },
   { label: "A Nossa Equipa", route: "/equipa" },
   { label: "Triagem Ocular", route: "/scanner" },
-  { label: "Meu Kamba", route: "/kamba" },
+  { label: "MEU KAMBA ESTRÁBICO", route: "/kamba" },
   { label: "Exercícios Visuais", route: "/exercicios" },
-  { label: "Conheça o Janelas para a Alma", route: "/impacto" },
+  { label: "Conheça-nos", route: "/impacto" },
   { label: "Portal Clínico", route: "/parceiros" },
   { label: "Contactos", route: "/junte-se" },
 ];
 
 const profissionalLinks: NavItem[] = [
   { label: "Sobre o Estrabismo", route: "/sobre" },
-  { label: "Meu Kamba", route: "/kamba" },
+  { label: "MEU KAMBA ESTRÁBICO", route: "/kamba" },
   { label: "A Nossa Equipa", route: "/equipa" },
   { label: "Triagem Ocular", route: "/scanner" },
   { label: "Exercícios Visuais", route: "/exercicios" },
-  { label: "Conheça o Janelas para a Alma", route: "/impacto" },
+  { label: "Conheça-nos", route: "/impacto" },
   { label: "Contactos", route: "/junte-se" },
   { label: "Portal Clínico", route: "/parceiros" },
 ];
