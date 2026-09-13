@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { z } from "zod";
-import { HeartHandshake, BookOpen } from "lucide-react";
+import { HeartHandshake } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -13,6 +13,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import ProgramModal from "@/components/ProgramModal";
+import KambaHeroCarousel from "@/components/kamba/KambaHeroCarousel";
 
 const volunteerSchema = z.object({
   name: z.string().trim().min(1, "Nome é obrigatório").max(100, "Máximo 100 caracteres"),
@@ -81,36 +82,10 @@ const VolunteerSection = () => {
 
   return (
     <section id="voluntariado" className="py-20 md:py-28 bg-navy text-navy-foreground">
-      <div className="container">
-        <div className="max-w-4xl mx-auto text-center space-y-6">
-          <span className="text-sm font-medium tracking-widest uppercase text-teal">
-            Programa Meu Kamba Estrábico
-          </span>
-          <h2 className="text-3xl md:text-5xl font-bold">
-            Torna-te um Kamba
-          </h2>
-          <p className="text-lg text-navy-foreground/70 max-w-2xl mx-auto">
-            Junta-te a nós como voluntário e ajuda a transformar vidas. Cada
-            "kamba" (amigo) faz a diferença na luta pela inclusão visual.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button
-              onClick={() => { setOpen(true); setErrors({}); }}
-              className="inline-flex items-center gap-3 px-10 py-5 rounded-xl bg-teal text-teal-foreground font-bold text-lg transition-all hover:opacity-90 hover:translate-y-[-2px] hover:shadow-2xl shadow-elevated"
-            >
-              <HeartHandshake className="w-6 h-6" />
-              Quero ser um Kamba
-            </button>
-            <button
-              onClick={() => setProgramOpen(true)}
-              className="inline-flex items-center gap-3 px-8 py-5 rounded-xl border border-navy-foreground/20 text-navy-foreground font-medium text-lg transition-all hover:bg-navy-foreground/10 hover:translate-y-[-2px]"
-            >
-              <BookOpen className="w-5 h-5" />
-              Saber Mais
-            </button>
-          </div>
-        </div>
-      </div>
+      <KambaHeroCarousel
+        onOpenForm={() => { setOpen(true); setErrors({}); }}
+        onOpenProgram={() => setProgramOpen(true)}
+      />
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-lg backdrop-blur-sm">
