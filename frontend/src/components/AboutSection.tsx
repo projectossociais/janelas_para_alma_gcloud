@@ -48,7 +48,7 @@ const AboutSection = () => {
     <section id="sobre" className="py-20 md:py-28 bg-background">
       <div className="container">
         <div className="max-w-3xl mx-auto text-center space-y-6 mb-16">
-          <span className="text-sm font-medium tracking-widest uppercase text-teal">Sobre a Janelas para a Alma</span>
+          <span className="text-sm font-medium tracking-widest uppercase text-teal">Conheça-nos</span>
           <h2 className="text-3xl md:text-5xl font-bold text-foreground leading-tight">
             Um Olhar Alinhado,{" "}
             <span className="text-gradient-brand">Uma Vida Transformada</span>
