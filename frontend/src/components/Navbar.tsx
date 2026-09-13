@@ -149,7 +149,7 @@ const baseLinks: NavItem[] = [
   { label: "Sobre o Estrabismo", route: "/sobre" },
   { label: "Conheça o Janelas para a Alma", route: "/impacto" },
   { label: "A Nossa Equipa", route: "/equipa" },
-  { label: "Triagem de Estrabismo", route: "/scanner" },
+  { label: "Triagem Ocular", route: "/scanner" },
   { label: "Meu Kamba", route: "/kamba" },
   { label: "Exercícios Visuais", route: "/exercicios" },
   { label: "Portal Clínico", route: "/parceiros" },
@@ -159,7 +159,7 @@ const baseLinks: NavItem[] = [
 const estrabicoLinks: NavItem[] = [
   { label: "Sobre o Estrabismo", route: "/sobre" },
   { label: "A Nossa Equipa", route: "/equipa" },
-  { label: "Triagem de Estrabismo", route: "/scanner" },
+  { label: "Triagem Ocular", route: "/scanner" },
   { label: "Meu Kamba", route: "/kamba" },
   { label: "Exercícios Visuais", route: "/exercicios" },
   { label: "Conheça o Janelas para a Alma", route: "/impacto" },
@@ -171,7 +171,7 @@ const profissionalLinks: NavItem[] = [
   { label: "Sobre o Estrabismo", route: "/sobre" },
   { label: "Meu Kamba", route: "/kamba" },
   { label: "A Nossa Equipa", route: "/equipa" },
-  { label: "Triagem de Estrabismo", route: "/scanner" },
+  { label: "Triagem Ocular", route: "/scanner" },
   { label: "Exercícios Visuais", route: "/exercicios" },
   { label: "Conheça o Janelas para a Alma", route: "/impacto" },
   { label: "Contactos", route: "/junte-se" },
@@ -338,7 +338,7 @@ const Navbar = () => {
               {[
                 { label: "Sobre nós", route: "/sobre" },
                 { label: "Serviços", route: "/parceiros" },
-                { label: "Triagem de Estrabismo", route: "/scanner" },
+                { label: "Triagem Ocular", route: "/scanner" },
                 { label: "Exercícios Visuais", route: "/exercicios" },
                 { label: "Contactos", route: "/junte-se" },
               ].map((link) => (
