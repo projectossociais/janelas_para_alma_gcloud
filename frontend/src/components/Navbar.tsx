@@ -146,34 +146,34 @@ interface NavItem {
 }
 
 const baseLinks: NavItem[] = [
+  { label: "Sobre Nós", route: "/impacto" },
   { label: "Sobre o Estrabismo", route: "/sobre" },
-  { label: "Conheça-nos", route: "/impacto" },
   { label: "A Nossa Equipa", route: "/equipa" },
   { label: "Triagem Ocular", route: "/scanner" },
-  { label: "MEU KAMBA ESTRÁBICO", route: "/kamba" },
+  { label: "Meu Kamba Estrábico", route: "/kamba" },
   { label: "Exercícios Visuais", route: "/exercicios" },
   { label: "Portal Clínico", route: "/parceiros" },
   { label: "Contactos", route: "/junte-se" },
 ];
 
 const estrabicoLinks: NavItem[] = [
+  { label: "Sobre Nós", route: "/impacto" },
   { label: "Sobre o Estrabismo", route: "/sobre" },
   { label: "A Nossa Equipa", route: "/equipa" },
   { label: "Triagem Ocular", route: "/scanner" },
-  { label: "MEU KAMBA ESTRÁBICO", route: "/kamba" },
+  { label: "Meu Kamba Estrábico", route: "/kamba" },
   { label: "Exercícios Visuais", route: "/exercicios" },
-  { label: "Conheça-nos", route: "/impacto" },
   { label: "Portal Clínico", route: "/parceiros" },
   { label: "Contactos", route: "/junte-se" },
 ];
 
 const profissionalLinks: NavItem[] = [
+  { label: "Sobre Nós", route: "/impacto" },
   { label: "Sobre o Estrabismo", route: "/sobre" },
-  { label: "MEU KAMBA ESTRÁBICO", route: "/kamba" },
+  { label: "Meu Kamba Estrábico", route: "/kamba" },
   { label: "A Nossa Equipa", route: "/equipa" },
   { label: "Triagem Ocular", route: "/scanner" },
   { label: "Exercícios Visuais", route: "/exercicios" },
-  { label: "Conheça-nos", route: "/impacto" },
   { label: "Contactos", route: "/junte-se" },
   { label: "Portal Clínico", route: "/parceiros" },
 ];
@@ -336,7 +336,7 @@ const Navbar = () => {
             {/* Top nav quick links */}
             <div className="hidden lg:flex items-center justify-end gap-6 flex-1">
               {[
-                { label: "Sobre nós", route: "/sobre" },
+                { label: "Sobre nós", route: "/impacto" },
                 { label: "Serviços", route: "/parceiros" },
                 { label: "Triagem Ocular", route: "/scanner" },
                 { label: "Exercícios Visuais", route: "/exercicios" },
