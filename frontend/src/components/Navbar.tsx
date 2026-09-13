@@ -41,7 +41,7 @@ const searchIndex: SearchItem[] = [
     title: "Sobre a Janelas para a Alma",
     description: "Janelas Para a Alma é uma start up angolana dedicada à saúde visual, inclusão e sustentabilidade.",
     keywords: "sobre, start up, janelas para a alma, missão, visão, saúde visual, inclusão, sustentabilidade, angola",
-    route: "/sobre",
+    route: "/impacto",
     elementId: "sobre",
   },
   {
@@ -147,9 +147,9 @@ interface NavItem {
 
 const baseLinks: NavItem[] = [
   { label: "Sobre o Estrabismo", route: "/sobre" },
-  { label: "Impacto", route: "/impacto" },
+  { label: "Conheça o Janelas para a Alma", route: "/impacto" },
   { label: "A Nossa Equipa", route: "/equipa" },
-  { label: "O Nosso Produto", route: "/produto" },
+  { label: "Triagem de Estrabismo", route: "/scanner" },
   { label: "Meu Kamba", route: "/kamba" },
   { label: "Exercícios Visuais", route: "/exercicios" },
   { label: "Portal Clínico", route: "/parceiros" },
@@ -159,22 +159,21 @@ const baseLinks: NavItem[] = [
 const estrabicoLinks: NavItem[] = [
   { label: "Sobre o Estrabismo", route: "/sobre" },
   { label: "A Nossa Equipa", route: "/equipa" },
-  { label: "Scanner de Estrabismo", route: "/scanner" },
+  { label: "Triagem de Estrabismo", route: "/scanner" },
   { label: "Meu Kamba", route: "/kamba" },
   { label: "Exercícios Visuais", route: "/exercicios" },
-  { label: "Impacto", route: "/impacto" },
+  { label: "Conheça o Janelas para a Alma", route: "/impacto" },
   { label: "Portal Clínico", route: "/parceiros" },
   { label: "Contactos", route: "/junte-se" },
 ];
 
 const profissionalLinks: NavItem[] = [
   { label: "Sobre o Estrabismo", route: "/sobre" },
-  { label: "O Nosso Produto", route: "/produto" },
   { label: "Meu Kamba", route: "/kamba" },
   { label: "A Nossa Equipa", route: "/equipa" },
-  { label: "Scanner de Estrabismo", route: "/scanner" },
+  { label: "Triagem de Estrabismo", route: "/scanner" },
   { label: "Exercícios Visuais", route: "/exercicios" },
-  { label: "Impacto", route: "/impacto" },
+  { label: "Conheça o Janelas para a Alma", route: "/impacto" },
   { label: "Contactos", route: "/junte-se" },
   { label: "Portal Clínico", route: "/parceiros" },
 ];
@@ -339,7 +338,7 @@ const Navbar = () => {
               {[
                 { label: "Sobre nós", route: "/sobre" },
                 { label: "Serviços", route: "/parceiros" },
-                { label: "Produto", route: "/produto" },
+                { label: "Triagem de Estrabismo", route: "/scanner" },
                 { label: "Exercícios Visuais", route: "/exercicios" },
                 { label: "Contactos", route: "/junte-se" },
               ].map((link) => (
