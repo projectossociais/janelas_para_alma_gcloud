@@ -60,7 +60,7 @@ const Footer = () => {
             <ul className="flex flex-col gap-2.5 text-sm">
               {[
                 { label: "Início", to: "/" },
-                { label: "Sobre Nós", to: "/sobre" },
+                { label: "Sobre Nós", to: "/impacto" },
                 { label: "Apoiar a Causa", to: "/apoiar" },
                 { label: "Contactos", to: "/junte-se" },
               ].map((l) => (
