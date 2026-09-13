@@ -337,7 +337,6 @@ const Navbar = () => {
             <div className="hidden lg:flex items-center justify-end gap-6 flex-1">
               {[
                 { label: "Sobre nós", route: "/impacto" },
-                { label: "Serviços", route: "/parceiros" },
                 { label: "Triagem Ocular", route: "/scanner" },
                 { label: "Exercícios Visuais", route: "/exercicios" },
                 { label: "Contactos", route: "/junte-se" },
