@@ -118,8 +118,7 @@ const KambaHeroCarousel = ({ onOpenForm, onOpenProgram }: KambaHeroCarouselProps
                   <video
                     ref={groupVideoRef}
                     className="w-full h-full object-cover"
-                    src="https://yjzqnjatrdngzfixrxcg.supabase.co/storage/v1/object/public/kamba-media/JPA%20Grupo.mov"
-                    poster="/assets/kamba/campanha-gamek-poster.jpg"
+                    src="https://yjzqnjatrdngzfixrxcg.supabase.co/storage/v1/object/public/kamba-media/JPA%20Grupo.mov#t=0.001"
                     autoPlay
                     muted
                     loop
