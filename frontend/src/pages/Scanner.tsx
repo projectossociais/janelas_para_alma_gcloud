@@ -8,6 +8,7 @@ import EyeLandmarkOverlay from "@/components/EyeLandmarkOverlay";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { submeterRastreioMultiGaze, type ScreeningResponse } from "@/services/api/screeningApi";
 
 
 const DIAGNOSES = ["Esotropia", "Exotropia", "Hipertropia", "Hipotropia"] as const;
@@ -182,11 +183,35 @@ const Scanner = () => {
   }, [cameraOn, checkVideoQuality]);
 
 
-  const finishScan = useCallback((url: string | null, analysisId?: string | null) => {
+  const finishScan = useCallback((
+    url: string | null,
+    analysisId?: string | null,
+    apiResult?: ScreeningResponse | null
+  ) => {
     setPreviewUrl(url);
     setScanning(true);
-    const diagnosis = DIAGNOSES[Math.floor(Math.random() * DIAGNOSES.length)];
-    const confidence = Math.floor(78 + Math.random() * 17); // 78-94
+
+    // Determina o diagnóstico e confiança a partir do retorno da API
+    let diagnosis = "Alinhamento Fisiológico Normal";
+    let confidence = 92;
+
+    if (apiResult) {
+      if (apiResult.incomitante || apiResult.requer_avaliacao_humana) {
+        // Categoria fixa — o texto livre de `recomendacao` vai em `apiData`,
+        // para o ecrã de resultados o mostrar à parte (nunca como chave de
+        // diagnóstico: DIAGNOSIS_DATA só conhece um conjunto fechado de chaves).
+        diagnosis = "Necessária Avaliação Oftalmológica";
+      }
+      // Calcula uma pontuação de confiança com base na qualidade da captura
+      const posCentro = apiResult.posicoes?.find(p => p.posicao.toUpperCase() === "CENTRO");
+      if (posCentro?.qualidade_captura?.pontuacao) {
+        confidence = Math.round(posCentro.qualidade_captura.pontuacao * 100);
+      }
+    } else {
+      diagnosis = DIAGNOSES[Math.floor(Math.random() * DIAGNOSES.length)];
+      confidence = Math.floor(78 + Math.random() * 17);
+    }
+
     window.setTimeout(() => {
       sessionStorage.setItem(
         "scanResult",
@@ -194,11 +219,11 @@ const Scanner = () => {
           diagnosis,
           confidence,
           date: new Date().toISOString(),
+          apiData: apiResult || null, // Guarda todos os dados clínicos reais da API
         })
       );
       navigate(analysisId ? `/scanner/resultados?id=${analysisId}` : "/scanner/resultados");
-
-    }, 3000);
+    }, 2500);
   }, [navigate]);
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -261,71 +286,100 @@ const Scanner = () => {
     [snapshotBase64]
   );
 
-  const startGuidedCapture = useCallback(() => {
-    if (captureStep !== "IDLE" || lowLight) return;
-    setUploadError(null);
-    clearTimers();
+  /** Máquina de estados da captura manual: cada clique avança um passo. */
+  const handleNextStep = useCallback(() => {
+    if (lowLight) return;
 
-    payloadRef.current = [];
-    setScanPayload([]);
-    setCaptureStep("CENTER");
+    if (captureStep === "IDLE") {
+      setUploadError(null);
+      clearTimers(); // cancela os avisos iniciais de "A procurar rosto…", se ainda pendentes
+      payloadRef.current = [];
+      setScanPayload([]);
+      setCaptureStep("CENTER");
+      return;
+    }
 
-    timersRef.current.push(
-      window.setTimeout(() => {
-        recordPose("center");
-        setCaptureStep("RIGHT");
-      }, 4000)
-    );
-    timersRef.current.push(
-      window.setTimeout(() => {
-        recordPose("right");
-        setCaptureStep("LEFT");
-      }, 8000)
-    );
-    timersRef.current.push(
-      window.setTimeout(() => {
-        void (async () => {
-          recordPose("left");
-          setCaptureStep("PROCESSING");
-          const payload = payloadRef.current;
-          const center = payload.find((s) => s.pose === "center")?.imageBase64 ?? null;
+    if (captureStep === "CENTER") {
+      recordPose("center");
+      setCaptureStep("RIGHT");
+      return;
+    }
 
-          if (!user) {
-            // Utilizador anónimo: avança e mostra o resultado, sem gravar no Supabase.
-            stopCamera();
-            finishScan(center, null);
-            return;
+    if (captureStep === "RIGHT") {
+      recordPose("right");
+      setCaptureStep("LEFT");
+      return;
+    }
+
+    if (captureStep === "LEFT") {
+      recordPose("left");
+      setCaptureStep("PROCESSING");
+      const payload = payloadRef.current;
+      const center = payload.find((s) => s.pose === "center")?.imageBase64 ?? null;
+
+      void (async () => {
+        setUploading(true);
+        setUploadError(null);
+
+        try {
+          // 1. Converte as 3 poses para Blob
+          const centerShot = payload.find((s) => s.pose === "center");
+          const leftShot = payload.find((s) => s.pose === "left");
+          const rightShot = payload.find((s) => s.pose === "right");
+
+          const blobCentro = centerShot ? dataUrlToBlob(centerShot.imageBase64) : null;
+          const blobEsquerda = leftShot ? dataUrlToBlob(leftShot.imageBase64) : null;
+          const blobDireita = rightShot ? dataUrlToBlob(rightShot.imageBase64) : null;
+
+          if (!blobCentro || !blobEsquerda || !blobDireita) {
+            throw new Error("Falha ao preparar as imagens das 3 posições.");
           }
 
-          setUploading(true);
-          setUploadError(null);
-          try {
-            const analysisId = await submitScan(payload);
-            setAnalysisId(analysisId);
-            setUploading(false);
-            toast.success("Exame enviado com sucesso!");
-            stopCamera();
-            finishScan(center, analysisId);
-          } catch (err) {
-            const message = err instanceof Error ? err.message : String(err);
-            setUploading(false);
-            setUploadError(message);
-            setCaptureStep("IDLE");
-            toast.error(message);
-            if (err instanceof Error && err.name === "SessionExpiredError") {
-              // Keep scanPayload/payloadRef intact so nothing captured is lost.
-              window.setTimeout(() => navigate("/auth?next=/scanner"), 1200);
+          // 2. Obtém token da sessão Supabase (se o utilizador estiver autenticado)
+          let token: string | undefined = undefined;
+          if (user) {
+            const { data: sessionData } = await supabase.auth.getSession();
+            token = sessionData.session?.access_token;
+          }
+
+          // 3. Executa o cálculo matemático no FastAPI (Python)
+          toast.info("A calcular alinhamento ocular na IA...");
+          const apiResult = await submeterRastreioMultiGaze(
+            {
+              centro: blobCentro,
+              esquerda: blobEsquerda,
+              direita: blobDireita,
+            },
+            token
+          );
+
+          // 4. Se estiver autenticado, persiste o histórico completo no Supabase
+          let savedAnalysisId: string | null = null;
+          if (user) {
+            try {
+              savedAnalysisId = await submitScan(payload);
+              setAnalysisId(savedAnalysisId);
+            } catch (persistErr) {
+              console.warn("Aviso ao guardar no Supabase:", persistErr);
             }
           }
 
-        })();
-      }, 12000)
-    );
+          setUploading(false);
+          stopCamera();
+          finishScan(center, savedAnalysisId, apiResult);
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          setUploading(false);
+          setUploadError(message);
+          setCaptureStep("IDLE");
+          toast.error(message);
+          if (err instanceof Error && err.name === "SessionExpiredError") {
+            window.setTimeout(() => navigate("/auth?next=/scanner"), 1200);
+          }
+        }
+      })();
+    }
   }, [captureStep, lowLight, recordPose, stopCamera, finishScan, navigate, user]);
-
-
-
-  const takePhoto = () => { void startGuidedCapture(); };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -425,13 +479,25 @@ const Scanner = () => {
                 </div>
                 <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                   <button
-                    onClick={takePhoto}
-                    disabled={lowLight || captureStep !== "IDLE"}
+                    onClick={handleNextStep}
+                    disabled={lowLight || captureStep === "PROCESSING" || uploading}
                     className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-teal text-teal-foreground font-semibold text-sm hover:bg-teal/90 transition-all shadow-elevated disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-teal"
                   >
                     {captureStep === "IDLE" ? (
                       <>
-                        <Camera className="w-4 h-4" /> Capturar agora
+                        <Camera className="w-4 h-4" /> Iniciar Captura
+                      </>
+                    ) : captureStep === "CENTER" ? (
+                      <>
+                        <Camera className="w-4 h-4" /> Capturar Frente (1/3)
+                      </>
+                    ) : captureStep === "RIGHT" ? (
+                      <>
+                        <Camera className="w-4 h-4" /> Capturar Direita (2/3)
+                      </>
+                    ) : captureStep === "LEFT" ? (
+                      <>
+                        <Camera className="w-4 h-4" /> Capturar Esquerda (3/3)
                       </>
                     ) : uploading ? (
                       <>
