@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
 import {
@@ -18,6 +18,34 @@ import {
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
+import logoImg from "@/assets/logo.png";
+
+interface LogoBitmap {
+  dataUrl: string;
+  width: number;
+  height: number;
+}
+
+/**
+ * jsPDF `addImage` exige um data URL — o URL que o Vite dá ao importar o
+ * ficheiro (`/src/assets/...` em dev, hash em build) não é aceite de forma
+ * fiável entre navegadores. Desenha-se num canvas só para extrair o base64.
+ */
+const carregarLogoComoDataUrl = (src: string): Promise<LogoBitmap> =>
+  new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return reject(new Error("Canvas indisponível para preparar o logótipo."));
+      ctx.drawImage(img, 0, 0);
+      resolve({ dataUrl: canvas.toDataURL("image/png"), width: img.naturalWidth, height: img.naturalHeight });
+    };
+    img.onerror = () => reject(new Error("Falha ao carregar o logótipo."));
+    img.src = src;
+  });
 
 type DiagnosisKey =
   | "Esotropia"
@@ -28,6 +56,7 @@ type DiagnosisKey =
   | "Necessária Avaliação Oftalmológica";
 
 const DIAGNOSIS_FALLBACK: DiagnosisKey = "Necessária Avaliação Oftalmológica";
+const DIAGNOSTICO_NORMAL: DiagnosisKey = "Alinhamento Fisiológico Normal";
 
 type TabKey = "condicao" | "clinicas" | "exercicios" | "comunidade";
 
@@ -140,7 +169,7 @@ const DIAGNOSIS_DATA: Record<DiagnosisKey, DiagnosisInfo> = {
 };
 
 const tabs: { key: TabKey; label: string; icon: typeof Info }[] = [
-  { key: "condicao", label: "Sobre a Condição", icon: Info },
+  { key: "condicao", label: "O Seu Resultado", icon: Info },
   { key: "clinicas", label: "Clínicas & Preços", icon: MapPin },
   { key: "exercicios", label: "Exercícios", icon: Activity },
   { key: "comunidade", label: "Comunidade", icon: Users },
@@ -255,10 +284,22 @@ const Resultados = () => {
     [result]
   );
 
-  const handleDownload = () => {
+  const isNormal = result?.diagnosis === DIAGNOSTICO_NORMAL;
+  const visibleTabs = useMemo(() => tabs.filter((t) => !(t.key === "clinicas" && isNormal)), [isNormal]);
+
+  // Carregado uma única vez e reutilizado — não há motivo para re-converter o
+  // logótipo em base64 a cada download.
+  const logoRef = useRef<Promise<LogoBitmap> | null>(null);
+  const obterLogo = () => {
+    if (!logoRef.current) logoRef.current = carregarLogoComoDataUrl(logoImg);
+    return logoRef.current;
+  };
+
+  const handleDownload = async () => {
     if (!result || !info) return;
     const date = new Date(result.date);
     const formatted = date.toLocaleString("pt-PT");
+    const logo = await obterLogo().catch(() => null);
 
     const doc = new jsPDF({ unit: "pt", format: "a4" });
     const W = doc.internal.pageSize.getWidth();
@@ -272,33 +313,47 @@ const Resultados = () => {
     const muted: [number, number, number] = [100, 116, 139];
     const soft: [number, number, number] = [241, 245, 249];
 
-    // Header
-    doc.setFillColor(...navy);
-    doc.rect(0, 0, W, 110, "F");
-    doc.setFillColor(...teal);
-    doc.rect(0, 110, W, 4, "F");
-
-    // Brand eye glyph
-    doc.setFillColor(...teal);
-    doc.ellipse(M + 14, 55, 18, 11, "F");
+    // Header — logótipo oficial (o glifo geométrico deixou de existir).
+    const headerH = 96;
     doc.setFillColor(255, 255, 255);
-    doc.circle(M + 14, 55, 5, "F");
-    doc.setFillColor(...navy);
-    doc.circle(M + 14, 55, 2.5, "F");
+    doc.rect(0, 0, W, headerH, "F");
+    doc.setFillColor(...teal);
+    doc.rect(0, headerH, W, 4, "F");
 
-    doc.setTextColor(255, 255, 255);
+    if (logo) {
+      const logoH = 44;
+      const logoW = (logo.width / logo.height) * logoH;
+      doc.addImage(logo.dataUrl, "PNG", M, (headerH - logoH) / 2, logoW, logoH);
+    }
+
+    doc.setTextColor(...navy);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    doc.text("JANELAS PARA A ALMA", M + 44, 50);
+    doc.setFontSize(10);
+    doc.text("Relatório de Triagem Visual Automática", W - M, 40, { align: "right" });
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(180, 220, 215);
-    doc.text("Relatório de Diagnóstico Visual · Simulação IA", M + 44, 66);
     doc.setFontSize(8);
-    doc.text(`Emitido em ${formatted}`, M + 44, 80);
+    doc.setTextColor(...muted);
+    doc.text(`Emitido em ${formatted}`, W - M, 54, { align: "right" });
+
+    // Introdução institucional
+    let y = headerH + 26;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(...teal);
+    doc.text("SOBRE A PLATAFORMA", M, y);
+    y += 14;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9.5);
+    doc.setTextColor(...ink);
+    const introLines = doc.splitTextToSize(
+      "O Janelas Para a Alma realiza uma triagem visual geométrica. Este relatório fornece uma " +
+        "orientação com base no alinhamento detetado, não constituindo um diagnóstico clínico.",
+      W - M * 2
+    );
+    doc.text(introLines, M, y);
+    y += introLines.length * 12 + 24;
 
     // Diagnosis card with deviation glyph
-    let y = 150;
     doc.setFillColor(...soft);
     doc.roundedRect(M, y, W - M * 2, 110, 12, 12, "F");
 
@@ -372,7 +427,7 @@ const Resultados = () => {
       y += 6;
     };
 
-    section("Sobre a Condição", teal);
+    section("O Seu Resultado", teal);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.setTextColor(...ink);
@@ -380,61 +435,83 @@ const Resultados = () => {
     doc.text(desc, M, y + 6);
     y += desc.length * 13 + 16;
 
-    section("Sintomas Frequentes", gold);
-    bullets(info.symptoms);
+    if (!isNormal) {
+      if (y > H - 100) { doc.addPage(); y = M; }
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      doc.setTextColor(...navy);
+      doc.text("Sintomas frequentes", M, y);
+      y += 16;
+      bullets(info.symptoms);
+    }
 
-    section("Tratamentos Recomendados", teal);
+    section("O que recomendamos", teal);
     bullets(info.treatments);
 
-    section("Clínicas Recomendadas em Angola", navy);
-    recommendedClinics.forEach((c) => {
-      if (y > H - 110) { doc.addPage(); y = M; }
-      doc.setFillColor(...soft);
-      doc.roundedRect(M, y, W - M * 2, 78, 10, 10, "F");
-      doc.setFillColor(...teal);
-      doc.rect(M, y, 4, 78, "F");
-      doc.setTextColor(...navy);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.text(c.name, M + 14, y + 18);
-      doc.setFont("helvetica", "italic");
-      doc.setFontSize(9);
-      doc.setTextColor(...teal);
-      doc.text(c.subtitle, M + 14, y + 32);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      doc.setTextColor(...ink);
-      doc.text(`${c.city}  ·  ${c.specialty}`, M + 14, y + 48);
-      doc.setTextColor(...muted);
-      doc.text(`Contacto: ${c.phoneDisplay}`, M + 14, y + 62);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(...gold);
-      doc.text(c.price, W - M - 14, y + 18, { align: "right" });
-      y += 88;
-    });
+    if (!isNormal) {
+      section("Clínicas Recomendadas em Angola", navy);
+      recommendedClinics.forEach((c) => {
+        if (y > H - 110) { doc.addPage(); y = M; }
+        doc.setFillColor(...soft);
+        doc.roundedRect(M, y, W - M * 2, 78, 10, 10, "F");
+        doc.setFillColor(...teal);
+        doc.rect(M, y, 4, 78, "F");
+        doc.setTextColor(...navy);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(11);
+        doc.text(c.name, M + 14, y + 18);
+        doc.setFont("helvetica", "italic");
+        doc.setFontSize(9);
+        doc.setTextColor(...teal);
+        doc.text(c.subtitle, M + 14, y + 32);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(...ink);
+        doc.text(`${c.city}  ·  ${c.specialty}`, M + 14, y + 48);
+        doc.setTextColor(...muted);
+        doc.text(`Contacto: ${c.phoneDisplay}`, M + 14, y + 62);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...gold);
+        doc.text(c.price, W - M - 14, y + 18, { align: "right" });
+        y += 88;
+      });
+    }
 
     section("Recomendações Gerais", gold);
-    bullets([
-      "Procure avaliação presencial com oftalmologista qualificado.",
-      "Realize exames de refração e teste de cobertura ocular.",
-      "Mantenha pausas visuais regulares (regra 20-20-20).",
-      "Inicie exercícios visuais terapêuticos sob orientação profissional.",
-      "Junte-se à comunidade Janelas Para a Alma para apoio emocional.",
-    ]);
+    bullets(
+      isNormal
+        ? [
+            "Utilize óculos de sol com proteção UV sempre que estiver ao ar livre.",
+            "Faça pausas visuais regulares — regra 20-20-20 (a cada 20 min, olhe 20 seg para algo a 6 metros).",
+            "Mantenha exames oftalmológicos de rotina, pelo menos uma vez por ano.",
+            "Junte-se à comunidade Janelas Para a Alma para acompanhar novidades de saúde visual.",
+          ]
+        : [
+            "Procure avaliação presencial com oftalmologista qualificado.",
+            "Realize exames de refração e teste de cobertura ocular.",
+            "Mantenha pausas visuais regulares (regra 20-20-20).",
+            "Inicie exercícios visuais terapêuticos sob orientação profissional.",
+            "Junte-se à comunidade Janelas Para a Alma para apoio emocional.",
+          ]
+    );
 
-    if (y > H - 120) { doc.addPage(); y = M; }
+    const discTexto =
+      "Os resultados desta triagem são informativos, baseados em biometria facial, e não substituem " +
+      "uma avaliação oftalmológica presencial. A plataforma Janelas Para a Alma isenta-se de " +
+      "responsabilidade por diagnósticos ou ações médicas tomadas com base neste documento. Em caso " +
+      "de desconforto visual, consulte imediatamente um especialista.";
+    const disc = doc.splitTextToSize(discTexto, W - M * 2 - 24);
+    const discBoxH = 34 + disc.length * 11;
+    if (y > H - discBoxH - 20) { doc.addPage(); y = M; }
     doc.setFillColor(255, 247, 224);
-    doc.roundedRect(M, y, W - M * 2, 50, 8, 8, "F");
+    doc.roundedRect(M, y, W - M * 2, discBoxH, 8, 8, "F");
     doc.setTextColor(...navy);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.text("AVISO IMPORTANTE", M + 12, y + 18);
     doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
     doc.setTextColor(...ink);
-    const disc = doc.splitTextToSize(
-      "Este relatório é gerado por uma simulação demonstrativa de IA e NÃO substitui um diagnóstico médico. Consulte sempre um profissional de saúde visual qualificado.",
-      W - M * 2 - 24
-    );
     doc.text(disc, M + 12, y + 32);
 
     const pageCount = doc.getNumberOfPages();
@@ -449,8 +526,23 @@ const Resultados = () => {
       doc.setFont("helvetica", "normal");
       doc.setTextColor(180, 220, 215);
       doc.text("Um Olhar Alinhado, Uma Vida Transformada", M, H - 10);
-      doc.setTextColor(255, 255, 255);
-      doc.text("janelasparaalma18@gmail.com", W / 2, H - 14, { align: "center" });
+
+      const emailTexto = "janelasparaalma18@gmail.com";
+      if (logo) {
+        const smallH = 14;
+        const smallW = (logo.width / logo.height) * smallH;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        const emailW = doc.getTextWidth(emailTexto);
+        const groupW = smallW + 6 + emailW;
+        const startX = W / 2 - groupW / 2;
+        doc.addImage(logo.dataUrl, "PNG", startX, H - 14 - smallH / 2, smallW, smallH);
+        doc.setTextColor(255, 255, 255);
+        doc.text(emailTexto, startX + smallW + 6, H - 14);
+      } else {
+        doc.setTextColor(255, 255, 255);
+        doc.text(emailTexto, W / 2, H - 14, { align: "center" });
+      }
       doc.setTextColor(180, 220, 215);
       doc.text(`Página ${i} de ${pageCount}`, W - M, H - 14, { align: "right" });
     }
@@ -500,7 +592,7 @@ const Resultados = () => {
             <div className="mt-5 flex flex-wrap items-center gap-3 text-xs text-white/70">
               <span className="inline-flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-teal" /> Dados confidenciais</span>
               <button
-                onClick={handleDownload}
+                onClick={() => void handleDownload()}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
               >
                 <Download className="w-3.5 h-3.5" /> Descarregar relatório
@@ -517,7 +609,7 @@ const Resultados = () => {
 
           <div className="max-w-5xl mx-auto mt-8">
             <div className="flex flex-wrap gap-2 p-1.5 rounded-2xl bg-muted">
-              {tabs.map((t) => {
+              {visibleTabs.map((t) => {
                 const Icon = t.icon;
                 const active = tab === t.key;
                 return (
@@ -537,7 +629,9 @@ const Resultados = () => {
 
             <div className="mt-6 animate-fade-in" key={tab}>
               {tab === "condicao" && <CondicaoPanel diagnosis={result.diagnosis} info={info} />}
-              {tab === "clinicas" && <ClinicasPanel clinics={recommendedClinics} diagnosis={result.diagnosis} />}
+              {tab === "clinicas" && !isNormal && (
+                <ClinicasPanel clinics={recommendedClinics} diagnosis={result.diagnosis} />
+              )}
               {tab === "exercicios" && <ExerciciosPanel />}
               {tab === "comunidade" && <ComunidadePanel />}
             </div>
@@ -557,26 +651,28 @@ const CondicaoPanel = ({ diagnosis, info }: { diagnosis: DiagnosisKey; info: Dia
   <div className="grid md:grid-cols-2 gap-4">
     <Card>
       <div className="flex items-center gap-2 text-teal text-xs font-bold uppercase tracking-widest">
-        <Info className="w-4 h-4" /> Sobre a condição
+        <Info className="w-4 h-4" /> O Seu Resultado
       </div>
       <h2 className="mt-2 text-xl font-bold text-foreground">O que é {diagnosis}?</h2>
       <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{info.description}</p>
-      <div className="mt-5">
-        <div className="text-xs font-semibold uppercase tracking-wider text-foreground/70 mb-2">Sintomas frequentes</div>
-        <ul className="space-y-1.5">
-          {info.symptoms.map((s) => (
-            <li key={s} className="flex items-start gap-2 text-sm text-muted-foreground">
-              <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-teal shrink-0" />
-              {s}
-            </li>
-          ))}
-        </ul>
-      </div>
+      {diagnosis !== DIAGNOSTICO_NORMAL && (
+        <div className="mt-5">
+          <div className="text-xs font-semibold uppercase tracking-wider text-foreground/70 mb-2">Sintomas frequentes</div>
+          <ul className="space-y-1.5">
+            {info.symptoms.map((s) => (
+              <li key={s} className="flex items-start gap-2 text-sm text-muted-foreground">
+                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-teal shrink-0" />
+                {s}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </Card>
 
     <Card>
       <div className="flex items-center gap-2 text-green text-xs font-bold uppercase tracking-widest">
-        <Stethoscope className="w-4 h-4" /> Tratamentos recomendados
+        <Stethoscope className="w-4 h-4" /> O que recomendamos
       </div>
       <h2 className="mt-2 text-xl font-bold text-foreground">Plano terapêutico orientador</h2>
       <p className="mt-3 text-sm text-muted-foreground">
