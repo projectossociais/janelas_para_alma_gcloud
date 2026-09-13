@@ -79,6 +79,7 @@ export interface UtilizadorPublico {
   nome_completo: string | null;
   provincia: string | null;
   genero: string | null;
+  email_confirmado: boolean;
   criado_em: string;
   eliminacao_cancelada: boolean;
 }
@@ -99,11 +100,32 @@ export const authApi = {
   entrar: (email: string, password: string) =>
     pedido<UtilizadorPublico>("/auth/entrar", { method: "POST", body: JSON.stringify({ email, password }) }),
 
+  /** `credential` é o ID token que o Google Identity Services devolve —
+   *  nunca decodificado nem confiado aqui, a verificação real é na API. */
+  google: (credential: string) =>
+    pedido<UtilizadorPublico>("/auth/google", { method: "POST", body: JSON.stringify({ credential }) }),
+
   eu: () => pedido<UtilizadorPublico>("/auth/eu"),
 
   sair: () => pedido<void>("/auth/sair", { method: "POST" }),
 
   atualizarToken: () => pedido<void>("/auth/atualizar-token", { method: "POST" }),
+
+  /** Sempre "sucesso" do lado do chamador, exista ou não o email — a API
+   *  nunca revela isso (ver docs/BACKLOG.md, "Identidade externa e email"). */
+  solicitarRecuperacaoPassword: (email: string) =>
+    pedido<void>("/auth/recuperar-password", { method: "POST", body: JSON.stringify({ email }) }),
+
+  redefinirPassword: (token: string, passwordNova: string) =>
+    pedido<void>("/auth/redefinir-password", {
+      method: "POST",
+      body: JSON.stringify({ token, password_nova: passwordNova }),
+    }),
+
+  confirmarEmail: (token: string) =>
+    pedido<void>("/auth/confirmar-email", { method: "POST", body: JSON.stringify({ token }) }),
+
+  reenviarConfirmacao: () => pedido<void>("/auth/reenviar-confirmacao", { method: "POST" }),
 };
 
 export interface PerfilPublico {

@@ -57,16 +57,16 @@ S6-02,frontend,DashboardUser com dados reais,P2,a-fazer,L,S6,2026-09-10,hoje sao
 S6-03,frontend,Exercicios premium restantes sobre BaseExercise,P3,a-fazer,L,S6,2026-09-10,
 S6-04,frontend,Loja de oculos: carrinho + pagamento,P3,a-fazer,W+L,S6,2026-09-10,Produto.tsx e mock
 S6-05,api,Conteudo editavel pelo admin (notifications; site_content CRUD),P2,a-fazer,W+L,S6,2026-09-10,mesmo padrao do CRUD de banners de admin
-CROSS-01,api,Escolher fornecedor de email transacional,P1,bloqueado,W,transversal,2026-09-10,"bloqueia: recuperacao de password, confirmacao de doacao/feedback/contacto"
+CROSS-01,api,Escolher fornecedor de email transacional,P1,feito,W,transversal,2026-09-13,"Resend escolhido pelo Wilson a 2026-09-13. ResendEmailSender implementado (email_sender.py) -- falta so a RESEND_API_KEY real em .env/Secret Manager"
 CROSS-02,api,Fluxo financeiro de doacoes (upload de comprovativo),P2,bloqueado,W,transversal,2026-09-10,precisa de email + storage
 CROSS-03,frontend,Migrar as restantes chamadas Supabase (Scanner; Dashboard; oculos; candidaturas),P2,a-fazer,W,transversal,2026-09-10,"modulo a modulo, nunca big bang"
-CROSS-04,infra,Recuperacao de palavra-passe,P1,bloqueado,W,transversal,2026-09-10,depende de CROSS-01 (fornecedor de email)
+CROSS-04,infra,Recuperacao de palavra-passe,P1,feito,W,transversal,2026-09-13,"POST /auth/recuperar-password + /auth/redefinir-password, tokens_email (hash, uso unico, validade 1h). AtualizarPassword.tsx reescrito para a API propria. Nunca revela se o email existe"
 CROSS-05,legal,Consentimento parental para menores,P1,bloqueado,W,transversal,2026-09-10,bloqueio #5; precisa de apoio juridico
 CROSS-06,infra,Confirmar o prazo do credito GCloud trial,P2,a-fazer,W,transversal,2026-09-10,bloqueio #7
 AUTH-01,api,Registo: politica de password mais forte + campo de confirmacao no formulario,P0,a-fazer,W,S0,2026-09-10,"hoje so valida >=8 chars (validar_password_forte em schemas/auth.py); definir regra minima real (maiuscula/digito/etc). Confirmacao e so no <form>, nunca vai ao servidor. Desbloqueado."
-AUTH-02,api,Registo: verificacao por email antes do 1o login (nunca redirecionar como se logado),P0,bloqueado,W,S0,2026-09-10,"Auth.tsx redireciona logo apos registar; nao existe email_verificado no esquema. /auth/entrar tem de recusar conta nao verificada. Depende de CROSS-01 (fornecedor de email); toca esquema + auth -> migracao Alembic + revisao humana (CLAUDE.md 5/10/12)"
+AUTH-02,api,Registo: verificacao por email antes do 1o login (nunca redirecionar como se logado),P0,em-curso,W,S0,2026-09-13,"email_confirmado + POST /auth/confirmar-email + /auth/reenviar-confirmacao ja existem, disparados (best-effort) no registo. FALTA A DECISAO: esta nota pedia /auth/entrar a RECUSAR conta nao confirmada -- nao implementado assim, de proposito, por ser decisao do dono do produto (grau de bloqueio), nao so tecnica. Hoje o login funciona com ou sem confirmar; so o campo fica visivel"
 NAO-01,-,Gateway de pagamento automatico (EMIS/AppyPay),-,nao-fazer-agora,-,-,2026-09-10,o ciclo manual da S2 chega; depende de contrato comercial
-NAO-02,-,Login com Google,-,nao-fazer-agora,-,-,2026-09-10,decidido: sprint proprio; falta escolher fornecedor de email
+W-18,api,Login com Google (Sign in with Google),P1,feito,W,transversal,2026-09-13,"POST /auth/google, verificar_id_token_google (assinatura/emissor/audiencia via lib google-auth), google_sub unico em utilizadores, liga conta existente so se email_verified=true (senao 409 -- vector de account takeover fechado). Testado: 23 novos (auth_service + router). Frontend: GoogleSignInButton.tsx, precisa de VITE_GOOGLE_CLIENT_ID + GOOGLE_OAUTH_CLIENT_ID reais"
 NAO-03,-,Versao em ingles,-,nao-fazer-agora,-,-,2026-09-10,o publico e angolano
 NAO-04,-,Mapa de clinicas parceiras,-,nao-fazer-agora,-,-,2026-09-10,uma lista chega enquanto houver poucas clinicas
 NAO-05,-,Notificacoes push + modo offline,-,nao-fazer-agora,-,-,2026-09-10,"custo alto, ninguem bloqueado hoje"

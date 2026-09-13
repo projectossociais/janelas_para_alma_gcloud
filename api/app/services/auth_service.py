@@ -9,6 +9,7 @@ Auth nem RLS por baixo — testar isto bem não é opcional.
 from dataclasses import dataclass
 
 from app.core.security import (
+    GoogleIdTokenInfo,
     TokenInvalidoError,
     criar_access_token,
     criar_refresh_token,
@@ -31,6 +32,15 @@ class CredenciaisInvalidasError(Exception):
 
 class RefreshTokenInvalidoError(Exception):
     pass
+
+
+class EmailGoogleNaoVerificadoError(Exception):
+    """A Google devolveu `email_verified: false` para uma conta que
+    coincide, por email, com uma conta nossa já existente. Recusar ligar
+    nesse caso -- fazê-lo confiando só na igualdade de string do email
+    seria um vector de account takeover: bastaria criar uma conta Google
+    com o email de outra pessoa, sem a Google alguma vez confirmar que essa
+    pessoa é dona desse email, para "entrar" na conta dela aqui."""
 
 
 @dataclass(frozen=True)
@@ -84,12 +94,47 @@ class AuthService:
 
     def autenticar(self, email: str, password: str) -> SessaoIniciada:
         utilizador = self._repo.obter_por_email(email)
-        # Mensagem de erro idêntica para email inexistente ou password errada
-        # de propósito — não confirmar a um atacante que um email existe.
-        if utilizador is None or not verificar_password(password, utilizador.password_hash):
+        # Mensagem de erro idêntica para email inexistente, conta só-Google
+        # (sem password_hash) ou password errada, de propósito — não
+        # confirmar a um atacante que um email existe, nem como a conta foi
+        # criada.
+        if (
+            utilizador is None
+            or utilizador.password_hash is None
+            or not verificar_password(password, utilizador.password_hash)
+        ):
             raise CredenciaisInvalidasError("email ou password incorretos")
 
         return SessaoIniciada(utilizador=utilizador, tokens=self._emitir_tokens(utilizador.id))
+
+    def autenticar_com_google(self, info: GoogleIdTokenInfo) -> SessaoIniciada:
+        """`info` já foi verificado (assinatura, emissor, audiência,
+        expiração) por `core.security.verificar_id_token_google` antes de
+        chegar aqui — este método só decide o que fazer com uma identidade
+        Google confirmada: entrar numa conta já ligada, ligar uma conta
+        existente pelo mesmo email, ou criar uma conta nova."""
+        existente_por_sub = self._repo.obter_por_google_sub(info.sub)
+        if existente_por_sub is not None:
+            return SessaoIniciada(
+                utilizador=existente_por_sub, tokens=self._emitir_tokens(existente_por_sub.id)
+            )
+
+        existente_por_email = self._repo.obter_por_email(info.email)
+        if existente_por_email is not None:
+            if not info.email_verified:
+                raise EmailGoogleNaoVerificadoError(info.email)
+            # Conta já existe (criada por password) com o mesmo email — liga
+            # a Google em vez de criar uma segunda conta duplicada. Só é
+            # seguro confiar na igualdade de email porque a Google confirmou
+            # `email_verified` (verificado acima) -- nunca ligar por email
+            # sem essa confirmação (ver EmailGoogleNaoVerificadoError).
+            ligado = self._repo.ligar_google_sub(existente_por_email.id, info.sub)
+            return SessaoIniciada(utilizador=ligado, tokens=self._emitir_tokens(ligado.id))
+
+        novo = self._repo.criar_via_google(
+            email=info.email, google_sub=info.sub, nome_completo=info.nome
+        )
+        return SessaoIniciada(utilizador=novo, tokens=self._emitir_tokens(novo.id))
 
     def renovar_access_token(self, refresh_token: str) -> str:
         try:

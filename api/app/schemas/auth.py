@@ -44,6 +44,30 @@ class UtilizadorLogin(BaseModel):
     password: str
 
 
+class GoogleEntrada(BaseModel):
+    """O que o frontend envia depois de o Google Identity Services devolver
+    um ID token -- só a string do token, nunca decodificada nem confiada do
+    lado do cliente. A verificação real acontece em
+    `core.security.verificar_id_token_google`."""
+
+    credential: str
+
+
+class RecuperarPasswordPedido(BaseModel):
+    email: EmailStr
+
+
+class RedefinirPasswordPedido(BaseModel):
+    token: str
+    password_nova: str
+
+    _valida_password = field_validator("password_nova")(validar_password_forte)
+
+
+class ConfirmarEmailPedido(BaseModel):
+    token: str
+
+
 class UtilizadorPublico(BaseModel):
     id: str
     email: str
@@ -51,6 +75,7 @@ class UtilizadorPublico(BaseModel):
     nome_completo: str | None = None
     provincia: str | None = None
     genero: str | None = None
+    email_confirmado: bool = False
     criado_em: datetime
     # true só na resposta de /auth/entrar, quando voltar a entrar cancelou
     # um pedido de eliminação de conta agendado. Ver routers/conta.py.

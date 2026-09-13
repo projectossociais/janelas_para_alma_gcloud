@@ -60,7 +60,19 @@ class Utilizador(Base):
 
     id: Mapped[uuid.UUID] = _uuid_pk()
     email: Mapped[str] = mapped_column(String(320), unique=True, nullable=False, index=True)
-    password_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    # Nullable: uma conta criada via "Entrar com a Google" não tem password
+    # nenhuma para verificar -- `google_sub` é a única credencial dela. Uma
+    # conta por password nunca tem isto a None (auth_service.registar exige
+    # sempre um hash). Ver docs/BACKLOG.md, "Identidade externa e email".
+    password_hash: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Identificador estável e único da conta Google (claim "sub" do ID
+    # token) -- nunca o email por si só, que pode mudar do lado da Google.
+    google_sub: Mapped[str | None] = mapped_column(Text, unique=True)
+    # Falso por omissão para contas por password (confirmar por email,
+    # W-13/sprint "Identidade externa e email"); uma conta Google entra já
+    # confirmada -- a própria Google já verificou o email (claim
+    # "email_verified" do ID token).
+    email_confirmado: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
 
     # O esquema antigo tinha `nome` e `nome_completo` como colunas paralelas
     # (dívida nunca resolvida). Ao começar do zero, só uma sobrevive.
@@ -267,6 +279,30 @@ class SessaoExercicio(Base):
     pontuacao: Mapped[int] = mapped_column(nullable=False, server_default="0")
     precisao_percentual: Mapped[float] = mapped_column(Numeric, nullable=False, server_default="0")
     detalhes: Mapped[dict | None] = mapped_column(JSONB)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class TokenEmail(Base):
+    """Tokens de uso único para fluxos por email -- recuperação de password
+    e confirmação de conta no registo (sprint "Identidade externa e email",
+    ver docs/BACKLOG.md). As duas peças partilham esta tabela porque a
+    forma é idêntica: um segredo de vida curta, ligado a um utilizador, que
+    se gasta uma vez.
+
+    Guarda-se só o hash do token (`token_hash`), nunca o valor em bruto que
+    vai por email -- mesma lógica de nunca guardar uma password em texto
+    simples (CLAUDE.md secção 4): uma fuga desta tabela não dá a ninguém um
+    link de reposição de password ainda válido."""
+
+    __tablename__ = "tokens_email"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("utilizadores.id", ondelete="CASCADE"), nullable=False)
+    # "recuperacao_password" | "confirmacao_conta"
+    tipo: Mapped[str] = mapped_column(Text, nullable=False)
+    token_hash: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
+    expira_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    usado_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 

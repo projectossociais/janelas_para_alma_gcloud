@@ -841,40 +841,65 @@ acrescentado antes disto agrava o problema.
 
 ---
 
-## Sprint planeado — Identidade externa e email (decidido 2026-09-10, não iniciado)
+## Sprint — Identidade externa e email (decidido 2026-09-10, feito 2026-09-13)
 
-Discussão tida a 2026-09-10 (ver também [[gcloud-trial-google-auth-platform]] na memória).
-Decisão do dono do projecto: **fazer**, num sprint próprio, mais para a frente. Não é
-para hoje. Três peças que andam juntas porque partilham a mesma infra de email:
+Discussão tida a 2026-09-10 (ver também [[gcloud-trial-google-auth-platform]] na
+memória). Fornecedor de email escolhido pelo Wilson a 2026-09-13: **Resend**. Branch
+`api/identidade-externa-email`. Migração `56443b2f310a` (aditiva): `google_sub` único
++ `email_confirmado` em `utilizadores`, `password_hash` passa a nullable, tabela nova
+`tokens_email`. `alembic upgrade head` + `downgrade -1` + upgrade de novo testados
+contra Postgres real.
 
-1. **Autenticação com a Google (Sign in with Google).**
-   - OAuth2/OIDC via Google Identity Services — *OAuth client ID* criado na consola GCP
-     (APIs & Services → Credenciais). Grátis, sem dependência gerida nova.
-   - Implementa-se **dentro do `auth_service.py`**: verificar o ID token da Google no
-     servidor, criar/ligar uma linha em `utilizadores`. Mantém o modelo JWT + cookie
-     `httpOnly` já existente.
-   - Esquema: coluna `google_sub` (unique) em `utilizadores`, `password_hash` passa a
-     nullable (contas só-Google não têm password). Migração Alembic aditiva.
-   - **Não** reintroduzir Firebase Auth / Identity Platform — é o tipo de auth gerido
-     que a reescrita passou 6 sprints a remover do Supabase.
+**1. Autenticação com a Google — feito.**
+- `core/security.verificar_id_token_google` — assinatura, emissor e audiência via
+  `google-auth` (não confiar num JWT só descodificado). `AuthService.autenticar_com_google`
+  decide entrar/ligar/criar. **Caso de segurança coberto com teste dedicado:** ligar a
+  uma conta existente pelo email só acontece se a Google confirmar
+  `email_verified: true` — senão `EmailGoogleNaoVerificadoError` (409). Sem isso seria
+  um vector de account takeover (criar uma conta Google com o email de outra pessoa
+  para "entrar" na conta dela por aqui).
+- `POST /auth/google` recebe só o `credential` (ID token) — nunca decodificado nem
+  confiado do lado do cliente. Frontend: `GoogleSignInButton.tsx` (Google Identity
+  Services, `index.html`), em `Auth.tsx` nos dois separadores.
+- **Falta para funcionar de facto:** `GOOGLE_OAUTH_CLIENT_ID` (API) e
+  `VITE_GOOGLE_CLIENT_ID` (frontend) reais — criar em
+  console.cloud.google.com → APIs & Services → Credenciais → OAuth client ID.
 
-2. **Recuperação de palavra-passe por email.**
-   - Substitui o recado fixo de `Auth.tsx` ("ainda não está disponível"). Fluxo:
-     pedir → token de uso único com validade curta guardado (hash) → email com link →
-     `AtualizarPassword.tsx` (já existe, hoje ligado ao Supabase) reescrito para a API.
-   - **Bloqueado por:** escolher o fornecedor de email (ver abaixo).
+**2. Recuperação de palavra-passe por email — feito.**
+- `POST /auth/recuperar-password` (sempre 204, nunca revela se o email existe ou é
+  só-Google) + `POST /auth/redefinir-password`. Token de uso único, guardado como
+  hash (`tokens_email`), validade de 1h. `AtualizarPassword.tsx` reescrito por
+  completo: sai o Supabase (detectava sessão de recuperação via evento
+  `PASSWORD_RECOVERY`), entra o token na query string (`?token=`) + a API própria.
 
-3. **Confirmação de conta por email no registo.**
-   - O registo passa a criar a conta como *não confirmada*; email com link de
-     confirmação; até confirmar, sessão limitada ou bloqueada (decidir o grau).
-   - Esquema: `email_confirmado bool` + token de confirmação (mesma tabela/mecanismo
-     do ponto 2).
-   - **Bloqueado por:** o mesmo fornecedor de email.
+**3. Confirmação de conta por email no registo — feito em parte, decisão em aberto.**
+- `email_confirmado` existe, `POST /auth/registar` dispara (best-effort, nunca desfaz
+  o registo se o email falhar) o envio via `VerificacaoEmailService`.
+  `POST /auth/confirmar-email` + `POST /auth/reenviar-confirmacao` (exige sessão) +
+  página nova `ConfirmarEmail.tsx`.
+- **Decisão que falta, deliberadamente não tomada aqui:** o "decidir o grau" já
+  identificado em 2026-09-10 continua por decidir — `/auth/entrar` **não** recusa
+  contas não confirmadas (login funciona de qualquer forma). Ver AUTH-02 em
+  `tarefas.csv`: implementar isso é uma linha no `AuthService.autenticar`, mas é
+  decisão de produto (bloquear todo-ou-nada vs. restringir só algumas acções vs. só
+  lembrete), não técnica.
 
-**Decisão que falta (bloqueia 2 e 3):** qual o fornecedor de email transacional. O
-GCloud não tem serviço nativo. Candidatos: **Resend** (mais simples), **SendGrid**
-(tier grátis no marketplace GCP), **AWS SES** (mais barato a volume). Chamada por API
-HTTP a partir do FastAPI (o Cloud Run bloqueia SMTP), chave no Secret Manager.
+**Infra partilhada:** `repositories/email_sender.py` (`EmailSender` Protocol +
+`ResendEmailSender`, não testado directamente — mesmo padrão de `storage.R2Presigner`,
+precisa de rede/chave real) + `services/verificacao_email_service.py` (puro, testado,
+12 testes) + `repositories/tokens_email_repository.py`. `tests/conftest.py` novo —
+fixture `autouse` que substitui o envio de email por um nulo em toda a suite, por
+omissão (sem isto, todo o teste de router que já chamava `/auth/registar` antes desta
+peça existir tentaria uma escrita real na base de dados com o id fabricado do
+repositório falso de cada teste).
+
+**Testes:** 23 novos na API (auth_service + verificacao_email_service + routers) —
+162/162 `pytest`, ruff limpo. 12 novos no frontend (AuthContext, Auth, AtualizarPassword,
+ConfirmarEmail) — 60/60 vitest, tsc e lint sem regressões, build ok.
+
+**Falta para produção, além das credenciais Google/Resend:** decidir o grau de
+bloqueio do ponto 3 (acima); nada disto corre em produção sem essa decisão e sem
+revisão humana (toca autenticação e esquema — CLAUDE.md secção 10).
 
 ---
 
@@ -905,8 +930,8 @@ desenvolvimento?"* — a resposta honesta condiciona o que cabe.
 | 8 | Parceiro clínico disposto a validar o scanner com casos reais | ⏳ **Aberto** — bloqueia W-16, e sem ele não há produto clínico defensável | Wilson (parcerias) |
 | 4 | Cloud Run exige cartão registado, mesmo sem cobrar | ⏳ Aberto | Wilson (administrativo) |
 | 5 | Consentimento parental para menores — nunca abordado, nem no código nem nos documentos | ⏳ Aberto | Wilson + apoio jurídico |
-| 6 | Recuperação de palavra-passe | ⏳ **Reenquadrado 2026-09-10** — já não é config do Supabase; entra no sprint "Identidade externa e email", bloqueado por escolher fornecedor de email | Wilson (escolher fornecedor) |
-| 9 | Fornecedor de email transacional (Resend / SendGrid / SES) | ⏳ **Aberto** — bloqueia recuperação de password, confirmação de conta, e as notificações pendentes de doações/feedback/contacto/Premium | Wilson |
+| 6 | Recuperação de palavra-passe | ✅ **Resolvido 2026-09-13** — `POST /auth/recuperar-password` + `/auth/redefinir-password`, ver sprint "Identidade externa e email" | — |
+| 9 | Fornecedor de email transacional (Resend / SendGrid / SES) | ✅ **Resolvido 2026-09-13** — Resend escolhido pelo Wilson. Falta só a `RESEND_API_KEY` real (conta Resend + domínio verificado) para os emails saírem de facto; o código já está pronto e testado | Wilson (criar conta Resend + verificar domínio) |
 | 7 | Data de expiração do crédito Google Cloud trial — anotar | ⏳ Aberto | Wilson |
 
 ---

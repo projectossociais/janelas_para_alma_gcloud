@@ -10,6 +10,7 @@ export interface AuthUser {
   email: string;
   province: string;
   role: UserRole;
+  emailConfirmado: boolean;
   gender?: string;
   avatarUrl?: string;
   // Estes três nunca vêm de /auth/eu (a API de autenticação não os conhece
@@ -43,6 +44,7 @@ interface AuthContextValue {
   user: AuthUser | null;
   registerUser: (input: RegisterInput) => Promise<ResultadoAuth>;
   signIn: (email: string, password: string) => Promise<ResultadoAuth>;
+  signInWithGoogle: (credential: string) => Promise<ResultadoAuth>;
   logout: () => void;
   updateUser: (patch: Partial<AuthUser>) => void;
   updateUserProfile: (patch: Partial<AuthUser>) => void;
@@ -54,6 +56,7 @@ const paraAuthUser = (u: UtilizadorPublico): AuthUser => ({
   email: u.email,
   province: u.provincia ?? "",
   role: (u.papel as UserRole) || "comum",
+  emailConfirmado: u.email_confirmado,
   gender: u.genero ?? undefined,
 });
 
@@ -112,6 +115,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const signInWithGoogle: AuthContextValue["signInWithGoogle"] = async (credential) => {
+    try {
+      const utilizador = await authApi.google(credential);
+      setUser(paraAuthUser(utilizador));
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: mensagemDeFalha(err, "Não foi possível entrar com a Google.") };
+    }
+  };
+
   const logout = () => {
     setUser(null);
     // Best-effort: mesmo que o pedido falhe (rede em baixo, sessão já
@@ -134,6 +147,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user,
         registerUser,
         signIn,
+        signInWithGoogle,
         logout,
         updateUser,
         updateUserProfile: updateUser,

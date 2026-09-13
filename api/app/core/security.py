@@ -6,10 +6,14 @@ há razão para herdar também a escolha de algoritmo — argon2 é a recomenda�
 actual da OWASP para hashing de passwords.
 """
 
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import jwt
+from google.auth.exceptions import GoogleAuthError
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token as google_id_token
 from passlib.context import CryptContext
 
 from app.core.config import obter_settings
@@ -65,3 +69,48 @@ def descodificar_token(token: str, tipo_esperado: str) -> dict[str, Any]:
         raise TokenInvalidoError(f"esperava um token '{tipo_esperado}'")
 
     return payload
+
+
+class TokenGoogleInvalidoError(Exception):
+    """O ID token da Google tem assinatura inválida, expirou, ou não foi
+    emitido para o nosso `google_oauth_client_id`."""
+
+
+@dataclass(frozen=True)
+class GoogleIdTokenInfo:
+    sub: str
+    email: str
+    email_verified: bool
+    nome: str | None
+
+
+def verificar_id_token_google(id_token_bruto: str) -> GoogleIdTokenInfo:
+    """Verifica o ID token que o Google Identity Services devolve ao
+    frontend -- assinatura contra as chaves públicas da Google, emissor
+    (`accounts.google.com`), audiência (o nosso `google_oauth_client_id`) e
+    expiração. Nunca confiar no payload de um JWT descodificado sem isto: é
+    exactamente o que um pedido forjado enviaria para se fazer passar por
+    qualquer conta Google.
+
+    Não testado directamente (precisa de rede para buscar as chaves
+    públicas da Google) -- mesmo padrão de `repositories/storage.R2Presigner`.
+    A lógica que decide o que fazer com um token já verificado
+    (`AuthService.autenticar_com_google`) é que tem testes."""
+    settings = obter_settings()
+    try:
+        claims = google_id_token.verify_oauth2_token(
+            id_token_bruto, google_requests.Request(), settings.google_oauth_client_id
+        )
+    except (ValueError, GoogleAuthError) as exc:
+        raise TokenGoogleInvalidoError(str(exc)) from exc
+
+    email = claims.get("email")
+    if not email:
+        raise TokenGoogleInvalidoError("token sem email")
+
+    return GoogleIdTokenInfo(
+        sub=claims["sub"],
+        email=email,
+        email_verified=bool(claims.get("email_verified", False)),
+        nome=claims.get("name"),
+    )

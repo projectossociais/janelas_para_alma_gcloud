@@ -12,11 +12,17 @@ from datetime import UTC, datetime
 
 import pytest
 
-from app.core.security import criar_access_token, criar_refresh_token, hash_password
+from app.core.security import (
+    GoogleIdTokenInfo,
+    criar_access_token,
+    criar_refresh_token,
+    hash_password,
+)
 from app.repositories.utilizadores_repository import UtilizadorRegisto
 from app.services.auth_service import (
     AuthService,
     CredenciaisInvalidasError,
+    EmailGoogleNaoVerificadoError,
     EmailJaRegistadoError,
     RefreshTokenInvalidoError,
 )
@@ -40,6 +46,9 @@ class RepositorioFalso:
     def obter_por_id(self, utilizador_id: str) -> UtilizadorRegisto | None:
         return next((u for u in self._utilizadores.values() if u.id == utilizador_id), None)
 
+    def obter_por_google_sub(self, google_sub: str) -> UtilizadorRegisto | None:
+        return next((u for u in self._utilizadores.values() if u.google_sub == google_sub), None)
+
     def criar(
         self,
         email: str,
@@ -61,6 +70,38 @@ class RepositorioFalso:
         )
         self._utilizadores[email] = registo
         return registo
+
+    def criar_via_google(
+        self, email: str, google_sub: str, nome_completo: str | None
+    ) -> UtilizadorRegisto:
+        registo = UtilizadorRegisto(
+            id=f"id-{len(self._utilizadores) + 1}",
+            email=email,
+            password_hash=None,
+            papel="comum",
+            nome_completo=nome_completo,
+            provincia=None,
+            genero=None,
+            criado_em=datetime.now(UTC),
+            google_sub=google_sub,
+            email_confirmado=True,
+        )
+        self._utilizadores[email] = registo
+        return registo
+
+    def ligar_google_sub(self, utilizador_id: str, google_sub: str) -> UtilizadorRegisto:
+        for email, u in self._utilizadores.items():
+            if u.id == utilizador_id:
+                atualizado = replace(u, google_sub=google_sub, email_confirmado=True)
+                self._utilizadores[email] = atualizado
+                return atualizado
+        raise AssertionError("utilizador não encontrado no fake")
+
+    def marcar_email_confirmado(self, utilizador_id: str) -> None:
+        for email, u in self._utilizadores.items():
+            if u.id == utilizador_id:
+                self._utilizadores[email] = replace(u, email_confirmado=True)
+                return
 
     def atualizar_password_hash(self, utilizador_id: str, password_hash: str) -> None:
         for email, u in self._utilizadores.items():
@@ -167,6 +208,68 @@ class TestAutenticar:
             erro_email_inexistente = str(exc)
 
         assert erro_password_errada == erro_email_inexistente
+
+    def test_recusa_password_numa_conta_so_google_sem_revelar_isso(
+        self, service: AuthService
+    ) -> None:
+        # Uma conta criada via Google não tem password_hash nenhum -- tentar
+        # entrar por password tem de falhar com a mesma mensagem genérica,
+        # nunca um erro diferente que revele "esta conta não tem password".
+        service.autenticar_com_google(
+            GoogleIdTokenInfo(sub="sub-1", email="ana@example.com", email_verified=True, nome="Ana")
+        )
+
+        with pytest.raises(CredenciaisInvalidasError):
+            service.autenticar("ana@example.com", "qualquer-password")
+
+
+class TestAutenticarComGoogle:
+    def test_cria_conta_nova_quando_nao_existe_nenhuma(self, service: AuthService) -> None:
+        info = GoogleIdTokenInfo(sub="sub-1", email="ana@example.com", email_verified=True, nome="Ana Teste")
+
+        sessao = service.autenticar_com_google(info)
+
+        assert sessao.utilizador.email == "ana@example.com"
+        assert sessao.utilizador.nome_completo == "Ana Teste"
+        assert sessao.utilizador.password_hash is None
+        assert sessao.utilizador.email_confirmado is True
+        assert sessao.tokens.access_token
+
+    def test_entra_de_novo_pela_mesma_conta_google_ja_criada(self, service: AuthService) -> None:
+        info = GoogleIdTokenInfo(sub="sub-1", email="ana@example.com", email_verified=True, nome="Ana")
+        primeira = service.autenticar_com_google(info)
+
+        segunda = service.autenticar_com_google(info)
+
+        assert segunda.utilizador.id == primeira.utilizador.id
+
+    def test_liga_a_uma_conta_existente_com_o_mesmo_email_verificado(
+        self, service: AuthService
+    ) -> None:
+        registada = service.registar("ana@example.com", "password-forte-123")
+
+        ligada = service.autenticar_com_google(
+            GoogleIdTokenInfo(sub="sub-1", email="ana@example.com", email_verified=True, nome="Ana")
+        )
+
+        assert ligada.utilizador.id == registada.utilizador.id
+        assert ligada.utilizador.google_sub == "sub-1"
+        assert ligada.utilizador.email_confirmado is True
+
+    def test_recusa_ligar_a_conta_existente_se_a_google_nao_verificou_o_email(
+        self, service: AuthService
+    ) -> None:
+        # O caso de segurança que importa: sem isto, bastaria uma conta
+        # Google não verificada com o email de outra pessoa para "entrar"
+        # na conta dela por aqui.
+        service.registar("ana@example.com", "password-forte-123")
+
+        with pytest.raises(EmailGoogleNaoVerificadoError):
+            service.autenticar_com_google(
+                GoogleIdTokenInfo(
+                    sub="sub-do-atacante", email="ana@example.com", email_verified=False, nome=None
+                )
+            )
 
 
 class TestRenovarAccessToken:

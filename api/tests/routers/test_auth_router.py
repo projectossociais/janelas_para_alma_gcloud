@@ -10,10 +10,16 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.core.dependencies import obter_conta_service
+from app.core.security import GoogleIdTokenInfo, TokenGoogleInvalidoError
 from app.main import app
 from app.routers import auth as auth_router
 from app.services.auth_service import AuthService
 from app.services.conta_service import ContaService
+from app.services.verificacao_email_service import (
+    TokenEmailExpiradoError,
+    TokenEmailInvalidoError,
+    TokenEmailJaUsadoError,
+)
 from tests.services.test_auth_service import RepositorioFalso
 
 
@@ -140,3 +146,118 @@ def test_atualizar_token_renova_o_acesso_sem_precisar_de_reautenticar(client: Te
     assert "access_token" in resposta.cookies
 
     assert client.get("/auth/eu").status_code == 200
+
+
+def test_registar_cria_a_conta_por_confirmar(client: TestClient) -> None:
+    resposta = client.post("/auth/registar", json={"email": "ana@example.com", "password": "password-forte-123"})
+    assert resposta.json()["email_confirmado"] is False
+
+
+# --- Entrar com a Google ---------------------------------------------------
+
+
+def test_google_com_token_invalido_devolve_401(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    def _rejeita(*_a, **_k):
+        raise TokenGoogleInvalidoError("assinatura inválida")
+
+    monkeypatch.setattr(auth_router, "verificar_id_token_google", _rejeita)
+
+    resposta = client.post("/auth/google", json={"credential": "token-forjado"})
+
+    assert resposta.status_code == 401
+    assert client.get("/auth/eu").status_code == 401
+
+
+def test_google_cria_conta_nova_com_cookies_httponly(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        auth_router,
+        "verificar_id_token_google",
+        lambda _cred: GoogleIdTokenInfo(
+            sub="sub-1", email="ana@example.com", email_verified=True, nome="Ana"
+        ),
+    )
+
+    resposta = client.post("/auth/google", json={"credential": "token-valido"})
+
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["email"] == "ana@example.com"
+    assert corpo["email_confirmado"] is True  # a Google já verificou
+    assert "access_token" in resposta.cookies
+    assert client.get("/auth/eu").status_code == 200
+
+
+def test_google_com_email_ja_registado_mas_nao_verificado_devolve_409(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    client.post("/auth/registar", json={"email": "ana@example.com", "password": "password-forte-123"})
+    client.cookies.clear()
+
+    monkeypatch.setattr(
+        auth_router,
+        "verificar_id_token_google",
+        lambda _cred: GoogleIdTokenInfo(
+            sub="sub-do-atacante", email="ana@example.com", email_verified=False, nome=None
+        ),
+    )
+
+    resposta = client.post("/auth/google", json={"credential": "token-nao-verificado"})
+
+    assert resposta.status_code == 409
+    assert client.get("/auth/eu").status_code == 401  # nada foi iniciado
+
+
+# --- Recuperação de password / confirmação de conta ------------------------
+
+
+def test_recuperar_password_e_sempre_204(client: TestClient) -> None:
+    # Nunca revela se o email existe -- mesma resposta com ou sem conta.
+    assert client.post("/auth/recuperar-password", json={"email": "existe@example.com"}).status_code == 204
+    assert client.post("/auth/recuperar-password", json={"email": "fantasma@example.com"}).status_code == 204
+
+
+def test_redefinir_password_propaga_os_erros_do_service_com_o_http_certo(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class _VerificacaoFalsa:
+        def __init__(self, erro):
+            self._erro = erro
+
+        def redefinir_password(self, token, password_nova):
+            raise self._erro
+
+    for erro, status_esperado in [
+        (TokenEmailInvalidoError(), 401),
+        (TokenEmailJaUsadoError(), 409),
+        (TokenEmailExpiradoError(), 410),
+    ]:
+        app.dependency_overrides[auth_router.obter_verificacao_email_service] = (
+            lambda erro=erro: _VerificacaoFalsa(erro)
+        )
+        resposta = client.post(
+            "/auth/redefinir-password", json={"token": "abc", "password_nova": "nova-password-123"}
+        )
+        assert resposta.status_code == status_esperado
+
+
+def test_confirmar_email_com_token_valido_devolve_204(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class _VerificacaoFalsa:
+        def confirmar_conta(self, token):
+            assert token == "token-bom"
+
+    app.dependency_overrides[auth_router.obter_verificacao_email_service] = lambda: _VerificacaoFalsa()
+
+    resposta = client.post("/auth/confirmar-email", json={"token": "token-bom"})
+
+    assert resposta.status_code == 204
+
+
+def test_reenviar_confirmacao_exige_sessao(client: TestClient) -> None:
+    assert client.post("/auth/reenviar-confirmacao").status_code == 401
+
+    client.post("/auth/registar", json={"email": "ana@example.com", "password": "password-forte-123"})
+    assert client.post("/auth/reenviar-confirmacao").status_code == 204

@@ -10,6 +10,7 @@ const eu = vi.fn();
 const entrar = vi.fn();
 const registar = vi.fn();
 const sair = vi.fn();
+const google = vi.fn();
 const toastSuccess = vi.fn();
 
 vi.mock("@/lib/apiClient", () => ({
@@ -18,6 +19,7 @@ vi.mock("@/lib/apiClient", () => ({
     entrar: (email: string, password: string) => entrar(email, password),
     registar: (dados: unknown) => registar(dados),
     sair: () => sair(),
+    google: (credential: string) => google(credential),
   },
   // Implementação real (não é preciso mockar) -- duck-typing puro, sem
   // depender de nenhuma classe do módulo real.
@@ -46,6 +48,7 @@ const UTILIZADOR_API = {
   nome_completo: "Ana Teste",
   provincia: "Luanda",
   genero: "feminino",
+  email_confirmado: false,
   criado_em: "2026-01-01T00:00:00.000Z",
   eliminacao_cancelada: false,
 };
@@ -61,6 +64,7 @@ describe("AuthContext", () => {
     registar.mockReset();
     sair.mockReset();
     sair.mockResolvedValue(undefined);
+    google.mockReset();
     toastSuccess.mockReset();
   });
 
@@ -122,6 +126,38 @@ describe("AuthContext", () => {
     expect(toastSuccess).toHaveBeenCalledWith(
       "A eliminação da sua conta foi cancelada. Bem-vindo de volta."
     );
+  });
+
+  it("signInWithGoogle autentica com a credencial recebida do botão da Google", async () => {
+    eu.mockRejectedValue(erroApi(401, "sem sessão"));
+    google.mockResolvedValue({ ...UTILIZADOR_API, email_confirmado: true });
+    const { result } = renderAuth();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    let resultado: { ok: boolean; error?: string } | undefined;
+    await act(async () => {
+      resultado = await result.current.signInWithGoogle("id-token-da-google");
+    });
+
+    expect(google).toHaveBeenCalledWith("id-token-da-google");
+    expect(resultado).toEqual({ ok: true });
+    expect(result.current.isLoggedIn).toBe(true);
+    expect(result.current.user?.emailConfirmado).toBe(true);
+  });
+
+  it("signInWithGoogle nunca finge sucesso quando a API recusa a credencial", async () => {
+    eu.mockRejectedValue(erroApi(401, "sem sessão"));
+    google.mockRejectedValue(erroApi(401, "token inválido"));
+    const { result } = renderAuth();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    let resultado: { ok: boolean; error?: string } | undefined;
+    await act(async () => {
+      resultado = await result.current.signInWithGoogle("token-forjado");
+    });
+
+    expect(resultado).toEqual({ ok: false, error: "token inválido" });
+    expect(result.current.isLoggedIn).toBe(false);
   });
 
   it("signIn com credenciais erradas devolve o erro e nunca autentica", async () => {

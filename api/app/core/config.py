@@ -43,6 +43,29 @@ class Settings(BaseSettings):
     # proxy de /api/* e isto nem chega a ser exercitado.
     frontend_origins: list[str] = ["http://localhost:8080"]
 
+    # URL público do frontend, usado só para montar links absolutos dentro
+    # de emails (recuperação de password, confirmação de conta) -- um email
+    # não tem noção de "mesma origem", precisa sempre do URL completo.
+    frontend_base_url: str = "http://localhost:8080"
+
+    # Google Identity Services — "Entrar com a Google". O client ID não é
+    # segredo (vai para o frontend); não há client secret nenhum aqui porque
+    # o fluxo usado é o de ID token (verificado contra as chaves públicas da
+    # Google), não um code exchange. Ver docs/BACKLOG.md, "Identidade
+    # externa e email".
+    google_oauth_client_id: str = ""
+
+    # Resend — email transacional (recuperação de password, confirmação de
+    # conta). Chave em Secret Manager em produção, nunca committed.
+    resend_api_key: str = ""
+    resend_from_email: str = "Janelas Para a Alma <no-reply@janelasparaalma.org>"
+
+    # Validade dos tokens de email de uso único (tokens_email). Recuperação
+    # de password curta de propósito (janela de exposição menor); confirmação
+    # de conta mais folgada (não é sensível a roubo do mesmo jeito).
+    token_recuperacao_password_horas: int = 1
+    token_confirmacao_conta_horas: int = 24
+
     @property
     def cookie_seguro(self) -> bool:
         """Cookies com `Secure` fora de desenvolvimento — exige HTTPS, que só
