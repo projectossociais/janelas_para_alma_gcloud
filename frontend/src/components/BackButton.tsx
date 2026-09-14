@@ -2,21 +2,19 @@ import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface BackButtonProps {
-  to?: string;
+  fallbackPath?: string;
   label?: string;
   className?: string;
 }
 
-const BackButton = ({ to, label = "Voltar", className = "" }: BackButtonProps) => {
+const BackButton = ({ fallbackPath = "/", label = "Voltar", className = "" }: BackButtonProps) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    if (to) {
-      navigate(to);
-    } else if (window.history.length > 1) {
+    if (window.history.length > 2) {
       navigate(-1);
     } else {
-      navigate("/");
+      navigate(fallbackPath);
     }
   };
 
