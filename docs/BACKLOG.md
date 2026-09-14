@@ -876,6 +876,46 @@ GCloud não tem serviço nativo. Candidatos: **Resend** (mais simples), **SendGr
 (tier grátis no marketplace GCP), **AWS SES** (mais barato a volume). Chamada por API
 HTTP a partir do FastAPI (o Cloud Run bloqueia SMTP), chave no Secret Manager.
 
+### Fornecedor decidido: Resend — recuperação de password fechada (2026-09-14)
+
+Decisão do dono do projecto: **Resend**, sem mais adiar. Só a recuperação de password
+avançou agora (CROSS-04) — confirmação de conta por email (ponto 3 acima) e login com
+Google (ponto 1) continuam deliberadamente fora deste PR, cada um merece o seu próprio.
+
+O que ficou feito:
+
+- **Tabela nova** `tokens_recuperacao_password` (migração `a1f3c9e7d2b4`) — guarda o
+  **hash** do token (nunca o valor em claro), com `expira_em` (30 minutos) e `usado_em`
+  (uso único). Mesmo princípio de uma password: uma fuga da tabela não dá a ninguém um
+  link válido.
+- **`api/app/core/email.py`** — `EmailSender` (Protocol) + `ResendEmailSender`, chamada
+  HTTP directa (`httpx`) à API do Resend, sem SDK a mais. Mesmo padrão do `Presigner` em
+  `repositories/storage.py`: o service depende do Protocol, não da implementação, para
+  ser testável sem rede.
+- **`api/app/services/recuperacao_password_service.py`** — `solicitar()` nunca revela
+  se um email existe (mesma resposta, exista conta ou não); `redefinir()` valida token
+  existente + não usado + não expirado antes de trocar a password. Nunca mostra sucesso
+  se o Resend falhar de verdade — só o caso "email não existe" parece sucesso ao
+  chamador, um erro real do Resend propaga como erro (ver CLAUDE.md, "nunca mostrar
+  sucesso antes de verificar erro").
+- **`POST /auth/recuperar-password`** (sempre 202, mesma resposta) e
+  **`POST /auth/redefinir-password`** (400 se o token for inválido/expirado/usado).
+- **Frontend:** `Auth.tsx` (botão "Esqueceu a palavra-passe?" deixa de mostrar o aviso
+  fixo, chama a API a sério) e `AtualizarPassword.tsx` (reescrito de raiz — já não
+  depende do Supabase Auth nem do evento `PASSWORD_RECOVERY`; o token vem em `?token=`
+  na própria URL e é validado directamente pela API).
+- **Testes:** 14 novos na API (service + router, cobrindo token válido/expirado/já
+  usado/inexistente, e a resposta idêntica com/sem conta) e 8 no frontend.
+
+**Pendente — CROSS-07, atribuída ao Lukeny:** o remetente configurado é
+`onboarding@resend.dev` (sandbox do Resend, só entrega à própria conta) até o domínio
+`janelasparaalma.com` estar verificado no Resend (registos DNS SPF/DKIM/DMARC — o
+Lukeny é quem tem acesso à gestão do domínio, ver mensagem de instruções enviada
+separadamente). Sem isso, ninguém fora da conta Resend recebe o email a sério em
+produção — o código já está pronto, só falta colar a chave (`RESEND_API_KEY`) e o
+remetente verificado (`EMAIL_REMETENTE`) nos segredos do Cloud Run
+(`infra/gcloud/03-secrets.sh`/`04-deploy.sh`, já preparados para os receber).
+
 ---
 
 ## O que NÃO fazer agora
@@ -905,8 +945,8 @@ desenvolvimento?"* — a resposta honesta condiciona o que cabe.
 | 8 | Parceiro clínico disposto a validar o scanner com casos reais | ⏳ **Aberto** — bloqueia W-16, e sem ele não há produto clínico defensável | Wilson (parcerias) |
 | 4 | Cloud Run exige cartão registado, mesmo sem cobrar | ⏳ Aberto | Wilson (administrativo) |
 | 5 | Consentimento parental para menores — nunca abordado, nem no código nem nos documentos | ⏳ Aberto | Wilson + apoio jurídico |
-| 6 | Recuperação de palavra-passe | ⏳ **Reenquadrado 2026-09-10** — já não é config do Supabase; entra no sprint "Identidade externa e email", bloqueado por escolher fornecedor de email | Wilson (escolher fornecedor) |
-| 9 | Fornecedor de email transacional (Resend / SendGrid / SES) | ⏳ **Aberto** — bloqueia recuperação de password, confirmação de conta, e as notificações pendentes de doações/feedback/contacto/Premium | Wilson |
+| 6 | Recuperação de palavra-passe | ✅ **Resolvido 2026-09-14** — `POST /auth/recuperar-password` + `/auth/redefinir-password`, token de uso único hasheado (30 min), ligado no frontend. Ver secção dedicada abaixo | — |
+| 9 | Fornecedor de email transacional (Resend / SendGrid / SES) | ✅ **Resolvido 2026-09-14** — Resend. Falta só o domínio verificado no Resend (CROSS-07, Lukeny) para sair do remetente sandbox `onboarding@resend.dev` | Lukeny (DNS) |
 | 7 | Data de expiração do crédito Google Cloud trial — anotar | ⏳ Aberto | Wilson |
 
 ---
