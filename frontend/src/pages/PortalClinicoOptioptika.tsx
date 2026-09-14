@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   MapPin,
   Phone,
@@ -14,13 +15,12 @@ import {
   QrCode,
   CalendarPlus,
 } from "lucide-react";
-import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
 import { Button } from "@/components/ui/button";
-
-const OPTIOPTIKA_YELLOW = "#FFD500";
+import OptioptikaBookingDialog from "@/components/OptioptikaBookingDialog";
+import { OPTIOPTIKA_YELLOW } from "@/data/optioptika";
 
 const consultasBasicas = [
   { icon: Stethoscope, label: "Optometria Clínica e Oftalmologia" },
@@ -54,9 +54,10 @@ const enderecoCompleto =
 const whatsappLink = "https://wa.me/244931240304";
 const siteLink = "https://www.optioptika.com";
 const mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(enderecoCompleto)}`;
-const internalBookingLink = "/portal-clinico?agendar=optiotica";
 
 const PortalClinicoOptioptika = () => {
+  const [bookingOpen, setBookingOpen] = useState(false);
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
@@ -318,15 +319,13 @@ const PortalClinicoOptioptika = () => {
             </div>
             <div className="flex justify-center">
               <Button
-                asChild
                 size="lg"
+                onClick={() => setBookingOpen(true)}
                 className="font-semibold text-black hover:opacity-90"
                 style={{ backgroundColor: OPTIOPTIKA_YELLOW }}
               >
-                <Link to={internalBookingLink}>
-                  <CalendarPlus className="w-5 h-5 mr-2" />
-                  Agendar a Minha Consulta
-                </Link>
+                <CalendarPlus className="w-5 h-5 mr-2" />
+                Agendar a Minha Consulta
               </Button>
             </div>
           </div>
@@ -353,6 +352,8 @@ const PortalClinicoOptioptika = () => {
       </main>
 
       <Footer />
+
+      <OptioptikaBookingDialog open={bookingOpen} onOpenChange={setBookingOpen} />
     </div>
   );
 };
