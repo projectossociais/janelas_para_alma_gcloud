@@ -39,7 +39,7 @@ const CampanhaGamek = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
-      <BackButton to="/kamba" label="Voltar ao Meu Kamba" />
+      <BackButton fallbackPath="/kamba" label="Voltar ao Meu Kamba" />
       <main className="flex-1">
         <div className="container">
           <div className="max-w-3xl mx-auto flex flex-col gap-12 py-10">
