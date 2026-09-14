@@ -932,14 +932,15 @@ O que ficou feito:
 - **Testes:** 14 novos na API (service + router, cobrindo token válido/expirado/já
   usado/inexistente, e a resposta idêntica com/sem conta) e 8 no frontend.
 
-**Pendente — CROSS-07, atribuída ao Lukeny:** o remetente configurado é
-`onboarding@resend.dev` (sandbox do Resend, só entrega à própria conta) até o domínio
-`janelasparaalma.com` estar verificado no Resend (registos DNS SPF/DKIM/DMARC — o
-Lukeny é quem tem acesso à gestão do domínio, ver mensagem de instruções enviada
-separadamente). Sem isso, ninguém fora da conta Resend recebe o email a sério em
-produção — o código já está pronto, só falta colar a chave (`RESEND_API_KEY`) e o
-remetente verificado (`EMAIL_REMETENTE`) nos segredos do Cloud Run
-(`infra/gcloud/03-secrets.sh`/`04-deploy.sh`, já preparados para os receber).
+**CROSS-07 — resolvida a 2026-09-14:** domínio `janelasparaalma.com` verificado no
+Resend e chave de API já gerada. Falta só colar `RESEND_API_KEY` no Secret Manager via
+`infra/gcloud/03-secrets.sh` — bloqueado por **DEP-02** (o projecto GCloud com
+facturação ainda não existe). Até lá, dá para testar tudo localmente: definir
+`RESEND_API_KEY` e `EMAIL_REMETENTE=noreply@janelasparaalma.com` em `api/.env`
+(gitignored — nunca commitar a chave) e correr a API sem Docker
+(`python -m uvicorn app.main:app --reload`), ou passá-las como variável de ambiente ao
+`docker compose up`. `04-deploy.sh` já sabe pegar no segredo automaticamente assim que
+`03-secrets.sh` o tiver criado — nenhum código a mudar quando o DEP-02 destrancar.
 
 ### AUTH-02 fechada — confirmação de conta por email, bloqueio total (2026-09-14)
 
