@@ -8,9 +8,9 @@ import {
   Mail,
   Clock,
   Stethoscope,
+  Baby,
   Eye,
-  Glasses,
-  BadgeCheck,
+  ScanEye,
   CalendarPlus,
   Video,
   MapPinned,
@@ -39,6 +39,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 
+const OPTIOPTIKA_YELLOW = "#FFD500";
+
 const optioptika = {
   name: "Óptica Optioptika",
   tagline: "Visão da Banda",
@@ -54,23 +56,23 @@ const optioptika = {
 const services = [
   {
     icon: Stethoscope,
-    title: "Consultas de Oftalmologia",
-    text: "Avaliação clínica completa com médicos oftalmologistas.",
+    title: "Optometria e Oftalmologia",
+    text: "Consultas de optometria clínica e oftalmologia geral.",
+  },
+  {
+    icon: Baby,
+    title: "Pediátrica e Neonatal",
+    text: "Oftalmologia pediátrica, neonatal e teste do olhinho.",
+  },
+  {
+    icon: ScanEye,
+    title: "Exames de Saúde Ocular",
+    text: "Retinografia, campimetria, topografia corneal, OCT e tonometria.",
   },
   {
     icon: Eye,
-    title: "Exames Visuais",
-    text: "Refracção, acuidade visual, campo visual e rastreio de estrabismo.",
-  },
-  {
-    icon: Glasses,
-    title: "Óculos de Grau",
-    text: "Aconselhamento e adaptação de armações e lentes personalizadas.",
-  },
-  {
-    icon: BadgeCheck,
-    title: "Acompanhamento Terapêutico",
-    text: "Terapia visual, oclusão e reavaliações periódicas.",
+    title: "Catarata, Glaucoma e Cores",
+    text: "Rastreio e acompanhamento de catarata, glaucoma e visão das cores.",
   },
 ];
 
@@ -117,6 +119,7 @@ const ClinicalPartners = ({ defaultOpen = false }: ClinicalPartnersProps) => {
   const [open, setOpen] = useState(defaultOpen);
   const [mode, setMode] = useState<Mode>("presencial");
   const [receipt, setReceipt] = useState<BookingReceipt | null>(null);
+  const [logoError, setLogoError] = useState(false);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -161,7 +164,7 @@ const ClinicalPartners = ({ defaultOpen = false }: ClinicalPartnersProps) => {
 
 
   return (
-    <section id="parceiros-clinicos" className="py-20 md:py-28 bg-muted/40">
+    <section id="parceiros-clinicos" className="pt-8 pb-20 md:pt-12 md:pb-28 bg-muted/40">
       <div className="container px-6">
         <div className="text-center max-w-2xl mx-auto mb-14 space-y-3">
           <span className="text-sm font-medium tracking-widest uppercase text-teal">
@@ -177,36 +180,48 @@ const ClinicalPartners = ({ defaultOpen = false }: ClinicalPartnersProps) => {
 
         {/* Óptica Optioptika Profile Card */}
         <article className="max-w-5xl mx-auto rounded-3xl overflow-hidden bg-card border border-border/60 shadow-elevated">
-          {/* Header banner */}
-          <div className="relative bg-gradient-to-br from-navy via-navy to-teal/70 text-primary-foreground p-8 md:p-10">
+          {/* Header banner — cores da marca Optioptika (amarelo, preto, branco) */}
+          <div
+            className="relative text-black p-8 md:p-10"
+            style={{ backgroundColor: OPTIOPTIKA_YELLOW }}
+          >
             <div
               className="absolute inset-0 opacity-10 pointer-events-none"
               style={{
                 backgroundImage:
-                  "radial-gradient(circle at 15% 20%, white 1px, transparent 1px)",
+                  "radial-gradient(circle at 15% 20%, black 1.5px, transparent 1.5px)",
                 backgroundSize: "22px 22px",
               }}
             />
             <div className="relative flex flex-col md:flex-row md:items-center gap-6">
-              <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-primary-foreground/10 backdrop-blur border border-primary-foreground/20 flex items-center justify-center shrink-0">
-                <Building2 className="w-10 h-10 md:w-12 md:h-12 text-gold" />
+              <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-white shadow-card border border-black/10 flex items-center justify-center shrink-0 overflow-hidden">
+                {logoError ? (
+                  <Building2 className="w-10 h-10 md:w-12 md:h-12 text-black" />
+                ) : (
+                  <img
+                    src="/optioptika-logo.png"
+                    alt="Logótipo Optioptika"
+                    className="w-full h-full object-contain p-2"
+                    onError={() => setLogoError(true)}
+                  />
+                )}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 text-gold text-sm font-semibold mb-1">
-                  <Star className="w-4 h-4 fill-gold" />
+                <div className="flex items-center gap-2 text-black/70 text-sm font-semibold mb-1">
+                  <Star className="w-4 h-4 fill-black text-black" />
                   Parceiro Clínico Oficial
                 </div>
-                <h3 className="text-3xl md:text-4xl font-bold leading-tight mb-2">
+                <h3 className="text-3xl md:text-4xl font-black leading-tight mb-2">
                   {optioptika.name}
                 </h3>
-                <p className="text-primary-foreground/80 text-base md:text-lg">
+                <p className="text-black/80 text-base md:text-lg font-medium">
                   {optioptika.tagline}
                 </p>
                 <div className="flex flex-wrap gap-2 mt-4">
                   {optioptika.badges.map((b) => (
                     <span
                       key={b}
-                      className="text-xs font-medium px-3 py-1 rounded-full bg-primary-foreground/10 border border-primary-foreground/20"
+                      className="text-xs font-medium px-3 py-1 rounded-full bg-black/10 border border-black/15"
                     >
                       {b}
                     </span>
@@ -217,7 +232,7 @@ const ClinicalPartners = ({ defaultOpen = false }: ClinicalPartnersProps) => {
                 <Button
                   size="lg"
                   onClick={() => setOpen(true)}
-                  className="bg-gold text-navy hover:bg-gold/90 font-semibold"
+                  className="bg-black text-white hover:bg-black/80 font-semibold"
                 >
                   <CalendarPlus className="w-5 h-5 mr-2" />
                   Agendar Consulta
@@ -226,7 +241,7 @@ const ClinicalPartners = ({ defaultOpen = false }: ClinicalPartnersProps) => {
                   asChild
                   size="lg"
                   variant="outline"
-                  className="border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground font-semibold"
+                  className="border-black/30 bg-transparent text-black hover:bg-black/10 font-semibold"
                 >
                   <Link to="/portal-clinico/optioptika">
                     Saber mais
