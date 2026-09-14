@@ -54,6 +54,18 @@ docker compose up --build
 O frontend não tem serviço no `docker-compose.yml` — em produção é o Vercel que o serve,
 não um container nosso. Corre-se sempre como abaixo, com Docker ou sem ele.
 
+**Primeira vez (ou depois de apagar o volume `jpa_db_data`): a base de dados sobe vazia,
+sem tabelas nenhumas.** O container da API nunca corre migrações sozinho — de propósito,
+ver `CLAUDE.md` secção 10 — por isso é preciso correr isto manualmente antes de usar
+qualquer funcionalidade que toque a base de dados (doações, autenticação, banners, ...):
+
+```bash
+docker compose exec api alembic upgrade head
+```
+
+Sem este passo, qualquer pedido à API que leia ou escreva na base de dados falha com
+500 — sintoma típico: um endpoint novo "não funciona" sem erro óbvio no frontend.
+
 ### Sem Docker (ciclo de edição mais rápido)
 
 **Frontend:**

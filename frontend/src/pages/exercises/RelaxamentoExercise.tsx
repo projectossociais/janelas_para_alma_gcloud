@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -322,18 +322,25 @@ const RelaxamentoGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: Relaxament
 };
 
 const RelaxamentoExercise = () => {
+  const navigate = useNavigate();
   const [duracaoSegundos, setDuracaoSegundos] = useState(DURACOES_PREDEFINIDAS[1].segundos);
+
+  const handleVoltar = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/exercicios");
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-1 pt-24 pb-16">
         <div className="container max-w-4xl mx-auto">
-          <Button variant="ghost" asChild className="mb-6">
-            <Link to="/exercicios">
-              <ArrowLeft className="w-4 h-4" />
-              Voltar ao Menu
-            </Link>
+          <Button variant="ghost" className="mb-6" onClick={handleVoltar}>
+            <ArrowLeft className="w-4 h-4" />
+            Voltar ao Menu
           </Button>
 
           <BaseExercise

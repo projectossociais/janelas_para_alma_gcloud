@@ -39,6 +39,17 @@ if [ -n "${R2_ENDPOINT_URL:-}" ]; then
   API_ENV="${API_ENV},R2_ENDPOINT_URL=${R2_ENDPOINT_URL},R2_BUCKET=${R2_BUCKET}"
   [ -n "${R2_PUBLIC_BASE_URL:-}" ] && API_ENV="${API_ENV},R2_PUBLIC_BASE_URL=${R2_PUBLIC_BASE_URL}"
 fi
+# FRONTEND_BASE_URL é só para montar o link de recuperação de password que
+# vai por email (ver core/email.py) — nada a ver com CORS. Normalmente vazio
+# no primeiro deploy (o URL do frontend só existe depois dele); preencher em
+# 00-config.sh e voltar a correr este script quando já o souberes.
+[ -n "${FRONTEND_BASE_URL:-}" ] && API_ENV="${API_ENV},FRONTEND_BASE_URL=${FRONTEND_BASE_URL}"
+if gcloud secrets describe jpa-resend-api-key >/dev/null 2>&1; then
+  API_SECRETS="${API_SECRETS},RESEND_API_KEY=jpa-resend-api-key:latest"
+  API_ENV="${API_ENV},EMAIL_REMETENTE=${EMAIL_REMETENTE:-onboarding@resend.dev}"
+else
+  echo "    Resend sem chave (03-secrets.sh) — recuperação de password fica por activar."
+fi
 
 echo "==> Deploy da API ('${API_SERVICE}')"
 gcloud run deploy "$API_SERVICE" \
@@ -58,4 +69,9 @@ echo "    API_URL = ${API_URL}"
 echo
 echo "    Confirmar que frontend/vercel.json tem este URL no rewrite de /api/*"
 echo "    (o browser em janelasparaalma.com fala com a API só através dele)."
+if [ -z "${FRONTEND_BASE_URL:-}" ]; then
+  echo "    FRONTEND_BASE_URL ainda vazio: define-o em 00-config.sh como https://${FRONTEND_DOMAIN}"
+  echo "    e volta a correr este script para os emails de recuperação/confirmação"
+  echo "    apontarem para o sítio certo."
+fi
 echo "    Se a base de dados ainda não tem esquema, corre agora (com confirmação): ./05-migrate.sh"

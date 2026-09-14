@@ -58,7 +58,7 @@ const Circular = () => {
           </div>
         </section>
 
-        <BackButton to="/" />
+        <BackButton />
 
         {/* Process Steps */}
         <section className="py-20 md:py-28">

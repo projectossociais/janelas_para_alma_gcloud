@@ -10,9 +10,20 @@ nunca no corpo JSON — ver nota em app/schemas/auth.py.
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
 
 from app.core.cookies import definir_cookie_acesso, definir_cookies_sessao, limpar_cookies_sessao
-from app.core.dependencies import obter_auth_service, obter_conta_service, obter_utilizador_atual
+from app.core.dependencies import (
+    obter_auth_service,
+    obter_conta_service,
+    obter_recuperacao_password_service,
+    obter_utilizador_atual,
+)
 from app.repositories.utilizadores_repository import UtilizadorRegisto
-from app.schemas.auth import UtilizadorCriar, UtilizadorLogin, UtilizadorPublico
+from app.schemas.auth import (
+    RedefinirPassword,
+    SolicitarRecuperacaoPassword,
+    UtilizadorCriar,
+    UtilizadorLogin,
+    UtilizadorPublico,
+)
 from app.services.auth_service import (
     AuthService,
     CredenciaisInvalidasError,
@@ -20,6 +31,10 @@ from app.services.auth_service import (
     RefreshTokenInvalidoError,
 )
 from app.services.conta_service import ContaService
+from app.services.recuperacao_password_service import (
+    RecuperacaoPasswordService,
+    TokenRecuperacaoInvalidoError,
+)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -104,3 +119,26 @@ def atualizar_token(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
 
     definir_cookie_acesso(response, novo_access_token)
+
+
+@router.post("/recuperar-password", status_code=status.HTTP_202_ACCEPTED)
+def recuperar_password(
+    dados: SolicitarRecuperacaoPassword,
+    service: RecuperacaoPasswordService = Depends(obter_recuperacao_password_service),
+) -> dict[str, str]:
+    # Resposta sempre igual, exista ou não conta com este email — nunca deixar
+    # que este endpoint sirva para confirmar a um atacante se um email está
+    # registado (ver RecuperacaoPasswordService.solicitar).
+    service.solicitar(dados.email)
+    return {"mensagem": "Se existir uma conta com este email, foi enviado um link de recuperação."}
+
+
+@router.post("/redefinir-password", status_code=status.HTTP_204_NO_CONTENT)
+def redefinir_password(
+    dados: RedefinirPassword,
+    service: RecuperacaoPasswordService = Depends(obter_recuperacao_password_service),
+) -> None:
+    try:
+        service.redefinir(dados.token, dados.password_nova)
+    except TokenRecuperacaoInvalidoError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc

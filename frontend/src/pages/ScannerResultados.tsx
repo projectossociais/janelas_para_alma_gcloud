@@ -569,7 +569,7 @@ const Resultados = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
-      <BackButton to="/scanner" label="Nova análise" />
+      <BackButton fallbackPath="/scanner" label="Nova análise" />
       <main className="flex-1">
         <section className="container py-8 md:py-12">
           <div className="max-w-5xl mx-auto rounded-3xl bg-gradient-to-br from-navy to-navy/80 text-navy-foreground p-6 md:p-10 shadow-elevated animate-fade-in">

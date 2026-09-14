@@ -12,6 +12,7 @@ import Equipa from "./pages/Equipa";
 import Kamba from "./pages/Kamba";
 import CampanhaGamek from "./pages/CampanhaGamek";
 import Parceiros from "./pages/Parceiros";
+import PortalClinicoOptioptika from "./pages/PortalClinicoOptioptika";
 import Tecnologia from "./pages/Tecnologia";
 import Circular from "./pages/Circular";
 import Suporte from "./pages/Suporte";
@@ -52,6 +53,7 @@ import AdminNotifications from "./pages/admin/AdminNotifications";
 import AdminContent from "./pages/admin/AdminContent";
 import AdminAdmins from "./pages/admin/AdminAdmins";
 import GlobalBanner from "./components/GlobalBanner";
+import ScrollToTop from "./components/ScrollToTop";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -65,6 +67,7 @@ const App = () => (
         <ProfileProvider>
           <FeedbackProvider>
             <BrowserRouter>
+              <ScrollToTop />
               <GlobalBanner />
               <Routes>
                 <Route path="/" element={<Index />} />
@@ -73,6 +76,8 @@ const App = () => (
                 <Route path="/kamba" element={<Kamba />} />
                 <Route path="/meu-kamba/campanha-gamek" element={<CampanhaGamek />} />
                 <Route path="/parceiros" element={<Parceiros />} />
+                <Route path="/portal-clinico" element={<Parceiros />} />
+                <Route path="/portal-clinico/optioptika" element={<PortalClinicoOptioptika />} />
                 <Route path="/tecnologia" element={<Tecnologia />} />
                 <Route path="/circular" element={<Circular />} />
                 <Route path="/suporte" element={<Suporte />} />

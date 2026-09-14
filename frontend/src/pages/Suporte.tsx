@@ -56,7 +56,7 @@ const Suporte = () => {
           </div>
         </section>
 
-        <BackButton to="/" />
+        <BackButton />
 
         {/* Features */}
         <section className="py-20 md:py-28">

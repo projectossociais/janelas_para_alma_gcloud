@@ -13,6 +13,7 @@ export interface Profile {
   provincia: string | null;
   avatar_url: string | null;
   papel: string;
+  premium_ativo: boolean;
   notificacoes_projetos: boolean;
   notificacoes_lembretes: boolean;
   notificacoes_comunidade: boolean;
@@ -30,6 +31,7 @@ const paraProfile = (p: PerfilPublico): Profile => ({
   provincia: p.provincia,
   avatar_url: p.avatar_url,
   papel: p.papel,
+  premium_ativo: p.premium_ativo,
   notificacoes_projetos: p.notificacoes_projetos,
   notificacoes_lembretes: p.notificacoes_lembretes,
   notificacoes_comunidade: p.notificacoes_comunidade,

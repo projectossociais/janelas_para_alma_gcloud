@@ -32,6 +32,21 @@ export API_SERVICE="jpa-api"
 # de frontend/vercel.json, que nem chega a exercitar isto).
 export FRONTEND_DOMAIN="janelasparaalma.com"
 
+# --- Resend (email transacional) — recuperação de password ---------------
+# Chave de API do Resend. Deixar vazio aqui e exportar na shell antes de
+# correr o 03/04: export RESEND_API_KEY='re_...'
+export RESEND_API_KEY="${RESEND_API_KEY:-}"
+# Remetente verificado no Resend. Só funciona depois de o domínio
+# janelasparaalma.com estar verificado lá (registos SPF/DKIM/DMARC — ver
+# CROSS-07 em docs/tarefas.csv) — até isso acontecer, usar
+# "onboarding@resend.dev" (só entrega à própria conta).
+export EMAIL_REMETENTE="${EMAIL_REMETENTE:-onboarding@resend.dev}"
+# URL público onde o frontend responde — só para montar o link do email de
+# recuperação de password (nada a ver com CORS/FRONTEND_ORIGINS). Preencher
+# depois do primeiro deploy do frontend (o *.run.app de FRONTEND_SERVICE,
+# ou o domínio próprio se já estiver configurado).
+export FRONTEND_BASE_URL="${FRONTEND_BASE_URL:-}"
+
 # --- Cloudflare R2 (storage de ficheiros) — preencher quando existir -----
 export R2_ENDPOINT_URL="${R2_ENDPOINT_URL:-}"
 export R2_BUCKET="janelasparaalma"

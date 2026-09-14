@@ -9,13 +9,16 @@ segundo router (perfil, e os que se seguirem) também precisa dela.
 from fastapi import Cookie, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.core.email import EmailSender, ResendEmailSender
 from app.db import obter_sessao
+from app.repositories.tokens_recuperacao_repository import SQLAlchemyTokensRecuperacaoRepository
 from app.repositories.utilizadores_repository import (
     SQLAlchemyUtilizadoresRepository,
     UtilizadorRegisto,
 )
 from app.services.auth_service import AuthService, CredenciaisInvalidasError
 from app.services.conta_service import ContaService
+from app.services.recuperacao_password_service import RecuperacaoPasswordService
 
 
 def obter_auth_service(sessao: Session = Depends(obter_sessao)) -> AuthService:
@@ -24,6 +27,21 @@ def obter_auth_service(sessao: Session = Depends(obter_sessao)) -> AuthService:
 
 def obter_conta_service(sessao: Session = Depends(obter_sessao)) -> ContaService:
     return ContaService(SQLAlchemyUtilizadoresRepository(sessao))
+
+
+def obter_email_sender() -> EmailSender:
+    return ResendEmailSender()
+
+
+def obter_recuperacao_password_service(
+    sessao: Session = Depends(obter_sessao),
+    email_sender: EmailSender = Depends(obter_email_sender),
+) -> RecuperacaoPasswordService:
+    return RecuperacaoPasswordService(
+        SQLAlchemyUtilizadoresRepository(sessao),
+        SQLAlchemyTokensRecuperacaoRepository(sessao),
+        email_sender,
+    )
 
 
 def obter_utilizador_atual(

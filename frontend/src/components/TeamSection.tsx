@@ -25,7 +25,7 @@ const TEAM_MEMBERS: TeamMember[] = [
     id: 1,
     name: "Dalva Filipe",
     role: "Coordenação Geral",
-    description: "Impulsionando a visão da Janelas para a Alma.",
+    description: "Impulsionando a visão do Janelas para a Alma.",
     image: teamDalva,
     bio: "Sou estudante do terceiro ano do curso de Contabilidade e Finanças no ISAF e bolseira de mérito da Fundação BAI. Natural de Benguela, desenvolvo-me activamente em iniciativas ligadas à educação financeira, liderança juvenil e mercado de capitais.\n\nFaço parte da coordenação do Clube de Finanças do ISAF e desempenho funções de liderança em diversos projectos estudantis e associativos. Paralelamente, sou investidora e tenho interesse em contribuir para a inclusão financeira e o desenvolvimento social.",
     mission: "O que me move neste projecto é a vontade de dar voz e visibilidade a realidades que muitas vezes passam despercebidas, promovendo empatia, inclusão e consciência social. Acredito que pequenas acções podem gerar grandes mudanças, e este projecto é a minha forma de contribuir para uma sociedade mais humana e atenta às diferenças.\n\n\"O 'Janelas para a Alma' nasceu da necessidade de dar visibilidade ao que muitas vezes é ignorado porque compreender o outro também é uma forma de transformar o mundo.\"",

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { perfilApi, contaApi, mensagemDeErroApi } from "@/lib/apiClient";
+import { erroDePasswordFraca } from "@/lib/validarPassword";
 import { useProfile } from "@/contexts/ProfileContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -98,8 +99,9 @@ const Configuracoes = () => {
       toast.error("Verifique os campos da palavra-passe.");
       return;
     }
-    if (newPw.length < 8) {
-      toast.error("A nova palavra-passe deve ter pelo menos 8 caracteres.");
+    const erroPassword = erroDePasswordFraca(newPw);
+    if (erroPassword) {
+      toast.error(erroPassword);
       return;
     }
 

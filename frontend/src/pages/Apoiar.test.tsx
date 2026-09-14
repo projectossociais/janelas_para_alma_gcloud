@@ -5,22 +5,24 @@ import { MemoryRouter } from "react-router-dom";
 
 // --- mocks ---
 // Este é o fluxo com o histórico mais grave do projecto (ver CLAUDE.md,
-// "Nunca mostrar sucesso antes de verificar error/excepção") — o teste que
-// importa aqui é especificamente o caminho do erro, não só o do sucesso.
+// "Nunca mostrar sucesso antes de verificar error/excepção") — o que importa
+// aqui é especificamente o caminho do erro, não só o do sucesso. A doação de
+// materiais foi unificada de volta ao Supabase (mesmo caminho do fluxo
+// financeiro: insert em `doacoes` + Edge Function `enviar-email-doacao`)
+// enquanto a infra de email em Python não está pronta — ver docs/BACKLOG.md.
 
-const registarMateriais = vi.fn();
-
-vi.mock("@/lib/apiClient", () => ({
-  doacoesApi: { registarMateriais: (...a: unknown[]) => registarMateriais(...a) },
-  mensagemDeErroApi: (err: unknown, fallback: string) => {
-    const status = (err as { status?: unknown } | null)?.status;
-    const message = (err as { message?: unknown } | null)?.message;
-    return typeof status === "number" && typeof message === "string" ? message : fallback;
-  },
-}));
+const fromMock = vi.fn();
+const insertMock = vi.fn();
+const invokeMock = vi.fn();
 
 vi.mock("@/integrations/supabase/client", () => ({
-  supabase: { functions: { invoke: vi.fn() } },
+  supabase: {
+    from: (...args: unknown[]) => {
+      fromMock(...args);
+      return { insert: (...a: unknown[]) => insertMock(...a) };
+    },
+    functions: { invoke: (...args: unknown[]) => invokeMock(...args) },
+  },
 }));
 
 vi.mock("@/hooks/useSupabaseRole", () => ({
@@ -51,22 +53,25 @@ async function abrirDialogoDeMateriais(user: ReturnType<typeof userEvent.setup>)
   return screen.getByRole("button", { name: /Confirmar Doação|A enviar/ });
 }
 
-describe("Apoiar — doação de materiais", () => {
+describe("Apoiar — doação de materiais (Supabase)", () => {
   beforeEach(() => {
-    registarMateriais.mockReset();
+    fromMock.mockReset();
+    insertMock.mockReset();
+    invokeMock.mockReset();
     toastSuccess.mockReset();
     toastError.mockReset();
   });
 
-  it("nunca mostra sucesso quando a API falha ao registar a doação", async () => {
-    registarMateriais.mockRejectedValue(Object.assign(new Error("falha ao gravar"), { status: 500 }));
+  it("nunca mostra sucesso quando a gravação em `doacoes` falha", async () => {
+    insertMock.mockResolvedValue({ error: new Error("falha ao gravar") });
     const user = userEvent.setup();
     render(<Apoiar />, { wrapper: MemoryRouter });
 
     const confirmar = await abrirDialogoDeMateriais(user);
     await user.click(confirmar);
 
-    await waitFor(() => expect(registarMateriais).toHaveBeenCalled());
+    await waitFor(() => expect(insertMock).toHaveBeenCalled());
+    expect(invokeMock).not.toHaveBeenCalled();
     expect(toastSuccess).not.toHaveBeenCalled();
     expect(toastError).toHaveBeenCalledWith("falha ao gravar");
     // o dialogo continua no passo de formulário -- nunca avançou para o
@@ -74,17 +79,24 @@ describe("Apoiar — doação de materiais", () => {
     expect(screen.getByLabelText(/O seu email para contacto/i)).toBeInTheDocument();
   });
 
-  it("só mostra sucesso depois de a API confirmar o registo, com o recibo do servidor", async () => {
-    registarMateriais.mockResolvedValue({
-      id: "doacao-1",
-      recibo_id: "JPA-ABC123",
-      tipo: "materiais",
-      email: "doador@example.com",
-      materiais: ["armacoes"],
-      detalhes: null,
-      status: "pendente",
-      created_at: "2026-01-01T00:00:00.000Z",
-    });
+  it("nunca mostra sucesso quando a gravação passa mas o envio do email falha", async () => {
+    insertMock.mockResolvedValue({ error: null });
+    invokeMock.mockResolvedValue({ error: new Error("falha ao enviar email") });
+    const user = userEvent.setup();
+    render(<Apoiar />, { wrapper: MemoryRouter });
+
+    const confirmar = await abrirDialogoDeMateriais(user);
+    await user.click(confirmar);
+
+    await waitFor(() => expect(invokeMock).toHaveBeenCalled());
+    expect(toastSuccess).not.toHaveBeenCalled();
+    expect(toastError).toHaveBeenCalledWith("falha ao enviar email");
+    expect(screen.getByLabelText(/O seu email para contacto/i)).toBeInTheDocument();
+  });
+
+  it("só mostra sucesso depois de gravar em `doacoes` e confirmar o envio do email", async () => {
+    insertMock.mockResolvedValue({ error: null });
+    invokeMock.mockResolvedValue({ error: null });
     const user = userEvent.setup();
     render(<Apoiar />, { wrapper: MemoryRouter });
 
@@ -93,6 +105,25 @@ describe("Apoiar — doação de materiais", () => {
 
     await waitFor(() => expect(toastSuccess).toHaveBeenCalled());
     expect(toastError).not.toHaveBeenCalled();
-    expect(registarMateriais).toHaveBeenCalledWith("doador@example.com", ["armacoes"], "");
+
+    expect(fromMock).toHaveBeenCalledWith("doacoes");
+    expect(insertMock).toHaveBeenCalledWith([
+      expect.objectContaining({
+        tipo: "materiais",
+        email: "doador@example.com",
+        materiais: ["armacoes"],
+        status: "pendente",
+      }),
+    ]);
+    expect(invokeMock).toHaveBeenCalledWith(
+      "enviar-email-doacao",
+      expect.objectContaining({
+        body: expect.objectContaining({
+          tipo: "materiais",
+          email: "doador@example.com",
+          materiais: ["armacoes"],
+        }),
+      }),
+    );
   });
 });

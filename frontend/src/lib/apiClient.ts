@@ -64,8 +64,13 @@ async function pedido<T>(caminho: string, opcoes: RequestInit = {}): Promise<T> 
     try {
       mensagem = mensagemDeErro(await resposta.json()) ?? mensagem;
     } catch {
-      // corpo vazio ou não-JSON — fica a mensagem genérica
+      // Corpo vazio ou não-JSON (ex.: 500 sem handler de excepção devolve
+      // texto simples, não JSON) — a mensagem ao utilizador fica genérica de
+      // propósito, mas a consola leva o corpo tal como veio: é o único sítio
+      // onde um erro real (tabela em falta, migração por correr, etc.) fica
+      // visível sem ter de instrumentar o backend.
     }
+    console.error(`[apiClient] ${caminho} → ${resposta.status}: ${mensagem}`);
     throw new ApiError(resposta.status, mensagem);
   }
 
@@ -105,6 +110,19 @@ export const authApi = {
   sair: () => pedido<void>("/auth/sair", { method: "POST" }),
 
   atualizarToken: () => pedido<void>("/auth/atualizar-token", { method: "POST" }),
+
+  /** Resposta idêntica exista ou não conta com este email — a API nunca
+   *  revela isso (ver api/app/services/recuperacao_password_service.py). */
+  recuperarPassword: (email: string) =>
+    pedido<{ mensagem: string }>("/auth/recuperar-password", { method: "POST", body: JSON.stringify({ email }) }),
+
+  /** `token` vem do link recebido por email. Um token inválido, expirado
+   *  ou já usado devolve 400 — nunca sucesso fabricado. */
+  redefinirPassword: (token: string, passwordNova: string) =>
+    pedido<void>("/auth/redefinir-password", {
+      method: "POST",
+      body: JSON.stringify({ token, password_nova: passwordNova }),
+    }),
 };
 
 export interface PerfilPublico {

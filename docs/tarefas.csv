@@ -23,8 +23,8 @@ DEP-02,infra,Projecto GCloud + facturacao; correr infra/gcloud/01-05,P0,bloquead
 DEP-03,infra,Migracao Alembic contra Postgres real (local),P1,bloqueado,W,deploy,2026-09-10,Docker/WSL ou role jpa local; o CI ja cobre isto
 DEP-04,infra,docker compose build local - validar o container,P2,bloqueado,W,deploy,2026-09-10,WSL/reboot pendente; o CI ja cobre isto
 DEP-05,infra,Dominio proprio + certificado; trocar R2_PUBLIC_BASE_URL para custom domain,P2,a-fazer,W,deploy,2026-09-10,gcloud run domain-mappings
-W-11,api,Confirmacao de pagamento activa o Premium (paywall + auditoria),P0,em-curso,W,S2,2026-09-10,branch api/premium-w11; toca paywall e papeis -> revisao humana (CLAUDE.md 10)
-W-01,frontend,Remover o bypass do Premium,P0,a-fazer,W,S0,2026-09-10,Exercicios.tsx / BaseExercise.tsx; depende de W-11 (ver armadilha de sequencia no BACKLOG)
+W-11,api,Confirmacao de pagamento activa o Premium (paywall + auditoria),P0,feito,W,S2,2026-09-11,confirmado no main: premium_service.py + premium.py + 16 testes a passar
+W-01,frontend,Remover o bypass do Premium,P0,feito,W,S0,2026-09-13,"Exercicios.tsx/BaseExercise.tsx passam a usar profile.premium_ativo (+ admin); 4 testes novos em Exercicios.test.tsx; branch rebase contra main e a passar lint/test/build"
 L-11,frontend,Botao Aprovar pagamento no AdminInbox,P1,em-curso,L,S2,2026-09-10,ja em curso no AdminInbox.tsx; consome o endpoint de W-11
 L-12,frontend,Ecra a aguardar aprovacao,P2,a-fazer,L,S2,2026-09-10,reutiliza LockedVideoOverlay / PremiumPaywallModal
 W-02,api,Mudar password passa a mudar mesmo a password,P0,feito,W,S0,2026-09-09,feito via INF-04
@@ -57,16 +57,17 @@ S6-02,frontend,DashboardUser com dados reais,P2,a-fazer,L,S6,2026-09-10,hoje sao
 S6-03,frontend,Exercicios premium restantes sobre BaseExercise,P3,a-fazer,L,S6,2026-09-10,
 S6-04,frontend,Loja de oculos: carrinho + pagamento,P3,a-fazer,W+L,S6,2026-09-10,Produto.tsx e mock
 S6-05,api,Conteudo editavel pelo admin (notifications; site_content CRUD),P2,a-fazer,W+L,S6,2026-09-10,mesmo padrao do CRUD de banners de admin
-CROSS-01,api,Escolher fornecedor de email transacional,P1,bloqueado,W,transversal,2026-09-10,"bloqueia: recuperacao de password, confirmacao de doacao/feedback/contacto"
+CROSS-01,api,Escolher fornecedor de email transacional,P1,feito,W,transversal,2026-09-14,"Resend escolhido; api/app/core/email.py (httpx). Falta so o dominio verificado no Resend -- ver CROSS-07 (Lukeny)"
 CROSS-02,api,Fluxo financeiro de doacoes (upload de comprovativo),P2,bloqueado,W,transversal,2026-09-10,precisa de email + storage
 CROSS-03,frontend,Migrar as restantes chamadas Supabase (Scanner; Dashboard; oculos; candidaturas),P2,a-fazer,W,transversal,2026-09-10,"modulo a modulo, nunca big bang"
-CROSS-04,infra,Recuperacao de palavra-passe,P1,bloqueado,W,transversal,2026-09-10,depende de CROSS-01 (fornecedor de email)
+CROSS-04,infra,Recuperacao de palavra-passe,P1,feito,W,transversal,2026-09-14,"POST /auth/recuperar-password + /auth/redefinir-password, token de uso unico hasheado, migracao a1f3c9e7d2b4, Auth.tsx/AtualizarPassword.tsx ligados; testes API+frontend. Pendente: CROSS-07 (dominio Resend) para sair do sandbox onboarding@resend.dev"
 CROSS-05,legal,Consentimento parental para menores,P1,bloqueado,W,transversal,2026-09-10,bloqueio #5; precisa de apoio juridico
 CROSS-06,infra,Confirmar o prazo do credito GCloud trial,P2,a-fazer,W,transversal,2026-09-10,bloqueio #7
-AUTH-01,api,Registo: politica de password mais forte + campo de confirmacao no formulario,P0,a-fazer,W,S0,2026-09-10,"hoje so valida >=8 chars (validar_password_forte em schemas/auth.py); definir regra minima real (maiuscula/digito/etc). Confirmacao e so no <form>, nunca vai ao servidor. Desbloqueado."
-AUTH-02,api,Registo: verificacao por email antes do 1o login (nunca redirecionar como se logado),P0,bloqueado,W,S0,2026-09-10,"Auth.tsx redireciona logo apos registar; nao existe email_verificado no esquema. /auth/entrar tem de recusar conta nao verificada. Depende de CROSS-01 (fornecedor de email); toca esquema + auth -> migracao Alembic + revisao humana (CLAUDE.md 5/10/12)"
+CROSS-07,infra,"Verificar janelasparaalma.com no Resend (registos DNS: SPF, DKIM, DMARC)",P0,a-fazer,L,transversal,2026-09-14,"Lukeny gere o dominio no Vercel/DNS -- ver mensagem de instrucoes anexada ao PR. Sem isto, RESEND_API_KEY e EMAIL_REMETENTE ficam por preencher a serio e a recuperacao de password fica presa ao sandbox onboarding@resend.dev (so entrega a propria conta Resend)"
+AUTH-01,api,Registo: politica de password mais forte + campo de confirmacao no formulario,P0,feito,W,S0,2026-09-14,"validar_password_forte exige letra+numero (sem maiuscula/simbolo, para nao frustrar registo); Auth.tsx ganha confirmar-password; helper partilhado frontend/src/lib/validarPassword.ts reutilizado em Configuracoes.tsx e AtualizarPassword.tsx; testes novos API+frontend"
+AUTH-02,api,Registo: verificacao por email antes do 1o login (nunca redirecionar como se logado),P0,a-fazer,W,S0,2026-09-14,"Auth.tsx redireciona logo apos registar; nao existe email_verificado no esquema. /auth/entrar tem de recusar conta nao verificada. CROSS-01 (fornecedor de email) ja resolvido -- deixou de estar bloqueada, so nao construida ainda; toca esquema + auth -> migracao Alembic + revisao humana (CLAUDE.md 5/10/12)"
 NAO-01,-,Gateway de pagamento automatico (EMIS/AppyPay),-,nao-fazer-agora,-,-,2026-09-10,o ciclo manual da S2 chega; depende de contrato comercial
-NAO-02,-,Login com Google,-,nao-fazer-agora,-,-,2026-09-10,decidido: sprint proprio; falta escolher fornecedor de email
+NAO-02,-,Login com Google,-,nao-fazer-agora,-,-,2026-09-14,"decidido: sprint proprio (nao e decisao tecnica, e de prioridade). Fornecedor de email ja resolvido (CROSS-01/Resend) -- deixou de ser bloqueio tecnico, continua fora de agora por decisao"
 NAO-03,-,Versao em ingles,-,nao-fazer-agora,-,-,2026-09-10,o publico e angolano
 NAO-04,-,Mapa de clinicas parceiras,-,nao-fazer-agora,-,-,2026-09-10,uma lista chega enquanto houver poucas clinicas
 NAO-05,-,Notificacoes push + modo offline,-,nao-fazer-agora,-,-,2026-09-10,"custo alto, ninguem bloqueado hoje"

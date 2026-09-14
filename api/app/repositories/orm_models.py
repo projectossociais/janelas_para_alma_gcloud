@@ -93,6 +93,26 @@ class Utilizador(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class TokenRecuperacaoPassword(Base):
+    """Token de uso único para o fluxo "esqueci-me da password" (ver
+    services/recuperacao_password_service.py). Guarda-se o hash do token,
+    nunca o valor em claro — o mesmo princípio de uma password: mesmo que a
+    tabela vaze, ninguém consegue recuperar/reutilizar um link a partir dela.
+    `usado_em` marca consumo (nunca se apaga a linha, fica o registo de que
+    aquele token já serviu); `expira_em` é sempre verificado na leitura."""
+
+    __tablename__ = "tokens_recuperacao_password"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    utilizador_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False, index=True)
+    criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    expira_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    usado_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class AdminPermission(Base):
     __tablename__ = "admin_permissions"
 
