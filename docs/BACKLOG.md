@@ -932,8 +932,13 @@ O que ficou feito:
 - **Testes:** 14 novos na API (service + router, cobrindo token válido/expirado/já
   usado/inexistente, e a resposta idêntica com/sem conta) e 8 no frontend.
 
-**CROSS-07 — resolvida a 2026-09-14:** domínio `janelasparaalma.com` verificado no
-Resend e chave de API já gerada. Falta só colar `RESEND_API_KEY` no Secret Manager via
+**CROSS-07 — resolvida a 2026-09-14, confirmada a funcionar a 2026-09-15:** domínio
+`janelasparaalma.com` verificado no Resend (`GET /domains` → `status: verified`,
+`sending: enabled`) e chave de API gerada. **Testado a sério** — não só com o
+`EmailSender` falso dos testes automatizados: um pedido real a
+`POST https://api.resend.com/emails` com a chave e o remetente configurados foi aceite
+e o email chegou à caixa de entrada. A integração está confirmada de ponta a ponta;
+falta só colar `RESEND_API_KEY` no Secret Manager via
 `infra/gcloud/03-secrets.sh` — bloqueado por **DEP-02** (o projecto GCloud com
 facturação ainda não existe). Até lá, dá para testar tudo localmente: definir
 `RESEND_API_KEY` e `EMAIL_REMETENTE=noreply@janelasparaalma.com` em `api/.env`
