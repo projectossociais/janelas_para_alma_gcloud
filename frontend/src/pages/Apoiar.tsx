@@ -531,7 +531,7 @@ const Apoiar = () => {
 
             <p className="text-center text-sm text-muted-foreground mt-12 max-w-xl mx-auto">
               Todos os donativos são geridos com total transparência e revertem integralmente para
-              os pacientes apoiados pela Janelas Para a Alma.
+              os pacientes apoiados pelo Janelas Para a Alma.
             </p>
           </div>
         </section>

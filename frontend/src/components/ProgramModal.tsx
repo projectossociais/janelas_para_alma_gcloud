@@ -42,7 +42,7 @@ const ProgramModal = ({ open, onOpenChange }: ProgramModalProps) => {
               Programa Meu Kamba Estrábico
             </DialogTitle>
             <DialogDescription>
-              Uma iniciativa estratégica de inclusão visual e ecológica da Janelas para a Alma.
+              Uma iniciativa estratégica de inclusão visual e ecológica do Janelas para a Alma.
             </DialogDescription>
           </DialogHeader>
 
@@ -54,7 +54,7 @@ const ProgramModal = ({ open, onOpenChange }: ProgramModalProps) => {
                 Sobre
               </h3>
               <p className="text-muted-foreground leading-relaxed text-justify">
-                O programa é uma iniciativa estratégica da Janelas para a Alma que busca criar uma rede de apoio nas comunidades,
+                O programa é uma iniciativa estratégica do Janelas para a Alma que busca criar uma rede de apoio nas comunidades,
                 promovendo a inclusão e a solidariedade em torno do estrabismo. O nome visa
                 desestigmatizar a condição por meio do afecto, mobilizando jovens voluntários como
                 "Kambas" (Embaixadores da inclusão visual e ecológica).

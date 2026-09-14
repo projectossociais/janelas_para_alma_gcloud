@@ -20,7 +20,7 @@ const impacts = [
     color: "bg-teal/10 text-teal",
     image: impactSocial,
     modalContent:
-      "A Janelas para a Alma promove a inclusão visual através da distribuição de óculos acessíveis e métodos de tratamento adaptados à realidade angolana. Ao devolver a capacidade de ver correctamente, restauramos a autoestima e qualidade de vida de crianças, jovens e adultos que vivem com estrabismo. O impacto estende-se às famílias e comunidades, quebrando o ciclo de exclusão social associado às condições visuais não tratadas.",
+      "O Janelas para a Alma promove a inclusão visual através da distribuição de óculos acessíveis e métodos de tratamento adaptados à realidade angolana. Ao devolver a capacidade de ver correctamente, restauramos a autoestima e qualidade de vida de crianças, jovens e adultos que vivem com estrabismo. O impacto estende-se às famílias e comunidades, quebrando o ciclo de exclusão social associado às condições visuais não tratadas.",
   },
   {
     icon: Recycle,
@@ -29,7 +29,7 @@ const impacts = [
     color: "bg-green/10 text-green",
     image: impactEcologico,
     modalContent:
-      "Através da recolha e reaproveitamento de óculos usados e materiais recicláveis, a Janelas para a Alma contribui directamente para a redução de resíduos sólidos. Cada par de óculos reutilizado representa menos lixo nos aterros e menos recursos naturais consumidos na fabricação de novos. Este modelo de economia circular transforma resíduos em instrumentos de transformação social.",
+      "Através da recolha e reaproveitamento de óculos usados e materiais recicláveis, o Janelas para a Alma contribui directamente para a redução de resíduos sólidos. Cada par de óculos reutilizado representa menos lixo nos aterros e menos recursos naturais consumidos na fabricação de novos. Este modelo de economia circular transforma resíduos em instrumentos de transformação social.",
   },
   {
     icon: TreePine,
@@ -38,7 +38,7 @@ const impacts = [
     color: "bg-gold/10 text-gold",
     image: impactClimatico,
     modalContent:
-      "Ao reduzir a necessidade de fabricação de novos óculos e promover práticas sustentáveis, a Janelas para a Alma contribui para a diminuição da pegada de carbono. O menor consumo industrial significa menos emissões de gases de efeito estufa, menos energia consumida e menos recursos naturais extraídos. Cada acção local tem um efeito positivo no combate às alterações climáticas globais.",
+      "Ao reduzir a necessidade de fabricação de novos óculos e promover práticas sustentáveis, o Janelas para a Alma contribui para a diminuição da pegada de carbono. O menor consumo industrial significa menos emissões de gases de efeito estufa, menos energia consumida e menos recursos naturais extraídos. Cada acção local tem um efeito positivo no combate às alterações climáticas globais.",
   },
   {
     icon: Glasses,
@@ -47,7 +47,7 @@ const impacts = [
     color: "bg-sky/10 text-sky",
     image: impactEducacional,
     modalContent:
-      "As oficinas educativas e campanhas de sensibilização formam jovens conscientes que se tornam multiplicadores de conhecimento nas suas comunidades. Através da educação sobre saúde visual e sustentabilidade ambiental, criamos uma rede de agentes de mudança que perpetuam o impacto da Janelas para a Alma muito além do seu alcance directo.",
+      "As oficinas educativas e campanhas de sensibilização formam jovens conscientes que se tornam multiplicadores de conhecimento nas suas comunidades. Através da educação sobre saúde visual e sustentabilidade ambiental, criamos uma rede de agentes de mudança que perpetuam o impacto do Janelas para a Alma muito além do seu alcance directo.",
   },
 ];
 
@@ -79,7 +79,7 @@ const ImpactSection = () => {
             Cuidar das pessoas e do planeta
           </h2>
           <p className="text-lg text-navy-foreground/70 max-w-2xl mx-auto">
-            Ao transformar desafios em oportunidades, a Janelas para a Alma constrói uma ponte entre inclusão social e economia circular.
+            Ao transformar desafios em oportunidades, o Janelas para a Alma constrói uma ponte entre inclusão social e economia circular.
           </p>
         </div>
 
