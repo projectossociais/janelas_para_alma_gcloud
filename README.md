@@ -49,6 +49,18 @@ docker compose up --build
 - API: http://localhost:8000 (docs automáticas em `/docs`)
 - Postgres: `localhost:5432` (utilizador/password/bd: `jpa`/`jpa`/`jpa`)
 
+**Primeira vez (ou depois de apagar o volume `jpa_db_data`): a base de dados sobe vazia,
+sem tabelas nenhumas.** O container da API nunca corre migrações sozinho — de propósito,
+ver `CLAUDE.md` secção 10 — por isso é preciso correr isto manualmente antes de usar
+qualquer funcionalidade que toque a base de dados (doações, autenticação, banners, ...):
+
+```bash
+docker compose exec api alembic upgrade head
+```
+
+Sem este passo, qualquer pedido à API que leia ou escreva na base de dados falha com
+500 — sintoma típico: um endpoint novo "não funciona" sem erro óbvio no frontend.
+
 ### Sem Docker (ciclo de edição mais rápido)
 
 **Frontend:**

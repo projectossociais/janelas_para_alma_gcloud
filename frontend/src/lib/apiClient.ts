@@ -63,8 +63,13 @@ async function pedido<T>(caminho: string, opcoes: RequestInit = {}): Promise<T> 
     try {
       mensagem = mensagemDeErro(await resposta.json()) ?? mensagem;
     } catch {
-      // corpo vazio ou não-JSON — fica a mensagem genérica
+      // Corpo vazio ou não-JSON (ex.: 500 sem handler de excepção devolve
+      // texto simples, não JSON) — a mensagem ao utilizador fica genérica de
+      // propósito, mas a consola leva o corpo tal como veio: é o único sítio
+      // onde um erro real (tabela em falta, migração por correr, etc.) fica
+      // visível sem ter de instrumentar o backend.
     }
+    console.error(`[apiClient] ${caminho} → ${resposta.status}: ${mensagem}`);
     throw new ApiError(resposta.status, mensagem);
   }
 
