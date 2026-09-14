@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  Building2,
   MapPin,
   Phone,
   Mail,
@@ -17,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import OptioptikaBookingDialog from "@/components/OptioptikaBookingDialog";
 import { optioptika, OPTIOPTIKA_YELLOW } from "@/data/optioptika";
+import optioptikaLogo from "@/assets/optioptika-logo.png";
 
 const services = [
   {
@@ -47,7 +47,6 @@ interface ClinicalPartnersProps {
 
 const ClinicalPartners = ({ defaultOpen = false }: ClinicalPartnersProps) => {
   const [open, setOpen] = useState(defaultOpen);
-  const [logoError, setLogoError] = useState(false);
 
   useEffect(() => {
     if (defaultOpen) setOpen(true);
@@ -85,16 +84,11 @@ const ClinicalPartners = ({ defaultOpen = false }: ClinicalPartnersProps) => {
             />
             <div className="relative flex flex-col md:flex-row md:items-center gap-6">
               <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-white shadow-card border border-black/10 flex items-center justify-center shrink-0 overflow-hidden">
-                {logoError ? (
-                  <Building2 className="w-10 h-10 md:w-12 md:h-12 text-black" />
-                ) : (
-                  <img
-                    src="/optioptika-logo.png"
-                    alt="Logótipo Optioptika"
-                    className="w-full h-full object-contain p-2"
-                    onError={() => setLogoError(true)}
-                  />
-                )}
+                <img
+                  src={optioptikaLogo}
+                  alt="Logótipo Óptica Optioptika"
+                  className="w-full h-full object-contain p-2"
+                />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 text-black/70 text-sm font-semibold mb-1">
