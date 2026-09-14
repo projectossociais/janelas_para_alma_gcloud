@@ -12,7 +12,6 @@ import {
   ScanEye,
   Activity,
   Radio,
-  QrCode,
   CalendarPlus,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
@@ -21,6 +20,7 @@ import BackButton from "@/components/BackButton";
 import { Button } from "@/components/ui/button";
 import OptioptikaBookingDialog from "@/components/OptioptikaBookingDialog";
 import { OPTIOPTIKA_YELLOW } from "@/data/optioptika";
+import optioptikaAppQr from "@/assets/optioptika-app-qr.png";
 
 const consultasBasicas = [
   { icon: Stethoscope, label: "Optometria Clínica e Oftalmologia" },
@@ -192,7 +192,7 @@ const PortalClinicoOptioptika = () => {
         <section className="py-16 md:py-24 bg-muted/40">
           <div className="container px-6">
             <div className="max-w-4xl mx-auto rounded-3xl bg-card border border-border/60 shadow-elevated p-8 md:p-12">
-              <div className="grid md:grid-cols-[1fr_auto] gap-8 items-center">
+              <div className="grid md:grid-cols-[1fr_420px] gap-10 items-center">
                 <div className="text-center md:text-left">
                   <div
                     className="inline-flex items-center justify-center w-14 h-14 rounded-2xl text-black mb-6"
@@ -212,15 +212,16 @@ const PortalClinicoOptioptika = () => {
                     disponível na Google Play e App Store.
                   </p>
                 </div>
-                <div className="flex flex-col items-center gap-2 mx-auto md:mx-0">
-                  <div
-                    className="w-28 h-28 md:w-32 md:h-32 rounded-2xl bg-white border-2 flex items-center justify-center"
-                    style={{ borderColor: OPTIOPTIKA_YELLOW }}
-                  >
-                    <QrCode className="w-16 h-16 md:w-20 md:h-20 text-black" strokeWidth={1.25} />
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-full rounded-2xl bg-white border-2 p-4" style={{ borderColor: OPTIOPTIKA_YELLOW }}>
+                    <img
+                      src={optioptikaAppQr}
+                      alt="Códigos QR para descarregar o aplicativo Optioptika na Google Play e App Store"
+                      className="w-full h-auto object-contain"
+                    />
                   </div>
-                  <span className="text-xs text-muted-foreground text-center max-w-[9rem]">
-                    Aponte a câmara do telemóvel para descarregar
+                  <span className="text-xs text-muted-foreground text-center">
+                    Aponte a câmara do telemóvel a um dos códigos para descarregar
                   </span>
                 </div>
               </div>
