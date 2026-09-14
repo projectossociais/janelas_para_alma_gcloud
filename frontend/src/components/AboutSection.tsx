@@ -54,7 +54,7 @@ const AboutSection = () => {
             <span className="text-gradient-brand">Uma Vida Transformada</span>
           </h2>
           <p className="text-lg text-muted-foreground leading-relaxed text-justify">
-            A Janelas para a Alma é uma start up angolana direccionada a pessoas com estrabismo — condição que afecta o alinhamento dos olhos, podendo causar visão dupla, ambliopia ou cegueira. Em Angola, muitas crianças, jovens e adultos convivem com esta condição sem o devido apoio, o que afecta a auto-estima, desempenho escolar e integração social.
+            O Janelas para a Alma é uma start up angolana direccionada a pessoas com estrabismo — condição que afecta o alinhamento dos olhos, podendo causar visão dupla, ambliopia ou cegueira. Em Angola, muitas crianças, jovens e adultos convivem com esta condição sem o devido apoio, o que afecta a auto-estima, desempenho escolar e integração social.
           </p>
           <p className="text-lg text-muted-foreground leading-relaxed text-justify">
             Ao mesmo tempo, o meio ambiente sofre com o descarte inadequado de resíduos reutilizáveis. O Janelas para a Alma actua na intersecção destas duas problemáticas, propondo soluções que beneficiam tanto as pessoas quanto o planeta.

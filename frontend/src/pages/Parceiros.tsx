@@ -7,7 +7,6 @@ import PartnerDialog from "@/components/PartnerDialog";
 import ClinicalPartners from "@/components/ClinicalPartners";
 import { useSupabaseRole } from "@/hooks/useSupabaseRole";
 import heroImg from "@/assets/parceiros-hero.jpg";
-import visaoImg from "@/assets/parceiros-visao.jpg";
 
 const benefits = [
   {
@@ -62,36 +61,7 @@ const Parceiros = () => {
 
       <BackButton />
 
-      {/* Vision */}
-      <section className="py-20 md:py-28 bg-background">
-        <div className="container px-6">
-          <div className="grid md:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">
-            <div className="animate-fade-in">
-              <span className="inline-block px-4 py-1.5 rounded-full bg-teal/10 text-teal text-sm font-medium mb-4">
-                A Nossa Visão
-              </span>
-              <h2 className="text-3xl md:text-4xl font-bold text-navy mb-6 leading-tight">
-                O ecossistema que estamos a construir
-              </h2>
-              <p className="text-lg text-muted-foreground leading-relaxed">
-                A nossa plataforma vai conectar utilizadores a clínicas, óticas e especialistas em saúde visual. O nosso plano inclui integrar parceiros numa plataforma centralizada para gestão de encaminhamentos e consultas, criando um ecossistema sustentável e inclusivo.
-              </p>
-            </div>
-            <div className="rounded-2xl overflow-hidden shadow-elevated animate-fade-in">
-              <img
-                src={visaoImg}
-                alt="Plataforma digital conectando profissionais de saúde visual"
-                className="w-full h-auto object-cover"
-                width={1024}
-                height={1024}
-                loading="lazy"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Clinical Partners (Optiótica) */}
+      {/* Clinical Partners (Óptica Optioptika) */}
       <ClinicalPartners defaultOpen={abrirAgendamentoOptiotica} />
 
       {canViewPartnerSections && (

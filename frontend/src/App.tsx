@@ -12,6 +12,7 @@ import Equipa from "./pages/Equipa";
 import Kamba from "./pages/Kamba";
 import CampanhaGamek from "./pages/CampanhaGamek";
 import Parceiros from "./pages/Parceiros";
+import PortalClinicoOptioptika from "./pages/PortalClinicoOptioptika";
 import Tecnologia from "./pages/Tecnologia";
 import Circular from "./pages/Circular";
 import Suporte from "./pages/Suporte";
@@ -75,6 +76,8 @@ const App = () => (
                 <Route path="/kamba" element={<Kamba />} />
                 <Route path="/meu-kamba/campanha-gamek" element={<CampanhaGamek />} />
                 <Route path="/parceiros" element={<Parceiros />} />
+                <Route path="/portal-clinico" element={<Parceiros />} />
+                <Route path="/portal-clinico/optioptika" element={<PortalClinicoOptioptika />} />
                 <Route path="/tecnologia" element={<Tecnologia />} />
                 <Route path="/circular" element={<Circular />} />
                 <Route path="/suporte" element={<Suporte />} />

@@ -38,7 +38,7 @@ interface SearchItem {
 const searchIndex: SearchItem[] = [
   {
     id: "sobre",
-    title: "Sobre a Janelas para a Alma",
+    title: "Sobre o Janelas para a Alma",
     description: "Janelas Para a Alma é uma start up angolana dedicada à saúde visual, inclusão e sustentabilidade.",
     keywords: "sobre, start up, janelas para a alma, missão, visão, saúde visual, inclusão, sustentabilidade, angola",
     route: "/impacto",

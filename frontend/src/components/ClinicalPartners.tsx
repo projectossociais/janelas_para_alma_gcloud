@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { z } from "zod";
 import {
   Building2,
@@ -14,6 +15,7 @@ import {
   Video,
   MapPinned,
   Star,
+  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,15 +39,15 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 
-const optiotica = {
-  name: "Optiótica",
-  tagline: "Cuidados visuais de referência em Luanda",
-  location: "Luanda, Angola",
-  phone: "+244 900 000 000",
-  email: "geral@optiotica.ao",
-  hours: "Seg–Sáb · 08h30 – 18h00",
+const optioptika = {
+  name: "Óptica Optioptika",
+  tagline: "Visão da Banda",
+  location: "Urbanização Nova Vida, Rua 54, Centro Empresarial Living-Luanda",
+  phone: "+244 931 240 304",
+  email: "geral@optioptika.com",
+  hours: "Seg–Qui · 08h–17h · Sáb · 08h–13h",
   description:
-    "Parceiro clínico oficial da Janelas para a Alma, a Optiótica reúne uma equipa multidisciplinar dedicada à saúde visual — do rastreio à correcção óptica — com atendimento humanizado e tecnologia moderna.",
+    "Parceiro clínico oficial do Janelas para a Alma, a Optioptika reúne uma equipa multidisciplinar dedicada à saúde visual — do rastreio à correcção óptica — com atendimento humanizado e tecnologia moderna.",
   badges: ["Parceiro Oficial", "Consultas Presenciais e Online", "Equipa Certificada"],
 };
 
@@ -147,7 +149,7 @@ const ClinicalPartners = ({ defaultOpen = false }: ClinicalPartnersProps) => {
     };
     setReceipt(booking);
     toast.success(
-      `Pedido enviado à ${optiotica.name}. Entraremos em contacto para confirmar a sua consulta ${mode === "online" ? "online" : "presencial"}.`,
+      `Pedido enviado à ${optioptika.name}. Entraremos em contacto para confirmar a sua consulta ${mode === "online" ? "online" : "presencial"}.`,
     );
     setForm({ name: "", email: "", phone: "", date: "", period: "", notes: "" });
   };
@@ -169,11 +171,11 @@ const ClinicalPartners = ({ defaultOpen = false }: ClinicalPartnersProps) => {
             Clínicas de confiança da nossa rede
           </h2>
           <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
-            Profissionais e instituições certificadas que colaboram directamente com a Janelas para a Alma no atendimento aos nossos beneficiários.
+            Profissionais e instituições certificadas que colaboram directamente com o Janelas para a Alma no atendimento aos nossos beneficiários.
           </p>
         </div>
 
-        {/* Optiótica Profile Card */}
+        {/* Óptica Optioptika Profile Card */}
         <article className="max-w-5xl mx-auto rounded-3xl overflow-hidden bg-card border border-border/60 shadow-elevated">
           {/* Header banner */}
           <div className="relative bg-gradient-to-br from-navy via-navy to-teal/70 text-primary-foreground p-8 md:p-10">
@@ -195,13 +197,13 @@ const ClinicalPartners = ({ defaultOpen = false }: ClinicalPartnersProps) => {
                   Parceiro Clínico Oficial
                 </div>
                 <h3 className="text-3xl md:text-4xl font-bold leading-tight mb-2">
-                  {optiotica.name}
+                  {optioptika.name}
                 </h3>
                 <p className="text-primary-foreground/80 text-base md:text-lg">
-                  {optiotica.tagline}
+                  {optioptika.tagline}
                 </p>
                 <div className="flex flex-wrap gap-2 mt-4">
-                  {optiotica.badges.map((b) => (
+                  {optioptika.badges.map((b) => (
                     <span
                       key={b}
                       className="text-xs font-medium px-3 py-1 rounded-full bg-primary-foreground/10 border border-primary-foreground/20"
@@ -211,14 +213,27 @@ const ClinicalPartners = ({ defaultOpen = false }: ClinicalPartnersProps) => {
                   ))}
                 </div>
               </div>
-              <Button
-                size="lg"
-                onClick={() => setOpen(true)}
-                className="bg-gold text-navy hover:bg-gold/90 font-semibold shrink-0"
-              >
-                <CalendarPlus className="w-5 h-5 mr-2" />
-                Agendar Consulta
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-3 shrink-0">
+                <Button
+                  size="lg"
+                  onClick={() => setOpen(true)}
+                  className="bg-gold text-navy hover:bg-gold/90 font-semibold"
+                >
+                  <CalendarPlus className="w-5 h-5 mr-2" />
+                  Agendar Consulta
+                </Button>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground font-semibold"
+                >
+                  <Link to="/portal-clinico/optioptika">
+                    Saber mais
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </Link>
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -231,36 +246,36 @@ const ClinicalPartners = ({ defaultOpen = false }: ClinicalPartnersProps) => {
                   Sobre a Clínica
                 </h4>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  {optiotica.description}
+                  {optioptika.description}
                 </p>
               </div>
 
               <div className="space-y-3 pt-2 border-t border-border/60">
                 <div className="flex items-start gap-3">
                   <MapPin className="w-4 h-4 text-teal mt-0.5 shrink-0" />
-                  <span className="text-sm text-foreground">{optiotica.location}</span>
+                  <span className="text-sm text-foreground">{optioptika.location}</span>
                 </div>
                 <div className="flex items-start gap-3">
                   <Phone className="w-4 h-4 text-teal mt-0.5 shrink-0" />
                   <a
-                    href={`tel:${optiotica.phone.replace(/\s/g, "")}`}
+                    href={`tel:${optioptika.phone.replace(/\s/g, "")}`}
                     className="text-sm text-foreground hover:text-teal transition-colors"
                   >
-                    {optiotica.phone}
+                    {optioptika.phone}
                   </a>
                 </div>
                 <div className="flex items-start gap-3">
                   <Mail className="w-4 h-4 text-teal mt-0.5 shrink-0" />
                   <a
-                    href={`mailto:${optiotica.email}`}
+                    href={`mailto:${optioptika.email}`}
                     className="text-sm text-foreground hover:text-teal transition-colors break-all"
                   >
-                    {optiotica.email}
+                    {optioptika.email}
                   </a>
                 </div>
                 <div className="flex items-start gap-3">
                   <Clock className="w-4 h-4 text-teal mt-0.5 shrink-0" />
-                  <span className="text-sm text-foreground">{optiotica.hours}</span>
+                  <span className="text-sm text-foreground">{optioptika.hours}</span>
                 </div>
               </div>
             </div>
@@ -309,7 +324,7 @@ const ClinicalPartners = ({ defaultOpen = false }: ClinicalPartnersProps) => {
                   Pedido de Consulta Confirmado
                 </DialogTitle>
                 <DialogDescription>
-                  A {optiotica.name} entrará em contacto por email ou telefone para
+                  A {optioptika.name} entrará em contacto por email ou telefone para
                   confirmar o horário definitivo.
                 </DialogDescription>
               </DialogHeader>
@@ -349,7 +364,7 @@ const ClinicalPartners = ({ defaultOpen = false }: ClinicalPartnersProps) => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
               <CalendarPlus className="w-5 h-5 text-teal" />
-              Agendar Consulta — {optiotica.name}
+              Agendar Consulta — {optioptika.name}
             </DialogTitle>
             <DialogDescription>
               Escolha a modalidade e preencha os seus dados. A clínica confirmará o horário por email ou telefone.
@@ -376,7 +391,7 @@ const ClinicalPartners = ({ defaultOpen = false }: ClinicalPartnersProps) => {
 
             <TabsContent value="presencial" className="mt-0 mb-4">
               <div className="rounded-lg border border-navy/20 bg-navy/5 p-4 text-sm text-muted-foreground">
-                Consulta presencial na clínica <strong className="text-foreground">{optiotica.name}</strong> em {optiotica.location}. Traga documento de identificação e prescrições anteriores, se disponíveis.
+                Consulta presencial na clínica <strong className="text-foreground">{optioptika.name}</strong> em {optioptika.location}. Traga documento de identificação e prescrições anteriores, se disponíveis.
               </div>
             </TabsContent>
             <TabsContent value="online" className="mt-0 mb-4">
