@@ -71,3 +71,5 @@ NAO-02,-,Login com Google,-,nao-fazer-agora,-,-,2026-09-14,"decidido: sprint pro
 NAO-03,-,Versao em ingles,-,nao-fazer-agora,-,-,2026-09-10,o publico e angolano
 NAO-04,-,Mapa de clinicas parceiras,-,nao-fazer-agora,-,-,2026-09-10,uma lista chega enquanto houver poucas clinicas
 NAO-05,-,Notificacoes push + modo offline,-,nao-fazer-agora,-,-,2026-09-10,"custo alto, ninguem bloqueado hoje"
+DEP-06,infra,Frontend passa a deploy no Vercel (janelasparaalma.com) via rewrites,P1,feito,W,deploy,2026-09-13,"vercel.json com rewrite /api/*; infra/nginx e frontend.Dockerfile removidos"
+DEP-07,infra,Substituir placeholder do URL da API em frontend/vercel.json,P0,bloqueado,W,deploy,2026-09-13,"so depois do 1o deploy real da API no Cloud Run (DEP-02); sem isto /api/* nao funciona em producao"

@@ -18,8 +18,17 @@ lições aprendidas com bugs reais **mantêm-se** — só a infraestrutura por b
 | Auth | Supabase Auth | Serviço próprio (`api/app/services/auth_service.py`), JWT próprio |
 | Base de dados | Supabase Postgres + RLS | Postgres próprio (Cloud SQL em produção), sem RLS — autorização vive na API |
 | Storage | Supabase Storage | Cloudflare R2 (compatível com S3) |
-| Frontend | Vercel | Container próprio (NGINX), Cloud Run |
-| Deploy | Vercel + Supabase cloud | Containers Docker no Google Cloud Run |
+| Frontend | Vercel (build antigo, Lovable) | **Vercel** (conta e CI/CD próprios do projecto, domínio `janelasparaalma.com`) — reaproveitado deliberadamente, ver nota abaixo |
+| Deploy do frontend | Vercel + Supabase cloud | Vercel, automático a cada push/merge em `main` |
+| Deploy da API | Vercel + Supabase cloud | Container Docker no Google Cloud Run, manual (`infra/gcloud/`) |
+
+**Nota sobre o Vercel (decidido em 2026-09-13):** o frontend saiu do Vercel do projecto
+antigo, mas **volta a usar o Vercel** — desta vez com conta e CI/CD próprios do Lukeny,
+já ligados ao domínio `janelasparaalma.com`. Não é reverter a decisão da Sprint 0: a API,
+a base de dados e o storage continuam inteiramente fora do Supabase. O que muda é só quem
+serve o build estático — Cloud Run com um container NGINX próprio deixou de fazer sentido
+quando já havia CI/CD pago e a funcionar no Vercel para exactamente essa função. Ver §2
+para como isto preserva o cookie `httpOnly` de sessão (§3b) sem introduzir CORS a sério.
 
 **Decisão explícita do dono do projecto: sem importação de dados de utilizadores do
 Supabase.** Esta base de dados nasce vazia — não há migração de contas nem de hashes de
@@ -69,7 +78,8 @@ de domínio em português. Não introduzir inglês em nomes de domínio novos.
 ```
 BROWSER (React + Vite + TS)
    │
-   └─→ NGINX (container, Cloud Run) ── serve o build estático
+   └─→ VERCEL ── serve o build estático em janelasparaalma.com, deploy automático
+         │        (rewrite estático em vercel.json, sem servidor nosso pelo meio)
          │
          └─→ /api/* ──→ API PRÓPRIA (FastAPI, container, Cloud Run)
                             │
@@ -83,25 +93,29 @@ directa: a fronteira de autorização é inteiramente a API — não existe "ace
 seguro" ao Postgres a partir do browser, porque essa segurança dependia do RLS que já não
 existe. Isto simplifica a regra de ouro da secção seguinte.
 
-Localmente: `docker-compose.yml` sobe `db` + `api` + `frontend` (build estático). Para
-desenvolvimento do dia-a-dia do frontend, continua a fazer mais sentido `npm run dev`
-dentro de `frontend/` — mais rápido, com hot reload real. Docker garante que "funciona na
-minha máquina" bate certo com o Cloud Run, não substitui o ciclo rápido de edição.
+Localmente: `docker-compose.yml` sobe só `db` + `api` — o frontend não tem container
+próprio (ver nota do Vercel em §0). Para desenvolvimento do dia-a-dia do frontend,
+`npm run dev` dentro de `frontend/` continua a ser o caminho — mais rápido, com hot
+reload real, e o proxy do Vite já reencaminha `/api/*` tal como o Vercel faz em produção.
 
 O browser fala **sempre com `/api/*` na mesma origem** — nunca com um URL absoluto da
 API. Em dev (`npm run dev`) o proxy do Vite (`vite.config.ts`) reencaminha `/api/*` para
-`http://localhost:8000`; nos containers, o NGINX faz o mesmo a partir de
-`infra/nginx/default.conf.template` — a imagem oficial corre `envsubst` no arranque e
-substitui `${API_URL}` (alvo do proxy) por uma variável de **run-time**: `http://api:8000`
-no compose, o URL público `https://` da API em produção (só conhecido depois do primeiro
-deploy). O bloco `location /api/` já lida com um upstream HTTPS do Cloud Run —
-`proxy_ssl_server_name on` (SNI) e `Host: $proxy_host` (o Cloud Run encaminha pelo Host),
-com o host público em `X-Forwarded-Host`. Nada de URL de API baked no bundle;
-`VITE_API_URL` só existe para apontar o dev a uma API remota. É esta partilha de origem que torna o cookie `httpOnly` de sessão viável (§3b) —
-o CORS na API fica como rede de segurança para o caso remoto, com lista fechada de origens.
+`http://localhost:8000`. Em produção, `frontend/vercel.json` faz o mesmo por um
+`rewrite` (proxy do lado do Vercel, não um redirect — o browser nunca vê o domínio da
+API): `/api/*` → o URL público `https://` do serviço da API no Cloud Run. Esse URL só se
+conhece depois do primeiro deploy da API, tal como acontecia antes com o `API_URL` do
+NGINX — só que agora fica escrito directamente em `vercel.json` (não há `envsubst`: o
+Vercel não passa uma variável de ambiente para dentro do ficheiro de rewrites, o valor
+tem de estar commitado). Nada de URL de API baked no *bundle* JS; `VITE_API_URL` só
+existe para apontar o `npm run dev` a uma API remota. É esta partilha de origem —
+mantida pelo rewrite do Vercel exactamente como antes pelo NGINX — que torna o cookie
+`httpOnly` de sessão viável (§3b) sem CORS a sério; o CORS na API (`frontend_origins`)
+fica só como rede de segurança para pedidos verdadeiramente cross-origin.
 
-Produção (Cloud Run): scripts de provisionamento e deploy em `infra/gcloud/` (ver o
-`README.md` lá). **Nenhum corre no `git push`** — o deploy é sempre manual. O CI
+Produção da API (Cloud Run): scripts de provisionamento e deploy em `infra/gcloud/` (ver
+o `README.md` lá). **Nenhum corre no `git push`** — o deploy da API é sempre manual. O
+frontend é o inverso: o deploy é automático, feito pelo Vercel a cada push/merge para
+`main` — não precisa de passo manual nem de script neste repositório. O CI
 (`.github/workflows/ci.yml`) só faz lint, testes e build, nunca deploy.
 
 ---
@@ -325,8 +339,9 @@ chore(infra): adiciona docker-compose para desenvolvimento local
 1. PR obrigatório — nunca commit directo em `main`
 2. CI verde: `npm run lint` + `npm run test` + `npm run build` (frontend);
    `ruff check` + `pytest` + `alembic upgrade head` contra um Postgres real (api);
-   `docker build` das duas imagens + `nginx -t` no `default.conf.template`
-   renderizado (imagens) — ver `.github/workflows/ci.yml`
+   `docker build` da imagem da API (imagens) — ver `.github/workflows/ci.yml`. O deploy
+   do frontend em si é o Vercel, fora deste CI — o `npm run build` aqui é só o portão de
+   qualidade antes do merge, não o que corre em produção
 3. **Testes novos para a lógica nova** — CI verde não chega
 4. Revisão humana obrigatória em tudo o que toque: esquema de dados (`orm_models.py` +
    migração Alembic), autenticação, paywall, papéis de utilizador

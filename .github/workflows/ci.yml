@@ -64,21 +64,14 @@ jobs:
         continue-on-error: true
         run: python -m alembic check
 
-  imagens:
+  imagem-api:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # Constrói as imagens que vão para o Cloud Run. Sem isto, uma regressão
-      # num Dockerfile ou no default.conf.template só aparece no deploy — já
-      # aconteceu (COPY de infra/nginx/nginx.conf depois de o ficheiro sair).
+      # Constrói a imagem que vai para o Cloud Run. Sem isto, uma regressão no
+      # Dockerfile só aparece no deploy. O frontend não tem imagem própria —
+      # é servido pelo Vercel (deploy automático dele, fora deste CI); o
+      # `npm run build` do job `frontend` acima já é o portão de qualidade
+      # desse lado.
       - name: Build da imagem da API
         run: docker build -f infra/docker/api.Dockerfile -t jpa-api:ci .
-      - name: Build da imagem do frontend
-        run: docker build -f infra/docker/frontend.Dockerfile -t jpa-frontend:ci .
-      # Renderiza o template (envsubst da imagem oficial) e valida com nginx -t.
-      # O `proxy_pass` leva um host literal (sem variável nem `resolver`), por
-      # isso o `nginx -t` resolve-o já no parse — tem de ser um host que exista
-      # sempre. `localhost` chega: o que este passo valida é a RENDERIZAÇÃO do
-      # template e a SINTAXE do config, não a alcançabilidade da API.
-      - name: NGINX — config renderiza e passa no nginx -t
-        run: docker run --rm -e API_URL=http://localhost:8000 jpa-frontend:ci nginx -t

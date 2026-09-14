@@ -11,9 +11,11 @@
 
 O repositório anterior (`janelasparaalma`) construiu o produto sobre Supabase + Vercel.
 Este monorepo é a mesma aplicação — mesmo frontend, mesmas regras de negócio, mesmas
-lições de bugs reais — sobre infraestrutura própria: **FastAPI + Postgres + Cloudflare R2,
-em containers no Google Cloud Run.** Ver [`CLAUDE.md`](./CLAUDE.md) secção 0 para o
-detalhe de o que mudou e porquê.
+lições de bugs reais — sobre infraestrutura própria do lado dos dados: **FastAPI +
+Postgres + Cloudflare R2, em container no Google Cloud Run.** O frontend continua no
+Vercel (`janelasparaalma.com`), agora com conta e CI/CD próprios do projecto, não os do
+repositório antigo. Ver [`CLAUDE.md`](./CLAUDE.md) secção 0 para o detalhe de o que
+mudou e porquê.
 
 Decisão explícita: **sem importação de dados do Supabase.** A base de dados nasce vazia,
 com a mesma estrutura de tabelas, sem os dados. Ver `docs/BACKLOG.md` para o plano de
@@ -26,28 +28,31 @@ migração módulo-a-módulo do frontend (troca de chamadas directas ao Supabase
 
 ```
 frontend/     React + Vite + TS + shadcn/ui — copiado do repositório antigo, a ser
-              migrado módulo a módulo para falar com a API em vez do Supabase
+              migrado módulo a módulo para falar com a API em vez do Supabase.
+              Deploy no Vercel (vercel.json), não neste repositório.
 api/          FastAPI, em camadas: routers/services/repositories/schemas/core
 infra/
-  docker/     Dockerfiles do frontend (build + NGINX) e da api
-  nginx/      configuração do NGINX (serve o build, proxy para /api/)
+  docker/     Dockerfile da api (Cloud Run)
+  gcloud/     scripts de provisionamento e deploy da api
 docs/         BACKLOG.md (plano vivo) e histórico do projecto
-docker-compose.yml   ambiente de desenvolvimento local (db + api + frontend)
+docker-compose.yml   ambiente de desenvolvimento local (db + api)
 ```
 
 ---
 
 ## Correr localmente
 
-### Com Docker (espelha produção)
+### Com Docker (espelha a produção da API — o frontend não está aqui, ver abaixo)
 
 ```bash
 docker compose up --build
 ```
 
-- Frontend: http://localhost:8080
 - API: http://localhost:8000 (docs automáticas em `/docs`)
 - Postgres: `localhost:5432` (utilizador/password/bd: `jpa`/`jpa`/`jpa`)
+
+O frontend não tem serviço no `docker-compose.yml` — em produção é o Vercel que o serve,
+não um container nosso. Corre-se sempre como abaixo, com Docker ou sem ele.
 
 **Primeira vez (ou depois de apagar o volume `jpa_db_data`): a base de dados sobe vazia,
 sem tabelas nenhumas.** O container da API nunca corre migrações sozinho — de propósito,
