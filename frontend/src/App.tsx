@@ -20,6 +20,7 @@ import Scanner from "./pages/Scanner";
 import ScannerResultados from "./pages/ScannerResultados";
 import Auth from "./pages/Auth";
 import AtualizarPassword from "./pages/AtualizarPassword";
+import ConfirmarEmail from "./pages/ConfirmarEmail";
 import Apoiar from "./pages/Apoiar";
 import Configuracoes from "./pages/Configuracoes";
 import EditarPerfil from "./pages/EditarPerfil";
@@ -84,6 +85,7 @@ const App = () => (
                 <Route path="/registo" element={<Auth />} />
                 <Route path="/atualizar-password" element={<AtualizarPassword />} />
                 <Route path="/update-password" element={<AtualizarPassword />} />
+                <Route path="/confirmar-email" element={<ConfirmarEmail />} />
                 <Route path="/apoiar" element={<Apoiar />} />
                 <Route path="/configuracoes" element={<Configuracoes />} />
                 <Route path="/editar-perfil" element={<EditarPerfil />} />

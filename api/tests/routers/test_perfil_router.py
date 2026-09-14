@@ -3,14 +3,22 @@ from datetime import UTC, datetime
 import pytest
 from fastapi.testclient import TestClient
 
-from app.core.dependencies import obter_auth_service
+from app.core.dependencies import (
+    obter_auth_service,
+    obter_confirmacao_email_service,
+    obter_conta_service,
+)
 from app.main import app
 from app.repositories.perfil_repository import PerfilRegisto
 from app.routers import perfil as perfil_router
 from app.services.auth_service import AuthService
+from app.services.confirmacao_email_service import ConfirmacaoEmailService
+from app.services.conta_service import ContaService
 from app.services.perfil_service import PerfilService
 from tests.services.test_auth_service import RepositorioFalso
+from tests.services.test_confirmacao_email_service import TokensConfirmacaoRepositorioFalso
 from tests.services.test_perfil_service import RepositorioPerfilFalso
+from tests.services.test_recuperacao_password_service import EmailSenderFalso
 
 
 @pytest.fixture
@@ -19,7 +27,17 @@ def client():
     repo_perfil = RepositorioPerfilFalso()
     app.dependency_overrides[obter_auth_service] = lambda: AuthService(repo_auth)
     app.dependency_overrides[perfil_router.obter_perfil_service] = lambda: PerfilService(repo_perfil)
+    # /auth/entrar também chama o ContaService (cancelar eliminação
+    # agendada) -- sem isto cairia no repositório real.
+    app.dependency_overrides[obter_conta_service] = lambda: ContaService(repo_auth)
+    # /auth/registar manda sempre um email de confirmação (AUTH-02) -- sem
+    # este override, cairia no repositório/email real (Postgres inexistente
+    # em testes).
+    app.dependency_overrides[obter_confirmacao_email_service] = lambda: ConfirmacaoEmailService(
+        repo_auth, TokensConfirmacaoRepositorioFalso(), EmailSenderFalso()
+    )
     with TestClient(app) as c:
+        c.repo_auth = repo_auth  # type: ignore[attr-defined]
         yield c, repo_perfil
     app.dependency_overrides.clear()
 
@@ -31,6 +49,11 @@ def _registar_e_ligar_perfil(client_tuple: tuple[TestClient, RepositorioPerfilFa
     client, repo_perfil = client_tuple
     resposta = client.post("/auth/registar", json={"email": "ana@example.com", "password": "password-forte-123"})
     utilizador_id = resposta.json()["id"]
+    # AUTH-02: registar já não inicia sessão -- confirma directamente no
+    # repositório falso (o fluxo de token por email é testado à parte, em
+    # test_auth_router.py) e entra a seguir.
+    client.repo_auth.confirmar_email(utilizador_id)  # type: ignore[attr-defined]
+    client.post("/auth/entrar", json={"email": "ana@example.com", "password": "password-forte-123"})
 
     repo_perfil._perfis[utilizador_id] = PerfilRegisto(
         id=utilizador_id,

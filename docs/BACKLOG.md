@@ -916,6 +916,55 @@ produção — o código já está pronto, só falta colar a chave (`RESEND_API_
 remetente verificado (`EMAIL_REMETENTE`) nos segredos do Cloud Run
 (`infra/gcloud/03-secrets.sh`/`04-deploy.sh`, já preparados para os receber).
 
+### AUTH-02 fechada — confirmação de conta por email, bloqueio total (2026-09-14)
+
+Decisão do dono do projecto, resolvendo a pergunta em aberto desde a Sprint planeada de
+"identidade externa e email": **bloqueio total**. Uma conta recém-registada não entra —
+nem com a password certa — até confirmar o email. Mais simples de raciocinar sobre
+segurança do que uma "sessão limitada" (essa exigiria gating em vários sítios do
+frontend, não só no login), e é a leitura mais directa do que já estava escrito no
+`tarefas.csv`: "nunca redirecionar como se logado".
+
+O que ficou feito:
+
+- **`utilizadores.email_confirmado`** (migração `c7e4b8a1f6d3`, aditiva) — `false` por
+  omissão. **`tokens_confirmacao_email`** — mesmo desenho de
+  `tokens_recuperacao_password` (hash do token, expiração, uso único), só com validade
+  mais longa (24h, contra 30 min da recuperação de password — confirmar não é tão
+  urgente como recuperar acesso perdido).
+- **`POST /auth/registar` deixa de definir cookies.** A conta é criada na mesma (commit
+  na base de dados não muda), mas fica por confirmar — sem sessão nenhuma até ao clique
+  no link. Manda sempre o email de confirmação a seguir; se o Resend falhar nesse
+  momento, a conta não é revertida (já existe de facto) — fica registado no stderr, e a
+  pessoa tem sempre `/auth/reenviar-confirmacao` como via de recuperação.
+- **`AuthService.autenticar()`** verifica a password primeiro (mantém a mensagem
+  genérica de sempre para email/password errados) e só depois checa
+  `email_confirmado` — um `EmailNaoConfirmadoError` próprio, que o router mapeia a 403
+  com uma mensagem explícita (aqui já não há razão para esconder a causa, ao contrário
+  do caso email/password).
+- **`POST /auth/confirmar-email`** (400 se o token for inválido/expirado/usado) e
+  **`POST /auth/reenviar-confirmacao`** (sempre 202, mesma resposta exista ou não a
+  conta, esteja ou não já confirmada — mesmo princípio anti-enumeração da recuperação
+  de password).
+- **Frontend:** `AuthContext.registerUser` deixa de marcar sessão local no sucesso;
+  `Auth.tsx` passa a ter separadores controlados — depois de registar, muda para o
+  login com o email pré-preenchido e um toast a explicar o próximo passo. Um login
+  recusado por email não confirmado ganha um botão "Reenviar link" directamente no
+  toast de erro. Página nova `ConfirmarEmail.tsx` (rota `/confirmar-email?token=...`) —
+  só confirma, nunca inicia sessão automaticamente (mesma decisão de manter os dois
+  passos separados).
+- **Efeito colateral útil, descoberto ao testar:** sem isto, `npm run dev`/`uvicorn`
+  locais sem `RESEND_API_KEY` configurada deixariam de conseguir registar contas
+  nenhumas (o registo passou a depender do envio do email de confirmação). Corrigido
+  com um `ConsoleEmailSender` de fallback em `core/email.py` — sem chave, imprime o
+  email no terminal em vez de tentar chamar o Resend a sério. Beneficia também a
+  recuperação de password (CROSS-04), que tinha o mesmo ponto cego.
+- **Testes:** ~30 novos/alterados na API (service dedicado + router, cobrindo o
+  bloqueio de login, confirmação válida/expirada/já usada, reenvio com/sem conta) e 13
+  no frontend. Teve ripple noutros ficheiros de teste que assumiam "registar = já hei-
+  de estar autenticado" (perfil, sessões de exercício, uploads, feedback, conta) — cada
+  um passou a confirmar explicitamente a conta de teste antes de entrar.
+
 ---
 
 ## O que NÃO fazer agora

@@ -18,6 +18,7 @@ from app.services.auth_service import (
     AuthService,
     CredenciaisInvalidasError,
     EmailJaRegistadoError,
+    EmailNaoConfirmadoError,
     RefreshTokenInvalidoError,
 )
 
@@ -58,6 +59,11 @@ class RepositorioFalso:
             provincia=provincia,
             genero=genero,
             criado_em=datetime.now(UTC),
+            # Explícito (ao contrário do default =True do dataclass, que só
+            # existe para não obrigar OUTROS testes/fixtures a passar isto):
+            # uma conta acabada de criar espelha sempre o repositório real,
+            # nasce por confirmar (AUTH-02).
+            email_confirmado=False,
         )
         self._utilizadores[email] = registo
         return registo
@@ -66,6 +72,12 @@ class RepositorioFalso:
         for email, u in self._utilizadores.items():
             if u.id == utilizador_id:
                 self._utilizadores[email] = replace(u, password_hash=password_hash)
+                return
+
+    def confirmar_email(self, utilizador_id: str) -> None:
+        for email, u in self._utilizadores.items():
+            if u.id == utilizador_id:
+                self._utilizadores[email] = replace(u, email_confirmado=True)
                 return
 
     def agendar_eliminacao(self, utilizador_id: str, quando: datetime) -> None:
@@ -81,8 +93,13 @@ class RepositorioFalso:
 
 
 @pytest.fixture
-def service() -> AuthService:
-    return AuthService(RepositorioFalso())
+def repo() -> RepositorioFalso:
+    return RepositorioFalso()
+
+
+@pytest.fixture
+def service(repo: RepositorioFalso) -> AuthService:
+    return AuthService(repo)
 
 
 class TestRegistar:
@@ -107,13 +124,21 @@ class TestRegistar:
         assert sessao.utilizador.genero == "feminino"
         assert sessao.utilizador.papel == "estrabico"
 
-    def test_registar_ja_devolve_uma_sessao_iniciada(self, service: AuthService) -> None:
-        # Registar é entrar — ninguém espera preencher o formulário de
-        # registo e depois ter de fazer login outra vez a seguir.
+    def test_registar_continua_a_calcular_tokens_mesmo_sem_sessao_automatica(
+        self, service: AuthService
+    ) -> None:
+        # AUTH-02: quem decide não usar estes tokens é o router (não põe
+        # cookies enquanto a conta não estiver confirmada) — o service
+        # continua a calculá-los por uniformidade com `autenticar`.
         sessao = service.registar("ana@example.com", "password-forte-123")
 
         assert sessao.tokens.access_token
         assert sessao.tokens.refresh_token
+
+    def test_conta_nasce_por_confirmar(self, service: AuthService) -> None:
+        sessao = service.registar("ana@example.com", "password-forte-123")
+
+        assert sessao.utilizador.email_confirmado is False
 
     def test_nunca_guarda_a_password_em_texto_simples(self, service: AuthService) -> None:
         sessao = service.registar("ana@example.com", "password-forte-123")
@@ -129,8 +154,11 @@ class TestRegistar:
 
 
 class TestAutenticar:
-    def test_autentica_com_credenciais_certas(self, service: AuthService) -> None:
-        service.registar("ana@example.com", "password-forte-123")
+    def test_autentica_com_credenciais_certas_depois_de_confirmar_o_email(
+        self, service: AuthService, repo: RepositorioFalso
+    ) -> None:
+        sessao_registo = service.registar("ana@example.com", "password-forte-123")
+        repo.confirmar_email(sessao_registo.utilizador.id)
 
         sessao = service.autenticar("ana@example.com", "password-forte-123")
 
@@ -139,7 +167,19 @@ class TestAutenticar:
         assert sessao.tokens.refresh_token
         assert sessao.tokens.access_token != sessao.tokens.refresh_token
 
-    def test_recusa_password_errada(self, service: AuthService) -> None:
+    def test_recusa_login_sem_confirmar_o_email_mesmo_com_a_password_certa(
+        self, service: AuthService
+    ) -> None:
+        # AUTH-02, bloqueio total: a password estar certa não chega.
+        service.registar("ana@example.com", "password-forte-123")
+
+        with pytest.raises(EmailNaoConfirmadoError):
+            service.autenticar("ana@example.com", "password-forte-123")
+
+    def test_recusa_password_errada_mesmo_numa_conta_por_confirmar(self, service: AuthService) -> None:
+        # A password é verificada antes da confirmação -- uma conta por
+        # confirmar com a password errada recebe o erro genérico de
+        # credenciais, nunca a informação extra de "falta confirmar".
         service.registar("ana@example.com", "password-forte-123")
 
         with pytest.raises(CredenciaisInvalidasError):
