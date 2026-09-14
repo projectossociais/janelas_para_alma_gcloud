@@ -36,7 +36,6 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { doacoesApi, mensagemDeErroApi } from "@/lib/apiClient";
 import { DEFAULT_BANK_DATA, fileToBase64, ofuscarValor } from "@/lib/pagamento";
 
 type Mode = "materiais" | "financeiro";
@@ -198,27 +197,55 @@ const Apoiar = () => {
     if (mode === "materiais") {
       setSubmitting(true);
       try {
-        // O registo na API é o que realmente conta como "doação recebida"
-        // -- se isto falhar, a UI de sucesso não pode avançar. O recibo é
-        // gerado pelo servidor, não pelo browser (ver DoacaoService).
-        const doacao = await doacoesApi.registarMateriais(email, selectedMaterials, materialNotes.trim());
+        const reciboId = `MAT-${Date.now().toString(36).toUpperCase()}`;
+        const detalhesDoacao = materialNotes.trim() || null;
+
+        // Mesmo padrão do fluxo financeiro (ver handleConcluirDoacao): a
+        // gravação em `doacoes` é o que conta como "doação recebida" -- só
+        // depois de confirmar que não houve erro é que a UI avança para
+        // sucesso. Unificado temporariamente no Supabase enquanto a infra de
+        // email em Python não está pronta (ver docs/BACKLOG.md); a API
+        // FastAPI própria (DoacaoService) fica para quando essa parte migrar.
+        const { error: insertError } = await supabase.from("doacoes").insert([
+          {
+            recibo_id: reciboId,
+            tipo: "materiais",
+            email,
+            materiais: selectedMaterials,
+            detalhes: detalhesDoacao,
+            status: "pendente",
+          },
+        ]);
+        if (insertError) throw insertError;
+
+        const { error: invokeError } = await supabase.functions.invoke("enviar-email-doacao", {
+          body: {
+            tipo: "materiais",
+            email,
+            recibo_id: reciboId,
+            detalhes: detalhesDoacao,
+            materiais: selectedMaterials,
+          },
+        });
+        if (invokeError) throw invokeError;
 
         setReceipt({
-          id: doacao.recibo_id,
+          id: reciboId,
           email,
           materials: [...selectedMaterials],
           notes: materialNotes,
         });
         setStep("recolha");
-        toast.success("Doação registada!");
+        toast.success("Doação registada! Enviámos um email de confirmação.");
         setSelectedMaterials([]);
         setMaterialNotes("");
-        // Confirmação por email fica pendente de escolher um fornecedor de
-        // email para a infra nova (ver docs/BACKLOG.md) -- nada aqui finge
-        // que foi enviada.
       } catch (err) {
-        console.error("Falha ao registar doação:", err);
-        toast.error(mensagemDeErroApi(err, "Não foi possível registar a doação. Tente novamente."));
+        console.error("Falha ao registar doação de materiais:", err);
+        toast.error(
+          err instanceof Error
+            ? err.message
+            : "Não foi possível registar a doação. Tente novamente.",
+        );
       } finally {
         setSubmitting(false);
       }
