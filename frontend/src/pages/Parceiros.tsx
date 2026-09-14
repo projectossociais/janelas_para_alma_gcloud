@@ -59,7 +59,7 @@ const Parceiros = () => {
         </div>
       </section>
 
-      <BackButton />
+      <BackButton className="pb-4 md:pb-6" />
 
       {/* Clinical Partners (Óptica Optioptika) */}
       <ClinicalPartners defaultOpen={abrirAgendamentoOptiotica} />

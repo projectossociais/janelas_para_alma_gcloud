@@ -11,7 +11,10 @@ import {
   ScanEye,
   Activity,
   Radio,
+  QrCode,
+  CalendarPlus,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
@@ -41,12 +44,17 @@ const examesESaude = [
 
 const horario = [
   { dias: "Segunda a Quinta", horas: "8h às 17h00" },
-  { dias: "Sexta-feira", horas: "Feriado" },
+  { dias: "Sexta-feira", horas: "Fechado" },
   { dias: "Sábado", horas: "8h às 13h00" },
 ];
 
+const enderecoCompleto =
+  "Urbanização Nova Vida, Rua 54, Centro Empresarial Living-Luanda, Lote 9, Luanda, Angola";
+
 const whatsappLink = "https://wa.me/244931240304";
 const siteLink = "https://www.optioptika.com";
+const mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(enderecoCompleto)}`;
+const internalBookingLink = "/portal-clinico?agendar=optiotica";
 
 const PortalClinicoOptioptika = () => {
   return (
@@ -182,24 +190,39 @@ const PortalClinicoOptioptika = () => {
         {/* App / Carteira de Desconto */}
         <section className="py-16 md:py-24 bg-muted/40">
           <div className="container px-6">
-            <div className="max-w-4xl mx-auto rounded-3xl bg-card border border-border/60 shadow-elevated p-8 md:p-12 text-center">
-              <div
-                className="inline-flex items-center justify-center w-14 h-14 rounded-2xl text-black mb-6"
-                style={{ backgroundColor: OPTIOPTIKA_YELLOW }}
-              >
-                <Smartphone className="w-7 h-7" />
+            <div className="max-w-4xl mx-auto rounded-3xl bg-card border border-border/60 shadow-elevated p-8 md:p-12">
+              <div className="grid md:grid-cols-[1fr_auto] gap-8 items-center">
+                <div className="text-center md:text-left">
+                  <div
+                    className="inline-flex items-center justify-center w-14 h-14 rounded-2xl text-black mb-6"
+                    style={{ backgroundColor: OPTIOPTIKA_YELLOW }}
+                  >
+                    <Smartphone className="w-7 h-7" />
+                  </div>
+                  <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
+                    Baixe agora o aplicativo Optioptika
+                  </h2>
+                  <p className="text-muted-foreground leading-relaxed mb-2">
+                    Tenha acesso à primeira Carteira de Desconto Digital em Angola e receba
+                    5.000Kz no seu Cartão Virtual.
+                  </p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Marque a sua consulta e exames oculares diretamente pelo aplicativo,
+                    disponível na Google Play e App Store.
+                  </p>
+                </div>
+                <div className="flex flex-col items-center gap-2 mx-auto md:mx-0">
+                  <div
+                    className="w-28 h-28 md:w-32 md:h-32 rounded-2xl bg-white border-2 flex items-center justify-center"
+                    style={{ borderColor: OPTIOPTIKA_YELLOW }}
+                  >
+                    <QrCode className="w-16 h-16 md:w-20 md:h-20 text-black" strokeWidth={1.25} />
+                  </div>
+                  <span className="text-xs text-muted-foreground text-center max-w-[9rem]">
+                    Aponte a câmara do telemóvel para descarregar
+                  </span>
+                </div>
               </div>
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
-                Baixe agora o aplicativo Optioptika
-              </h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-2">
-                Tenha acesso à primeira Carteira de Desconto Digital em Angola e receba
-                5.000Kz no seu Cartão Virtual.
-              </p>
-              <p className="text-sm text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                Marque a sua consulta e exames oculares diretamente pelo aplicativo, disponível
-                na Google Play e App Store.
-              </p>
             </div>
           </div>
         </section>
@@ -228,16 +251,26 @@ const PortalClinicoOptioptika = () => {
                 </ul>
               </div>
 
-              <div className="rounded-2xl border border-border/60 bg-card p-8">
+              <a
+                href={mapsLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group rounded-2xl border border-border/60 bg-card p-8 hover:border-[#FFD500] hover:shadow-card transition-all"
+              >
                 <div className="flex items-center gap-3 mb-6">
                   <MapPin className="w-5 h-5" style={{ color: "#B89600" }} />
-                  <h3 className="text-xl font-bold text-foreground">Onde Estamos</h3>
+                  <h3 className="text-xl font-bold text-foreground group-hover:underline">
+                    Onde Estamos
+                  </h3>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   Urbanização Nova Vida, Rua 54 (rua do tribunal provincial), Centro
                   Empresarial Living-Luanda, Lote 9, Luanda, Angola.
                 </p>
-              </div>
+                <p className="text-xs font-semibold mt-4" style={{ color: "#B89600" }}>
+                  Ver no Google Maps →
+                </p>
+              </a>
             </div>
           </div>
         </section>
@@ -290,9 +323,10 @@ const PortalClinicoOptioptika = () => {
                 className="font-semibold text-black hover:opacity-90"
                 style={{ backgroundColor: OPTIOPTIKA_YELLOW }}
               >
-                <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+                <Link to={internalBookingLink}>
+                  <CalendarPlus className="w-5 h-5 mr-2" />
                   Agendar a Minha Consulta
-                </a>
+                </Link>
               </Button>
             </div>
           </div>
