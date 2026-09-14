@@ -152,7 +152,21 @@ describe("Configuracoes — mudar palavra-passe", () => {
     await user.click(guardar);
 
     expect(mudarPassword).not.toHaveBeenCalled();
-    expect(toastError).toHaveBeenCalledWith("A nova palavra-passe deve ter pelo menos 8 caracteres.");
+    expect(toastError).toHaveBeenCalledWith("A palavra-passe deve ter pelo menos 8 caracteres.");
+  });
+
+  it("nunca chama a API se a nova palavra-passe não tiver letras nem números (AUTH-01)", async () => {
+    const user = userEvent.setup();
+    render(<Configuracoes />, { wrapper: MemoryRouter });
+
+    const { actual, nova, confirmar, guardar } = await abrirDialogoPassword(user);
+    await user.type(actual, "senhaCerta1");
+    await user.type(nova, "12345678");
+    await user.type(confirmar, "12345678");
+    await user.click(guardar);
+
+    expect(mudarPassword).not.toHaveBeenCalled();
+    expect(toastError).toHaveBeenCalledWith("A palavra-passe precisa de pelo menos uma letra.");
   });
 });
 

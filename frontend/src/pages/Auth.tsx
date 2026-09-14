@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 import { useAuth, PROVINCES, UserRole, ROLE_LABEL } from "@/contexts/AuthContext";
 import { authApi, mensagemDeErroApi } from "@/lib/apiClient";
+import { erroDePasswordFraca } from "@/lib/validarPassword";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -39,6 +40,7 @@ const Auth = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [province, setProvince] = useState("");
   const [role, setRole] = useState<UserRole | "">("");
   const [gender, setGender] = useState("");
@@ -89,8 +91,21 @@ const Auth = () => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !email || !password || !province || !gender || !role) {
+    if (!name || !email || !password || !confirmPassword || !province || !gender || !role) {
       toast.error("Por favor, preencha todos os campos.");
+      return;
+    }
+    // Confirmação é só neste formulário, nunca vai ao servidor — a API só
+    // vê `password` (ver AuthContext.registerUser). Verificação da força
+    // da password é uma cópia da regra do servidor (validarPassword.ts):
+    // dá feedback imediato, mas quem decide de facto é sempre a API.
+    if (password !== confirmPassword) {
+      toast.error("As palavras-passe não coincidem.");
+      return;
+    }
+    const erroPassword = erroDePasswordFraca(password);
+    if (erroPassword) {
+      toast.error(erroPassword);
       return;
     }
     setRegisterLoading(true);
@@ -200,6 +215,21 @@ const Auth = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
+                      autoComplete="new-password"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Pelo menos 8 caracteres, com letras e números.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="reg-confirm-password">Confirmar Palavra-passe</Label>
+                    <Input
+                      id="reg-confirm-password"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="••••••••"
+                      autoComplete="new-password"
                     />
                   </div>
                   <div className="space-y-2">

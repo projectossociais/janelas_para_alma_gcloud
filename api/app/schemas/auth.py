@@ -1,5 +1,6 @@
 """Formas dos dados de autenticação — nada de dict solto vindo do cliente."""
 
+import re
 from datetime import datetime
 
 from pydantic import BaseModel, EmailStr, field_validator
@@ -16,8 +17,18 @@ PAPEIS_AUTO_REGISTAVEIS = {"comum", "estrabico", "profissional"}
 
 
 def validar_password_forte(v: str) -> str:
+    """Única implementação da regra de força de password (AUTH-01) — usada
+    no registo, em mudar-password e em redefinir-password (ver conta.py e
+    este ficheiro). Deliberadamente sem exigir maiúscula nem símbolo: só
+    comprimento + letra + número, para não frustrar quem regista pela
+    primeira vez sem complicar a mensagem de erro. Reforçar mais tarde se a
+    validação real (ex.: contra listas de passwords vazadas) vier a existir."""
     if len(v) < PASSWORD_MIN_LEN:
         raise ValueError(f"a password precisa de pelo menos {PASSWORD_MIN_LEN} caracteres")
+    if not re.search(r"[A-Za-z]", v):
+        raise ValueError("a password precisa de pelo menos uma letra")
+    if not re.search(r"\d", v):
+        raise ValueError("a password precisa de pelo menos um número")
     return v
 
 

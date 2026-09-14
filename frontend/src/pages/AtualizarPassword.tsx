@@ -9,8 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
 import { authApi, mensagemDeErroApi } from "@/lib/apiClient";
-
-const PASSWORD_MIN_LEN = 8;
+import { erroDePasswordFraca } from "@/lib/validarPassword";
 
 /**
  * Ecrã de "Definir nova palavra-passe", aberto a partir do link de
@@ -39,8 +38,9 @@ const AtualizarPassword = () => {
       toast.error("Preencha os dois campos.");
       return;
     }
-    if (password.length < PASSWORD_MIN_LEN) {
-      toast.error(`A palavra-passe deve ter pelo menos ${PASSWORD_MIN_LEN} caracteres.`);
+    const erroPassword = erroDePasswordFraca(password);
+    if (erroPassword) {
+      toast.error(erroPassword);
       return;
     }
     if (password !== confirm) {
