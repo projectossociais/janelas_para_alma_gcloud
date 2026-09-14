@@ -90,6 +90,12 @@ class Utilizador(Base):
     # Ver antigo supabase/migrations/20260831120000_eliminacao_agendada_contas.sql
     eliminar_agendado_para: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
+    # AUTH-02: conta nasce por confirmar; /auth/entrar recusa login enquanto
+    # isto for false (bloqueio total, decisão do dono do projecto). Nunca há
+    # sessão nenhuma antes de confirmar — o registo deixou de fazer login
+    # automático. Ver services/confirmacao_email_service.py.
+    email_confirmado: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -102,6 +108,24 @@ class TokenRecuperacaoPassword(Base):
     aquele token já serviu); `expira_em` é sempre verificado na leitura."""
 
     __tablename__ = "tokens_recuperacao_password"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    utilizador_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False, index=True)
+    criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    expira_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    usado_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class TokenConfirmacaoEmail(Base):
+    """Token de uso único para confirmar a conta no registo (AUTH-02).
+    Mesmo desenho do `TokenRecuperacaoPassword` (hash guardado, nunca o
+    valor em claro; `usado_em` marca consumo) — validade mais longa (24h,
+    ver serviço) porque confirmar não é tão urgente como recuperar acesso."""
+
+    __tablename__ = "tokens_confirmacao_email"
 
     id: Mapped[uuid.UUID] = _uuid_pk()
     utilizador_id: Mapped[uuid.UUID] = mapped_column(
