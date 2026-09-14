@@ -86,6 +86,9 @@ export interface UtilizadorPublico {
   provincia: string | null;
   genero: string | null;
   criado_em: string;
+  /** AUTH-02 — false logo após o registo; /auth/entrar recusa login
+   *  enquanto isto for false (bloqueio total). */
+  email_confirmado: boolean;
   eliminacao_cancelada: boolean;
 }
 
@@ -122,6 +125,19 @@ export const authApi = {
     pedido<void>("/auth/redefinir-password", {
       method: "POST",
       body: JSON.stringify({ token, password_nova: passwordNova }),
+    }),
+
+  /** AUTH-02. `token` vem do link de confirmação recebido por email logo
+   *  após o registo. Um token inválido, expirado ou já usado devolve 400. */
+  confirmarEmail: (token: string) =>
+    pedido<void>("/auth/confirmar-email", { method: "POST", body: JSON.stringify({ token }) }),
+
+  /** Pedido explícito de um novo link -- resposta idêntica exista ou não a
+   *  conta, esteja ou não já confirmada (mesmo princípio de recuperarPassword). */
+  reenviarConfirmacao: (email: string) =>
+    pedido<{ mensagem: string }>("/auth/reenviar-confirmacao", {
+      method: "POST",
+      body: JSON.stringify({ email }),
     }),
 };
 

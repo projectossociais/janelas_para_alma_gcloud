@@ -7,18 +7,24 @@ A sessão viaja em dois cookies `httpOnly` (`access_token`, `refresh_token`),
 nunca no corpo JSON — ver nota em app/schemas/auth.py.
 """
 
+import sys
+
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
 
 from app.core.cookies import definir_cookie_acesso, definir_cookies_sessao, limpar_cookies_sessao
 from app.core.dependencies import (
     obter_auth_service,
+    obter_confirmacao_email_service,
     obter_conta_service,
     obter_recuperacao_password_service,
     obter_utilizador_atual,
 )
+from app.core.email import EmailEnvioFalhouError
 from app.repositories.utilizadores_repository import UtilizadorRegisto
 from app.schemas.auth import (
+    ConfirmarEmailPedido,
     RedefinirPassword,
+    ReenviarConfirmacaoPedido,
     SolicitarRecuperacaoPassword,
     UtilizadorCriar,
     UtilizadorLogin,
@@ -28,7 +34,12 @@ from app.services.auth_service import (
     AuthService,
     CredenciaisInvalidasError,
     EmailJaRegistadoError,
+    EmailNaoConfirmadoError,
     RefreshTokenInvalidoError,
+)
+from app.services.confirmacao_email_service import (
+    ConfirmacaoEmailService,
+    TokenConfirmacaoInvalidoError,
 )
 from app.services.conta_service import ContaService
 from app.services.recuperacao_password_service import (
@@ -48,13 +59,16 @@ def _utilizador_publico(utilizador: UtilizadorRegisto, eliminacao_cancelada: boo
         provincia=utilizador.provincia,
         genero=utilizador.genero,
         criado_em=utilizador.criado_em,
+        email_confirmado=utilizador.email_confirmado,
         eliminacao_cancelada=eliminacao_cancelada,
     )
 
 
 @router.post("/registar", response_model=UtilizadorPublico, status_code=status.HTTP_201_CREATED)
 def registar(
-    dados: UtilizadorCriar, response: Response, service: AuthService = Depends(obter_auth_service)
+    dados: UtilizadorCriar,
+    service: AuthService = Depends(obter_auth_service),
+    confirmacao_service: ConfirmacaoEmailService = Depends(obter_confirmacao_email_service),
 ) -> UtilizadorPublico:
     try:
         sessao = service.registar(
@@ -68,7 +82,18 @@ def registar(
     except EmailJaRegistadoError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
 
-    definir_cookies_sessao(response, sessao.tokens)
+    # AUTH-02: registar já não inicia sessão -- sem `definir_cookies_sessao`
+    # de propósito. A conta existe (já commitada), mas fica por confirmar;
+    # /auth/entrar recusa-a até o link chegar.
+    try:
+        confirmacao_service.enviar(sessao.utilizador)
+    except EmailEnvioFalhouError as exc:
+        # A conta já foi criada com sucesso -- um problema a enviar o email
+        # não pode reverter isso, nem faz sentido devolver erro de registo
+        # quando o registo, de facto, correu bem. Fica registado no stderr;
+        # o utilizador tem sempre a via de /auth/reenviar-confirmacao.
+        print(f"[confirmacao-email] falha a enviar para {sessao.utilizador.email}: {exc}", file=sys.stderr)
+
     return _utilizador_publico(sessao.utilizador)
 
 
@@ -81,6 +106,8 @@ def entrar(
 ) -> UtilizadorPublico:
     try:
         sessao = service.autenticar(dados.email, dados.password)
+    except EmailNaoConfirmadoError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
     except CredenciaisInvalidasError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
 
@@ -142,3 +169,25 @@ def redefinir_password(
         service.redefinir(dados.token, dados.password_nova)
     except TokenRecuperacaoInvalidoError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.post("/confirmar-email", status_code=status.HTTP_204_NO_CONTENT)
+def confirmar_email(
+    dados: ConfirmarEmailPedido,
+    service: ConfirmacaoEmailService = Depends(obter_confirmacao_email_service),
+) -> None:
+    try:
+        service.confirmar(dados.token)
+    except TokenConfirmacaoInvalidoError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.post("/reenviar-confirmacao", status_code=status.HTTP_202_ACCEPTED)
+def reenviar_confirmacao(
+    dados: ReenviarConfirmacaoPedido,
+    service: ConfirmacaoEmailService = Depends(obter_confirmacao_email_service),
+) -> dict[str, str]:
+    # Resposta sempre igual, exista ou não a conta, esteja ou não já
+    # confirmada — mesmo princípio de /auth/recuperar-password.
+    service.reenviar(dados.email)
+    return {"mensagem": "Se existir uma conta por confirmar com este email, foi enviado um novo link."}

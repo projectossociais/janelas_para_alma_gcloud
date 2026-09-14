@@ -47,6 +47,7 @@ const UTILIZADOR_API = {
   provincia: "Luanda",
   genero: "feminino",
   criado_em: "2026-01-01T00:00:00.000Z",
+  email_confirmado: true,
   eliminacao_cancelada: false,
 };
 
@@ -139,9 +140,9 @@ describe("AuthContext", () => {
     expect(result.current.isLoggedIn).toBe(false);
   });
 
-  it("registerUser cria conta e já entra com a sessão devolvida", async () => {
+  it("registerUser cria conta mas AUTH-02 nunca entra automaticamente (a conta fica por confirmar)", async () => {
     eu.mockRejectedValue(erroApi(401, "sem sessão"));
-    registar.mockResolvedValue(UTILIZADOR_API);
+    registar.mockResolvedValue({ ...UTILIZADOR_API, email_confirmado: false });
     const { result } = renderAuth();
     await waitFor(() => expect(result.current.loading).toBe(false));
 
@@ -158,7 +159,9 @@ describe("AuthContext", () => {
     });
 
     expect(resultado).toEqual({ ok: true });
-    expect(result.current.isLoggedIn).toBe(true);
+    // A API não define cookies para uma conta por confirmar -- nunca fingir
+    // aqui que há sessão só porque o registo correu bem.
+    expect(result.current.isLoggedIn).toBe(false);
     expect(registar).toHaveBeenCalledWith({
       email: "ana@example.com",
       password: "password-forte-123",

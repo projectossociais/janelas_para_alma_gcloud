@@ -138,6 +138,10 @@ def test_redefinir_com_token_valido_muda_a_password(
 
     service.redefinir(token_em_claro, "password-nova-456")
 
+    # AUTH-02: autenticar exige email confirmado -- não é o que este teste
+    # cobre (é sobre a password ter mudado de facto), por isso confirma
+    # directamente aqui.
+    utilizadores_repo.confirmar_email(utilizador_existente.id)
     auth = AuthService(utilizadores_repo)
     sessao = auth.autenticar("ana@example.com", "password-nova-456")
     assert sessao.utilizador.email == "ana@example.com"
