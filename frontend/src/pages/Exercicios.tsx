@@ -29,16 +29,6 @@ import PremiumPaywallModal from "@/components/PremiumPaywallModal";
 import FeedbackWidget from "@/components/FeedbackWidget";
 import { useProfile } from "@/contexts/ProfileContext";
 
-/**
- * Papéis considerados "adequados" para acesso Premium.
- *
- * IMPORTANTE: mesma convenção provisória usada em `BaseExercise.tsx` --
- * `"premium"` ainda não é escrito em `profiles.papel` por nenhum fluxo real
- * (o registo em `RegistoPremium.tsx` continua a não gravar no Supabase).
- * Incluído aqui já para quando esse estado passar a existir de facto.
- */
-const PAPEIS_COM_ACESSO_PREMIUM = ["profissional", "admin", "premium"];
-
 interface ExercicioBase {
   id: string;
   title: string;
@@ -160,9 +150,7 @@ const Exercicios = () => {
   const { profile } = useProfile();
   const [paywallAberto, setPaywallAberto] = useState(false);
 
-  // TODO: REMOVER BYPASS PREMIUM DEPOIS DOS TESTES
-  // const temAcessoPremium = !!profile && PAPEIS_COM_ACESSO_PREMIUM.includes(profile.papel);
-  const temAcessoPremium = true;
+  const temAcessoPremium = !!profile && (profile.premium_ativo || profile.papel === "admin");
 
   return (
     <div className="min-h-screen flex flex-col">

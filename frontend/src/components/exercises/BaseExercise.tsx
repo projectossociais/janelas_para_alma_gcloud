@@ -11,20 +11,6 @@ import { Button } from "@/components/ui/button";
 import { useProfile } from "@/contexts/ProfileContext";
 import { Clock, Lock, LogOut, Pause, Play, Sparkles, Trophy } from "lucide-react";
 
-/**
- * Papéis considerados "adequados" para conteúdo premium.
- *
- * IMPORTANTE: isto é uma convenção provisória, não um sistema de subscrição
- * real. Não existe nenhuma coluna/flag "premium" em `profiles` nem qualquer
- * fluxo que a defina (o registo em `RegistoPremium.tsx` nem sequer grava no
- * Supabase ainda). Escolhi `profissional`/`admin` por serem os dois papéis já
- * usados noutro sítio do código (`Parceiros.tsx`) para gating de conteúdo
- * restrito -- mas "profissional" significa "profissional de saúde", não
- * "assinante pago". Quando existir uma noção real de subscrição, substituir
- * esta lista pela verificação certa.
- */
-const PAPEIS_COM_ACESSO_PREMIUM = ["profissional", "admin"];
-
 const DURACAO_PADRAO_SEGUNDOS = 5 * 60; // 5 minutos
 
 const formatarTempo = (totalSegundos: number): string => {
@@ -67,7 +53,7 @@ export const useExerciseSession = (): ExerciseSessionContextValue => {
 interface BaseExerciseProps {
   title: string;
   description: string;
-  /** Se true, exige um papel premium-adequado (ver PAPEIS_COM_ACESSO_PREMIUM). */
+  /** Se true, exige `profile.premium_ativo` (ou papel `admin`). */
   isPremium?: boolean;
   /** Duração da sessão, em segundos. Por omissão, 5 minutos. */
   durationSeconds?: number;
@@ -93,9 +79,7 @@ const BaseExercise = ({
 }: BaseExerciseProps) => {
   const { profile } = useProfile();
 
-  // TODO: REMOVER BYPASS PREMIUM DEPOIS DOS TESTES
-  // const locked = isPremium && !(profile && PAPEIS_COM_ACESSO_PREMIUM.includes(profile.papel));
-  const locked = false;
+  const locked = isPremium && !(profile && (profile.premium_ativo || profile.papel === "admin"));
 
   const [isRunning, setIsRunning] = useState(false);
   const [remainingSeconds, setRemainingSeconds] = useState(durationSeconds);
