@@ -52,6 +52,7 @@ import AdminNotifications from "./pages/admin/AdminNotifications";
 import AdminContent from "./pages/admin/AdminContent";
 import AdminAdmins from "./pages/admin/AdminAdmins";
 import GlobalBanner from "./components/GlobalBanner";
+import ScrollToTop from "./components/ScrollToTop";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -65,6 +66,7 @@ const App = () => (
         <ProfileProvider>
           <FeedbackProvider>
             <BrowserRouter>
+              <ScrollToTop />
               <GlobalBanner />
               <Routes>
                 <Route path="/" element={<Index />} />
