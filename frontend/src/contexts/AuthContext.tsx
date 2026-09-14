@@ -82,7 +82,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const registerUser: AuthContextValue["registerUser"] = async (input) => {
     try {
-      const utilizador = await authApi.registar({
+      // AUTH-02: registar já não inicia sessão -- a API não define cookies
+      // (a conta fica por confirmar), por isso nunca marcar `user` aqui.
+      // `ok: true` continua a significar "a conta foi criada", só isso.
+      await authApi.registar({
         email: input.email,
         password: input.password,
         nome_completo: input.name,
@@ -90,7 +93,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         genero: input.gender,
         papel: input.role,
       });
-      setUser(paraAuthUser(utilizador));
       return { ok: true };
     } catch (err) {
       return { ok: false, error: mensagemDeFalha(err, "Não foi possível criar a conta.") };

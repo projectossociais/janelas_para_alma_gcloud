@@ -66,6 +66,14 @@ class RedefinirPassword(BaseModel):
     _valida_password = field_validator("password_nova")(validar_password_forte)
 
 
+class ConfirmarEmailPedido(BaseModel):
+    token: str
+
+
+class ReenviarConfirmacaoPedido(BaseModel):
+    email: EmailStr
+
+
 class UtilizadorPublico(BaseModel):
     id: str
     email: str
@@ -74,6 +82,11 @@ class UtilizadorPublico(BaseModel):
     provincia: str | None = None
     genero: str | None = None
     criado_em: datetime
+    # AUTH-02 — false logo após o registo; /auth/entrar recusa login
+    # enquanto isto for false. O frontend usa isto para decidir o que
+    # mostrar depois de registar (nunca trata a resposta do registo como
+    # sessão iniciada).
+    email_confirmado: bool = False
     # true só na resposta de /auth/entrar, quando voltar a entrar cancelou
     # um pedido de eliminação de conta agendado. Ver routers/conta.py.
     eliminacao_cancelada: bool = False

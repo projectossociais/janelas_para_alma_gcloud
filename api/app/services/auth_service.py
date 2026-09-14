@@ -33,6 +33,14 @@ class RefreshTokenInvalidoError(Exception):
     pass
 
 
+class EmailNaoConfirmadoError(Exception):
+    """AUTH-02 — bloqueio total: sem confirmar o email, não há sessão
+    nenhuma, mesmo com a password certa. Erro à parte de
+    `CredenciaisInvalidasError` porque a mensagem é diferente (aqui sim vale
+    a pena dizer o que falta — a password está certa, não há razão para
+    fingir que não sabemos disso como no caso de email/password errados)."""
+
+
 @dataclass(frozen=True)
 class ParDeTokens:
     access_token: str
@@ -64,11 +72,14 @@ class AuthService:
         provincia: str | None = None,
         genero: str | None = None,
     ) -> SessaoIniciada:
-        """Regista um utilizador novo e já devolve uma sessão iniciada — tal
-        como qualquer app espera hoje, registar é entrar. `password` e
-        `papel` já vêm validados pelo schema Pydantic (UtilizadorCriar) antes
-        de chegar aqui — a password por ser forte, o papel por estar entre os
-        auto-registáveis; este serviço verifica só o que é dele (duplicado)."""
+        """Regista um utilizador novo. A conta nasce por confirmar
+        (AUTH-02) — devolve na mesma um `ParDeTokens` (por uniformidade com
+        `autenticar`), mas é o router que decide não os pôr em cookies: sem
+        confirmar o email não há sessão nenhuma, mesmo logo a seguir ao
+        registo. `password` e `papel` já vêm validados pelo schema Pydantic
+        (UtilizadorCriar) antes de chegar aqui — a password por ser forte, o
+        papel por estar entre os auto-registáveis; este serviço verifica só
+        o que é dele (duplicado)."""
         if self._repo.obter_por_email(email) is not None:
             raise EmailJaRegistadoError(f"o email {email} já está registado")
 
@@ -88,6 +99,11 @@ class AuthService:
         # de propósito — não confirmar a um atacante que um email existe.
         if utilizador is None or not verificar_password(password, utilizador.password_hash):
             raise CredenciaisInvalidasError("email ou password incorretos")
+
+        # Só depois de confirmar que a password está certa: aqui já não há
+        # razão para esconder a causa (ver EmailNaoConfirmadoError).
+        if not utilizador.email_confirmado:
+            raise EmailNaoConfirmadoError("confirme o seu email antes de entrar")
 
         return SessaoIniciada(utilizador=utilizador, tokens=self._emitir_tokens(utilizador.id))
 

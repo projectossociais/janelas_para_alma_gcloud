@@ -30,6 +30,11 @@ const Auth = () => {
   const rawNext = searchParams.get("next") ?? "";
   const nextPath = /^\/(?!\/)/.test(rawNext) ? rawNext : "/";
 
+  // AUTH-02: registar já não inicia sessão -- depois de criar a conta,
+  // muda para o separador de login (em vez de navegar como se estivesse
+  // autenticado) e avisa para confirmar o email primeiro.
+  const [activeTab, setActiveTab] = useState<"login" | "register">("login");
+
   // Login state
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -58,6 +63,18 @@ const Auth = () => {
     try {
       const resultado = await signIn(loginEmail.trim(), loginPassword);
       if (!resultado.ok) {
+        // AUTH-02, bloqueio total: a API devolve esta mensagem exacta em
+        // 403 quando a password está certa mas o email não. Dá logo a
+        // acção óbvia (reenviar o link) em vez de deixar a pessoa presa.
+        if (resultado.error?.includes("confirme o seu email")) {
+          toast.error(resultado.error, {
+            action: {
+              label: "Reenviar link",
+              onClick: () => void handleReenviarConfirmacao(loginEmail.trim()),
+            },
+          });
+          return;
+        }
         toast.error(resultado.error || "Email ou palavra-passe incorretos.");
         return;
       }
@@ -65,6 +82,17 @@ const Auth = () => {
       irParaProximo();
     } finally {
       setLoginLoading(false);
+    }
+  };
+
+  const handleReenviarConfirmacao = async (email: string) => {
+    try {
+      // Resposta sempre igual, exista ou não a conta, esteja ou não já
+      // confirmada -- mesmo princípio de handleForgotPassword.
+      await authApi.reenviarConfirmacao(email);
+      toast.success("Se existir uma conta por confirmar com este email, foi enviado um novo link.");
+    } catch (err) {
+      toast.error(mensagemDeErroApi(err, "Não foi possível reenviar o link. Tente novamente mais tarde."));
     }
   };
 
@@ -122,8 +150,22 @@ const Auth = () => {
         toast.error(resultado.error || "Não foi possível criar a conta.");
         return;
       }
-      toast.success(`Bem-vindo(a), ${name.trim().split(" ")[0]}!`);
-      irParaProximo();
+      // AUTH-02: a conta existe mas fica por confirmar -- nunca navegar
+      // como se já estivesse autenticado. Mostra o próximo passo (confirmar
+      // o email) e leva para o login, já com o email preenchido.
+      toast.success(`Conta criada! Enviámos um link de confirmação para ${email.trim()}.`, {
+        duration: 8000,
+      });
+      const emailRegistado = email.trim();
+      setName("");
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+      setProvince("");
+      setGender("");
+      setRole("");
+      setLoginEmail(emailRegistado);
+      setActiveTab("login");
     } finally {
       setRegisterLoading(false);
     }
@@ -140,7 +182,7 @@ const Auth = () => {
             <CardDescription>Entre ou crie a sua conta para continuar.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="login" className="w-full">
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "login" | "register")} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="login">Entrar</TabsTrigger>
                 <TabsTrigger value="register">Criar Conta</TabsTrigger>

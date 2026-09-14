@@ -9,14 +9,17 @@ segundo router (perfil, e os que se seguirem) também precisa dela.
 from fastapi import Cookie, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.email import EmailSender, ResendEmailSender
+from app.core.config import obter_settings
+from app.core.email import ConsoleEmailSender, EmailSender, ResendEmailSender
 from app.db import obter_sessao
+from app.repositories.tokens_confirmacao_repository import SQLAlchemyTokensConfirmacaoRepository
 from app.repositories.tokens_recuperacao_repository import SQLAlchemyTokensRecuperacaoRepository
 from app.repositories.utilizadores_repository import (
     SQLAlchemyUtilizadoresRepository,
     UtilizadorRegisto,
 )
 from app.services.auth_service import AuthService, CredenciaisInvalidasError
+from app.services.confirmacao_email_service import ConfirmacaoEmailService
 from app.services.conta_service import ContaService
 from app.services.recuperacao_password_service import RecuperacaoPasswordService
 
@@ -30,6 +33,12 @@ def obter_conta_service(sessao: Session = Depends(obter_sessao)) -> ContaService
 
 
 def obter_email_sender() -> EmailSender:
+    # Sem chave (dev local sem .env preenchido), cair no envio por consola em
+    # vez de tentar chamar o Resend a sério — chamada que falharia de
+    # qualquer forma sem credenciais. Nunca acontece em produção: lá a chave
+    # vem sempre do Secret Manager (ver infra/gcloud/03-secrets.sh).
+    if not obter_settings().resend_api_key:
+        return ConsoleEmailSender()
     return ResendEmailSender()
 
 
@@ -40,6 +49,17 @@ def obter_recuperacao_password_service(
     return RecuperacaoPasswordService(
         SQLAlchemyUtilizadoresRepository(sessao),
         SQLAlchemyTokensRecuperacaoRepository(sessao),
+        email_sender,
+    )
+
+
+def obter_confirmacao_email_service(
+    sessao: Session = Depends(obter_sessao),
+    email_sender: EmailSender = Depends(obter_email_sender),
+) -> ConfirmacaoEmailService:
+    return ConfirmacaoEmailService(
+        SQLAlchemyUtilizadoresRepository(sessao),
+        SQLAlchemyTokensConfirmacaoRepository(sessao),
         email_sender,
     )
 

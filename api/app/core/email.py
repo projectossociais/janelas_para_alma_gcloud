@@ -59,3 +59,21 @@ class ResendEmailSender:
 
         if resposta.status_code >= 400:
             raise EmailEnvioFalhouError(f"Resend devolveu {resposta.status_code}: {resposta.text}")
+
+
+class ConsoleEmailSender:
+    """Fallback de desenvolvimento: sem `RESEND_API_KEY` configurada (dev
+    local sem `.env` preenchido), imprime o email no terminal em vez de
+    tentar chamar o Resend — que rejeitaria a chamada de qualquer forma sem
+    chave real. Ver `obter_email_sender()` em core/dependencies.py: só entra
+    quando a chave está vazia, nunca em produção. Existe porque o registo
+    (AUTH-02) manda sempre um email de confirmação — sem isto, `npm run dev`
+    /`uvicorn` locais sem Resend configurado deixariam de conseguir
+    registar contas nenhumas."""
+
+    def enviar(self, destinatario: str, assunto: str, corpo_html: str) -> None:
+        print(
+            f"\n--- EMAIL (modo consola — RESEND_API_KEY vazia) ---\n"
+            f"Para: {destinatario}\nAssunto: {assunto}\n{corpo_html}\n"
+            f"----------------------------------------------------\n"
+        )

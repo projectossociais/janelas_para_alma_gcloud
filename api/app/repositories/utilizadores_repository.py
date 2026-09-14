@@ -33,6 +33,13 @@ class UtilizadorRegisto:
     provincia: str | None
     genero: str | None
     criado_em: datetime
+    # AUTH-02. Default `True` só para não obrigar todos os outros testes
+    # (banners, premium, admin, ...) que constroem um UtilizadorRegisto à
+    # mão para simular "já há sessão" a passar isto explicitamente — esses
+    # fixtures representam sempre uma conta já activa. Quem cria de facto
+    # (RepositorioFalso.criar() e SQLAlchemyUtilizadoresRepository.criar())
+    # continua a fixar `False` explicitamente, como uma conta nova de verdade.
+    email_confirmado: bool = True
 
 
 class UtilizadoresRepository(Protocol):
@@ -51,6 +58,8 @@ class UtilizadoresRepository(Protocol):
     ) -> UtilizadorRegisto: ...
 
     def atualizar_password_hash(self, utilizador_id: str, password_hash: str) -> None: ...
+
+    def confirmar_email(self, utilizador_id: str) -> None: ...
 
     def agendar_eliminacao(self, utilizador_id: str, quando: datetime) -> None: ...
 
@@ -76,6 +85,7 @@ class SQLAlchemyUtilizadoresRepository:
             provincia=row.provincia,
             genero=row.genero,
             criado_em=row.created_at,
+            email_confirmado=row.email_confirmado,
         )
 
     def obter_por_email(self, email: str) -> UtilizadorRegisto | None:
@@ -113,6 +123,13 @@ class SQLAlchemyUtilizadoresRepository:
         if row is None:
             return
         row.password_hash = password_hash
+        self._sessao.commit()
+
+    def confirmar_email(self, utilizador_id: str) -> None:
+        row = self._sessao.get(Utilizador, uuid.UUID(utilizador_id))
+        if row is None:
+            return
+        row.email_confirmado = True
         self._sessao.commit()
 
     def agendar_eliminacao(self, utilizador_id: str, quando: datetime) -> None:
