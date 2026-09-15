@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
 import PartnerDialog from "@/components/PartnerDialog";
 import ClinicalPartners from "@/components/ClinicalPartners";
-import { useSupabaseRole } from "@/hooks/useSupabaseRole";
+import { useAuth } from "@/contexts/AuthContext";
 import heroImg from "@/assets/parceiros-hero.jpg";
 
 const benefits = [
@@ -27,8 +27,8 @@ const benefits = [
 ];
 
 const Parceiros = () => {
-  const { role, loading } = useSupabaseRole();
-  const canViewPartnerSections = !loading && (role === "admin" || role === "profissional");
+  const { user, loading } = useAuth();
+  const canViewPartnerSections = !loading && (user?.role === "admin" || user?.role === "profissional");
   const [searchParams] = useSearchParams();
   const abrirAgendamentoOptiotica = searchParams.get("agendar") === "optiotica";
 

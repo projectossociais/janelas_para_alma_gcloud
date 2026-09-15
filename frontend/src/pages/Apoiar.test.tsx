@@ -40,12 +40,6 @@ vi.mock("@/contexts/AuthContext", () => ({
   useAuth: () => ({ isLoggedIn: false, user: null, logout: vi.fn(), isAdmin: false }),
 }));
 
-// Navbar chama isto directamente (ainda não migrado para a API nova nesta
-// branch -- ver PR #34) -- sem mockar, tentaria falar com o Supabase de verdade.
-vi.mock("@/hooks/useSupabaseRole", () => ({
-  useSupabaseRole: () => ({ isAdmin: false }),
-}));
-
 vi.mock("@/contexts/ProfileContext", () => ({
   useProfile: () => ({ profile: null, loading: false, refetch: vi.fn(), setProfile: vi.fn() }),
 }));

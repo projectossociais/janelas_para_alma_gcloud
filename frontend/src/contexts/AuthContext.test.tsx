@@ -82,6 +82,17 @@ describe("AuthContext", () => {
     expect(result.current.isLoggedIn).toBe(true);
     expect(result.current.user?.email).toBe("ana@example.com");
     expect(result.current.user?.name).toBe("Ana Teste");
+    // UTILIZADOR_API tem papel "comum" -- isAdmin deriva disto, nunca do Supabase.
+    expect(result.current.isAdmin).toBe(false);
+  });
+
+  it("isAdmin é true só quando o papel da sessão é 'admin'", async () => {
+    eu.mockResolvedValue({ ...UTILIZADOR_API, papel: "admin" });
+    const { result } = renderAuth();
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.isAdmin).toBe(true);
   });
 
   it("sem sessão (/auth/eu falha), fica por não-autenticado — nunca lança", async () => {
@@ -92,6 +103,7 @@ describe("AuthContext", () => {
 
     expect(result.current.isLoggedIn).toBe(false);
     expect(result.current.user).toBeNull();
+    expect(result.current.isAdmin).toBe(false);
   });
 
   it("signIn com credenciais certas autentica o utilizador", async () => {
