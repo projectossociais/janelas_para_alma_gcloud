@@ -1,4 +1,4 @@
-import { NavLink, useLocation, Link } from "react-router-dom";
+import { NavLink, useLocation, Link, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
@@ -21,29 +21,29 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
-import { useAdminScope } from "@/hooks/useAdminScope";
+import { useAuth } from "@/contexts/AuthContext";
 
-const allItems = [
-  { title: "Visão Geral", url: "/admin", icon: LayoutDashboard, end: true, scope: "can_overview" as const },
-  { title: "Utilizadores", url: "/admin/utilizadores", icon: Users, scope: "can_users" as const },
-  { title: "Mensagens & Pedidos", url: "/admin/mensagens", icon: Inbox, scope: "can_inbox" as const },
-  { title: "Banners", url: "/admin/banners", icon: Megaphone, scope: "can_banners" as const },
-  { title: "Notificações", url: "/admin/notificacoes", icon: Bell, scope: "can_notifications" as const },
-  { title: "Conteúdo", url: "/admin/conteudo", icon: FileEdit, scope: "can_content" as const },
-  { title: "Administradores", url: "/admin/administradores", icon: ShieldCheck, scope: "can_manage_admins" as const },
+// W-11: "admin" é binário na API própria (uma coluna `papel`), não uma
+// matriz de permissões — saiu o `useAdminScope` (que lia `admin_permissions`
+// no Supabase) junto com os `can_*`/`is_super`. Quem passa em `RequireAdmin`
+// vê o menu inteiro; não há hoje conceito de admin parcial.
+const items = [
+  { title: "Visão Geral", url: "/admin", icon: LayoutDashboard, end: true },
+  { title: "Utilizadores", url: "/admin/utilizadores", icon: Users },
+  { title: "Mensagens & Pedidos", url: "/admin/mensagens", icon: Inbox },
+  { title: "Banners", url: "/admin/banners", icon: Megaphone },
+  { title: "Notificações", url: "/admin/notificacoes", icon: Bell },
+  { title: "Conteúdo", url: "/admin/conteudo", icon: FileEdit },
+  { title: "Administradores", url: "/admin/administradores", icon: ShieldCheck },
 ];
 
 const AdminSidebar = () => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { scope } = useAdminScope();
-  const items = allItems.filter((i) => !scope || scope.is_super || scope[i.scope]);
+  const { logout } = useAuth();
 
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
+    logout();
     navigate("/");
   };
 

@@ -34,11 +34,6 @@ vi.mock("@/lib/apiClient", () => ({
   },
 }));
 
-// Navbar chama isto directamente (ainda não migrado para a API nova) —
-// sem mockar, tentaria falar com o Supabase de verdade.
-vi.mock("@/hooks/useSupabaseRole", () => ({
-  useSupabaseRole: () => ({ isAdmin: false }),
-}));
 
 const mockProfile = {
   id: "user-1",
