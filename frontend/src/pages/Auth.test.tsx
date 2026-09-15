@@ -43,9 +43,6 @@ vi.mock("@/contexts/ProfileContext", () => ({
   useProfile: () => ({ profile: null, loading: false, refetch: vi.fn(), setProfile: vi.fn() }),
 }));
 
-vi.mock("@/hooks/useSupabaseRole", () => ({
-  useSupabaseRole: () => ({ isAdmin: false }),
-}));
 
 const toastError = vi.fn();
 const toastSuccess = vi.fn();

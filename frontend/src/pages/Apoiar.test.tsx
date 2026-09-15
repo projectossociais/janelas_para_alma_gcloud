@@ -25,9 +25,6 @@ vi.mock("@/integrations/supabase/client", () => ({
   },
 }));
 
-vi.mock("@/hooks/useSupabaseRole", () => ({
-  useSupabaseRole: () => ({ isAdmin: false }),
-}));
 
 vi.mock("@/contexts/AuthContext", () => ({
   useAuth: () => ({ isLoggedIn: false, user: null, logout: vi.fn() }),
