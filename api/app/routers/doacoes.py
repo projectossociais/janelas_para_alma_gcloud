@@ -1,11 +1,12 @@
 """Router de doações. Público de propósito — doar não exige conta, só um
-email para onde mandar a confirmação (quando essa parte da infra existir,
-ver docs/BACKLOG.md).
+email para onde mandar a confirmação (via Resend, ver core/email.py).
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.core.dependencies import obter_email_sender
+from app.core.email import EmailSender
 from app.db import obter_sessao
 from app.repositories.doacoes_repository import SQLAlchemyDoacoesRepository
 from app.schemas.doacao import DoacaoMateriaisCriar, DoacaoPublica
@@ -14,8 +15,11 @@ from app.services.doacao_service import DoacaoService, MateriaisNaoSelecionadosE
 router = APIRouter(prefix="/doacoes", tags=["doacoes"])
 
 
-def obter_doacao_service(sessao: Session = Depends(obter_sessao)) -> DoacaoService:
-    return DoacaoService(SQLAlchemyDoacoesRepository(sessao))
+def obter_doacao_service(
+    sessao: Session = Depends(obter_sessao),
+    email_sender: EmailSender = Depends(obter_email_sender),
+) -> DoacaoService:
+    return DoacaoService(SQLAlchemyDoacoesRepository(sessao), email_sender)
 
 
 @router.post("/materiais", response_model=DoacaoPublica, status_code=status.HTTP_201_CREATED)
