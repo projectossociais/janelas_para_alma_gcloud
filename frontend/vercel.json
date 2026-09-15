@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://SUBSTITUIR-PELO-URL-DA-API.run.app/:path*"
+      "destination": "https://jpa-api-73u3krcgwa-ew.a.run.app/:path*"
     },
     { "source": "/(.*)", "destination": "/index.html" }
   ]

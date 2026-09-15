@@ -1165,6 +1165,115 @@ O que mudou:
   de qualquer uma gravar) é um risco teórico aceite para o volume esperado, não
   corrigido com `SELECT FOR UPDATE` — documentado, não esquecido.
 
+### DEP-02 — primeiro deploy real (2026-09-15)
+
+Projecto GCP criado pelo dono do projecto (`project-f083cafc-d127-435a-a77`,
+`europe-west1`, facturação activa) e `01`→`04` correram pela primeira vez a sério.
+Dois problemas de permissões apareceram — nenhum tinha aparecido antes porque nunca
+tínhamos corrido isto contra um projecto GCP genuinamente novo:
+
+1. **`gcloud builds submit` falhava com "storage.objects.get denied"** ao tentar ler
+   a própria fonte que acabara de enviar. Causa: projectos GCP criados recentemente
+   já não recebem `Editor` automático no service account por omissão do Compute
+   Engine (endurecimento de segurança da Google, mudança relativamente recente) — o
+   SA que o Cloud Build usa por omissão não tinha literalmente nenhum papel.
+2. **O Job de migração e o deploy da API falhavam a ligar ao Cloud SQL** com
+   `403 NOT_AUTHORIZED ... cloudsql.instances.get`. Mesma causa raiz: o SA por
+   omissão também precisa de `roles/cloudsql.client` para o proxy do Cloud SQL
+   embutido no Cloud Run funcionar.
+
+Corrigido de vez em `01-bootstrap.sh` — passa a conceder `roles/cloudbuild.builds.builder`
+e `roles/cloudsql.client` ao SA por omissão do Compute Engine, para nenhum projecto
+novo voltar a tropeçar nisto. Também corrigido um bug real (não de permissões) em
+`_build-imagem.sh`: `gcloud builds submit --config=-` não lê de stdin no `gcloud`
+actual — tenta abrir literalmente um ficheiro chamado `-` e falha. Passa a escrever
+a configuração num ficheiro temporário real.
+
+Resultado: `jpa-db` (Cloud SQL) a correr, segredos no Secret Manager, esquema
+migrado até `cfaf27163f7e` (inclui o voluntariado do PR #37), API viva em
+`https://jpa-api-73u3krcgwa-ew.a.run.app` — `/saude` e `/auth/eu` confirmados a
+responder correctamente. `frontend/vercel.json` actualizado com o URL real (deixa de
+apontar para o placeholder `SUBSTITUIR-PELO-URL-DA-API.run.app`) — isto desbloqueia
+tudo o que já estava construído e à espera disto (login, registo, recuperação de
+password, confirmação de email, painel admin, doações), que estava silenciosamente
+partido em produção desde o corte do domínio para o Vercel.
+
+**Falta ainda:** correr `06-ci-cd-setup.sh` para o deploy automático (`DEP-06`) ficar
+mesmo activo a partir de agora — feito manualmente desta vez.
+
+### Backups automáticos do Cloud SQL estavam desligados (2026-09-15)
+
+Achado ao responder a uma pergunta directa do dono do projecto ("os dados são apagados
+a cada deploy? onde está o backup?"): a instância `jpa-db`, criada no DEP-02, tinha
+`backupConfiguration.enabled: false` — nenhum backup diário automático. A única rede
+de segurança que existia era o backup avulso que o `05-migrate.sh` dispara mesmo antes
+de cada migração (bom para proteger uma migração; nada protegia os dados no dia-a-dia
+entre migrações, ex.: um erro de operação, não de esquema).
+
+Corrigido nos dois sítios:
+
+- **A instância já criada** (`jpa-db`): activados backups diários (03:00, 7 dias de
+  retenção) e recuperação num ponto no tempo (`point-in-time recovery`) — permite
+  restaurar para qualquer instante exacto dentro da janela de 7 dias, não só para o
+  momento de um backup.
+- **`02-cloud-sql.sh`**: `gcloud sql instances create` ganha
+  `--backup-start-time=03:00 --retained-backups-count=7 --enable-point-in-time-recovery`,
+  para nenhuma instância nova voltar a nascer sem isto.
+
+Confirmado com `gcloud sql instances describe jpa-db` e `gcloud sql backups list` —
+`enabled: true`, `pointInTimeRecoveryEnabled: true`, e os dois backups avulsos das
+migrações do DEP-02 já visíveis com `STATUS: SUCCESSFUL`.
+
+### DEP-06 — três permissões em falta, achadas no primeiro deploy automático real (2026-09-15)
+
+`06-ci-cd-setup.sh` correu, e o `deploy-api` do CI passou a correr (deixou de aparecer
+"skipping") — mas falhou três vezes seguidas, cada vez por um motivo diferente, todos
+do mesmo tipo: permissões que só aparecem quando **um service account restrito**
+(`jpa-deploy`, não um humano com `Owner`) tenta fazer a mesma operação que eu já tinha
+testado manualmente como Owner. Testar como Owner nunca ia mostrar nada disto.
+
+1. `gcloud builds submit` recusado com *"forbidden from accessing the bucket
+   [..._cloudbuild]"*, a sugerir `serviceusage.services.use`. Corrigido dando a
+   `jpa-deploy` o papel `roles/serviceusage.serviceUsageConsumer`.
+2. Mesmo comando, erro diferente a seguir: o mesmo tipo de acesso ao bucket, desta vez
+   resolvido com `roles/cloudbuild.builds.builder` (o mesmo papel que já tinha
+   resolvido um erro parecido para o service account de runtime, no DEP-02).
+3. Com as duas permissões acima, **o build em si passou a ter sucesso** — mas o
+   comando `gcloud builds submit` continuava a devolver erro, porque tenta mostrar os
+   logs do build ao vivo, e isso exige que quem chama seja Viewer/Owner do *projecto*
+   (não chega ter papéis específicos do Cloud Build) quando os logs vão para o bucket
+   GCS por omissão. `jpa-deploy` não é Viewer do projecto, de propósito (permissões
+   mínimas). Corrigido na raiz, não com mais um papel: `_build-imagem.sh` passa a
+   configurar `options.logging: CLOUD_LOGGING_ONLY` no Cloud Build, o que evita por
+   completo a necessidade de acesso ao bucket GCS para ler logs.
+
+**Lição a levar**: sempre que se testar um fluxo de permissões novo, testar como o
+service account real que o vai executar em produção, nunca só como Owner — um Owner
+nunca vê estes erros.
+
+### DEP-06 — a base de dados ficou à frente do `main` (2026-09-15)
+
+Depois de corrigir as três permissões acima, o `deploy-api` voltou a falhar — desta
+vez sem nada a ver com permissões: `alembic` recusou-se a correr com
+`FAILED: Can't locate revision identified by 'cfaf27163f7e'`.
+
+Causa: ao correr as migrações manuais do DEP-02, a pasta local ainda estava na branch
+`api/voluntariado-atividades` (do PR #37, nessa altura por rever) em vez de `main` —
+sem reparar nisso, a imagem construída e a migração aplicada usaram o código dessa
+branch, que inclui a migração do voluntariado (`cfaf27163f7e`). A base de dados de
+produção ficou a marcar essa revisão como aplicada, mas o `main` — o que o
+`deploy-api` automático de facto usa — nunca teve essa migração, porque o PR #37
+continuava por mesclar. Todo o deploy automático a seguir falhava logo ao arrancar,
+porque o Alembic não encontra no histórico do `main` uma revisão que a base de dados
+diz já ter.
+
+Corrigido mesclando o PR #37 para o `main` — alinha o código com o que já estava de
+facto na base de dados, em vez de reverter dados reais.
+
+**Lição a levar**: antes de qualquer operação que toque produção a sério (build,
+migração, deploy), confirmar explicitamente `git branch --show-current` — nunca supor
+que a pasta está no `main` só porque foi lá que se começou a sessão.
+
 ---
 
 ## O que NÃO fazer agora

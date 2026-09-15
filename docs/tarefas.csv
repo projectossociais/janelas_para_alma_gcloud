@@ -19,7 +19,7 @@ INF-17,infra,NGINX: proxy para upstream HTTPS do Cloud Run,P1,feito,W,deploy,202
 INF-18,infra,R2: bucket + credenciais + URL publico + CORS,P1,feito,W,deploy,2026-09-10,bucket janelasparaalma; pub dev URL; scripts passam R2_PUBLIC_BASE_URL
 INF-19,ci,CI: docker build das 2 imagens + nginx -t; alembic upgrade head contra Postgres real,P1,feito,W,deploy,2026-09-10,por validar na 1a corrida do CI
 DEP-01,infra,git push origin main (commits locais 3777321 + d8a7d1d),P0,a-fazer,W,deploy,2026-09-10,o push a main esta bloqueado para o Claude
-DEP-02,infra,Projecto GCloud + facturacao; correr infra/gcloud/01-06,P0,bloqueado,W,deploy,2026-09-15,"precisa conta e cartao registado (bloqueio #4). 01-06 agora inclui o CI/CD automatico (DEP-06) -- ver docs/BACKLOG.md"
+DEP-02,infra,Projecto GCloud + facturacao; correr infra/gcloud/01-06,P0,feito,W,deploy,2026-09-15,"Projecto project-f083cafc-d127-435a-a77 (europe-west1), facturacao activa. 01-05 corridos: Cloud SQL (jpa-db), segredos, migracao ate cfaf27163f7e, API viva em jpa-api-73u3krcgwa-ew.a.run.app (/saude e /auth/eu confirmados). Dois bugs de permissoes de projecto novo corrigidos no 01-bootstrap.sh (ver BACKLOG.md). Falta so o 06-ci-cd-setup.sh (WIF para o deploy automatico) e actualizar FRONTEND_ORIGINS/CORS se preciso"
 DEP-03,infra,Migracao Alembic contra Postgres real (local),P1,bloqueado,W,deploy,2026-09-10,Docker/WSL ou role jpa local; o CI ja cobre isto
 DEP-04,infra,docker compose build local - validar o container,P2,bloqueado,W,deploy,2026-09-10,WSL/reboot pendente; o CI ja cobre isto
 DEP-05,infra,Dominio proprio + certificado; trocar R2_PUBLIC_BASE_URL para custom domain,P2,a-fazer,W,deploy,2026-09-10,gcloud run domain-mappings
@@ -77,4 +77,5 @@ NAO-03,-,Versao em ingles,-,nao-fazer-agora,-,-,2026-09-10,o publico e angolano
 NAO-04,-,Mapa de clinicas parceiras,-,nao-fazer-agora,-,-,2026-09-10,uma lista chega enquanto houver poucas clinicas
 NAO-05,-,Notificacoes push + modo offline,-,nao-fazer-agora,-,-,2026-09-10,"custo alto, ninguem bloqueado hoje"
 DEP-06,infra,Frontend passa a deploy no Vercel (janelasparaalma.com) via rewrites,P1,feito,W,deploy,2026-09-13,"vercel.json com rewrite /api/*; infra/nginx e frontend.Dockerfile removidos"
-DEP-07,infra,Substituir placeholder do URL da API em frontend/vercel.json,P0,bloqueado,W,deploy,2026-09-13,"so depois do 1o deploy real da API no Cloud Run (DEP-02); sem isto /api/* nao funciona em producao"
+DEP-07,infra,Substituir placeholder do URL da API em frontend/vercel.json,P0,feito,W,deploy,2026-09-15,"feito no PR #39 -- vercel.json aponta para jpa-api-73u3krcgwa-ew.a.run.app; confirmado ao vivo (www.janelasparaalma.com/api/saude e /api/auth/eu)"
+DEP-08,infra,Cloud SQL: activar backups automaticos diarios + point-in-time recovery,P0,feito,W,deploy,2026-09-15,"jpa-db nasceu com backupConfiguration.enabled=false (so o backup avulso do 05-migrate.sh existia). Activado backup diario as 03:00 (7 dias) + PITR na instancia e em 02-cloud-sql.sh para instancias novas"
