@@ -996,6 +996,38 @@ O que ficou feito:
   de estar autenticado" (perfil, sessões de exercício, uploads, feedback, conta) — cada
   um passou a confirmar explicitamente a conta de teste antes de entrar.
 
+### CROSS-09 — desfeito o retrocesso da doação de materiais (2026-09-15)
+
+O PR #27 (`fix(doacoes): unifica materiais e financeiro no Supabase (temporario)`, já
+mesclado) tinha posto `Apoiar.tsx` (modo "materiais") a chamar de novo o Supabase
+directamente — `supabase.from("doacoes").insert` + `supabase.functions.invoke
+("enviar-email-doacao")` — explicitamente enquanto a infra de email em Python não
+estava pronta. Essa razão deixou de existir com o Resend (CROSS-01/CROSS-04/CROSS-07).
+
+O que mudou:
+
+- **`DoacaoService.registar_doacao_materiais`** ganha o passo de email de confirmação
+  (via `EmailSender`, o mesmo Protocol de `core/email.py`), com o recibo e os materiais
+  no corpo. Mantém o comportamento já testado deste fluxo desde a versão Supabase — ao
+  contrário do registo de conta (AUTH-02, onde a conta já criada É o sucesso), aqui uma
+  falha no envio conta como falha do pedido inteiro: nunca "doação recebida" sem a
+  confirmação também sair. A doação em si não é apagada (fica `pendente` na base de
+  dados, visível a um admin) — só a resposta ao chamador não finge sucesso.
+- **`Apoiar.tsx`** (modo materiais) volta a chamar `doacoesApi.registarMateriais(...)` —
+  um pedido só, gravação e email já vêm juntos do lado da API.
+- Testes actualizados/novos: `test_doacao_service.py` (email enviado com o recibo,
+  falha no envio propaga sem apagar o registo) e `test_doacoes_router.py`
+  (500 quando o email falha) na API; `Apoiar.test.tsx` de volta ao mock de
+  `doacoesApi` no frontend.
+
+**Fica no Supabase, de propósito — bloqueado por storage, não por email:**
+`Apoiar.tsx` (modo **financeiro**) e `RegistoPremium.tsx` continuam a mandar o
+comprovativo de pagamento pela Edge Function `enviar-email-doacao`, que hoje é o
+**único** sítio para onde esse ficheiro tem destino real (não há upload separado para
+o R2 enquanto as credenciais não existirem — CROSS-02). Reverter estes dois sem ter
+para onde mandar o ficheiro deixaria o comprovativo sem destino nenhum; fica para
+quando o R2 estiver ligado.
+
 ---
 
 ## O que NÃO fazer agora

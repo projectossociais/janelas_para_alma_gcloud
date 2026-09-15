@@ -6,31 +6,44 @@ import { MemoryRouter } from "react-router-dom";
 // --- mocks ---
 // Este é o fluxo com o histórico mais grave do projecto (ver CLAUDE.md,
 // "Nunca mostrar sucesso antes de verificar error/excepção") — o que importa
-// aqui é especificamente o caminho do erro, não só o do sucesso. A doação de
-// materiais foi unificada de volta ao Supabase (mesmo caminho do fluxo
-// financeiro: insert em `doacoes` + Edge Function `enviar-email-doacao`)
-// enquanto a infra de email em Python não está pronta — ver docs/BACKLOG.md.
+// aqui é especificamente o caminho do erro, não só o do sucesso. Voltou a
+// falar com a API própria (DoacaoService, via Resend para a confirmação)
+// depois de ter passado por um retrocesso temporário para o Supabase
+// enquanto a infra de email em Python não estava pronta — ver docs/BACKLOG.md.
 
-const fromMock = vi.fn();
-const insertMock = vi.fn();
-const invokeMock = vi.fn();
+class ApiErrorFalso extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+  }
+}
 
-vi.mock("@/integrations/supabase/client", () => ({
-  supabase: {
-    from: (...args: unknown[]) => {
-      fromMock(...args);
-      return { insert: (...a: unknown[]) => insertMock(...a) };
-    },
-    functions: { invoke: (...args: unknown[]) => invokeMock(...args) },
+const registarMateriais = vi.fn();
+
+vi.mock("@/lib/apiClient", () => ({
+  doacoesApi: { registarMateriais: (...a: unknown[]) => registarMateriais(...a) },
+  mensagemDeErroApi: (err: unknown, fallback: string) => {
+    const status = (err as { status?: unknown } | null)?.status;
+    const message = (err as { message?: unknown } | null)?.message;
+    return typeof status === "number" && typeof message === "string" ? message : fallback;
   },
 }));
 
-vi.mock("@/hooks/useSupabaseRole", () => ({
-  useSupabaseRole: () => ({ isAdmin: false }),
+// handleConcluirDoacao (fluxo financeiro) continua no Supabase -- fora de
+// âmbito aqui, mas o módulo é importado pelo componente inteiro.
+vi.mock("@/integrations/supabase/client", () => ({
+  supabase: { functions: { invoke: vi.fn() } },
 }));
 
 vi.mock("@/contexts/AuthContext", () => ({
-  useAuth: () => ({ isLoggedIn: false, user: null, logout: vi.fn() }),
+  useAuth: () => ({ isLoggedIn: false, user: null, logout: vi.fn(), isAdmin: false }),
+}));
+
+// Navbar chama isto directamente (ainda não migrado para a API nova nesta
+// branch -- ver PR #34) -- sem mockar, tentaria falar com o Supabase de verdade.
+vi.mock("@/hooks/useSupabaseRole", () => ({
+  useSupabaseRole: () => ({ isAdmin: false }),
 }));
 
 vi.mock("@/contexts/ProfileContext", () => ({
@@ -53,25 +66,22 @@ async function abrirDialogoDeMateriais(user: ReturnType<typeof userEvent.setup>)
   return screen.getByRole("button", { name: /Confirmar Doação|A enviar/ });
 }
 
-describe("Apoiar — doação de materiais (Supabase)", () => {
+describe("Apoiar — doação de materiais", () => {
   beforeEach(() => {
-    fromMock.mockReset();
-    insertMock.mockReset();
-    invokeMock.mockReset();
+    registarMateriais.mockReset();
     toastSuccess.mockReset();
     toastError.mockReset();
   });
 
-  it("nunca mostra sucesso quando a gravação em `doacoes` falha", async () => {
-    insertMock.mockResolvedValue({ error: new Error("falha ao gravar") });
+  it("nunca mostra sucesso quando a API falha ao registar a doação", async () => {
+    registarMateriais.mockRejectedValue(new ApiErrorFalso(500, "falha ao gravar"));
     const user = userEvent.setup();
     render(<Apoiar />, { wrapper: MemoryRouter });
 
     const confirmar = await abrirDialogoDeMateriais(user);
     await user.click(confirmar);
 
-    await waitFor(() => expect(insertMock).toHaveBeenCalled());
-    expect(invokeMock).not.toHaveBeenCalled();
+    await waitFor(() => expect(registarMateriais).toHaveBeenCalled());
     expect(toastSuccess).not.toHaveBeenCalled();
     expect(toastError).toHaveBeenCalledWith("falha ao gravar");
     // o dialogo continua no passo de formulário -- nunca avançou para o
@@ -79,24 +89,33 @@ describe("Apoiar — doação de materiais (Supabase)", () => {
     expect(screen.getByLabelText(/O seu email para contacto/i)).toBeInTheDocument();
   });
 
-  it("nunca mostra sucesso quando a gravação passa mas o envio do email falha", async () => {
-    insertMock.mockResolvedValue({ error: null });
-    invokeMock.mockResolvedValue({ error: new Error("falha ao enviar email") });
+  it("nunca mostra sucesso quando a gravação passa mas o envio do email de confirmação falha", async () => {
+    // DoacaoService trata as duas coisas como um pedido só -- se o Resend
+    // falhar, a API devolve erro mesmo que a doação já esteja gravada.
+    registarMateriais.mockRejectedValue(new ApiErrorFalso(500, "falha ao enviar email"));
     const user = userEvent.setup();
     render(<Apoiar />, { wrapper: MemoryRouter });
 
     const confirmar = await abrirDialogoDeMateriais(user);
     await user.click(confirmar);
 
-    await waitFor(() => expect(invokeMock).toHaveBeenCalled());
+    await waitFor(() => expect(registarMateriais).toHaveBeenCalled());
     expect(toastSuccess).not.toHaveBeenCalled();
     expect(toastError).toHaveBeenCalledWith("falha ao enviar email");
     expect(screen.getByLabelText(/O seu email para contacto/i)).toBeInTheDocument();
   });
 
-  it("só mostra sucesso depois de gravar em `doacoes` e confirmar o envio do email", async () => {
-    insertMock.mockResolvedValue({ error: null });
-    invokeMock.mockResolvedValue({ error: null });
+  it("só mostra sucesso depois de a API confirmar o registo, com o recibo do servidor", async () => {
+    registarMateriais.mockResolvedValue({
+      id: "doacao-1",
+      recibo_id: "JPA-ABC123",
+      tipo: "materiais",
+      email: "doador@example.com",
+      materiais: ["armacoes"],
+      detalhes: null,
+      status: "pendente",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
     const user = userEvent.setup();
     render(<Apoiar />, { wrapper: MemoryRouter });
 
@@ -105,25 +124,6 @@ describe("Apoiar — doação de materiais (Supabase)", () => {
 
     await waitFor(() => expect(toastSuccess).toHaveBeenCalled());
     expect(toastError).not.toHaveBeenCalled();
-
-    expect(fromMock).toHaveBeenCalledWith("doacoes");
-    expect(insertMock).toHaveBeenCalledWith([
-      expect.objectContaining({
-        tipo: "materiais",
-        email: "doador@example.com",
-        materiais: ["armacoes"],
-        status: "pendente",
-      }),
-    ]);
-    expect(invokeMock).toHaveBeenCalledWith(
-      "enviar-email-doacao",
-      expect.objectContaining({
-        body: expect.objectContaining({
-          tipo: "materiais",
-          email: "doador@example.com",
-          materiais: ["armacoes"],
-        }),
-      }),
-    );
+    expect(registarMateriais).toHaveBeenCalledWith("doador@example.com", ["armacoes"], null);
   });
 });
