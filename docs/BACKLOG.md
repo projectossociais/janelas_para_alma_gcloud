@@ -1274,6 +1274,74 @@ facto na base de dados, em vez de reverter dados reais.
 migração, deploy), confirmar explicitamente `git branch --show-current` — nunca supor
 que a pasta está no `main` só porque foi lá que se começou a sessão.
 
+## Ciclo completo do painel de administração (2026-09-16)
+
+Pedido directo do dono do projecto: "complete o painel de administração", com mandato
+para decidir sem parar a perguntar em cada passo. Antes de tocar em código, foi feito
+um levantamento honesto, página a página — o retrato era mais nuançado do que o
+`CROSS-03` registava: três páginas (`AdminInbox`, `AdminBanners`, `AdminAdmins`) já
+estavam 100% na API própria; as outras quatro tinham problemas de gravidades muito
+diferentes, não só "ainda no Supabase":
+
+- **`AdminOverview`** — números de um Supabase que já não reflecte a actividade real
+  (utilizadores novos registam-se na API própria, não em `profiles`). Enganoso, não
+  só desactualizado.
+- **`AdminUsers`** — mesmo problema: um admin que tente gerir um utilizador real do
+  site novo simplesmente não o encontra aqui.
+- **`AdminContent`** — o pior dos quatro: confirmado por grep que **nenhuma página
+  pública lê `site_content`** (`HeroSection.tsx`/`ImpactSection.tsx` são hardcoded).
+  Editar aqui não publica nada — o texto "publicado ao guardar" é falso.
+- **`AdminNotifications`** — confirmado que **nenhuma página do site mostra
+  notificações a ninguém**. O admin "envia" para o vazio.
+
+### ADMIN-01 — `AdminOverview` real + Central de Pendências (feito)
+
+`GET /admin/estatisticas` e `GET /admin/pendencias` novos — leitura pura sobre tabelas
+que já existiam no Postgres próprio (`utilizadores`, `sessoes_exercicio`,
+`scanner_analyses`, `premium_requests`, `contact_messages`, `candidaturas_voluntariado`),
+nenhuma tabela nova. Decisão de desenho: o antigo "online agora" (presença em tempo
+real do Supabase) não media nada de real — ninguém publica presença nesse canal desde
+que a sessão passou a ser da API própria. Substituído por **"Ativos esta semana"**
+(utilizadores distintos com uma sessão de exercício nos últimos 7 dias) — um sinal
+honesto e mais relevante para um produto de terapia visual do que uma contagem de
+"quem tem o painel aberto agora".
+
+**Inovação própria**: a Central de Pendências — um cartão no topo da Visão Geral que
+junta pedidos Premium por decidir, mensagens por ler, e candidaturas de voluntariado
+por decidir, cada um a linkar directamente para o sítio certo (`AdminInbox` ganhou
+`?tab=` para abrir já no separador certo). A ideia: um admin não devia ter de adivinhar
+qual separador tem trabalho à espera — devia ver isso assim que abre o painel.
+
+### L-15 — `AdminVoluntariado.tsx` (feito)
+
+O backend do voluntariado (`W-12`/`AUTH-03`... na verdade `W-12`) estava pronto e
+testado há um dia inteiro sem nenhuma interface — um admin não tinha forma nenhuma de
+aprovar uma candidatura ou publicar uma actividade excepto chamando a API à mão. Uma
+página só, dois separadores (mesmo padrão do `AdminInbox`): Candidaturas
+(aprovar/rejeitar, com destaque para pendentes) e Actividades (publicar, cancelar, ver
+inscritos num dialog). Entrada nova no menu lateral.
+
+### Por decidir/fazer a seguir
+
+- **`ADMIN-02` (`AdminUsers`)** — o `AdminRepository.definir_papel()` já existe ao
+  nível do repositório; falta só expor um endpoint genérico (nunca para `papel=admin`,
+  que mantém o fluxo próprio com protecção contra ficar sem nenhum admin). **Toca
+  papéis de utilizador — CLAUDE.md §10 exige revisão humana antes do merge.**
+- **`ADMIN-03` (Publicações)** — o pedido do dono do projecto foi claro: "as
+  publicações e mural de actividades são publicadas via código... o painel deve ter
+  um lugar para fazer esta gestão". Confirmado com `ActivitiesFeed.tsx` (uma única
+  publicação hardcoded, "Ações Recentes") e `CampanhaGamek.tsx` (uma página nova por
+  campanha, escrita por um programador). Desenho: tabela `publicacoes` (título,
+  resumo, corpo, data, local, capa, estado rascunho/publicado) + `midias_publicacao`
+  (galeria de fotos/vídeos, reaproveitando o `Presigner`/upload directo ao R2 já usado
+  para avatares — `INF-10`), com uma única página pública dinâmica
+  (`/publicacoes/:slug`) em vez de uma rota nova por campanha. **Toca esquema de dados
+  — exige revisão humana.**
+- **`ADMIN-04` (Notificações)** — a tabela `Notification` já existe no ORM (por
+  utilizador, com `lida`); falta o service/router e um sino de verdade no `Navbar`
+  público. Sem tabela nova, mas é trabalho de UI genuinamente novo (nunca existiu
+  consumo de notificações no frontend).
+
 ---
 
 ## O que NÃO fazer agora

@@ -55,6 +55,7 @@ import AdminBanners from "./pages/admin/AdminBanners";
 import AdminNotifications from "./pages/admin/AdminNotifications";
 import AdminContent from "./pages/admin/AdminContent";
 import AdminAdmins from "./pages/admin/AdminAdmins";
+import AdminVoluntariado from "./pages/admin/AdminVoluntariado";
 import GlobalBanner from "./components/GlobalBanner";
 import ScrollToTop from "./components/ScrollToTop";
 import NotFound from "./pages/NotFound";
@@ -114,6 +115,7 @@ const App = () => (
                   <Route path="notificacoes" element={<AdminNotifications />} />
                   <Route path="conteudo" element={<AdminContent />} />
                   <Route path="administradores" element={<AdminAdmins />} />
+                  <Route path="voluntariado" element={<AdminVoluntariado />} />
                 </Route>
 
                 <Route path="/exercicios/convergencia" element={<ConvergenciaExercise />} />
