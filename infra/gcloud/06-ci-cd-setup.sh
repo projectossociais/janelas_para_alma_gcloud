@@ -84,7 +84,19 @@ echo "==> Papéis do SA de deploy no projecto (mínimo necessário para build + 
 #                         para uma equipa pequena)
 # iam.serviceAccountUser -- para o Cloud Run correr como o SA de runtime
 #                           (o SA de compute por omissão, usado em --set-secrets)
-for role in roles/run.admin roles/cloudbuild.builds.editor roles/cloudsql.editor roles/iam.serviceAccountUser; do
+#
+# Os dois papéis seguintes só apareceram a falhar no primeiro deploy
+# automático a sério, correndo como este SA restrito -- testar manualmente
+# como Owner nunca os teria mostrado:
+# serviceusage.serviceUsageConsumer + cloudbuild.builds.builder --
+#                           sem os dois, `gcloud builds submit` falha com
+#                           "user is forbidden from accessing the bucket
+#                           project_cloudbuild" ao enviar o código-fonte.
+#                           (Uma terceira falha, a mostrar os logs do build
+#                           ao vivo, não se resolve com mais papéis -- ver
+#                           `options.logging: CLOUD_LOGGING_ONLY` em
+#                           _build-imagem.sh.)
+for role in roles/run.admin roles/cloudbuild.builds.editor roles/cloudbuild.builds.builder roles/cloudsql.editor roles/iam.serviceAccountUser roles/serviceusage.serviceUsageConsumer; do
   gcloud projects add-iam-policy-binding "$PROJECT_ID" \
     --member="serviceAccount:${DEPLOY_SA_EMAIL}" \
     --role="$role" \
