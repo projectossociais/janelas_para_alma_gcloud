@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import obter_settings
 from app.core.email import ConsoleEmailSender, EmailSender, ResendEmailSender
+from app.core.google_auth import GoogleIdTokenVerifier, GoogleTokenVerifier
 from app.db import obter_sessao
 from app.repositories.tokens_confirmacao_repository import SQLAlchemyTokensConfirmacaoRepository
 from app.repositories.tokens_recuperacao_repository import SQLAlchemyTokensRecuperacaoRepository
@@ -40,6 +41,10 @@ def obter_email_sender() -> EmailSender:
     if not obter_settings().resend_api_key:
         return ConsoleEmailSender()
     return ResendEmailSender()
+
+
+def obter_google_verifier() -> GoogleTokenVerifier:
+    return GoogleIdTokenVerifier()
 
 
 def obter_recuperacao_password_service(
