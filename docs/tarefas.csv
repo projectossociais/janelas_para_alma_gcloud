@@ -19,10 +19,11 @@ INF-17,infra,NGINX: proxy para upstream HTTPS do Cloud Run,P1,feito,W,deploy,202
 INF-18,infra,R2: bucket + credenciais + URL publico + CORS,P1,feito,W,deploy,2026-09-10,bucket janelasparaalma; pub dev URL; scripts passam R2_PUBLIC_BASE_URL
 INF-19,ci,CI: docker build das 2 imagens + nginx -t; alembic upgrade head contra Postgres real,P1,feito,W,deploy,2026-09-10,por validar na 1a corrida do CI
 DEP-01,infra,git push origin main (commits locais 3777321 + d8a7d1d),P0,a-fazer,W,deploy,2026-09-10,o push a main esta bloqueado para o Claude
-DEP-02,infra,Projecto GCloud + facturacao; correr infra/gcloud/01-05,P0,bloqueado,W,deploy,2026-09-10,precisa conta e cartao registado (bloqueio #4)
+DEP-02,infra,Projecto GCloud + facturacao; correr infra/gcloud/01-06,P0,bloqueado,W,deploy,2026-09-15,"precisa conta e cartao registado (bloqueio #4). 01-06 agora inclui o CI/CD automatico (DEP-06) -- ver docs/BACKLOG.md"
 DEP-03,infra,Migracao Alembic contra Postgres real (local),P1,bloqueado,W,deploy,2026-09-10,Docker/WSL ou role jpa local; o CI ja cobre isto
 DEP-04,infra,docker compose build local - validar o container,P2,bloqueado,W,deploy,2026-09-10,WSL/reboot pendente; o CI ja cobre isto
 DEP-05,infra,Dominio proprio + certificado; trocar R2_PUBLIC_BASE_URL para custom domain,P2,a-fazer,W,deploy,2026-09-10,gcloud run domain-mappings
+DEP-06,infra,CI/CD: push/merge em main faz deploy automatico da API (codigo + migracoes),P0,feito,W,deploy,2026-09-15,"Decisao do dono do projecto: sem pausa manual (contraria CLAUDE.md 10 antigo, secao reescrita). job deploy-api em ci.yml + infra/gcloud/06-ci-cd-setup.sh (Workload Identity Federation, sem chave JSON). 05-migrate.sh ganha backup automatico do Cloud SQL antes de migrar + salta o prompt quando $CI esta definido. Bloqueado por DEP-02 (precisa do projecto GCloud para correr o 06 e testar a serio)"
 W-11,api,Confirmacao de pagamento activa o Premium (paywall + auditoria),P0,feito,W,S2,2026-09-11,confirmado no main: premium_service.py + premium.py + 16 testes a passar
 W-01,frontend,Remover o bypass do Premium,P0,feito,W,S0,2026-09-13,"Exercicios.tsx/BaseExercise.tsx passam a usar profile.premium_ativo (+ admin); 4 testes novos em Exercicios.test.tsx; branch rebase contra main e a passar lint/test/build"
 L-11,frontend,Botao Aprovar pagamento no AdminInbox,P1,em-curso,L,S2,2026-09-10,ja em curso no AdminInbox.tsx; consome o endpoint de W-11

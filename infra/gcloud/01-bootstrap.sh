@@ -3,7 +3,7 @@
 # Idempotente — pode correr-se as vezes que forem precisas.
 set -euo pipefail
 cd "$(dirname "$0")"
-source ./00-config.sh
+[ -f ./00-config.sh ] && source ./00-config.sh
 
 gcloud config set project "$PROJECT_ID"
 

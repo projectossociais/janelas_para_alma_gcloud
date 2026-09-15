@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
-# Build da imagem (Cloud Build) e deploy do serviço da API no Cloud Run.
-# NÃO corre migrações Alembic — ver 05-migrate.sh.
+# Build da imagem (Cloud Build, se ainda não existir para este commit -- ver
+# _build-imagem.sh) e deploy do serviço da API no Cloud Run. NÃO corre
+# migrações Alembic — isso é o 05-migrate.sh, sempre ANTES deste (uma
+# migração tem de aplicar-se contra o esquema antigo antes do código novo
+# começar a servir pedidos com ele).
+#
+# Corre-se tanto à mão (Wilson) como automaticamente a cada push/merge em
+# `main` (ver .github/workflows/ci.yml, job `deploy-api`, e a nota sobre
+# migrações automáticas em CLAUDE.md secção 10) -- por isso `00-config.sh`
+# é opcional aqui: localmente vem de lá, no CI vem de variáveis já definidas
+# pelo workflow (secrets/vars do GitHub, nunca hardcoded).
 #
 # O frontend não faz parte deste script: é servido pelo Vercel (conta e
 # CI/CD próprios, domínio janelasparaalma.com), com deploy automático a cada
@@ -12,20 +21,9 @@
 # frontend no Vercel.
 set -euo pipefail
 cd "$(dirname "$0")"
-source ./00-config.sh
+[ -f ./00-config.sh ] && source ./00-config.sh
 
-REPO_ROOT="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
-TAG="$(git -C "$REPO_ROOT" rev-parse --short HEAD)"
-API_IMAGE="${IMAGE_BASE}/api:${TAG}"
-
-echo "==> Build da imagem da API (tag ${TAG}) via Cloud Build"
-gcloud builds submit "$REPO_ROOT" --config=- <<EOF
-steps:
-  - name: gcr.io/cloud-builders/docker
-    args: ["build", "-f", "infra/docker/api.Dockerfile", "-t", "${API_IMAGE}", "."]
-images:
-  - "${API_IMAGE}"
-EOF
+source ./_build-imagem.sh
 
 # --- Env vars e secrets da API -------------------------------------------
 # FRONTEND_ORIGINS é só a rede de segurança do CORS (ver api/app/main.py) —
@@ -74,4 +72,5 @@ if [ -z "${FRONTEND_BASE_URL:-}" ]; then
   echo "    e volta a correr este script para os emails de recuperação/confirmação"
   echo "    apontarem para o sítio certo."
 fi
-echo "    Se a base de dados ainda não tem esquema, corre agora (com confirmação): ./05-migrate.sh"
+echo "    Se estás a correr isto à mão, faltou o ./05-migrate.sh ANTES deste script"
+echo "    se houver migrações novas por aplicar -- no CI/CD isso já corre sozinho."

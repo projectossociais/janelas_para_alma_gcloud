@@ -10,7 +10,7 @@
 #   jpa-resend-api-key        Resend (só se RESEND_API_KEY estiver definida)
 set -euo pipefail
 cd "$(dirname "$0")"
-source ./00-config.sh
+[ -f ./00-config.sh ] && source ./00-config.sh
 
 [ -n "${SQL_PASSWORD:-}" ] || { echo "ERRO: define SQL_PASSWORD." >&2; exit 1; }
 

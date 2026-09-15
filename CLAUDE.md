@@ -113,10 +113,14 @@ mantida pelo rewrite do Vercel exactamente como antes pelo NGINX — que torna o
 fica só como rede de segurança para pedidos verdadeiramente cross-origin.
 
 Produção da API (Cloud Run): scripts de provisionamento e deploy em `infra/gcloud/` (ver
-o `README.md` lá). **Nenhum corre no `git push`** — o deploy da API é sempre manual. O
-frontend é o inverso: o deploy é automático, feito pelo Vercel a cada push/merge para
-`main` — não precisa de passo manual nem de script neste repositório. O CI
-(`.github/workflows/ci.yml`) só faz lint, testes e build, nunca deploy.
+o `README.md` lá). **Decisão do dono do projecto (2026-09-15): o deploy da API passa a
+ser automático**, tal como o do frontend — um push/merge para `main` builda a imagem,
+migra o esquema e actualiza o Cloud Run sozinho (job `deploy-api` em
+`.github/workflows/ci.yml`), sem pausa manual. Ver §9 e §10 para o detalhe e a rede de
+segurança que fica no lugar dessa pausa — não é a mesma coisa que "sem cuidado nenhum".
+Antes disto o deploy era sempre manual (`infra/gcloud/04-deploy.sh`/`05-migrate.sh`
+corridos à mão); esses scripts continuam a existir e a funcionar exactamente na mesma,
+para quem preferir correr um deploy fora do fluxo automático.
 
 ---
 
@@ -345,18 +349,33 @@ chore(infra): adiciona docker-compose para desenvolvimento local
 3. **Testes novos para a lógica nova** — CI verde não chega
 4. Revisão humana obrigatória em tudo o que toque: esquema de dados (`orm_models.py` +
    migração Alembic), autenticação, paywall, papéis de utilizador
-5. **Nenhuma migração Alembic corre em produção sem confirmação humana** de que o esquema
-   resultante bate certo com o código
+5. **Migrações Alembic em produção — decisão do dono do projecto (2026-09-15):** passam
+   a correr sozinhas a seguir ao merge (job `deploy-api`), sem uma segunda pausa manual
+   depois disso. A confirmação humana continua a existir, só que já não é um passo à
+   parte — é a própria revisão do PR (ponto 4): quem aprova o merge já viu a migração e
+   o esquema resultante. Rede de segurança automática a seguir a esse ponto: o CI (ponto
+   2) já correu essa mesma migração contra um Postgres real antes de sequer chegar aqui,
+   e `05-migrate.sh` tira sempre um backup do Cloud SQL logo antes de migrar a sério. Ver
+   §2 e §10.
 
 ---
 
 ## 10. Nunca fazer sem confirmação humana explícita
 
-- Correr migrações Alembic em produção
 - Alterar a lógica de paywall ou de papéis de utilizador
 - Apagar dados de utilizadores
 - Alterar dados bancários ou preços
 - Rodar o `JWT_SECRET_KEY` de produção sem plano de invalidar sessões activas
+
+**Já não está nesta lista, de propósito:** correr migrações Alembic em produção. Até
+2026-09-14 estava aqui — o dono do projecto decidiu deixar de exigir uma pausa manual
+separada depois do merge, para o deploy do backend acompanhar o do frontend (automático
+a cada push/merge para `main`, ver §2/§9). A confirmação humana não desapareceu, mudou
+de sítio: acontece na revisão do PR (§9 ponto 4), reforçada por três redes automáticas —
+`alembic upgrade head` já corre no CI antes do merge (§9 ponto 2), `05-migrate.sh` tira
+sempre um backup do Cloud SQL antes de migrar a sério, e o deploy da API só acontece
+depois da migração correr sem erro. Ver `infra/gcloud/06-ci-cd-setup.sh` para o desenho
+completo (Workload Identity Federation, sem chaves de longa duração).
 
 ---
 

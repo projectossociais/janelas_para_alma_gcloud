@@ -115,7 +115,8 @@ meio da migração:
 - ✅ Containers (frontend + api + db) a correr localmente
 - ⏳ Frontend ainda fala com o Supabase directamente — migração módulo a módulo em curso,
   ver `docs/BACKLOG.md`
-- ⏳ Deploy no Cloud Run — ainda não feito
+- ⏳ Deploy no Cloud Run — CI/CD pronto (push/merge em `main` faz deploy sozinho, ver
+  `infra/gcloud/README.md`), falta só o projecto GCloud existir (DEP-02)
 
 ---
 
