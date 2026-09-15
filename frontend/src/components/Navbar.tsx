@@ -434,7 +434,7 @@ const Navbar = () => {
               <Settings className="w-4 h-4 text-muted-foreground" /> Configurações
             </button>
             <button
-              onClick={() => { setProfileOpen(false); navigate("/politicas"); }}
+              onClick={() => { setProfileOpen(false); navigate("/politica-de-privacidade"); }}
               className="flex items-center gap-3 px-3 py-3 rounded-xl text-foreground hover:bg-muted transition-colors text-sm font-medium"
             >
               <Shield className="w-4 h-4 text-muted-foreground" /> Políticas e Privacidade
