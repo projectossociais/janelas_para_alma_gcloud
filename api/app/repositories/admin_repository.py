@@ -32,6 +32,7 @@ class AdminUtilizadorRegisto:
 class AdminRepository(Protocol):
     def listar(self, papel: str | None = None) -> list[AdminUtilizadorRegisto]: ...
     def obter_por_email(self, email: str) -> AdminUtilizadorRegisto | None: ...
+    def obter_por_id(self, utilizador_id: str) -> AdminUtilizadorRegisto | None: ...
     def definir_papel(self, utilizador_id: str, papel: str) -> AdminUtilizadorRegisto | None: ...
 
 
@@ -62,6 +63,10 @@ class SQLAlchemyAdminRepository:
             .filter(Utilizador.email == email.strip().lower())
             .one_or_none()
         )
+        return _para_registo(row) if row else None
+
+    def obter_por_id(self, utilizador_id: str) -> AdminUtilizadorRegisto | None:
+        row = self._sessao.get(Utilizador, uuid.UUID(utilizador_id))
         return _para_registo(row) if row else None
 
     def definir_papel(self, utilizador_id: str, papel: str) -> AdminUtilizadorRegisto | None:

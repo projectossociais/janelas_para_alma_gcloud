@@ -468,6 +468,14 @@ export const adminApi = {
   removerAdmin: (id: string) =>
     pedido<AdminUtilizador>(`/admin/utilizadores/${id}/remover-admin`, { method: "POST" }),
 
+  /** Nunca aceita `papel: "admin"` (a API recusa com 422) — para isso é
+   *  sempre `promover`/`removerAdmin`, que têm a protecção do último admin. */
+  definirPapel: (id: string, papel: string) =>
+    pedido<AdminUtilizador>(`/admin/utilizadores/${id}/papel`, {
+      method: "POST",
+      body: JSON.stringify({ papel }),
+    }),
+
   obterEstatisticas: (dias: number) => pedido<EstatisticasAdmin>(`/admin/estatisticas?dias=${dias}`),
 
   obterPendencias: () => pedido<PendenciasAdmin>("/admin/pendencias"),
