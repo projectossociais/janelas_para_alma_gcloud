@@ -177,3 +177,44 @@ def test_admin_ve_pendencias(ambiente) -> None:
     assert corpo["pedidos_premium_pendentes"] == 2
     assert corpo["mensagens_por_ler"] == 3
     assert corpo["candidaturas_voluntariado_pendentes"] == 1
+
+
+def test_definir_papel_sem_sessao_401(ambiente) -> None:
+    c, *_ = ambiente
+    assert c.post("/admin/utilizadores/u-comum/papel", json={"papel": "estrabico"}).status_code == 401
+
+
+def test_admin_define_papel(ambiente) -> None:
+    c, _repo, token_admin, _, _ = ambiente
+    c.cookies.set("access_token", token_admin)
+    r = c.post("/admin/utilizadores/u-comum/papel", json={"papel": "estrabico"})
+    assert r.status_code == 200
+    assert r.json()["papel"] == "estrabico"
+
+
+def test_definir_papel_admin_e_422(ambiente) -> None:
+    c, _, token_admin, _, _ = ambiente
+    c.cookies.set("access_token", token_admin)
+    r = c.post("/admin/utilizadores/u-comum/papel", json={"papel": "admin"})
+    assert r.status_code == 422
+
+
+def test_definir_papel_invalido_e_422(ambiente) -> None:
+    c, _, token_admin, _, _ = ambiente
+    c.cookies.set("access_token", token_admin)
+    r = c.post("/admin/utilizadores/u-comum/papel", json={"papel": "super-utilizador"})
+    assert r.status_code == 422
+
+
+def test_definir_papel_de_um_admin_e_409(ambiente) -> None:
+    c, _, token_admin, _, _ = ambiente
+    c.cookies.set("access_token", token_admin)
+    r = c.post("/admin/utilizadores/id-admin/papel", json={"papel": "comum"})
+    assert r.status_code == 409
+
+
+def test_definir_papel_utilizador_desconhecido_404(ambiente) -> None:
+    c, _, token_admin, _, _ = ambiente
+    c.cookies.set("access_token", token_admin)
+    r = c.post("/admin/utilizadores/fantasma/papel", json={"papel": "comum"})
+    assert r.status_code == 404
