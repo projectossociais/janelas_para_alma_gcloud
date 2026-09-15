@@ -996,6 +996,75 @@ O que ficou feito:
   de estar autenticado" (perfil, sessões de exercício, uploads, feedback, conta) — cada
   um passou a confirmar explicitamente a conta de teste antes de entrar.
 
+### CROSS-08 — o painel de administração estava, na prática, inacessível (2026-09-15)
+
+Achado ao investigar "o Supabase já saiu do frontend?" (pergunta directa do dono do
+projecto) — não é só dívida por terminar, é uma funcionalidade **estragada**: nenhum
+admin do sistema novo conseguia entrar no painel.
+
+Causa: `RequireAdmin`, `AdminSidebar` e `useSupabaseRole`/`useAdminScope` liam
+`supabase.auth.getSession()` — a sessão do **Supabase**, inteiramente separada da
+sessão da API própria (cookie `httpOnly` + JWT). Uma conta que se regista/entra pelo
+`/auth/registar`/`/auth/entrar` novos nunca cria sessão nenhuma no Supabase, por isso
+`getSession()` devolvia sempre `null` para ela. Como a base de dados nasce vazia (sem
+importação de contas do Supabase, decisão da Sprint 0), **não existia nenhum admin real
+do sistema novo capaz de passar nesta porta** — só continuaria a "funcionar" para quem
+tivesse por acaso uma sessão Supabase antiga, de antes desta reescrita começar.
+
+Corrigido:
+
+- `AuthContext.tsx` ganha `isAdmin` (`papel === "admin"`), derivado da mesma sessão que
+  já existia — nenhum pedido novo à API, só uma leitura do que `/auth/eu` já devolvia.
+- `RequireAdmin.tsx`, `AdminSidebar.tsx` (logout e menu), `Navbar.tsx` e `Parceiros.tsx`
+  passam a usar `useAuth()` em vez de `useSupabaseRole`.
+- `AdminSidebar` deixa de filtrar o menu por `useAdminScope` (permissões granulares do
+  Supabase, tabela `admin_permissions`) — "admin" é binário na API própria (uma coluna
+  `papel`, ver `obter_utilizador_admin`), mesma simplificação que `AdminAdmins.tsx` já
+  tinha adoptado antes (W-11). Um admin vê o menu inteiro; não há hoje noção de admin
+  parcial.
+- Saem `useSupabaseRole.ts` e `useAdminScope.ts` — nenhum ficheiro os importa mais.
+- Testes novos: `RequireAdmin.test.tsx` (loading / sem sessão / sem ser admin / admin) e
+  2 casos em `AuthContext.test.tsx` para `isAdmin`.
+
+**Fora de âmbito deste PR, de propósito:** as 4 páginas de dados do painel
+(`AdminOverview` → `profiles`, `AdminUsers` → `user_roles`, `AdminContent` →
+`site_content`, `AdminNotifications` → `notifications`) continuam a ler directamente do
+Supabase. Migrar a sessão resolve "consigo entrar?"; estas páginas são trabalho novo —
+tabelas e endpoints que ainda não existem na API própria, não só troca de chamada. Ver
+CROSS-03.
+
+### CROSS-09 — desfeito o retrocesso da doação de materiais (2026-09-15)
+
+O PR #27 (`fix(doacoes): unifica materiais e financeiro no Supabase (temporario)`, já
+mesclado) tinha posto `Apoiar.tsx` (modo "materiais") a chamar de novo o Supabase
+directamente — `supabase.from("doacoes").insert` + `supabase.functions.invoke
+("enviar-email-doacao")` — explicitamente enquanto a infra de email em Python não
+estava pronta. Essa razão deixou de existir com o Resend (CROSS-01/CROSS-04/CROSS-07).
+
+O que mudou:
+
+- **`DoacaoService.registar_doacao_materiais`** ganha o passo de email de confirmação
+  (via `EmailSender`, o mesmo Protocol de `core/email.py`), com o recibo e os materiais
+  no corpo. Mantém o comportamento já testado deste fluxo desde a versão Supabase — ao
+  contrário do registo de conta (AUTH-02, onde a conta já criada É o sucesso), aqui uma
+  falha no envio conta como falha do pedido inteiro: nunca "doação recebida" sem a
+  confirmação também sair. A doação em si não é apagada (fica `pendente` na base de
+  dados, visível a um admin) — só a resposta ao chamador não finge sucesso.
+- **`Apoiar.tsx`** (modo materiais) volta a chamar `doacoesApi.registarMateriais(...)` —
+  um pedido só, gravação e email já vêm juntos do lado da API.
+- Testes actualizados/novos: `test_doacao_service.py` (email enviado com o recibo,
+  falha no envio propaga sem apagar o registo) e `test_doacoes_router.py`
+  (500 quando o email falha) na API; `Apoiar.test.tsx` de volta ao mock de
+  `doacoesApi` no frontend.
+
+**Fica no Supabase, de propósito — bloqueado por storage, não por email:**
+`Apoiar.tsx` (modo **financeiro**) e `RegistoPremium.tsx` continuam a mandar o
+comprovativo de pagamento pela Edge Function `enviar-email-doacao`, que hoje é o
+**único** sítio para onde esse ficheiro tem destino real (não há upload separado para
+o R2 enquanto as credenciais não existirem — CROSS-02). Reverter estes dois sem ter
+para onde mandar o ficheiro deixaria o comprovativo sem destino nenhum; fica para
+quando o R2 estiver ligado.
+
 ### DEP-06 — deploy automático da API, código e migrações (2026-09-15)
 
 Decisão do dono do projecto, pedida directamente: o Lukeny (ou quem for) precisa de

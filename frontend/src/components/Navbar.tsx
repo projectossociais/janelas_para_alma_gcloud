@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Menu, Search, ArrowRight, User, Settings, Shield, LogOut, LogIn, Eye, LayoutDashboard } from "lucide-react";
-import { useSupabaseRole } from "@/hooks/useSupabaseRole";
 import logoIcon from "@/assets/logo-icon.png";
 import {
   Sheet,
@@ -191,8 +190,7 @@ const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
-  const { isLoggedIn, user, logout } = useAuth();
-  const { isAdmin } = useSupabaseRole();
+  const { isLoggedIn, user, logout, isAdmin } = useAuth();
   const { profile } = useProfile();
   const isHome = location.pathname === "/";
   const useSolidNav = !isHome || scrolled || drawerOpen || profileOpen || searchOpen;

@@ -41,6 +41,11 @@ interface AuthContextValue {
   /** true só durante a verificação inicial da sessão (pedido a /auth/eu). */
   loading: boolean;
   user: AuthUser | null;
+  /** `papel === "admin"` na sessão da API própria — única fonte de verdade
+   *  para acesso de administrador (ver `obter_utilizador_admin` na API).
+   *  Substitui `useSupabaseRole`/`useAdminScope`: não há noção de permissões
+   *  granulares aqui, "admin" é binário, tal como no backend. */
+  isAdmin: boolean;
   registerUser: (input: RegisterInput) => Promise<ResultadoAuth>;
   signIn: (email: string, password: string) => Promise<ResultadoAuth>;
   logout: () => void;
@@ -134,6 +139,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isLoggedIn: !!user,
         loading,
         user,
+        isAdmin: user?.role === "admin",
         registerUser,
         signIn,
         logout,
