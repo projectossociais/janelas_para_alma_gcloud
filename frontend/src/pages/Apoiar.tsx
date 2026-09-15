@@ -36,6 +36,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { doacoesApi, mensagemDeErroApi } from "@/lib/apiClient";
 import { DEFAULT_BANK_DATA, fileToBase64, ofuscarValor } from "@/lib/pagamento";
 
 type Mode = "materiais" | "financeiro";
@@ -197,40 +198,18 @@ const Apoiar = () => {
     if (mode === "materiais") {
       setSubmitting(true);
       try {
-        const reciboId = `MAT-${Date.now().toString(36).toUpperCase()}`;
         const detalhesDoacao = materialNotes.trim() || null;
 
-        // Mesmo padrão do fluxo financeiro (ver handleConcluirDoacao): a
-        // gravação em `doacoes` é o que conta como "doação recebida" -- só
-        // depois de confirmar que não houve erro é que a UI avança para
-        // sucesso. Unificado temporariamente no Supabase enquanto a infra de
-        // email em Python não está pronta (ver docs/BACKLOG.md); a API
-        // FastAPI própria (DoacaoService) fica para quando essa parte migrar.
-        const { error: insertError } = await supabase.from("doacoes").insert([
-          {
-            recibo_id: reciboId,
-            tipo: "materiais",
-            email,
-            materiais: selectedMaterials,
-            detalhes: detalhesDoacao,
-            status: "pendente",
-          },
-        ]);
-        if (insertError) throw insertError;
-
-        const { error: invokeError } = await supabase.functions.invoke("enviar-email-doacao", {
-          body: {
-            tipo: "materiais",
-            email,
-            recibo_id: reciboId,
-            detalhes: detalhesDoacao,
-            materiais: selectedMaterials,
-          },
-        });
-        if (invokeError) throw invokeError;
+        // A API própria já grava a doação e manda a confirmação por email
+        // (DoacaoService, via Resend) -- o mesmo recibo/email que antes
+        // vinha da Edge Function do Supabase, agora só num pedido. Uma
+        // falha em qualquer um dos dois passos (gravar ou enviar o email)
+        // devolve erro, nunca um 201 fabricado (ver CLAUDE.md, "nunca
+        // mostrar sucesso antes de verificar erro").
+        const doacao = await doacoesApi.registarMateriais(email, selectedMaterials, detalhesDoacao);
 
         setReceipt({
-          id: reciboId,
+          id: doacao.recibo_id,
           email,
           materials: [...selectedMaterials],
           notes: materialNotes,
@@ -241,11 +220,7 @@ const Apoiar = () => {
         setMaterialNotes("");
       } catch (err) {
         console.error("Falha ao registar doação de materiais:", err);
-        toast.error(
-          err instanceof Error
-            ? err.message
-            : "Não foi possível registar a doação. Tente novamente.",
-        );
+        toast.error(mensagemDeErroApi(err, "Não foi possível registar a doação. Tente novamente."));
       } finally {
         setSubmitting(false);
       }
