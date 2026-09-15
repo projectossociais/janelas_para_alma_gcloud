@@ -19,7 +19,7 @@ INF-17,infra,NGINX: proxy para upstream HTTPS do Cloud Run,P1,feito,W,deploy,202
 INF-18,infra,R2: bucket + credenciais + URL publico + CORS,P1,feito,W,deploy,2026-09-10,bucket janelasparaalma; pub dev URL; scripts passam R2_PUBLIC_BASE_URL
 INF-19,ci,CI: docker build das 2 imagens + nginx -t; alembic upgrade head contra Postgres real,P1,feito,W,deploy,2026-09-10,por validar na 1a corrida do CI
 DEP-01,infra,git push origin main (commits locais 3777321 + d8a7d1d),P0,a-fazer,W,deploy,2026-09-10,o push a main esta bloqueado para o Claude
-DEP-02,infra,Projecto GCloud + facturacao; correr infra/gcloud/01-06,P0,bloqueado,W,deploy,2026-09-15,"precisa conta e cartao registado (bloqueio #4). 01-06 agora inclui o CI/CD automatico (DEP-06) -- ver docs/BACKLOG.md"
+DEP-02,infra,Projecto GCloud + facturacao; correr infra/gcloud/01-06,P0,feito,W,deploy,2026-09-15,"Projecto project-f083cafc-d127-435a-a77 (europe-west1), facturacao activa. 01-05 corridos: Cloud SQL (jpa-db), segredos, migracao ate cfaf27163f7e, API viva em jpa-api-73u3krcgwa-ew.a.run.app (/saude e /auth/eu confirmados). Dois bugs de permissoes de projecto novo corrigidos no 01-bootstrap.sh (ver BACKLOG.md). Falta so o 06-ci-cd-setup.sh (WIF para o deploy automatico) e actualizar FRONTEND_ORIGINS/CORS se preciso"
 DEP-03,infra,Migracao Alembic contra Postgres real (local),P1,bloqueado,W,deploy,2026-09-10,Docker/WSL ou role jpa local; o CI ja cobre isto
 DEP-04,infra,docker compose build local - validar o container,P2,bloqueado,W,deploy,2026-09-10,WSL/reboot pendente; o CI ja cobre isto
 DEP-05,infra,Dominio proprio + certificado; trocar R2_PUBLIC_BASE_URL para custom domain,P2,a-fazer,W,deploy,2026-09-10,gcloud run domain-mappings

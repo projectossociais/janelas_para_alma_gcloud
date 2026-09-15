@@ -1111,6 +1111,42 @@ O que mudou:
 falha (sem credenciais válidas) até o `06-ci-cd-setup.sh` correr uma vez, depois do
 `01`-`03`. Nenhum código fica por escrever à espera disso — fica pronto a activar.
 
+### DEP-02 — primeiro deploy real (2026-09-15)
+
+Projecto GCP criado pelo dono do projecto (`project-f083cafc-d127-435a-a77`,
+`europe-west1`, facturação activa) e `01`→`04` correram pela primeira vez a sério.
+Dois problemas de permissões apareceram — nenhum tinha aparecido antes porque nunca
+tínhamos corrido isto contra um projecto GCP genuinamente novo:
+
+1. **`gcloud builds submit` falhava com "storage.objects.get denied"** ao tentar ler
+   a própria fonte que acabara de enviar. Causa: projectos GCP criados recentemente
+   já não recebem `Editor` automático no service account por omissão do Compute
+   Engine (endurecimento de segurança da Google, mudança relativamente recente) — o
+   SA que o Cloud Build usa por omissão não tinha literalmente nenhum papel.
+2. **O Job de migração e o deploy da API falhavam a ligar ao Cloud SQL** com
+   `403 NOT_AUTHORIZED ... cloudsql.instances.get`. Mesma causa raiz: o SA por
+   omissão também precisa de `roles/cloudsql.client` para o proxy do Cloud SQL
+   embutido no Cloud Run funcionar.
+
+Corrigido de vez em `01-bootstrap.sh` — passa a conceder `roles/cloudbuild.builds.builder`
+e `roles/cloudsql.client` ao SA por omissão do Compute Engine, para nenhum projecto
+novo voltar a tropeçar nisto. Também corrigido um bug real (não de permissões) em
+`_build-imagem.sh`: `gcloud builds submit --config=-` não lê de stdin no `gcloud`
+actual — tenta abrir literalmente um ficheiro chamado `-` e falha. Passa a escrever
+a configuração num ficheiro temporário real.
+
+Resultado: `jpa-db` (Cloud SQL) a correr, segredos no Secret Manager, esquema
+migrado até `cfaf27163f7e` (inclui o voluntariado do PR #37), API viva em
+`https://jpa-api-73u3krcgwa-ew.a.run.app` — `/saude` e `/auth/eu` confirmados a
+responder correctamente. `frontend/vercel.json` actualizado com o URL real (deixa de
+apontar para o placeholder `SUBSTITUIR-PELO-URL-DA-API.run.app`) — isto desbloqueia
+tudo o que já estava construído e à espera disto (login, registo, recuperação de
+password, confirmação de email, painel admin, doações), que estava silenciosamente
+partido em produção desde o corte do domínio para o Vercel.
+
+**Falta ainda:** correr `06-ci-cd-setup.sh` para o deploy automático (`DEP-06`) ficar
+mesmo activo a partir de agora — feito manualmente desta vez.
+
 ---
 
 ## O que NÃO fazer agora
