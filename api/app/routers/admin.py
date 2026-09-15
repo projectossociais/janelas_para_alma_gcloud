@@ -5,14 +5,26 @@ admin cria-se por linha de comando (`python -m app.criar_admin <email>`);
 a partir daí, um admin promove outros por aqui.
 """
 
+from datetime import UTC, datetime, timedelta
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import obter_utilizador_admin
 from app.db import obter_sessao
 from app.repositories.admin_repository import AdminUtilizadorRegisto, SQLAlchemyAdminRepository
+from app.repositories.admin_stats_repository import (
+    EstatisticasRegisto,
+    PendenciasRegisto,
+    SQLAlchemyAdminStatsRepository,
+)
 from app.repositories.utilizadores_repository import UtilizadorRegisto
-from app.schemas.admin import AdminUtilizadorPublico, PromoverAdmin
+from app.schemas.admin import (
+    AdminUtilizadorPublico,
+    EstatisticasAdmin,
+    PendenciasAdmin,
+    PromoverAdmin,
+)
 from app.services.admin_service import (
     AdminService,
     NaoPodeDespromoverASiProprioError,
@@ -29,6 +41,31 @@ def obter_admin_service(sessao: Session = Depends(obter_sessao)) -> AdminService
 
 def obter_admin_repository(sessao: Session = Depends(obter_sessao)) -> SQLAlchemyAdminRepository:
     return SQLAlchemyAdminRepository(sessao)
+
+
+def obter_admin_stats_repository(
+    sessao: Session = Depends(obter_sessao),
+) -> SQLAlchemyAdminStatsRepository:
+    return SQLAlchemyAdminStatsRepository(sessao)
+
+
+@router.get("/estatisticas", response_model=EstatisticasAdmin)
+def obter_estatisticas(
+    dias: int = 30,
+    repo: SQLAlchemyAdminStatsRepository = Depends(obter_admin_stats_repository),
+) -> EstatisticasRegisto:
+    # Sem isto, um `dias` absurdo (negativo, ou milhões) fazia a série
+    # devolver um payload gigante ou vazio -- limite generoso mas real.
+    dias_limitado = min(max(dias, 1), 365)
+    desde = datetime.now(UTC) - timedelta(days=dias_limitado)
+    return repo.obter_estatisticas(desde, dias_limitado)
+
+
+@router.get("/pendencias", response_model=PendenciasAdmin)
+def obter_pendencias(
+    repo: SQLAlchemyAdminStatsRepository = Depends(obter_admin_stats_repository),
+) -> PendenciasRegisto:
+    return repo.obter_pendencias()
 
 
 @router.get("/utilizadores", response_model=list[AdminUtilizadorPublico])

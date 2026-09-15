@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +15,10 @@ import { toast } from "sonner";
 import { Check, Mail, Phone, X } from "lucide-react";
 
 const AdminInbox = () => {
+  // Permite a Central de Pendências (AdminOverview) linkar directamente ao
+  // separador certo -- ex.: /admin/mensagens?tab=premium.
+  const [searchParams] = useSearchParams();
+  const tabInicial = searchParams.get("tab") === "premium" ? "premium" : "messages";
   const [msgs, setMsgs] = useState<ContactMessageAdmin[]>([]);
   const [premium, setPremium] = useState<PedidoPremiumAdmin[]>([]);
   const [ocupado, setOcupado] = useState<string | null>(null);
@@ -81,7 +86,7 @@ const AdminInbox = () => {
         <CardTitle>Mensagens & Pedidos</CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="messages">
+        <Tabs defaultValue={tabInicial}>
           <TabsList>
             <TabsTrigger value="messages">Mensagens ({msgs.length})</TabsTrigger>
             <TabsTrigger value="premium">Pedidos Premium ({premium.length})</TabsTrigger>
