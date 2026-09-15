@@ -1111,6 +1111,60 @@ O que mudou:
 falha (sem credenciais válidas) até o `06-ci-cd-setup.sh` correr uma vez, depois do
 `01`-`03`. Nenhum código fica por escrever à espera disso — fica pronto a activar.
 
+### W-12 — voluntariado: candidatura, actividades e inscrições (2026-09-15)
+
+Pedido directo do dono do projecto: pessoas poderem candidatar-se a voluntário, um
+admin publicar actividades, e voluntários inscreverem-se e receberem confirmação por
+email. O que existia até aqui (`VolunteerSection.tsx`, o formulário "Kamba") era só
+uma Edge Function que enviava um email — nada ficava gravado, `papel: "voluntario"`
+existia no enum mas não estava ligado a nada, e a tabela `Notification` já criada no
+ORM nunca teve API nenhuma por cima (achado durante o levantamento inicial: o
+`AdminNotifications.tsx` ainda no Supabase usa até colunas diferentes das do ORM).
+
+Duas decisões do dono do projecto, pedidas explicitamente antes de escrever código:
+
+1. **Candidatura exige conta** (não anónima como o formulário Kamba antigo) — sem
+   isso não há como ligar "as minhas actividades" nem notificações a ninguém.
+2. **MVP inclui limite de vagas; controlo de presença fica para depois.**
+
+O que mudou:
+
+- **`voluntariado` é um estado ortogonal ao `papel`**, não um valor dele — mesma
+  correcção já feita para o Premium (ver `CLAUDE.md` §0): um profissional, um
+  estrábico ou uma pessoa comum podem todos ser voluntários sem deixar de ser o que
+  já são. `utilizadores.voluntario_ativo` (bool) é o "interruptor actual", mesmo
+  desenho de `premium_ativo`.
+- **`candidaturas_voluntariado`** — pedido com estado (`pendente`/`aprovada`/
+  `rejeitada`) e auditoria de quem decidiu e quando, mesmo desenho de
+  `premium_requests`. `CandidaturaVoluntariadoService.aprovar` liga
+  `voluntario_ativo=true` na mesma transacção que decide o pedido — nunca podem ficar
+  dessincronizados (mesmo cuidado do `PremiumRepository`).
+- **`atividades_voluntariado`** — um admin publica (`titulo`, `descricao`, `local`,
+  datas, `vagas` opcional). Publicar dispara um email a todos os voluntários activos
+  com `notificacoes_projetos` ligado — a primeira utilização real desse campo de
+  preferências, que existia desde o registo mas nunca tinha disparado nada.
+- **`inscricoes_atividade`** — `UNIQUE(atividade_id, utilizador_id)` impede
+  duplicação. `AtividadeVoluntariadoService.inscrever` verifica, sempre a partir da
+  base de dados (nunca de um valor vindo do pedido): a actividade está publicada,
+  quem pede é voluntário activo, ainda não está inscrito, e ainda há vagas.
+- **Decisão deliberada sobre email, ao contrário das doações (`CROSS-09`):** aqui uma
+  falha a enviar a confirmação **não** desfaz a candidatura/inscrição já gravada — o
+  registo em si já é o estado de valor, e reverter obrigaria a um "tentar outra vez"
+  que esbarraria na restrição `UNIQUE`. A falha fica só registada em log.
+- Migração `cfaf27163f7e`. 42 testes novos (25 de service, 17 de router) — cobrem o
+  caminho do erro tanto como o do sucesso: candidatura duplicada, decidir uma
+  candidatura já decidida, inscrever sem ser voluntário activo, inscrever duas vezes,
+  inscrever sem vagas, e a falha de email nunca impedir o registo.
+
+**Fora deste PR, de propósito:**
+- Frontend (ligar `VolunteerSection.tsx` à API, área "as minhas actividades",
+  `AdminVoluntarios.tsx`, `AdminAtividades.tsx`) — ver `L-13`/`L-15`.
+- Lembretes automáticos antes de uma actividade — precisa de um trigger por tempo
+  (Cloud Scheduler ou um Cloud Run Job agendado) que ainda não existe — ver `W-18`.
+- Corrida pela última vaga (duas inscrições em simultâneo a passar a verificação antes
+  de qualquer uma gravar) é um risco teórico aceite para o volume esperado, não
+  corrigido com `SELECT FOR UPDATE` — documentado, não esquecido.
+
 ### DEP-02 — primeiro deploy real (2026-09-15)
 
 Projecto GCP criado pelo dono do projecto (`project-f083cafc-d127-435a-a77`,
@@ -1196,6 +1250,29 @@ testado manualmente como Owner. Testar como Owner nunca ia mostrar nada disto.
 **Lição a levar**: sempre que se testar um fluxo de permissões novo, testar como o
 service account real que o vai executar em produção, nunca só como Owner — um Owner
 nunca vê estes erros.
+
+### DEP-06 — a base de dados ficou à frente do `main` (2026-09-15)
+
+Depois de corrigir as três permissões acima, o `deploy-api` voltou a falhar — desta
+vez sem nada a ver com permissões: `alembic` recusou-se a correr com
+`FAILED: Can't locate revision identified by 'cfaf27163f7e'`.
+
+Causa: ao correr as migrações manuais do DEP-02, a pasta local ainda estava na branch
+`api/voluntariado-atividades` (do PR #37, nessa altura por rever) em vez de `main` —
+sem reparar nisso, a imagem construída e a migração aplicada usaram o código dessa
+branch, que inclui a migração do voluntariado (`cfaf27163f7e`). A base de dados de
+produção ficou a marcar essa revisão como aplicada, mas o `main` — o que o
+`deploy-api` automático de facto usa — nunca teve essa migração, porque o PR #37
+continuava por mesclar. Todo o deploy automático a seguir falhava logo ao arrancar,
+porque o Alembic não encontra no histórico do `main` uma revisão que a base de dados
+diz já ter.
+
+Corrigido mesclando o PR #37 para o `main` — alinha o código com o que já estava de
+facto na base de dados, em vez de reverter dados reais.
+
+**Lição a levar**: antes de qualquer operação que toque produção a sério (build,
+migração, deploy), confirmar explicitamente `git branch --show-current` — nunca supor
+que a pasta está no `main` só porque foi lá que se começou a sessão.
 
 ---
 
