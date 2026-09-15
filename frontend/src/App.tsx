@@ -25,7 +25,9 @@ import ConfirmarEmail from "./pages/ConfirmarEmail";
 import Apoiar from "./pages/Apoiar";
 import Configuracoes from "./pages/Configuracoes";
 import EditarPerfil from "./pages/EditarPerfil";
-import Politicas from "./pages/Politicas";
+import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
+import TermosUtilizacao from "./pages/TermosUtilizacao";
+import Faq from "./pages/Faq";
 import Impacto from "./pages/Impacto";
 import JunteSe from "./pages/JunteSe";
 import RegistoPremium from "./pages/RegistoPremium";
@@ -94,7 +96,9 @@ const App = () => (
                 <Route path="/apoiar" element={<Apoiar />} />
                 <Route path="/configuracoes" element={<Configuracoes />} />
                 <Route path="/editar-perfil" element={<EditarPerfil />} />
-                <Route path="/politicas" element={<Politicas />} />
+                <Route path="/politica-de-privacidade" element={<PoliticaPrivacidade />} />
+                <Route path="/termos-de-utilizacao" element={<TermosUtilizacao />} />
+                <Route path="/faq" element={<Faq />} />
                 <Route path="/impacto" element={<Impacto />} />
                 <Route path="/junte-se" element={<JunteSe />} />
                 <Route path="/registo-premium" element={<RegistoPremium />} />

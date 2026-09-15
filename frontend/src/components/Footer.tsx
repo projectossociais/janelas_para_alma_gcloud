@@ -142,11 +142,14 @@ const Footer = () => {
         <div className="container py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
           <p>© {new Date().getFullYear()} Janelas Para a Alma. Todos os direitos reservados.</p>
           <div className="flex items-center gap-5">
-            <Link to="/politicas" className="hover:text-primary transition-colors">
+            <Link to="/politica-de-privacidade" className="hover:text-primary transition-colors">
               Política de Privacidade
             </Link>
-            <Link to="/politicas" className="hover:text-primary transition-colors">
+            <Link to="/termos-de-utilizacao" className="hover:text-primary transition-colors">
               Termos de Utilização
+            </Link>
+            <Link to="/faq" className="hover:text-primary transition-colors">
+              Faq
             </Link>
           </div>
         </div>
