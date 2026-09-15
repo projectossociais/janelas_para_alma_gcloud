@@ -14,6 +14,7 @@ from app.routers import (
     premium,
     sessoes_exercicio,
     uploads,
+    voluntariado,
 )
 
 app = FastAPI(title="Janelas Para a Alma — API")
@@ -44,6 +45,7 @@ app.include_router(sessoes_exercicio.router)
 app.include_router(contact_messages.router)
 app.include_router(premium.router)
 app.include_router(admin.router)
+app.include_router(voluntariado.router)
 
 
 @app.get("/saude")

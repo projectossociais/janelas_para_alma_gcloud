@@ -30,6 +30,7 @@ from sqlalchemy import (
     Numeric,
     String,
     Text,
+    UniqueConstraint,
     func,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
@@ -86,6 +87,13 @@ class Utilizador(Base):
     notificacoes_projetos: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     notificacoes_lembretes: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     notificacoes_comunidade: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+
+    # Voluntariado: estado ortogonal ao `papel`, mesmo desenho do Premium
+    # (`premium_ativo` acima) — um profissional, um estrábico ou uma pessoa
+    # comum podem todos ser voluntários sem deixar de ser o que já são.
+    # Activado por `CandidaturaVoluntariadoService` ao aprovar uma
+    # candidatura. Ver docs/BACKLOG.md.
+    voluntario_ativo: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
 
     # Ver antigo supabase/migrations/20260831120000_eliminacao_agendada_contas.sql
     eliminar_agendado_para: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -321,6 +329,70 @@ class SiteContent(Base):
     chave: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
     valor: Mapped[dict] = mapped_column(JSONB, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class CandidaturaVoluntariado(Base):
+    """Pedido para se tornar voluntário activo — mesmo desenho do
+    `PremiumRequest` (pedido com estado + auditoria de quem decidiu e
+    quando), aplicado ao voluntariado em vez do Premium."""
+
+    __tablename__ = "candidaturas_voluntariado"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    utilizador_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    motivacao: Mapped[str] = mapped_column(Text, nullable=False)
+    telefone: Mapped[str | None] = mapped_column(Text)
+    # "pendente" | "aprovada" | "rejeitada"
+    status: Mapped[str] = mapped_column(Text, nullable=False, server_default="pendente")
+    decidido_por: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="SET NULL")
+    )
+    decidido_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class AtividadeVoluntariado(Base):
+    """Uma actividade publicada por um admin para os voluntários activos se
+    inscreverem. `vagas` nulo significa sem limite."""
+
+    __tablename__ = "atividades_voluntariado"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    titulo: Mapped[str] = mapped_column(Text, nullable=False)
+    descricao: Mapped[str] = mapped_column(Text, nullable=False)
+    local: Mapped[str] = mapped_column(Text, nullable=False)
+    data_inicio: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    data_fim: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    vagas: Mapped[int | None] = mapped_column()
+    # "publicada" | "cancelada" | "concluida"
+    estado: Mapped[str] = mapped_column(Text, nullable=False, server_default="publicada")
+    criado_por: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="SET NULL")
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class InscricaoAtividade(Base):
+    """Um voluntário inscrito numa actividade. `UNIQUE` impede duas
+    inscrições da mesma pessoa na mesma actividade."""
+
+    __tablename__ = "inscricoes_atividade"
+    __table_args__ = (
+        UniqueConstraint("atividade_id", "utilizador_id", name="uq_inscricoes_atividade_utilizador"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    atividade_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("atividades_voluntariado.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    utilizador_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    # "inscrito" | "cancelado" | "compareceu" | "faltou"
+    estado: Mapped[str] = mapped_column(Text, nullable=False, server_default="inscrito")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class UserFeedback(Base):

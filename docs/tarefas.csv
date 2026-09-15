@@ -42,8 +42,10 @@ L-07,frontend,Termos de Uso (Politicas.tsx),P1,a-fazer,L,S1,2026-09-10,inclui o 
 L-08,frontend,Ordem da informacao segue o menu (Servicos; Produtos),P2,a-fazer,L,S1,2026-09-10,
 L-09,frontend,Separar planos de exercicios,P2,a-fazer,L,S1,2026-09-10,depende de W-01
 L-10,frontend,Linguagem: tirar o ingles do texto visivel,P2,a-fazer,L,S1,2026-09-10,
-W-12,api,Sistema de candidaturas (voluntarios; clinicas): tabela + maquina de estados,P2,a-fazer,W,S2,2026-09-10,a tabela voluntarios nao existe; e trabalho novo
-L-13,frontend,Formularios + pagina de gestao de candidaturas,P2,a-fazer,L,S2,2026-09-10,depende de W-12; segue o padrao do AdminInbox
+W-12,api,Voluntariado: candidatura + atividades publicadas por admin + inscricoes,P1,feito,W,S2,2026-09-15,"voluntario_ativo ortogonal ao papel (mesmo desenho do Premium); candidaturas_voluntariado, atividades_voluntariado, inscricoes_atividade; migracao cfaf27163f7e; 42 testes novos (25 service + 17 router). So backend -- ver L-13/L-15"
+L-13,frontend,Ligar VolunteerSection.tsx a API + area 'as minhas atividades',P1,a-fazer,L,S2,2026-09-15,depende de W-12 (feito); candidatura passa a exigir sessao (decisao do dono do projecto)
+L-15,frontend,AdminVoluntarios.tsx (decidir candidaturas) + AdminAtividades.tsx (publicar; ver inscritos),P1,a-fazer,L,S2,2026-09-15,depende de W-12 (feito); segue o padrao do AdminInbox/AdminBanners
+W-18,api,Voluntariado: lembretes automaticos antes de uma atividade,P3,bloqueado,W,S2,2026-09-15,"fase 2, fora do MVP -- precisa de um trigger por tempo (Cloud Scheduler ou Cloud Run Job agendado) que ainda nao existe"
 W-13,api,Scanner: escolher e documentar o metodo de medicao,P1,bloqueado,W,S3,2026-09-10,"Hirschberg provavel; precisa validacao clinica, nao e decisao de programador"
 W-14,frontend,Scanner: calibracao (distancia a camara; inclinacao da cabeca),P1,a-fazer,W,S3,2026-09-10,Scanner.tsx ja guia 3 poses
 W-15,api,Scanner: servico de analise (coordenadas -> medicao + confianca real),P1,a-fazer,W,S3,2026-09-10,logica de resultado clinico -> testes obrigatorios

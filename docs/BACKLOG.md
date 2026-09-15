@@ -1111,6 +1111,60 @@ O que mudou:
 falha (sem credenciais válidas) até o `06-ci-cd-setup.sh` correr uma vez, depois do
 `01`-`03`. Nenhum código fica por escrever à espera disso — fica pronto a activar.
 
+### W-12 — voluntariado: candidatura, actividades e inscrições (2026-09-15)
+
+Pedido directo do dono do projecto: pessoas poderem candidatar-se a voluntário, um
+admin publicar actividades, e voluntários inscreverem-se e receberem confirmação por
+email. O que existia até aqui (`VolunteerSection.tsx`, o formulário "Kamba") era só
+uma Edge Function que enviava um email — nada ficava gravado, `papel: "voluntario"`
+existia no enum mas não estava ligado a nada, e a tabela `Notification` já criada no
+ORM nunca teve API nenhuma por cima (achado durante o levantamento inicial: o
+`AdminNotifications.tsx` ainda no Supabase usa até colunas diferentes das do ORM).
+
+Duas decisões do dono do projecto, pedidas explicitamente antes de escrever código:
+
+1. **Candidatura exige conta** (não anónima como o formulário Kamba antigo) — sem
+   isso não há como ligar "as minhas actividades" nem notificações a ninguém.
+2. **MVP inclui limite de vagas; controlo de presença fica para depois.**
+
+O que mudou:
+
+- **`voluntariado` é um estado ortogonal ao `papel`**, não um valor dele — mesma
+  correcção já feita para o Premium (ver `CLAUDE.md` §0): um profissional, um
+  estrábico ou uma pessoa comum podem todos ser voluntários sem deixar de ser o que
+  já são. `utilizadores.voluntario_ativo` (bool) é o "interruptor actual", mesmo
+  desenho de `premium_ativo`.
+- **`candidaturas_voluntariado`** — pedido com estado (`pendente`/`aprovada`/
+  `rejeitada`) e auditoria de quem decidiu e quando, mesmo desenho de
+  `premium_requests`. `CandidaturaVoluntariadoService.aprovar` liga
+  `voluntario_ativo=true` na mesma transacção que decide o pedido — nunca podem ficar
+  dessincronizados (mesmo cuidado do `PremiumRepository`).
+- **`atividades_voluntariado`** — um admin publica (`titulo`, `descricao`, `local`,
+  datas, `vagas` opcional). Publicar dispara um email a todos os voluntários activos
+  com `notificacoes_projetos` ligado — a primeira utilização real desse campo de
+  preferências, que existia desde o registo mas nunca tinha disparado nada.
+- **`inscricoes_atividade`** — `UNIQUE(atividade_id, utilizador_id)` impede
+  duplicação. `AtividadeVoluntariadoService.inscrever` verifica, sempre a partir da
+  base de dados (nunca de um valor vindo do pedido): a actividade está publicada,
+  quem pede é voluntário activo, ainda não está inscrito, e ainda há vagas.
+- **Decisão deliberada sobre email, ao contrário das doações (`CROSS-09`):** aqui uma
+  falha a enviar a confirmação **não** desfaz a candidatura/inscrição já gravada — o
+  registo em si já é o estado de valor, e reverter obrigaria a um "tentar outra vez"
+  que esbarraria na restrição `UNIQUE`. A falha fica só registada em log.
+- Migração `cfaf27163f7e`. 42 testes novos (25 de service, 17 de router) — cobrem o
+  caminho do erro tanto como o do sucesso: candidatura duplicada, decidir uma
+  candidatura já decidida, inscrever sem ser voluntário activo, inscrever duas vezes,
+  inscrever sem vagas, e a falha de email nunca impedir o registo.
+
+**Fora deste PR, de propósito:**
+- Frontend (ligar `VolunteerSection.tsx` à API, área "as minhas actividades",
+  `AdminVoluntarios.tsx`, `AdminAtividades.tsx`) — ver `L-13`/`L-15`.
+- Lembretes automáticos antes de uma actividade — precisa de um trigger por tempo
+  (Cloud Scheduler ou um Cloud Run Job agendado) que ainda não existe — ver `W-18`.
+- Corrida pela última vaga (duas inscrições em simultâneo a passar a verificação antes
+  de qualquer uma gravar) é um risco teórico aceite para o volume esperado, não
+  corrigido com `SELECT FOR UPDATE` — documentado, não esquecido.
+
 ---
 
 ## O que NÃO fazer agora
