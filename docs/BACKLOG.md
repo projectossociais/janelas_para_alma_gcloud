@@ -1170,6 +1170,33 @@ Confirmado com `gcloud sql instances describe jpa-db` e `gcloud sql backups list
 `enabled: true`, `pointInTimeRecoveryEnabled: true`, e os dois backups avulsos das
 migrações do DEP-02 já visíveis com `STATUS: SUCCESSFUL`.
 
+### DEP-06 — três permissões em falta, achadas no primeiro deploy automático real (2026-09-15)
+
+`06-ci-cd-setup.sh` correu, e o `deploy-api` do CI passou a correr (deixou de aparecer
+"skipping") — mas falhou três vezes seguidas, cada vez por um motivo diferente, todos
+do mesmo tipo: permissões que só aparecem quando **um service account restrito**
+(`jpa-deploy`, não um humano com `Owner`) tenta fazer a mesma operação que eu já tinha
+testado manualmente como Owner. Testar como Owner nunca ia mostrar nada disto.
+
+1. `gcloud builds submit` recusado com *"forbidden from accessing the bucket
+   [..._cloudbuild]"*, a sugerir `serviceusage.services.use`. Corrigido dando a
+   `jpa-deploy` o papel `roles/serviceusage.serviceUsageConsumer`.
+2. Mesmo comando, erro diferente a seguir: o mesmo tipo de acesso ao bucket, desta vez
+   resolvido com `roles/cloudbuild.builds.builder` (o mesmo papel que já tinha
+   resolvido um erro parecido para o service account de runtime, no DEP-02).
+3. Com as duas permissões acima, **o build em si passou a ter sucesso** — mas o
+   comando `gcloud builds submit` continuava a devolver erro, porque tenta mostrar os
+   logs do build ao vivo, e isso exige que quem chama seja Viewer/Owner do *projecto*
+   (não chega ter papéis específicos do Cloud Build) quando os logs vão para o bucket
+   GCS por omissão. `jpa-deploy` não é Viewer do projecto, de propósito (permissões
+   mínimas). Corrigido na raiz, não com mais um papel: `_build-imagem.sh` passa a
+   configurar `options.logging: CLOUD_LOGGING_ONLY` no Cloud Build, o que evita por
+   completo a necessidade de acesso ao bucket GCS para ler logs.
+
+**Lição a levar**: sempre que se testar um fluxo de permissões novo, testar como o
+service account real que o vai executar em produção, nunca só como Owner — um Owner
+nunca vê estes erros.
+
 ---
 
 ## O que NÃO fazer agora
