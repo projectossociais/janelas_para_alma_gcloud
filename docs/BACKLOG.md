@@ -1147,6 +1147,29 @@ partido em produção desde o corte do domínio para o Vercel.
 **Falta ainda:** correr `06-ci-cd-setup.sh` para o deploy automático (`DEP-06`) ficar
 mesmo activo a partir de agora — feito manualmente desta vez.
 
+### Backups automáticos do Cloud SQL estavam desligados (2026-09-15)
+
+Achado ao responder a uma pergunta directa do dono do projecto ("os dados são apagados
+a cada deploy? onde está o backup?"): a instância `jpa-db`, criada no DEP-02, tinha
+`backupConfiguration.enabled: false` — nenhum backup diário automático. A única rede
+de segurança que existia era o backup avulso que o `05-migrate.sh` dispara mesmo antes
+de cada migração (bom para proteger uma migração; nada protegia os dados no dia-a-dia
+entre migrações, ex.: um erro de operação, não de esquema).
+
+Corrigido nos dois sítios:
+
+- **A instância já criada** (`jpa-db`): activados backups diários (03:00, 7 dias de
+  retenção) e recuperação num ponto no tempo (`point-in-time recovery`) — permite
+  restaurar para qualquer instante exacto dentro da janela de 7 dias, não só para o
+  momento de um backup.
+- **`02-cloud-sql.sh`**: `gcloud sql instances create` ganha
+  `--backup-start-time=03:00 --retained-backups-count=7 --enable-point-in-time-recovery`,
+  para nenhuma instância nova voltar a nascer sem isto.
+
+Confirmado com `gcloud sql instances describe jpa-db` e `gcloud sql backups list` —
+`enabled: true`, `pointInTimeRecoveryEnabled: true`, e os dois backups avulsos das
+migrações do DEP-02 já visíveis com `STATUS: SUCCESSFUL`.
+
 ---
 
 ## O que NÃO fazer agora

@@ -14,13 +14,21 @@ fi
 
 echo "==> Instância Cloud SQL '${SQL_INSTANCE}' (${REGION})"
 if ! gcloud sql instances describe "$SQL_INSTANCE" >/dev/null 2>&1; then
+  # Backups diários automáticos + recuperação num ponto no tempo -- não vêm
+  # ligados por omissão. Sem isto, a única rede de segurança seria o backup
+  # avulso que o 05-migrate.sh dispara antes de cada migração -- bom para
+  # proteger uma migração, mas nada protege os dados no dia-a-dia entre
+  # migrações (ex.: um erro de operação, não de esquema).
   gcloud sql instances create "$SQL_INSTANCE" \
     --database-version=POSTGRES_16 \
     --tier="$SQL_TIER" \
     --region="$REGION" \
     --storage-auto-increase \
     --availability-type=zonal \
-    --edition=ENTERPRISE
+    --edition=ENTERPRISE \
+    --backup-start-time=03:00 \
+    --retained-backups-count=7 \
+    --enable-point-in-time-recovery
 else
   echo "    já existe."
 fi
