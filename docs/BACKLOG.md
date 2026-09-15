@@ -1274,6 +1274,54 @@ facto na base de dados, em vez de reverter dados reais.
 migração, deploy), confirmar explicitamente `git branch --show-current` — nunca supor
 que a pasta está no `main` só porque foi lá que se começou a sessão.
 
+### AUTH-03 — login com Google (2026-09-15)
+
+Pedido directo do dono do projecto — reverte a decisão `NAO-02` ("Login com Google"),
+que só tinha ficado de fora por prioridade, nunca por bloqueio técnico. Nada disto
+existia no site antigo (Supabase) — estava só planeado, nunca construído (ver
+`RoadmapTecnico.tsx`: "Login social (Google) — Não implementado").
+
+Duas decisões do dono do projecto, confirmadas antes de escrever código:
+
+1. **Se já existir conta com o mesmo email (registada por password), ligar
+   automaticamente** — o Google já provou a posse desse email, é seguro, e é o
+   comportamento padrão da generalidade dos sites com login social.
+
+O que mudou:
+
+- **`core/google_auth.py`** — `GoogleTokenVerifier` (Protocol) + `GoogleIdTokenVerifier`
+  (real, usa a biblioteca `google-auth`), mesmo padrão do `EmailSender`
+  (`core/email.py`): o `AuthService` nunca fala com o Google directamente, só com o
+  Protocol — testável sem rede. A verificação confirma a assinatura contra as chaves
+  públicas do Google **e** que o token foi emitido para este `google_client_id` —
+  nunca confiar em nada vindo do browser sem isto.
+- **`AuthService.entrar_com_google`** — liga a uma conta existente pelo email, ou cria
+  uma nova (`papel: comum`, nunca outro — mesma regra de `PAPEIS_AUTO_REGISTAVEIS` do
+  registo normal). `password_hash` de uma conta só-Google é uma password aleatória,
+  nunca comunicada — quem quiser entrar também por password usa "esqueci-me da
+  password", já funciona sem alterações. Uma conta que ainda não tivesse confirmado o
+  email por link (AUTH-02) fica confirmada aqui também: a verificação do Google é pelo
+  menos tão forte quanto isso.
+- **`POST /auth/google`** — recebe `id_token`, define os mesmos cookies `httpOnly` de
+  sempre em caso de sucesso.
+- **`GoogleSignInButton.tsx`** — usa o Google Identity Services (script global em
+  `index.html`), nunca um redireccionamento para fora do site. Sem
+  `VITE_GOOGLE_CLIENT_ID` configurado, não renderiza nada (nunca um botão partido).
+- Testes novos: 5 de service (conta nova, ligar a existente, confirmar email em
+  atraso, recusar email não verificado pelo Google, duas entradas dão a mesma conta),
+  4 de router, 12 de `AuthContext`/`GoogleSignInButton` no frontend.
+- **Bug real apanhado pelo CI, não em dev**: `google.auth.transport.requests`
+  precisa da biblioteca `requests` instalada à parte (não é dependência obrigatória
+  do `google-auth`) — passou despercebido localmente só porque outra biblioteca já a
+  tinha instalado por acaso; o ambiente limpo do CI apanhou logo (18 erros de colecção
+  do `pytest`). Corrigido acrescentando `requests` explicitamente a `pyproject.toml`.
+
+**Falta ainda:** o ID do cliente OAuth em si — criado manualmente na consola do GCP
+(`console.cloud.google.com/apis/credentials`, ecrã de consentimento + credenciais tipo
+"Aplicação Web"), pendente do dono do projecto. Sem isso preenchido em
+`GOOGLE_CLIENT_ID` (API) e `VITE_GOOGLE_CLIENT_ID` (frontend), o botão simplesmente não
+aparece — não há nada partido, só por activar.
+
 ---
 
 ## O que NÃO fazer agora
@@ -1285,7 +1333,7 @@ desenvolvimento?"* — a resposta honesta condiciona o que cabe.
 | Adiado | Porquê |
 |---|---|
 | Gateway de pagamento automático | Depende de contrato comercial (EMIS/AppyPay). O ciclo manual do Sprint 2 chega |
-| ~~Login com Google~~ | **Repriorizado a 2026-09-10** — passa a sprint próprio (ver "Identidade externa e email" acima), junto com a recuperação e confirmação por email |
+| ~~Login com Google~~ | **Feito a 2026-09-15** — ver `AUTH-03` acima |
 | Versão em inglês | O público é angolano |
 | Mapa de clínicas parceiras | Uma lista resolve, enquanto houver poucas clínicas |
 | Notificações push e modo offline | Boa ideia, custo alto, nenhum utilizador bloqueado hoje |

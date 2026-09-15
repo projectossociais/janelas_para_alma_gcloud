@@ -47,6 +47,11 @@ export EMAIL_REMETENTE="${EMAIL_REMETENTE:-onboarding@resend.dev}"
 # ou o domínio próprio se já estiver configurado).
 export FRONTEND_BASE_URL="${FRONTEND_BASE_URL:-}"
 
+# --- Login com Google (Sign In With Google) -------------------------------
+# ID do cliente OAuth criado em console.cloud.google.com/apis/credentials
+# (tipo "Aplicação Web"). Não é secreto -- corre no browser.
+export GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID:-}"
+
 # --- Cloudflare R2 (storage de ficheiros) — preencher quando existir -----
 export R2_ENDPOINT_URL="${R2_ENDPOINT_URL:-}"
 export R2_BUCKET="janelasparaalma"

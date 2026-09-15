@@ -8,6 +8,7 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 
 const eu = vi.fn();
 const entrar = vi.fn();
+const entrarComGoogle = vi.fn();
 const registar = vi.fn();
 const sair = vi.fn();
 const toastSuccess = vi.fn();
@@ -16,6 +17,7 @@ vi.mock("@/lib/apiClient", () => ({
   authApi: {
     eu: () => eu(),
     entrar: (email: string, password: string) => entrar(email, password),
+    entrarComGoogle: (idToken: string) => entrarComGoogle(idToken),
     registar: (dados: unknown) => registar(dados),
     sair: () => sair(),
   },
@@ -59,6 +61,7 @@ describe("AuthContext", () => {
   beforeEach(() => {
     eu.mockReset();
     entrar.mockReset();
+    entrarComGoogle.mockReset();
     registar.mockReset();
     sair.mockReset();
     sair.mockResolvedValue(undefined);
@@ -149,6 +152,37 @@ describe("AuthContext", () => {
     });
 
     expect(resultado).toEqual({ ok: false, error: "email ou password incorretos" });
+    expect(result.current.isLoggedIn).toBe(false);
+  });
+
+  it("signInWithGoogle com token válido autentica o utilizador", async () => {
+    eu.mockRejectedValue(erroApi(401, "sem sessão"));
+    entrarComGoogle.mockResolvedValue(UTILIZADOR_API);
+    const { result } = renderAuth();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    let resultado: { ok: boolean; error?: string } | undefined;
+    await act(async () => {
+      resultado = await result.current.signInWithGoogle("token-do-google");
+    });
+
+    expect(entrarComGoogle).toHaveBeenCalledWith("token-do-google");
+    expect(resultado).toEqual({ ok: true });
+    expect(result.current.isLoggedIn).toBe(true);
+  });
+
+  it("signInWithGoogle propaga o erro da API e nunca autentica", async () => {
+    eu.mockRejectedValue(erroApi(401, "sem sessão"));
+    entrarComGoogle.mockRejectedValue(erroApi(403, "o Google não confirma que este email é seu"));
+    const { result } = renderAuth();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    let resultado: { ok: boolean; error?: string } | undefined;
+    await act(async () => {
+      resultado = await result.current.signInWithGoogle("token-forjado");
+    });
+
+    expect(resultado).toEqual({ ok: false, error: "o Google não confirma que este email é seu" });
     expect(result.current.isLoggedIn).toBe(false);
   });
 

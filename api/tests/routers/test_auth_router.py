@@ -12,8 +12,10 @@ from fastapi.testclient import TestClient
 from app.core.dependencies import (
     obter_confirmacao_email_service,
     obter_conta_service,
+    obter_google_verifier,
     obter_recuperacao_password_service,
 )
+from app.core.google_auth import PerfilGoogle, TokenGoogleInvalidoError
 from app.main import app
 from app.routers import auth as auth_router
 from app.services.auth_service import AuthService
@@ -26,6 +28,21 @@ from tests.services.test_recuperacao_password_service import (
     EmailSenderFalso,
     TokensRepositorioFalso,
 )
+
+
+class GoogleVerifierFalso:
+    """Devolve sempre o `perfil` configurado, ou levanta
+    `TokenGoogleInvalidoError` se `falha=True` -- nunca chama o Google a
+    sério, o router não sabe a diferença."""
+
+    def __init__(self, perfil: PerfilGoogle | None = None, falha: bool = False) -> None:
+        self._perfil = perfil or PerfilGoogle(email="ana@example.com", email_verificado=True, nome="Ana Teste")
+        self._falha = falha
+
+    def verificar(self, id_token_str: str) -> PerfilGoogle:
+        if self._falha:
+            raise TokenGoogleInvalidoError("token de teste inválido")
+        return self._perfil
 
 
 @pytest.fixture
@@ -51,6 +68,10 @@ def client():
     app.dependency_overrides[obter_confirmacao_email_service] = lambda: ConfirmacaoEmailService(
         repo, tokens_confirmacao_repo, email_sender
     )
+    # Omissão sensata para testes que nem tocam /auth/google -- os que
+    # testam esse endpoint a sério substituem isto de novo, dentro do
+    # próprio teste, por um GoogleVerifierFalso configurado à medida.
+    app.dependency_overrides[obter_google_verifier] = lambda: GoogleVerifierFalso()
     with TestClient(app) as c:
         c.email_sender = email_sender  # type: ignore[attr-defined]
         yield c
@@ -141,6 +162,53 @@ def test_entrar_sem_confirmar_o_email_devolve_403_e_nao_define_cookies(client: T
     client.post("/auth/registar", json={"email": "ana@example.com", "password": "password-forte-123"})
 
     resposta = client.post("/auth/entrar", json={"email": "ana@example.com", "password": "password-forte-123"})
+
+    assert resposta.status_code == 403
+    assert "access_token" not in resposta.cookies
+    assert client.get("/auth/eu").status_code == 401
+
+
+def test_entrar_com_google_cria_conta_e_inicia_sessao(client: TestClient) -> None:
+    resposta = client.post("/auth/google", json={"id_token": "token-de-teste"})
+
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["email"] == "ana@example.com"
+    assert corpo["email_confirmado"] is True
+    assert "access_token" in resposta.cookies
+
+    assert client.get("/auth/eu").status_code == 200
+
+
+def test_entrar_com_google_liga_a_conta_ja_existente(client: TestClient) -> None:
+    client.post("/auth/registar", json={"email": "ana@example.com", "password": "password-forte-123"})
+    _confirmar_ultimo_registo(client)
+    client.post("/auth/entrar", json={"email": "ana@example.com", "password": "password-forte-123"})
+    id_via_password = client.get("/auth/eu").json()["id"]
+
+    resposta = client.post("/auth/google", json={"id_token": "token-de-teste"})
+
+    assert resposta.status_code == 200
+    assert resposta.json()["email"] == "ana@example.com"
+    assert resposta.json()["id"] == id_via_password
+
+
+def test_entrar_com_google_token_invalido_devolve_401(client: TestClient) -> None:
+    app.dependency_overrides[auth_router.obter_google_verifier] = lambda: GoogleVerifierFalso(falha=True)
+
+    resposta = client.post("/auth/google", json={"id_token": "token-forjado"})
+
+    assert resposta.status_code == 401
+    assert "access_token" not in resposta.cookies
+
+
+def test_entrar_com_google_email_nao_verificado_devolve_403(client: TestClient) -> None:
+    perfil_nao_verificado = PerfilGoogle(email="ana@example.com", email_verificado=False, nome="Ana")
+    app.dependency_overrides[auth_router.obter_google_verifier] = lambda: GoogleVerifierFalso(
+        perfil=perfil_nao_verificado
+    )
+
+    resposta = client.post("/auth/google", json={"id_token": "token-de-teste"})
 
     assert resposta.status_code == 403
     assert "access_token" not in resposta.cookies

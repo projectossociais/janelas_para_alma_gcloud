@@ -12,11 +12,13 @@ from datetime import UTC, datetime
 
 import pytest
 
+from app.core.google_auth import PerfilGoogle
 from app.core.security import criar_access_token, criar_refresh_token, hash_password
 from app.repositories.utilizadores_repository import UtilizadorRegisto
 from app.services.auth_service import (
     AuthService,
     CredenciaisInvalidasError,
+    EmailGoogleNaoVerificadoError,
     EmailJaRegistadoError,
     EmailNaoConfirmadoError,
     RefreshTokenInvalidoError,
@@ -274,3 +276,55 @@ def test_hash_password_produz_hashes_diferentes_para_a_mesma_password() -> None:
     # Argon2 usa salt aleatório — dois hashes da mesma password nunca
     # deviam ser iguais. Confirma que não caímos num hashing determinístico.
     assert hash_password("mesma-password") != hash_password("mesma-password")
+
+
+class TestEntrarComGoogle:
+    def test_cria_conta_nova_ja_confirmada(self, service: AuthService, repo: RepositorioFalso) -> None:
+        perfil = PerfilGoogle(email="ana@example.com", email_verificado=True, nome="Ana Teste")
+
+        sessao = service.entrar_com_google(perfil)
+
+        assert sessao.utilizador.email == "ana@example.com"
+        assert sessao.utilizador.papel == "comum"
+        assert sessao.utilizador.nome_completo == "Ana Teste"
+        assert sessao.utilizador.email_confirmado is True
+
+    def test_liga_a_uma_conta_existente_pelo_mesmo_email(
+        self, service: AuthService, repo: RepositorioFalso
+    ) -> None:
+        existente = service.registar("ana@example.com", "password-forte-123")
+        perfil = PerfilGoogle(email="ana@example.com", email_verificado=True, nome="Ana Teste")
+
+        sessao = service.entrar_com_google(perfil)
+
+        assert sessao.utilizador.id == existente.utilizador.id
+
+    def test_confirma_o_email_de_uma_conta_existente_ainda_por_confirmar(
+        self, service: AuthService, repo: RepositorioFalso
+    ) -> None:
+        service.registar("ana@example.com", "password-forte-123")
+        assert repo.obter_por_email("ana@example.com").email_confirmado is False
+
+        perfil = PerfilGoogle(email="ana@example.com", email_verificado=True, nome=None)
+        sessao = service.entrar_com_google(perfil)
+
+        assert sessao.utilizador.email_confirmado is True
+
+    def test_recusa_email_que_o_google_nao_verificou(
+        self, service: AuthService, repo: RepositorioFalso
+    ) -> None:
+        perfil = PerfilGoogle(email="ana@example.com", email_verificado=False, nome="Ana Teste")
+
+        with pytest.raises(EmailGoogleNaoVerificadoError):
+            service.entrar_com_google(perfil)
+        assert repo.obter_por_email("ana@example.com") is None
+
+    def test_duas_entradas_com_google_dao_sessoes_para_o_mesmo_utilizador(
+        self, service: AuthService, repo: RepositorioFalso
+    ) -> None:
+        perfil = PerfilGoogle(email="ana@example.com", email_verificado=True, nome="Ana Teste")
+
+        primeira = service.entrar_com_google(perfil)
+        segunda = service.entrar_com_google(perfil)
+
+        assert primeira.utilizador.id == segunda.utilizador.id

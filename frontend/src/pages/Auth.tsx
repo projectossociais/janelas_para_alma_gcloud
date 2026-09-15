@@ -19,11 +19,12 @@ import { toast } from "sonner";
 import { useAuth, PROVINCES, UserRole, ROLE_LABEL } from "@/contexts/AuthContext";
 import { authApi, mensagemDeErroApi } from "@/lib/apiClient";
 import { erroDePasswordFraca } from "@/lib/validarPassword";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 const Auth = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { signIn, registerUser } = useAuth();
+  const { signIn, registerUser, signInWithGoogle } = useAuth();
 
   // Para onde voltar depois de autenticar (ex.: uma página que exigiu login
   // primeiro, ver Scanner.tsx). Só caminhos relativos, nunca um URL externo.
@@ -51,7 +52,26 @@ const Auth = () => {
   const [gender, setGender] = useState("");
   const [registerLoading, setRegisterLoading] = useState(false);
 
+  // Google (login ou registo, o mesmo botão -- /auth/google resolve as duas
+  // coisas do lado da API: liga a uma conta existente ou cria uma nova).
+  const [googleLoading, setGoogleLoading] = useState(false);
+
   const irParaProximo = () => navigate(nextPath);
+
+  const handleGoogleCredential = async (idToken: string) => {
+    setGoogleLoading(true);
+    try {
+      const resultado = await signInWithGoogle(idToken);
+      if (!resultado.ok) {
+        toast.error(resultado.error || "Não foi possível entrar com o Google.");
+        return;
+      }
+      toast.success("Sessão iniciada.");
+      irParaProximo();
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -182,6 +202,22 @@ const Auth = () => {
             <CardDescription>Entre ou crie a sua conta para continuar.</CardDescription>
           </CardHeader>
           <CardContent>
+            {import.meta.env.VITE_GOOGLE_CLIENT_ID && (
+              <div className="mb-6 space-y-4">
+                <GoogleSignInButton onCredential={handleGoogleCredential} />
+                {googleLoading && (
+                  <p className="text-center text-sm text-muted-foreground">A entrar…</p>
+                )}
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">ou</span>
+                  </div>
+                </div>
+              </div>
+            )}
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "login" | "register")} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="login">Entrar</TabsTrigger>
