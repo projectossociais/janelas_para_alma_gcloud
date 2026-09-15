@@ -4,7 +4,7 @@
 # confirmação humana (CLAUDE.md secção 10).
 set -euo pipefail
 cd "$(dirname "$0")"
-source ./00-config.sh
+[ -f ./00-config.sh ] && source ./00-config.sh
 
 if [ -z "${SQL_PASSWORD:-}" ]; then
   echo "ERRO: SQL_PASSWORD não está definida." >&2

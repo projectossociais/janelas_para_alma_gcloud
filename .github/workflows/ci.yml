@@ -75,3 +75,66 @@ jobs:
       # desse lado.
       - name: Build da imagem da API
         run: docker build -f infra/docker/api.Dockerfile -t jpa-api:ci .
+
+  # Deploy automático da API a cada push/merge em `main` -- decisão do dono
+  # do projecto (2026-09-15, ver CLAUDE.md secção 10) para o Lukeny (ou
+  # quem for) conseguir levar uma alteração ao backend a produção só com um
+  # push, tal como o frontend já faz no Vercel. Só corre depois de `api` e
+  # `imagem-api` passarem -- nunca em PRs, nunca em forks (o `if` abaixo e a
+  # condição do provider OIDC em 06-ci-cd-setup.sh garantem isso em duas
+  # camadas). Sem segredos de longa duração: autentica por Workload Identity
+  # Federation (token OIDC do próprio GitHub, válido minutos, nunca
+  # guardado) -- ver infra/gcloud/06-ci-cd-setup.sh para o porquê.
+  #
+  # Fica sem efeito (passos gcloud falham) até o DEP-02 estar resolvido
+  # (projecto GCloud criado) e o 06-ci-cd-setup.sh ter corrido uma vez --
+  # ver docs/tarefas.csv.
+  deploy-api:
+    needs: [api, imagem-api]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+
+      # As mesmas variáveis que 00-config.sh define localmente (ver
+      # infra/gcloud/00-config.example.sh) -- aqui vindas de Variables do
+      # repositório (nenhuma é secreta: nomes de projecto, região, emails de
+      # service account) em vez de um ficheiro local. Os dois caminhos
+      # correm exactamente os mesmos scripts a seguir, de propósito.
+      - name: Preparar variáveis de configuração
+        run: |
+          {
+            echo "PROJECT_ID=${{ vars.GCP_PROJECT_ID }}"
+            echo "REGION=${{ vars.GCP_REGION }}"
+            echo "AR_REPO=${{ vars.GCP_AR_REPO }}"
+            echo "SQL_INSTANCE=${{ vars.GCP_SQL_INSTANCE }}"
+            echo "SQL_CONNECTION_NAME=${{ vars.GCP_SQL_CONNECTION_NAME }}"
+            echo "API_SERVICE=${{ vars.GCP_API_SERVICE }}"
+            echo "FRONTEND_DOMAIN=${{ vars.GCP_FRONTEND_DOMAIN }}"
+            echo "AR_HOST=${{ vars.GCP_REGION }}-docker.pkg.dev"
+            echo "IMAGE_BASE=${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.GCP_AR_REPO }}"
+          } >> "$GITHUB_ENV"
+
+      # 05 ANTES do 04, sempre -- uma migração tem de aplicar-se contra o
+      # esquema antigo antes do código novo começar a servir pedidos com
+      # ele. `$CI` já vem definido pelo GitHub Actions, por isso o script
+      # sabe que não deve parar a pedir confirmação (ver a nota no próprio
+      # ficheiro sobre a rede de segurança que fica no lugar dessa pausa).
+      - name: Migrar o esquema (com backup automático antes)
+        run: ./infra/gcloud/05-migrate.sh
+
+      - name: Deploy da API no Cloud Run
+        run: ./infra/gcloud/04-deploy.sh

@@ -996,6 +996,52 @@ O que ficou feito:
   de estar autenticado" (perfil, sessões de exercício, uploads, feedback, conta) — cada
   um passou a confirmar explicitamente a conta de teste antes de entrar.
 
+### DEP-06 — deploy automático da API, código e migrações (2026-09-15)
+
+Decisão do dono do projecto, pedida directamente: o Lukeny (ou quem for) precisa de
+conseguir levar uma alteração ao backend a produção só com um push, tal como o frontend
+já faz no Vercel. Isto **contraria** o que o `CLAUDE.md` dizia até aqui — "nenhuma
+migração corre em produção sem confirmação humana", com pausa manual a seguir ao deploy
+— e foi confirmado explicitamente depois de eu ter levantado esse ponto (ver a conversa
+que levou a esta secção): a decisão fica registada como escolha consciente do dono do
+projecto, não uma correcção silenciosa da regra antiga.
+
+O que mudou:
+
+- **`.github/workflows/ci.yml`** ganha o job `deploy-api`: corre só a seguir a `api` e
+  `imagem-api` passarem, só em push directo a `main` (nunca em PRs, nunca em forks).
+  Migra o esquema (`05-migrate.sh`) e só depois faz deploy do serviço (`04-deploy.sh`) —
+  nessa ordem, sempre: código novo não deve começar a servir pedidos antes do esquema
+  estar pronto para ele.
+- **Sem chaves de longa duração**: autentica por **Workload Identity Federation**, não
+  por uma chave JSON de service account descarregada e guardada como GitHub Secret. O
+  GitHub prova quem é com um token OIDC assinado por ele próprio, válido minutos; o GCP
+  confia nessa prova só para este repositório exacto (`attribute-condition` no
+  provider). Provisionado por `infra/gcloud/06-ci-cd-setup.sh`, que também escreve a
+  configuração resultante como Variables do repositório GitHub (`gh variable set`) —
+  nada disto é secreto (nomes de projecto, região, emails de service account).
+- **Rede de segurança automática, no lugar da pausa manual removida:**
+  1. O CI já corre `alembic upgrade head` contra um Postgres real a cada PR (existia
+     antes desta mudança) — se a migração não aplicar limpo, falha ali, nunca chega ao
+     deploy.
+  2. `05-migrate.sh` tira sempre um backup do Cloud SQL (`gcloud sql backups create
+     --async`) logo antes de migrar a sério — ponto de restauro a minutos de distância.
+  3. Corrido à mão fora do CI (`$CI` não definido), `05-migrate.sh` continua a pedir
+     confirmação explícita como sempre pediu — só o caminho automático deixou de parar.
+  4. A confirmação humana não desapareceu, mudou de sítio: passa a ser a própria
+     revisão do PR antes do merge (já obrigatória para qualquer PR que toque esquema —
+     `CLAUDE.md` §9 ponto 4), não uma segunda pausa depois disso.
+- **`04-deploy.sh` e `05-migrate.sh` partilham agora `_build-imagem.sh`** (novo) — builda
+  a imagem só se ainda não existir para o commit actual. Sem isto, cada script tinha a
+  sua cópia da lógica de build, e corrê-los os dois (migrar depois de deployar, ou
+  vice-versa) buildava a imagem duas vezes.
+- `00-config.sh` (gitignored, só para uso local) passa a **opcional** em todos os
+  scripts — no CI a mesma configuração vem de Variables do GitHub, nunca de um ficheiro.
+
+**Bloqueado por DEP-02:** não há projecto GCloud ainda, por isso o job `deploy-api`
+falha (sem credenciais válidas) até o `06-ci-cd-setup.sh` correr uma vez, depois do
+`01`-`03`. Nenhum código fica por escrever à espera disso — fica pronto a activar.
+
 ---
 
 ## O que NÃO fazer agora
