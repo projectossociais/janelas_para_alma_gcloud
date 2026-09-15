@@ -1310,6 +1310,11 @@ O que mudou:
 - Testes novos: 5 de service (conta nova, ligar a existente, confirmar email em
   atraso, recusar email não verificado pelo Google, duas entradas dão a mesma conta),
   4 de router, 12 de `AuthContext`/`GoogleSignInButton` no frontend.
+- **Bug real apanhado pelo CI, não em dev**: `google.auth.transport.requests`
+  precisa da biblioteca `requests` instalada à parte (não é dependência obrigatória
+  do `google-auth`) — passou despercebido localmente só porque outra biblioteca já a
+  tinha instalado por acaso; o ambiente limpo do CI apanhou logo (18 erros de colecção
+  do `pytest`). Corrigido acrescentando `requests` explicitamente a `pyproject.toml`.
 
 **Falta ainda:** o ID do cliente OAuth em si — criado manualmente na consola do GCP
 (`console.cloud.google.com/apis/credentials`, ecrã de consentimento + credenciais tipo
