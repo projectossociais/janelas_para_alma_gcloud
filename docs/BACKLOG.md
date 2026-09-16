@@ -1321,22 +1321,56 @@ página só, dois separadores (mesmo padrão do `AdminInbox`): Candidaturas
 (aprovar/rejeitar, com destaque para pendentes) e Actividades (publicar, cancelar, ver
 inscritos num dialog). Entrada nova no menu lateral.
 
+### ADMIN-03 — Publicações: substitui campanhas escritas em código (feito)
+
+O pedido do dono do projecto foi claro: "as publicações e mural de actividades são
+publicadas via código... o painel deve ter um lugar para fazer esta gestão". Confirmado
+com `ActivitiesFeed.tsx` (uma única publicação hardcoded, "Ações Recentes") e
+`CampanhaGamek.tsx` (uma página nova por campanha, escrita por um programador).
+
+Duas tabelas novas: `publicacoes` (título, resumo, corpo, data, local, capa, estado
+`rascunho`/`publicada`) e `midias_publicacao` (galeria de fotos, `ON DELETE CASCADE`
+a partir de `publicacoes`) — migração `0140a7145adb`, validada `upgrade`→`downgrade`→
+`upgrade` contra Postgres real antes de fechar. O slug é sempre gerado no servidor a
+partir do título (nunca aceite do cliente) e nunca muda depois de criado — evita
+colisões, enumeração de rascunhos, e um link partilhado que deixa de funcionar. Upload
+de capa e galeria reaproveita tal e qual o padrão de três passos do avatar
+(`Presigner`/R2, `INF-10`): a API só assina, o browser envia os bytes directamente, a
+API confirma que a chave pertence à publicação certa. Uma única página pública dinâmica
+(`/publicacoes/:slug`) substitui a ideia de "uma rota nova por campanha".
+
+**A verificação de segurança que mais importava aqui**: um rascunho tem de ser
+invisível mesmo sabendo o slug exacto — nunca assumir que ninguém vai tentar adivinhar
+ou enumerar. Confirmado com um teste de integração dedicado e, para além dos testes,
+com um `curl` real contra a API a correr em Postgres containerizado: `GET
+/publicacoes` devolve `[]` e `GET /publicacoes/{slug}` devolve `404` enquanto o estado
+é `rascunho`, e só aparecem depois de `POST /publicacoes/{id}/publicar`.
+
+`AdminContent.tsx` (editor de `site_content` no Supabase — confirmado por grep que
+**nenhuma página pública o lia**, e sem nenhum teste a perder) foi substituído por
+`AdminPublicacoes.tsx`: criar em rascunho, editar, upload de capa/galeria, publicar/
+despublicar, apagar. `ActivitiesFeed.tsx` (secção "Ações Recentes" da home) deixou de
+mostrar a campanha da Gamek fixa em código — mostra agora até duas publicações reais
+mais recentes, ou desaparece por completo se não houver nenhuma publicada. É a mesma
+lição do `CROSS-08`: nunca deixar uma funcionalidade "pronta" sem ligar o lado que a
+torna real. `CampanhaGamek.tsx` manteve-se tal como está (tem vídeos de testemunhos que
+o novo modelo de publicações ainda não cobre) — conteúdo genuíno não se apaga só
+porque o padrão mudou.
+
+**Lição a levar**: `AdminContent`/`site_content` não tinha nenhum teste, nenhuma
+página a consumi-lo, e ninguém tinha reparado. Um CMS "funcional" pode estar
+completamente desligado do produto durante meses se nada o liga ao lado público —
+o achado só apareceu porque a auditoria confirmou consumidores reais por grep, em vez
+de assumir que "edita e guarda" implica "está a ser usado".
+
+**Toca esquema de dados — PR aberto para revisão humana antes do merge (CLAUDE.md §9).**
+
 ### Por decidir/fazer a seguir
 
 - **`ADMIN-02` (`AdminUsers`)** — o `AdminRepository.definir_papel()` já existe ao
   nível do repositório; falta só expor um endpoint genérico (nunca para `papel=admin`,
   que mantém o fluxo próprio com protecção contra ficar sem nenhum admin). **Toca
   papéis de utilizador — CLAUDE.md §10 exige revisão humana antes do merge.**
-- **`ADMIN-03` (Publicações)** — o pedido do dono do projecto foi claro: "as
-  publicações e mural de actividades são publicadas via código... o painel deve ter
-  um lugar para fazer esta gestão". Confirmado com `ActivitiesFeed.tsx` (uma única
-  publicação hardcoded, "Ações Recentes") e `CampanhaGamek.tsx` (uma página nova por
-  campanha, escrita por um programador). Desenho: tabela `publicacoes` (título,
-  resumo, corpo, data, local, capa, estado rascunho/publicado) + `midias_publicacao`
-  (galeria de fotos/vídeos, reaproveitando o `Presigner`/upload directo ao R2 já usado
-  para avatares — `INF-10`), com uma única página pública dinâmica
-  (`/publicacoes/:slug`) em vez de uma rota nova por campanha. **Toca esquema de dados
-  — exige revisão humana.**
 - **`ADMIN-04` (Notificações)** — a tabela `Notification` já existe no ORM (por
   utilizador, com `lida`); falta o service/router e um sino de verdade no `Navbar`
   público. Sem tabela nova, mas é trabalho de UI genuinamente novo (nunca existiu
