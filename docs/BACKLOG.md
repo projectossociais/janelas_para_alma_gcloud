@@ -1473,6 +1473,61 @@ desenvolvimento?"* — a resposta honesta condiciona o que cabe.
 
 ---
 
+## CROSS-02 — R2 ligado a sério ao deploy automático (2026-09-16)
+
+Pedido directo do dono do projecto: "vamos resolver de uma vez por todas o R2".
+As credenciais já existiam há dias, mas só em `api/.env` local — nunca tinham
+chegado à produção, o que explica a confusão inicial ("já tenho as variáveis no
+repositório" referia-se ao `.env`, que nunca é comitado nem lido pelo Cloud Run).
+
+O que ficou feito:
+
+- **Segredos** (`R2_ACCESS_KEY_ID`/`R2_SECRET_ACCESS_KEY`) para o Secret Manager
+  (`jpa-r2-access-key-id`/`jpa-r2-secret-access-key`), com acesso concedido à
+  service account de runtime do Cloud Run.
+- **Variáveis não-secretas** (`R2_ENDPOINT_URL`, `R2_BUCKET`,
+  `R2_PUBLIC_BASE_URL`) para GitHub Variables e ligadas ao job `deploy-api` do
+  CI — a mesma lacuna que já tinha sido corrigida antes para
+  `EMAIL_REMETENTE`/`GOOGLE_CLIENT_ID` (DEP-06/AUTH-03): sem isto no workflow,
+  cada deploy automático apagava-as do serviço (`--set-env-vars` substitui, não
+  soma).
+
+**Bug real achado ao testar a sério** (nunca assumir que credenciais que "já
+existem" estão correctas — testá-las de verdade): `R2_ENDPOINT_URL` tinha o
+nome do bucket colado ao fim
+(`https://<conta>.r2.cloudflarestorage.com/janelasparaalma`), quando o
+`boto3`/S3 espera o endpoint sem o bucket (o bucket vai à parte, no parâmetro
+`Bucket=`). Isto fazia todos os uploads ficarem guardados com o bucket
+duplicado dentro da própria chave
+(`janelasparaalma/janelasparaalma/avatares/...`), enquanto os URLs públicos
+construídos como `{R2_PUBLIC_BASE_URL}/{chave}` continuavam a apontar para o
+caminho sem essa duplicação — **404 garantido em qualquer avatar ou foto
+publicada**, mesmo com um upload "bem sucedido" do ponto de vista da API.
+Confirmado com um ciclo real `put`/`get`/`list`/`delete` contra o bucket antes
+e depois da correcção.
+
+**A verificação que salvou de um incidente maior**: antes de dar isto como
+fechado, confirmou-se por uma consulta directa à base de dados de produção
+que **zero utilizadores tinham `avatar_url`** e **zero publicações tinham
+`capa_url`** guardados até este momento — o bug existia desde `INF-10`
+(2026-09-10) mas nunca chegou a partir uma imagem real, porque ninguém tinha
+ainda carregado nenhuma.
+
+**Lição a levar**: "já tenho as credenciais" e "as credenciais funcionam em
+produção" são coisas diferentes — só a segunda importa, e só se confirma
+testando a sério (não só olhando para o valor). Um `.env` local nunca chega
+a produção sozinho; toda a configuração nova precisa de um passo explícito
+que a leve até ao serviço real, e esse passo tem de estar no caminho
+automático, não só documentado para se lembrar de correr à mão.
+
+**Falta ainda**: `Apoiar.tsx` (modo financeiro) e `RegistoPremium.tsx`
+continuam a enviar o comprovativo de pagamento via Edge Function do Supabase
+— agora que o R2 está resolvido a sério, o próximo passo é reescrever esse
+envio para o mesmo padrão de upload em 3 passos já usado no avatar (`INF-10`)
+e nas fotos de publicações (`ADMIN-03`).
+
+---
+
 ## Bloqueios em aberto
 
 | # | Bloqueio | Estado | Quem resolve |

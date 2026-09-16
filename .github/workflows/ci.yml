@@ -135,6 +135,15 @@ jobs:
             echo "EMAIL_REMETENTE=${{ vars.GCP_EMAIL_REMETENTE }}"
             echo "GOOGLE_CLIENT_ID=${{ vars.GCP_GOOGLE_CLIENT_ID }}"
             echo "FRONTEND_BASE_URL=https://${{ vars.GCP_FRONTEND_DOMAIN }}"
+            # Idem para o R2: endpoint/bucket/URL pública não são secretos
+            # (as chaves de acesso é que vivem só no Secret Manager, nunca
+            # aqui) -- sem isto, 04-deploy.sh nunca ligava R2_ENDPOINT_URL/
+            # R2_BUCKET no caminho automático (só via 00-config.sh local),
+            # e o upload de avatar/publicações ficava sem storage em
+            # qualquer deploy feito só pelo CI.
+            echo "R2_ENDPOINT_URL=${{ vars.GCP_R2_ENDPOINT_URL }}"
+            echo "R2_BUCKET=${{ vars.GCP_R2_BUCKET }}"
+            echo "R2_PUBLIC_BASE_URL=${{ vars.GCP_R2_PUBLIC_BASE_URL }}"
           } >> "$GITHUB_ENV"
 
       # 05 ANTES do 04, sempre -- uma migração tem de aplicar-se contra o

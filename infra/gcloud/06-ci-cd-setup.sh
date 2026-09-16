@@ -128,6 +128,11 @@ gh variable set GCP_FRONTEND_DOMAIN --repo "$GITHUB_REPO" --body "$FRONTEND_DOMA
 # substitui, não soma). Achado ao ligar o login com Google (AUTH-03).
 [ -n "${EMAIL_REMETENTE:-}" ] && gh variable set GCP_EMAIL_REMETENTE --repo "$GITHUB_REPO" --body "$EMAIL_REMETENTE"
 [ -n "${GOOGLE_CLIENT_ID:-}" ] && gh variable set GCP_GOOGLE_CLIENT_ID --repo "$GITHUB_REPO" --body "$GOOGLE_CLIENT_ID"
+# Idem para o R2 -- as chaves de acesso (R2_ACCESS_KEY_ID/R2_SECRET_ACCESS_KEY)
+# nunca vêm para aqui, ficam só no Secret Manager (ver 03-secrets.sh).
+[ -n "${R2_ENDPOINT_URL:-}" ] && gh variable set GCP_R2_ENDPOINT_URL --repo "$GITHUB_REPO" --body "$R2_ENDPOINT_URL"
+[ -n "${R2_BUCKET:-}" ] && gh variable set GCP_R2_BUCKET --repo "$GITHUB_REPO" --body "$R2_BUCKET"
+[ -n "${R2_PUBLIC_BASE_URL:-}" ] && gh variable set GCP_R2_PUBLIC_BASE_URL --repo "$GITHUB_REPO" --body "$R2_PUBLIC_BASE_URL"
 gh variable set GCP_WORKLOAD_IDENTITY_PROVIDER --repo "$GITHUB_REPO" --body "$WIF_PROVIDER"
 gh variable set GCP_DEPLOY_SERVICE_ACCOUNT --repo "$GITHUB_REPO" --body "$DEPLOY_SA_EMAIL"
 
