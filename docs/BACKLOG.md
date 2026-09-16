@@ -1411,18 +1411,48 @@ completamente desligado do produto durante meses se nada o liga ao lado público
 o achado só apareceu porque a auditoria confirmou consumidores reais por grep, em vez
 de assumir que "edita e guarda" implica "está a ser usado".
 
-**Toca esquema de dados — PR aberto para revisão humana antes do merge (CLAUDE.md §9).**
+**TOCAVA esquema de dados — revisto e mesclado por Wilson (PR #45), deploy automático
+confirmado em produção.**
 
-### Por decidir/fazer a seguir
+### ADMIN-02 — `AdminUsers` com dados reais e mudança de papel genérica (feito)
 
-- **`ADMIN-02` (`AdminUsers`)** — o `AdminRepository.definir_papel()` já existe ao
-  nível do repositório; falta só expor um endpoint genérico (nunca para `papel=admin`,
-  que mantém o fluxo próprio com protecção contra ficar sem nenhum admin). **Toca
-  papéis de utilizador — CLAUDE.md §10 exige revisão humana antes do merge.**
-- **`ADMIN-04` (Notificações)** — a tabela `Notification` já existe no ORM (por
-  utilizador, com `lida`); falta o service/router e um sino de verdade no `Navbar`
-  público. Sem tabela nova, mas é trabalho de UI genuinamente novo (nunca existiu
-  consumo de notificações no frontend).
+`POST /admin/utilizadores/{id}/papel` novo: recusa `papel=admin` (422 — essa
+transição mantém-se só em `promover`/`remover-admin`, que têm a protecção do último
+admin) e recusa mudar o papel de quem já é admin por esta via (409 — mesma razão).
+`AdminUsers.tsx` deixou de ler o Supabase (nem `profiles`, nem `user_roles` — dupla
+fonte que já nem existe no esquema novo). Revisto a fundo, sincronizado com o `main`
+e mesclado por Wilson (PR #44); deploy automático confirmado em produção.
+
+### ADMIN-04 — Notificações reais por utilizador (feito)
+
+Substitui o antigo `AdminNotifications.tsx`, que escrevia numa tabela `notifications`
+do **Supabase** — confirmado por grep, sem nenhum consumidor no site — para um envio
+que cria mesmo uma linha por destinatário na tabela `notifications` do Postgres
+próprio, que já existia desde a baseline (nenhuma migração nova precisou de correr).
+
+- `POST /notificacoes/admin/enviar` — broadcast a todos ou a um `papel` (reaproveita
+  `AdminRepository.listar(papel=...)` para resolver os destinatários, em vez de
+  duplicar essa consulta).
+- `GET /notificacoes`, `GET /notificacoes/nao-lidas/contagem`, `POST
+  /notificacoes/{id}/marcar-lida`, `POST /notificacoes/marcar-todas-lidas` — qualquer
+  sessão autenticada, só sobre as suas próprias.
+- **A verificação que mais importava aqui**: marcar como lida a notificação de outra
+  pessoa devolve sempre 404 — nunca confiar no `id` vindo do cliente sem confirmar o
+  dono, e nunca distinguir "não existe" de "não é tua" (evita confirmar por
+  enumeração que um dado id existe). Verificado com testes de integração e com um
+  `curl` real: o admin a tentar marcar como lida a notificação de outro utilizador
+  leva 404 e a contagem desse outro utilizador não muda.
+- `NotificationBell.tsx` no `Navbar` — sino com contagem de não lidas (sondagem a
+  cada 60s), lista as notificações num popover, marca uma ou todas como lidas sem
+  esperar por um novo pedido completo. É o consumidor real que faltava: antes desta
+  mudança, nada no site alguma vez mostrava uma notificação a alguém.
+- 21 testes novos na API, 9 no frontend.
+
+**Lição a levar**: mesma lição do `ADMIN-03` — uma tabela e um formulário de admin a
+funcionar não significam uma funcionalidade completa. `AdminNotifications.tsx`
+"enviava" havia meses sem que ninguém alguma vez recebesse nada; só apareceu porque a
+auditoria inicial confirmou, por grep, que não havia nenhum consumidor no lado
+público, em vez de assumir que existia.
 
 ---
 
