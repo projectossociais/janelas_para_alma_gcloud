@@ -5,7 +5,7 @@ import {
   Inbox,
   Megaphone,
   Bell,
-  FileEdit,
+  Newspaper,
   LogOut,
   ShieldCheck,
   ArrowLeft,
@@ -35,7 +35,7 @@ const items = [
   { title: "Voluntariado", url: "/admin/voluntariado", icon: HeartHandshake },
   { title: "Banners", url: "/admin/banners", icon: Megaphone },
   { title: "Notificações", url: "/admin/notificacoes", icon: Bell },
-  { title: "Conteúdo", url: "/admin/conteudo", icon: FileEdit },
+  { title: "Publicações", url: "/admin/publicacoes", icon: Newspaper },
   { title: "Administradores", url: "/admin/administradores", icon: ShieldCheck },
 ];
 

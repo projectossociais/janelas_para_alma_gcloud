@@ -590,6 +590,111 @@ export const voluntariadoApi = {
     pedido<InscricaoAtividadeAdmin[]>(`/voluntariado/atividades/${atividadeId}/inscritos`),
 };
 
+// --- Publicações (ADMIN-03) --------------------------------------------------
+// Substitui o padrão antigo de escrever uma página React nova por cada
+// campanha/actividade (ver ActivitiesFeed.tsx) por um CMS real gerido no
+// painel de administração.
+
+export interface MidiaPublicacao {
+  id: string;
+  url: string;
+  ordem: number;
+}
+
+export interface PublicacaoPublica {
+  id: string;
+  slug: string;
+  titulo: string;
+  resumo: string;
+  corpo: string;
+  local: string | null;
+  data_evento: string | null;
+  capa_url: string | null;
+  midias: MidiaPublicacao[];
+}
+
+export interface PublicacaoAdmin extends PublicacaoPublica {
+  estado: "rascunho" | "publicada";
+  criado_por: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PublicacaoCriarInput {
+  titulo: string;
+  resumo: string;
+  corpo: string;
+  local?: string | null;
+  data_evento?: string | null;
+}
+
+export type PublicacaoAtualizarInput = Partial<PublicacaoCriarInput>;
+
+export interface MidiaUploadPreparado {
+  url_de_upload: string;
+  chave: string;
+  url_publico: string;
+}
+
+export const TIPOS_DE_MIDIA_ACEITES = ["image/png", "image/jpeg", "image/webp"] as const;
+
+export const publicacoesApi = {
+  // Leitura pública ---------------------------------------------------------
+  listarPublicadas: () => pedido<PublicacaoPublica[]>("/publicacoes"),
+
+  obterPorSlug: (slug: string) => pedido<PublicacaoPublica>(`/publicacoes/${slug}`),
+
+  // Administração -------------------------------------------------------------
+  listarTodas: () => pedido<PublicacaoAdmin[]>("/publicacoes/admin/todas"),
+
+  criar: (dados: PublicacaoCriarInput) =>
+    pedido<PublicacaoAdmin>("/publicacoes", { method: "POST", body: JSON.stringify(dados) }),
+
+  atualizar: (id: string, dados: PublicacaoAtualizarInput) =>
+    pedido<PublicacaoAdmin>(`/publicacoes/${id}`, { method: "PATCH", body: JSON.stringify(dados) }),
+
+  publicar: (id: string) =>
+    pedido<PublicacaoAdmin>(`/publicacoes/${id}/publicar`, { method: "POST" }),
+
+  despublicar: (id: string) =>
+    pedido<PublicacaoAdmin>(`/publicacoes/${id}/despublicar`, { method: "POST" }),
+
+  apagar: (id: string) => pedido<void>(`/publicacoes/${id}`, { method: "DELETE" }),
+
+  // Fotos (capa + galeria) — mesmo fluxo de 3 passos do avatar --------------
+  prepararCapa: (publicacaoId: string, contentType: string) =>
+    pedido<MidiaUploadPreparado>(`/publicacoes/${publicacaoId}/capa/preparar`, {
+      method: "POST",
+      body: JSON.stringify({ content_type: contentType }),
+    }),
+
+  confirmarCapa: (publicacaoId: string, chave: string) =>
+    pedido<{ capa_url: string }>(`/publicacoes/${publicacaoId}/capa/confirmar`, {
+      method: "POST",
+      body: JSON.stringify({ chave }),
+    }),
+
+  prepararMidia: (publicacaoId: string, contentType: string) =>
+    pedido<MidiaUploadPreparado>(`/publicacoes/${publicacaoId}/midias/preparar`, {
+      method: "POST",
+      body: JSON.stringify({ content_type: contentType }),
+    }),
+
+  confirmarMidia: (publicacaoId: string, chave: string) =>
+    pedido<MidiaPublicacao>(`/publicacoes/${publicacaoId}/midias/confirmar`, {
+      method: "POST",
+      body: JSON.stringify({ chave }),
+    }),
+
+  removerMidia: (publicacaoId: string, midiaId: string) =>
+    pedido<void>(`/publicacoes/${publicacaoId}/midias/${midiaId}`, { method: "DELETE" }),
+
+  /** Envio directo ao storage — fora do `apiClient` de propósito (outra
+   *  origem, sem cookies, corpo binário). Reutiliza a mesma lógica de
+   *  `uploadsApi.enviarParaStorage`. */
+  enviarParaStorage: uploadsApi.enviarParaStorage,
+};
+
 // --- Notificações (ADMIN-04) --------------------------------------------------
 // Substitui o antigo AdminNotifications.tsx, que escrevia numa tabela do
 // Supabase sem nenhum consumidor real do lado do site.

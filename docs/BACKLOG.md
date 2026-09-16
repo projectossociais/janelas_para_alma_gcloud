@@ -1369,6 +1369,51 @@ página só, dois separadores (mesmo padrão do `AdminInbox`): Candidaturas
 (aprovar/rejeitar, com destaque para pendentes) e Actividades (publicar, cancelar, ver
 inscritos num dialog). Entrada nova no menu lateral.
 
+### ADMIN-03 — Publicações: substitui campanhas escritas em código (feito)
+
+O pedido do dono do projecto foi claro: "as publicações e mural de actividades são
+publicadas via código... o painel deve ter um lugar para fazer esta gestão". Confirmado
+com `ActivitiesFeed.tsx` (uma única publicação hardcoded, "Ações Recentes") e
+`CampanhaGamek.tsx` (uma página nova por campanha, escrita por um programador).
+
+Duas tabelas novas: `publicacoes` (título, resumo, corpo, data, local, capa, estado
+`rascunho`/`publicada`) e `midias_publicacao` (galeria de fotos, `ON DELETE CASCADE`
+a partir de `publicacoes`) — migração `0140a7145adb`, validada `upgrade`→`downgrade`→
+`upgrade` contra Postgres real antes de fechar. O slug é sempre gerado no servidor a
+partir do título (nunca aceite do cliente) e nunca muda depois de criado — evita
+colisões, enumeração de rascunhos, e um link partilhado que deixa de funcionar. Upload
+de capa e galeria reaproveita tal e qual o padrão de três passos do avatar
+(`Presigner`/R2, `INF-10`): a API só assina, o browser envia os bytes directamente, a
+API confirma que a chave pertence à publicação certa. Uma única página pública dinâmica
+(`/publicacoes/:slug`) substitui a ideia de "uma rota nova por campanha".
+
+**A verificação de segurança que mais importava aqui**: um rascunho tem de ser
+invisível mesmo sabendo o slug exacto — nunca assumir que ninguém vai tentar adivinhar
+ou enumerar. Confirmado com um teste de integração dedicado e, para além dos testes,
+com um `curl` real contra a API a correr em Postgres containerizado: `GET
+/publicacoes` devolve `[]` e `GET /publicacoes/{slug}` devolve `404` enquanto o estado
+é `rascunho`, e só aparecem depois de `POST /publicacoes/{id}/publicar`.
+
+`AdminContent.tsx` (editor de `site_content` no Supabase — confirmado por grep que
+**nenhuma página pública o lia**, e sem nenhum teste a perder) foi substituído por
+`AdminPublicacoes.tsx`: criar em rascunho, editar, upload de capa/galeria, publicar/
+despublicar, apagar. `ActivitiesFeed.tsx` (secção "Ações Recentes" da home) deixou de
+mostrar a campanha da Gamek fixa em código — mostra agora até duas publicações reais
+mais recentes, ou desaparece por completo se não houver nenhuma publicada. É a mesma
+lição do `CROSS-08`: nunca deixar uma funcionalidade "pronta" sem ligar o lado que a
+torna real. `CampanhaGamek.tsx` manteve-se tal como está (tem vídeos de testemunhos que
+o novo modelo de publicações ainda não cobre) — conteúdo genuíno não se apaga só
+porque o padrão mudou.
+
+**Lição a levar**: `AdminContent`/`site_content` não tinha nenhum teste, nenhuma
+página a consumi-lo, e ninguém tinha reparado. Um CMS "funcional" pode estar
+completamente desligado do produto durante meses se nada o liga ao lado público —
+o achado só apareceu porque a auditoria confirmou consumidores reais por grep, em vez
+de assumir que "edita e guarda" implica "está a ser usado".
+
+**TOCAVA esquema de dados — revisto e mesclado por Wilson (PR #45), deploy automático
+confirmado em produção.**
+
 ### ADMIN-02 — `AdminUsers` com dados reais e mudança de papel genérica (feito)
 
 `POST /admin/utilizadores/{id}/papel` novo: recusa `papel=admin` (422 — essa
@@ -1409,12 +1454,6 @@ funcionar não significam uma funcionalidade completa. `AdminNotifications.tsx`
 auditoria inicial confirmou, por grep, que não havia nenhum consumidor no lado
 público, em vez de assumir que existia.
 
-### ADMIN-03 — Publicações (PR #45 aberto, à espera de revisão)
-
-Ver secção dedicada mais abaixo (branch `admin/painel-fase-4-publicacoes`) — feito e
-validado, mas ainda por mesclar: toca esquema de dados (novas tabelas `publicacoes` e
-`midias_publicacao`), exige revisão humana antes do merge (CLAUDE.md §9/§10).
-
 ---
 
 ## O que NÃO fazer agora
@@ -1431,6 +1470,61 @@ desenvolvimento?"* — a resposta honesta condiciona o que cabe.
 | Mapa de clínicas parceiras | Uma lista resolve, enquanto houver poucas clínicas |
 | Notificações push e modo offline | Boa ideia, custo alto, nenhum utilizador bloqueado hoje |
 | Migrar as 37 chamadas directas de uma vez | Migração por domínio, não big bang. É assim que as reescritas morrem |
+
+---
+
+## CROSS-02 — R2 ligado a sério ao deploy automático (2026-09-16)
+
+Pedido directo do dono do projecto: "vamos resolver de uma vez por todas o R2".
+As credenciais já existiam há dias, mas só em `api/.env` local — nunca tinham
+chegado à produção, o que explica a confusão inicial ("já tenho as variáveis no
+repositório" referia-se ao `.env`, que nunca é comitado nem lido pelo Cloud Run).
+
+O que ficou feito:
+
+- **Segredos** (`R2_ACCESS_KEY_ID`/`R2_SECRET_ACCESS_KEY`) para o Secret Manager
+  (`jpa-r2-access-key-id`/`jpa-r2-secret-access-key`), com acesso concedido à
+  service account de runtime do Cloud Run.
+- **Variáveis não-secretas** (`R2_ENDPOINT_URL`, `R2_BUCKET`,
+  `R2_PUBLIC_BASE_URL`) para GitHub Variables e ligadas ao job `deploy-api` do
+  CI — a mesma lacuna que já tinha sido corrigida antes para
+  `EMAIL_REMETENTE`/`GOOGLE_CLIENT_ID` (DEP-06/AUTH-03): sem isto no workflow,
+  cada deploy automático apagava-as do serviço (`--set-env-vars` substitui, não
+  soma).
+
+**Bug real achado ao testar a sério** (nunca assumir que credenciais que "já
+existem" estão correctas — testá-las de verdade): `R2_ENDPOINT_URL` tinha o
+nome do bucket colado ao fim
+(`https://<conta>.r2.cloudflarestorage.com/janelasparaalma`), quando o
+`boto3`/S3 espera o endpoint sem o bucket (o bucket vai à parte, no parâmetro
+`Bucket=`). Isto fazia todos os uploads ficarem guardados com o bucket
+duplicado dentro da própria chave
+(`janelasparaalma/janelasparaalma/avatares/...`), enquanto os URLs públicos
+construídos como `{R2_PUBLIC_BASE_URL}/{chave}` continuavam a apontar para o
+caminho sem essa duplicação — **404 garantido em qualquer avatar ou foto
+publicada**, mesmo com um upload "bem sucedido" do ponto de vista da API.
+Confirmado com um ciclo real `put`/`get`/`list`/`delete` contra o bucket antes
+e depois da correcção.
+
+**A verificação que salvou de um incidente maior**: antes de dar isto como
+fechado, confirmou-se por uma consulta directa à base de dados de produção
+que **zero utilizadores tinham `avatar_url`** e **zero publicações tinham
+`capa_url`** guardados até este momento — o bug existia desde `INF-10`
+(2026-09-10) mas nunca chegou a partir uma imagem real, porque ninguém tinha
+ainda carregado nenhuma.
+
+**Lição a levar**: "já tenho as credenciais" e "as credenciais funcionam em
+produção" são coisas diferentes — só a segunda importa, e só se confirma
+testando a sério (não só olhando para o valor). Um `.env` local nunca chega
+a produção sozinho; toda a configuração nova precisa de um passo explícito
+que a leve até ao serviço real, e esse passo tem de estar no caminho
+automático, não só documentado para se lembrar de correr à mão.
+
+**Falta ainda**: `Apoiar.tsx` (modo financeiro) e `RegistoPremium.tsx`
+continuam a enviar o comprovativo de pagamento via Edge Function do Supabase
+— agora que o R2 está resolvido a sério, o próximo passo é reescrever esse
+envio para o mesmo padrão de upload em 3 passos já usado no avatar (`INF-10`)
+e nas fotos de publicações (`ADMIN-03`).
 
 ---
 
