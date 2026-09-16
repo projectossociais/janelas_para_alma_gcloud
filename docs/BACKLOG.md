@@ -1369,6 +1369,51 @@ página só, dois separadores (mesmo padrão do `AdminInbox`): Candidaturas
 (aprovar/rejeitar, com destaque para pendentes) e Actividades (publicar, cancelar, ver
 inscritos num dialog). Entrada nova no menu lateral.
 
+### ADMIN-03 — Publicações: substitui campanhas escritas em código (feito)
+
+O pedido do dono do projecto foi claro: "as publicações e mural de actividades são
+publicadas via código... o painel deve ter um lugar para fazer esta gestão". Confirmado
+com `ActivitiesFeed.tsx` (uma única publicação hardcoded, "Ações Recentes") e
+`CampanhaGamek.tsx` (uma página nova por campanha, escrita por um programador).
+
+Duas tabelas novas: `publicacoes` (título, resumo, corpo, data, local, capa, estado
+`rascunho`/`publicada`) e `midias_publicacao` (galeria de fotos, `ON DELETE CASCADE`
+a partir de `publicacoes`) — migração `0140a7145adb`, validada `upgrade`→`downgrade`→
+`upgrade` contra Postgres real antes de fechar. O slug é sempre gerado no servidor a
+partir do título (nunca aceite do cliente) e nunca muda depois de criado — evita
+colisões, enumeração de rascunhos, e um link partilhado que deixa de funcionar. Upload
+de capa e galeria reaproveita tal e qual o padrão de três passos do avatar
+(`Presigner`/R2, `INF-10`): a API só assina, o browser envia os bytes directamente, a
+API confirma que a chave pertence à publicação certa. Uma única página pública dinâmica
+(`/publicacoes/:slug`) substitui a ideia de "uma rota nova por campanha".
+
+**A verificação de segurança que mais importava aqui**: um rascunho tem de ser
+invisível mesmo sabendo o slug exacto — nunca assumir que ninguém vai tentar adivinhar
+ou enumerar. Confirmado com um teste de integração dedicado e, para além dos testes,
+com um `curl` real contra a API a correr em Postgres containerizado: `GET
+/publicacoes` devolve `[]` e `GET /publicacoes/{slug}` devolve `404` enquanto o estado
+é `rascunho`, e só aparecem depois de `POST /publicacoes/{id}/publicar`.
+
+`AdminContent.tsx` (editor de `site_content` no Supabase — confirmado por grep que
+**nenhuma página pública o lia**, e sem nenhum teste a perder) foi substituído por
+`AdminPublicacoes.tsx`: criar em rascunho, editar, upload de capa/galeria, publicar/
+despublicar, apagar. `ActivitiesFeed.tsx` (secção "Ações Recentes" da home) deixou de
+mostrar a campanha da Gamek fixa em código — mostra agora até duas publicações reais
+mais recentes, ou desaparece por completo se não houver nenhuma publicada. É a mesma
+lição do `CROSS-08`: nunca deixar uma funcionalidade "pronta" sem ligar o lado que a
+torna real. `CampanhaGamek.tsx` manteve-se tal como está (tem vídeos de testemunhos que
+o novo modelo de publicações ainda não cobre) — conteúdo genuíno não se apaga só
+porque o padrão mudou.
+
+**Lição a levar**: `AdminContent`/`site_content` não tinha nenhum teste, nenhuma
+página a consumi-lo, e ninguém tinha reparado. Um CMS "funcional" pode estar
+completamente desligado do produto durante meses se nada o liga ao lado público —
+o achado só apareceu porque a auditoria confirmou consumidores reais por grep, em vez
+de assumir que "edita e guarda" implica "está a ser usado".
+
+**TOCAVA esquema de dados — revisto e mesclado por Wilson (PR #45), deploy automático
+confirmado em produção.**
+
 ### ADMIN-02 — `AdminUsers` com dados reais e mudança de papel genérica (feito)
 
 `POST /admin/utilizadores/{id}/papel` novo: recusa `papel=admin` (422 — essa
@@ -1408,12 +1453,6 @@ funcionar não significam uma funcionalidade completa. `AdminNotifications.tsx`
 "enviava" havia meses sem que ninguém alguma vez recebesse nada; só apareceu porque a
 auditoria inicial confirmou, por grep, que não havia nenhum consumidor no lado
 público, em vez de assumir que existia.
-
-### ADMIN-03 — Publicações (PR #45 aberto, à espera de revisão)
-
-Ver secção dedicada mais abaixo (branch `admin/painel-fase-4-publicacoes`) — feito e
-validado, mas ainda por mesclar: toca esquema de dados (novas tabelas `publicacoes` e
-`midias_publicacao`), exige revisão humana antes do merge (CLAUDE.md §9/§10).
 
 ---
 

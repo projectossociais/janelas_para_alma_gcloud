@@ -395,6 +395,49 @@ class InscricaoAtividade(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class Publicacao(Base):
+    """Uma publicação/actividade gerida pelo painel de administração --
+    substitui o padrão antigo de escrever uma página React nova por cada
+    campanha (ver docs/BACKLOG.md, ADMIN-03). `slug` é gerado pelo servidor
+    a partir do título, nunca aceite do cliente -- é o que dá uma única
+    página pública dinâmica (`/publicacoes/{slug}`) em vez de uma rota nova
+    por publicação."""
+
+    __tablename__ = "publicacoes"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    slug: Mapped[str] = mapped_column(Text, unique=True, nullable=False, index=True)
+    titulo: Mapped[str] = mapped_column(Text, nullable=False)
+    resumo: Mapped[str] = mapped_column(Text, nullable=False)
+    corpo: Mapped[str] = mapped_column(Text, nullable=False)
+    local: Mapped[str | None] = mapped_column(Text)
+    data_evento: Mapped[date | None] = mapped_column(Date)
+    capa_url: Mapped[str | None] = mapped_column(Text)
+    # "rascunho" | "publicada"
+    estado: Mapped[str] = mapped_column(Text, nullable=False, server_default="rascunho")
+    criado_por: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="SET NULL")
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class MidiaPublicacao(Base):
+    """Uma foto da galeria de uma publicação. Upload directo ao R2, mesmo
+    padrão do avatar (`upload_service.py`) -- os bytes nunca passam pela
+    API. `ordem` decide a posição na galeria."""
+
+    __tablename__ = "midias_publicacao"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    publicacao_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("publicacoes.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    url: Mapped[str] = mapped_column(Text, nullable=False)
+    ordem: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class UserFeedback(Base):
     __tablename__ = "user_feedback"
 

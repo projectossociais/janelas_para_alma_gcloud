@@ -11,6 +11,8 @@ import Sobre from "./pages/Sobre";
 import Equipa from "./pages/Equipa";
 import Kamba from "./pages/Kamba";
 import CampanhaGamek from "./pages/CampanhaGamek";
+import Publicacoes from "./pages/Publicacoes";
+import PublicacaoDetalhe from "./pages/PublicacaoDetalhe";
 import Parceiros from "./pages/Parceiros";
 import PortalClinicoOptioptika from "./pages/PortalClinicoOptioptika";
 import Tecnologia from "./pages/Tecnologia";
@@ -53,7 +55,7 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminInbox from "./pages/admin/AdminInbox";
 import AdminBanners from "./pages/admin/AdminBanners";
 import AdminNotifications from "./pages/admin/AdminNotifications";
-import AdminContent from "./pages/admin/AdminContent";
+import AdminPublicacoes from "./pages/admin/AdminPublicacoes";
 import AdminAdmins from "./pages/admin/AdminAdmins";
 import AdminVoluntariado from "./pages/admin/AdminVoluntariado";
 import GlobalBanner from "./components/GlobalBanner";
@@ -79,6 +81,8 @@ const App = () => (
                 <Route path="/equipa" element={<Equipa />} />
                 <Route path="/kamba" element={<Kamba />} />
                 <Route path="/meu-kamba/campanha-gamek" element={<CampanhaGamek />} />
+                <Route path="/publicacoes" element={<Publicacoes />} />
+                <Route path="/publicacoes/:slug" element={<PublicacaoDetalhe />} />
                 <Route path="/parceiros" element={<Parceiros />} />
                 <Route path="/portal-clinico" element={<Parceiros />} />
                 <Route path="/portal-clinico/optioptika" element={<PortalClinicoOptioptika />} />
@@ -113,7 +117,7 @@ const App = () => (
                   <Route path="mensagens" element={<AdminInbox />} />
                   <Route path="banners" element={<AdminBanners />} />
                   <Route path="notificacoes" element={<AdminNotifications />} />
-                  <Route path="conteudo" element={<AdminContent />} />
+                  <Route path="publicacoes" element={<AdminPublicacoes />} />
                   <Route path="administradores" element={<AdminAdmins />} />
                   <Route path="voluntariado" element={<AdminVoluntariado />} />
                 </Route>

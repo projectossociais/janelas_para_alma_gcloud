@@ -13,6 +13,7 @@ from app.routers import (
     notificacoes,
     perfil,
     premium,
+    publicacoes,
     sessoes_exercicio,
     uploads,
     voluntariado,
@@ -47,6 +48,7 @@ app.include_router(contact_messages.router)
 app.include_router(premium.router)
 app.include_router(admin.router)
 app.include_router(voluntariado.router)
+app.include_router(publicacoes.router)
 app.include_router(notificacoes.router)
 
 
