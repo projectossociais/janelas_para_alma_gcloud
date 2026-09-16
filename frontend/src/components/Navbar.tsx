@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import NotificationBell from "@/components/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -366,6 +367,8 @@ const Navbar = () => {
                   <LogIn className="w-4 h-4" /> Entrar
                 </button>
               )}
+
+              {isLoggedIn && <NotificationBell claro={!useSolidNav} />}
 
               <button
                 onClick={() => setSearchOpen(true)}
