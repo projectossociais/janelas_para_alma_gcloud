@@ -108,6 +108,11 @@ export const authApi = {
   entrar: (email: string, password: string) =>
     pedido<UtilizadorPublico>("/auth/entrar", { method: "POST", body: JSON.stringify({ email, password }) }),
 
+  /** `idToken` vem do Google Identity Services -- a API verifica a
+   *  assinatura antes de confiar em qualquer campo dele. */
+  entrarComGoogle: (idToken: string) =>
+    pedido<UtilizadorPublico>("/auth/google", { method: "POST", body: JSON.stringify({ id_token: idToken }) }),
+
   eu: () => pedido<UtilizadorPublico>("/auth/eu"),
 
   sair: () => pedido<void>("/auth/sair", { method: "POST" }),
