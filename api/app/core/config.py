@@ -58,6 +58,12 @@ class Settings(BaseSettings):
     # de testes do Resend, só entrega à própria conta.
     email_remetente: str = "onboarding@resend.dev"
 
+    # Login com Google (Sign In With Google) — ver core/google_auth.py. O
+    # Client ID não é secreto (corre no browser, dentro do próprio token que
+    # o Google Identity Services emite) — mesmo assim vem de variável de
+    # ambiente, nunca hardcoded, para poder mudar sem alterar código.
+    google_client_id: str = ""
+
     @property
     def cookie_seguro(self) -> bool:
         """Cookies com `Secure` fora de desenvolvimento — exige HTTPS, que só

@@ -122,6 +122,12 @@ gh variable set GCP_SQL_INSTANCE --repo "$GITHUB_REPO" --body "$SQL_INSTANCE"
 gh variable set GCP_SQL_CONNECTION_NAME --repo "$GITHUB_REPO" --body "$SQL_CONNECTION_NAME"
 gh variable set GCP_API_SERVICE --repo "$GITHUB_REPO" --body "$API_SERVICE"
 gh variable set GCP_FRONTEND_DOMAIN --repo "$GITHUB_REPO" --body "$FRONTEND_DOMAIN"
+# Também não secretos, mas precisos aqui e não só em 00-config.sh -- sem
+# isto, o job deploy-api do CI não tinha de onde os ler, e cada deploy
+# automático apagava-os silenciosamente do serviço (--set-env-vars
+# substitui, não soma). Achado ao ligar o login com Google (AUTH-03).
+[ -n "${EMAIL_REMETENTE:-}" ] && gh variable set GCP_EMAIL_REMETENTE --repo "$GITHUB_REPO" --body "$EMAIL_REMETENTE"
+[ -n "${GOOGLE_CLIENT_ID:-}" ] && gh variable set GCP_GOOGLE_CLIENT_ID --repo "$GITHUB_REPO" --body "$GOOGLE_CLIENT_ID"
 gh variable set GCP_WORKLOAD_IDENTITY_PROVIDER --repo "$GITHUB_REPO" --body "$WIF_PROVIDER"
 gh variable set GCP_DEPLOY_SERVICE_ACCOUNT --repo "$GITHUB_REPO" --body "$DEPLOY_SA_EMAIL"
 

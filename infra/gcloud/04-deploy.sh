@@ -48,6 +48,11 @@ if gcloud secrets describe jpa-resend-api-key >/dev/null 2>&1; then
 else
   echo "    Resend sem chave (03-secrets.sh) — recuperação de password fica por activar."
 fi
+# Não é secreto (corre no browser, dentro do próprio id_token que o Google
+# Identity Services emite) -- ver core/google_auth.py. Vazio até o dono do
+# projecto criar o cliente OAuth na consola do GCP; sem isto, o botão de
+# login com Google simplesmente não aparece (GoogleSignInButton.tsx).
+[ -n "${GOOGLE_CLIENT_ID:-}" ] && API_ENV="${API_ENV},GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}"
 
 echo "==> Deploy da API ('${API_SERVICE}')"
 gcloud run deploy "$API_SERVICE" \

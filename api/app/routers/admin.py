@@ -21,13 +21,16 @@ from app.repositories.admin_stats_repository import (
 from app.repositories.utilizadores_repository import UtilizadorRegisto
 from app.schemas.admin import (
     AdminUtilizadorPublico,
+    DefinirPapel,
     EstatisticasAdmin,
     PendenciasAdmin,
     PromoverAdmin,
 )
 from app.services.admin_service import (
     AdminService,
+    NaoPodeAlterarAdminPorAquiError,
     NaoPodeDespromoverASiProprioError,
+    PapelInvalidoError,
     UltimoAdminError,
     UtilizadorNaoEncontradoError,
 )
@@ -47,6 +50,28 @@ def obter_admin_stats_repository(
     sessao: Session = Depends(obter_sessao),
 ) -> SQLAlchemyAdminStatsRepository:
     return SQLAlchemyAdminStatsRepository(sessao)
+
+
+@router.post("/utilizadores/{utilizador_id}/papel", response_model=AdminUtilizadorPublico)
+def definir_papel(
+    utilizador_id: str,
+    dados: DefinirPapel,
+    servico: AdminService = Depends(obter_admin_service),
+) -> AdminUtilizadorRegisto:
+    try:
+        return servico.definir_papel(utilizador_id, dados.papel)
+    except PapelInvalidoError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"papel '{dados.papel}' inválido — use /promover para tornar alguém admin",
+        ) from exc
+    except NaoPodeAlterarAdminPorAquiError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="esta conta já é admin — use /remover-admin para lhe tirar o acesso",
+        ) from exc
+    except UtilizadorNaoEncontradoError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="conta não encontrada") from exc
 
 
 @router.get("/estatisticas", response_model=EstatisticasAdmin)
