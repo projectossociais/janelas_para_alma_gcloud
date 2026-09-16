@@ -589,3 +589,43 @@ export const voluntariadoApi = {
   listarInscritos: (atividadeId: string) =>
     pedido<InscricaoAtividadeAdmin[]>(`/voluntariado/atividades/${atividadeId}/inscritos`),
 };
+
+// --- Notificações (ADMIN-04) --------------------------------------------------
+// Substitui o antigo AdminNotifications.tsx, que escrevia numa tabela do
+// Supabase sem nenhum consumidor real do lado do site.
+
+export interface NotificacaoPublica {
+  id: string;
+  titulo: string;
+  mensagem: string;
+  lida: boolean;
+  created_at: string;
+}
+
+export const PAPEIS_PARA_NOTIFICAR = [
+  "comum",
+  "estrabico",
+  "profissional",
+  "oftalmologista",
+  "voluntario",
+  "admin",
+] as const;
+
+export const notificacoesApi = {
+  // Qualquer sessão autenticada -- só vê as suas próprias.
+  listarMinhas: () => pedido<NotificacaoPublica[]>("/notificacoes"),
+
+  contarNaoLidas: () => pedido<{ contagem: number }>("/notificacoes/nao-lidas/contagem"),
+
+  marcarLida: (id: string) =>
+    pedido<NotificacaoPublica>(`/notificacoes/${id}/marcar-lida`, { method: "POST" }),
+
+  marcarTodasLidas: () => pedido<void>("/notificacoes/marcar-todas-lidas", { method: "POST" }),
+
+  // Administração -- envia (broadcast) a todos ou a um papel.
+  enviar: (titulo: string, mensagem: string, papel?: string | null) =>
+    pedido<{ enviadas: number }>("/notificacoes/admin/enviar", {
+      method: "POST",
+      body: JSON.stringify({ titulo, mensagem, papel: papel || null }),
+    }),
+};
