@@ -434,6 +434,30 @@ export interface AdminUtilizador {
   criado_em: string;
 }
 
+export interface SerieDiaAdmin {
+  dia: string;
+  registos: number;
+  sessoes: number;
+  pedidos_premium: number;
+}
+
+export interface EstatisticasAdmin {
+  total_utilizadores: number;
+  novos_utilizadores: number;
+  utilizadores_ativos_semana: number;
+  sessoes_exercicio: number;
+  analises_scanner: number;
+  pedidos_premium: number;
+  mensagens_contacto: number;
+  serie: SerieDiaAdmin[];
+}
+
+export interface PendenciasAdmin {
+  pedidos_premium_pendentes: number;
+  mensagens_por_ler: number;
+  candidaturas_voluntariado_pendentes: number;
+}
+
 export const adminApi = {
   listarUtilizadores: (papel?: string) =>
     pedido<AdminUtilizador[]>(`/admin/utilizadores${papel ? `?papel=${papel}` : ""}`),
@@ -448,4 +472,112 @@ export const adminApi = {
 
   removerAdmin: (id: string) =>
     pedido<AdminUtilizador>(`/admin/utilizadores/${id}/remover-admin`, { method: "POST" }),
+
+  obterEstatisticas: (dias: number) => pedido<EstatisticasAdmin>(`/admin/estatisticas?dias=${dias}`),
+
+  obterPendencias: () => pedido<PendenciasAdmin>("/admin/pendencias"),
+};
+
+// --- Voluntariado (W-12) ---------------------------------------------------
+
+export interface CandidaturaVoluntariado {
+  id: string;
+  motivacao: string;
+  telefone: string | null;
+  status: string;
+  decidido_em: string | null;
+  created_at: string;
+}
+
+export interface CandidaturaVoluntariadoAdmin extends CandidaturaVoluntariado {
+  utilizador_id: string;
+  utilizador_email: string;
+  utilizador_nome: string | null;
+  decidido_por: string | null;
+}
+
+export interface AtividadeVoluntariado {
+  id: string;
+  titulo: string;
+  descricao: string;
+  local: string;
+  data_inicio: string;
+  data_fim: string | null;
+  vagas: number | null;
+  inscritos: number;
+  estado: string;
+  created_at: string;
+}
+
+export interface AtividadeVoluntariadoAdmin extends AtividadeVoluntariado {
+  criado_por: string | null;
+}
+
+export interface InscricaoAtividade {
+  id: string;
+  atividade_id: string;
+  atividade_titulo: string;
+  atividade_data_inicio: string;
+  atividade_local: string;
+  estado: string;
+  created_at: string;
+}
+
+export interface InscricaoAtividadeAdmin extends InscricaoAtividade {
+  utilizador_id: string;
+  utilizador_email: string;
+  utilizador_nome: string | null;
+}
+
+export interface AtividadeVoluntariadoCriar {
+  titulo: string;
+  descricao: string;
+  local: string;
+  data_inicio: string;
+  data_fim?: string | null;
+  vagas?: number | null;
+}
+
+export const voluntariadoApi = {
+  // Auto-serviço (voluntário) --------------------------------------------
+  candidatar: (motivacao: string, telefone?: string) =>
+    pedido<CandidaturaVoluntariado>("/voluntariado/candidatar", {
+      method: "POST",
+      body: JSON.stringify({ motivacao, telefone: telefone || undefined }),
+    }),
+
+  aMinhaCandidatura: () => pedido<CandidaturaVoluntariado | null>("/voluntariado/candidatura"),
+
+  listarAtividades: () => pedido<AtividadeVoluntariado[]>("/voluntariado/atividades"),
+
+  inscrever: (atividadeId: string) =>
+    pedido<InscricaoAtividade>(`/voluntariado/atividades/${atividadeId}/inscrever`, { method: "POST" }),
+
+  cancelarInscricao: (atividadeId: string) =>
+    pedido<InscricaoAtividade>(`/voluntariado/atividades/${atividadeId}/inscrever`, { method: "DELETE" }),
+
+  minhasInscricoes: () => pedido<InscricaoAtividade[]>("/voluntariado/minhas-inscricoes"),
+
+  // Administração -----------------------------------------------------------
+  listarCandidaturas: () => pedido<CandidaturaVoluntariadoAdmin[]>("/voluntariado/candidaturas"),
+
+  aprovarCandidatura: (id: string) =>
+    pedido<CandidaturaVoluntariadoAdmin>(`/voluntariado/candidaturas/${id}/aprovar`, { method: "POST" }),
+
+  rejeitarCandidatura: (id: string) =>
+    pedido<CandidaturaVoluntariadoAdmin>(`/voluntariado/candidaturas/${id}/rejeitar`, { method: "POST" }),
+
+  listarTodasAsAtividades: () => pedido<AtividadeVoluntariadoAdmin[]>("/voluntariado/atividades/todas"),
+
+  publicarAtividade: (dados: AtividadeVoluntariadoCriar) =>
+    pedido<AtividadeVoluntariadoAdmin>("/voluntariado/atividades", {
+      method: "POST",
+      body: JSON.stringify(dados),
+    }),
+
+  cancelarAtividade: (id: string) =>
+    pedido<AtividadeVoluntariadoAdmin>(`/voluntariado/atividades/${id}/cancelar`, { method: "POST" }),
+
+  listarInscritos: (atividadeId: string) =>
+    pedido<InscricaoAtividadeAdmin[]>(`/voluntariado/atividades/${atividadeId}/inscritos`),
 };

@@ -9,6 +9,7 @@ import {
   LogOut,
   ShieldCheck,
   ArrowLeft,
+  HeartHandshake,
 } from "lucide-react";
 import {
   Sidebar,
@@ -31,6 +32,7 @@ const items = [
   { title: "Visão Geral", url: "/admin", icon: LayoutDashboard, end: true },
   { title: "Utilizadores", url: "/admin/utilizadores", icon: Users },
   { title: "Mensagens & Pedidos", url: "/admin/mensagens", icon: Inbox },
+  { title: "Voluntariado", url: "/admin/voluntariado", icon: HeartHandshake },
   { title: "Banners", url: "/admin/banners", icon: Megaphone },
   { title: "Notificações", url: "/admin/notificacoes", icon: Bell },
   { title: "Conteúdo", url: "/admin/conteudo", icon: FileEdit },

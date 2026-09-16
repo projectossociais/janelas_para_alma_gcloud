@@ -1,109 +1,83 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Activity, Sparkles, MessageSquare, Eye, TrendingUp } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
+import {
+  Users,
+  Activity,
+  Sparkles,
+  MessageSquare,
+  UserCheck,
+  TrendingUp,
+  ScanEye,
+  Inbox,
+  HeartHandshake,
+  ArrowRight,
+} from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { adminApi, mensagemDeErroApi, type EstatisticasAdmin, type PendenciasAdmin } from "@/lib/apiClient";
+import { toast } from "sonner";
 
 type Period = "week" | "month" | "year";
 
 const periodDays: Record<Period, number> = { week: 7, month: 30, year: 365 };
 
-interface Kpis {
-  totalUsers: number;
-  newUsers: number;
-  scans: number;
-  premium: number;
-  messages: number;
-  online: number;
-}
-
 const AdminOverview = () => {
   const [period, setPeriod] = useState<Period>("month");
-  const [kpis, setKpis] = useState<Kpis>({
-    totalUsers: 0, newUsers: 0, scans: 0, premium: 0, messages: 0, online: 0,
-  });
-  const [series, setSeries] = useState<{ day: string; registos: number; analises: number; pedidos: number }[]>([]);
+  const [stats, setStats] = useState<EstatisticasAdmin | null>(null);
+  const [pendencias, setPendencias] = useState<PendenciasAdmin | null>(null);
 
   useEffect(() => {
-    const load = async () => {
-      const since = new Date();
-      since.setDate(since.getDate() - periodDays[period]);
-      const sinceIso = since.toISOString();
-
-      const [users, newUsers, scans, premium, msgs] = await Promise.all([
-        supabase.from("profiles").select("id", { count: "exact", head: true }),
-        supabase.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", sinceIso),
-        supabase.from("scanner_analyses").select("id", { count: "exact", head: true }).gte("created_at", sinceIso),
-        supabase.from("premium_requests").select("id", { count: "exact", head: true }).gte("created_at", sinceIso),
-        supabase.from("contact_messages").select("id", { count: "exact", head: true }).gte("created_at", sinceIso),
-      ]);
-
-      setKpis((k) => ({
-        ...k,
-        totalUsers: users.count ?? 0,
-        newUsers: newUsers.count ?? 0,
-        scans: scans.count ?? 0,
-        premium: premium.count ?? 0,
-        messages: msgs.count ?? 0,
-      }));
-
-      // Series
-      const [rProfiles, rScans, rPremium] = await Promise.all([
-        supabase.from("profiles").select("created_at").gte("created_at", sinceIso),
-        supabase.from("scanner_analyses").select("created_at").gte("created_at", sinceIso),
-        supabase.from("premium_requests").select("created_at").gte("created_at", sinceIso),
-      ]);
-      const days = periodDays[period];
-      const buckets: Record<string, { registos: number; analises: number; pedidos: number }> = {};
-      for (let i = days - 1; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        const key = d.toISOString().slice(0, 10);
-        buckets[key] = { registos: 0, analises: 0, pedidos: 0 };
-      }
-      const bump = (rows: { created_at: string }[], field: keyof (typeof buckets)[string]) => {
-        rows?.forEach((r) => {
-          const k = r.created_at.slice(0, 10);
-          if (buckets[k]) buckets[k][field]++;
-        });
-      };
-      bump(rProfiles.data || [], "registos");
-      bump(rScans.data || [], "analises");
-      bump(rPremium.data || [], "pedidos");
-      setSeries(Object.entries(buckets).map(([day, v]) => ({ day: day.slice(5), ...v })));
-    };
-    load();
+    adminApi
+      .obterEstatisticas(periodDays[period])
+      .then(setStats)
+      .catch((err) => toast.error(mensagemDeErroApi(err, "Não foi possível carregar as estatísticas.")));
   }, [period]);
 
-  // Presence: online users
   useEffect(() => {
-    const channel = supabase.channel("online-users", {
-      config: { presence: { key: crypto.randomUUID() } },
-    });
-    channel
-      .on("presence", { event: "sync" }, () => {
-        const state = channel.presenceState();
-        setKpis((k) => ({ ...k, online: Object.keys(state).length }));
-      })
-      .subscribe(async (status) => {
-        if (status === "SUBSCRIBED") {
-          await channel.track({ at: Date.now() });
-        }
-      });
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    adminApi
+      .obterPendencias()
+      .then(setPendencias)
+      .catch((err) => toast.error(mensagemDeErroApi(err, "Não foi possível carregar as pendências.")));
   }, []);
 
   const cards = [
-    { label: "Utilizadores (total)", value: kpis.totalUsers, icon: Users, color: "text-navy" },
-    { label: "Novos utilizadores", value: kpis.newUsers, icon: TrendingUp, color: "text-teal" },
-    { label: "Online agora", value: kpis.online, icon: Eye, color: "text-green-600" },
-    { label: "Análises scanner", value: kpis.scans, icon: Activity, color: "text-gold" },
-    { label: "Pedidos premium", value: kpis.premium, icon: Sparkles, color: "text-purple-600" },
-    { label: "Mensagens", value: kpis.messages, icon: MessageSquare, color: "text-blue-600" },
+    { label: "Utilizadores (total)", value: stats?.total_utilizadores ?? 0, icon: Users, color: "text-navy" },
+    { label: "Novos utilizadores", value: stats?.novos_utilizadores ?? 0, icon: TrendingUp, color: "text-teal" },
+    {
+      label: "Ativos esta semana",
+      value: stats?.utilizadores_ativos_semana ?? 0,
+      icon: UserCheck,
+      color: "text-green-600",
+    },
+    { label: "Sessões de exercício", value: stats?.sessoes_exercicio ?? 0, icon: Activity, color: "text-gold" },
+    { label: "Análises scanner", value: stats?.analises_scanner ?? 0, icon: ScanEye, color: "text-indigo-600" },
+    { label: "Pedidos premium", value: stats?.pedidos_premium ?? 0, icon: Sparkles, color: "text-purple-600" },
+    { label: "Mensagens", value: stats?.mensagens_contacto ?? 0, icon: MessageSquare, color: "text-blue-600" },
   ];
+
+  const pendenciasItems = [
+    {
+      label: "Pedidos Premium por decidir",
+      valor: pendencias?.pedidos_premium_pendentes ?? 0,
+      href: "/admin/mensagens?tab=premium",
+      icon: Sparkles,
+    },
+    {
+      label: "Mensagens por ler",
+      valor: pendencias?.mensagens_por_ler ?? 0,
+      href: "/admin/mensagens?tab=messages",
+      icon: Inbox,
+    },
+    {
+      label: "Candidaturas de voluntariado por decidir",
+      valor: pendencias?.candidaturas_voluntariado_pendentes ?? 0,
+      href: "/admin/voluntariado",
+      icon: HeartHandshake,
+    },
+  ];
+  const totalPendencias = pendenciasItems.reduce((soma, p) => soma + p.valor, 0);
 
   return (
     <div className="space-y-6">
@@ -121,7 +95,34 @@ const AdminOverview = () => {
         </Tabs>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <Card className={totalPendencias > 0 ? "border-amber-300 bg-amber-50/50" : undefined}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            Central de Pendências
+            {totalPendencias > 0 && <Badge variant="destructive">{totalPendencias}</Badge>}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid sm:grid-cols-3 gap-3">
+          {pendenciasItems.map((p) => (
+            <Link
+              key={p.label}
+              to={p.href}
+              className="flex items-center justify-between gap-3 rounded-lg border bg-background p-4 hover:border-primary hover:shadow-sm transition-all"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <p.icon className="w-5 h-5 text-muted-foreground shrink-0" />
+                <div className="min-w-0">
+                  <div className="text-2xl font-bold leading-none">{p.valor}</div>
+                  <div className="text-xs text-muted-foreground mt-1">{p.label}</div>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
+            </Link>
+          ))}
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
         {cards.map((c) => (
           <Card key={c.label}>
             <CardContent className="p-4">
@@ -141,14 +142,14 @@ const AdminOverview = () => {
         </CardHeader>
         <CardContent className="h-72">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={series}>
+            <BarChart data={stats?.serie ?? []}>
               <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-              <XAxis dataKey="day" fontSize={11} />
+              <XAxis dataKey="dia" fontSize={11} tickFormatter={(d: string) => d.slice(5)} />
               <YAxis fontSize={11} allowDecimals={false} />
               <Tooltip />
               <Bar dataKey="registos" fill="hsl(var(--primary))" name="Registos" />
-              <Bar dataKey="analises" fill="hsl(var(--secondary))" name="Análises" />
-              <Bar dataKey="pedidos" fill="hsl(var(--accent))" name="Pedidos" />
+              <Bar dataKey="sessoes" fill="hsl(var(--secondary))" name="Sessões de exercício" />
+              <Bar dataKey="pedidos_premium" fill="hsl(var(--accent))" name="Pedidos premium" />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>

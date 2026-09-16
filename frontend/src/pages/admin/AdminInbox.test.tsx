@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 
 const listar = vi.fn();
 const marcarLida = vi.fn();
@@ -76,7 +77,7 @@ describe("AdminInbox — mensagens de contacto", () => {
 
   it("mostra um erro (e não rebenta) quando a listagem falha", async () => {
     listar.mockRejectedValue(Object.assign(new Error("Sem permissões"), { status: 403 }));
-    render(<AdminInbox />);
+    render(<AdminInbox />, { wrapper: MemoryRouter });
 
     await waitFor(() => expect(toastError).toHaveBeenCalledWith("Sem permissões"));
     expect(screen.getByText("Sem mensagens.")).toBeInTheDocument();
@@ -86,7 +87,7 @@ describe("AdminInbox — mensagens de contacto", () => {
     listar.mockResolvedValueOnce([umaMensagem]).mockResolvedValueOnce([{ ...umaMensagem, lida: true }]);
     marcarLida.mockResolvedValue({ ...umaMensagem, lida: true });
     const user = userEvent.setup();
-    render(<AdminInbox />);
+    render(<AdminInbox />, { wrapper: MemoryRouter });
 
     const botao = await screen.findByRole("button", { name: /Marcar tratada/i });
     await user.click(botao);
@@ -100,7 +101,7 @@ describe("AdminInbox — mensagens de contacto", () => {
     listar.mockResolvedValue([umaMensagem]);
     marcarLida.mockRejectedValue(Object.assign(new Error("Falhou"), { status: 500 }));
     const user = userEvent.setup();
-    render(<AdminInbox />);
+    render(<AdminInbox />, { wrapper: MemoryRouter });
 
     await user.click(await screen.findByRole("button", { name: /Marcar tratada/i }));
 
@@ -114,7 +115,7 @@ describe("AdminInbox — mensagens de contacto", () => {
       .mockResolvedValueOnce([{ ...umPedido, status: "aprovado" }]);
     premiumAprovar.mockResolvedValue({ ...umPedido, status: "aprovado" });
     const user = userEvent.setup();
-    render(<AdminInbox />);
+    render(<AdminInbox />, { wrapper: MemoryRouter });
 
     await abrirSeparadorPremium(user);
     await user.click(await screen.findByRole("button", { name: /Aprovar pagamento/i }));
@@ -128,7 +129,7 @@ describe("AdminInbox — mensagens de contacto", () => {
     premiumListar.mockResolvedValue([umPedido]);
     premiumAprovar.mockRejectedValue(Object.assign(new Error("já aprovado"), { status: 409 }));
     const user = userEvent.setup();
-    render(<AdminInbox />);
+    render(<AdminInbox />, { wrapper: MemoryRouter });
 
     await abrirSeparadorPremium(user);
     await user.click(await screen.findByRole("button", { name: /Aprovar pagamento/i }));
@@ -140,7 +141,7 @@ describe("AdminInbox — mensagens de contacto", () => {
   it("desactiva o botão de aprovar quando o pedido não tem conta ligada", async () => {
     premiumListar.mockResolvedValue([{ ...umPedido, user_id: null }]);
     const user = userEvent.setup();
-    render(<AdminInbox />);
+    render(<AdminInbox />, { wrapper: MemoryRouter });
 
     await abrirSeparadorPremium(user);
     const botao = await screen.findByRole("button", { name: /Aprovar pagamento/i });
