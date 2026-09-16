@@ -55,6 +55,14 @@ class UtilizadorLogin(BaseModel):
     password: str
 
 
+class GoogleLoginPedido(BaseModel):
+    """`id_token` vem do Google Identity Services, no browser — a API
+    verifica a assinatura antes de confiar em qualquer campo dele (ver
+    core/google_auth.py). Nunca confiar num email enviado directamente."""
+
+    id_token: str
+
+
 class SolicitarRecuperacaoPassword(BaseModel):
     email: EmailStr
 

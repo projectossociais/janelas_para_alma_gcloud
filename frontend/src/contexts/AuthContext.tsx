@@ -48,6 +48,7 @@ interface AuthContextValue {
   isAdmin: boolean;
   registerUser: (input: RegisterInput) => Promise<ResultadoAuth>;
   signIn: (email: string, password: string) => Promise<ResultadoAuth>;
+  signInWithGoogle: (idToken: string) => Promise<ResultadoAuth>;
   logout: () => void;
   updateUser: (patch: Partial<AuthUser>) => void;
   updateUserProfile: (patch: Partial<AuthUser>) => void;
@@ -119,6 +120,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const signInWithGoogle: AuthContextValue["signInWithGoogle"] = async (idToken) => {
+    try {
+      const utilizador = await authApi.entrarComGoogle(idToken);
+      setUser(paraAuthUser(utilizador));
+      if (utilizador.eliminacao_cancelada) {
+        toast.success("A eliminação da sua conta foi cancelada. Bem-vindo de volta.");
+      }
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: mensagemDeFalha(err, "Não foi possível entrar com o Google.") };
+    }
+  };
+
   const logout = () => {
     setUser(null);
     // Best-effort: mesmo que o pedido falhe (rede em baixo, sessão já
@@ -142,6 +156,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isAdmin: user?.role === "admin",
         registerUser,
         signIn,
+        signInWithGoogle,
         logout,
         updateUser,
         updateUserProfile: updateUser,

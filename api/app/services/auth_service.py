@@ -6,8 +6,10 @@ Esta é a fronteira de segurança inteira do sistema agora que não há Supabase
 Auth nem RLS por baixo — testar isto bem não é opcional.
 """
 
+import secrets
 from dataclasses import dataclass
 
+from app.core.google_auth import PerfilGoogle
 from app.core.security import (
     TokenInvalidoError,
     criar_access_token,
@@ -39,6 +41,21 @@ class EmailNaoConfirmadoError(Exception):
     `CredenciaisInvalidasError` porque a mensagem é diferente (aqui sim vale
     a pena dizer o que falta — a password está certa, não há razão para
     fingir que não sabemos disso como no caso de email/password errados)."""
+
+
+class EmailGoogleNaoVerificadoError(Exception):
+    """O próprio Google não confirma a posse deste email (`email_verified`
+    falso no token) — recusar, nunca assumir que está tudo bem."""
+
+
+def _gerar_password_aleatoria() -> str:
+    # Contas criadas via Google não têm password escolhida pela pessoa, mas
+    # `utilizadores.password_hash` não é anulável (ver orm_models.py) -- em
+    # vez de mudar o esquema, gera-se uma password aleatória, nunca
+    # comunicada a ninguém, e faz-se o hash normal dela. Quem quiser entrar
+    # também por password no futuro usa "esqueci-me da password" -- já
+    # funciona sem alterações, porque é o mesmo fluxo de sempre.
+    return secrets.token_urlsafe(32)
 
 
 @dataclass(frozen=True)
@@ -104,6 +121,35 @@ class AuthService:
         # razão para esconder a causa (ver EmailNaoConfirmadoError).
         if not utilizador.email_confirmado:
             raise EmailNaoConfirmadoError("confirme o seu email antes de entrar")
+
+        return SessaoIniciada(utilizador=utilizador, tokens=self._emitir_tokens(utilizador.id))
+
+    def entrar_com_google(self, perfil: PerfilGoogle) -> SessaoIniciada:
+        """`perfil` já vem de um token verificado criptograficamente (ver
+        core/google_auth.py) — aqui só as regras de negócio: ligar a uma
+        conta existente pelo email (decisão do dono do projecto: o Google já
+        provou a posse do email, é seguro ligar automaticamente, sem exigir
+        a password original) ou criar uma conta nova, sempre `papel: comum`
+        (os outros papéis nunca se auto-atribuem, mesma regra do registo
+        normal — ver PAPEIS_AUTO_REGISTAVEIS). Uma conta que ainda não
+        tivesse confirmado o email por link (AUTH-02) fica confirmada aqui
+        também: a verificação do Google é pelo menos tão forte quanto isso.
+        """
+        if not perfil.email_verificado:
+            raise EmailGoogleNaoVerificadoError(perfil.email)
+
+        utilizador = self._repo.obter_por_email(perfil.email)
+        if utilizador is None:
+            utilizador = self._repo.criar(
+                email=perfil.email,
+                password_hash=hash_password(_gerar_password_aleatoria()),
+                papel="comum",
+                nome_completo=perfil.nome,
+            )
+
+        if not utilizador.email_confirmado:
+            self._repo.confirmar_email(utilizador.id)
+            utilizador = self._repo.obter_por_id(utilizador.id)
 
         return SessaoIniciada(utilizador=utilizador, tokens=self._emitir_tokens(utilizador.id))
 

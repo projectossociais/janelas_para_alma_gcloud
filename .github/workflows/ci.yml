@@ -126,6 +126,15 @@ jobs:
             echo "FRONTEND_DOMAIN=${{ vars.GCP_FRONTEND_DOMAIN }}"
             echo "AR_HOST=${{ vars.GCP_REGION }}-docker.pkg.dev"
             echo "IMAGE_BASE=${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.GCP_AR_REPO }}"
+            # Nenhum destes é secreto (email de remetente, ID de cliente
+            # OAuth, domínio do frontend) -- sem os passar aqui, 04-deploy.sh
+            # não os tinha de lado nenhum no caminho automático (só existiam
+            # em 00-config.sh, que não existe neste runner), e cada deploy
+            # automático ia silenciosamente apagá-los do serviço em produção
+            # (--set-env-vars substitui, não soma).
+            echo "EMAIL_REMETENTE=${{ vars.GCP_EMAIL_REMETENTE }}"
+            echo "GOOGLE_CLIENT_ID=${{ vars.GCP_GOOGLE_CLIENT_ID }}"
+            echo "FRONTEND_BASE_URL=https://${{ vars.GCP_FRONTEND_DOMAIN }}"
           } >> "$GITHUB_ENV"
 
       # 05 ANTES do 04, sempre -- uma migração tem de aplicar-se contra o
