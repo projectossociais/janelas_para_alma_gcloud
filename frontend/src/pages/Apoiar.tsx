@@ -35,9 +35,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { doacoesApi, mensagemDeErroApi } from "@/lib/apiClient";
-import { DEFAULT_BANK_DATA, fileToBase64, ofuscarValor } from "@/lib/pagamento";
+import {
+  comprovativosApi,
+  doacoesApi,
+  mensagemDeErroApi,
+  TIPOS_DE_COMPROVATIVO_ACEITES,
+} from "@/lib/apiClient";
+import { DEFAULT_BANK_DATA, ofuscarValor } from "@/lib/pagamento";
 
 type Mode = "materiais" | "financeiro";
 
@@ -235,55 +239,31 @@ const Apoiar = () => {
       toast.error("Anexe o comprovativo da transferência para continuar.");
       return;
     }
+    if (!TIPOS_DE_COMPROVATIVO_ACEITES.includes(comprovativo.type as never)) {
+      toast.error("Formato não suportado — use PNG, JPEG, WebP ou PDF.");
+      return;
+    }
 
     setSubmitting(true);
     try {
-      const arquivoBase64 = await fileToBase64(comprovativo);
-      const nomeArquivo = comprovativo.name;
-
-      const reciboId = `FIN-${Date.now().toString(36).toUpperCase()}`;
       const detalhesDonativo = activeTier
         ? `${activeTier.name} (${activeTier.range})`
         : "Donativo Financeiro";
 
-      const { error: insertError } = await supabase.from("doacoes").insert([
-        {
-          recibo_id: reciboId,
-          tipo: "financeiro",
-          email,
-          detalhes: detalhesDonativo,
-          status: "comprovativo_enviado",
-        },
-      ]);
-      if (insertError) throw insertError;
-
-      // Ao contrário do fluxo de materiais, aqui a Edge Function não é só o
-      // email: é também o único sítio para onde o ficheiro do comprovativo é
-      // enviado (não há upload separado para o Storage). Se isto falhar, o
-      // comprovativo em si perde-se -- por isso conta como falha real, não
-      // como um "aviso" a ignorar.
-      const { error: invokeError } = await supabase.functions.invoke("enviar-email-doacao", {
-        body: {
-          tipo: "financeiro",
-          email,
-          recibo_id: reciboId,
-          detalhes: detalhesDonativo,
-          arquivoBase64,
-          nomeArquivo,
-        },
-      });
-      if (invokeError) throw invokeError;
+      // Três passos (CROSS-02, mesmo padrão do avatar): a API assina o
+      // URL, o browser envia os bytes directamente ao R2, e só depois a
+      // doação é criada com a chave -- nunca os bytes passam pela nossa
+      // API. Nunca mostrar sucesso antes de todos os passos confirmarem.
+      const preparado = await comprovativosApi.preparar(comprovativo.type);
+      await comprovativosApi.enviarParaStorage(preparado.url_de_upload, comprovativo);
+      await doacoesApi.registarFinanceira(email, detalhesDonativo, preparado.chave);
 
       toast.success("Comprovativo recebido com sucesso! Enviámos um email de confirmação.");
       setSelectedTier(null);
       closeDialog();
     } catch (err) {
       console.error("Falha ao processar comprovativo:", err);
-      toast.error(
-        err instanceof Error
-          ? err.message
-          : "Não foi possível enviar o comprovativo. Tente novamente.",
-      );
+      toast.error(mensagemDeErroApi(err, "Não foi possível enviar o comprovativo. Tente novamente."));
     } finally {
       setSubmitting(false);
     }

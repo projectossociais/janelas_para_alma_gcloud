@@ -1544,4 +1544,47 @@ e nas fotos de publicações (`ADMIN-03`).
 
 ---
 
+## CROSS-02 — comprovativo de doações e Premium sai do Supabase (2026-09-17)
+
+Pedido directo do dono do projecto, a seguir a fechar o R2: "vamos resolver de uma vez
+por todas o comprovativo". `Apoiar.tsx` (modo financeiro) e `RegistoPremium.tsx`
+continuavam a enviar o ficheiro do comprovativo por uma Edge Function do Supabase — o
+único sítio, em todo o site, onde isso ainda acontecia.
+
+O que ficou feito:
+
+- `comprovativo_upload_service.py` novo — mesmo padrão de 3 passos do avatar
+  (`upload_service.py`) e das fotos de publicações (`ADMIN-03`): a API só assina o
+  `PUT`, o browser envia os bytes directamente ao R2. Diferença deliberada: aqui não
+  há "dono" a validar na preparação (doar ou pedir Premium não exige sessão) — a chave
+  nasce sob um prefixo fixo (`comprovativos/`), e é esse prefixo que se confirma no
+  momento de criar a doação/o pedido, nunca aceitando um caminho arbitrário do bucket.
+- Coluna `comprovativo_url` em `doacoes` e `premium_requests` (migração
+  `05db9b9b607c`, validada `upgrade`→`downgrade`→`upgrade` contra Postgres real).
+- `POST /doacoes/financeiro` novo (a doação financeira nunca tinha passado pela API
+  própria — ia directa para o Supabase). `POST /premium-requests` passa a exigir
+  `comprovativo_chave`; a lógica de validar essa chave saiu do router para dentro do
+  `PremiumService` (regra de ouro do CLAUDE.md §3 — "o utilizador podia mentir sobre
+  isto" já se aplicava aqui, só ainda não tinha um `service` a aplicá-la).
+- `AdminInbox.tsx` ganha um link **"Ver comprovativo"** no separador Premium. Antes
+  desta mudança, um admin aprovava um pagamento a confiar apenas no que via por email,
+  fora do produto — agora vê o ficheiro real, no mesmo sítio onde decide.
+- Verificado ponta-a-ponta com pedidos reais contra a API a correr em Docker: `PUT`
+  no URL assinado devolvido pela própria API, seguido de `GET` no URL público
+  devolvido — o ficheiro chega mesmo lá, com a chave certa.
+
+**Perdido de propósito, não por descuido**: a Edge Function também mandava, só para
+`RegistoPremium.tsx`, um email interno com notas de diagnóstico ("já tem diagnóstico
+médico?", "dúvida clínica: ...") para a equipa. Isso nunca teve destino persistente
+(não ficava gravado em lado nenhum, só num email) e não foi recriado — o formulário
+continua a recolher essa informação (ainda validada, ainda no ecrã), só deixou de ser
+enviada por email a alguém. Fica registado aqui para não passar despercebido: se a
+equipa precisar mesmo dessas notas, o sítio certo para elas é uma coluna nova em
+`premium_requests`, com um dono a decidir isso — não uma Edge Function a reviver.
+
+12 testes novos na API, 12 no frontend. **Toca esquema de dados — PR aberto para
+revisão humana antes do merge (CLAUDE.md §9/§10).**
+
+---
+
 <sub>Actualizar este ficheiro à medida que as tarefas fecham. Uma tarefa fechada sai da lista com o commit que a fecha.</sub>

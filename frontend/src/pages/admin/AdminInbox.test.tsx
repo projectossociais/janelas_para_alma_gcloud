@@ -147,4 +147,26 @@ describe("AdminInbox — mensagens de contacto", () => {
     const botao = await screen.findByRole("button", { name: /Aprovar pagamento/i });
     expect(botao).toBeDisabled();
   });
+
+  it("mostra um link para o comprovativo quando o pedido tem um (CROSS-02)", async () => {
+    premiumListar.mockResolvedValue([
+      { ...umPedido, comprovativo_url: "https://cdn.exemplo.test/comprovativos/x.pdf" },
+    ]);
+    const user = userEvent.setup();
+    render(<AdminInbox />, { wrapper: MemoryRouter });
+
+    await abrirSeparadorPremium(user);
+    const link = await screen.findByRole("link", { name: /Ver comprovativo/i });
+    expect(link).toHaveAttribute("href", "https://cdn.exemplo.test/comprovativos/x.pdf");
+  });
+
+  it("não mostra o link de comprovativo quando o pedido não tem um", async () => {
+    premiumListar.mockResolvedValue([umPedido]);
+    const user = userEvent.setup();
+    render(<AdminInbox />, { wrapper: MemoryRouter });
+
+    await abrirSeparadorPremium(user);
+    await screen.findByText(umPedido.nome);
+    expect(screen.queryByRole("link", { name: /Ver comprovativo/i })).not.toBeInTheDocument();
+  });
 });

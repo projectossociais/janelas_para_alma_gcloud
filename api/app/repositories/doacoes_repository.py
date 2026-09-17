@@ -21,6 +21,7 @@ class DoacaoRegisto:
     materiais: list[str] | None
     detalhes: str | None
     status: str
+    comprovativo_url: str | None
     created_at: datetime
 
 
@@ -33,6 +34,7 @@ class DoacoesRepository(Protocol):
         status: str,
         materiais: list[str] | None = None,
         detalhes: str | None = None,
+        comprovativo_url: str | None = None,
     ) -> DoacaoRegisto: ...
 
 
@@ -48,6 +50,7 @@ class SQLAlchemyDoacoesRepository:
         status: str,
         materiais: list[str] | None = None,
         detalhes: str | None = None,
+        comprovativo_url: str | None = None,
     ) -> DoacaoRegisto:
         row = Doacao(
             recibo_id=recibo_id,
@@ -56,6 +59,7 @@ class SQLAlchemyDoacoesRepository:
             materiais=materiais,
             detalhes=detalhes,
             status=status,
+            comprovativo_url=comprovativo_url,
         )
         self._sessao.add(row)
         # Se isto falhar (constraint, ligação perdida, o que for), a
@@ -71,5 +75,6 @@ class SQLAlchemyDoacoesRepository:
             materiais=row.materiais,
             detalhes=row.detalhes,
             status=row.status,
+            comprovativo_url=row.comprovativo_url,
             created_at=row.created_at,
         )

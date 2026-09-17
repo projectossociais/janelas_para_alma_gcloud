@@ -9,7 +9,9 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
+from app.core.config import obter_settings
 from app.repositories.premium_repository import PedidoPremiumRegisto
+from app.services.comprovativo_upload_service import ChaveDeComprovativoInvalidaError
 from app.services.premium_service import (
     PREMIUM_DURACAO_DIAS,
     PedidoJaAprovadoError,
@@ -17,6 +19,13 @@ from app.services.premium_service import (
     PedidoSemContaError,
     PremiumService,
 )
+
+BASE_PUBLICA = "https://cdn.exemplo.test"
+
+
+@pytest.fixture(autouse=True)
+def _base_publica(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(obter_settings(), "r2_public_base_url", BASE_PUBLICA)
 
 
 def _pedido(**over) -> PedidoPremiumRegisto:
@@ -28,6 +37,7 @@ def _pedido(**over) -> PedidoPremiumRegisto:
         "telefone": None,
         "plano": "mensal",
         "status": "pendente",
+        "comprovativo_url": None,
         "aprovado_por": None,
         "aprovado_em": None,
         "created_at": datetime.now(UTC),
@@ -41,6 +51,7 @@ class RepositorioPremiumFalso:
         self._pedido = pedido
         self.aprovado: dict | None = None
         self.revogado: dict | None = None
+        self.criado: dict | None = None
 
     def obter(self, pedido_id: str) -> PedidoPremiumRegisto | None:
         return self._pedido if self._pedido and self._pedido.id == pedido_id else None
@@ -58,12 +69,41 @@ class RepositorioPremiumFalso:
         self.revogado = {"pedido_id": pedido_id, "admin_id": admin_id, "quando": quando}
         return _pedido(status="revogado", aprovado_por=admin_id, aprovado_em=quando)
 
-    # não usados pelo service, só pelo Protocol
-    def criar(self, *a, **k):  # pragma: no cover
-        raise NotImplementedError
+    def criar(self, nome, email, telefone, plano, user_id, comprovativo_url=None):
+        self.criado = {
+            "nome": nome,
+            "email": email,
+            "telefone": telefone,
+            "plano": plano,
+            "user_id": user_id,
+            "comprovativo_url": comprovativo_url,
+        }
+        return _pedido(nome=nome, email=email, comprovativo_url=comprovativo_url)
 
     def listar(self):  # pragma: no cover
         raise NotImplementedError
+
+
+class TestCriarPedido:
+    def test_cria_com_o_url_publico_do_comprovativo(self) -> None:
+        repo = RepositorioPremiumFalso(None)
+        chave = "comprovativos/abc.pdf"
+
+        resultado = PremiumService(repo).criar_pedido(
+            "Ana", "ana@example.com", None, "mensal", "user-1", chave
+        )
+
+        assert resultado.comprovativo_url == f"{BASE_PUBLICA}/{chave}"
+        assert repo.criado["comprovativo_url"] == f"{BASE_PUBLICA}/{chave}"
+
+    def test_recusa_chave_fora_do_prefixo_comprovativos(self) -> None:
+        repo = RepositorioPremiumFalso(None)
+
+        with pytest.raises(ChaveDeComprovativoInvalidaError):
+            PremiumService(repo).criar_pedido(
+                "Ana", "ana@example.com", None, "mensal", None, "avatares/outro/foto.png"
+            )
+        assert repo.criado is None
 
 
 class TestAprovarPagamento:

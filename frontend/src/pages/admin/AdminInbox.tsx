@@ -12,7 +12,7 @@ import {
   type PedidoPremiumAdmin,
 } from "@/lib/apiClient";
 import { toast } from "sonner";
-import { Check, Mail, Phone, X } from "lucide-react";
+import { Check, FileText, Mail, Phone, X } from "lucide-react";
 
 const AdminInbox = () => {
   // Permite a Central de Pendências (AdminOverview) linkar directamente ao
@@ -180,6 +180,13 @@ const AdminInbox = () => {
                       </div>
                     </div>
                     <div className="flex flex-col gap-2 shrink-0">
+                      {p.comprovativo_url && (
+                        <Button size="sm" variant="outline" asChild>
+                          <a href={p.comprovativo_url} target="_blank" rel="noopener noreferrer">
+                            <FileText className="w-3 h-3" /> Ver comprovativo
+                          </a>
+                        </Button>
+                      )}
                       {p.status !== "aprovado" && (
                         <Button
                           size="sm"

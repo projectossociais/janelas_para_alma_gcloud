@@ -9,7 +9,8 @@ from app.core.dependencies import obter_email_sender
 from app.core.email import EmailSender
 from app.db import obter_sessao
 from app.repositories.doacoes_repository import SQLAlchemyDoacoesRepository
-from app.schemas.doacao import DoacaoMateriaisCriar, DoacaoPublica
+from app.schemas.doacao import DoacaoFinanceiraCriar, DoacaoMateriaisCriar, DoacaoPublica
+from app.services.comprovativo_upload_service import ChaveDeComprovativoInvalidaError
 from app.services.doacao_service import DoacaoService, MateriaisNaoSelecionadosError
 
 router = APIRouter(prefix="/doacoes", tags=["doacoes"])
@@ -34,5 +35,22 @@ def registar_doacao_materiais(
         doacao = service.registar_doacao_materiais(dados.email, dados.materiais, dados.detalhes)
     except MateriaisNaoSelecionadosError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)) from exc
+
+    return DoacaoPublica.model_validate(doacao)
+
+
+@router.post("/financeiro", response_model=DoacaoPublica, status_code=status.HTTP_201_CREATED)
+def registar_doacao_financeira(
+    dados: DoacaoFinanceiraCriar, service: DoacaoService = Depends(obter_doacao_service)
+) -> DoacaoPublica:
+    try:
+        doacao = service.registar_doacao_financeira(
+            dados.email, dados.detalhes, dados.comprovativo_chave
+        )
+    except ChaveDeComprovativoInvalidaError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="essa chave não é um comprovativo válido",
+        ) from exc
 
     return DoacaoPublica.model_validate(doacao)

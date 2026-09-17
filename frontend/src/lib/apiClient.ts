@@ -281,6 +281,37 @@ export const uploadsApi = {
     }),
 };
 
+// --- Upload de comprovativos (CROSS-02) --------------------------------
+// Doação financeira e pedido Premium — substitui o envio do ficheiro por
+// uma Edge Function do Supabase. Público de propósito: doar ou pedir
+// Premium não exige sessão. Mesmo fluxo de 3 passos do avatar; o passo 3
+// aqui não é "confirmar" (nada fica gravado ainda) — a chave devolvida no
+// passo 1 vai directamente no pedido que cria a doação/o pedido Premium.
+
+export interface ComprovativoUploadPreparado {
+  url_de_upload: string;
+  chave: string;
+  url_publico: string;
+}
+
+export const TIPOS_DE_COMPROVATIVO_ACEITES = [
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "application/pdf",
+] as const;
+
+export const comprovativosApi = {
+  preparar: (contentType: string) =>
+    pedido<ComprovativoUploadPreparado>("/uploads/comprovativo", {
+      method: "POST",
+      body: JSON.stringify({ content_type: contentType }),
+    }),
+
+  /** Mesmo passo 2 do avatar — reutilizado tal e qual. */
+  enviarParaStorage: uploadsApi.enviarParaStorage,
+};
+
 export interface SessaoExercicioInput {
   exercicio_id: string;
   duracao_segundos: number;
@@ -319,6 +350,7 @@ export interface DoacaoPublica {
   materiais: string[] | null;
   detalhes: string | null;
   status: string;
+  comprovativo_url: string | null;
   created_at: string;
 }
 
@@ -327,6 +359,14 @@ export const doacoesApi = {
     pedido<DoacaoPublica>("/doacoes/materiais", {
       method: "POST",
       body: JSON.stringify({ email, materiais, detalhes: detalhes || null }),
+    }),
+
+  /** `comprovativoChave` vem de `comprovativosApi.preparar` + upload já
+   *  feito directamente ao R2 (ver CROSS-02) — nunca os bytes por aqui. */
+  registarFinanceira: (email: string, detalhes: string | null, comprovativoChave: string) =>
+    pedido<DoacaoPublica>("/doacoes/financeiro", {
+      method: "POST",
+      body: JSON.stringify({ email, detalhes, comprovativo_chave: comprovativoChave }),
     }),
 };
 
@@ -386,6 +426,9 @@ export interface PedidoPremioInput {
   email: string;
   telefone?: string | null;
   plano?: string | null;
+  // Chave devolvida por comprovativosApi.preparar, depois do PUT ao R2
+  // já ter corrido.
+  comprovativo_chave: string;
 }
 
 export interface PedidoPremiumPublico {
@@ -400,6 +443,7 @@ export interface PedidoPremiumPublico {
 
 export interface PedidoPremiumAdmin extends PedidoPremiumPublico {
   user_id: string | null;
+  comprovativo_url: string | null;
   aprovado_por: string | null;
   aprovado_em: string | null;
 }

@@ -15,6 +15,7 @@ O que o utilizador podia falsear e é recusado aqui:
 from datetime import UTC, datetime, timedelta
 
 from app.repositories.premium_repository import PedidoPremiumRegisto, PremiumRepository
+from app.services.comprovativo_upload_service import url_publico_do_comprovativo
 
 PREMIUM_DURACAO_DIAS = 30
 
@@ -34,6 +35,30 @@ class PedidoSemContaError(Exception):
 class PremiumService:
     def __init__(self, repositorio: PremiumRepository) -> None:
         self._repo = repositorio
+
+    def criar_pedido(
+        self,
+        nome: str,
+        email: str,
+        telefone: str | None,
+        plano: str | None,
+        user_id: str | None,
+        comprovativo_chave: str,
+    ) -> PedidoPremiumRegisto:
+        """CROSS-02: o comprovativo já foi enviado directamente ao R2 (ver
+        `uploads.py`) -- aqui só se confirma que a chave apresentada é
+        mesmo um comprovativo (nunca um caminho arbitrário do bucket)
+        antes de a gravar. Um admin só aprova o pagamento depois de ver
+        este ficheiro (ver `AdminInbox.tsx`)."""
+        comprovativo_url = url_publico_do_comprovativo(comprovativo_chave)
+        return self._repo.criar(
+            nome=nome,
+            email=email,
+            telefone=telefone,
+            plano=plano,
+            user_id=user_id,
+            comprovativo_url=comprovativo_url,
+        )
 
     def aprovar_pagamento(self, pedido_id: str, admin_id: str) -> PedidoPremiumRegisto:
         pedido = self._repo.obter(pedido_id)

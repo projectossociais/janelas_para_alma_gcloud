@@ -20,6 +20,7 @@ import uuid
 
 from app.core.email import EmailSender
 from app.repositories.doacoes_repository import DoacaoRegisto, DoacoesRepository
+from app.services.comprovativo_upload_service import url_publico_do_comprovativo
 
 
 class MateriaisNaoSelecionadosError(Exception):
@@ -66,6 +67,37 @@ class DoacaoService:
                 + (f"<br>Notas: {detalhes}" if detalhes else "")
                 + "</p>"
                 "<p>Em breve entraremos em contacto para combinar a recolha.</p>"
+            ),
+        )
+
+        return doacao
+
+    def registar_doacao_financeira(
+        self, email: str, detalhes: str | None, comprovativo_chave: str
+    ) -> DoacaoRegisto:
+        """CROSS-02: o comprovativo já foi enviado directamente ao R2 (ver
+        `uploads.py`/`comprovativo_upload_service.py`) — aqui só se
+        confirma que a chave apresentada é mesmo um comprovativo (nunca um
+        caminho arbitrário do bucket) antes de a gravar."""
+        comprovativo_url = url_publico_do_comprovativo(comprovativo_chave)
+
+        doacao = self._repo.criar(
+            recibo_id=_gerar_recibo_id("FIN"),
+            tipo="financeiro",
+            email=email,
+            status="comprovativo_enviado",
+            detalhes=detalhes,
+            comprovativo_url=comprovativo_url,
+        )
+
+        self._email.enviar(
+            destinatario=email,
+            assunto="Recebemos o seu comprovativo — Janelas Para a Alma",
+            corpo_html=(
+                f"<p>Obrigado pelo seu donativo! Recebemos o comprovativo, com o "
+                f"recibo <strong>{doacao.recibo_id}</strong>.</p>"
+                + (f"<p>{detalhes}</p>" if detalhes else "")
+                + "<p>A nossa equipa vai confirmar a transferência em breve.</p>"
             ),
         )
 

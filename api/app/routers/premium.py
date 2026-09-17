@@ -21,6 +21,7 @@ from app.schemas.premium import (
     PedidoPremiumCriar,
     PedidoPremiumPublico,
 )
+from app.services.comprovativo_upload_service import ChaveDeComprovativoInvalidaError
 from app.services.premium_service import (
     PedidoJaAprovadoError,
     PedidoNaoEncontradoError,
@@ -43,15 +44,22 @@ def obter_premium_repository(sessao: Session = Depends(obter_sessao)) -> SQLAlch
 def criar_pedido(
     dados: PedidoPremiumCriar,
     utilizador: UtilizadorRegisto | None = Depends(obter_utilizador_atual_opcional),
-    repo: SQLAlchemyPremiumRepository = Depends(obter_premium_repository),
+    servico: PremiumService = Depends(obter_premium_service),
 ) -> PedidoPremiumRegisto:
-    return repo.criar(
-        nome=dados.nome,
-        email=dados.email,
-        telefone=dados.telefone,
-        plano=dados.plano,
-        user_id=utilizador.id if utilizador else None,
-    )
+    try:
+        return servico.criar_pedido(
+            nome=dados.nome,
+            email=dados.email,
+            telefone=dados.telefone,
+            plano=dados.plano,
+            user_id=utilizador.id if utilizador else None,
+            comprovativo_chave=dados.comprovativo_chave,
+        )
+    except ChaveDeComprovativoInvalidaError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="essa chave não é um comprovativo válido",
+        ) from exc
 
 
 @router.get(

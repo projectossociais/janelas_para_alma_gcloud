@@ -12,18 +12,36 @@ from datetime import UTC, datetime
 
 import pytest
 
+from app.core.config import obter_settings
 from app.core.email import EmailEnvioFalhouError
 from app.repositories.doacoes_repository import DoacaoRegisto
+from app.services.comprovativo_upload_service import ChaveDeComprovativoInvalidaError
 from app.services.doacao_service import DoacaoService, MateriaisNaoSelecionadosError
+
+BASE_PUBLICA = "https://cdn.exemplo.test"
+
+
+@pytest.fixture(autouse=True)
+def _base_publica(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(obter_settings(), "r2_public_base_url", BASE_PUBLICA)
 
 
 class RepositorioFalso:
     def __init__(self) -> None:
         self.chamadas: list[dict] = []
 
-    def criar(self, recibo_id, tipo, email, status, materiais=None, detalhes=None) -> DoacaoRegisto:
+    def criar(
+        self, recibo_id, tipo, email, status, materiais=None, detalhes=None, comprovativo_url=None
+    ) -> DoacaoRegisto:
         self.chamadas.append(
-            {"recibo_id": recibo_id, "tipo": tipo, "email": email, "status": status, "materiais": materiais}
+            {
+                "recibo_id": recibo_id,
+                "tipo": tipo,
+                "email": email,
+                "status": status,
+                "materiais": materiais,
+                "comprovativo_url": comprovativo_url,
+            }
         )
         return DoacaoRegisto(
             id="doacao-1",
@@ -33,6 +51,7 @@ class RepositorioFalso:
             materiais=materiais,
             detalhes=detalhes,
             status=status,
+            comprovativo_url=comprovativo_url,
             created_at=datetime.now(UTC),
         )
 
@@ -112,3 +131,37 @@ class TestRegistarDoacaoMateriais:
             service.registar_doacao_materiais("ana@example.com", ["livros"])
 
         assert len(repo.chamadas) == 1
+
+
+class TestRegistarDoacaoFinanceira:
+    def test_grava_com_o_url_publico_do_comprovativo(self) -> None:
+        repo = RepositorioFalso()
+        service = DoacaoService(repo, EmailSenderFalso())
+        chave = "comprovativos/abc.pdf"
+
+        doacao = service.registar_doacao_financeira("ana@example.com", "Nível Ouro", chave)
+
+        assert doacao.recibo_id.startswith("FIN-")
+        assert doacao.status == "comprovativo_enviado"
+        assert doacao.comprovativo_url == f"{BASE_PUBLICA}/{chave}"
+
+    def test_recusa_chave_fora_do_prefixo_comprovativos(self) -> None:
+        service = DoacaoService(RepositorioFalso(), EmailSenderFalso())
+
+        with pytest.raises(ChaveDeComprovativoInvalidaError):
+            service.registar_doacao_financeira("ana@example.com", None, "avatares/outro/foto.png")
+
+    def test_nunca_engole_uma_falha_de_gravacao(self) -> None:
+        service = DoacaoService(RepositorioQueFalha(), EmailSenderFalso())
+
+        with pytest.raises(RuntimeError):
+            service.registar_doacao_financeira("ana@example.com", None, "comprovativos/abc.pdf")
+
+    def test_manda_email_de_confirmacao_com_o_recibo(self) -> None:
+        email_sender = EmailSenderFalso()
+        service = DoacaoService(RepositorioFalso(), email_sender)
+
+        doacao = service.registar_doacao_financeira("ana@example.com", None, "comprovativos/abc.pdf")
+
+        assert len(email_sender.enviados) == 1
+        assert doacao.recibo_id in email_sender.enviados[0]["corpo_html"]

@@ -11,6 +11,9 @@ class PedidoPremiumCriar(BaseModel):
     email: EmailStr
     telefone: str | None = Field(default=None, max_length=40)
     plano: str | None = Field(default=None, max_length=60)
+    # Chave devolvida por POST /uploads/comprovativo, depois do PUT ao R2
+    # já ter corrido -- ver comprovativo_upload_service.py.
+    comprovativo_chave: str = Field(min_length=1, max_length=300)
 
 
 class PedidoPremiumPublico(BaseModel):
@@ -28,8 +31,10 @@ class PedidoPremiumPublico(BaseModel):
 
 
 class PedidoPremiumAdmin(PedidoPremiumPublico):
-    """Visto no painel de administração — inclui a auditoria."""
+    """Visto no painel de administração — inclui a auditoria e o
+    comprovativo (um admin só aprova depois de o conferir)."""
 
     user_id: str | None
+    comprovativo_url: str | None
     aprovado_por: str | None
     aprovado_em: datetime | None

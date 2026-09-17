@@ -11,6 +11,14 @@ from app.schemas.upload import (
     AvatarConfirmar,
     AvatarUploadPedido,
     AvatarUploadPreparado,
+    ComprovativoUploadPedido,
+    ComprovativoUploadPreparado,
+)
+from app.services.comprovativo_upload_service import (
+    ComprovativoUploadService,
+)
+from app.services.comprovativo_upload_service import (
+    TipoDeFicheiroNaoPermitidoError as TipoDeComprovativoNaoPermitidoError,
 )
 from app.services.upload_service import (
     ChaveDeAvatarInvalidaError,
@@ -23,6 +31,10 @@ router = APIRouter(prefix="/uploads", tags=["uploads"])
 
 def obter_upload_service(sessao: Session = Depends(obter_sessao)) -> UploadService:
     return UploadService(R2Presigner(), SQLAlchemyPerfilRepository(sessao))
+
+
+def obter_comprovativo_upload_service() -> ComprovativoUploadService:
+    return ComprovativoUploadService(R2Presigner())
 
 
 @router.post("/avatar", response_model=AvatarUploadPreparado)
@@ -59,3 +71,21 @@ def confirmar_upload_de_avatar(
             detail="essa chave não pertence a este utilizador",
         ) from exc
     return AvatarConfirmado(avatar_url=url)
+
+
+@router.post("/comprovativo", response_model=ComprovativoUploadPreparado)
+def preparar_upload_de_comprovativo(
+    pedido: ComprovativoUploadPedido,
+    servico: ComprovativoUploadService = Depends(obter_comprovativo_upload_service),
+) -> ComprovativoUploadPreparado:
+    """Público de propósito — doar ou pedir Premium não exige sessão. A
+    chave devolvida só serve para provar, ao criar a doação/pedido, que o
+    ficheiro foi mesmo enviado (ver `doacoes.py`/`premium.py`)."""
+    try:
+        preparado = servico.preparar(pedido.content_type)
+    except TipoDeComprovativoNaoPermitidoError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="tipo de ficheiro não permitido (PNG, JPEG, WebP ou PDF)",
+        ) from exc
+    return ComprovativoUploadPreparado(**preparado.__dict__)

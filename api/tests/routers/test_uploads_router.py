@@ -10,6 +10,7 @@ from app.core.dependencies import (
 from app.main import app
 from app.routers import uploads as uploads_router
 from app.services.auth_service import AuthService
+from app.services.comprovativo_upload_service import ComprovativoUploadService
 from app.services.confirmacao_email_service import ConfirmacaoEmailService
 from app.services.conta_service import ContaService
 from app.services.upload_service import UploadService
@@ -33,6 +34,9 @@ def client():
     app.dependency_overrides[obter_auth_service] = lambda: AuthService(repo_auth)
     app.dependency_overrides[uploads_router.obter_upload_service] = lambda: UploadService(
         PresignerFalso(), avatares
+    )
+    app.dependency_overrides[uploads_router.obter_comprovativo_upload_service] = (
+        lambda: ComprovativoUploadService(PresignerFalso())
     )
     # /auth/entrar também chama o ContaService (cancelar eliminação
     # agendada) -- sem isto cairia no repositório real.
@@ -106,3 +110,22 @@ def test_confirmar_recusa_chave_de_outro_utilizador_com_403(client) -> None:
 
     assert resposta.status_code == 403
     assert avatares.gravado == {}
+
+
+# --- Comprovativo (CROSS-02) -- público, sem sessão ------------------------
+
+
+def test_preparar_comprovativo_nao_exige_sessao(client) -> None:
+    c, _ = client
+    resposta = c.post("/uploads/comprovativo", json={"content_type": "application/pdf"})
+
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["chave"].startswith("comprovativos/")
+    assert corpo["url_publico"] == f"{BASE_PUBLICA}/{corpo['chave']}"
+
+
+def test_preparar_comprovativo_recusa_tipo_invalido(client) -> None:
+    c, _ = client
+    resposta = c.post("/uploads/comprovativo", json={"content_type": "application/zip"})
+    assert resposta.status_code == 422

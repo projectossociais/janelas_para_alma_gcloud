@@ -20,20 +20,25 @@ class ApiErrorFalso extends Error {
 }
 
 const registarMateriais = vi.fn();
+const registarFinanceira = vi.fn();
+const prepararComprovativo = vi.fn();
+const enviarParaStorage = vi.fn();
 
 vi.mock("@/lib/apiClient", () => ({
-  doacoesApi: { registarMateriais: (...a: unknown[]) => registarMateriais(...a) },
+  doacoesApi: {
+    registarMateriais: (...a: unknown[]) => registarMateriais(...a),
+    registarFinanceira: (...a: unknown[]) => registarFinanceira(...a),
+  },
+  comprovativosApi: {
+    preparar: (...a: unknown[]) => prepararComprovativo(...a),
+    enviarParaStorage: (...a: unknown[]) => enviarParaStorage(...a),
+  },
+  TIPOS_DE_COMPROVATIVO_ACEITES: ["image/png", "image/jpeg", "image/webp", "application/pdf"],
   mensagemDeErroApi: (err: unknown, fallback: string) => {
     const status = (err as { status?: unknown } | null)?.status;
     const message = (err as { message?: unknown } | null)?.message;
     return typeof status === "number" && typeof message === "string" ? message : fallback;
   },
-}));
-
-// handleConcluirDoacao (fluxo financeiro) continua no Supabase -- fora de
-// âmbito aqui, mas o módulo é importado pelo componente inteiro.
-vi.mock("@/integrations/supabase/client", () => ({
-  supabase: { functions: { invoke: vi.fn() } },
 }));
 
 vi.mock("@/contexts/AuthContext", () => ({
@@ -63,6 +68,9 @@ async function abrirDialogoDeMateriais(user: ReturnType<typeof userEvent.setup>)
 describe("Apoiar — doação de materiais", () => {
   beforeEach(() => {
     registarMateriais.mockReset();
+    registarFinanceira.mockReset();
+    prepararComprovativo.mockReset();
+    enviarParaStorage.mockReset();
     toastSuccess.mockReset();
     toastError.mockReset();
   });
@@ -119,5 +127,106 @@ describe("Apoiar — doação de materiais", () => {
     await waitFor(() => expect(toastSuccess).toHaveBeenCalled());
     expect(toastError).not.toHaveBeenCalled();
     expect(registarMateriais).toHaveBeenCalledWith("doador@example.com", ["armacoes"], null);
+  });
+});
+
+describe("Apoiar — doação financeira (comprovativo via R2, CROSS-02)", () => {
+  beforeEach(() => {
+    registarMateriais.mockReset();
+    registarFinanceira.mockReset();
+    prepararComprovativo.mockReset();
+    enviarParaStorage.mockReset();
+    toastSuccess.mockReset();
+    toastError.mockReset();
+  });
+
+  async function chegarAoPassoDeUpload(user: ReturnType<typeof userEvent.setup>) {
+    render(<Apoiar />, { wrapper: MemoryRouter });
+    await user.click(screen.getByRole("tab", { name: /Apoio Financeiro/i }));
+    await user.click(screen.getByRole("button", { name: /Aliado/i }));
+    await user.click(screen.getByRole("button", { name: /^Apoiar como Aliado$/i }));
+    const email = await screen.findByLabelText(/receber o comprovativo/i);
+    await user.type(email, "doador@example.com");
+    await user.click(screen.getByRole("button", { name: /Continuar/i }));
+    return screen.findByTestId("file-input");
+  }
+
+  it("nunca mostra sucesso quando o envio ao storage falha", async () => {
+    prepararComprovativo.mockResolvedValue({
+      url_de_upload: "https://r2.exemplo.test/comprovativos/x.pdf?sig=1",
+      chave: "comprovativos/x.pdf",
+      url_publico: "https://cdn.exemplo.test/comprovativos/x.pdf",
+    });
+    enviarParaStorage.mockRejectedValue(
+      Object.assign(new Error("Não foi possível enviar a imagem para o storage."), { status: 500 }),
+    );
+    const user = userEvent.setup();
+    const inputFicheiro = await chegarAoPassoDeUpload(user);
+
+    await user.upload(inputFicheiro, new File(["x"], "comprovativo.pdf", { type: "application/pdf" }));
+    await user.click(screen.getByRole("button", { name: /Concluir Doação/i }));
+
+    await waitFor(() => expect(enviarParaStorage).toHaveBeenCalled());
+    expect(registarFinanceira).not.toHaveBeenCalled();
+    expect(toastSuccess).not.toHaveBeenCalled();
+    expect(toastError).toHaveBeenCalledWith("Não foi possível enviar a imagem para o storage.");
+  });
+
+  it("nunca mostra sucesso quando registar a doação falha", async () => {
+    prepararComprovativo.mockResolvedValue({
+      url_de_upload: "https://r2.exemplo.test/comprovativos/x.pdf?sig=1",
+      chave: "comprovativos/x.pdf",
+      url_publico: "https://cdn.exemplo.test/comprovativos/x.pdf",
+    });
+    enviarParaStorage.mockResolvedValue(undefined);
+    registarFinanceira.mockRejectedValue(
+      Object.assign(new Error("essa chave não é um comprovativo válido"), { status: 403 }),
+    );
+    const user = userEvent.setup();
+    const inputFicheiro = await chegarAoPassoDeUpload(user);
+
+    await user.upload(inputFicheiro, new File(["x"], "comprovativo.pdf", { type: "application/pdf" }));
+    await user.click(screen.getByRole("button", { name: /Concluir Doação/i }));
+
+    await waitFor(() => expect(registarFinanceira).toHaveBeenCalled());
+    expect(toastSuccess).not.toHaveBeenCalled();
+    expect(toastError).toHaveBeenCalledWith("essa chave não é um comprovativo válido");
+  });
+
+  it("só mostra sucesso depois dos três passos (assinar, enviar, registar) completarem", async () => {
+    prepararComprovativo.mockResolvedValue({
+      url_de_upload: "https://r2.exemplo.test/comprovativos/x.pdf?sig=1",
+      chave: "comprovativos/x.pdf",
+      url_publico: "https://cdn.exemplo.test/comprovativos/x.pdf",
+    });
+    enviarParaStorage.mockResolvedValue(undefined);
+    registarFinanceira.mockResolvedValue({
+      id: "doacao-2",
+      recibo_id: "FIN-ABC123",
+      tipo: "financeiro",
+      email: "doador@example.com",
+      materiais: null,
+      detalhes: "Aliado (R$ 10-30)",
+      status: "comprovativo_enviado",
+      comprovativo_url: "https://cdn.exemplo.test/comprovativos/x.pdf",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    const user = userEvent.setup();
+    const inputFicheiro = await chegarAoPassoDeUpload(user);
+
+    await user.upload(inputFicheiro, new File(["x"], "comprovativo.pdf", { type: "application/pdf" }));
+    await user.click(screen.getByRole("button", { name: /Concluir Doação/i }));
+
+    await waitFor(() => expect(toastSuccess).toHaveBeenCalled());
+    expect(toastError).not.toHaveBeenCalled();
+    expect(enviarParaStorage).toHaveBeenCalledWith(
+      "https://r2.exemplo.test/comprovativos/x.pdf?sig=1",
+      expect.any(File),
+    );
+    expect(registarFinanceira).toHaveBeenCalledWith(
+      "doador@example.com",
+      expect.any(String),
+      "comprovativos/x.pdf",
+    );
   });
 });
