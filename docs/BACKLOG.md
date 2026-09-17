@@ -650,6 +650,27 @@ Não depende de infraestrutura nova. Dias, não semanas.
 - **O que ainda faltava e foi corrigido agora:** o botão "Carregar Fotografia" (upload de uma única imagem) nunca chamava esse microserviço — caía sempre no `Math.random()`. Removido por completo: só fica a captura guiada, que exige as 3 poses para o cálculo real
 - **Pronto quando:** nenhum ecrã apresenta um resultado clínico que não tenha sido calculado a partir de medições reais — ✅
 
+### W-16 · Candidaturas a voluntário nunca chegam à base de dados — descoberto 2026-09-17
+- **Onde:** `src/components/ContactSection.tsx` (modal "Quero ser um Kamba", homepage) e
+  `src/components/VolunteerSection.tsx` (página `/kamba`), ambos via `src/lib/edgeFunction.ts`
+- **Hoje:** os dois formulários chamam `sendToEdgeFunction("send-volunteer-email", dados)` —
+  uma Edge Function do Supabase que só envia um email. Nenhum dos dois chama
+  `POST /voluntariado/candidatura`, o endpoint que já existe na API própria
+  (`app/routers/voluntariado.py`), com serviço, testes, e um ecrã de admin inteiro
+  (`AdminVoluntariado.tsx`) pronto para aprovar candidaturas — só que nunca recebe nenhuma
+  vinda destes dois formulários
+- **Porquê é grave:** não é dívida de arquitectura, é um fluxo activo e visível (o CTA mais
+  proeminente de voluntariado no site) que não faz o que promete. Uma pessoa que se candidata
+  recebe "Bem-vindo(a) à equipa!" e nunca é vista por ninguém do lado do admin
+- **Fazer:** trocar `sendToEdgeFunction(...)` por `voluntariadoApi.candidatar(...)` (já existe em
+  `apiClient.ts`, usado hoje só pelo admin) nos dois formulários. Decidir à parte se a
+  notificação por email ao voluntário/à equipa continua a fazer sentido manter (via `EmailSender`
+  da API própria, não a Edge Function do Supabase)
+- **Pronto quando:** submeter qualquer um dos dois formulários cria uma linha em
+  `candidaturas_voluntariado`, visível em `AdminVoluntariado.tsx`
+- **Testes:** integração — caminho de erro (API recusa/falha) e caminho de sucesso, mesmo
+  padrão dos outros formulários já migrados (`ContactSection.tsx` → `contactMessagesApi`)
+
 ### W-05 · Tirar o `.env` do controlo de versões
 - **Onde:** `.gitignore` (já actualizado), falta `git rm --cached .env`
 - **Nota honesta:** as três variáveis actuais são `VITE_*`, públicas por natureza — vão no bundle do browser de qualquer forma. **Não é uma fuga de segredos hoje.** É uma armadilha para amanhã: a API vai precisar de `service_role`, credenciais SMTP e tokens de pagamento, e com o `.env` versionado isso é commitado sem ninguém dar por ela
