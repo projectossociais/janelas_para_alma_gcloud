@@ -5,6 +5,7 @@ from app.core.config import obter_settings
 from app.routers import (
     admin,
     auth,
+    banner_homepage,
     banners,
     conta,
     contact_messages,
@@ -40,6 +41,7 @@ app.include_router(auth.router)
 app.include_router(perfil.router)
 app.include_router(conta.router)
 app.include_router(banners.router)
+app.include_router(banner_homepage.router)
 app.include_router(doacoes.router)
 app.include_router(feedback.router)
 app.include_router(uploads.router)

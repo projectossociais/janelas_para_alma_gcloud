@@ -172,6 +172,24 @@ class Banner(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class BannerHomepage(Base):
+    """Banner visual da homepage (imagem + título/descrição/link) --
+    entidade distinta de `Banner` (a faixa fina de aviso de texto, no topo
+    de todas as páginas). Nasce sem `imagem_url`: a foto é sempre um
+    upload em dois passos à parte (mesmo padrão de `Publicacao.capa_url`,
+    nunca um campo de texto livre no create)."""
+
+    __tablename__ = "banners_homepage"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    titulo: Mapped[str] = mapped_column(Text, nullable=False)
+    descricao: Mapped[str | None] = mapped_column(Text)
+    link: Mapped[str | None] = mapped_column(Text)
+    imagem_url: Mapped[str | None] = mapped_column(Text)
+    ativo: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class ContactMessage(Base):
     __tablename__ = "contact_messages"
 

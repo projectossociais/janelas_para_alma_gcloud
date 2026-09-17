@@ -281,6 +281,78 @@ export const uploadsApi = {
     }),
 };
 
+// --- Banner-imagem da homepage -----------------------------------------------
+// Entidade distinta de `banners` (a faixa fina de texto no topo do site) --
+// uma secção visual só na homepage, com foto. Nasce sem imagem; a foto é
+// sempre um upload em dois passos à parte, mesmo padrão de `publicacoesApi`
+// (capa), ver mais abaixo.
+
+export interface BannerHomepagePublico {
+  id: string;
+  titulo: string;
+  descricao: string | null;
+  link: string | null;
+  imagem_url: string | null;
+}
+
+export interface BannerHomepageAdmin extends BannerHomepagePublico {
+  ativo: boolean;
+  created_at: string;
+}
+
+export interface BannerHomepageCriarInput {
+  titulo: string;
+  descricao?: string | null;
+  link?: string | null;
+  ativo?: boolean;
+}
+
+export interface BannerHomepageAtualizarInput {
+  titulo?: string;
+  descricao?: string | null;
+  link?: string | null;
+  ativo?: boolean;
+}
+
+export interface ImagemUploadPreparado {
+  url_de_upload: string;
+  chave: string;
+  url_publico: string;
+}
+
+export const bannerHomepageApi = {
+  obterAtivo: () => pedido<BannerHomepagePublico | null>("/banners-homepage/ativo"),
+
+  /** Gestão — exige sessão com papel `admin` (a API devolve 403 caso contrário). */
+  listar: () => pedido<BannerHomepageAdmin[]>("/banners-homepage"),
+
+  criar: (dados: BannerHomepageCriarInput) =>
+    pedido<BannerHomepageAdmin>("/banners-homepage", { method: "POST", body: JSON.stringify(dados) }),
+
+  atualizar: (id: string, dados: BannerHomepageAtualizarInput) =>
+    pedido<BannerHomepageAdmin>(`/banners-homepage/${id}`, { method: "PATCH", body: JSON.stringify(dados) }),
+
+  remover: (id: string) => pedido<void>(`/banners-homepage/${id}`, { method: "DELETE" }),
+
+  // Foto — mesmo fluxo de 3 passos do avatar/publicações --------------------
+  prepararImagem: (bannerId: string, contentType: string) =>
+    pedido<ImagemUploadPreparado>(`/banners-homepage/${bannerId}/imagem/preparar`, {
+      method: "POST",
+      body: JSON.stringify({ content_type: contentType }),
+    }),
+
+  confirmarImagem: (bannerId: string, chave: string) =>
+    pedido<{ imagem_url: string }>(`/banners-homepage/${bannerId}/imagem/confirmar`, {
+      method: "POST",
+      body: JSON.stringify({ chave }),
+    }),
+
+  /** Envio directo ao storage — fora do `apiClient` de propósito (outra
+   *  origem, sem cookies, corpo binário). Reutiliza a mesma lógica de
+   *  `uploadsApi.enviarParaStorage`. */
+  enviarParaStorage: uploadsApi.enviarParaStorage,
+};
+
 // --- Upload de comprovativos (CROSS-02) --------------------------------
 // Doação financeira e pedido Premium — substitui o envio do ficheiro por
 // uma Edge Function do Supabase. Público de propósito: doar ou pedir

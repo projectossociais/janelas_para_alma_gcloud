@@ -1,5 +1,6 @@
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
+import BannerHomepageSection from "@/components/BannerHomepageSection";
 import StrabismusIntroCard from "@/components/StrabismusIntroCard";
 import ExercisesSection from "@/components/ExercisesSection";
 import PillarsSection from "@/components/PillarsSection";
@@ -13,6 +14,7 @@ const Index = () => {
       <Navbar />
       <main className="flex-1">
         <HeroSection />
+        <BannerHomepageSection />
         <StrabismusIntroCard />
         <ExercisesSection />
         <PillarsSection />
