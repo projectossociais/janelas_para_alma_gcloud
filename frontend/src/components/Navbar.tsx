@@ -22,6 +22,7 @@ import NotificationBell from "@/components/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useSiteBannerAltura } from "@/contexts/SiteBannerContext";
 import { toast } from "sonner";
 
 
@@ -292,11 +293,13 @@ const Navbar = () => {
   };
 
   const hideNavbar = isScrollingDown && !drawerOpen && !profileOpen && !searchOpen;
+  const bannerAltura = useSiteBannerAltura();
 
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 right-0 w-full z-50 transition-transform duration-300 ease-in-out ${
+        style={{ top: bannerAltura }}
+        className={`fixed left-0 right-0 w-full z-50 transition-transform duration-300 ease-in-out ${
           hideNavbar ? "-translate-y-full" : "translate-y-0"
         }`}
       >

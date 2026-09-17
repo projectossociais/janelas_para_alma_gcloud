@@ -29,7 +29,7 @@ import {
 
 const EditarPerfil = () => {
   const navigate = useNavigate();
-  const { isLoggedIn, user, updateUserProfile } = useAuth();
+  const { isLoggedIn, loading: authLoading, user, updateUserProfile } = useAuth();
   const { profile, loading: profileLoading, setProfile } = useProfile();
 
   const [name, setName] = useState("");
@@ -50,10 +50,16 @@ const EditarPerfil = () => {
   const hidratadoRef = useRef(false);
 
   useEffect(() => {
-    if (!isLoggedIn) {
+    // Esperar o AuthContext terminar de validar a sessão (/auth/eu) antes de
+    // decidir -- sem isto, num hard refresh `isLoggedIn` começa `false`
+    // (user ainda não chegou) e esta guarda mandava para /auth mesmo com
+    // sessão válida, enquanto a Navbar (o mesmo AuthContext) já mostrava o
+    // avatar assim que a resposta chegasse. Mesmo padrão de espera que
+    // `ProfileContext.tsx` já usa (`if (!authLoading) ...`).
+    if (!authLoading && !isLoggedIn) {
       navigate("/auth");
     }
-  }, [isLoggedIn, navigate]);
+  }, [authLoading, isLoggedIn, navigate]);
 
   useEffect(() => {
     if (profile && !hidratadoRef.current) {
