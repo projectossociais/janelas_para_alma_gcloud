@@ -412,9 +412,14 @@ const EditorDialog = ({ publicacao, onClose, onChanged }: EditorDialogProps) => 
             <Label>Foto de capa</Label>
             <div className="flex items-center gap-3 mt-2">
               {capaUrl ? (
-                <img src={capaUrl} alt="Capa" className="w-24 h-24 rounded-lg object-cover" />
+                // `object-contain` -- um quadrado forçado (`object-cover`)
+                // recortava sempre fotos de capa, que são tipicamente
+                // paisagem, não quadradas.
+                <div className="w-32 h-24 rounded-lg bg-muted overflow-hidden shrink-0">
+                  <img src={capaUrl} alt="Capa" className="w-full h-full object-contain" />
+                </div>
               ) : (
-                <div className="w-24 h-24 rounded-lg bg-muted flex items-center justify-center">
+                <div className="w-32 h-24 rounded-lg bg-muted flex items-center justify-center shrink-0">
                   <ImagePlus className="w-6 h-6 text-muted-foreground" />
                 </div>
               )}

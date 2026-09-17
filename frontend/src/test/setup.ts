@@ -10,6 +10,19 @@ if (!("ResizeObserver" in globalThis)) {
   };
 }
 
+// Idem para IntersectionObserver -- o embla-carousel (galeria de fotos das
+// publicações) usa-o para saber que slides estão visíveis.
+if (!("IntersectionObserver" in globalThis)) {
+  globalThis.IntersectionObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+    takeRecords() {
+      return [];
+    }
+  } as unknown as typeof IntersectionObserver;
+}
+
 if (typeof Element !== "undefined") {
   Element.prototype.hasPointerCapture ??= () => false;
   Element.prototype.setPointerCapture ??= () => {};
