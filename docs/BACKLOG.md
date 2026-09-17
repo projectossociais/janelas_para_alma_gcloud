@@ -1587,4 +1587,36 @@ revisão humana antes do merge (CLAUDE.md §9/§10).**
 
 ---
 
+### `jpa-deploy` sem permissão para verificar segredos — quarta lacuna do mesmo tipo (2026-09-17)
+
+Achado ao confirmar o `CROSS-02` em produção: o URL de upload assinado devolvido pela
+API tinha a credencial de acesso **vazia** (`X-Amz-Credential=%2F2026...`, sem nada
+antes da primeira barra). `R2_ACCESS_KEY_ID`/`R2_SECRET_ACCESS_KEY` não estavam sequer
+presentes no serviço em produção, apesar de já estarem no Secret Manager.
+
+Causa: `04-deploy.sh` só liga um segredo (R2, Resend) se `gcloud secrets describe`
+tiver sucesso — mas `jpa-deploy` (o SA que os deploys automáticos do CI usam) nunca
+teve `secretmanager.secrets.get`, a permissão que `describe` exige (é diferente de
+`secretmanager.versions.access`, essa sim concedida por segredo em `03-secrets.sh`,
+mas que serve só para o SA de **runtime** ler o *valor*). O `describe` falhava em
+silêncio (`>/dev/null 2>&1`) e o script saltava o segredo inteiro — todo o deploy
+automático seguinte apagava-o do serviço.
+
+É a mesma classe de falha já vista três vezes (DEP-06: `serviceusage`/`cloudbuild`;
+`EMAIL_REMETENTE`/`GOOGLE_CLIENT_ID`: variáveis nunca chegavam ao CI): **testar como
+Owner nunca mostra o que falta a um service account com menos permissões.** Corrigido
+concedendo `roles/secretmanager.viewer` a `jpa-deploy` (metadados só — o valor dos
+segredos continua a ler-se só pelo SA de runtime, nunca por este) e registado em
+`06-ci-cd-setup.sh` para qualquer projecto novo já nascer sem esta lacuna.
+
+Confirmado corrigido com um deploy manual imediato e um ciclo `PUT`/`GET` real contra
+a API de produção — o mesmo teste que apanhou o problema.
+
+**Lição a levar**: sempre que `04-deploy.sh` ganhar uma condição nova do tipo
+`if gcloud <algo> describe ... ; then`, perguntar explicitamente "o SA de deploy tem
+esta permissão, ou só o Owner a testar à mão?" — a resposta errada fica invisível até
+ao primeiro deploy automático a sério, exactamente como desta vez.
+
+---
+
 <sub>Actualizar este ficheiro à medida que as tarefas fecham. Uma tarefa fechada sai da lista com o commit que a fecha.</sub>
