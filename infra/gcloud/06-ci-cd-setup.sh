@@ -96,7 +96,17 @@ echo "==> Papéis do SA de deploy no projecto (mínimo necessário para build + 
 #                           ao vivo, não se resolve com mais papéis -- ver
 #                           `options.logging: CLOUD_LOGGING_ONLY` em
 #                           _build-imagem.sh.)
-for role in roles/run.admin roles/cloudbuild.builds.editor roles/cloudbuild.builds.builder roles/cloudsql.editor roles/iam.serviceAccountUser roles/serviceusage.serviceUsageConsumer; do
+# secretmanager.viewer -- 04-deploy.sh decide se liga R2/Resend com
+#                           `gcloud secrets describe`, que precisa de
+#                           `secretmanager.secrets.get` (metadados, nunca o
+#                           valor -- isso é só o SA de runtime, via
+#                           --set-secrets). Sem isto, o `describe` falha em
+#                           silêncio (redirigido para /dev/null) e o script
+#                           salta o secret todo, apagando-o do serviço em
+#                           produção a cada deploy automático -- achado só
+#                           ao ligar o R2 a sério (CROSS-02), nunca testando
+#                           como Owner.
+for role in roles/run.admin roles/cloudbuild.builds.editor roles/cloudbuild.builds.builder roles/cloudsql.editor roles/iam.serviceAccountUser roles/serviceusage.serviceUsageConsumer roles/secretmanager.viewer; do
   gcloud projects add-iam-policy-binding "$PROJECT_ID" \
     --member="serviceAccount:${DEPLOY_SA_EMAIL}" \
     --role="$role" \
