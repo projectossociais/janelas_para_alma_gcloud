@@ -33,6 +33,9 @@ export SQL_PASSWORD='<password forte da DB>'
 ./01-bootstrap.sh     # activa APIs + cria o Artifact Registry
 ./02-cloud-sql.sh     # instância Postgres + base de dados + utilizador
 ./03-secrets.sh       # segredos no Secret Manager (DATABASE_URL, JWT, R2, Resend)
+./07-r2-cors.sh       # CORS do bucket R2 -- sem isto, upload directo (avatar/
+                       # comprovativos) falha sempre no browser, mesmo com
+                       # credenciais e endpoint correctos (ver o próprio script)
 ./05-migrate.sh       # alembic upgrade head -- primeiro esquema, ANTES do primeiro deploy
 ./04-deploy.sh        # build da imagem + deploy da API
 
@@ -106,8 +109,8 @@ Corre-se uma vez, depois do `01`–`03`. A partir daí, o job `deploy-api` do
 1. ~~**Domínio próprio + certificado**~~ — **resolvido**: `janelasparaalma.com` já
    aponta para o Vercel. A API continua no URL `*.run.app` do Cloud Run (não precisa de
    domínio próprio — o browser nunca o vê directamente, só através do rewrite).
-2. **Cloudflare R2** — o `03-secrets.sh` salta os segredos de R2 se não houver
-   credenciais; enquanto isso, avatares e comprovativos ficam por migrar.
+2. ~~**Cloudflare R2**~~ — **resolvido**: credenciais, env vars e CORS do bucket
+   (`07-r2-cors.sh`) configurados; avatar e comprovativos usam upload directo.
 3. **`--allow-unauthenticated`** está ligado no serviço da API (é um site público).
    Rever se algum dia houver endpoints que não devam ser expostos directamente.
 
