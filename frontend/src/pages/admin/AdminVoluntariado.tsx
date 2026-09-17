@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -48,6 +49,11 @@ const AdminVoluntariado = () => {
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [inscritosDe, setInscritosDe] = useState<AtividadeVoluntariadoAdmin | null>(null);
   const [inscritos, setInscritos] = useState<InscricaoAtividadeAdmin[]>([]);
+  // Filtros só do lado do cliente -- a lista já vem inteira da API
+  // (gestão de admin, volume baixo); não há razão para um endpoint novo
+  // só para isto. "Este mês" e "Futuras/Passadas" olham a `data_inicio`.
+  const [filtroEstado, setFiltroEstado] = useState<"todas" | "publicada" | "cancelada">("todas");
+  const [filtroPeriodo, setFiltroPeriodo] = useState<"todas" | "mes" | "futuras" | "passadas">("todas");
 
   const carregarCandidaturas = async () => {
     try {
@@ -131,6 +137,24 @@ const AdminVoluntariado = () => {
 
   const pendentes = candidaturas.filter((c) => c.status === "pendente");
   const decididas = candidaturas.filter((c) => c.status !== "pendente");
+
+  const agora = Date.now();
+  const inicioDoMes = new Date();
+  inicioDoMes.setDate(1);
+  inicioDoMes.setHours(0, 0, 0, 0);
+  const fimDoMes = new Date(inicioDoMes);
+  fimDoMes.setMonth(fimDoMes.getMonth() + 1);
+
+  const atividadesFiltradas = atividades
+    .filter((a) => filtroEstado === "todas" || a.estado === filtroEstado)
+    .filter((a) => {
+      const inicio = new Date(a.data_inicio).getTime();
+      if (filtroPeriodo === "mes") return inicio >= inicioDoMes.getTime() && inicio < fimDoMes.getTime();
+      if (filtroPeriodo === "futuras") return inicio >= agora;
+      if (filtroPeriodo === "passadas") return inicio < agora;
+      return true;
+    })
+    .sort((a, b) => new Date(a.data_inicio).getTime() - new Date(b.data_inicio).getTime());
 
   return (
     <div className="space-y-6">
@@ -234,9 +258,33 @@ const AdminVoluntariado = () => {
           </Card>
 
           <Card>
-            <CardHeader><CardTitle>Actividades publicadas</CardTitle></CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-3">
+              <CardTitle>
+                Actividades ({atividadesFiltradas.length}
+                {atividadesFiltradas.length !== atividades.length ? ` de ${atividades.length}` : ""})
+              </CardTitle>
+              <div className="flex gap-2 flex-wrap">
+                <Select value={filtroEstado} onValueChange={(v) => setFiltroEstado(v as typeof filtroEstado)}>
+                  <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todas">Todos os estados</SelectItem>
+                    <SelectItem value="publicada">Publicadas</SelectItem>
+                    <SelectItem value="cancelada">Canceladas</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={filtroPeriodo} onValueChange={(v) => setFiltroPeriodo(v as typeof filtroPeriodo)}>
+                  <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todas">Qualquer altura</SelectItem>
+                    <SelectItem value="mes">Este mês</SelectItem>
+                    <SelectItem value="futuras">Por acontecer</SelectItem>
+                    <SelectItem value="passadas">Já aconteceram</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardHeader>
             <CardContent className="space-y-2">
-              {atividades.map((a) => (
+              {atividadesFiltradas.map((a) => (
                 <div key={a.id} className="flex items-center justify-between border rounded-lg p-3 gap-3 flex-wrap">
                   <div className="min-w-0 flex-1">
                     <div className="font-semibold flex items-center gap-2 flex-wrap">
@@ -260,7 +308,12 @@ const AdminVoluntariado = () => {
                   </div>
                 </div>
               ))}
-              {!atividades.length && <p className="text-center text-muted-foreground py-6">Nenhuma actividade ainda.</p>}
+              {!atividades.length && (
+                <p className="text-center text-muted-foreground py-6">Nenhuma actividade ainda.</p>
+              )}
+              {!!atividades.length && !atividadesFiltradas.length && (
+                <p className="text-center text-muted-foreground py-6">Nenhuma actividade corresponde aos filtros.</p>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
