@@ -386,8 +386,7 @@ Não imitar estes padrões enquanto a migração módulo-a-módulo decorre (ver 
 
 | Onde | Problema |
 |---|---|
-| `frontend/src/integrations/supabase/*` | Ainda chama o Supabase directamente — a substituir por um cliente da API própria, módulo a módulo |
-| `Scanner.tsx` | O "diagnóstico" é `Math.random()` — não é calculado a partir de medições |
+| `frontend/src/integrations/supabase/*` | Ainda chama o Supabase directamente — a substituir por um cliente da API própria, módulo a módulo. `Scanner.tsx` persiste o exame (`scanner_analyses`, storage `exames`) directo no Supabase, fora deste padrão |
 | `Exercicios.tsx`, `BaseExercise.tsx` | Paywall Premium ainda desligado por bypass (`temAcessoPremium = true`) — a activação já existe (W-11), falta só virar a chave, num PR isolado |
 | `ClinicalPartners.tsx` | Formulário de agendamento não persiste nada — só mostra um toast |
 | `DashboardUser.tsx` | Parte dos números são valores fixos, não dados reais |
