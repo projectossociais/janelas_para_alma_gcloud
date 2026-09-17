@@ -5,19 +5,27 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Send } from "lucide-react";
 import { notificacoesApi, mensagemDeErroApi, PAPEIS_PARA_NOTIFICAR } from "@/lib/apiClient";
 import { toast } from "sonner";
 import { ROLE_LABEL, type UserRole } from "@/contexts/AuthContext";
 
-const FORM_VAZIO = { titulo: "", mensagem: "", papel: "all" };
+const FORM_VAZIO = { titulo: "", mensagem: "", papel: "all", enviarEmail: false };
+
+interface UltimoEnvio {
+  titulo: string;
+  enviadas: number;
+  papel: string;
+  enviarEmail: boolean;
+  emailsEnviados: number;
+  emailsFalharam: number;
+}
 
 const AdminNotifications = () => {
   const [form, setForm] = useState(FORM_VAZIO);
   const [aEnviar, setAEnviar] = useState(false);
-  const [ultimoEnvio, setUltimoEnvio] = useState<{ titulo: string; enviadas: number; papel: string } | null>(
-    null,
-  );
+  const [ultimoEnvio, setUltimoEnvio] = useState<UltimoEnvio | null>(null);
 
   const enviar = async () => {
     if (!form.titulo || !form.mensagem) {
@@ -26,17 +34,37 @@ const AdminNotifications = () => {
     }
     setAEnviar(true);
     try {
-      const { enviadas } = await notificacoesApi.enviar(
+      const { enviadas, emails_enviados, emails_falharam } = await notificacoesApi.enviar(
         form.titulo,
         form.mensagem,
         form.papel === "all" ? null : form.papel,
+        form.enviarEmail,
       );
-      toast.success(
-        enviadas > 0
-          ? `Notificação enviada a ${enviadas} pessoa${enviadas === 1 ? "" : "s"}.`
-          : "Enviada, mas não há ninguém com esse perfil ainda.",
-      );
-      setUltimoEnvio({ titulo: form.titulo, enviadas, papel: form.papel });
+      if (enviadas === 0) {
+        toast.success("Enviada, mas não há ninguém com esse perfil ainda.");
+      } else if (form.enviarEmail && emails_falharam > 0) {
+        // Nunca esconder uma falha parcial atrás de um "sucesso" genérico
+        // (CLAUDE.md, "nunca mostrar sucesso antes de verificar erro") --
+        // as notificações no sino já foram todas criadas, mas o admin
+        // precisa de saber que nem todos os emails saíram.
+        toast.error(
+          `Notificação enviada a ${enviadas} pessoa${enviadas === 1 ? "" : "s"}, mas ${emails_falharam} email${emails_falharam === 1 ? "" : "s"} falharam.`,
+        );
+      } else {
+        toast.success(
+          form.enviarEmail
+            ? `Notificação enviada a ${enviadas} pessoa${enviadas === 1 ? "" : "s"}, com email para todos.`
+            : `Notificação enviada a ${enviadas} pessoa${enviadas === 1 ? "" : "s"}.`,
+        );
+      }
+      setUltimoEnvio({
+        titulo: form.titulo,
+        enviadas,
+        papel: form.papel,
+        enviarEmail: form.enviarEmail,
+        emailsEnviados: emails_enviados,
+        emailsFalharam: emails_falharam,
+      });
       setForm(FORM_VAZIO);
     } catch (err) {
       toast.error(mensagemDeErroApi(err, "Não foi possível enviar a notificação."));
@@ -92,6 +120,16 @@ const AdminNotifications = () => {
               onChange={(e) => setForm({ ...form, mensagem: e.target.value })}
             />
           </div>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="notif-enviar-email"
+              checked={form.enviarEmail}
+              onCheckedChange={(v) => setForm({ ...form, enviarEmail: v === true })}
+            />
+            <Label htmlFor="notif-enviar-email" className="font-normal cursor-pointer">
+              Enviar também por email
+            </Label>
+          </div>
           <Button onClick={enviar} disabled={aEnviar}>
             <Send className="w-4 h-4" /> {aEnviar ? "A enviar..." : "Enviar"}
           </Button>
@@ -112,6 +150,13 @@ const AdminNotifications = () => {
                   : `Perfil: ${ROLE_LABEL[ultimoEnvio.papel as UserRole] ?? ultimoEnvio.papel}`}{" "}
                 · {ultimoEnvio.enviadas} destinatário{ultimoEnvio.enviadas === 1 ? "" : "s"}
               </div>
+              {ultimoEnvio.enviarEmail && (
+                <div className="text-xs text-muted-foreground mt-1">
+                  Email: {ultimoEnvio.emailsEnviados} enviado{ultimoEnvio.emailsEnviados === 1 ? "" : "s"}
+                  {ultimoEnvio.emailsFalharam > 0 &&
+                    `, ${ultimoEnvio.emailsFalharam} ${ultimoEnvio.emailsFalharam === 1 ? "falhou" : "falharam"}`}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

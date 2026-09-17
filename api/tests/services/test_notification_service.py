@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 
 import pytest
 
+from app.core.email import EmailEnvioFalhouError
 from app.repositories.notification_repository import NotificacaoRegisto
 from app.services.notification_service import (
     NotificacaoNaoEncontradaError,
@@ -19,6 +20,7 @@ from app.services.notification_service import (
 class UtilizadorFalso:
     id: str
     papel: str
+    email: str = ""
 
 
 class UtilizadoresFalso:
@@ -29,6 +31,21 @@ class UtilizadoresFalso:
         if papel is None:
             return list(self._utilizadores)
         return [u for u in self._utilizadores if u.papel == papel]
+
+
+class EmailSenderFalso:
+    """Em memória -- `falhar_para` marca destinatários cujo envio deve
+    levantar `EmailEnvioFalhouError`, para testar que uma falha não trava
+    as restantes nem apaga as notificações já criadas."""
+
+    def __init__(self, falhar_para: set[str] | None = None) -> None:
+        self.enviados: list[tuple[str, str, str]] = []
+        self._falhar_para = falhar_para or set()
+
+    def enviar(self, destinatario: str, assunto: str, corpo_html: str) -> None:
+        if destinatario in self._falhar_para:
+            raise EmailEnvioFalhouError(destinatario)
+        self.enviados.append((destinatario, assunto, corpo_html))
 
 
 class RepositorioNotificacoesFalso:
@@ -77,31 +94,36 @@ class RepositorioNotificacoesFalso:
 def utilizadores() -> UtilizadoresFalso:
     return UtilizadoresFalso(
         [
-            UtilizadorFalso(id="u-1", papel="comum"),
-            UtilizadorFalso(id="u-2", papel="comum"),
-            UtilizadorFalso(id="u-3", papel="estrabico"),
+            UtilizadorFalso(id="u-1", papel="comum", email="u1@example.com"),
+            UtilizadorFalso(id="u-2", papel="comum", email="u2@example.com"),
+            UtilizadorFalso(id="u-3", papel="estrabico", email="u3@example.com"),
         ]
     )
 
 
 @pytest.fixture
-def servico(utilizadores) -> tuple[NotificationService, RepositorioNotificacoesFalso]:
+def email_sender() -> EmailSenderFalso:
+    return EmailSenderFalso()
+
+
+@pytest.fixture
+def servico(utilizadores, email_sender) -> tuple[NotificationService, RepositorioNotificacoesFalso]:
     repo = RepositorioNotificacoesFalso()
-    return NotificationService(repo, utilizadores), repo
+    return NotificationService(repo, utilizadores, email_sender), repo
 
 
 class TestEnviar:
     def test_envia_a_todos_quando_papel_e_none(self, servico) -> None:
         svc, repo = servico
-        enviadas = svc.enviar("Aviso", "Texto", None)
-        assert enviadas == 3
+        resultado = svc.enviar("Aviso", "Texto", None)
+        assert resultado.notificacoes_criadas == 3
         assert repo.contar_nao_lidas("u-1") == 1
         assert repo.contar_nao_lidas("u-3") == 1
 
     def test_envia_so_ao_papel_pedido(self, servico) -> None:
         svc, repo = servico
-        enviadas = svc.enviar("Aviso", "Texto", "estrabico")
-        assert enviadas == 1
+        resultado = svc.enviar("Aviso", "Texto", "estrabico")
+        assert resultado.notificacoes_criadas == 1
         assert repo.contar_nao_lidas("u-3") == 1
         assert repo.contar_nao_lidas("u-1") == 0
 
@@ -113,7 +135,41 @@ class TestEnviar:
 
     def test_sem_destinatarios_devolve_zero(self, servico) -> None:
         svc, _ = servico
-        assert svc.enviar("Aviso", "Texto", "voluntario") == 0
+        resultado = svc.enviar("Aviso", "Texto", "voluntario")
+        assert resultado.notificacoes_criadas == 0
+
+    def test_sem_pedir_email_nunca_toca_no_email_sender(self, servico, email_sender) -> None:
+        svc, _ = servico
+        svc.enviar("Aviso", "Texto", None)
+        assert email_sender.enviados == []
+
+
+class TestEnviarComEmail:
+    def test_envia_email_a_todos_os_destinatarios(self, servico, email_sender) -> None:
+        svc, _ = servico
+        resultado = svc.enviar("Aviso", "Texto", None, enviar_email=True)
+
+        assert resultado.notificacoes_criadas == 3
+        assert resultado.emails_enviados == 3
+        assert resultado.emails_falharam == 0
+        assert {e[0] for e in email_sender.enviados} == {"u1@example.com", "u2@example.com", "u3@example.com"}
+        assert email_sender.enviados[0][1] == "Aviso"
+
+    def test_falha_de_email_num_destinatario_nao_trava_os_restantes_nem_a_notificacao(
+        self, utilizadores, servico
+    ) -> None:
+        repo = RepositorioNotificacoesFalso()
+        email_sender_com_falha = EmailSenderFalso(falhar_para={"u2@example.com"})
+        svc = NotificationService(repo, utilizadores, email_sender_com_falha)
+
+        resultado = svc.enviar("Aviso", "Texto", None, enviar_email=True)
+
+        # A notificação dentro da app já estava gravada antes de sequer se
+        # tentar o email -- uma falha de email nunca a desfaz.
+        assert resultado.notificacoes_criadas == 3
+        assert repo.contar_nao_lidas("u-2") == 1
+        assert resultado.emails_enviados == 2
+        assert resultado.emails_falharam == 1
 
 
 class TestListarEContar:

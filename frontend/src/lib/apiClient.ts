@@ -905,10 +905,15 @@ export const notificacoesApi = {
 
   marcarTodasLidas: () => pedido<void>("/notificacoes/marcar-todas-lidas", { method: "POST" }),
 
-  // Administração -- envia (broadcast) a todos ou a um papel.
-  enviar: (titulo: string, mensagem: string, papel?: string | null) =>
-    pedido<{ enviadas: number }>("/notificacoes/admin/enviar", {
-      method: "POST",
-      body: JSON.stringify({ titulo, mensagem, papel: papel || null }),
-    }),
+  // Administração -- envia (broadcast) a todos ou a um papel. `enviarEmail`
+  // é além da notificação no sino (que acontece sempre) -- nunca em vez
+  // dela.
+  enviar: (titulo: string, mensagem: string, papel?: string | null, enviarEmail?: boolean) =>
+    pedido<{ enviadas: number; emails_enviados: number; emails_falharam: number }>(
+      "/notificacoes/admin/enviar",
+      {
+        method: "POST",
+        body: JSON.stringify({ titulo, mensagem, papel: papel || null, enviar_email: !!enviarEmail }),
+      }
+    ),
 };
