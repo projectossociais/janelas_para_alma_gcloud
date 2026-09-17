@@ -47,3 +47,27 @@ class PendenciasAdmin(BaseModel):
     pedidos_premium_pendentes: int
     mensagens_por_ler: int
     candidaturas_voluntariado_pendentes: int
+
+
+class SessaoExercicioAdmin(BaseModel):
+    id: str
+    user_id: str
+    utilizador_nome: str | None
+    utilizador_email: str
+    exercicio_id: str
+    duracao_segundos: int
+    pontuacao: int
+    precisao_percentual: float
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class UtilizadorAtivoAdmin(BaseModel):
+    user_id: str
+    utilizador_nome: str | None
+    utilizador_email: str
+    sessoes_na_semana: int
+    ultima_sessao_em: datetime
+
+    model_config = {"from_attributes": True}

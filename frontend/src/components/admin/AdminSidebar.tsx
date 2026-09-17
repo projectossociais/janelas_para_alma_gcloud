@@ -2,6 +2,7 @@ import { NavLink, useLocation, Link, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
+  Activity,
   Inbox,
   Megaphone,
   Bell,
@@ -31,6 +32,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const items = [
   { title: "Visão Geral", url: "/admin", icon: LayoutDashboard, end: true },
   { title: "Utilizadores", url: "/admin/utilizadores", icon: Users },
+  { title: "Atividade", url: "/admin/atividade", icon: Activity },
   { title: "Mensagens & Pedidos", url: "/admin/mensagens", icon: Inbox },
   { title: "Voluntariado", url: "/admin/voluntariado", icon: HeartHandshake },
   { title: "Banners", url: "/admin/banners", icon: Megaphone },

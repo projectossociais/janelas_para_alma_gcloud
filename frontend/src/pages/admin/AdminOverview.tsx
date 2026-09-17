@@ -43,18 +43,59 @@ const AdminOverview = () => {
   }, []);
 
   const cards = [
-    { label: "Utilizadores (total)", value: stats?.total_utilizadores ?? 0, icon: Users, color: "text-navy" },
-    { label: "Novos utilizadores", value: stats?.novos_utilizadores ?? 0, icon: TrendingUp, color: "text-teal" },
+    {
+      label: "Utilizadores (total)",
+      value: stats?.total_utilizadores ?? 0,
+      icon: Users,
+      color: "text-navy",
+      href: "/admin/utilizadores",
+    },
+    {
+      label: "Novos utilizadores",
+      value: stats?.novos_utilizadores ?? 0,
+      icon: TrendingUp,
+      color: "text-teal",
+      href: `/admin/utilizadores?dias=${periodDays[period]}`,
+    },
     {
       label: "Ativos esta semana",
       value: stats?.utilizadores_ativos_semana ?? 0,
       icon: UserCheck,
       color: "text-green-600",
+      href: "/admin/atividade?tab=ativos",
     },
-    { label: "Sessões de exercício", value: stats?.sessoes_exercicio ?? 0, icon: Activity, color: "text-gold" },
-    { label: "Análises scanner", value: stats?.analises_scanner ?? 0, icon: ScanEye, color: "text-indigo-600" },
-    { label: "Pedidos premium", value: stats?.pedidos_premium ?? 0, icon: Sparkles, color: "text-purple-600" },
-    { label: "Mensagens", value: stats?.mensagens_contacto ?? 0, icon: MessageSquare, color: "text-blue-600" },
+    {
+      label: "Sessões de exercício",
+      value: stats?.sessoes_exercicio ?? 0,
+      icon: Activity,
+      color: "text-gold",
+      href: "/admin/atividade?tab=sessoes",
+    },
+    {
+      label: "Análises scanner",
+      value: stats?.analises_scanner ?? 0,
+      icon: ScanEye,
+      color: "text-indigo-600",
+      // Sem link de propósito: o scanner ainda grava os resultados noutro
+      // serviço (janelas-scanner-api), nunca nesta base de dados -- ligar
+      // este card a uma lista aqui seria sempre mostrar "vazio", mesmo
+      // depois de análises reais acontecerem. Ver proposta de integração.
+      href: null,
+    },
+    {
+      label: "Pedidos premium",
+      value: stats?.pedidos_premium ?? 0,
+      icon: Sparkles,
+      color: "text-purple-600",
+      href: "/admin/mensagens?tab=premium",
+    },
+    {
+      label: "Mensagens",
+      value: stats?.mensagens_contacto ?? 0,
+      icon: MessageSquare,
+      color: "text-blue-600",
+      href: "/admin/mensagens?tab=messages",
+    },
   ];
 
   const pendenciasItems = [
@@ -123,17 +164,31 @@ const AdminOverview = () => {
       </Card>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
-        {cards.map((c) => (
-          <Card key={c.label}>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <c.icon className={`w-5 h-5 ${c.color}`} />
-              </div>
-              <div className="text-2xl font-bold">{c.value}</div>
-              <div className="text-xs text-muted-foreground">{c.label}</div>
-            </CardContent>
-          </Card>
-        ))}
+        {cards.map((c) =>
+          c.href ? (
+            <Link key={c.label} to={c.href}>
+              <Card className="h-full transition-all hover:border-primary hover:shadow-sm">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <c.icon className={`w-5 h-5 ${c.color}`} />
+                  </div>
+                  <div className="text-2xl font-bold">{c.value}</div>
+                  <div className="text-xs text-muted-foreground">{c.label}</div>
+                </CardContent>
+              </Card>
+            </Link>
+          ) : (
+            <Card key={c.label} title="O scanner ainda regista resultados noutro serviço, não aqui.">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <c.icon className={`w-5 h-5 ${c.color}`} />
+                </div>
+                <div className="text-2xl font-bold">{c.value}</div>
+                <div className="text-xs text-muted-foreground">{c.label}</div>
+              </CardContent>
+            </Card>
+          )
+        )}
       </div>
 
       <Card>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -21,13 +21,16 @@ const PAPEIS_ATRIBUIVEIS: Exclude<UserRole, "admin">[] = [
 ];
 
 const AdminUsers = () => {
+  const [searchParams] = useSearchParams();
+  // Vem do card "Novos utilizadores" do dashboard: mesma janela de dias.
+  const dias = searchParams.get("dias") ? Number(searchParams.get("dias")) : undefined;
   const [rows, setRows] = useState<AdminUtilizador[]>([]);
   const [q, setQ] = useState("");
   const [aGuardar, setAGuardar] = useState<string | null>(null);
 
   const load = async () => {
     try {
-      setRows(await adminApi.listarUtilizadores());
+      setRows(await adminApi.listarUtilizadores(undefined, dias));
     } catch (err) {
       toast.error(mensagemDeErroApi(err, "Não foi possível carregar os utilizadores."));
     }
@@ -35,7 +38,8 @@ const AdminUsers = () => {
 
   useEffect(() => {
     load();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dias]);
 
   const changeRole = async (userId: string, novoPapel: string) => {
     setAGuardar(userId);
@@ -58,7 +62,14 @@ const AdminUsers = () => {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
-        <CardTitle>Utilizadores ({filtered.length})</CardTitle>
+        <div>
+          <CardTitle>Utilizadores ({filtered.length})</CardTitle>
+          {dias && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Registados nos últimos {dias} dias — <Link to="/admin/utilizadores" className="underline">ver todos</Link>
+            </p>
+          )}
+        </div>
         <Input placeholder="Pesquisar por nome ou email…" value={q} onChange={(e) => setQ(e.target.value)} className="max-w-sm" />
       </CardHeader>
       <CardContent>

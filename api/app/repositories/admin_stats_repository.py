@@ -23,6 +23,8 @@ from app.repositories.orm_models import (
     Utilizador,
 )
 
+_LIMITE_LISTAGEM = 200
+
 _JANELA_ATIVOS_DIAS = 7
 
 
@@ -53,9 +55,33 @@ class PendenciasRegisto:
     candidaturas_voluntariado_pendentes: int
 
 
+@dataclass(frozen=True)
+class SessaoExercicioAdminRegisto:
+    id: str
+    user_id: str
+    utilizador_nome: str | None
+    utilizador_email: str
+    exercicio_id: str
+    duracao_segundos: int
+    pontuacao: int
+    precisao_percentual: float
+    created_at: datetime
+
+
+@dataclass(frozen=True)
+class UtilizadorAtivoRegisto:
+    user_id: str
+    utilizador_nome: str | None
+    utilizador_email: str
+    sessoes_na_semana: int
+    ultima_sessao_em: datetime
+
+
 class AdminStatsRepository(Protocol):
     def obter_estatisticas(self, desde: datetime, dias: int) -> EstatisticasRegisto: ...
     def obter_pendencias(self) -> PendenciasRegisto: ...
+    def listar_sessoes_exercicio(self, desde: datetime) -> list[SessaoExercicioAdminRegisto]: ...
+    def listar_ativos_semana(self) -> list[UtilizadorAtivoRegisto]: ...
 
 
 class SQLAlchemyAdminStatsRepository:
@@ -123,3 +149,54 @@ class SQLAlchemyAdminStatsRepository:
                 CandidaturaVoluntariado, CandidaturaVoluntariado.status == "pendente"
             ),
         )
+
+    def listar_sessoes_exercicio(self, desde: datetime) -> list[SessaoExercicioAdminRegisto]:
+        linhas = self._sessao.execute(
+            select(SessaoExercicio, Utilizador)
+            .join(Utilizador, Utilizador.id == SessaoExercicio.user_id)
+            .where(SessaoExercicio.created_at >= desde)
+            .order_by(SessaoExercicio.created_at.desc())
+            .limit(_LIMITE_LISTAGEM)
+        ).all()
+        return [
+            SessaoExercicioAdminRegisto(
+                id=str(sessao.id),
+                user_id=str(sessao.user_id),
+                utilizador_nome=utilizador.nome_completo,
+                utilizador_email=utilizador.email,
+                exercicio_id=sessao.exercicio_id,
+                duracao_segundos=sessao.duracao_segundos,
+                pontuacao=sessao.pontuacao,
+                precisao_percentual=float(sessao.precisao_percentual),
+                created_at=sessao.created_at,
+            )
+            for sessao, utilizador in linhas
+        ]
+
+    def listar_ativos_semana(self) -> list[UtilizadorAtivoRegisto]:
+        # Mesma janela fixa de 7 dias do card "Ativos esta semana" em
+        # obter_estatisticas -- não o período escolhido no filtro do
+        # dashboard (ver _JANELA_ATIVOS_DIAS). Manter os dois em sincronia:
+        # é o mesmo número, só que aqui discriminado por utilizador.
+        desde = datetime.now(UTC) - timedelta(days=_JANELA_ATIVOS_DIAS)
+        linhas = self._sessao.execute(
+            select(
+                Utilizador,
+                func.count(SessaoExercicio.id),
+                func.max(SessaoExercicio.created_at),
+            )
+            .join(SessaoExercicio, SessaoExercicio.user_id == Utilizador.id)
+            .where(SessaoExercicio.created_at >= desde)
+            .group_by(Utilizador.id)
+            .order_by(func.max(SessaoExercicio.created_at).desc())
+        ).all()
+        return [
+            UtilizadorAtivoRegisto(
+                user_id=str(utilizador.id),
+                utilizador_nome=utilizador.nome_completo,
+                utilizador_email=utilizador.email,
+                sessoes_na_semana=total_sessoes,
+                ultima_sessao_em=ultima_sessao_em,
+            )
+            for utilizador, total_sessoes, ultima_sessao_em in linhas
+        ]
