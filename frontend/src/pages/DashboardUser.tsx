@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Eye, Activity, Sparkles, Calendar, Play } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { screeningsApi } from "@/lib/apiClient";
 import { useAuth } from "@/contexts/AuthContext";
 
 const DashboardUser = () => {
@@ -14,14 +14,12 @@ const DashboardUser = () => {
   const [scanCount, setScanCount] = useState(0);
 
   useEffect(() => {
-    (async () => {
-      const { data: s } = await supabase.auth.getSession();
-      const uid = s.session?.user.id;
-      if (!uid) return;
-      const { count } = await supabase.from("scanner_analyses").select("id", { count: "exact", head: true }).eq("user_id", uid);
-      setScanCount(count ?? 0);
-    })();
-  }, []);
+    if (!user) return;
+    screeningsApi
+      .listarMinhas()
+      .then((screenings) => setScanCount(screenings.length))
+      .catch(() => setScanCount(0));
+  }, [user]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-muted/40">

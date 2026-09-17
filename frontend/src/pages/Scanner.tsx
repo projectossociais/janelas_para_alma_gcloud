@@ -5,10 +5,10 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
 import EyeLandmarkOverlay from "@/components/EyeLandmarkOverlay";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { submeterRastreioMultiGaze, type ScreeningResponse } from "@/services/api/screeningApi";
+import { screeningsApi, mensagemDeErroApi } from "@/lib/apiClient";
 
 
 type TrackingStage = 0 | 1 | 2;
@@ -45,57 +45,24 @@ const dataUrlToBlob = (dataUrl: string): Blob | null => {
   return new Blob([bytes], { type: mime });
 };
 
-class SessionExpiredError extends Error {
-  constructor() {
-    super("A tua sessão expirou, por favor inicia sessão novamente.");
-    this.name = "SessionExpiredError";
-  }
-}
-
-/** Uploads the 3 guided snapshots to storage and persists the clinical record. Returns the new row id. */
-const submitScan = async (shots: ScanShot[]): Promise<string> => {
-  // Ensure a fresh token right before the uploads so RLS never fails mid-flight.
-  const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
-  let session = refreshed?.session ?? null;
-  if (refreshError || !session) {
-    const { data } = await supabase.auth.getSession();
-    session = data.session ?? null;
-    const expMs = (session?.expires_at ?? 0) * 1000;
-    if (!session || (expMs && expMs <= Date.now())) throw new SessionExpiredError();
-  }
-  const userId = session.user?.id;
-  if (!userId) throw new SessionExpiredError();
-
-  const ts = Date.now();
-  const paths: Record<string, string> = {};
-
-  for (const shot of shots) {
-    const blob = dataUrlToBlob(shot.imageBase64);
-    if (!blob) throw new Error(`Falha ao converter a imagem (${shot.pose}).`);
-    const path = `${userId}/${ts}_${shot.pose}.png`;
-    const { error } = await supabase.storage
-      .from("exames")
-      .upload(path, blob, { contentType: blob.type, upsert: true });
-    if (error) throw new Error(error.message);
-    paths[shot.pose] = path;
-  }
-
-  const { data: inserted, error: insertError } = await supabase
-    .from("scanner_analyses")
-    .insert({
-      user_id: userId,
-      diagnostico: "A processar análise clínica",
-      dados_clinicos: {
-        landmarks: shots.map((s) => ({ pose: s.pose, landmarks: s.landmarks })),
-        images: paths,
-        captured_at: new Date().toISOString(),
-      },
-    })
-    .select()
-    .single();
-  if (insertError) throw new Error(insertError.message);
-  if (!inserted?.id) throw new Error("O exame não foi registado corretamente (id ausente). Tente novamente.");
-  return inserted.id as string;
+/** Persiste só as medições já calculadas pelo janelas-scanner-api na API
+ *  própria — nunca a fotografia em si (CLAUDE.md secção 4, regra 4). Devolve
+ *  o novo id, ou `null` se o utilizador não tiver sessão (o rastreio em si
+ *  já correu; falhar aqui não pode apagar o resultado que a pessoa vê). */
+const persistirScreening = async (apiResult: ScreeningResponse): Promise<string | null> => {
+  const posCentro = apiResult.posicoes?.find((p) => p.posicao.toUpperCase() === "CENTRO");
+  const registado = await screeningsApi.registar({
+    estado: apiResult.estado,
+    rosto_detetado: apiResult.posicoes?.some((p) => p.rosto_detetado) ?? false,
+    requer_avaliacao_humana: apiResult.requer_avaliacao_humana ?? false,
+    assimetria_horizontal: apiResult.variacao_desalinhamento ?? null,
+    qualidade_captura: posCentro?.qualidade_captura?.pontuacao ?? null,
+    qualidade_fiavel: posCentro?.qualidade_captura?.fiavel ?? null,
+    qualidade_motivos: posCentro?.qualidade_captura?.motivos ?? [],
+    medicoes: apiResult as unknown as Record<string, unknown>,
+    versao_analise: "janelas-scanner-api/multi-gaze",
+  });
+  return registado.id;
 };
 
 
@@ -321,32 +288,25 @@ const Scanner = () => {
             throw new Error("Falha ao preparar as imagens das 3 posições.");
           }
 
-          // 2. Obtém token da sessão Supabase (se o utilizador estiver autenticado)
-          let token: string | undefined = undefined;
-          if (user) {
-            const { data: sessionData } = await supabase.auth.getSession();
-            token = sessionData.session?.access_token;
-          }
-
-          // 3. Executa o cálculo matemático no FastAPI (Python)
+          // 2. Executa o cálculo matemático no FastAPI (Python) — o
+          // janelas-scanner-api é um microserviço à parte, sem sessão própria.
           toast.info("A calcular alinhamento ocular na IA...");
-          const apiResult = await submeterRastreioMultiGaze(
-            {
-              centro: blobCentro,
-              esquerda: blobEsquerda,
-              direita: blobDireita,
-            },
-            token
-          );
+          const apiResult = await submeterRastreioMultiGaze({
+            centro: blobCentro,
+            esquerda: blobEsquerda,
+            direita: blobDireita,
+          });
 
-          // 4. Se estiver autenticado, persiste o histórico completo no Supabase
+          // 3. Se estiver autenticado, persiste só as medições na API própria
+          // — nunca as fotografias (CLAUDE.md secção 4, regra 4). Uma falha
+          // aqui não pode esconder o resultado que a pessoa já tem na mão.
           let savedAnalysisId: string | null = null;
           if (user) {
             try {
-              savedAnalysisId = await submitScan(payload);
+              savedAnalysisId = await persistirScreening(apiResult);
               setAnalysisId(savedAnalysisId);
             } catch (persistErr) {
-              console.warn("Aviso ao guardar no Supabase:", persistErr);
+              console.warn("Aviso ao guardar o histórico do rastreio:", persistErr);
             }
           }
 
@@ -354,18 +314,15 @@ const Scanner = () => {
           stopCamera();
           finishScan(center, savedAnalysisId, apiResult);
         } catch (err) {
-          const message = err instanceof Error ? err.message : String(err);
+          const message = mensagemDeErroApi(err, err instanceof Error ? err.message : String(err));
           setUploading(false);
           setUploadError(message);
           setCaptureStep("IDLE");
           toast.error(message);
-          if (err instanceof Error && err.name === "SessionExpiredError") {
-            window.setTimeout(() => navigate("/auth?next=/scanner"), 1200);
-          }
         }
       })();
     }
-  }, [captureStep, lowLight, recordPose, stopCamera, finishScan, navigate, user]);
+  }, [captureStep, lowLight, recordPose, stopCamera, finishScan, user]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -381,8 +338,8 @@ const Scanner = () => {
               Área de Diagnóstico Inteligente
             </h1>
             <p className="mt-4 text-base md:text-lg text-muted-foreground">
-              Carregue uma fotografia ou utilize a câmara para uma análise visual assistida por
-              inteligência artificial. Resultados em segundos — confidenciais e seguros.
+              Utilize a câmara para uma análise visual guiada, assistida por inteligência
+              artificial. Resultados em segundos — confidenciais e seguros.
             </p>
             <div className="mt-4 inline-flex items-center gap-2 text-xs text-muted-foreground">
               <ShieldCheck className="w-4 h-4 text-green" />
