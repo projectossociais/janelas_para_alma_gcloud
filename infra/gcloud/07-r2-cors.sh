@@ -39,8 +39,13 @@ client = boto3.client(
 cors_config = {
     "CORSRules": [
         {
+            # O apex (sem "www.") faz 308 para "www." em produção -- aos
+            # olhos do browser são origens diferentes, por isso as duas têm
+            # de estar aqui, não só o domínio "canónico". Confirmar com
+            # `curl -sI https://<dominio>` se algum dia isto mudar.
             "AllowedOrigins": [
                 "https://${FRONTEND_DOMAIN}",
+                "https://www.${FRONTEND_DOMAIN}",
                 "http://localhost:8080",
                 "http://localhost:5173",
             ],
