@@ -25,8 +25,6 @@ from app.repositories.orm_models import (
 
 _LIMITE_LISTAGEM = 200
 
-_JANELA_ATIVOS_DIAS = 7
-
 
 @dataclass(frozen=True)
 class SerieDiaRegisto:
@@ -40,7 +38,7 @@ class SerieDiaRegisto:
 class EstatisticasRegisto:
     total_utilizadores: int
     novos_utilizadores: int
-    utilizadores_ativos_semana: int
+    utilizadores_ativos_periodo: int
     sessoes_exercicio: int
     analises_scanner: int
     pedidos_premium: int
@@ -73,7 +71,7 @@ class UtilizadorAtivoRegisto:
     user_id: str
     utilizador_nome: str | None
     utilizador_email: str
-    sessoes_na_semana: int
+    sessoes_no_periodo: int
     ultima_sessao_em: datetime
 
 
@@ -81,7 +79,7 @@ class AdminStatsRepository(Protocol):
     def obter_estatisticas(self, desde: datetime, dias: int) -> EstatisticasRegisto: ...
     def obter_pendencias(self) -> PendenciasRegisto: ...
     def listar_sessoes_exercicio(self, desde: datetime) -> list[SessaoExercicioAdminRegisto]: ...
-    def listar_ativos_semana(self) -> list[UtilizadorAtivoRegisto]: ...
+    def listar_ativos(self, desde: datetime) -> list[UtilizadorAtivoRegisto]: ...
 
 
 class SQLAlchemyAdminStatsRepository:
@@ -103,10 +101,12 @@ class SQLAlchemyAdminStatsRepository:
     def obter_estatisticas(self, desde: datetime, dias: int) -> EstatisticasRegisto:
         total_utilizadores = self._contar(Utilizador)
         novos_utilizadores = self._contar(Utilizador, Utilizador.created_at >= desde)
-        sete_dias_atras = datetime.now(UTC) - timedelta(days=_JANELA_ATIVOS_DIAS)
-        utilizadores_ativos_semana = self._sessao.scalar(
+        # Mesmo período escolhido no filtro do dashboard (Semanal/Mensal/
+        # Anual) -- antes disto era sempre uma janela fixa de 7 dias, por
+        # isso este card nunca mudava com o filtro (só o gráfico mudava).
+        utilizadores_ativos_periodo = self._sessao.scalar(
             select(func.count(func.distinct(SessaoExercicio.user_id))).where(
-                SessaoExercicio.created_at >= sete_dias_atras
+                SessaoExercicio.created_at >= desde
             )
         ) or 0
         sessoes_exercicio = self._contar(SessaoExercicio, SessaoExercicio.created_at >= desde)
@@ -133,7 +133,7 @@ class SQLAlchemyAdminStatsRepository:
         return EstatisticasRegisto(
             total_utilizadores=total_utilizadores,
             novos_utilizadores=novos_utilizadores,
-            utilizadores_ativos_semana=utilizadores_ativos_semana,
+            utilizadores_ativos_periodo=utilizadores_ativos_periodo,
             sessoes_exercicio=sessoes_exercicio,
             analises_scanner=analises_scanner,
             pedidos_premium=pedidos_premium,
@@ -173,12 +173,7 @@ class SQLAlchemyAdminStatsRepository:
             for sessao, utilizador in linhas
         ]
 
-    def listar_ativos_semana(self) -> list[UtilizadorAtivoRegisto]:
-        # Mesma janela fixa de 7 dias do card "Ativos esta semana" em
-        # obter_estatisticas -- não o período escolhido no filtro do
-        # dashboard (ver _JANELA_ATIVOS_DIAS). Manter os dois em sincronia:
-        # é o mesmo número, só que aqui discriminado por utilizador.
-        desde = datetime.now(UTC) - timedelta(days=_JANELA_ATIVOS_DIAS)
+    def listar_ativos(self, desde: datetime) -> list[UtilizadorAtivoRegisto]:
         linhas = self._sessao.execute(
             select(
                 Utilizador,
@@ -195,7 +190,7 @@ class SQLAlchemyAdminStatsRepository:
                 user_id=str(utilizador.id),
                 utilizador_nome=utilizador.nome_completo,
                 utilizador_email=utilizador.email,
-                sessoes_na_semana=total_sessoes,
+                sessoes_no_periodo=total_sessoes,
                 ultima_sessao_em=ultima_sessao_em,
             )
             for utilizador, total_sessoes, ultima_sessao_em in linhas

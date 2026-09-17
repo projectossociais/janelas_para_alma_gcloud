@@ -488,7 +488,7 @@ export interface SerieDiaAdmin {
 export interface EstatisticasAdmin {
   total_utilizadores: number;
   novos_utilizadores: number;
-  utilizadores_ativos_semana: number;
+  utilizadores_ativos_periodo: number;
   sessoes_exercicio: number;
   analises_scanner: number;
   pedidos_premium: number;
@@ -518,7 +518,7 @@ export interface UtilizadorAtivoAdmin {
   user_id: string;
   utilizador_nome: string | null;
   utilizador_email: string;
-  sessoes_na_semana: number;
+  sessoes_no_periodo: number;
   ultima_sessao_em: string;
 }
 
@@ -536,7 +536,7 @@ export const adminApi = {
   listarSessoesExercicio: (dias: number) =>
     pedido<SessaoExercicioAdmin[]>(`/admin/sessoes-exercicio?dias=${dias}`),
 
-  listarAtivosSemana: () => pedido<UtilizadorAtivoAdmin[]>("/admin/ativos-semana"),
+  listarAtivos: (dias: number) => pedido<UtilizadorAtivoAdmin[]>(`/admin/ativos?dias=${dias}`),
 
   /** Promove a conta com este email a `admin`. O primeiro admin cria-se por
    *  linha de comando (`python -m app.criar_admin`). */

@@ -29,7 +29,7 @@ class RepositorioStatsFalso:
         return EstatisticasRegisto(
             total_utilizadores=42,
             novos_utilizadores=3,
-            utilizadores_ativos_semana=7,
+            utilizadores_ativos_periodo=7,
             sessoes_exercicio=15,
             analises_scanner=2,
             pedidos_premium=4,
@@ -59,13 +59,13 @@ class RepositorioStatsFalso:
             )
         ]
 
-    def listar_ativos_semana(self) -> list[UtilizadorAtivoRegisto]:
+    def listar_ativos(self, desde) -> list[UtilizadorAtivoRegisto]:
         return [
             UtilizadorAtivoRegisto(
                 user_id="u-comum",
                 utilizador_nome="Rui",
                 utilizador_email="rui@example.com",
-                sessoes_na_semana=3,
+                sessoes_no_periodo=3,
                 ultima_sessao_em=datetime.now(UTC),
             )
         ]
@@ -182,7 +182,7 @@ def test_admin_ve_estatisticas(ambiente) -> None:
     assert r.status_code == 200
     corpo = r.json()
     assert corpo["total_utilizadores"] == 42
-    assert corpo["utilizadores_ativos_semana"] == 7
+    assert corpo["utilizadores_ativos_periodo"] == 7
 
 
 def test_estatisticas_limita_dias_absurdos(ambiente) -> None:
@@ -283,16 +283,16 @@ def test_admin_lista_sessoes_exercicio(ambiente) -> None:
     assert corpo[0]["utilizador_email"] == "rui@example.com"
 
 
-def test_ativos_semana_sem_sessao_401(ambiente) -> None:
+def test_ativos_sem_sessao_401(ambiente) -> None:
     c, *_ = ambiente
-    assert c.get("/admin/ativos-semana").status_code == 401
+    assert c.get("/admin/ativos").status_code == 401
 
 
-def test_admin_lista_ativos_semana(ambiente) -> None:
+def test_admin_lista_ativos(ambiente) -> None:
     c, _, token_admin, _, _ = ambiente
     c.cookies.set("access_token", token_admin)
-    r = c.get("/admin/ativos-semana")
+    r = c.get("/admin/ativos")
     assert r.status_code == 200
     corpo = r.json()
     assert len(corpo) == 1
-    assert corpo[0]["sessoes_na_semana"] == 3
+    assert corpo[0]["sessoes_no_periodo"] == 3
