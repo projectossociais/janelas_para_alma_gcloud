@@ -7,7 +7,15 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trash2, Plus, ImagePlus } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Trash2, Plus, ImagePlus, Pencil } from "lucide-react";
 import {
   bannersApi,
   bannerHomepageApi,
@@ -42,6 +50,9 @@ const FaixaDeAviso = () => {
   const [rows, setRows] = useState<BannerAdmin[]>([]);
   const [form, setForm] = useState({ titulo: "", mensagem: "", link: "", ativo: true });
   const [aGravar, setAGravar] = useState(false);
+  const [aEditar, setAEditar] = useState<BannerAdmin | null>(null);
+  const [formEdicao, setFormEdicao] = useState({ titulo: "", mensagem: "", link: "" });
+  const [aGuardarEdicao, setAGuardarEdicao] = useState(false);
 
   const load = async () => {
     try {
@@ -93,6 +104,34 @@ const FaixaDeAviso = () => {
       await load();
     } catch (err) {
       toast.error(mensagemDeErroApi(err, "Não foi possível remover o banner."));
+    }
+  };
+
+  const abrirEdicao = (b: BannerAdmin) => {
+    setFormEdicao({ titulo: b.titulo, mensagem: b.mensagem, link: b.link ?? "" });
+    setAEditar(b);
+  };
+
+  const guardarEdicao = async () => {
+    if (!aEditar) return;
+    if (!formEdicao.titulo || !formEdicao.mensagem) {
+      toast.error("Título e mensagem obrigatórios.");
+      return;
+    }
+    setAGuardarEdicao(true);
+    try {
+      await bannersApi.atualizar(aEditar.id, {
+        titulo: formEdicao.titulo,
+        mensagem: formEdicao.mensagem,
+        link: formEdicao.link || null,
+      });
+      toast.success("Banner atualizado.");
+      setAEditar(null);
+      await load();
+    } catch (err) {
+      toast.error(mensagemDeErroApi(err, "Não foi possível guardar as alterações."));
+    } finally {
+      setAGuardarEdicao(false);
     }
   };
 
@@ -157,7 +196,10 @@ const FaixaDeAviso = () => {
               </div>
               <div className="flex items-center gap-2">
                 <Switch checked={b.ativo} onCheckedChange={(v) => toggle(b.id, v)} />
-                <Button size="icon" variant="ghost" onClick={() => remove(b.id)}>
+                <Button size="icon" variant="ghost" onClick={() => abrirEdicao(b)} aria-label={`Editar ${b.titulo}`}>
+                  <Pencil className="w-4 h-4" />
+                </Button>
+                <Button size="icon" variant="ghost" onClick={() => remove(b.id)} aria-label={`Remover ${b.titulo}`}>
                   <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
@@ -166,6 +208,47 @@ const FaixaDeAviso = () => {
           {!rows.length && <p className="text-center text-muted-foreground py-6">Nenhuma faixa ainda.</p>}
         </CardContent>
       </Card>
+
+      <Dialog open={!!aEditar} onOpenChange={(open) => !open && setAEditar(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar faixa de aviso</DialogTitle>
+            <DialogDescription>As alterações ficam visíveis no site assim que guardar.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="edit-banner-titulo">Título</Label>
+              <Input
+                id="edit-banner-titulo"
+                value={formEdicao.titulo}
+                onChange={(e) => setFormEdicao({ ...formEdicao, titulo: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-banner-mensagem">Mensagem</Label>
+              <Textarea
+                id="edit-banner-mensagem"
+                value={formEdicao.mensagem}
+                onChange={(e) => setFormEdicao({ ...formEdicao, mensagem: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-banner-link">Link (opcional)</Label>
+              <Input
+                id="edit-banner-link"
+                value={formEdicao.link}
+                onChange={(e) => setFormEdicao({ ...formEdicao, link: e.target.value })}
+                placeholder="/apoiar"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={guardarEdicao} disabled={aGuardarEdicao}>
+              {aGuardarEdicao ? "A guardar..." : "Guardar alterações"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
@@ -181,6 +264,9 @@ const BannerHomepage = () => {
   const [aGravar, setAGravar] = useState(false);
   const [aEnviarImagem, setAEnviarImagem] = useState<string | null>(null);
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [aEditar, setAEditar] = useState<BannerHomepageAdmin | null>(null);
+  const [formEdicao, setFormEdicao] = useState({ titulo: "", descricao: "", link: "" });
+  const [aGuardarEdicao, setAGuardarEdicao] = useState(false);
 
   const load = async () => {
     try {
@@ -235,6 +321,34 @@ const BannerHomepage = () => {
       await load();
     } catch (err) {
       toast.error(mensagemDeErroApi(err, "Não foi possível remover o banner."));
+    }
+  };
+
+  const abrirEdicao = (b: BannerHomepageAdmin) => {
+    setFormEdicao({ titulo: b.titulo, descricao: b.descricao ?? "", link: b.link ?? "" });
+    setAEditar(b);
+  };
+
+  const guardarEdicao = async () => {
+    if (!aEditar) return;
+    if (!formEdicao.titulo) {
+      toast.error("Título obrigatório.");
+      return;
+    }
+    setAGuardarEdicao(true);
+    try {
+      await bannerHomepageApi.atualizar(aEditar.id, {
+        titulo: formEdicao.titulo,
+        descricao: formEdicao.descricao || null,
+        link: formEdicao.link || null,
+      });
+      toast.success("Banner atualizado.");
+      setAEditar(null);
+      await load();
+    } catch (err) {
+      toast.error(mensagemDeErroApi(err, "Não foi possível guardar as alterações."));
+    } finally {
+      setAGuardarEdicao(false);
     }
   };
 
@@ -343,7 +457,10 @@ const BannerHomepage = () => {
                   {aEnviarImagem === b.id ? "A enviar..." : b.imagem_url ? "Trocar foto" : "Adicionar foto"}
                 </Button>
                 <Switch checked={b.ativo} onCheckedChange={(v) => toggle(b, v)} />
-                <Button size="icon" variant="ghost" onClick={() => remove(b.id)}>
+                <Button size="icon" variant="ghost" onClick={() => abrirEdicao(b)} aria-label={`Editar ${b.titulo}`}>
+                  <Pencil className="w-4 h-4" />
+                </Button>
+                <Button size="icon" variant="ghost" onClick={() => remove(b.id)} aria-label={`Remover ${b.titulo}`}>
                   <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
@@ -352,6 +469,47 @@ const BannerHomepage = () => {
           {!rows.length && <p className="text-center text-muted-foreground py-6">Nenhum banner ainda.</p>}
         </CardContent>
       </Card>
+
+      <Dialog open={!!aEditar} onOpenChange={(open) => !open && setAEditar(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar banner da homepage</DialogTitle>
+            <DialogDescription>As alterações ficam visíveis assim que guardar (a foto edita-se à parte).</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="edit-bh-titulo">Título</Label>
+              <Input
+                id="edit-bh-titulo"
+                value={formEdicao.titulo}
+                onChange={(e) => setFormEdicao({ ...formEdicao, titulo: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-bh-descricao">Descrição (opcional)</Label>
+              <Textarea
+                id="edit-bh-descricao"
+                value={formEdicao.descricao}
+                onChange={(e) => setFormEdicao({ ...formEdicao, descricao: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-bh-link">Link (opcional)</Label>
+              <Input
+                id="edit-bh-link"
+                value={formEdicao.link}
+                onChange={(e) => setFormEdicao({ ...formEdicao, link: e.target.value })}
+                placeholder="/apoiar"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={guardarEdicao} disabled={aGuardarEdicao}>
+              {aGuardarEdicao ? "A guardar..." : "Guardar alterações"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
