@@ -387,7 +387,6 @@ Não imitar estes padrões enquanto a migração módulo-a-módulo decorre (ver 
 | Onde | Problema |
 |---|---|
 | `frontend/src/integrations/supabase/*` | Ainda chama o Supabase directamente — a substituir por um cliente da API própria, módulo a módulo. `Scanner.tsx` já não é exemplo disto (migrado para `screenings`, ver abaixo); `ProfileContext.tsx` e outros continuam |
-| `Exercicios.tsx`, `BaseExercise.tsx` | Paywall Premium ainda desligado por bypass (`temAcessoPremium = true`) — a activação já existe (W-11), falta só virar a chave, num PR isolado |
 | `ClinicalPartners.tsx` | Formulário de agendamento não persiste nada — só mostra um toast |
 | `DashboardUser.tsx` | "Exercícios disponíveis" e "Próxima teleconsulta" continuam valores fixos — "Análises realizadas" já lê `screenings` reais |
 | `Produto.tsx` | Catálogo de óculos é mock — sem carrinho nem checkout |
