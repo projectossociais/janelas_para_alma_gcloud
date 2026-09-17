@@ -45,7 +45,9 @@ describe("AdminNotifications", () => {
 
     await preencherEEnviar(user);
 
-    await waitFor(() => expect(enviar).toHaveBeenCalledWith("Manutenção", "O site vai estar em baixo.", null));
+    await waitFor(() =>
+      expect(enviar).toHaveBeenCalledWith("Manutenção", "O site vai estar em baixo.", null, false),
+    );
     expect(toastSuccess).not.toHaveBeenCalled();
     expect(toastError).toHaveBeenCalledWith("sem permissões");
   });
@@ -73,5 +75,36 @@ describe("AdminNotifications", () => {
     await waitFor(() =>
       expect(toastSuccess).toHaveBeenCalledWith(expect.stringMatching(/não há ninguém/i)),
     );
+  });
+
+  it("pede também por email quando a checkbox está marcada", async () => {
+    enviar.mockResolvedValue({ enviadas: 5, emails_enviados: 5, emails_falharam: 0 });
+    const user = userEvent.setup();
+    render(<AdminNotifications />);
+
+    await user.click(screen.getByLabelText("Enviar também por email"));
+    await preencherEEnviar(user);
+
+    await waitFor(() =>
+      expect(enviar).toHaveBeenCalledWith("Manutenção", "O site vai estar em baixo.", null, true),
+    );
+    expect(toastSuccess).toHaveBeenCalledWith(expect.stringMatching(/com email para todos/i));
+    expect(toastError).not.toHaveBeenCalled();
+  });
+
+  it("uma falha parcial de email nunca fica escondida atrás de um sucesso genérico", async () => {
+    enviar.mockResolvedValue({ enviadas: 5, emails_enviados: 3, emails_falharam: 2 });
+    const user = userEvent.setup();
+    render(<AdminNotifications />);
+
+    await user.click(screen.getByLabelText("Enviar também por email"));
+    await preencherEEnviar(user);
+
+    await waitFor(() => expect(enviar).toHaveBeenCalled());
+    // As notificações no sino já foram todas criadas -- não é um erro total
+    // (não usa a mensagem genérica de falha), mas também não pode fingir
+    // que os 2 emails que falharam saíram bem.
+    expect(toastError).toHaveBeenCalledWith(expect.stringMatching(/2 emails falharam/i));
+    expect(toastSuccess).not.toHaveBeenCalled();
   });
 });

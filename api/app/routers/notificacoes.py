@@ -6,7 +6,8 @@ lado do site. Aqui um envio de admin cria mesmo uma linha por utilizador-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.dependencies import obter_utilizador_admin, obter_utilizador_atual
+from app.core.dependencies import obter_email_sender, obter_utilizador_admin, obter_utilizador_atual
+from app.core.email import EmailSender
 from app.db import obter_sessao
 from app.repositories.admin_repository import SQLAlchemyAdminRepository
 from app.repositories.notification_repository import SQLAlchemyNotificationRepository
@@ -26,9 +27,12 @@ from app.services.notification_service import (
 router = APIRouter(prefix="/notificacoes", tags=["notificacoes"])
 
 
-def obter_notification_service(sessao: Session = Depends(obter_sessao)) -> NotificationService:
+def obter_notification_service(
+    sessao: Session = Depends(obter_sessao),
+    email_sender: EmailSender = Depends(obter_email_sender),
+) -> NotificationService:
     return NotificationService(
-        SQLAlchemyNotificationRepository(sessao), SQLAlchemyAdminRepository(sessao)
+        SQLAlchemyNotificationRepository(sessao), SQLAlchemyAdminRepository(sessao), email_sender
     )
 
 
@@ -86,9 +90,13 @@ def enviar(
     servico: NotificationService = Depends(obter_notification_service),
 ) -> NotificacaoEnviada:
     try:
-        enviadas = servico.enviar(dados.titulo, dados.mensagem, dados.papel)
+        resultado = servico.enviar(dados.titulo, dados.mensagem, dados.papel, dados.enviar_email)
     except PapelDeNotificacaoInvalidoError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=f"papel '{dados.papel}' inválido"
         ) from exc
-    return NotificacaoEnviada(enviadas=enviadas)
+    return NotificacaoEnviada(
+        enviadas=resultado.notificacoes_criadas,
+        emails_enviados=resultado.emails_enviados,
+        emails_falharam=resultado.emails_falharam,
+    )
