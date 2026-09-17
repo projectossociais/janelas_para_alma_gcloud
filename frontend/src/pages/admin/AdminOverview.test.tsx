@@ -73,9 +73,15 @@ describe("AdminOverview", () => {
     const linkVoluntariado = screen.getByRole("link", { name: /Candidaturas de voluntariado por decidir/i });
     expect(linkVoluntariado).toHaveAttribute("href", "/admin/voluntariado");
 
-    // 2 + 3 + 1 = 6, mostrado como destaque no cabeçalho da Central
-    const titulo = screen.getByText("Central de Pendências").closest("h3") as HTMLElement;
-    expect(within(titulo).getByText("6")).toBeInTheDocument();
+    // 2 + 3 + 1 = 6, mostrado como destaque no cabeçalho da Central. O link
+    // acima já aparece no primeiro render (usa "?? 0" antes dos dados
+    // chegarem) -- o Badge só depois de obterPendencias() resolver, por
+    // isso tem de se esperar por ele em vez de o verificar de imediato
+    // (senão o teste fica dependente da velocidade da máquina que o corre).
+    await waitFor(() => {
+      const titulo = screen.getByText("Central de Pendências").closest("h3") as HTMLElement;
+      expect(within(titulo).getByText("6")).toBeInTheDocument();
+    });
   });
 
   it("pede as estatísticas outra vez quando o período muda", async () => {
