@@ -610,11 +610,10 @@ marcada com ⚠️ e tem ordem definida.
 **Objectivo:** nenhuma funcionalidade afirma ao utilizador algo que não é verdade.
 Não depende de infraestrutura nova. Dias, não semanas.
 
-### W-01 · Remover o bypass do Premium
-- **Onde:** `src/pages/Exercicios.tsx:152` (`temAcessoPremium = true`), `src/components/exercises/BaseExercise.tsx:96-97` (`locked = false`)
-- **Fazer:** repor a verificação real de acesso; apagar o `// TODO: REMOVER BYPASS`
-- **Pronto quando:** uma conta sem Premium é bloqueada nos 8 exercícios avançados, e uma com Premium entra
-- ✅ **Desbloqueado:** confirmado que não há teste interno a decorrer
+### W-01 · Remover o bypass do Premium — ✅ **FEITO** (confirmado no código a 2026-09-17)
+- **Onde:** `src/pages/Exercicios.tsx:153`, `src/components/exercises/BaseExercise.tsx:82`
+- **Estado actual:** já não há bypass — ambos verificam `profile.premium_ativo || profile.papel === "admin"` a sério, com teste dedicado (`Exercicios.test.tsx`, comentário explícito: "nunca mais pelo bypass fixo"). Não ficou registado aqui quando foi feito nem por quem — só se confirmou ao verificar o código para responder a "o que falta" (2026-09-17). Sem pagantes confirmados nessa data (saída 1 da armadilha abaixo), por isso não houve necessidade da saída 2/3
+- **Pronto quando:** uma conta sem Premium é bloqueada nos 8 exercícios avançados, e uma com Premium entra — ✅
 
 > ⚠️ **Armadilha de sequência — ler antes de executar.**
 > Nenhum fluxo escreve hoje `profiles.papel = "premium"` (é o que **W-11** vai construir).
@@ -1546,7 +1545,7 @@ e nas fotos de publicações (`ADMIN-03`).
 |---|---|---|---|
 | 1 | Motor de análise do scanner | ✅ **Existe e está em produção** — `janelas-scanner-api`, microserviço à parte, já devolve medições reais a `Scanner.tsx` (ver W-09, corrigido 2026-09-17). Falta validação clínica (bloqueio nº8) | — |
 | 2 | Bypass do Premium é teste interno? | ✅ **Resolvido** — não é. Fica como tarefa atribuída (W-01), não se remove fora do sprint | — |
-| 3 | Existe algum utilizador com Premium pago? | ⏳ **Aberto** — W-11 já está feito, mas o bypass do paywall (`Exercicios.tsx:154`) só se remove depois de saber isto: sem pagantes, remove-se já; com pagantes, aprova-se-lhes o Premium no mesmo momento | Wilson |
+| 3 | Existe algum utilizador com Premium pago? | ✅ **Resolvido 2026-09-17** — confirmado que não, nessa data. O bypass do paywall já tinha saído do código antes disto ser perguntado (ver W-01) | Wilson |
 | 8 | Parceiro clínico disposto a validar o scanner com casos reais | ⏳ **Aberto** — bloqueia W-16, e sem ele não há produto clínico defensável | Wilson (parcerias) |
 | 4 | Cloud Run exige cartão registado, mesmo sem cobrar | ⏳ Aberto | Wilson (administrativo) |
 | 5 | Consentimento parental para menores — nunca abordado, nem no código nem nos documentos | ⏳ Aberto | Wilson + apoio jurídico |
