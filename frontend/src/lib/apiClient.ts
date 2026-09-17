@@ -5,10 +5,13 @@
  * este módulo tocar.
  *
  * Ver CLAUDE.md secção 0 — autenticação, perfil, banners, doações, feedback,
- * sessões de exercício, formulário de contacto, Premium (W-11) e gestão de
- * admins já estão migrados. O resto dos dados (scanner, dashboard, óculos,
- * candidaturas, ...) continua a vir de `src/integrations/supabase/client.ts`
- * enquanto a migração módulo-a-módulo não chega lá.
+ * sessões de exercício, scanner (`screenings`), dashboard, formulário de
+ * contacto, Premium (W-11), candidaturas de voluntariado e gestão de admins
+ * já estão migrados. Ver CLAUDE.md secção 11 (dívida conhecida) para o que
+ * ainda falta — inclui um bug real, não só dívida: os formulários públicos
+ * de candidatura a voluntário (`ContactSection.tsx`, `VolunteerSection.tsx`)
+ * ainda não chamam `voluntariadoApi.candidatar` definido aqui, chamam uma
+ * Edge Function do Supabase que só envia um email (docs/BACKLOG.md W-16).
  */
 
 // Mesma origem por omissão: `/api/*` é servido pelo rewrite de `vercel.json`
