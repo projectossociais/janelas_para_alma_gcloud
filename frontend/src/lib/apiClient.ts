@@ -444,6 +444,47 @@ export const sessoesExercicioApi = {
     }),
 };
 
+export interface ScreeningInput {
+  estado: string;
+  rosto_detetado: boolean;
+  requer_avaliacao_humana: boolean;
+  assimetria_horizontal?: number | null;
+  assimetria_vertical?: number | null;
+  qualidade_captura?: number | null;
+  qualidade_fiavel?: boolean | null;
+  qualidade_motivos?: string[];
+  medicoes?: Record<string, unknown> | null;
+  versao_analise?: string | null;
+}
+
+export interface ScreeningPublica {
+  id: string;
+  user_id: string;
+  estado: string;
+  rosto_detetado: boolean;
+  requer_avaliacao_humana: boolean;
+  assimetria_horizontal: number | null;
+  assimetria_vertical: number | null;
+  qualidade_captura: number | null;
+  qualidade_fiavel: boolean | null;
+  qualidade_motivos: string[];
+  medicoes: Record<string, unknown> | null;
+  versao_analise: string | null;
+  criado_em: string;
+}
+
+export const screeningsApi = {
+  /** Grava o resultado já calculado pelo janelas-scanner-api. Nunca envia a
+   *  fotografia em si — só as medições (CLAUDE.md secção 4, regra 4). */
+  registar: (dados: ScreeningInput) =>
+    pedido<ScreeningPublica>("/screenings", {
+      method: "POST",
+      body: JSON.stringify(dados),
+    }),
+
+  listarMinhas: () => pedido<ScreeningPublica[]>("/screenings/minhas"),
+};
+
 export interface DoacaoPublica {
   id: string;
   recibo_id: string;

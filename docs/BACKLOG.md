@@ -645,10 +645,11 @@ Não depende de infraestrutura nova. Dias, não semanas.
 - **Pronto quando:** após eliminar, o login deixa de funcionar e os dados pessoais desapareceram da base de dados
 - **Testes:** integração, incluindo o caminho de erro
 
-### W-04 · Scanner deixa de inventar diagnósticos
+### W-04 · Scanner deixa de inventar diagnósticos — ✅ feito 2026-09-17
 - **Onde:** `src/pages/Scanner.tsx` (`DIAGNOSES[Math.floor(Math.random() * ...)]`)
-- **Fazer:** enquanto não houver análise real (Sprint 3), retirar o diagnóstico ou reclassificar o ecrã como *"sinais observados — sujeitos a confirmação clínica"*. Remover a percentagem de confiança fabricada
-- **Pronto quando:** nenhum ecrã apresenta um resultado clínico que não tenha sido calculado a partir de medições reais
+- **O que mudou entretanto (fora deste backlog, por isso ficou desactualizado):** o Lukeny ligou um microserviço próprio de análise, o `janelas-scanner-api` (ver W-09 abaixo — a nota "parte-se do zero" já não é verdade), ao fluxo de câmara guiada (3 poses). Esse fluxo já calculava um diagnóstico real, com medições de alinhamento ocular
+- **O que ainda faltava e foi corrigido agora:** o botão "Carregar Fotografia" (upload de uma única imagem) nunca chamava esse microserviço — caía sempre no `Math.random()`. Removido por completo: só fica a captura guiada, que exige as 3 poses para o cálculo real
+- **Pronto quando:** nenhum ecrã apresenta um resultado clínico que não tenha sido calculado a partir de medições reais — ✅
 
 ### W-05 · Tirar o `.env` do controlo de versões
 - **Onde:** `.gitignore` (já actualizado), falta `git rm --cached .env`
@@ -713,15 +714,26 @@ visivelmente avariado. Nenhuma destas tarefas toca base de dados, RLS ou paywall
 - `pytest` + build da imagem Docker na API; `lint` + `test` + `build` no frontend
 - **Pronto quando:** um PR com teste a falhar é bloqueado automaticamente
 
-#### W-09 · Motor de análise — parte-se do zero
-- **Assunção fixada:** não existe código nem base do scanner de IA. O `janelas-scanner-api`
-  deixa de constar do plano. Nada do que se segue depende de recuperar seja o que for
-- **O que já existe e conta:** a extracção de pontos faciais **já funciona**, em
-  TypeScript, no browser — `src/hooks/useEyeTracking.ts` e `src/components/EyeLandmarkOverlay.tsx`
-  usam FaceMesh, e `Scanner.tsx` já captura as 3 poses. O ponto de partida não é zero
-  absoluto: é zero do lado do *cálculo clínico*
-- **O que falta é a parte difícil:** transformar coordenadas de pontos faciais numa
-  medição clinicamente defensável de desvio ocular. Ver Sprint 3
+#### W-09 · Motor de análise — ⚠️ nota desactualizada, corrigida 2026-09-17
+- **A assunção abaixo já não é verdade e não deve orientar mais nenhum trabalho.**
+  Ficou aqui como registo de como o plano evoluiu, não como estado actual
+- ~~**Assunção fixada:** não existe código nem base do scanner de IA. O `janelas-scanner-api`
+  deixa de constar do plano.~~ O `janelas-scanner-api` **existe e está em produção** —
+  um microserviço FastAPI à parte (fora deste monorepo), que `Scanner.tsx` chama via
+  `POST /screening/multi-gaze` (`src/services/api/screeningApi.ts`) com as 3 fotografias
+  guiadas, e devolve medições reais de alinhamento ocular por olho (posição, desvio
+  horizontal/vertical, qualidade de captura). Quem o construiu e quando não está
+  documentado aqui — só se percebeu ao abrir `Scanner.tsx` para corrigir o W-04
+- **O que existe agora do lado da API própria (2026-09-17):** o resultado desse
+  microserviço passou a persistir-se em `screenings` (tabela já existente na baseline,
+  antes órfã) através de `POST /screenings` / `GET /screenings/minhas`
+  (`app/routers/screenings.py`) — nunca a fotografia, só as medições (CLAUDE.md §4.4)
+- **O que continua por fazer:** validar clinicamente as medições que o `janelas-scanner-api`
+  devolve (não há parceiro clínico a confirmar casos reais, ver bloqueio nº8 mais abaixo),
+  e decidir se esse microserviço passa a viver dentro deste monorepo ou fica separado
+  a prazo. A extracção de pontos faciais no browser (`useEyeTracking.ts`,
+  `EyeLandmarkOverlay.tsx`, FaceMesh) continua a ser usada só para o overlay ao vivo, não
+  para o cálculo em si — isso acontece no microserviço
 
 ### Lukeny — conteúdo e estrutura
 
@@ -1532,7 +1544,7 @@ e nas fotos de publicações (`ADMIN-03`).
 
 | # | Bloqueio | Estado | Quem resolve |
 |---|---|---|---|
-| 1 | Motor de análise do scanner | ✅ **Assunção fixada** — não existe código nem base. Parte-se do zero (W-09, Sprint 3) | — |
+| 1 | Motor de análise do scanner | ✅ **Existe e está em produção** — `janelas-scanner-api`, microserviço à parte, já devolve medições reais a `Scanner.tsx` (ver W-09, corrigido 2026-09-17). Falta validação clínica (bloqueio nº8) | — |
 | 2 | Bypass do Premium é teste interno? | ✅ **Resolvido** — não é. Fica como tarefa atribuída (W-01), não se remove fora do sprint | — |
 | 3 | Existe algum utilizador com Premium pago? | ⏳ **Aberto** — W-11 já está feito, mas o bypass do paywall (`Exercicios.tsx:154`) só se remove depois de saber isto: sem pagantes, remove-se já; com pagantes, aprova-se-lhes o Premium no mesmo momento | Wilson |
 | 8 | Parceiro clínico disposto a validar o scanner com casos reais | ⏳ **Aberto** — bloqueia W-16, e sem ele não há produto clínico defensável | Wilson (parcerias) |
@@ -1616,6 +1628,109 @@ a API de produção — o mesmo teste que apanhou o problema.
 `if gcloud <algo> describe ... ; then`, perguntar explicitamente "o SA de deploy tem
 esta permissão, ou só o Owner a testar à mão?" — a resposta errada fica invisível até
 ao primeiro deploy automático a sério, exactamente como desta vez.
+
+---
+
+## Auditoria de jornada do utilizador + UX externa (2026-09-17)
+
+Duas auditorias pedidas pelo dono do projecto, cruzadas com o estado real do código
+(não com suposições nem com o que está em produção — ver achado principal abaixo).
+Documento de trabalho completo, com evidência ficheiro:linha e as tabelas comparativas,
+publicado à parte como artefacto partilhável; este registo fica só com o essencial para
+quem pega no `git pull` sem esse link.
+
+**Achado principal**: das duas auditorias, a mais valiosa não foi nenhum problema de UI —
+foi confirmar que **produção pode estar atrás de `main`**. Um relatório UX externo,
+feito por navegação manual em `janelasparaalma.com`, apontou 8 problemas técnicos; ao
+verificar cada um contra o código actual, **5 já estavam corrigidos em `main`** (páginas
+legais, validação da password actual ao mudar password, recuperação de password, editar
+perfil, separação plano gratuito/premium na página de exercícios). Antes de reabrir
+qualquer um destes como tarefa nova, confirmar a data do último deploy da API (Cloud Run)
+e do frontend (Vercel) contra o commit de `main` — se estiver atrasado, um deploy resolve
+sozinho, sem código novo.
+
+### UX-01 — Confirmar deploy de produção contra `main` · W
+
+Antes de tocar em qualquer item desta secção: `git log -1 main` vs. o commit realmente
+em Cloud Run/Vercel. Se divergir, disparar deploy e voltar a testar os 5 pontos "já
+corrigidos" abaixo em produção antes de os tratar como bug.
+
+### UX-02 — Gralha "Três tiers, três formas de transformar" · L
+
+`frontend/src/pages/Apoiar.tsx:422`. Mistura inglês ("tiers") com português — corrigir
+para "Três formas de transformar" ou "três níveis".
+
+### UX-03 — Falta campo de localização/província na doação de materiais · L
+
+`api/app/schemas/doacao.py` (`DoacaoMateriaisCriar`) não tem campo de
+localização/província do doador, nem o formulário em `Apoiar.tsx` o pede — sem isto a
+equipa não sabe onde recolher o que foi doado. Adicionar ao schema Pydantic e ao
+formulário; validação simples (campo obrigatório), sem lógica de service — é dado, não
+regra de negócio.
+
+### UX-04 — Candidatura pública do Kamba não grava em BD · L
+
+`VolunteerSection.tsx` (em `/kamba`) envia a candidatura por email via edge function do
+Supabase. Já existe `voluntariadoApi.candidatar` (`apiClient.ts:729`), ligado a
+`POST /voluntariado/candidatar`, que grava em BD e alimenta a fila de aprovação em
+`AdminVoluntariado.tsx` — mas o formulário público não a chama. Resultado: o painel de
+candidaturas do admin nunca recebe nada pela via pública actual. Trocar o envio por
+email pela chamada real à API.
+
+### UX-05 — Actividades de voluntariado sem vitrine pública · L
+
+`voluntariadoApi.listarAtividades()` (`apiClient.ts:737`) está definida e nunca é
+chamada em nenhuma página pública — confirmado por grep a todo o `frontend/src`. O
+admin já filtra actividades por estado/período (`AdminVoluntariado.tsx`), mas esse
+trabalho fica invisível ao utilizador comum. Consumir a listagem numa secção pública de
+`/kamba`.
+
+### UX-06 — Sem link permanente para o dashboard na Navbar · L
+
+`Navbar.tsx:160-180` (`allLinks`, utilizador autenticado não-admin): Sobre Nós, Sobre o
+Estrabismo, Equipa, Triagem Ocular, Meu Kamba Estrábico, Exercícios, Portal Clínico,
+Contactos — nenhum leva a `/dashboard`. O único caminho é adivinhar o URL. Adicionar "O
+meu painel" à Navbar — maior ganho de discoverability desta lista pelo menor esforço.
+
+### UX-07 — `DashboardUser.tsx` mostra dados fixos · W+L
+
+Linha 46: "Exercícios disponíveis" é sempre `"4"`, hardcoded. Linha 53: "Próxima
+teleconsulta" é sempre `"—"`. Coincide com "Painel pessoal com dados reais" já marcado
+como prioridade Alta no documento de roadmap de produto — ligar aos exercícios/pontuação
+reais do utilizador quando essa base existir (depende de pontuação de exercícios ainda
+não implementada — ver secções de produto anteriores).
+
+### UX-08 — Polimento de UI directo, sem dependência de backend · L
+
+Do relatório externo, confirmado por inspecção visual (não precisam de verificação de
+código de negócio):
+- Reordenar "Serviços"/"Produtos" para a ordem do menu ("A Nossa Visão" aparece antes de
+  "Os Vossos Parceiros" — inverter).
+- Scroll em falta no modal de "Últimas Referências" (conteúdo cortado).
+- Links rápidos/âncoras não levam ao topo da página de destino.
+- Link do Google Maps sem `target="_blank"`.
+- Botão "Voltar" com contraste/posição pouco visíveis.
+- Espaço insuficiente entre o botão de perfil e o logótipo na Navbar.
+- "Terceiro link avariado" apontado no relatório sem especificar qual — pedir ao
+  avaliador o link exacto antes de investir tempo a procurá-lo às cegas.
+
+### UX-09 — "Vídeos não reproduzem" é provável mal-entendido, não bug · —
+
+Os exercícios (`components/exercises/BaseExercise.tsx`, `pages/exercises/*.tsx`) usam
+`canvas`/`requestAnimationFrame`, não ficheiros de vídeo. O único `<video>` num
+exercício (`AmbliopiaExercise.tsx:459`) é o feed da câmara para eye-tracking,
+propositadamente `sr-only`/oculto — não um vídeo demonstrativo. Não abrir tarefa de
+correcção sem antes confirmar com o avaliador o que exactamente esperava ver.
+
+### Kamba Social — proposta, não tarefa ainda
+
+Levantado à parte da auditoria técnica: "Meu Kamba Estrábico" tem hoje só um
+formulário de candidatura a voluntário — nada do espaço de apoio mútuo entre pessoas
+estrábicas que o nome sugere. Proposta (fica registada, não entra em sprint sem decisão
+do dono do produto): separar em dois produtos debaixo do mesmo nome — (1) voluntariado,
+reparado por UX-04/UX-05; (2) "Kamba Social", testemunhos moderados + mural de
+perguntas/respostas estruturado (não chat livre — mais seguro com público infantil,
+mais fácil de moderar pelo mesmo padrão já usado em Publicações/Banners).
 
 ---
 
