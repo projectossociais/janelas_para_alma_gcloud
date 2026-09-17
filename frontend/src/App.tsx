@@ -60,6 +60,7 @@ import AdminPublicacoes from "./pages/admin/AdminPublicacoes";
 import AdminAdmins from "./pages/admin/AdminAdmins";
 import AdminVoluntariado from "./pages/admin/AdminVoluntariado";
 import GlobalBanner from "./components/GlobalBanner";
+import { SiteBannerProvider } from "./contexts/SiteBannerContext";
 import ScrollToTop from "./components/ScrollToTop";
 import NotFound from "./pages/NotFound";
 
@@ -74,6 +75,7 @@ const App = () => (
         <ProfileProvider>
           <FeedbackProvider>
             <BrowserRouter>
+              <SiteBannerProvider>
               <ScrollToTop />
               <GlobalBanner />
               <Routes>
@@ -139,6 +141,7 @@ const App = () => (
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              </SiteBannerProvider>
             </BrowserRouter>
           </FeedbackProvider>
         </ProfileProvider>

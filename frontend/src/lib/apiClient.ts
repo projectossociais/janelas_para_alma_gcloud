@@ -52,12 +52,42 @@ function mensagemDeErro(corpo: unknown): string | null {
   return null;
 }
 
-async function pedido<T>(caminho: string, opcoes: RequestInit = {}): Promise<T> {
+/** Tenta renovar o access token pelo refresh token (cookie httpOnly, 30
+ *  dias) -- `fetch` cru, não `pedido()`, para nunca poder entrar em
+ *  recursão. Devolve `false` em qualquer falha (refresh também expirado,
+ *  rede em baixo, etc.) -- quem chamou fica com o 401 original. */
+async function tentarRenovarToken(): Promise<boolean> {
+  try {
+    const resposta = await fetch(`${API_URL}/auth/atualizar-token`, {
+      method: "POST",
+      credentials: "include",
+    });
+    return resposta.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function pedido<T>(caminho: string, opcoes: RequestInit = {}, jaTentouRenovar = false): Promise<T> {
   const resposta = await fetch(`${API_URL}${caminho}`, {
     ...opcoes,
     credentials: "include",
     headers: { "Content-Type": "application/json", ...opcoes.headers },
   });
+
+  // O access token dura só 15 minutos (ver CLAUDE.md §3b) -- sem isto,
+  // qualquer página onde o utilizador fique parado mais tempo sem nenhum
+  // pedido de fundo perdia a sessão em silêncio, e só se notava (com um 401
+  // inesperado) no próximo clique. O refresh token (30 dias) já existia no
+  // backend; só faltava o browser alguma vez o usar. Uma única tentativa
+  // (`jaTentouRenovar` corta a recursão) — se o refresh também falhar
+  // (expirado, revogado), o 401 original segue tal como antes.
+  if (resposta.status === 401 && !jaTentouRenovar) {
+    const renovou = await tentarRenovarToken();
+    if (renovou) {
+      return pedido<T>(caminho, opcoes, true);
+    }
+  }
 
   if (!resposta.ok) {
     let mensagem = "Ocorreu um erro. Tente novamente.";

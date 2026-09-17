@@ -93,6 +93,40 @@ describe("apiClient — mesma origem", () => {
     ).rejects.toMatchObject({ status: 401 });
   });
 
+  it("num 401, tenta renovar o token e repete o pedido original — sessão continua sem o utilizador notar", async () => {
+    const fetchMock = vi
+      .fn()
+      // 1º: o pedido original, com o access token já expirado
+      .mockResolvedValueOnce(respostaFalsa({ detail: "Sessão inválida" }, { ok: false, status: 401 }))
+      // 2º: POST /auth/atualizar-token — o refresh token (30 dias) ainda é válido
+      .mockResolvedValueOnce(respostaFalsa(undefined, { ok: true, status: 204 }))
+      // 3º: repetição do pedido original, agora com o access token renovado
+      .mockResolvedValueOnce(respostaFalsa({ id: "u1", email: "a@b.com" }, { ok: true, status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { authApi } = await import("./apiClient");
+    await expect(authApi.eu()).resolves.toMatchObject({ id: "u1" });
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock.mock.calls[1][0]).toBe("/api/auth/atualizar-token");
+    expect(fetchMock.mock.calls[2][0]).toBe("/api/auth/eu");
+  });
+
+  it("se o refresh também falhar (refresh token expirado), propaga o 401 original sem tentar outra vez", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(respostaFalsa({ detail: "Sessão inválida" }, { ok: false, status: 401 }))
+      .mockResolvedValueOnce(respostaFalsa({ detail: "sem sessão" }, { ok: false, status: 401 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { authApi } = await import("./apiClient");
+    await expect(authApi.eu()).rejects.toMatchObject({ status: 401, message: "Sessão inválida" });
+
+    // Exactamente 2 chamadas -- pedido original + a tentativa de renovar.
+    // Nunca uma 3ª (senão seria uma recursão sem fim quando o refresh falha).
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it("204 sem corpo não tenta fazer parse de JSON", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
