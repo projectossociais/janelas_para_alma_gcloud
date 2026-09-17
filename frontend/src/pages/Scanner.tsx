@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload, Camera, ScanLine, ShieldCheck, Sparkles, Loader2, CameraOff, RefreshCw, AlertTriangle } from "lucide-react";
+import { Camera, ScanLine, ShieldCheck, Sparkles, Loader2, CameraOff, RefreshCw, AlertTriangle } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
@@ -10,8 +10,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { submeterRastreioMultiGaze, type ScreeningResponse } from "@/services/api/screeningApi";
 
-
-const DIAGNOSES = ["Esotropia", "Exotropia", "Hipertropia", "Hipotropia"] as const;
 
 type TrackingStage = 0 | 1 | 2;
 const TRACKING_STAGES = [
@@ -119,7 +117,6 @@ const Scanner = () => {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [analysisId, setAnalysisId] = useState<string | null>(null);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const timersRef = useRef<number[]>([]);
@@ -185,31 +182,27 @@ const Scanner = () => {
 
   const finishScan = useCallback((
     url: string | null,
-    analysisId?: string | null,
-    apiResult?: ScreeningResponse | null
+    analysisId: string | null,
+    apiResult: ScreeningResponse
   ) => {
     setPreviewUrl(url);
     setScanning(true);
 
-    // Determina o diagnóstico e confiança a partir do retorno da API
+    // Determina o diagnóstico e confiança a partir do retorno real da API de
+    // rastreio (janelas-scanner-api) — nunca inventado no frontend.
     let diagnosis = "Alinhamento Fisiológico Normal";
     let confidence = 92;
 
-    if (apiResult) {
-      if (apiResult.incomitante || apiResult.requer_avaliacao_humana) {
-        // Categoria fixa — o texto livre de `recomendacao` vai em `apiData`,
-        // para o ecrã de resultados o mostrar à parte (nunca como chave de
-        // diagnóstico: DIAGNOSIS_DATA só conhece um conjunto fechado de chaves).
-        diagnosis = "Necessária Avaliação Oftalmológica";
-      }
-      // Calcula uma pontuação de confiança com base na qualidade da captura
-      const posCentro = apiResult.posicoes?.find(p => p.posicao.toUpperCase() === "CENTRO");
-      if (posCentro?.qualidade_captura?.pontuacao) {
-        confidence = Math.round(posCentro.qualidade_captura.pontuacao * 100);
-      }
-    } else {
-      diagnosis = DIAGNOSES[Math.floor(Math.random() * DIAGNOSES.length)];
-      confidence = Math.floor(78 + Math.random() * 17);
+    if (apiResult.incomitante || apiResult.requer_avaliacao_humana) {
+      // Categoria fixa — o texto livre de `recomendacao` vai em `apiData`,
+      // para o ecrã de resultados o mostrar à parte (nunca como chave de
+      // diagnóstico: DIAGNOSIS_DATA só conhece um conjunto fechado de chaves).
+      diagnosis = "Necessária Avaliação Oftalmológica";
+    }
+    // Calcula uma pontuação de confiança com base na qualidade da captura
+    const posCentro = apiResult.posicoes?.find(p => p.posicao.toUpperCase() === "CENTRO");
+    if (posCentro?.qualidade_captura?.pontuacao) {
+      confidence = Math.round(posCentro.qualidade_captura.pontuacao * 100);
     }
 
     window.setTimeout(() => {
@@ -225,13 +218,6 @@ const Scanner = () => {
       navigate(analysisId ? `/scanner/resultados?id=${analysisId}` : "/scanner/resultados");
     }, 2500);
   }, [navigate]);
-
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    finishScan(URL.createObjectURL(file));
-  };
-
 
   const startCamera = async () => {
     setCameraError(null);
@@ -543,45 +529,27 @@ const Scanner = () => {
 
               </div>
             ) : (
-              <div className="grid md:grid-cols-2 gap-5 animate-fade-in">
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="group relative overflow-hidden rounded-3xl border-2 border-dashed border-border bg-card p-8 md:p-10 text-left transition-all duration-300 hover:border-teal hover:-translate-y-1 hover:shadow-elevated"
-                >
-                  <div className="w-14 h-14 rounded-2xl bg-teal/10 text-teal flex items-center justify-center mb-5 group-hover:bg-teal group-hover:text-teal-foreground transition-colors">
-                    <Upload className="w-7 h-7" />
-                  </div>
-                  <h3 className="text-xl font-bold text-foreground">Carregar Fotografia</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Selecione uma imagem nítida do rosto, com olhar dirigido à câmara e boa iluminação.
-                  </p>
-                  <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-teal">
-                    Escolher ficheiro →
-                  </span>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleFile}
-                  />
-                </button>
-
+              <div className="max-w-md mx-auto animate-fade-in">
                 <button
                   onClick={startCamera}
-                  className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-navy to-navy/80 p-8 md:p-10 text-left text-navy-foreground transition-all duration-300 hover:-translate-y-1 hover:shadow-elevated"
+                  className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-navy to-navy/80 p-8 md:p-10 text-left text-navy-foreground transition-all duration-300 hover:-translate-y-1 hover:shadow-elevated w-full"
                 >
                   <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center mb-5 group-hover:bg-white/25 transition-colors">
                     <Camera className="w-7 h-7" />
                   </div>
                   <h3 className="text-xl font-bold">Usar Câmara</h3>
                   <p className="mt-2 text-sm text-white/80">
-                    Capture uma imagem em tempo real diretamente pela câmara do seu dispositivo.
+                    Capture 3 imagens guiadas (frente, direita, esquerda) para uma análise real do
+                    alinhamento ocular.
                   </p>
                   <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-gold">
                     Ativar câmara →
                   </span>
                 </button>
+                <p className="mt-3 text-center text-xs text-muted-foreground">
+                  O diagnóstico é calculado a partir das 3 poses capturadas — não é possível a
+                  partir de uma única fotografia.
+                </p>
               </div>
             )}
 
