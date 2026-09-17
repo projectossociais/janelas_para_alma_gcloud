@@ -150,4 +150,68 @@ describe("AdminVoluntariado", () => {
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).getByText("ana@example.com")).toBeInTheDocument();
   });
+
+  describe("filtros de actividades (gestão com muitas actividades)", () => {
+    const PUBLICADA_PASSADA = {
+      ...ATIVIDADE,
+      id: "ativ-passada",
+      titulo: "Rastreio já feito",
+      data_inicio: "2020-01-01T09:00:00.000Z",
+      estado: "publicada",
+    };
+    const CANCELADA_FUTURA = {
+      ...ATIVIDADE,
+      id: "ativ-cancelada",
+      titulo: "Rastreio cancelado",
+      data_inicio: "2099-01-01T09:00:00.000Z",
+      estado: "cancelada",
+    };
+
+    it("filtra por estado -- só mostra as canceladas", async () => {
+      listarTodasAsAtividades.mockResolvedValue([PUBLICADA_PASSADA, CANCELADA_FUTURA]);
+      const user = userEvent.setup();
+      renderPage();
+
+      await user.click(await screen.findByRole("tab", { name: /Actividades/i }));
+      expect(await screen.findByText("Rastreio já feito")).toBeInTheDocument();
+      expect(screen.getByText("Rastreio cancelado")).toBeInTheDocument();
+
+      // Dois selects sem label -- o primeiro é o de estado (ver AdminVoluntariado.tsx).
+      await user.click(screen.getAllByRole("combobox")[0]);
+      await user.click(await screen.findByRole("option", { name: "Canceladas" }));
+
+      expect(screen.queryByText("Rastreio já feito")).not.toBeInTheDocument();
+      expect(screen.getByText("Rastreio cancelado")).toBeInTheDocument();
+    });
+
+    it("filtra por período -- só mostra as que já aconteceram", async () => {
+      listarTodasAsAtividades.mockResolvedValue([PUBLICADA_PASSADA, CANCELADA_FUTURA]);
+      const user = userEvent.setup();
+      renderPage();
+
+      await user.click(await screen.findByRole("tab", { name: /Actividades/i }));
+      expect(await screen.findByText("Rastreio já feito")).toBeInTheDocument();
+
+      await user.click(screen.getAllByRole("combobox")[1]);
+      await user.click(await screen.findByRole("option", { name: "Já aconteceram" }));
+
+      expect(screen.getByText("Rastreio já feito")).toBeInTheDocument();
+      expect(screen.queryByText("Rastreio cancelado")).not.toBeInTheDocument();
+    });
+
+    it("mostra aviso distinto quando os filtros não têm nenhum resultado (não confunde com 'sem actividades')", async () => {
+      listarTodasAsAtividades.mockResolvedValue([PUBLICADA_PASSADA]);
+      const user = userEvent.setup();
+      renderPage();
+
+      await user.click(await screen.findByRole("tab", { name: /Actividades/i }));
+      await screen.findByText("Rastreio já feito");
+
+      await user.click(screen.getAllByRole("combobox")[0]);
+      await user.click(await screen.findByRole("option", { name: "Canceladas" }));
+
+      expect(screen.getByText("Nenhuma actividade corresponde aos filtros.")).toBeInTheDocument();
+      expect(screen.queryByText("Nenhuma actividade ainda.")).not.toBeInTheDocument();
+    });
+  });
 });
