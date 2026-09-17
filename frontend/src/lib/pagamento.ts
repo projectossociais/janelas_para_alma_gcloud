@@ -22,13 +22,3 @@ export const DEFAULT_BANK_DATA: DadosBancarios = {
 /** Oculta o meio de um valor sensível (telefone, IBAN) para exibição. */
 export const ofuscarValor = (valor: string): string =>
   valor.length <= 8 ? valor : `${valor.slice(0, 4)}****${valor.slice(-4)}`;
-
-/** Converte o ficheiro binário (PDF ou imagem) para base64 para envio seguro via Edge Function. */
-export const fileToBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve((reader.result as string).split(",")[1]);
-    reader.onerror = (error) => reject(error);
-  });
-};

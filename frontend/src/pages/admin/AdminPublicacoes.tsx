@@ -103,7 +103,7 @@ const AdminPublicacoes = () => {
       <div>
         <h2 className="text-2xl font-bold">Publicações & Mural de Actividades</h2>
         <p className="text-sm text-muted-foreground">
-          O que aparece como "Ações Recentes" no site já não é escrito directamente em código —
+          O que aparece como "Ações Recentes" no site,
           crie, adicione fotos e publique aqui. Nasce sempre em rascunho: só fica visível ao
           público depois de premir "Publicar".
         </p>

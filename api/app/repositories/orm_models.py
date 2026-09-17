@@ -207,6 +207,9 @@ class Doacao(Base):
     detalhes: Mapped[str | None] = mapped_column(Text)
     recibo_id: Mapped[str | None] = mapped_column(Text)
     status: Mapped[str | None] = mapped_column(Text, server_default="pendente")
+    # Comprovativo de transferência (doação financeira) -- upload directo ao
+    # R2, mesmo padrão do avatar (CROSS-02). Nunca os bytes pela API.
+    comprovativo_url: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -272,6 +275,9 @@ class PremiumRequest(Base):
         ForeignKey("utilizadores.id", ondelete="SET NULL")
     )
     aprovado_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Comprovativo de pagamento -- upload directo ao R2, mesmo padrão do
+    # avatar (CROSS-02). Um admin só aprova depois de confirmar isto.
+    comprovativo_url: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 

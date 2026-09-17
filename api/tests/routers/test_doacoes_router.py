@@ -77,3 +77,24 @@ def test_nunca_devolve_201_quando_o_envio_do_email_falha(client_com_falha_de_ema
 
     assert resposta.status_code != 201
     assert resposta.status_code == 500
+
+
+def test_regista_doacao_financeira_com_comprovativo_valido(client_ok: TestClient) -> None:
+    resposta = client_ok.post(
+        "/doacoes/financeiro",
+        json={"email": "ana@example.com", "comprovativo_chave": "comprovativos/abc.pdf"},
+    )
+
+    assert resposta.status_code == 201
+    corpo = resposta.json()
+    assert corpo["recibo_id"].startswith("FIN-")
+    assert corpo["status"] == "comprovativo_enviado"
+
+
+def test_recusa_comprovativo_fora_do_prefixo_com_403(client_ok: TestClient) -> None:
+    resposta = client_ok.post(
+        "/doacoes/financeiro",
+        json={"email": "ana@example.com", "comprovativo_chave": "avatares/outro/foto.png"},
+    )
+
+    assert resposta.status_code == 403

@@ -28,6 +28,7 @@ class PedidoPremiumRegisto:
     telefone: str | None
     plano: str | None
     status: str
+    comprovativo_url: str | None
     aprovado_por: str | None
     aprovado_em: datetime | None
     created_at: datetime
@@ -35,7 +36,13 @@ class PedidoPremiumRegisto:
 
 class PremiumRepository(Protocol):
     def criar(
-        self, nome: str, email: str, telefone: str | None, plano: str | None, user_id: str | None
+        self,
+        nome: str,
+        email: str,
+        telefone: str | None,
+        plano: str | None,
+        user_id: str | None,
+        comprovativo_url: str | None = None,
     ) -> PedidoPremiumRegisto: ...
     def obter(self, pedido_id: str) -> PedidoPremiumRegisto | None: ...
     def listar(self) -> list[PedidoPremiumRegisto]: ...
@@ -54,6 +61,7 @@ def _para_registo(row: PremiumRequest) -> PedidoPremiumRegisto:
         telefone=row.telefone,
         plano=row.plano,
         status=row.status or "pendente",
+        comprovativo_url=row.comprovativo_url,
         aprovado_por=str(row.aprovado_por) if row.aprovado_por else None,
         aprovado_em=row.aprovado_em,
         created_at=row.created_at,
@@ -65,7 +73,13 @@ class SQLAlchemyPremiumRepository:
         self._sessao = sessao
 
     def criar(
-        self, nome: str, email: str, telefone: str | None, plano: str | None, user_id: str | None
+        self,
+        nome: str,
+        email: str,
+        telefone: str | None,
+        plano: str | None,
+        user_id: str | None,
+        comprovativo_url: str | None = None,
     ) -> PedidoPremiumRegisto:
         row = PremiumRequest(
             nome=nome,
@@ -74,6 +88,7 @@ class SQLAlchemyPremiumRepository:
             plano=plano,
             user_id=uuid.UUID(user_id) if user_id else None,
             status="pendente",
+            comprovativo_url=comprovativo_url,
         )
         self._sessao.add(row)
         self._sessao.commit()

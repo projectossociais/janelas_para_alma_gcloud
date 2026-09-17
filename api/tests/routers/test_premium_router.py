@@ -19,7 +19,7 @@ class RepositorioPremiumFalso:
         self._pedidos: dict[str, PedidoPremiumRegisto] = {}
         self._seq = 0
 
-    def criar(self, nome, email, telefone, plano, user_id) -> PedidoPremiumRegisto:
+    def criar(self, nome, email, telefone, plano, user_id, comprovativo_url=None) -> PedidoPremiumRegisto:
         self._seq += 1
         reg = PedidoPremiumRegisto(
             id=f"ped-{self._seq}",
@@ -29,6 +29,7 @@ class RepositorioPremiumFalso:
             telefone=telefone,
             plano=plano,
             status="pendente",
+            comprovativo_url=comprovativo_url,
             aprovado_por=None,
             aprovado_em=None,
             created_at=datetime.now(UTC),
@@ -92,7 +93,15 @@ def ambiente():
 
 def test_criar_pedido_sem_sessao_e_publico(ambiente) -> None:
     c, repo, *_ = ambiente
-    r = c.post("/premium-requests", json={"nome": "Ana", "email": "ana@example.com", "plano": "mensal"})
+    r = c.post(
+        "/premium-requests",
+        json={
+            "nome": "Ana",
+            "email": "ana@example.com",
+            "plano": "mensal",
+            "comprovativo_chave": "comprovativos/abc.pdf",
+        },
+    )
     assert r.status_code == 201
     assert r.json()["status"] == "pendente"
     assert repo.listar()[0].user_id is None
@@ -101,8 +110,29 @@ def test_criar_pedido_sem_sessao_e_publico(ambiente) -> None:
 def test_criar_pedido_com_sessao_liga_a_conta(ambiente) -> None:
     c, repo, _, token_comum = ambiente
     c.cookies.set("access_token", token_comum)
-    c.post("/premium-requests", json={"nome": "Rui", "email": "rui@example.com"})
+    c.post(
+        "/premium-requests",
+        json={
+            "nome": "Rui",
+            "email": "rui@example.com",
+            "comprovativo_chave": "comprovativos/abc.pdf",
+        },
+    )
     assert repo.listar()[0].user_id == "id-comum"
+
+
+def test_criar_pedido_recusa_comprovativo_fora_do_prefixo(ambiente) -> None:
+    c, repo, *_ = ambiente
+    r = c.post(
+        "/premium-requests",
+        json={
+            "nome": "Ana",
+            "email": "ana@example.com",
+            "comprovativo_chave": "avatares/outro/foto.png",
+        },
+    )
+    assert r.status_code == 403
+    assert repo.listar() == []
 
 
 # --- listar / aprovar exigem admin --------------------------------------

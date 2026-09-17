@@ -26,9 +26,13 @@ import { Textarea } from "@/components/ui/textarea";
 import FileDropzone from "@/components/FileDropzone";
 import CopyRow from "@/components/CopyRow";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { premiumApi } from "@/lib/apiClient";
-import { DEFAULT_BANK_DATA, fileToBase64, ofuscarValor } from "@/lib/pagamento";
+import {
+  comprovativosApi,
+  mensagemDeErroApi,
+  premiumApi,
+  TIPOS_DE_COMPROVATIVO_ACEITES,
+} from "@/lib/apiClient";
+import { DEFAULT_BANK_DATA, ofuscarValor } from "@/lib/pagamento";
 
 const doctorImage = "/registo-premium-doctor.webp";
 
@@ -163,46 +167,24 @@ const RegistoPremium = () => {
       });
       return;
     }
+    if (!TIPOS_DE_COMPROVATIVO_ACEITES.includes(comprovativo.type as never)) {
+      toast({
+        title: "Formato não suportado",
+        description: "Use PNG, JPEG, WebP ou PDF.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setSubmitting(true);
     try {
-      const arquivoBase64 = await fileToBase64(comprovativo);
-      const nomeArquivo = comprovativo.name;
-      const reciboId = `PREM-${Date.now().toString(36).toUpperCase()}`;
-
-      // `premium_requests` ainda não tem coluna para os detalhes do
-      // diagnóstico ("Não tenho a certeza" + texto livre) -- em vez de
-      // forçá-los para dentro de `nome` (que é só o nome da pessoa), vão no
-      // email para a equipa, que é quem realmente precisa de os ler.
-      const detalhesEnvio = [
-        `Assinatura ${planoEscolhido?.label ?? plano}`,
-        diagnostico === "duvida" && detalhesDiagnostico.trim()
-          ? `Dúvida clínica: ${detalhesDiagnostico.trim()}`
-          : null,
-      ]
-        .filter(Boolean)
-        .join(" | ");
-
-      // O registo do pedido é o que realmente conta como "pedido recebido"
-      // -- se isto falhar, não avançamos para a Conclusão (W-11: já grava
-      // na API própria). A Edge Function abaixo continua a ser o único
-      // sítio para onde o comprovativo é enviado (não há upload separado
-      // para o Storage enquanto o R2 não tiver credenciais), por isso conta
-      // como falha real também.
-      await premiumApi.pedir({ nome, email, telefone, plano });
-
-      const { error: invokeError } = await supabase.functions.invoke("enviar-email-doacao", {
-        body: {
-          tipo: "financeiro",
-          contexto: "premium",
-          email,
-          recibo_id: reciboId,
-          detalhes: detalhesEnvio,
-          arquivoBase64,
-          nomeArquivo,
-        },
-      });
-      if (invokeError) throw invokeError;
+      // Três passos (CROSS-02, mesmo padrão do avatar): a API assina o
+      // URL, o browser envia os bytes directamente ao R2, e só depois o
+      // pedido é criado com a chave -- nunca os bytes passam pela nossa
+      // API. Nunca mostrar sucesso antes de todos os passos confirmarem.
+      const preparado = await comprovativosApi.preparar(comprovativo.type);
+      await comprovativosApi.enviarParaStorage(preparado.url_de_upload, comprovativo);
+      await premiumApi.pedir({ nome, email, telefone, plano, comprovativo_chave: preparado.chave });
 
       setStep(5);
       toast({
@@ -213,8 +195,7 @@ const RegistoPremium = () => {
       console.error("Falha ao processar o pagamento Premium:", err);
       toast({
         title: "Não foi possível concluir",
-        description:
-          err instanceof Error ? err.message : "Tente novamente dentro de momentos.",
+        description: mensagemDeErroApi(err, "Tente novamente dentro de momentos."),
         variant: "destructive",
       });
     } finally {

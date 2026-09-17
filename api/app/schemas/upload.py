@@ -17,3 +17,13 @@ class AvatarConfirmar(BaseModel):
 
 class AvatarConfirmado(BaseModel):
     avatar_url: str
+
+
+class ComprovativoUploadPedido(BaseModel):
+    content_type: str = Field(min_length=1, max_length=100)
+
+
+class ComprovativoUploadPreparado(BaseModel):
+    url_de_upload: str
+    chave: str
+    url_publico: str
