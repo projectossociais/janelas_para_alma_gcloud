@@ -73,17 +73,6 @@ const AdminOverview = () => {
       href: `/admin/atividade?tab=sessoes&dias=${periodDays[period]}`,
     },
     {
-      label: "Análises scanner",
-      value: stats?.analises_scanner ?? 0,
-      icon: ScanEye,
-      color: "text-indigo-600",
-      // Sem link de propósito: o scanner ainda grava os resultados noutro
-      // serviço (janelas-scanner-api), nunca nesta base de dados -- ligar
-      // este card a uma lista aqui seria sempre mostrar "vazio", mesmo
-      // depois de análises reais acontecerem. Ver proposta de integração.
-      href: null,
-    },
-    {
       label: "Pedidos premium",
       value: stats?.pedidos_premium ?? 0,
       icon: Sparkles,
