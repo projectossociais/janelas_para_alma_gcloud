@@ -28,23 +28,31 @@ source ./_build-imagem.sh
 # --- Env vars e secrets da API -------------------------------------------
 # FRONTEND_ORIGINS é só a rede de segurança do CORS (ver api/app/main.py) —
 # o caminho normal é mesma-origem, via rewrite do Vercel, e nem a exercita.
-API_ENV="AMBIENTE=producao,FRONTEND_ORIGINS=[\"https://${FRONTEND_DOMAIN}\"]"
+# Inclui o apex e o "www." porque o apex faz 308 para "www." em produção —
+# aos olhos do browser (e do CORS) são origens diferentes (mesmo bug que já
+# nos mordeu no CORS do bucket R2, ver 07-r2-cors.sh).
+#
+# `--set-env-vars` usa "," como separador entre variáveis; como o valor de
+# FRONTEND_ORIGINS é agora um JSON com vírgula lá dentro, usamos o
+# delimitador alternativo do gcloud (`^;^` em vez de `,`) para não partir o
+# parsing -- ver `gcloud topic escaping`.
+API_ENV="^;^AMBIENTE=producao;FRONTEND_ORIGINS=[\"https://${FRONTEND_DOMAIN}\",\"https://www.${FRONTEND_DOMAIN}\"]"
 API_SECRETS="DATABASE_URL=jpa-database-url:latest,JWT_SECRET_KEY=jpa-jwt-secret-key:latest"
 if gcloud secrets describe jpa-r2-access-key-id >/dev/null 2>&1; then
   API_SECRETS="${API_SECRETS},R2_ACCESS_KEY_ID=jpa-r2-access-key-id:latest,R2_SECRET_ACCESS_KEY=jpa-r2-secret-access-key:latest"
 fi
 if [ -n "${R2_ENDPOINT_URL:-}" ]; then
-  API_ENV="${API_ENV},R2_ENDPOINT_URL=${R2_ENDPOINT_URL},R2_BUCKET=${R2_BUCKET}"
-  [ -n "${R2_PUBLIC_BASE_URL:-}" ] && API_ENV="${API_ENV},R2_PUBLIC_BASE_URL=${R2_PUBLIC_BASE_URL}"
+  API_ENV="${API_ENV};R2_ENDPOINT_URL=${R2_ENDPOINT_URL};R2_BUCKET=${R2_BUCKET}"
+  [ -n "${R2_PUBLIC_BASE_URL:-}" ] && API_ENV="${API_ENV};R2_PUBLIC_BASE_URL=${R2_PUBLIC_BASE_URL}"
 fi
 # FRONTEND_BASE_URL é só para montar o link de recuperação de password que
 # vai por email (ver core/email.py) — nada a ver com CORS. Normalmente vazio
 # no primeiro deploy (o URL do frontend só existe depois dele); preencher em
 # 00-config.sh e voltar a correr este script quando já o souberes.
-[ -n "${FRONTEND_BASE_URL:-}" ] && API_ENV="${API_ENV},FRONTEND_BASE_URL=${FRONTEND_BASE_URL}"
+[ -n "${FRONTEND_BASE_URL:-}" ] && API_ENV="${API_ENV};FRONTEND_BASE_URL=${FRONTEND_BASE_URL}"
 if gcloud secrets describe jpa-resend-api-key >/dev/null 2>&1; then
   API_SECRETS="${API_SECRETS},RESEND_API_KEY=jpa-resend-api-key:latest"
-  API_ENV="${API_ENV},EMAIL_REMETENTE=${EMAIL_REMETENTE:-onboarding@resend.dev}"
+  API_ENV="${API_ENV};EMAIL_REMETENTE=${EMAIL_REMETENTE:-onboarding@resend.dev}"
 else
   echo "    Resend sem chave (03-secrets.sh) — recuperação de password fica por activar."
 fi
@@ -52,7 +60,7 @@ fi
 # Identity Services emite) -- ver core/google_auth.py. Vazio até o dono do
 # projecto criar o cliente OAuth na consola do GCP; sem isto, o botão de
 # login com Google simplesmente não aparece (GoogleSignInButton.tsx).
-[ -n "${GOOGLE_CLIENT_ID:-}" ] && API_ENV="${API_ENV},GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}"
+[ -n "${GOOGLE_CLIENT_ID:-}" ] && API_ENV="${API_ENV};GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}"
 
 echo "==> Deploy da API ('${API_SERVICE}')"
 gcloud run deploy "$API_SERVICE" \
