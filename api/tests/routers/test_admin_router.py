@@ -6,7 +6,12 @@ from fastapi.testclient import TestClient
 from app.core.dependencies import obter_auth_service
 from app.core.security import criar_access_token, hash_password
 from app.main import app
-from app.repositories.admin_stats_repository import EstatisticasRegisto, PendenciasRegisto
+from app.repositories.admin_stats_repository import (
+    EstatisticasRegisto,
+    PendenciasRegisto,
+    SessaoExercicioAdminRegisto,
+    UtilizadorAtivoRegisto,
+)
 from app.repositories.utilizadores_repository import UtilizadorRegisto
 from app.routers import admin as admin_router
 from app.services.admin_service import AdminService
@@ -38,6 +43,32 @@ class RepositorioStatsFalso:
             mensagens_por_ler=3,
             candidaturas_voluntariado_pendentes=1,
         )
+
+    def listar_sessoes_exercicio(self, desde) -> list[SessaoExercicioAdminRegisto]:
+        return [
+            SessaoExercicioAdminRegisto(
+                id="s1",
+                user_id="u-comum",
+                utilizador_nome="Rui",
+                utilizador_email="rui@example.com",
+                exercicio_id="convergencia",
+                duracao_segundos=120,
+                pontuacao=80,
+                precisao_percentual=91.5,
+                created_at=datetime.now(UTC),
+            )
+        ]
+
+    def listar_ativos_semana(self) -> list[UtilizadorAtivoRegisto]:
+        return [
+            UtilizadorAtivoRegisto(
+                user_id="u-comum",
+                utilizador_nome="Rui",
+                utilizador_email="rui@example.com",
+                sessoes_na_semana=3,
+                ultima_sessao_em=datetime.now(UTC),
+            )
+        ]
 
 
 def _seed(repo_auth: RepositorioAuthFalso, id_: str, papel: str) -> str:
@@ -218,3 +249,50 @@ def test_definir_papel_utilizador_desconhecido_404(ambiente) -> None:
     c.cookies.set("access_token", token_admin)
     r = c.post("/admin/utilizadores/fantasma/papel", json={"papel": "comum"})
     assert r.status_code == 404
+
+
+def test_listar_utilizadores_aceita_filtro_de_dias(ambiente) -> None:
+    c, _, token_admin, _, _ = ambiente
+    c.cookies.set("access_token", token_admin)
+    # Ambos os utilizadores de teste nascem "agora" -- com `dias=30` (janela
+    # generosa) continuam os dois dentro do filtro.
+    r = c.get("/admin/utilizadores?dias=30")
+    assert r.status_code == 200
+    assert len(r.json()) == 2
+
+
+def test_sessoes_exercicio_sem_sessao_401(ambiente) -> None:
+    c, *_ = ambiente
+    assert c.get("/admin/sessoes-exercicio").status_code == 401
+
+
+def test_sessoes_exercicio_papel_comum_403(ambiente) -> None:
+    c, _, _, token_comum, _ = ambiente
+    c.cookies.set("access_token", token_comum)
+    assert c.get("/admin/sessoes-exercicio").status_code == 403
+
+
+def test_admin_lista_sessoes_exercicio(ambiente) -> None:
+    c, _, token_admin, _, _ = ambiente
+    c.cookies.set("access_token", token_admin)
+    r = c.get("/admin/sessoes-exercicio")
+    assert r.status_code == 200
+    corpo = r.json()
+    assert len(corpo) == 1
+    assert corpo[0]["exercicio_id"] == "convergencia"
+    assert corpo[0]["utilizador_email"] == "rui@example.com"
+
+
+def test_ativos_semana_sem_sessao_401(ambiente) -> None:
+    c, *_ = ambiente
+    assert c.get("/admin/ativos-semana").status_code == 401
+
+
+def test_admin_lista_ativos_semana(ambiente) -> None:
+    c, _, token_admin, _, _ = ambiente
+    c.cookies.set("access_token", token_admin)
+    r = c.get("/admin/ativos-semana")
+    assert r.status_code == 200
+    corpo = r.json()
+    assert len(corpo) == 1
+    assert corpo[0]["sessoes_na_semana"] == 3

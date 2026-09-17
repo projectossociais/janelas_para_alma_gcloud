@@ -502,9 +502,41 @@ export interface PendenciasAdmin {
   candidaturas_voluntariado_pendentes: number;
 }
 
+export interface SessaoExercicioAdmin {
+  id: string;
+  user_id: string;
+  utilizador_nome: string | null;
+  utilizador_email: string;
+  exercicio_id: string;
+  duracao_segundos: number;
+  pontuacao: number;
+  precisao_percentual: number;
+  created_at: string;
+}
+
+export interface UtilizadorAtivoAdmin {
+  user_id: string;
+  utilizador_nome: string | null;
+  utilizador_email: string;
+  sessoes_na_semana: number;
+  ultima_sessao_em: string;
+}
+
 export const adminApi = {
-  listarUtilizadores: (papel?: string) =>
-    pedido<AdminUtilizador[]>(`/admin/utilizadores${papel ? `?papel=${papel}` : ""}`),
+  /** `dias`: só utilizadores registados nesse período — usado quando se vem
+   *  do card "Novos utilizadores" do dashboard, mesma janela do filtro lá. */
+  listarUtilizadores: (papel?: string, dias?: number) => {
+    const params = new URLSearchParams();
+    if (papel) params.set("papel", papel);
+    if (dias) params.set("dias", String(dias));
+    const query = params.toString();
+    return pedido<AdminUtilizador[]>(`/admin/utilizadores${query ? `?${query}` : ""}`);
+  },
+
+  listarSessoesExercicio: (dias: number) =>
+    pedido<SessaoExercicioAdmin[]>(`/admin/sessoes-exercicio?dias=${dias}`),
+
+  listarAtivosSemana: () => pedido<UtilizadorAtivoAdmin[]>("/admin/ativos-semana"),
 
   /** Promove a conta com este email a `admin`. O primeiro admin cria-se por
    *  linha de comando (`python -m app.criar_admin`). */

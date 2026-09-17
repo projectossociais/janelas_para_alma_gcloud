@@ -35,8 +35,12 @@ class RepositorioAdminFalso:
         self._us = {u.id: u for u in utilizadores}
         self.definidos: list[tuple[str, str]] = []
 
-    def listar(self, papel: str | None = None) -> list[AdminUtilizadorRegisto]:
-        return [u for u in self._us.values() if papel is None or u.papel == papel]
+    def listar(self, papel: str | None = None, desde: datetime | None = None) -> list[AdminUtilizadorRegisto]:
+        return [
+            u
+            for u in self._us.values()
+            if (papel is None or u.papel == papel) and (desde is None or u.criado_em >= desde)
+        ]
 
     def obter_por_email(self, email: str) -> AdminUtilizadorRegisto | None:
         return next((u for u in self._us.values() if u.email == email.strip().lower()), None)

@@ -18,6 +18,10 @@ from sqlalchemy.orm import Session
 
 from app.repositories.orm_models import AppRole, Utilizador
 
+# Nenhum admin devia ter de adivinhar "quantos dias contam como recentes" —
+# ver /admin/estatisticas, que já usa o mesmo período (7/30/365) escolhido
+# no filtro Semanal/Mensal/Anual do topo do dashboard.
+
 
 @dataclass(frozen=True)
 class AdminUtilizadorRegisto:
@@ -30,7 +34,7 @@ class AdminUtilizadorRegisto:
 
 
 class AdminRepository(Protocol):
-    def listar(self, papel: str | None = None) -> list[AdminUtilizadorRegisto]: ...
+    def listar(self, papel: str | None = None, desde: datetime | None = None) -> list[AdminUtilizadorRegisto]: ...
     def obter_por_email(self, email: str) -> AdminUtilizadorRegisto | None: ...
     def obter_por_id(self, utilizador_id: str) -> AdminUtilizadorRegisto | None: ...
     def definir_papel(self, utilizador_id: str, papel: str) -> AdminUtilizadorRegisto | None: ...
@@ -51,10 +55,12 @@ class SQLAlchemyAdminRepository:
     def __init__(self, sessao: Session) -> None:
         self._sessao = sessao
 
-    def listar(self, papel: str | None = None) -> list[AdminUtilizadorRegisto]:
+    def listar(self, papel: str | None = None, desde: datetime | None = None) -> list[AdminUtilizadorRegisto]:
         consulta = select(Utilizador).order_by(Utilizador.created_at.desc())
         if papel is not None:
             consulta = consulta.where(Utilizador.papel == AppRole(papel))
+        if desde is not None:
+            consulta = consulta.where(Utilizador.created_at >= desde)
         return [_para_registo(linha) for linha in self._sessao.scalars(consulta).all()]
 
     def obter_por_email(self, email: str) -> AdminUtilizadorRegisto | None:

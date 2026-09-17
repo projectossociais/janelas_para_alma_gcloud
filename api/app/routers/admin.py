@@ -16,7 +16,9 @@ from app.repositories.admin_repository import AdminUtilizadorRegisto, SQLAlchemy
 from app.repositories.admin_stats_repository import (
     EstatisticasRegisto,
     PendenciasRegisto,
+    SessaoExercicioAdminRegisto,
     SQLAlchemyAdminStatsRepository,
+    UtilizadorAtivoRegisto,
 )
 from app.repositories.utilizadores_repository import UtilizadorRegisto
 from app.schemas.admin import (
@@ -25,6 +27,8 @@ from app.schemas.admin import (
     EstatisticasAdmin,
     PendenciasAdmin,
     PromoverAdmin,
+    SessaoExercicioAdmin,
+    UtilizadorAtivoAdmin,
 )
 from app.services.admin_service import (
     AdminService,
@@ -96,9 +100,30 @@ def obter_pendencias(
 @router.get("/utilizadores", response_model=list[AdminUtilizadorPublico])
 def listar_utilizadores(
     papel: str | None = None,
+    dias: int | None = None,
     repo: SQLAlchemyAdminRepository = Depends(obter_admin_repository),
 ) -> list[AdminUtilizadorRegisto]:
-    return repo.listar(papel=papel)
+    # `dias` é o mesmo período do card "Novos utilizadores" no dashboard —
+    # clicar nesse card traz para aqui só quem se registou nesse intervalo.
+    desde = datetime.now(UTC) - timedelta(days=min(max(dias, 1), 365)) if dias else None
+    return repo.listar(papel=papel, desde=desde)
+
+
+@router.get("/sessoes-exercicio", response_model=list[SessaoExercicioAdmin])
+def listar_sessoes_exercicio(
+    dias: int = 30,
+    repo: SQLAlchemyAdminStatsRepository = Depends(obter_admin_stats_repository),
+) -> list[SessaoExercicioAdminRegisto]:
+    dias_limitado = min(max(dias, 1), 365)
+    desde = datetime.now(UTC) - timedelta(days=dias_limitado)
+    return repo.listar_sessoes_exercicio(desde)
+
+
+@router.get("/ativos-semana", response_model=list[UtilizadorAtivoAdmin])
+def listar_ativos_semana(
+    repo: SQLAlchemyAdminStatsRepository = Depends(obter_admin_stats_repository),
+) -> list[UtilizadorAtivoRegisto]:
+    return repo.listar_ativos_semana()
 
 
 @router.post("/utilizadores/promover", response_model=AdminUtilizadorPublico)
