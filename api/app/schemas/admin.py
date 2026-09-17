@@ -35,7 +35,7 @@ class SerieDiaAdmin(BaseModel):
 class EstatisticasAdmin(BaseModel):
     total_utilizadores: int
     novos_utilizadores: int
-    utilizadores_ativos_semana: int
+    utilizadores_ativos_periodo: int
     sessoes_exercicio: int
     analises_scanner: int
     pedidos_premium: int
@@ -67,7 +67,7 @@ class UtilizadorAtivoAdmin(BaseModel):
     user_id: str
     utilizador_nome: str | None
     utilizador_email: str
-    sessoes_na_semana: int
+    sessoes_no_periodo: int
     ultima_sessao_em: datetime
 
     model_config = {"from_attributes": True}

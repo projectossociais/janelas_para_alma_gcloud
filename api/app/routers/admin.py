@@ -119,11 +119,14 @@ def listar_sessoes_exercicio(
     return repo.listar_sessoes_exercicio(desde)
 
 
-@router.get("/ativos-semana", response_model=list[UtilizadorAtivoAdmin])
-def listar_ativos_semana(
+@router.get("/ativos", response_model=list[UtilizadorAtivoAdmin])
+def listar_ativos(
+    dias: int = 30,
     repo: SQLAlchemyAdminStatsRepository = Depends(obter_admin_stats_repository),
 ) -> list[UtilizadorAtivoRegisto]:
-    return repo.listar_ativos_semana()
+    dias_limitado = min(max(dias, 1), 365)
+    desde = datetime.now(UTC) - timedelta(days=dias_limitado)
+    return repo.listar_ativos(desde)
 
 
 @router.post("/utilizadores/promover", response_model=AdminUtilizadorPublico)

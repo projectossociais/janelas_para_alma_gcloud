@@ -36,7 +36,7 @@ import AdminOverview from "./AdminOverview";
 const ESTATISTICAS = {
   total_utilizadores: 120,
   novos_utilizadores: 8,
-  utilizadores_ativos_semana: 34,
+  utilizadores_ativos_periodo: 34,
   sessoes_exercicio: 210,
   analises_scanner: 15,
   pedidos_premium: 6,
@@ -61,7 +61,9 @@ describe("AdminOverview", () => {
 
     await waitFor(() => expect(screen.getByText("120")).toBeInTheDocument());
     expect(screen.getByText("34")).toBeInTheDocument();
-    expect(screen.getByText("Ativos esta semana")).toBeInTheDocument();
+    // Período por omissão é "month" -- o rótulo acompanha o filtro
+    // seleccionado (ver AdminOverview.tsx, periodLabel).
+    expect(screen.getByText("Ativos este mês")).toBeInTheDocument();
   });
 
   it("mostra a Central de Pendências com os totais certos e liga aos sítios certos", async () => {

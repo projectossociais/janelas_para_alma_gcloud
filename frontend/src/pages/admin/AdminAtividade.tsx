@@ -12,24 +12,27 @@ import {
 import { toast } from "sonner";
 
 const AdminAtividade = () => {
-  // A Visão Geral (AdminOverview) linka directamente ao separador certo —
-  // ex.: /admin/atividade?tab=sessoes a partir do card "Sessões de exercício".
+  // A Visão Geral (AdminOverview) linka directamente ao separador e ao
+  // período certos — ex.: /admin/atividade?tab=sessoes&dias=7 a partir do
+  // card "Sessões de exercício" com o filtro "Semanal" seleccionado. Sem o
+  // `dias` na URL, os números aqui nunca coincidiam com os do card que
+  // trouxe até aqui (ficava sempre preso a 30 dias fixos).
   const [searchParams] = useSearchParams();
   const tabInicial = searchParams.get("tab") === "ativos" ? "ativos" : "sessoes";
+  const dias = Number(searchParams.get("dias")) || 30;
   const [sessoes, setSessoes] = useState<SessaoExercicioAdmin[]>([]);
   const [ativos, setAtivos] = useState<UtilizadorAtivoAdmin[]>([]);
 
   useEffect(() => {
-    // Mesmos 30 dias por omissão do resto do dashboard (obterEstatisticas).
     adminApi
-      .listarSessoesExercicio(30)
+      .listarSessoesExercicio(dias)
       .then(setSessoes)
       .catch((err) => toast.error(mensagemDeErroApi(err, "Não foi possível carregar as sessões de exercício.")));
     adminApi
-      .listarAtivosSemana()
+      .listarAtivos(dias)
       .then(setAtivos)
       .catch((err) => toast.error(mensagemDeErroApi(err, "Não foi possível carregar os utilizadores ativos.")));
-  }, []);
+  }, [dias]);
 
   return (
     <Card>
@@ -40,11 +43,11 @@ const AdminAtividade = () => {
         <Tabs defaultValue={tabInicial}>
           <TabsList>
             <TabsTrigger value="sessoes">Sessões de exercício ({sessoes.length})</TabsTrigger>
-            <TabsTrigger value="ativos">Ativos esta semana ({ativos.length})</TabsTrigger>
+            <TabsTrigger value="ativos">Ativos no período ({ativos.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="sessoes">
-            <p className="text-xs text-muted-foreground mb-3">Últimos 30 dias.</p>
+            <p className="text-xs text-muted-foreground mb-3">Últimos {dias} dias.</p>
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -73,7 +76,7 @@ const AdminAtividade = () => {
                   {!sessoes.length && (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center text-muted-foreground py-6">
-                        Sem sessões de exercício nos últimos 30 dias.
+                        Sem sessões de exercício nos últimos {dias} dias.
                       </TableCell>
                     </TableRow>
                   )}
@@ -84,14 +87,14 @@ const AdminAtividade = () => {
 
           <TabsContent value="ativos">
             <p className="text-xs text-muted-foreground mb-3">
-              Fizeram pelo menos um exercício nos últimos 7 dias.
+              Fizeram pelo menos um exercício nos últimos {dias} dias.
             </p>
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Utilizador</TableHead>
-                    <TableHead>Sessões na semana</TableHead>
+                    <TableHead>Sessões no período</TableHead>
                     <TableHead>Última sessão</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -99,7 +102,7 @@ const AdminAtividade = () => {
                   {ativos.map((a) => (
                     <TableRow key={a.user_id}>
                       <TableCell className="font-medium">{a.utilizador_nome || a.utilizador_email}</TableCell>
-                      <TableCell>{a.sessoes_na_semana}</TableCell>
+                      <TableCell>{a.sessoes_no_periodo}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         {new Date(a.ultima_sessao_em).toLocaleString("pt-PT")}
                       </TableCell>
@@ -108,7 +111,7 @@ const AdminAtividade = () => {
                   {!ativos.length && (
                     <TableRow>
                       <TableCell colSpan={3} className="text-center text-muted-foreground py-6">
-                        Ninguém fez exercícios nos últimos 7 dias.
+                        Ninguém fez exercícios nos últimos {dias} dias.
                       </TableCell>
                     </TableRow>
                   )}

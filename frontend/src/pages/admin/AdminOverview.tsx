@@ -22,6 +22,7 @@ import { toast } from "sonner";
 type Period = "week" | "month" | "year";
 
 const periodDays: Record<Period, number> = { week: 7, month: 30, year: 365 };
+const periodLabel: Record<Period, string> = { week: "esta semana", month: "este mês", year: "este ano" };
 
 const AdminOverview = () => {
   const [period, setPeriod] = useState<Period>("month");
@@ -58,18 +59,18 @@ const AdminOverview = () => {
       href: `/admin/utilizadores?dias=${periodDays[period]}`,
     },
     {
-      label: "Ativos esta semana",
-      value: stats?.utilizadores_ativos_semana ?? 0,
+      label: `Ativos ${periodLabel[period]}`,
+      value: stats?.utilizadores_ativos_periodo ?? 0,
       icon: UserCheck,
       color: "text-green-600",
-      href: "/admin/atividade?tab=ativos",
+      href: `/admin/atividade?tab=ativos&dias=${periodDays[period]}`,
     },
     {
       label: "Sessões de exercício",
       value: stats?.sessoes_exercicio ?? 0,
       icon: Activity,
       color: "text-gold",
-      href: "/admin/atividade?tab=sessoes",
+      href: `/admin/atividade?tab=sessoes&dias=${periodDays[period]}`,
     },
     {
       label: "Análises scanner",
