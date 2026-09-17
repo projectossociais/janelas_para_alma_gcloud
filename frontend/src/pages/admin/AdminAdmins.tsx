@@ -76,10 +76,6 @@ const AdminAdmins = () => {
             Adicionar
           </Button>
         </CardContent>
-        <CardContent className="pt-0 text-sm text-muted-foreground">
-          A conta tem de já existir. Para criar o primeiro admin, corra na API{" "}
-          <code>python -m app.criar_admin &lt;email&gt;</code>.
-        </CardContent>
       </Card>
 
       <Card>
