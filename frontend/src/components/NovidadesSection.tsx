@@ -1,21 +1,26 @@
 import { Link } from "react-router-dom";
-import { ArrowUpRight, ImageIcon } from "lucide-react";
+import { ArrowUpRight, Gamepad2 } from "lucide-react";
+import teamGroupPhoto from "@/assets/team-group-stairs.jpg";
+import saudeMundialPhoto from "@/assets/novidade-saude-mundial.jpg";
 
 const novidades = [
   {
     title: "Campanha de Conscientização na Gamek",
     to: "/meu-kamba/campanha-gamek",
     external: false,
+    image: teamGroupPhoto,
   },
   {
     title: "Notícias sobre a Saúde Visual no Mundo",
     to: "https://www.cnnbrasil.com.br/tudo-sobre/saude-ocular/",
     external: true,
+    image: saudeMundialPhoto,
   },
   {
     title: "Lançamento do nosso jogo: Você Sabia Que...",
     to: "/jogo-curiosidades",
     external: false,
+    image: null,
   },
 ];
 
@@ -34,8 +39,19 @@ const NovidadesSection = () => {
           {novidades.map((item) => {
             const cardContent = (
               <>
-                <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-teal/15 to-navy/10 flex items-center justify-center">
-                  <ImageIcon className="w-10 h-10 text-teal/40" />
+                <div className="relative w-full h-48 overflow-hidden">
+                  {item.image ? (
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="w-full h-48 object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-48 bg-gradient-to-br from-gold/20 to-navy/10 flex items-center justify-center">
+                      <Gamepad2 className="w-10 h-10 text-navy/40" />
+                    </div>
+                  )}
                   {item.external && (
                     <span className="absolute top-4 left-4 bg-navy text-navy-foreground px-3 py-1 rounded-lg font-semibold text-xs">
                       Externo
