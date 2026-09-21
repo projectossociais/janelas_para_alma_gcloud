@@ -2,10 +2,11 @@ import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import BannerHomepageSection from "@/components/BannerHomepageSection";
 import StrabismusIntroCard from "@/components/StrabismusIntroCard";
-import ExercisesSection from "@/components/ExercisesSection";
+import AboutTeaserSection from "@/components/AboutTeaserSection";
 import PillarsSection from "@/components/PillarsSection";
-
-
+import CuriosidadesSection from "@/components/CuriosidadesSection";
+import NovidadesSection from "@/components/NovidadesSection";
+import ParceirosSection from "@/components/ParceirosSection";
 import Footer from "@/components/Footer";
 
 const Index = () => {
@@ -16,10 +17,11 @@ const Index = () => {
         <HeroSection />
         <BannerHomepageSection />
         <StrabismusIntroCard />
-        <ExercisesSection />
+        <AboutTeaserSection />
         <PillarsSection />
-
-
+        <CuriosidadesSection />
+        <NovidadesSection />
+        <ParceirosSection />
       </main>
       <Footer />
     </div>
