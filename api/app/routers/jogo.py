@@ -4,22 +4,34 @@ A resposta correta nunca sai da API antes da validação: `GET
 /jogo/pergunta-aleatoria` devolve `PerguntaPublica` (sem `resposta_correta`
 nem `explicacao`) e só `POST /jogo/validar` -- que compara no servidor --
 é que revela qual era a certa.
+
+Mesma fronteira de confiança na economia virtual: `POST /jogo/recompensas`
+recebe só o patamar alcançado, nunca moedas/diamantes -- é sempre o
+servidor (`calcular_recompensa`) que decide quanto isso vale.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.core.dependencies import obter_utilizador_admin
+from app.core.dependencies import obter_utilizador_admin, obter_utilizador_atual
 from app.db import obter_sessao
 from app.repositories.jogo_repository import (
     PerguntaJogoRegisto,
     SQLAlchemyPerguntaJogoRepository,
     nivel_dificuldade_do_patamar,
 )
+from app.repositories.perfil_jogador_repository import (
+    PerfilJogadorRegisto,
+    SQLAlchemyPerfilJogadorRepository,
+    calcular_recompensa,
+)
+from app.repositories.utilizadores_repository import UtilizadorRegisto
 from app.schemas.jogo import (
+    PerfilJogadorPublico,
     PerguntaAdmin,
     PerguntaCriar,
     PerguntaPublica,
+    RecompensaRequest,
     ValidarRespostaRequest,
     ValidarRespostaResponse,
 )
@@ -31,6 +43,12 @@ def obter_pergunta_jogo_repository(
     sessao: Session = Depends(obter_sessao),
 ) -> SQLAlchemyPerguntaJogoRepository:
     return SQLAlchemyPerguntaJogoRepository(sessao)
+
+
+def obter_perfil_jogador_repository(
+    sessao: Session = Depends(obter_sessao),
+) -> SQLAlchemyPerfilJogadorRepository:
+    return SQLAlchemyPerfilJogadorRepository(sessao)
 
 
 @router.get("/jogo/pergunta-aleatoria", response_model=PerguntaPublica)
@@ -57,6 +75,29 @@ def validar_resposta(
         correta=dados.resposta_usuario == pergunta.resposta_correta,
         resposta_correta=pergunta.resposta_correta,
         explicacao=pergunta.explicacao,
+    )
+
+
+# --- Perfil e economia (exige sessão) ---------------------------------------
+
+
+@router.get("/jogo/perfil", response_model=PerfilJogadorPublico)
+def obter_perfil_jogador(
+    utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
+    repo: SQLAlchemyPerfilJogadorRepository = Depends(obter_perfil_jogador_repository),
+) -> PerfilJogadorRegisto:
+    return repo.obter_ou_criar(utilizador.id)
+
+
+@router.post("/jogo/recompensas", response_model=PerfilJogadorPublico)
+def registar_recompensa(
+    dados: RecompensaRequest,
+    utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
+    repo: SQLAlchemyPerfilJogadorRepository = Depends(obter_perfil_jogador_repository),
+) -> PerfilJogadorRegisto:
+    moedas_ganhas, diamantes_ganhos = calcular_recompensa(dados.patamar_alcancado)
+    return repo.registar_recompensa(
+        utilizador.id, moedas_ganhas, diamantes_ganhos, dados.patamar_alcancado
     )
 
 

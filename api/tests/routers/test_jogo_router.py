@@ -7,6 +7,7 @@ from app.core.dependencies import obter_auth_service
 from app.core.security import criar_access_token, hash_password
 from app.main import app
 from app.repositories.jogo_repository import PerguntaJogoRegisto
+from app.repositories.perfil_jogador_repository import PerfilJogadorRegisto
 from app.repositories.utilizadores_repository import UtilizadorRegisto
 from app.routers import jogo as jogo_router
 from app.services.auth_service import AuthService
@@ -56,6 +57,40 @@ class RepositorioPerguntaJogoFalso:
         return registo
 
 
+class RepositorioPerfilJogadorFalso:
+    """Mesmo contrato (Protocol) que o repositório real, em memória."""
+
+    def __init__(self) -> None:
+        self._perfis: dict[str, PerfilJogadorRegisto] = {}
+
+    def obter_ou_criar(self, utilizador_id: str) -> PerfilJogadorRegisto:
+        if utilizador_id not in self._perfis:
+            self._perfis[utilizador_id] = PerfilJogadorRegisto(
+                id=f"perfil-{utilizador_id}",
+                utilizador_id=utilizador_id,
+                moedas=0,
+                diamantes=0,
+                partidas_jogadas=0,
+                patamar_maximo_alcancado=0,
+            )
+        return self._perfis[utilizador_id]
+
+    def registar_recompensa(
+        self, utilizador_id: str, moedas_ganhas: int, diamantes_ganhos: int, patamar_alcancado: int
+    ) -> PerfilJogadorRegisto:
+        atual = self.obter_ou_criar(utilizador_id)
+        atualizado = PerfilJogadorRegisto(
+            id=atual.id,
+            utilizador_id=utilizador_id,
+            moedas=atual.moedas + moedas_ganhas,
+            diamantes=atual.diamantes + diamantes_ganhos,
+            partidas_jogadas=atual.partidas_jogadas + 1,
+            patamar_maximo_alcancado=max(atual.patamar_maximo_alcancado, patamar_alcancado),
+        )
+        self._perfis[utilizador_id] = atualizado
+        return atualizado
+
+
 def _seed(repo_auth: RepositorioAuthFalso, id_: str, papel: str) -> str:
     repo_auth._utilizadores[f"{id_}@example.com"] = UtilizadorRegisto(
         id=id_,
@@ -74,12 +109,14 @@ def _seed(repo_auth: RepositorioAuthFalso, id_: str, papel: str) -> str:
 def ambiente():
     repo_auth = RepositorioAuthFalso()
     repo_jogo = RepositorioPerguntaJogoFalso()
+    repo_perfil = RepositorioPerfilJogadorFalso()
     token_admin = _seed(repo_auth, "id-admin", "admin")
     token_comum = _seed(repo_auth, "id-comum", "comum")
     app.dependency_overrides[obter_auth_service] = lambda: AuthService(repo_auth)
     app.dependency_overrides[jogo_router.obter_pergunta_jogo_repository] = lambda: repo_jogo
+    app.dependency_overrides[jogo_router.obter_perfil_jogador_repository] = lambda: repo_perfil
     with TestClient(app) as c:
-        yield c, repo_jogo, token_admin, token_comum
+        yield c, repo_jogo, token_admin, token_comum, repo_perfil
     app.dependency_overrides.clear()
 
 
@@ -187,14 +224,14 @@ def test_criar_pergunta_sem_sessao_devolve_401(ambiente) -> None:
 
 
 def test_criar_pergunta_com_papel_comum_devolve_403(ambiente) -> None:
-    c, _, _, token_comum = ambiente
+    c, _, _, token_comum, _ = ambiente
     c.cookies.set("access_token", token_comum)
     resposta = c.post("/admin/jogo/perguntas", json=_PERGUNTA_VALIDA)
     assert resposta.status_code == 403
 
 
 def test_admin_cria_pergunta(ambiente) -> None:
-    c, repo, token_admin, _ = ambiente
+    c, repo, token_admin, *_ = ambiente
     c.cookies.set("access_token", token_admin)
     resposta = c.post(
         "/admin/jogo/perguntas",
@@ -209,14 +246,89 @@ def test_admin_cria_pergunta(ambiente) -> None:
 
 
 def test_criar_pergunta_com_nivel_fora_do_intervalo_devolve_422(ambiente) -> None:
-    c, _, token_admin, _ = ambiente
+    c, _, token_admin, *_ = ambiente
     c.cookies.set("access_token", token_admin)
     resposta = c.post("/admin/jogo/perguntas", json={**_PERGUNTA_VALIDA, "nivel_dificuldade": 4})
     assert resposta.status_code == 422
 
 
 def test_criar_pergunta_com_resposta_correta_invalida_devolve_422(ambiente) -> None:
-    c, _, token_admin, _ = ambiente
+    c, _, token_admin, *_ = ambiente
     c.cookies.set("access_token", token_admin)
     resposta = c.post("/admin/jogo/perguntas", json={**_PERGUNTA_VALIDA, "resposta_correta": "Z"})
     assert resposta.status_code == 422
+
+
+# --- Perfil e economia (exige sessão) ----------------------------------------
+
+
+def test_obter_perfil_sem_sessao_devolve_401(ambiente) -> None:
+    c, *_ = ambiente
+    assert c.get("/jogo/perfil").status_code == 401
+
+
+def test_obter_perfil_cria_um_perfil_zerado_na_primeira_vez(ambiente) -> None:
+    c, _, _, token_comum, _ = ambiente
+    c.cookies.set("access_token", token_comum)
+
+    resposta = c.get("/jogo/perfil")
+    assert resposta.status_code == 200
+    assert resposta.json() == {
+        "moedas": 0,
+        "diamantes": 0,
+        "partidas_jogadas": 0,
+        "patamar_maximo_alcancado": 0,
+    }
+
+
+def test_registar_recompensa_sem_sessao_devolve_401(ambiente) -> None:
+    c, *_ = ambiente
+    resposta = c.post("/jogo/recompensas", json={"patamar_alcancado": 5})
+    assert resposta.status_code == 401
+
+
+def test_registar_recompensa_calcula_moedas_e_diamantes_no_servidor(ambiente) -> None:
+    # O pedido só manda o patamar -- o cliente nunca diz quantas moedas
+    # ganhou, precisamente para não poder inventar um valor maior.
+    c, _, _, token_comum, _ = ambiente
+    c.cookies.set("access_token", token_comum)
+
+    resposta = c.post("/jogo/recompensas", json={"patamar_alcancado": 5})
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["moedas"] == 250  # 5 patamares x 50 moedas
+    assert corpo["diamantes"] == 1  # marco do patamar 5
+    assert corpo["partidas_jogadas"] == 1
+    assert corpo["patamar_maximo_alcancado"] == 5
+
+
+def test_registar_recompensa_acumula_entre_partidas(ambiente) -> None:
+    c, _, _, token_comum, _ = ambiente
+    c.cookies.set("access_token", token_comum)
+
+    c.post("/jogo/recompensas", json={"patamar_alcancado": 3})
+    resposta = c.post("/jogo/recompensas", json={"patamar_alcancado": 2})
+
+    corpo = resposta.json()
+    assert corpo["moedas"] == 250  # (3 + 2) x 50
+    assert corpo["partidas_jogadas"] == 2
+    # o máximo alcançado não desce quando uma partida seguinte vai pior.
+    assert corpo["patamar_maximo_alcancado"] == 3
+
+
+def test_registar_recompensa_vitoria_completa_da_o_bonus_maximo_de_diamantes(ambiente) -> None:
+    c, _, _, token_comum, _ = ambiente
+    c.cookies.set("access_token", token_comum)
+
+    resposta = c.post("/jogo/recompensas", json={"patamar_alcancado": 15})
+    corpo = resposta.json()
+    assert corpo["moedas"] == 750  # 15 x 50
+    assert corpo["diamantes"] == 5
+
+
+def test_registar_recompensa_com_patamar_fora_do_intervalo_devolve_422(ambiente) -> None:
+    c, _, _, token_comum, _ = ambiente
+    c.cookies.set("access_token", token_comum)
+
+    assert c.post("/jogo/recompensas", json={"patamar_alcancado": -1}).status_code == 422
+    assert c.post("/jogo/recompensas", json={"patamar_alcancado": 16}).status_code == 422

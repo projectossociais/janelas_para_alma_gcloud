@@ -502,3 +502,25 @@ class PerguntaJogo(Base):
     nivel_dificuldade: Mapped[int] = mapped_column(nullable=False)
     explicacao: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class PerfilJogador(Base):
+    """Moedas, diamantes e estatísticas do jogo "Você Sabia Que...", um por
+    utilizador -- separado de `Utilizador` porque é economia de jogo, não
+    identidade/perfil geral da conta (mesma fronteira que já separa
+    `PremiumRequest` ou `ScreeningResultado`). Nasce só quando o utilizador
+    toca pela primeira vez em `/jogo/perfil` ou `/jogo/recompensas`, nunca
+    no registo da conta -- ver `SQLAlchemyPerfilJogadorRepository.obter_ou_criar`."""
+
+    __tablename__ = "perfis_jogador"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    utilizador_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="CASCADE"), nullable=False, unique=True, index=True
+    )
+    moedas: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    diamantes: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    partidas_jogadas: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    patamar_maximo_alcancado: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
