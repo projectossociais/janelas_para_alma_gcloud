@@ -11,6 +11,7 @@ from app.routers import (
     contact_messages,
     doacoes,
     feedback,
+    jogo,
     notificacoes,
     perfil,
     premium,
@@ -54,6 +55,7 @@ app.include_router(voluntariado.router)
 app.include_router(publicacoes.router)
 app.include_router(notificacoes.router)
 app.include_router(screenings.router)
+app.include_router(jogo.router)
 
 
 @app.get("/saude")
