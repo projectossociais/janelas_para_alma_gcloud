@@ -71,7 +71,7 @@ const PillarsSection = () => {
   };
 
   return (
-    <section id="pilares" className="py-20 md:py-28 bg-muted/50">
+    <section id="pilares" className="py-20 md:py-28 bg-background">
       {/* Preload all pillar images for instant carousel transitions */}
       <div className="hidden" aria-hidden="true">
         {pillars.map((pillar, i) => (

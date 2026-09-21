@@ -8,8 +8,8 @@ const AboutTeaserSection = () => {
   return (
     <section id="quem-somos" className="py-16 md:py-24 bg-muted/50">
       <div className="container">
-        <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center max-w-5xl mx-auto">
-          <div className="relative rounded-2xl overflow-hidden shadow-elevated aspect-[4/3]">
+        <div className="grid md:grid-cols-2 gap-10 md:gap-16 md:items-stretch max-w-5xl mx-auto">
+          <div className="relative rounded-2xl overflow-hidden shadow-elevated h-64 sm:h-80 md:h-auto">
             <img
               src={teamGroupPhoto}
               alt="Equipa do Janelas Para a Alma reunida"
@@ -20,7 +20,7 @@ const AboutTeaserSection = () => {
             />
           </div>
 
-          <div className="space-y-5">
+          <div className="space-y-5 flex flex-col justify-center">
             <span className="text-sm font-medium tracking-widest uppercase text-teal">
               Sobre Nós
             </span>
@@ -28,14 +28,20 @@ const AboutTeaserSection = () => {
               Uma equipa jovem a transformar a saúde visual em Angola
             </h2>
             <p className="text-muted-foreground leading-relaxed text-base md:text-lg text-justify">
-              Somos um grupo de jovens angolanos unidos pela vontade de dar visibilidade
-              ao estrabismo e à ambliopia — condições ainda pouco faladas no país.
-              Combinamos rastreio ocular, terapia visual e economia circular para
-              transformar olhares e, com eles, vidas inteiras.
+              Somos jovens angolanos que decidimos olhar de frente para uma condição
+              que a maioria prefere ignorar. Todos os dias trabalhamos ao lado de
+              crianças, famílias e clínicas parceiras para detectar cedo o estrabismo
+              e a ambliopia, e para devolver a quem mais precisa o simples direito de
+              ver bem.
+            </p>
+            <p className="text-muted-foreground leading-relaxed text-base md:text-lg text-justify">
+              Cada rastreio feito, cada óculo reaproveitado e cada sessão de terapia
+              visual é um passo para mudar não só um olhar, mas a vida inteira à
+              volta dele.
             </p>
             <button
-              onClick={() => navigate("/sobre")}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-teal text-teal-foreground font-semibold transition-all hover:opacity-90 hover:gap-3"
+              onClick={() => navigate("/impacto")}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-teal text-teal-foreground font-semibold transition-all hover:opacity-90 hover:gap-3 self-start"
             >
               Ler mais
               <ArrowRight className="w-5 h-5" />
