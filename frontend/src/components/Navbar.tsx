@@ -33,7 +33,6 @@ interface SearchItem {
   keywords: string;
   route: string;
   elementId?: string;
-  action?: string;
 }
 
 const searchIndex: SearchItem[] = [
@@ -107,7 +106,6 @@ const searchIndex: SearchItem[] = [
     keywords: "kamba, estrábico, programa, embaixadores, inclusão, estrabismo, objectivos, etapas, voluntários",
     route: "/kamba",
     elementId: "voluntariado",
-    action: "open-program-modal",
   },
   {
     id: "contacto",
@@ -273,14 +271,6 @@ const Navbar = () => {
   const handleSearchSelect = (item: SearchItem) => {
     setSearchOpen(false);
     setSearchQuery("");
-
-    if (item.action === "open-program-modal") {
-      navigateTo(item.route, item.elementId);
-      setTimeout(() => {
-        window.dispatchEvent(new CustomEvent("open-program-modal"));
-      }, 500);
-      return;
-    }
 
     navigateTo(item.route, item.elementId);
   };

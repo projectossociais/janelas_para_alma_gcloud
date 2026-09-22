@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { z } from "zod";
 import { HeartHandshake } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import ProgramModal from "@/components/ProgramModal";
 import KambaHeroCarousel from "@/components/kamba/KambaHeroCarousel";
 
 const volunteerSchema = z.object({
@@ -26,14 +25,7 @@ const volunteerSchema = z.object({
 const VolunteerSection = () => {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
-  const [programOpen, setProgramOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const handler = () => setProgramOpen(true);
-    window.addEventListener("open-program-modal", handler);
-    return () => window.removeEventListener("open-program-modal", handler);
-  }, []);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -84,7 +76,6 @@ const VolunteerSection = () => {
     <section id="voluntariado" className="py-20 md:py-28 bg-navy text-navy-foreground">
       <KambaHeroCarousel
         onOpenForm={() => { setOpen(true); setErrors({}); }}
-        onOpenProgram={() => setProgramOpen(true)}
       />
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -134,8 +125,6 @@ const VolunteerSection = () => {
           </form>
         </DialogContent>
       </Dialog>
-
-      <ProgramModal open={programOpen} onOpenChange={setProgramOpen} />
     </section>
   );
 };

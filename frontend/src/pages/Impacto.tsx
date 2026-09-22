@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Handshake, Recycle, Monitor, Heart, ArrowRight } from "lucide-react";
+import { Handshake, Recycle, ArrowRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import AboutSection from "@/components/AboutSection";
 import ImpactSection from "@/components/ImpactSection";
@@ -9,30 +9,16 @@ const valueProps = [
   {
     icon: Handshake,
     title: "Rede de Parceiros",
-    description: "Prevemos criar um sistema que conecte pacientes a parceiros de saúde visual, facilitando o acesso a rastreios e consultas através de preços ajustados à realidade do utilizador.",
+    description: "Sistema que conecta pacientes a parceiros de saúde visual, facilitando o acesso a rastreios e consultas através de preços ajustados à realidade do utilizador.",
     color: "text-teal bg-teal/10",
     to: "/parceiros",
   },
   {
     icon: Recycle,
     title: "Logística de Economia Circular",
-    description: "Desenvolvimento de um canal para a recolha e reutilização de armações. A meta é transformar resíduos em materiais terapêuticos, reduzindo custos e impacto ambiental.",
+    description: "Canal dedicado à recolha e reutilização de armações. Transformamos resíduos em materiais terapêuticos, reduzindo os custos para os pacientes e o impacto ambiental.",
     color: "text-green bg-green/10",
     to: "/circular",
-  },
-  {
-    icon: Monitor,
-    title: "Interface Tecnológica",
-    description: "Projeção de uma plataforma intuitiva que centralizará agendamentos e aquisições. O foco é eliminar barreiras geográficas através da tecnologia assistiva.",
-    color: "text-sky bg-sky/10",
-    to: "/tecnologia",
-  },
-  {
-    icon: Heart,
-    title: "Programa de Suporte",
-    description: "Planeamento de uma comunidade digital para apoio psicossocial e partilha de experiências, visando combater o estigma associado ao estrabismo.",
-    color: "text-gold bg-gold/10",
-    to: "/suporte",
   },
 ];
 
@@ -55,7 +41,7 @@ const Impacto = () => {
               Uma abordagem integrada para transformar a saúde visual em Angola.
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-14 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-14 max-w-4xl mx-auto">
               {valueProps.map((item) => (
                 <Link
                   key={item.title}

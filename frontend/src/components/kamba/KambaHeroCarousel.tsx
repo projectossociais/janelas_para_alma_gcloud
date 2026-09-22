@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import Autoplay from "embla-carousel-autoplay";
-import { HeartHandshake, BookOpen, Images } from "lucide-react";
+import { HeartHandshake, BookOpen, Target, Users, ChevronRight, Images } from "lucide-react";
 import {
   Carousel,
   CarouselContent,
@@ -9,12 +9,18 @@ import {
 } from "@/components/ui/carousel";
 import { cn } from "@/lib/utils";
 
+const objectives = [
+  "Mobilizar jovens voluntários",
+  "Promover a desestigmatização através da empatia",
+  "Estabelecer uma rede activa de apoio comunitário",
+  "Implementar acções de inclusão social, visual e ecológica",
+];
+
 interface KambaHeroCarouselProps {
   onOpenForm: () => void;
-  onOpenProgram: () => void;
 }
 
-const KambaHeroCarousel = ({ onOpenForm, onOpenProgram }: KambaHeroCarouselProps) => {
+const KambaHeroCarousel = ({ onOpenForm }: KambaHeroCarouselProps) => {
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
   const groupVideoRef = useRef<HTMLVideoElement>(null);
@@ -53,7 +59,7 @@ const KambaHeroCarousel = ({ onOpenForm, onOpenProgram }: KambaHeroCarouselProps
         opts={{ loop: true }}
         plugins={[Autoplay({ delay: 6000, stopOnInteraction: false })]}
       >
-        <CarouselContent className="-ml-0">
+        <CarouselContent className="-ml-0 items-start">
           {/* Slide 1: Programa Meu Kamba Estrábico */}
           <CarouselItem className="pl-0">
             <div className="container">
@@ -76,13 +82,55 @@ const KambaHeroCarousel = ({ onOpenForm, onOpenProgram }: KambaHeroCarouselProps
                     <HeartHandshake className="w-6 h-6" />
                     Quero ser um Kamba
                   </button>
-                  <button
-                    onClick={onOpenProgram}
-                    className="inline-flex items-center gap-3 px-8 py-5 rounded-xl border border-navy-foreground/20 text-navy-foreground font-medium text-lg transition-all hover:bg-navy-foreground/10 hover:translate-y-[-2px]"
-                  >
-                    <BookOpen className="w-5 h-5" />
-                    Saber Mais
-                  </button>
+                </div>
+              </div>
+
+              <div className="max-w-4xl mx-auto mt-12 text-left space-y-3">
+                <h3 className="text-base font-semibold text-navy-foreground flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-teal" />
+                  Sobre o Programa
+                </h3>
+                <p className="text-navy-foreground/70 leading-relaxed">
+                  O programa é uma iniciativa estratégica do Janelas para a Alma que busca criar uma rede de apoio nas comunidades,
+                  promovendo a inclusão e a solidariedade em torno do estrabismo. O nome visa
+                  desestigmatizar a condição por meio do afecto, mobilizando jovens voluntários como
+                  "Kambas" (Embaixadores da inclusão visual e ecológica).
+                </p>
+              </div>
+
+              <div className="max-w-4xl mx-auto mt-8 grid sm:grid-cols-2 gap-6">
+                <div className="rounded-2xl bg-navy-foreground/5 border border-navy-foreground/10 p-6 space-y-3">
+                  <h3 className="text-base font-semibold text-navy-foreground flex items-center gap-2">
+                    <Target className="w-4 h-4 text-teal" />
+                    Objectivos
+                  </h3>
+                  <ul className="space-y-2">
+                    {objectives.map((obj, i) => (
+                      <li key={i} className="flex items-start gap-3">
+                        <ChevronRight className="w-4 h-4 text-teal shrink-0 mt-1" />
+                        <span className="text-navy-foreground/70 leading-relaxed text-sm">{obj}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="rounded-2xl bg-navy-foreground/5 border border-navy-foreground/10 p-6 space-y-3">
+                  <h3 className="text-base font-semibold text-navy-foreground flex items-center gap-2">
+                    <Users className="w-4 h-4 text-teal" />
+                    Público-Alvo
+                  </h3>
+                  <div className="space-y-2">
+                    <div className="p-3 rounded-xl bg-teal/10 border border-teal/20">
+                      <p className="text-sm font-medium text-navy-foreground mb-1">Primário</p>
+                      <p className="text-navy-foreground/70 text-sm">Pessoas estrábicas e com deficiência visual.</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-navy-foreground/5 border border-navy-foreground/10">
+                      <p className="text-sm font-medium text-navy-foreground mb-1">Secundário</p>
+                      <p className="text-navy-foreground/70 text-sm">
+                        Famílias, voluntários, líderes comunitários, escolas e parceiros locais.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
