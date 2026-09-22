@@ -17,7 +17,7 @@ const novidades = [
     image: saudeMundialPhoto,
   },
   {
-    title: "Lançamento do nosso jogo: Você Sabia Que...",
+    title: "Lançamento do nosso jogo: Inclusivamente",
     to: "/jogo-curiosidades",
     external: false,
     image: null,

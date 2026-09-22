@@ -155,7 +155,7 @@ const baseLinks: NavItem[] = [
   { label: "Exercícios Visuais", route: "/exercicios" },
   { label: "Portal Clínico", route: "/parceiros" },
   { label: "Contactos", route: "/junte-se" },
-  { label: "Você Sabia Que...", route: "/jogo-curiosidades" },
+  { label: "Inclusivamente", route: "/jogo-curiosidades" },
 ];
 
 const estrabicoLinks: NavItem[] = [
@@ -167,7 +167,7 @@ const estrabicoLinks: NavItem[] = [
   { label: "Exercícios Visuais", route: "/exercicios" },
   { label: "Portal Clínico", route: "/parceiros" },
   { label: "Contactos", route: "/junte-se" },
-  { label: "Você Sabia Que...", route: "/jogo-curiosidades" },
+  { label: "Inclusivamente", route: "/jogo-curiosidades" },
 ];
 
 const profissionalLinks: NavItem[] = [
@@ -179,7 +179,7 @@ const profissionalLinks: NavItem[] = [
   { label: "Exercícios Visuais", route: "/exercicios" },
   { label: "Contactos", route: "/junte-se" },
   { label: "Portal Clínico", route: "/parceiros" },
-  { label: "Você Sabia Que...", route: "/jogo-curiosidades" },
+  { label: "Inclusivamente", route: "/jogo-curiosidades" },
 ];
 
 
@@ -365,8 +365,8 @@ const Navbar = () => {
               <button
                 onClick={() => navigateTo("/jogo-curiosidades")}
                 className="p-2 rounded-lg bg-teal/15 text-teal hover:bg-teal/25 transition-colors"
-                aria-label="Jogo: Você Sabia Que...?"
-                title="Jogo: Você Sabia Que...?"
+                aria-label="Jogo: Inclusivamente"
+                title="Jogo: Inclusivamente"
               >
                 <Gamepad2 className="w-5 h-5" />
               </button>

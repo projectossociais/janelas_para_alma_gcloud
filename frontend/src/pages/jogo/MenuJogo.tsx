@@ -52,7 +52,7 @@ const MenuJogo = () => {
         <div className="container pb-16">
           <header className="max-w-2xl mx-auto text-center space-y-3 mb-8">
             <span className="text-sm font-medium tracking-widest uppercase text-teal">
-              Você Sabia Que...
+              Inclusivamente
             </span>
             <h1 className="text-3xl md:text-4xl font-bold text-foreground">O Jogo da Saúde Ocular</h1>
             <p className="text-muted-foreground">Escolha como quer jogar e comece a subir a escada.</p>

@@ -45,7 +45,7 @@ const PerfilJogador = () => {
         <div className="container pb-16 max-w-2xl mx-auto">
           <header className="text-center space-y-3 mb-8">
             <span className="text-sm font-medium tracking-widest uppercase text-teal">
-              Você Sabia Que...
+              Inclusivamente
             </span>
             <h1 className="text-3xl md:text-4xl font-bold text-foreground">O Meu Perfil</h1>
           </header>

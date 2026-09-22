@@ -373,11 +373,11 @@ const JogoCuriosidades = () => {
 
   const partilhar = async () => {
     const texto =
-      'Completei o jogo "Você Sabia Que..." da Janelas Para a Alma e dominei o conhecimento em saúde ocular!';
+      'Completei o jogo "Inclusivamente" da Janelas Para a Alma e dominei o conhecimento em saúde ocular!';
     const url = window.location.href;
     if (navigator.share) {
       try {
-        await navigator.share({ title: "Você Sabia Que...", text: texto, url });
+        await navigator.share({ title: "Inclusivamente", text: texto, url });
       } catch {
         // utilizador cancelou a partilha -- não é um erro a reportar.
       }
@@ -407,7 +407,7 @@ const JogoCuriosidades = () => {
             <div className="max-w-lg mx-auto rounded-2xl bg-card border border-border/60 shadow-elevated p-6 sm:p-8 text-center space-y-6 animate-scale-in">
               <div>
                 <span className="text-sm font-medium tracking-widest uppercase text-teal">
-                  Você Sabia Que...
+                  Inclusivamente
                 </span>
                 <h1 className="text-2xl md:text-3xl font-bold text-foreground mt-1">
                   Prepare-se para subir a escada
@@ -429,7 +429,7 @@ const JogoCuriosidades = () => {
             <>
               <header className="max-w-2xl mx-auto text-center space-y-3 mb-8">
                 <span className="text-sm font-medium tracking-widest uppercase text-teal">
-                  Você Sabia Que...
+                  Inclusivamente
                 </span>
                 <h1 className="text-3xl md:text-4xl font-bold text-foreground">
                   O Jogo da Saúde Ocular
