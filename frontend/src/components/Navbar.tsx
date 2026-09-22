@@ -155,7 +155,7 @@ const baseLinks: NavItem[] = [
   { label: "Exercícios Visuais", route: "/exercicios" },
   { label: "Portal Clínico", route: "/parceiros" },
   { label: "Contactos", route: "/junte-se" },
-  { label: "Você Sabia Que... (Jogo)", route: "/jogo-curiosidades" },
+  { label: "Você Sabia Que...", route: "/jogo-curiosidades" },
 ];
 
 const estrabicoLinks: NavItem[] = [
@@ -167,7 +167,7 @@ const estrabicoLinks: NavItem[] = [
   { label: "Exercícios Visuais", route: "/exercicios" },
   { label: "Portal Clínico", route: "/parceiros" },
   { label: "Contactos", route: "/junte-se" },
-  { label: "Você Sabia Que... (Jogo)", route: "/jogo-curiosidades" },
+  { label: "Você Sabia Que...", route: "/jogo-curiosidades" },
 ];
 
 const profissionalLinks: NavItem[] = [
@@ -179,7 +179,7 @@ const profissionalLinks: NavItem[] = [
   { label: "Exercícios Visuais", route: "/exercicios" },
   { label: "Contactos", route: "/junte-se" },
   { label: "Portal Clínico", route: "/parceiros" },
-  { label: "Você Sabia Que... (Jogo)", route: "/jogo-curiosidades" },
+  { label: "Você Sabia Que...", route: "/jogo-curiosidades" },
 ];
 
 
@@ -484,8 +484,9 @@ const Navbar = () => {
               <button
                 key={link.label}
                 onClick={() => handleNavClick(link)}
-                className="text-left px-4 py-3 rounded-xl text-foreground font-medium text-base hover:bg-muted transition-colors"
+                className="text-left flex items-center gap-3 px-4 py-3 rounded-xl text-foreground font-medium text-base hover:bg-muted transition-colors"
               >
+                {link.route === "/jogo-curiosidades" && <Gamepad2 className="w-4 h-4 text-teal" />}
                 {link.label}
               </button>
             ))}
