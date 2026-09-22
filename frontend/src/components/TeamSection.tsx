@@ -97,11 +97,11 @@ const TeamSection = () => {
           </p>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-8">
+        <div className="flex flex-row flex-nowrap overflow-x-auto overflow-y-hidden gap-6 pb-8 px-4 snap-x snap-mandatory">
           {TEAM_MEMBERS.map((member) => (
             <div
               key={member.id}
-              className="bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col w-[280px] hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 cursor-pointer"
+              className="snap-center shrink-0 bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col w-[220px] hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 cursor-pointer"
               onClick={() => setSelectedMember(member)}
               role="button"
               tabIndex={0}
@@ -112,11 +112,11 @@ const TeamSection = () => {
                 }
               }}
             >
-              <div className="bg-slate-100/50">
+              <div className="bg-teal/5">
                 <img
                   src={member.image}
                   alt={member.name}
-                  className="w-full h-[480px] object-cover object-bottom pt-4"
+                  className="w-full h-[260px] object-contain object-bottom"
                   loading="eager"
                 />
               </div>
