@@ -82,26 +82,26 @@ const TeamSection = () => {
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
 
   return (
-    <section id="equipa" className="py-20 md:py-28 bg-background">
+    <section id="equipa" className="py-20 md:py-28 bg-navy">
       <div className="container">
         <div className="text-center mb-16 space-y-4">
           <span className="text-sm font-medium tracking-widest uppercase text-teal">
             A Nossa Equipa
           </span>
-          <h2 className="text-3xl md:text-5xl font-bold text-foreground">
+          <h2 className="text-3xl md:text-5xl font-bold text-navy-foreground">
             As pessoas por trás da missão
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg text-navy-foreground/70 max-w-2xl mx-auto">
             Jovens angolanos comprometidos com a inclusão visual e a
             sustentabilidade ambiental.
           </p>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-8">
+        <div className="flex flex-wrap justify-center items-stretch gap-8">
           {TEAM_MEMBERS.map((member) => (
             <div
               key={member.id}
-              className="w-64 rounded-2xl bg-card shadow-card border border-border/50 text-center overflow-hidden cursor-pointer transition-transform duration-300 hover:scale-105 hover:shadow-elevated"
+              className="w-64 bg-white rounded-sm shadow-2xl overflow-hidden cursor-pointer transition-transform duration-300 hover:-translate-y-2 flex flex-col h-full"
               onClick={() => setSelectedMember(member)}
               role="button"
               tabIndex={0}
@@ -112,20 +112,20 @@ const TeamSection = () => {
                 }
               }}
             >
+              <div className="pt-8 px-6 pb-4 text-left">
+                <h3 className="uppercase font-black text-2xl text-slate-900 leading-tight">
+                  {member.name}
+                </h3>
+                <p className="text-sm font-medium text-slate-600 mt-1">
+                  {member.role}
+                </p>
+              </div>
               <img
                 src={member.image}
                 alt={member.name}
-                className="w-full h-72 object-cover object-top"
+                className="w-full h-80 object-cover object-bottom mt-auto"
                 loading="eager"
               />
-              <div className="p-5 space-y-2">
-                <h3 className="text-lg font-bold text-foreground">
-                  {member.name}
-                </h3>
-                <span className="inline-block text-sm font-medium text-teal bg-teal/10 px-3 py-1 rounded-full">
-                  {member.role}
-                </span>
-              </div>
             </div>
           ))}
         </div>
