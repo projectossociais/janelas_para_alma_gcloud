@@ -313,15 +313,15 @@ const Navbar = () => {
               : "bg-transparent"
           }`}
         >
-          <div className="container flex items-center justify-between h-14 md:h-16 gap-4">
-            <div className="flex items-center gap-2 shrink-0">
+          <div className="container flex items-center justify-between h-14 md:h-16 gap-2 sm:gap-4">
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0 min-w-0">
               {isLoggedIn && (
                 <button
                   onClick={() => setProfileOpen(true)}
-                  className="rounded-full ring-2 ring-transparent hover:ring-primary/40 transition-all"
+                  className="rounded-full ring-2 ring-transparent hover:ring-primary/40 transition-all shrink-0"
                   aria-label="Abrir perfil"
                 >
-                  <Avatar className="h-9 w-9">
+                  <Avatar className="h-8 w-8 sm:h-9 sm:w-9">
                     {displayAvatarUrl && <AvatarImage src={displayAvatarUrl} alt={displayName} />}
                     <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
                       {initials}
@@ -329,9 +329,9 @@ const Navbar = () => {
                   </Avatar>
                 </button>
               )}
-              <button onClick={() => navigateTo("/")} className="flex items-center gap-3">
-                <img src={logoIcon} alt="Logo" className="h-10 w-auto object-contain" />
-                <span className={`font-bold text-base md:text-lg transition-colors ${useSolidNav ? "text-foreground" : "text-primary-foreground"}`}>
+              <button onClick={() => navigateTo("/")} className="flex items-center gap-3 shrink-0">
+                <img src={logoIcon} alt="Logo" className="h-10 w-auto object-contain shrink-0" />
+                <span className={`hidden md:inline-block font-bold text-base md:text-lg whitespace-nowrap transition-colors ${useSolidNav ? "text-foreground" : "text-primary-foreground"}`}>
                   Janelas Para a Alma
                 </span>
               </button>
@@ -360,11 +360,11 @@ const Navbar = () => {
             </div>
 
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-0.5 sm:gap-2 shrink-0">
 
               <button
                 onClick={() => navigateTo("/jogo-curiosidades")}
-                className="p-2 rounded-lg bg-teal/15 text-teal hover:bg-teal/25 transition-colors"
+                className="p-2 rounded-lg bg-teal/15 text-teal hover:bg-teal/25 transition-colors shrink-0"
                 aria-label="Jogo: Inclusivamente"
                 title="Jogo: Inclusivamente"
               >
@@ -374,7 +374,7 @@ const Navbar = () => {
               {!isLoggedIn && (
                 <button
                   onClick={() => navigate("/auth")}
-                  className={`hidden sm:inline-flex items-center gap-1.5 text-sm font-medium transition-colors ${
+                  className={`hidden sm:inline-flex items-center gap-1.5 text-sm font-medium transition-colors shrink-0 ${
                     useSolidNav ? "text-foreground/80 hover:text-primary" : "text-primary-foreground/85 hover:text-primary-foreground"
                   }`}
                 >
@@ -382,11 +382,15 @@ const Navbar = () => {
                 </button>
               )}
 
-              {isLoggedIn && <NotificationBell claro={!useSolidNav} />}
+              {isLoggedIn && (
+                <div className="shrink-0">
+                  <NotificationBell claro={!useSolidNav} />
+                </div>
+              )}
 
               <button
                 onClick={() => setSearchOpen(true)}
-                className={`p-2 rounded-lg transition-colors ${
+                className={`p-2 rounded-lg transition-colors shrink-0 ${
                   useSolidNav ? "text-foreground hover:bg-muted" : "text-primary-foreground hover:bg-primary-foreground/10"
                 }`}
                 aria-label="Pesquisar"
@@ -395,7 +399,7 @@ const Navbar = () => {
               </button>
               <button
                 onClick={() => setDrawerOpen(true)}
-                className={`p-2 rounded-lg transition-colors ${
+                className={`p-2 rounded-lg transition-colors shrink-0 ${
                   useSolidNav ? "text-foreground hover:bg-muted" : "text-primary-foreground hover:bg-primary-foreground/10"
                 }`}
                 aria-label="Abrir menu"
