@@ -83,37 +83,32 @@ const TeamSection = () => {
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
 
   return (
-    <section id="equipa" className="py-20 md:py-28 bg-navy overflow-hidden">
+    <section id="equipa" className="py-20 md:py-28 bg-white overflow-hidden">
       <div className="container">
         <div className="text-center mb-16 space-y-4">
           <span className="text-sm font-medium tracking-widest uppercase text-teal">
             A Nossa Equipa
           </span>
-          <h2 className="text-3xl md:text-5xl font-bold text-navy-foreground">
+          <h2 className="text-3xl md:text-5xl font-bold text-foreground">
             As pessoas por trás da missão
           </h2>
-          <p className="text-lg text-navy-foreground/70 max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Jovens angolanos comprometidos com a inclusão visual e a
             sustentabilidade ambiental.
           </p>
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row w-full">
+      <div className="flex flex-col md:flex-row w-full justify-center items-stretch">
         {TEAM_MEMBERS.map((member, index) => {
-          const isLight = index % 2 === 1;
+          const isDark = index % 2 === 0;
           const [firstName, ...rest] = member.name.split(" ");
           const lastName = rest.join(" ");
 
           return (
             <div
               key={member.id}
-              className={cn(
-                "relative flex-1 min-w-0 min-h-[420px] md:min-h-[600px] flex flex-col justify-between overflow-hidden cursor-pointer transition-transform duration-300",
-                isLight
-                  ? "bg-white text-slate-900 md:-mx-6 md:z-10 md:hover:scale-[1.03] md:[clip-path:polygon(5%_0,_100%_3%,_95%_100%,_0_97%)]"
-                  : "bg-transparent text-navy-foreground",
-              )}
+              className="relative overflow-visible flex-1 min-h-[420px] md:min-h-[600px] cursor-pointer"
               onClick={() => setSelectedMember(member)}
               role="button"
               tabIndex={0}
@@ -124,22 +119,33 @@ const TeamSection = () => {
                 }
               }}
             >
-              <div className="p-6 md:p-8">
-                <h3 className="font-black text-2xl uppercase leading-none">
+              <div
+                className={cn(
+                  "absolute inset-0 -skew-x-6 origin-top z-0",
+                  isDark ? "bg-slate-900" : "bg-white shadow-xl",
+                )}
+              />
+              <div
+                className={cn(
+                  "relative z-10 flex flex-col h-full",
+                  isDark ? "text-white" : "text-slate-900",
+                )}
+              >
+                <h3 className="font-black text-xl uppercase mt-8 px-4 leading-tight">
                   {firstName}
                   <br />
                   {lastName}
                 </h3>
-                <p className="font-light text-xs uppercase tracking-wider mt-2">
+                <p className="text-xs uppercase font-light mt-2 px-4">
                   {member.role}
                 </p>
+                <img
+                  src={member.image}
+                  alt={member.name}
+                  className="mt-auto object-cover object-bottom w-full"
+                  loading="eager"
+                />
               </div>
-              <img
-                src={member.image}
-                alt={member.name}
-                className="w-full object-cover object-bottom mt-auto"
-                loading="eager"
-              />
             </div>
           );
         })}
