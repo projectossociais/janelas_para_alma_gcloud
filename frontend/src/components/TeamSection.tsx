@@ -112,11 +112,11 @@ const TeamSection = () => {
                 }
               }}
             >
-              <div className="bg-teal/5">
+              <div className="bg-white">
                 <img
                   src={member.image}
                   alt={member.name}
-                  className="w-full h-[260px] object-contain object-bottom"
+                  className="w-full h-[280px] object-contain object-bottom pt-8"
                   loading="eager"
                 />
               </div>
@@ -124,7 +124,7 @@ const TeamSection = () => {
                 <h3 className="text-lg font-bold text-slate-900">
                   {member.name}
                 </h3>
-                <span className="inline-block text-sm font-semibold text-teal bg-teal/10 px-3 py-1 rounded-full mt-2">
+                <span className="inline-block text-[11px] font-semibold text-teal bg-teal/10 uppercase tracking-wider leading-tight px-2 py-1 rounded-full mt-2">
                   {member.role}
                 </span>
               </div>
