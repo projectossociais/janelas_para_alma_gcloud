@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Linkedin, Mail } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 import teamDalva from "@/assets/team-dalva.png";
 import teamManuel from "@/assets/team-manuel.png";
@@ -82,7 +83,7 @@ const TeamSection = () => {
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
 
   return (
-    <section id="equipa" className="py-20 md:py-28 bg-navy">
+    <section id="equipa" className="py-20 md:py-28 bg-navy overflow-hidden">
       <div className="container">
         <div className="text-center mb-16 space-y-4">
           <span className="text-sm font-medium tracking-widest uppercase text-teal">
@@ -96,12 +97,23 @@ const TeamSection = () => {
             sustentabilidade ambiental.
           </p>
         </div>
+      </div>
 
-        <div className="flex flex-wrap justify-center items-stretch gap-8">
-          {TEAM_MEMBERS.map((member) => (
+      <div className="flex flex-col md:flex-row w-full">
+        {TEAM_MEMBERS.map((member, index) => {
+          const isLight = index % 2 === 1;
+          const [firstName, ...rest] = member.name.split(" ");
+          const lastName = rest.join(" ");
+
+          return (
             <div
               key={member.id}
-              className="w-64 bg-white rounded-sm shadow-2xl overflow-hidden cursor-pointer transition-transform duration-300 hover:-translate-y-2 flex flex-col h-full"
+              className={cn(
+                "relative flex-1 min-w-0 min-h-[420px] md:min-h-[600px] flex flex-col justify-between overflow-hidden cursor-pointer transition-transform duration-300",
+                isLight
+                  ? "bg-white text-slate-900 md:-mx-6 md:z-10 md:hover:scale-[1.03] md:[clip-path:polygon(5%_0,_100%_3%,_95%_100%,_0_97%)]"
+                  : "bg-transparent text-navy-foreground",
+              )}
               onClick={() => setSelectedMember(member)}
               role="button"
               tabIndex={0}
@@ -112,23 +124,25 @@ const TeamSection = () => {
                 }
               }}
             >
-              <div className="pt-8 px-6 pb-4 text-left">
-                <h3 className="uppercase font-black text-2xl text-slate-900 leading-tight">
-                  {member.name}
+              <div className="p-6 md:p-8">
+                <h3 className="font-black text-2xl uppercase leading-none">
+                  {firstName}
+                  <br />
+                  {lastName}
                 </h3>
-                <p className="text-sm font-medium text-slate-600 mt-1">
+                <p className="font-light text-xs uppercase tracking-wider mt-2">
                   {member.role}
                 </p>
               </div>
               <img
                 src={member.image}
                 alt={member.name}
-                className="w-full h-80 object-cover object-bottom mt-auto"
+                className="w-full object-cover object-bottom mt-auto"
                 loading="eager"
               />
             </div>
-          ))}
-        </div>
+          );
+        })}
       </div>
 
       {/* Team Member Detail Modal */}
