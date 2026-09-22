@@ -1,12 +1,12 @@
-import { useState, useEffect, useCallback } from "react";
-import { ChevronLeft, ChevronRight, Linkedin, Mail, X } from "lucide-react";
+import { useState } from "react";
+import { Linkedin, Mail } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 import teamDalva from "@/assets/team-dalva.png";
 import teamManuel from "@/assets/team-manuel.png";
-import teamLukeny from "@/assets/team-lukeny.jpg";
-import teamPedro from "@/assets/team-pedro.jpg";
-import teamKassia from "@/assets/team-kassia.png";
+import teamLukeny from "@/assets/team-lukeny.png";
+import teamPedro from "@/assets/team-pedro.png";
+import teamKassia from "@/assets/team-kassia.webp";
 
 interface TeamMember {
   id: number;
@@ -35,7 +35,7 @@ const TEAM_MEMBERS: TeamMember[] = [
   {
     id: 2,
     name: "Manuel Francisco",
-    role: "Director de Relações Públicas",
+    role: "Director Financeiro",
     description: "Investigador e líder jovem dedicado à inclusão visual.",
     image: teamManuel,
     bio: "Sou estudante universitário de Contabilidade e Finanças no ISAF, com forte interesse em investigação científica e liderança.\n\nJuntei-me ao Janelas Para a Alma porque acredito que ver o outro com humanidade é o primeiro passo para transformar qualquer sociedade. Num contexto em que o estrabismo ainda é alvo de estigma, acredito que a educação, a tecnologia e a inclusão são as ferramentas mais poderosas para mudar essa realidade.",
@@ -46,7 +46,7 @@ const TEAM_MEMBERS: TeamMember[] = [
   {
     id: 3,
     name: "Lukeny Viegas",
-    role: "Especialista em Comunicação e Marketing",
+    role: "Director de TI",
     description: "Amplificando a nossa mensagem e mobilizando a comunidade.",
     image: teamLukeny,
     bio: "Estudante universitário, natural de Luanda, Angola. Amante de práticas contabilistas, ESL Student at UofA e graduando em Finance.\n\nInteressado em projectos ligados à acção social desde cedo e almejo contribuir mais para o Projecto \"Janelas Para a Alma\" de modo a torná-lo realidade.",
@@ -57,7 +57,7 @@ const TEAM_MEMBERS: TeamMember[] = [
   {
     id: 4,
     name: "Pedro Sapalo",
-    role: "Responsável pela Legalização e Logística",
+    role: "Director de Legalização e Logística",
     description: "Garantindo a conformidade e a eficiência operacional.",
     image: teamPedro,
     bio: "Sou estudante universitário com forte interesse em pesquisa científica e aplicada. Fora do projecto \"Janelas para a Alma\", coopero activamente em associativismo académico, contribuindo para o fortalecimento da comunidade estudantil e para a promoção de iniciativas de impacto social e educacional.",
@@ -68,7 +68,7 @@ const TEAM_MEMBERS: TeamMember[] = [
   {
     id: 5,
     name: "Kássia Nunda",
-    role: "Líder em Parcerias e Estratégia",
+    role: "Directora de Comunicação e Marketing",
     description: "Construindo alianças e definindo o rumo do nosso crescimento.",
     image: teamKassia,
     bio: "Sou uma jovem cristã de 22 anos, estudante do 3.º ano da Licenciatura em Contabilidade e Finanças no Instituto Superior de Administração e Finanças (ISAF). Apaixonada por liderança, voluntariado e trabalho em equipa, destaco-me pelo meu envolvimento activo em diversas iniciativas e projectos juvenis.\n\nSou Presidente da Comunidade Nexus, Roteirista oficial e responsável pelas Relações Exteriores do podcast Palco Universitário, Coordenadora auxiliar da Comunidade Estudante Blindado e Responsável pela área financeira do movimento ASG Conexão Mulheres.\n\nNo âmbito profissional, exerço funções como navegadora no Banco BAI, conciliando esta actividade com o meu espírito empreendedor no sector dos cosméticos.",
@@ -79,37 +79,10 @@ const TEAM_MEMBERS: TeamMember[] = [
 ];
 
 const TeamSection = () => {
-  const [current, setCurrent] = useState(0);
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
-  const totalMembers = TEAM_MEMBERS.length;
-
-  useEffect(() => {
-    TEAM_MEMBERS.forEach((member) => {
-      const img = new Image();
-      img.src = member.image;
-    });
-  }, []);
-
-  const navigate = useCallback((dir: "left" | "right") => {
-    setCurrent((prev) =>
-      dir === "right"
-        ? (prev + 1) % totalMembers
-        : (prev - 1 + totalMembers) % totalMembers
-    );
-  }, [totalMembers]);
-
-  const goTo = useCallback((index: number) => {
-    setCurrent(index);
-  }, []);
 
   return (
     <section id="equipa" className="py-20 md:py-28 bg-background">
-      <div className="hidden" aria-hidden="true">
-        {TEAM_MEMBERS.map((member) => (
-          <img key={member.id} src={member.image} alt="" />
-        ))}
-      </div>
-
       <div className="container">
         <div className="text-center mb-16 space-y-4">
           <span className="text-sm font-medium tracking-widest uppercase text-teal">
@@ -124,120 +97,64 @@ const TeamSection = () => {
           </p>
         </div>
 
-        <div className="relative flex flex-col items-center group/carousel">
-          <div className="relative w-full max-w-sm mx-auto">
-            <button
-              onClick={() => navigate("left")}
-              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 sm:-translate-x-12 md:-translate-x-16 z-10 w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-card/90 shadow-elevated border border-border/50 flex items-center justify-center text-muted-foreground hover:text-teal transition-all duration-300 opacity-0 group-hover/carousel:opacity-100"
-              aria-label="Membro anterior"
+        <div className="flex flex-wrap justify-center gap-8">
+          {TEAM_MEMBERS.map((member) => (
+            <div
+              key={member.id}
+              className="w-64 rounded-2xl bg-card shadow-card border border-border/50 text-center overflow-hidden cursor-pointer transition-transform duration-300 hover:scale-105 hover:shadow-elevated"
+              onClick={() => setSelectedMember(member)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setSelectedMember(member);
+                }
+              }}
             >
-              <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
-            </button>
-            <button
-              onClick={() => navigate("right")}
-              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 sm:translate-x-12 md:translate-x-16 z-10 w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-card/90 shadow-elevated border border-border/50 flex items-center justify-center text-muted-foreground hover:text-teal transition-all duration-300 opacity-0 group-hover/carousel:opacity-100"
-              aria-label="Próximo membro"
-            >
-              <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
-            </button>
-
-            <div className="overflow-hidden rounded-2xl">
-              <div
-                className="flex transition-transform duration-500 ease-in-out"
-                style={{
-                  width: `${totalMembers * 100}%`,
-                  transform: `translateX(-${(current * 100) / totalMembers}%)`,
-                }}
-              >
-                {TEAM_MEMBERS.map((member) => (
-                  <div
-                    key={member.id}
-                    className="flex-shrink-0"
-                    style={{ width: `${100 / totalMembers}%` }}
-                  >
-                    <div
-                      className="rounded-2xl bg-card shadow-card border border-border/50 text-center overflow-hidden cursor-pointer group/card transition-shadow duration-300 hover:shadow-elevated"
-                      onClick={() => setSelectedMember(member)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          setSelectedMember(member);
-                        }
-                      }}
-                    >
-                      <img
-                        src={member.image}
-                        alt={member.name}
-                        className="w-full h-72 md:h-80 object-cover object-top rounded-t-xl"
-                        loading="eager"
-                      />
-                      <div className="p-6 space-y-3">
-                        <h3 className="text-xl font-bold text-foreground">
-                          {member.name}
-                        </h3>
-                        <span className="inline-block text-sm font-medium text-teal bg-teal/10 px-3 py-1 rounded-full">
-                          {member.role}
-                        </span>
-                        <p className="text-muted-foreground text-sm leading-relaxed">
-                          {member.description}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <img
+                src={member.image}
+                alt={member.name}
+                className="w-full h-72 object-cover object-top"
+                loading="eager"
+              />
+              <div className="p-5 space-y-2">
+                <h3 className="text-lg font-bold text-foreground">
+                  {member.name}
+                </h3>
+                <span className="inline-block text-sm font-medium text-teal bg-teal/10 px-3 py-1 rounded-full">
+                  {member.role}
+                </span>
               </div>
             </div>
-          </div>
-
-          <div className="flex gap-2 mt-8">
-            {TEAM_MEMBERS.map((member, index) => (
-              <button
-                key={member.id}
-                onClick={() => goTo(index)}
-                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-                  index === current
-                    ? "bg-teal scale-125"
-                    : "bg-border hover:bg-muted-foreground"
-                }`}
-                aria-label={`Ver membro ${index + 1}`}
-              />
-            ))}
-          </div>
+          ))}
         </div>
       </div>
 
       {/* Team Member Detail Modal */}
       <Dialog open={!!selectedMember} onOpenChange={(open) => !open && setSelectedMember(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 gap-0 rounded-2xl border-border/50">
-          <DialogTitle className="sr-only">
-            {selectedMember?.name} — {selectedMember?.role}
-          </DialogTitle>
-
+        <DialogContent className="max-w-4xl w-full max-h-[90vh] overflow-hidden p-0 gap-0 rounded-2xl border-border/50">
           {selectedMember && (
-            <div className="flex flex-col">
-              {/* Header with photo and identity */}
-              <div className="relative bg-gradient-to-br from-teal/10 to-teal/5 p-6 sm:p-8">
-                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-                  <img
-                    src={selectedMember.image}
-                    alt={selectedMember.name}
-                    className="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl object-cover object-top shadow-elevated border-2 border-background flex-shrink-0"
-                  />
-                  <div className="text-center sm:text-left space-y-2 pt-1">
-                    <h3 className="text-2xl sm:text-3xl font-bold text-foreground">
-                      {selectedMember.name}
-                    </h3>
-                    <span className="inline-block text-sm font-semibold text-teal bg-teal/10 px-4 py-1.5 rounded-full">
-                      {selectedMember.role}
-                    </span>
-                  </div>
+            <div className="flex flex-col md:flex-row max-h-[90vh]">
+              {/* Left column: photo, name, role */}
+              <div className="md:w-2/5 flex flex-col bg-gradient-to-br from-teal/10 to-teal/5 shrink-0">
+                <img
+                  src={selectedMember.image}
+                  alt={selectedMember.name}
+                  className="w-full h-64 md:h-auto md:flex-1 object-cover object-top"
+                />
+                <div className="text-center md:text-left p-6 space-y-2">
+                  <DialogTitle className="text-2xl font-bold text-foreground">
+                    {selectedMember.name}
+                  </DialogTitle>
+                  <span className="inline-block text-sm font-semibold text-teal bg-teal/10 px-4 py-1.5 rounded-full">
+                    {selectedMember.role}
+                  </span>
                 </div>
               </div>
 
-              {/* Content */}
-              <div className="p-6 sm:p-8 space-y-6 pb-16">
+              {/* Right column: bio, mission, contact */}
+              <div className="md:w-3/5 overflow-y-auto p-6 sm:p-8 space-y-6">
                 {/* Bio */}
                 <div className="space-y-2">
                   <h4 className="text-sm font-semibold tracking-widest uppercase text-teal">
@@ -263,7 +180,7 @@ const TeamSection = () => {
                 </div>
 
                 {/* Social Links */}
-                <div className="flex items-center justify-center sm:justify-start gap-3 pt-2">
+                <div className="flex items-center justify-center md:justify-start gap-3 pt-2">
                   {selectedMember.linkedin && (
                     <a
                       href={selectedMember.linkedin}
