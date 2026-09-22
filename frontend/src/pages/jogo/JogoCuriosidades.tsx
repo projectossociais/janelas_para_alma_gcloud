@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   Check,
@@ -34,8 +34,12 @@ import {
   mensagemDeErroApi,
   type PerguntaJogoPublica,
   type RespostaOpcaoJogo,
+  type ValidarRespostaJogoResponse,
 } from "@/lib/apiClient";
 import { OPCOES, PATAMARES, TOTAL_PATAMARES, calcularRecompensaCliente, formatarKz, valorDoPatamar } from "./jogoConfig";
+import { obterPerguntaOfflineNaoVista, obterPerguntaOfflinePorId, obterPerguntasDoPatamar } from "./perguntasOffline";
+
+const TEMPO_SPLASH_MS = 2500;
 
 const TEMPO_POR_PERGUNTA = 45;
 
@@ -73,10 +77,12 @@ const gerarOpiniaoPublico = (correta: RespostaOpcaoJogo): Record<RespostaOpcaoJo
 const JogoCuriosidades = () => {
   const { profile } = useProfile();
 
+  const [mostrarSplash, setMostrarSplash] = useState(true);
+
   const [patamar, setPatamar] = useState(1);
   const [pergunta, setPergunta] = useState<PerguntaJogoPublica | null>(null);
   const [aCarregarPergunta, setACarregarPergunta] = useState(true);
-  const [erroCarregamento, setErroCarregamento] = useState<string | null>(null);
+  const [emModoOffline, setEmModoOffline] = useState(false);
 
   const [opcaoSelecionada, setOpcaoSelecionada] = useState<RespostaOpcaoJogo | null>(null);
   const [aValidar, setAValidar] = useState(false);
@@ -96,9 +102,56 @@ const JogoCuriosidades = () => {
   const [recompensaEnviada, setRecompensaEnviada] = useState(false);
   const [recompensaLocal, setRecompensaLocal] = useState<RecompensaLocal | null>(null);
 
+  // Ids das perguntas offline já mostradas nesta sessão -- evita repetição
+  // enquanto a reserva do patamar não se esgota. Guardado também numa ref
+  // porque é lido de dentro de `carregarPergunta` (async, `useCallback` com
+  // deps vazias) depois de um `await` -- sem a ref, essa leitura veria
+  // sempre o valor de quando o componente montou, nunca as atualizações
+  // seguintes (incluindo o reset em `reiniciarJogo`).
+  const [perguntasVistas, setPerguntasVistas] = useState<string[]>([]);
+  const perguntasVistasRef = useRef<string[]>([]);
+
+  const atualizarPerguntasVistas = useCallback((atualizador: (atual: string[]) => string[]) => {
+    const novo = atualizador(perguntasVistasRef.current);
+    perguntasVistasRef.current = novo;
+    setPerguntasVistas(novo);
+  }, []);
+
+  // Escolhe (e regista como vista) uma pergunta offline para `novoPatamar`,
+  // já convertida para a forma pública usada no ecrã. Se a reserva desse
+  // patamar já tiver sido totalmente mostrada nesta sessão, reinicia só o
+  // rastreio dele -- o jogador volta a poder ver as mesmas 5, em vez de o
+  // jogo ficar preso ou de misturar patamares diferentes.
+  const escolherPerguntaOfflineParaPatamar = useCallback(
+    (novoPatamar: number): PerguntaJogoPublica => {
+      const idsDoPatamar = obterPerguntasDoPatamar(novoPatamar).map((p) => p.id);
+      const vistosAtuais = perguntasVistasRef.current;
+      const vistosDoPatamar = vistosAtuais.filter((id) => idsDoPatamar.includes(id));
+      const esgotado = idsDoPatamar.length > 0 && vistosDoPatamar.length >= idsDoPatamar.length;
+      const escolhida = obterPerguntaOfflineNaoVista(novoPatamar, vistosAtuais);
+      atualizarPerguntasVistas((atual) =>
+        esgotado
+          ? [...atual.filter((id) => !idsDoPatamar.includes(id)), escolhida.id]
+          : [...atual, escolhida.id]
+      );
+      return {
+        id: escolhida.id,
+        texto_pergunta: escolhida.texto_pergunta,
+        opcao_a: escolhida.opcao_a,
+        opcao_b: escolhida.opcao_b,
+        opcao_c: escolhida.opcao_c,
+        opcao_d: escolhida.opcao_d,
+      };
+    },
+    [atualizarPerguntasVistas]
+  );
+
+  // Nunca deixa o modo "Um Jogador" bloqueado por falta de servidor: se o
+  // pedido falhar (sem internet, backend em baixo), serve silenciosamente a
+  // pergunta estática de contingência para este patamar (perguntasOffline.ts)
+  // e o jogo continua -- só o pequeno aviso "Modo offline" no ecrã denuncia.
   const carregarPergunta = useCallback(async (novoPatamar: number) => {
     setACarregarPergunta(true);
-    setErroCarregamento(null);
     setPergunta(null);
     setOpcaoSelecionada(null);
     setResultado(null);
@@ -108,25 +161,35 @@ const JogoCuriosidades = () => {
     try {
       const nova = await jogoApi.obterPerguntaAleatoria(novoPatamar);
       setPergunta(nova);
-      setPatamar(novoPatamar);
+      setEmModoOffline(false);
     } catch (err) {
-      setErroCarregamento(
-        mensagemDeErroApi(err, "Não foi possível ligar ao servidor de perguntas.")
-      );
+      console.error("Falha ao contactar a API do jogo, a usar o modo offline:", err);
+      setPergunta(escolherPerguntaOfflineParaPatamar(novoPatamar));
+      setEmModoOffline(true);
     } finally {
+      setPatamar(novoPatamar);
       setACarregarPergunta(false);
     }
-  }, []);
+  }, [escolherPerguntaOfflineParaPatamar]);
 
-  // Arranque do jogo.
+  // Arranque do jogo -- corre em paralelo com o ecrã de apresentação, para a
+  // pergunta já estar pronta quando o "splash" da escada terminar.
   useEffect(() => {
     void carregarPergunta(1);
   }, [carregarPergunta]);
 
-  // Temporizador -- pára assim que a pergunta é respondida, falha o
-  // carregamento ou o jogo termina.
+  // Ecrã de apresentação com a escada completa -- unico este 2,5s ou até o
+  // jogador clicar em "Começar".
   useEffect(() => {
-    if (!pergunta || resultado || jogoTerminado || erroCarregamento) return;
+    if (!mostrarSplash) return;
+    const id = setTimeout(() => setMostrarSplash(false), TEMPO_SPLASH_MS);
+    return () => clearTimeout(id);
+  }, [mostrarSplash]);
+
+  // Temporizador -- pára assim que a pergunta é respondida, o jogo termina
+  // ou o ecrã de apresentação ainda está visível.
+  useEffect(() => {
+    if (!pergunta || resultado || jogoTerminado || mostrarSplash) return;
     if (tempoRestante <= 0) {
       void aoTempoEsgotar();
       return;
@@ -134,7 +197,7 @@ const JogoCuriosidades = () => {
     const id = setTimeout(() => setTempoRestante((t) => t - 1), 1000);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pergunta, resultado, jogoTerminado, erroCarregamento, tempoRestante]);
+  }, [pergunta, resultado, jogoTerminado, mostrarSplash, tempoRestante]);
 
   // Avança automaticamente ao acertar; ao errar ou esgotar o tempo, abre já
   // o modal com a explicação -- não há motivo para atrasar essa revelação.
@@ -171,8 +234,24 @@ const JogoCuriosidades = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jogoTerminado, mostrarModalErrado, recompensaEnviada]);
 
+  // Compara localmente contra a reserva de contingência -- só chamado
+  // quando `emModoOffline` já garantiu que `pergunta.id` é um dos ids
+  // "offline-N", nunca para uma pergunta vinda do servidor.
+  const validarLocalmente = (opcaoEscolhida: RespostaOpcaoJogo): ValidarRespostaJogoResponse => {
+    const local = pergunta && obterPerguntaOfflinePorId(pergunta.id);
+    return {
+      correta: !!local && opcaoEscolhida === local.resposta_correta,
+      resposta_correta: local?.resposta_correta ?? "A",
+      explicacao: local?.explicacao ?? null,
+    };
+  };
+
   const aoTempoEsgotar = async () => {
     if (!pergunta || aValidar) return;
+    if (emModoOffline) {
+      setResultado({ ...validarLocalmente("A"), tempoEsgotado: true });
+      return;
+    }
     setAValidar(true);
     try {
       const resp = await jogoApi.validarResposta(pergunta.id, "A");
@@ -192,6 +271,10 @@ const JogoCuriosidades = () => {
   const selecionarOpcao = async (opcao: RespostaOpcaoJogo) => {
     if (!pergunta || resultado || aValidar || opcoesEliminadas.includes(opcao)) return;
     setOpcaoSelecionada(opcao);
+    if (emModoOffline) {
+      setResultado({ ...validarLocalmente(opcao), tempoEsgotado: false });
+      return;
+    }
     setAValidar(true);
     try {
       const resp = await jogoApi.validarResposta(pergunta.id, opcao);
@@ -212,6 +295,12 @@ const JogoCuriosidades = () => {
   const usar5050 = async () => {
     if (!pergunta || ajudaCincoUsada || resultado || aValidar) return;
     setAjudaCincoUsada(true);
+    if (emModoOffline) {
+      const respostaCerta = obterPerguntaOfflinePorId(pergunta.id)?.resposta_correta ?? "A";
+      const erradas = OPCOES.filter((o) => o !== respostaCerta);
+      setOpcoesEliminadas(erradas.sort(() => Math.random() - 0.5).slice(0, 2));
+      return;
+    }
     try {
       // Chamada silenciosa: só serve para saber quais são as 2 opções erradas
       // a esconder -- a letra enviada aqui é arbitrária e nunca é mostrada
@@ -229,6 +318,12 @@ const JogoCuriosidades = () => {
   const usarOpiniaoPublico = async () => {
     if (!pergunta || ajudaPublicoUsada || resultado || aValidar) return;
     setAjudaPublicoUsada(true);
+    if (emModoOffline) {
+      const respostaCerta = obterPerguntaOfflinePorId(pergunta.id)?.resposta_correta ?? "A";
+      setOpiniaoPublico(gerarOpiniaoPublico(respostaCerta));
+      setMostrarModalPublico(true);
+      return;
+    }
     try {
       // Mesma técnica do 50:50 -- só usa a resposta para gerar a sondagem
       // simulada, nunca a revela directamente.
@@ -244,6 +339,17 @@ const JogoCuriosidades = () => {
   const trocarPergunta = () => {
     if (ajudaTrocarUsada || resultado || aValidar || aCarregarPergunta) return;
     setAjudaTrocarUsada(true);
+    if (emModoOffline) {
+      // Sem rede, troca dentro da própria reserva local do patamar (5
+      // perguntas, filtrando as já vistas) em vez de tentar o servidor outra
+      // vez -- substitui a pergunta no ecrã sem qualquer pedido de rede.
+      setPergunta(escolherPerguntaOfflineParaPatamar(patamar));
+      setOpcaoSelecionada(null);
+      setResultado(null);
+      setOpcoesEliminadas([]);
+      setTempoRestante(TEMPO_POR_PERGUNTA);
+      return;
+    }
     void carregarPergunta(patamar);
   };
 
@@ -254,6 +360,14 @@ const JogoCuriosidades = () => {
     setJogoTerminado(false);
     setRecompensaEnviada(false);
     setRecompensaLocal(null);
+    // Limpa já a pergunta e o patamar anteriores -- não basta confiar só no
+    // que `carregarPergunta` faz lá dentro: isto garante que o ecrã nunca
+    // mostra a pergunta da partida anterior, mesmo por um instante, e que o
+    // sorteio seguinte parte sempre do patamar 1.
+    setPergunta(null);
+    setPatamar(1);
+    // Nova jogada, novo leque de perguntas offline disponível outra vez.
+    atualizarPerguntasVistas(() => []);
     void carregarPergunta(1);
   };
 
@@ -289,185 +403,203 @@ const JogoCuriosidades = () => {
 
       <main className="flex-1">
         <div className="container pb-16">
-          <header className="max-w-2xl mx-auto text-center space-y-3 mb-8">
-            <span className="text-sm font-medium tracking-widest uppercase text-teal">
-              Você Sabia Que...
-            </span>
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground">
-              O Jogo da Saúde Ocular
-            </h1>
-            <p className="text-muted-foreground">
-              Suba os 15 patamares respondendo a perguntas reais sobre visão e estrabismo.
-            </p>
-          </header>
+          {mostrarSplash ? (
+            <div className="max-w-lg mx-auto rounded-2xl bg-card border border-border/60 shadow-elevated p-6 sm:p-8 text-center space-y-6 animate-scale-in">
+              <div>
+                <span className="text-sm font-medium tracking-widest uppercase text-teal">
+                  Você Sabia Que...
+                </span>
+                <h1 className="text-2xl md:text-3xl font-bold text-foreground mt-1">
+                  Prepare-se para subir a escada
+                </h1>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Responda corretamente e avance patamar a patamar até {formatarKz(valorDoPatamar(TOTAL_PATAMARES))}.
+                </p>
+              </div>
+              <EscadaPatamares patamarAtual={1} />
+              <Button
+                onClick={() => setMostrarSplash(false)}
+                size="lg"
+                className="w-full bg-teal text-teal-foreground hover:bg-teal/90"
+              >
+                Começar
+              </Button>
+            </div>
+          ) : (
+            <>
+              <header className="max-w-2xl mx-auto text-center space-y-3 mb-8">
+                <span className="text-sm font-medium tracking-widest uppercase text-teal">
+                  Você Sabia Que...
+                </span>
+                <h1 className="text-3xl md:text-4xl font-bold text-foreground">
+                  O Jogo da Saúde Ocular
+                </h1>
+                <p className="text-muted-foreground">
+                  Suba os 15 patamares respondendo a perguntas reais sobre visão e estrabismo.
+                </p>
+              </header>
 
-          {/* Patamar atual em mobile -- gaveta com a escada completa. */}
-          <div className="md:hidden max-w-2xl mx-auto mb-6">
-            <Sheet>
-              <SheetTrigger asChild>
-                <button
-                  type="button"
-                  className="w-full flex items-center justify-between rounded-2xl bg-card border border-border/60 shadow-card px-5 py-4"
-                >
-                  <span className="text-sm text-muted-foreground">
-                    Patamar <span className="font-bold text-foreground">{patamar}</span> de {TOTAL_PATAMARES}
-                  </span>
-                  <span className="inline-flex items-center gap-2 font-bold text-gold">
-                    {formatarKz(valorDoPatamar(patamar))}
-                    <ChevronDown className="w-4 h-4" />
-                  </span>
-                </button>
-              </SheetTrigger>
-              <SheetContent side="bottom" className="max-h-[75vh] overflow-y-auto rounded-t-2xl">
-                <SheetHeader>
-                  <SheetTitle>Escada de prémios</SheetTitle>
-                </SheetHeader>
-                <EscadaPatamares patamarAtual={patamar} className="mt-4" />
-              </SheetContent>
-            </Sheet>
-          </div>
+              {/* Patamar atual em mobile -- gaveta com a escada completa. */}
+              <div className="md:hidden max-w-2xl mx-auto mb-6">
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <button
+                      type="button"
+                      className="w-full flex items-center justify-between rounded-2xl bg-card border border-border/60 shadow-card px-5 py-4"
+                    >
+                      <span className="text-sm text-muted-foreground">
+                        Patamar <span className="font-bold text-foreground">{patamar}</span> de {TOTAL_PATAMARES}
+                      </span>
+                      <span className="inline-flex items-center gap-2 font-bold text-gold">
+                        {formatarKz(valorDoPatamar(patamar))}
+                        <ChevronDown className="w-4 h-4" />
+                      </span>
+                    </button>
+                  </SheetTrigger>
+                  <SheetContent side="bottom" className="max-h-[75vh] overflow-y-auto rounded-t-2xl">
+                    <SheetHeader>
+                      <SheetTitle>Escada de prémios</SheetTitle>
+                    </SheetHeader>
+                    <EscadaPatamares patamarAtual={patamar} className="mt-4" />
+                  </SheetContent>
+                </Sheet>
+              </div>
 
-          <div className="max-w-5xl mx-auto grid md:grid-cols-[minmax(0,1fr)_240px] gap-6 items-start">
-            {/* Área central */}
-            <div className="order-2 md:order-1">
-              {erroCarregamento && (
-                <div className="rounded-2xl bg-card border border-border/60 shadow-card p-8 sm:p-10 text-center space-y-4">
-                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-destructive/10 text-destructive mx-auto">
-                    <WifiOff className="w-7 h-7" />
-                  </div>
-                  <h2 className="text-lg font-bold text-foreground">Sem ligação ao servidor</h2>
-                  <p className="text-sm text-muted-foreground max-w-sm mx-auto">{erroCarregamento}</p>
-                  <Button onClick={() => carregarPergunta(patamar)} className="bg-teal text-teal-foreground hover:bg-teal/90">
-                    <RefreshCw className="w-4 h-4" />
-                    Tentar reconectar
-                  </Button>
-                </div>
-              )}
-
-              {!erroCarregamento && aCarregarPergunta && (
-                <div className="rounded-2xl bg-card border border-border/60 shadow-card p-16 flex justify-center">
-                  <Loader2 className="w-8 h-8 animate-spin text-teal" />
-                </div>
-              )}
-
-              {!erroCarregamento && !aCarregarPergunta && jogoTerminado && (
-                <div className="rounded-2xl bg-card border border-gold/40 shadow-elevated p-8 sm:p-12 text-center space-y-5">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-gold to-teal mx-auto shadow-elevated">
-                    <Trophy className="w-8 h-8 text-navy" />
-                  </div>
-                  <h2 className="text-2xl md:text-3xl font-bold text-foreground">Parabéns!</h2>
-                  <p className="text-muted-foreground max-w-md mx-auto">
-                    Completou os 15 patamares e mostrou que domina o conhecimento em saúde ocular.
-                  </p>
-                  <p className="text-3xl font-bold text-gold">{formatarKz(valorDoPatamar(TOTAL_PATAMARES))}</p>
-                  <RecompensaGanha recompensa={recompensaLocal} autenticado={!!profile?.id} />
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-                    <Button onClick={partilhar} variant="outline" className="border-teal text-teal hover:bg-teal/10">
-                      <Share2 className="w-4 h-4" />
-                      Partilhar
-                    </Button>
-                    <Button onClick={reiniciarJogo} className="bg-teal text-teal-foreground hover:bg-teal/90">
-                      <RefreshCw className="w-4 h-4" />
-                      Jogar novamente
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {!erroCarregamento && !aCarregarPergunta && !jogoTerminado && pergunta && (
-                <div className="rounded-2xl bg-card border border-border/60 shadow-card p-6 sm:p-8 space-y-6">
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <p className="text-xs font-medium tracking-widest uppercase text-muted-foreground">
-                        Patamar {patamar} de {TOTAL_PATAMARES}
-                      </p>
-                      <p className="text-2xl font-bold text-gold">{formatarKz(valorDoPatamar(patamar))}</p>
+              <div className="max-w-5xl mx-auto grid md:grid-cols-[minmax(0,1fr)_240px] gap-6 items-start">
+                {/* Área central */}
+                <div className="order-2 md:order-1">
+                  {aCarregarPergunta && (
+                    <div className="rounded-2xl bg-card border border-border/60 shadow-card p-16 flex justify-center">
+                      <Loader2 className="w-8 h-8 animate-spin text-teal" />
                     </div>
-                    <TemporizadorCircular tempoRestante={tempoRestante} tempoTotal={TEMPO_POR_PERGUNTA} />
-                  </div>
+                  )}
 
-                  <p className="text-lg md:text-xl font-semibold text-foreground leading-relaxed">
-                    {pergunta.texto_pergunta}
-                  </p>
+                  {!aCarregarPergunta && jogoTerminado && (
+                    <div className="rounded-2xl bg-card border border-gold/40 shadow-elevated p-8 sm:p-12 text-center space-y-5">
+                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-gold to-teal mx-auto shadow-elevated">
+                        <Trophy className="w-8 h-8 text-navy" />
+                      </div>
+                      <h2 className="text-2xl md:text-3xl font-bold text-foreground">Parabéns!</h2>
+                      <p className="text-muted-foreground max-w-md mx-auto">
+                        Completou os 15 patamares e mostrou que domina o conhecimento em saúde ocular.
+                      </p>
+                      <p className="text-3xl font-bold text-gold">{formatarKz(valorDoPatamar(TOTAL_PATAMARES))}</p>
+                      <RecompensaGanha recompensa={recompensaLocal} autenticado={!!profile?.id} />
+                      <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+                        <Button onClick={partilhar} variant="outline" className="border-teal text-teal hover:bg-teal/10">
+                          <Share2 className="w-4 h-4" />
+                          Partilhar
+                        </Button>
+                        <Button onClick={reiniciarJogo} className="bg-teal text-teal-foreground hover:bg-teal/90">
+                          <RefreshCw className="w-4 h-4" />
+                          Jogar novamente
+                        </Button>
+                      </div>
+                    </div>
+                  )}
 
-                  <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
-                    {OPCOES.map((opcao) => {
-                      const eliminada = opcoesEliminadas.includes(opcao);
-                      const ehSelecionada = opcaoSelecionada === opcao;
-                      const ehCorreta = resultado?.resposta_correta === opcao;
-                      const mostrarComoErrada = !!resultado && ehSelecionada && !resultado.correta;
-                      const mostrarComoCerta = !!resultado && ehCorreta;
-
-                      return (
-                        <button
-                          key={opcao}
-                          type="button"
-                          disabled={!!resultado || aValidar || eliminada}
-                          onClick={() => void selecionarOpcao(opcao)}
-                          className={cn(
-                            "flex items-center gap-3 rounded-xl border-2 px-4 py-3.5 text-left transition-all duration-300",
-                            "disabled:cursor-not-allowed",
-                            eliminada && "opacity-30",
-                            !resultado &&
-                              !eliminada &&
-                              "border-border bg-background hover:border-teal hover:bg-teal/5",
-                            mostrarComoCerta && "border-green bg-green/10",
-                            mostrarComoErrada && "border-destructive bg-destructive/10"
+                  {!aCarregarPergunta && !jogoTerminado && pergunta && (
+                    <div className="rounded-2xl bg-card border border-border/60 shadow-card p-6 sm:p-8 space-y-6">
+                      <div className="flex items-center justify-between gap-4">
+                        <div>
+                          <p className="text-xs font-medium tracking-widest uppercase text-muted-foreground">
+                            Patamar {patamar} de {TOTAL_PATAMARES}
+                          </p>
+                          <p className="text-2xl font-bold text-gold">{formatarKz(valorDoPatamar(patamar))}</p>
+                          {emModoOffline && (
+                            <span className="inline-flex items-center gap-1 mt-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground bg-muted rounded-full px-2 py-0.5">
+                              <WifiOff className="w-3 h-3" />
+                              Modo offline
+                            </span>
                           )}
+                        </div>
+                        <TemporizadorCircular tempoRestante={tempoRestante} tempoTotal={TEMPO_POR_PERGUNTA} />
+                      </div>
+
+                      <p className="text-lg md:text-xl font-semibold text-foreground leading-relaxed">
+                        {pergunta.texto_pergunta}
+                      </p>
+
+                      <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
+                        {OPCOES.map((opcao) => {
+                          const eliminada = opcoesEliminadas.includes(opcao);
+                          const ehSelecionada = opcaoSelecionada === opcao;
+                          const ehCorreta = resultado?.resposta_correta === opcao;
+                          const mostrarComoErrada = !!resultado && ehSelecionada && !resultado.correta;
+                          const mostrarComoCerta = !!resultado && ehCorreta;
+
+                          return (
+                            <button
+                              key={opcao}
+                              type="button"
+                              disabled={!!resultado || aValidar || eliminada}
+                              onClick={() => void selecionarOpcao(opcao)}
+                              className={cn(
+                                "flex items-center gap-3 rounded-xl border-2 px-4 py-3.5 text-left transition-all duration-300",
+                                "disabled:cursor-not-allowed",
+                                eliminada && "opacity-30",
+                                !resultado &&
+                                  !eliminada &&
+                                  "border-border bg-background hover:border-teal hover:bg-teal/5",
+                                mostrarComoCerta && "border-green bg-green/10",
+                                mostrarComoErrada && "border-destructive bg-destructive/10"
+                              )}
+                            >
+                              <span
+                                className={cn(
+                                  "flex items-center justify-center w-8 h-8 shrink-0 rounded-full border-2 font-bold text-sm",
+                                  mostrarComoCerta && "border-green bg-green text-green-foreground",
+                                  mostrarComoErrada && "border-destructive bg-destructive text-destructive-foreground",
+                                  !mostrarComoCerta && !mostrarComoErrada && "border-teal text-teal"
+                                )}
+                              >
+                                {mostrarComoCerta ? <Check className="w-4 h-4" /> : mostrarComoErrada ? <X className="w-4 h-4" /> : opcao}
+                              </span>
+                              <span className="text-sm sm:text-base text-foreground">{textoDaOpcao(opcao)}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-center gap-3 border-t border-border/50 pt-5">
+                        <Button
+                          variant="outline"
+                          onClick={() => void usar5050()}
+                          disabled={ajudaCincoUsada || !!resultado || aValidar}
+                          className="border-teal/50 text-teal hover:bg-teal/10"
                         >
-                          <span
-                            className={cn(
-                              "flex items-center justify-center w-8 h-8 shrink-0 rounded-full border-2 font-bold text-sm",
-                              mostrarComoCerta && "border-green bg-green text-green-foreground",
-                              mostrarComoErrada && "border-destructive bg-destructive text-destructive-foreground",
-                              !mostrarComoCerta && !mostrarComoErrada && "border-teal text-teal"
-                            )}
-                          >
-                            {mostrarComoCerta ? <Check className="w-4 h-4" /> : mostrarComoErrada ? <X className="w-4 h-4" /> : opcao}
-                          </span>
-                          <span className="text-sm sm:text-base text-foreground">{textoDaOpcao(opcao)}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <div className="flex flex-wrap items-center justify-center gap-3 border-t border-border/50 pt-5">
-                    <Button
-                      variant="outline"
-                      onClick={() => void usar5050()}
-                      disabled={ajudaCincoUsada || !!resultado || aValidar}
-                      className="border-teal/50 text-teal hover:bg-teal/10"
-                    >
-                      50:50
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => void usarOpiniaoPublico()}
-                      disabled={ajudaPublicoUsada || !!resultado || aValidar}
-                      className="border-teal/50 text-teal hover:bg-teal/10"
-                    >
-                      <Users className="w-4 h-4" />
-                      Opinião do público
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={trocarPergunta}
-                      disabled={ajudaTrocarUsada || !!resultado || aValidar}
-                      className="border-teal/50 text-teal hover:bg-teal/10"
-                    >
-                      <Shuffle className="w-4 h-4" />
-                      Trocar pergunta
-                    </Button>
-                  </div>
+                          50:50
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => void usarOpiniaoPublico()}
+                          disabled={ajudaPublicoUsada || !!resultado || aValidar}
+                          className="border-teal/50 text-teal hover:bg-teal/10"
+                        >
+                          <Users className="w-4 h-4" />
+                          Opinião do público
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={trocarPergunta}
+                          disabled={ajudaTrocarUsada || !!resultado || aValidar}
+                          className="border-teal/50 text-teal hover:bg-teal/10"
+                        >
+                          <Shuffle className="w-4 h-4" />
+                          Trocar pergunta
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            {/* Escada de prémios -- desktop */}
-            <div className="order-1 md:order-2 hidden md:block sticky top-24">
-              <EscadaPatamares patamarAtual={patamar} />
-            </div>
-          </div>
+                {/* Escada de prémios -- desktop */}
+                <div className="order-1 md:order-2 hidden md:block sticky top-24">
+                  <EscadaPatamares patamarAtual={patamar} />
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </main>
 
@@ -658,16 +790,13 @@ const EscadaPatamares = ({ patamarAtual, className }: EscadaPatamaresProps) => (
           <li
             key={numero}
             className={cn(
-              "flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors",
+              "flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors",
               ativo && "bg-teal/10 border border-teal text-foreground font-bold",
               superado && "text-muted-foreground",
               !ativo && !superado && "text-muted-foreground/70"
             )}
           >
-            <span className="flex items-center gap-2">
-              {superado && <Check className="w-3.5 h-3.5 text-green" />}
-              {numero}
-            </span>
+            {superado && <Check className="w-3.5 h-3.5 text-green shrink-0" />}
             <span className={cn(ativo && "text-gold font-bold", superado && "text-foreground/70")}>
               {formatarKz(valorKz)}
             </span>

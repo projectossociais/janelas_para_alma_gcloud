@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
@@ -29,8 +29,13 @@ vi.mock("@/contexts/ProfileContext", () => ({
 
 const toastError = vi.fn();
 const toastSuccess = vi.fn();
+const toastInfo = vi.fn();
 vi.mock("sonner", () => ({
-  toast: { error: (...a: unknown[]) => toastError(...a), success: (...a: unknown[]) => toastSuccess(...a) },
+  toast: {
+    error: (...a: unknown[]) => toastError(...a),
+    success: (...a: unknown[]) => toastSuccess(...a),
+    info: (...a: unknown[]) => toastInfo(...a),
+  },
 }));
 
 import JogoCuriosidades from "./JogoCuriosidades";
@@ -44,6 +49,12 @@ const PERGUNTA_1 = {
   opcao_d: "Errada D",
 };
 
+// O ecrã de apresentação (splash) mostra-se sempre primeiro -- todos os
+// testes de jogabilidade passam por ele clicando em "Começar".
+const comecarJogo = async () => {
+  await userEvent.click(await screen.findByRole("button", { name: "Começar" }));
+};
+
 describe("JogoCuriosidades", () => {
   beforeEach(() => {
     obterPerguntaAleatoria.mockReset();
@@ -52,12 +63,33 @@ describe("JogoCuriosidades", () => {
     registarRecompensa.mockResolvedValue({ moedas: 0, diamantes: 0, partidas_jogadas: 1, patamar_maximo_alcancado: 0 });
     toastError.mockReset();
     toastSuccess.mockReset();
+    toastInfo.mockReset();
     mockProfile = null;
+    // A reserva offline tem 5 perguntas por patamar, escolhidas ao acaso --
+    // fixamos `Math.random` para os testes de modo offline serem
+    // determinísticos (index 0 = a primeira pergunta ainda não vista).
+    vi.spyOn(Math, "random").mockReturnValue(0);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("mostra o ecrã de apresentação com a escada antes da primeira pergunta", async () => {
+    obterPerguntaAleatoria.mockResolvedValue(PERGUNTA_1);
+    render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+
+    expect(await screen.findByText("Prepare-se para subir a escada")).toBeInTheDocument();
+    expect(screen.queryByText(PERGUNTA_1.texto_pergunta)).not.toBeInTheDocument();
+
+    await comecarJogo();
+    expect(await screen.findByText(PERGUNTA_1.texto_pergunta)).toBeInTheDocument();
   });
 
   it("busca a pergunta do patamar 1 ao montar e mostra as 4 opções", async () => {
     obterPerguntaAleatoria.mockResolvedValue(PERGUNTA_1);
     render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+    await comecarJogo();
 
     expect(await screen.findByText(PERGUNTA_1.texto_pergunta)).toBeInTheDocument();
     expect(obterPerguntaAleatoria).toHaveBeenCalledWith(1);
@@ -67,18 +99,15 @@ describe("JogoCuriosidades", () => {
     expect(screen.getByText("Errada D")).toBeInTheDocument();
   });
 
-  it("mostra um estado de erro amigável quando a API falha, com botão para reconectar", async () => {
-    obterPerguntaAleatoria.mockRejectedValue(Object.assign(new Error("servidor em baixo"), { status: 500 }));
+  it("a escada de prémios mostra só os valores em Kz, nunca o número do patamar", async () => {
+    obterPerguntaAleatoria.mockResolvedValue(PERGUNTA_1);
     render(<JogoCuriosidades />, { wrapper: MemoryRouter });
 
-    expect(await screen.findByText("Sem ligação ao servidor")).toBeInTheDocument();
-    expect(screen.getByText("servidor em baixo")).toBeInTheDocument();
-
-    obterPerguntaAleatoria.mockResolvedValue(PERGUNTA_1);
-    await userEvent.click(screen.getByRole("button", { name: /Tentar reconectar/i }));
-
-    expect(await screen.findByText(PERGUNTA_1.texto_pergunta)).toBeInTheDocument();
-    expect(obterPerguntaAleatoria).toHaveBeenCalledTimes(2);
+    expect(await screen.findByText("Kz 500")).toBeInTheDocument();
+    expect(screen.getByText("Kz 1.000.000")).toBeInTheDocument();
+    // Nenhum índice de patamar (1 a 15) deve sobrar como texto isolado na escada.
+    expect(screen.queryByText("15")).not.toBeInTheDocument();
+    expect(screen.queryByText("1", { exact: true })).not.toBeInTheDocument();
   });
 
   it("ao errar, marca a opção escolhida a vermelho, a certa a verde, e abre o modal com a explicação", async () => {
@@ -89,6 +118,7 @@ describe("JogoCuriosidades", () => {
       explicacao: "A explicação científica da resposta certa.",
     });
     render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+    await comecarJogo();
     await screen.findByText(PERGUNTA_1.texto_pergunta);
 
     await userEvent.click(screen.getByText("Errada A"));
@@ -110,6 +140,7 @@ describe("JogoCuriosidades", () => {
     obterPerguntaAleatoria.mockResolvedValue(PERGUNTA_1);
     validarResposta.mockResolvedValue({ correta: true, resposta_correta: "B", explicacao: null });
     render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+    await comecarJogo();
     await screen.findByText(PERGUNTA_1.texto_pergunta);
 
     await userEvent.click(screen.getByText("Certa B"));
@@ -122,6 +153,7 @@ describe("JogoCuriosidades", () => {
     obterPerguntaAleatoria.mockResolvedValue(PERGUNTA_1);
     validarResposta.mockResolvedValue({ correta: false, resposta_correta: "B", explicacao: null });
     render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+    await comecarJogo();
     await screen.findByText(PERGUNTA_1.texto_pergunta);
 
     const botao5050 = screen.getByRole("button", { name: "50:50" });
@@ -142,6 +174,7 @@ describe("JogoCuriosidades", () => {
     obterPerguntaAleatoria.mockResolvedValue(PERGUNTA_1);
     validarResposta.mockResolvedValue({ correta: false, resposta_correta: "B", explicacao: null });
     render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+    await comecarJogo();
     await screen.findByText(PERGUNTA_1.texto_pergunta);
 
     const botaoPublico = screen.getByRole("button", { name: /Opinião do público/i });
@@ -166,6 +199,7 @@ describe("JogoCuriosidades", () => {
     obterPerguntaAleatoria.mockResolvedValue(PERGUNTA_1);
     validarResposta.mockResolvedValue({ correta: false, resposta_correta: "B", explicacao: null });
     render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+    await comecarJogo();
     await screen.findByText(PERGUNTA_1.texto_pergunta);
 
     await userEvent.click(screen.getByText("Errada A"));
@@ -180,6 +214,7 @@ describe("JogoCuriosidades", () => {
     obterPerguntaAleatoria.mockResolvedValue(PERGUNTA_1);
     validarResposta.mockResolvedValue({ correta: false, resposta_correta: "B", explicacao: null });
     render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+    await comecarJogo();
     await screen.findByText(PERGUNTA_1.texto_pergunta);
 
     await userEvent.click(screen.getByText("Errada A"));
@@ -187,5 +222,68 @@ describe("JogoCuriosidades", () => {
     expect(await screen.findByText("Prémio ganho")).toBeInTheDocument();
     expect(screen.getByText(/Inicie sessão para guardar/i)).toBeInTheDocument();
     expect(registarRecompensa).not.toHaveBeenCalled();
+  });
+
+  describe("Modo de Contingência (offline)", () => {
+    const falhaDeRede = () => Object.assign(new Error("sem ligação"), { status: 0 });
+
+    it("se a API falhar, serve silenciosamente a pergunta estática do patamar e assinala 'Modo offline'", async () => {
+      obterPerguntaAleatoria.mockRejectedValue(falhaDeRede());
+      render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+      await comecarJogo();
+
+      expect(await screen.findByText("O que é o estrabismo, em termos simples?")).toBeInTheDocument();
+      expect(screen.getByText("Modo offline")).toBeInTheDocument();
+      expect(toastError).not.toHaveBeenCalled();
+    });
+
+    it("em modo offline, valida a resposta localmente sem chamar o servidor", async () => {
+      obterPerguntaAleatoria.mockRejectedValue(falhaDeRede());
+      render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+      await comecarJogo();
+      await screen.findByText("O que é o estrabismo, em termos simples?");
+
+      await userEvent.click(screen.getByText("Uma doença de pele")); // opção errada
+
+      expect(await screen.findByText("Essa não era a resposta certa")).toBeInTheDocument();
+      expect(screen.getByText(/desalinhamento dos eixos visuais/i)).toBeInTheDocument();
+      expect(validarResposta).not.toHaveBeenCalled();
+    });
+
+    it("a ajuda 50:50 funciona em modo offline sem chamar o servidor", async () => {
+      obterPerguntaAleatoria.mockRejectedValue(falhaDeRede());
+      render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+      await comecarJogo();
+      await screen.findByText("O que é o estrabismo, em termos simples?");
+
+      await userEvent.click(screen.getByRole("button", { name: "50:50" }));
+
+      const opcaoCerta = screen.getByText("Um desalinhamento dos olhos").closest("button");
+      await waitFor(() => expect(opcaoCerta).not.toBeDisabled());
+      const desativadas = ["Uma doença de pele", "Uma alergia ocular", "Um tipo de miopia"]
+        .map((texto) => screen.getByText(texto).closest("button"))
+        .filter((botao) => botao?.disabled).length;
+      expect(desativadas).toBe(2);
+      expect(validarResposta).not.toHaveBeenCalled();
+    });
+
+    it("'trocar pergunta' em modo offline substitui por outra pergunta do mesmo patamar, sem voltar a tentar o servidor", async () => {
+      obterPerguntaAleatoria.mockRejectedValue(falhaDeRede());
+      render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+      await comecarJogo();
+      await screen.findByText("O que é o estrabismo, em termos simples?");
+
+      const botaoTrocar = screen.getByRole("button", { name: /Trocar pergunta/i });
+      await userEvent.click(botaoTrocar);
+
+      // a reserva do patamar 1 tem 5 perguntas -- trocar mostra a próxima
+      // ainda não vista, nunca repetindo a que já apareceu.
+      expect(await screen.findByText("Quantos músculos controlam os movimentos de cada olho?")).toBeInTheDocument();
+      expect(screen.queryByText("O que é o estrabismo, em termos simples?")).not.toBeInTheDocument();
+      expect(obterPerguntaAleatoria).toHaveBeenCalledTimes(1); // só a tentativa inicial (que falhou)
+      expect(toastError).not.toHaveBeenCalled();
+      expect(botaoTrocar).toBeDisabled(); // ajuda de uso único por partida, mesmo offline
+    });
+
   });
 });

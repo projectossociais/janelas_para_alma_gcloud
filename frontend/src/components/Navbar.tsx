@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Menu, Search, ArrowRight, User, Settings, Shield, LogOut, LogIn, Eye, LayoutDashboard } from "lucide-react";
+import { Menu, Search, ArrowRight, User, Settings, Shield, LogOut, LogIn, Eye, LayoutDashboard, Gamepad2 } from "lucide-react";
 import logoIcon from "@/assets/logo-icon.png";
 import {
   Sheet,
@@ -153,6 +153,7 @@ const baseLinks: NavItem[] = [
   { label: "Triagem Ocular", route: "/scanner" },
   { label: "Meu Kamba Estrábico", route: "/kamba" },
   { label: "Exercícios Visuais", route: "/exercicios" },
+  { label: "Você Sabia Que... (Jogo)", route: "/jogo-curiosidades" },
   { label: "Portal Clínico", route: "/parceiros" },
   { label: "Contactos", route: "/junte-se" },
 ];
@@ -164,6 +165,7 @@ const estrabicoLinks: NavItem[] = [
   { label: "Triagem Ocular", route: "/scanner" },
   { label: "Meu Kamba Estrábico", route: "/kamba" },
   { label: "Exercícios Visuais", route: "/exercicios" },
+  { label: "Você Sabia Que... (Jogo)", route: "/jogo-curiosidades" },
   { label: "Portal Clínico", route: "/parceiros" },
   { label: "Contactos", route: "/junte-se" },
 ];
@@ -175,6 +177,7 @@ const profissionalLinks: NavItem[] = [
   { label: "A Nossa Equipa", route: "/equipa" },
   { label: "Triagem Ocular", route: "/scanner" },
   { label: "Exercícios Visuais", route: "/exercicios" },
+  { label: "Você Sabia Que... (Jogo)", route: "/jogo-curiosidades" },
   { label: "Contactos", route: "/junte-se" },
   { label: "Portal Clínico", route: "/parceiros" },
 ];
@@ -341,7 +344,6 @@ const Navbar = () => {
                 { label: "Sobre nós", route: "/impacto" },
                 { label: "Triagem Ocular", route: "/scanner" },
                 { label: "Exercícios Visuais", route: "/exercicios" },
-                { label: "Contactos", route: "/junte-se" },
               ].map((link) => (
                 <button
                   key={link.label}
@@ -372,6 +374,15 @@ const Navbar = () => {
               )}
 
               {isLoggedIn && <NotificationBell claro={!useSolidNav} />}
+
+              <button
+                onClick={() => navigateTo("/jogo-curiosidades")}
+                className="p-2 rounded-lg bg-teal/15 text-teal hover:bg-teal/25 transition-colors"
+                aria-label="Jogo: Você Sabia Que...?"
+                title="Jogo: Você Sabia Que...?"
+              >
+                <Gamepad2 className="w-5 h-5" />
+              </button>
 
               <button
                 onClick={() => setSearchOpen(true)}
