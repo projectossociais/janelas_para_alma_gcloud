@@ -243,10 +243,10 @@ describe("JogoCuriosidades", () => {
       await comecarJogo();
       await screen.findByText("O que é o estrabismo, em termos simples?");
 
-      await userEvent.click(screen.getByText("Uma doença de pele")); // opção errada
+      await userEvent.click(screen.getByText("Uma alteração na cor natural da íris")); // opção errada
 
       expect(await screen.findByText("Essa não era a resposta certa")).toBeInTheDocument();
-      expect(screen.getByText(/desalinhamento dos eixos visuais/i)).toBeInTheDocument();
+      expect(screen.getByText(/desalinhamento dos eixos visuais dos dois olhos/i)).toBeInTheDocument();
       expect(validarResposta).not.toHaveBeenCalled();
     });
 
@@ -258,9 +258,13 @@ describe("JogoCuriosidades", () => {
 
       await userEvent.click(screen.getByRole("button", { name: "50:50" }));
 
-      const opcaoCerta = screen.getByText("Um desalinhamento dos olhos").closest("button");
+      const opcaoCerta = screen.getByText("Um desalinhamento dos eixos visuais dos olhos").closest("button");
       await waitFor(() => expect(opcaoCerta).not.toBeDisabled());
-      const desativadas = ["Uma doença de pele", "Uma alergia ocular", "Um tipo de miopia"]
+      const desativadas = [
+        "Uma alteração na cor natural da íris",
+        "Uma alergia crónica à luz solar direta",
+        "Um tipo particular de miopia elevada",
+      ]
         .map((texto) => screen.getByText(texto).closest("button"))
         .filter((botao) => botao?.disabled).length;
       expect(desativadas).toBe(2);
