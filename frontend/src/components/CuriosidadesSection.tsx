@@ -44,7 +44,7 @@ const CuriosidadesSection = () => {
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gold text-gold-foreground font-bold transition-all hover:opacity-90 hover:translate-y-[-2px]"
             >
               <Gamepad2 className="w-5 h-5" />
-              Tente o nosso Jogo: Você Sabia Que...
+              Tente o nosso Jogo: Inclusivamente
             </button>
           </div>
         </div>

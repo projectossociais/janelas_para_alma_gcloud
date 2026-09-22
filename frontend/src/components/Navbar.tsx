@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Menu, Search, ArrowRight, User, Settings, Shield, LogOut, LogIn, Eye, LayoutDashboard } from "lucide-react";
+import { Menu, Search, ArrowRight, User, Settings, Shield, LogOut, LogIn, Eye, LayoutDashboard, Gamepad2 } from "lucide-react";
 import logoIcon from "@/assets/logo-icon.png";
 import {
   Sheet,
@@ -155,6 +155,7 @@ const baseLinks: NavItem[] = [
   { label: "Exercícios Visuais", route: "/exercicios" },
   { label: "Portal Clínico", route: "/parceiros" },
   { label: "Contactos", route: "/junte-se" },
+  { label: "Inclusivamente", route: "/jogo-curiosidades" },
 ];
 
 const estrabicoLinks: NavItem[] = [
@@ -166,6 +167,7 @@ const estrabicoLinks: NavItem[] = [
   { label: "Exercícios Visuais", route: "/exercicios" },
   { label: "Portal Clínico", route: "/parceiros" },
   { label: "Contactos", route: "/junte-se" },
+  { label: "Inclusivamente", route: "/jogo-curiosidades" },
 ];
 
 const profissionalLinks: NavItem[] = [
@@ -177,6 +179,7 @@ const profissionalLinks: NavItem[] = [
   { label: "Exercícios Visuais", route: "/exercicios" },
   { label: "Contactos", route: "/junte-se" },
   { label: "Portal Clínico", route: "/parceiros" },
+  { label: "Inclusivamente", route: "/jogo-curiosidades" },
 ];
 
 
@@ -341,7 +344,6 @@ const Navbar = () => {
                 { label: "Sobre nós", route: "/impacto" },
                 { label: "Triagem Ocular", route: "/scanner" },
                 { label: "Exercícios Visuais", route: "/exercicios" },
-                { label: "Contactos", route: "/junte-se" },
               ].map((link) => (
                 <button
                   key={link.label}
@@ -359,6 +361,15 @@ const Navbar = () => {
 
 
             <div className="flex items-center gap-2 shrink-0">
+
+              <button
+                onClick={() => navigateTo("/jogo-curiosidades")}
+                className="p-2 rounded-lg bg-teal/15 text-teal hover:bg-teal/25 transition-colors"
+                aria-label="Jogo: Inclusivamente"
+                title="Jogo: Inclusivamente"
+              >
+                <Gamepad2 className="w-5 h-5" />
+              </button>
 
               {!isLoggedIn && (
                 <button
@@ -473,8 +484,9 @@ const Navbar = () => {
               <button
                 key={link.label}
                 onClick={() => handleNavClick(link)}
-                className="text-left px-4 py-3 rounded-xl text-foreground font-medium text-base hover:bg-muted transition-colors"
+                className="text-left flex items-center gap-3 px-4 py-3 rounded-xl text-foreground font-medium text-base hover:bg-muted transition-colors"
               >
+                {link.route === "/jogo-curiosidades" && <Gamepad2 className="w-4 h-4 text-teal" />}
                 {link.label}
               </button>
             ))}

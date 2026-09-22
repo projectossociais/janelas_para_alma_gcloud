@@ -23,6 +23,7 @@ from datetime import date, datetime
 from sqlalchemy import (
     ARRAY,
     Boolean,
+    CheckConstraint,
     Date,
     DateTime,
     Enum,
@@ -469,4 +470,57 @@ class UserFeedback(Base):
     user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("utilizadores.id", ondelete="SET NULL"))
     avaliacao: Mapped[int | None] = mapped_column()
     comentario: Mapped[str | None] = mapped_column(Text)
+
+
+class RespostaOpcao(str, enum.Enum):
+    A = "A"
+    B = "B"
+    C = "C"
+    D = "D"
+
+
+class PerguntaJogo(Base):
+    """Pergunta do jogo "Você Sabia Que..." (estilo Quem Quer Ser
+    Milionário). A resposta certa nunca sai daqui para o cliente antes da
+    validação em `POST /jogo/validar` -- ver `schemas/jogo.py`
+    (`PerguntaPublica` não tem `resposta_correta` nem `explicacao`)."""
+
+    __tablename__ = "perguntas_jogo"
+    __table_args__ = (
+        CheckConstraint("nivel_dificuldade BETWEEN 1 AND 3", name="ck_perguntas_jogo_nivel_dificuldade"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    texto_pergunta: Mapped[str] = mapped_column(Text, nullable=False)
+    opcao_a: Mapped[str] = mapped_column(Text, nullable=False)
+    opcao_b: Mapped[str] = mapped_column(Text, nullable=False)
+    opcao_c: Mapped[str] = mapped_column(Text, nullable=False)
+    opcao_d: Mapped[str] = mapped_column(Text, nullable=False)
+    resposta_correta: Mapped[RespostaOpcao] = mapped_column(
+        Enum(RespostaOpcao, name="resposta_opcao"), nullable=False
+    )
+    nivel_dificuldade: Mapped[int] = mapped_column(nullable=False)
+    explicacao: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class PerfilJogador(Base):
+    """Moedas, diamantes e estatísticas do jogo "Você Sabia Que...", um por
+    utilizador -- separado de `Utilizador` porque é economia de jogo, não
+    identidade/perfil geral da conta (mesma fronteira que já separa
+    `PremiumRequest` ou `ScreeningResultado`). Nasce só quando o utilizador
+    toca pela primeira vez em `/jogo/perfil` ou `/jogo/recompensas`, nunca
+    no registo da conta -- ver `SQLAlchemyPerfilJogadorRepository.obter_ou_criar`."""
+
+    __tablename__ = "perfis_jogador"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    utilizador_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="CASCADE"), nullable=False, unique=True, index=True
+    )
+    moedas: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    diamantes: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    partidas_jogadas: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    patamar_maximo_alcancado: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

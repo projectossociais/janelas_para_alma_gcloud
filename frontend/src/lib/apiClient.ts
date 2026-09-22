@@ -961,3 +961,54 @@ export const notificacoesApi = {
       }
     ),
 };
+
+export type RespostaOpcaoJogo = "A" | "B" | "C" | "D";
+
+export interface PerguntaJogoPublica {
+  id: string;
+  texto_pergunta: string;
+  opcao_a: string;
+  opcao_b: string;
+  opcao_c: string;
+  opcao_d: string;
+}
+
+export interface ValidarRespostaJogoResponse {
+  correta: boolean;
+  resposta_correta: RespostaOpcaoJogo;
+  explicacao: string | null;
+}
+
+export interface PerfilJogadorPublico {
+  moedas: number;
+  diamantes: number;
+  partidas_jogadas: number;
+  patamar_maximo_alcancado: number;
+}
+
+export const jogoApi = {
+  // `patamar` (1-15) é só do jogo -- o backend mapeia-o para um dos 3 níveis
+  // de dificuldade da reserva de perguntas (ver nivel_dificuldade_do_patamar).
+  obterPerguntaAleatoria: (patamar: number) =>
+    pedido<PerguntaJogoPublica>(`/jogo/pergunta-aleatoria?patamar=${patamar}`),
+
+  // A resposta certa nunca chega em `obterPerguntaAleatoria` -- só esta
+  // chamada, depois de o jogador já ter escolhido, é que a revela.
+  validarResposta: (perguntaId: string, respostaUsuario: RespostaOpcaoJogo) =>
+    pedido<ValidarRespostaJogoResponse>("/jogo/validar", {
+      method: "POST",
+      body: JSON.stringify({ pergunta_id: perguntaId, resposta_usuario: respostaUsuario }),
+    }),
+
+  // Exige sessão -- só tem sentido para quem tem conta (ver `useProfile`).
+  obterPerfil: () => pedido<PerfilJogadorPublico>("/jogo/perfil"),
+
+  // Só manda o patamar alcançado -- quem calcula quanto isso vale em moedas
+  // e diamantes é sempre o servidor (`calcular_recompensa`), nunca o
+  // cliente, para não dar para "inventar" prémios com um pedido forjado.
+  registarRecompensa: (patamarAlcancado: number) =>
+    pedido<PerfilJogadorPublico>("/jogo/recompensas", {
+      method: "POST",
+      body: JSON.stringify({ patamar_alcancado: patamarAlcancado }),
+    }),
+};

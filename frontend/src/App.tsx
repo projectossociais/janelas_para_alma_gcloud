@@ -34,6 +34,9 @@ import Impacto from "./pages/Impacto";
 import JunteSe from "./pages/JunteSe";
 import RegistoPremium from "./pages/RegistoPremium";
 import RoadmapTecnico from "./pages/RoadmapTecnico";
+import MenuJogo from "./pages/jogo/MenuJogo";
+import JogoCuriosidades from "./pages/jogo/JogoCuriosidades";
+import PerfilJogador from "./pages/jogo/PerfilJogador";
 
 import ConvergenciaExercise from "./pages/exercises/ConvergenciaExercise";
 import CerebroExercise from "./pages/exercises/CerebroExercise";
@@ -113,6 +116,9 @@ const App = () => (
                 <Route path="/dashboard" element={<DashboardUser />} />
                 <Route path="/roadmap-tecnico" element={<RoadmapTecnico />} />
                 <Route path="/dashboard-pro" element={<DashboardPro />} />
+                <Route path="/jogo-curiosidades" element={<MenuJogo />} />
+                <Route path="/jogo-curiosidades/jogar" element={<JogoCuriosidades />} />
+                <Route path="/jogo-curiosidades/perfil" element={<PerfilJogador />} />
 
                 <Route path="/admin" element={<AdminLayout />}>
                   <Route index element={<AdminOverview />} />
