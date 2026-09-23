@@ -288,19 +288,19 @@
     "encontreEFixeO": "Find the shape that pulses among the others and hold your gaze on it."
   },
   "Circular": {
-    "sustentabilidade": "",
-    "logisticaDeEconomiaCircular": "",
-    "cuidamosDaSaudeVisual": "",
-    "oNossoProcessoCircular": "",
-    "tresEtapasQueTransformam": "",
-    "aNossaLogisticaReduz": "",
-    "recolhaDeArmacoesUsadas": "",
-    "implementacaoDeCanaisDe": "",
-    "recondicionamento": "",
-    "processoRigorosoDeLimpeza": "",
-    "reutilizacaoTerapeutica": "",
-    "transformamosResiduosEmMateriais": "",
-    "oculosASeremReciclados": ""
+    "sustentabilidade": "Sustainability",
+    "logisticaDeEconomiaCircular": "Circular Economy Logistics",
+    "cuidamosDaSaudeVisual": "We care for vision health and for the future of our planet.",
+    "oNossoProcessoCircular": "Our Circular Process",
+    "tresEtapasQueTransformam": "Three steps that turn waste into opportunity.",
+    "aNossaLogisticaReduz": "Our logistics drastically reduce <span>costs for families</span> and the <span>environmental impact</span> of Angolan cities.",
+    "recolhaDeArmacoesUsadas": "Collecting Used Frames",
+    "implementacaoDeCanaisDe": "We set up collection channels in partnership with clinics, optical stores and communities. Every donated pair of glasses gets a new life.",
+    "recondicionamento": "Refurbishing",
+    "processoRigorosoDeLimpeza": "A rigorous process of cleaning, repair and technical checks. We make sure every frame meets the standards required for reuse.",
+    "reutilizacaoTerapeutica": "Therapeutic Reuse",
+    "transformamosResiduosEmMateriais": "We turn waste into therapeutic materials: refurbished frames and sustainable kits for treatment and prevention in vulnerable communities.",
+    "oculosASeremReciclados": "Eyeglasses being recycled in a sustainable setting"
   },
   "ClinicalPartners": {
     "parceirosClinicos": "",
