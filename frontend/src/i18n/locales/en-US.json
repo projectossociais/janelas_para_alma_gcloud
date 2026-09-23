@@ -1498,11 +1498,11 @@
     "fechar": "Close"
   },
   "StrabismusIntroCard": {
-    "sabiaQue": "",
-    "oQueEO": "",
-    "estrabismoEUmaCondicao": "",
-    "lerMaisSobreO": "",
-    "rastreioVisualDeUma": ""
+    "sabiaQue": "Did you know...",
+    "oQueEO": "What Is Strabismus?",
+    "estrabismoEUmaCondicao": "Strabismus is a condition in which the eyes are not properly aligned, causing them to point in different directions.",
+    "lerMaisSobreO": "Read more about strabismus",
+    "rastreioVisualDeUma": "Vision screening of an Angolan child, promoting visual inclusion"
   },
   "StrabismusSection": {
     "compreenderOEstrabismo": "",
