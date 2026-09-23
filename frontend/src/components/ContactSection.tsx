@@ -23,14 +23,14 @@ import i18n from "@/i18n";
 
 const contactSchema = () => z.object({
   name: z.string().trim().min(1, i18n.t("ContactSection.nomeEObrigatorio")).max(100, i18n.t("ContactSection.maximo100Caracteres")),
-  email: z.string().trim().email("Email inválido").max(255, "Máximo 255 caracteres"),
+  email: z.string().trim().email(i18n.t("ContactSection.emailInvalido")).max(255, i18n.t("ContactSection.maximo255Caracteres")),
   message: z.string().trim().min(1, i18n.t("ContactSection.mensagemEObrigatoria")).max(1000, i18n.t("ContactSection.maximo1000Caracteres")),
 });
 
 const volunteerSchema = () => z.object({
   name: z.string().trim().min(1, i18n.t("ContactSection.nomeEObrigatorio")).max(100, i18n.t("ContactSection.maximo100Caracteres")),
-  email: z.string().trim().email("Email inválido").max(255, "Máximo 255 caracteres"),
-  phone: z.string().trim().min(1, "Telefone é obrigatório").max(20, "Máximo 20 caracteres"),
+  email: z.string().trim().email(i18n.t("ContactSection.emailInvalido")).max(255, i18n.t("ContactSection.maximo255Caracteres")),
+  phone: z.string().trim().min(1, i18n.t("ContactSection.telefoneEObrigatorio")).max(20, i18n.t("ContactSection.maximo20Caracteres")),
   motivation: z.string().trim().min(1, i18n.t("ContactSection.motivacaoEObrigatoria")).max(1000, i18n.t("ContactSection.maximo1000Caracteres")),
 });
 
@@ -264,7 +264,7 @@ const ContactSection = () => {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">{t("ContactSection.email")}</label>
-              <Input name="email" type="email" placeholder="email@exemplo.com" maxLength={255} />
+              <Input name="email" type="email" placeholder={t("ContactSection.exemploEmail")} maxLength={255} />
               {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
             </div>
             <div className="space-y-2">
@@ -369,7 +369,7 @@ const ContactSection = () => {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">{t("ContactSection.email")}</label>
-                <Input name="email" type="email" placeholder="email@exemplo.com" maxLength={255} />
+                <Input name="email" type="email" placeholder={t("ContactSection.exemploEmail")} maxLength={255} />
                 {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
               </div>
             </div>

@@ -474,7 +474,7 @@ const Navbar = () => {
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
     } else {
-      navigate(route);
+      navigate(localizar(route));
       if (elementId) {
         setTimeout(() => {
           const el = document.getElementById(elementId);

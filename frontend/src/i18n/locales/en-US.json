@@ -432,7 +432,12 @@
     "n2449xxXxxXxx": "",
     "porqueQueresSerUm": "",
     "aSubmeter": "",
-    "inscreverMeComoKamba": ""
+    "inscreverMeComoKamba": "",
+    "exemploEmail": "",
+    "emailInvalido": "",
+    "maximo255Caracteres": "",
+    "telefoneEObrigatorio": "",
+    "maximo20Caracteres": ""
   },
   "ConvergenciaExercise": {
     "pts": "",
@@ -927,7 +932,13 @@
     "pedidoEnviadoAEntraremos": "",
     "exAnaSilva": "",
     "escolherPeriodo": "",
-    "descrevaSintomasHistoricoOu": ""
+    "descrevaSintomasHistoricoOu": "",
+    "modalidadeOnline": "",
+    "modalidadePresencial": "",
+    "emailInvalido": "",
+    "maximo255Caracteres": "",
+    "telefoneInvalido": "",
+    "maximo30Caracteres": ""
   },
   "Parceiros": {
     "redeDeParceirosDe": "",
@@ -976,7 +987,8 @@
     "seleccioneUmaOpcao": "",
     "conteNosComoGostaria": "",
     "aEnviar": "",
-    "enviarProposta": ""
+    "enviarProposta": "",
+    "exemploEmail": ""
   },
   "PerfilJogador": {
     "inclusivamente": "",
@@ -1252,7 +1264,11 @@
     "descrevaBrevementeOsSeus": "",
     "plano": "",
     "beneficiario": "",
-    "aEnviar": ""
+    "aEnviar": "",
+    "exemploEmail": "",
+    "emailInvalido": "",
+    "telefoneInvalido": "",
+    "useApenasDigitos": ""
   },
   "RelaxamentoExercise": {
     "duracaoDaSessao": "",
@@ -1469,7 +1485,14 @@
     "pdfContactos": "",
     "pdfEmitidoEm": "",
     "pdfContacto": "",
-    "pdfPagina": ""
+    "pdfPagina": "",
+    "diagEsotropia": "",
+    "diagExotropia": "",
+    "diagHipertropia": "",
+    "diagHipotropia": "",
+    "diagNormal": "",
+    "diagAvaliacao": "",
+    "pdfNomeFicheiro": ""
   },
   "SiteBanner": {
     "fechar": ""
@@ -1676,7 +1699,12 @@
     "n2449xxXxxXxx": "",
     "porqueQueresSerUm": "",
     "aSubmeter": "",
-    "inscreverMeComoKamba": ""
+    "inscreverMeComoKamba": "",
+    "exemploEmail": "",
+    "emailInvalido": "",
+    "maximo255Caracteres": "",
+    "telefoneEObrigatorio": "",
+    "maximo20Caracteres": ""
   },
   "apiClient": {
     "ocorreuUmErroTente": ""
@@ -1702,7 +1730,6 @@
     "dalvaEtelvinaBenguelaFilipe": ""
   },
   "screeningApi": {
-    "bearer": "",
     "erroNaAnalise": ""
   },
   "useEyeTracking": {
@@ -1713,5 +1740,36 @@
     "aPalavraPasseDeve": "",
     "aPalavraPassePrecisa": "",
     "aPalavraPassePrecisa2": ""
+  },
+  "erroApi": {
+    "rede": "",
+    "servidor": "",
+    "naoAutenticado": "",
+    "semPermissao": "",
+    "naoEncontrado": "",
+    "conflito": "",
+    "ficheiroGrande": "",
+    "demasiadosPedidos": "",
+    "pedidoInvalido": "",
+    "emailJaRegistado": "",
+    "credenciaisInvalidas": "",
+    "confirmarEmailPrimeiro": "",
+    "linkConfirmacaoInvalido": "",
+    "linkRecuperacaoInvalido": "",
+    "passwordActualIncorrecta": "",
+    "googleEmailNaoConfirmado": "",
+    "sessaoTerminada": "",
+    "seleccioneMaterial": "",
+    "tipoFicheiroImagem": "",
+    "tipoFicheiroComprovativo": "",
+    "comprovativoInvalido": "",
+    "candidaturaExistente": "",
+    "soVoluntariosActivos": "",
+    "jaInscrito": "",
+    "naoInscrito": "",
+    "semVagas": "",
+    "actividadeIndisponivel": "",
+    "publicacaoNaoEncontrada": "",
+    "semPerguntas": ""
   }
 }

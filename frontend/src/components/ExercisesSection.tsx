@@ -98,7 +98,7 @@ const ExercisesSection = () => {
             <button
               key={ex.id}
               type="button"
-              onClick={() => navigate(ex.route)}
+              onClick={() => navigate(localizar(ex.route))}
               className="group text-left rounded-2xl border border-border/60 bg-card p-6 shadow-card hover:shadow-elevated hover:-translate-y-1 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
             >
               <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl ${ex.accent} mb-4`}>

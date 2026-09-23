@@ -10,6 +10,7 @@ import { publicacoesApi, mensagemDeErroApi, type PublicacaoPublica } from "@/lib
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { localizar } from "@/i18n/rotas";
+import { formatarData } from "@/i18n/formatar";
 
 const INTERVALO_CARROSSEL_MS = 10_000;
 
@@ -78,7 +79,7 @@ const PublicacaoDetalhe = () => {
                   {publicacao.data_evento && (
                     <span className="inline-flex items-center gap-1.5">
                       <CalendarDays className="w-4 h-4" />
-                      {new Date(publicacao.data_evento).toLocaleDateString("pt-PT")}
+                      {formatarData(publicacao.data_evento)}
                     </span>
                   )}
                   {publicacao.local && (

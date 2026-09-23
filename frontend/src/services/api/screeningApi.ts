@@ -49,7 +49,7 @@ export async function submeterRastreioMultiGaze(
 
   const headers: Record<string, string> = {};
   if (token) {
-    headers['Authorization'] = i18n.t("screeningApi.bearer", { token });
+    headers['Authorization'] = `Bearer ${token}`;
   }
 
   const response = await fetch(`${API_BASE}/screening/multi-gaze`, {

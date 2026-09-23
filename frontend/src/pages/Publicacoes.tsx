@@ -9,6 +9,7 @@ import { publicacoesApi, mensagemDeErroApi, type PublicacaoPublica } from "@/lib
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { localizar } from "@/i18n/rotas";
+import { formatarData } from "@/i18n/formatar";
 
 const Publicacoes = () => {
   const { t } = useTranslation();
@@ -70,7 +71,7 @@ const Publicacoes = () => {
                       {p.data_evento && (
                         <span className="inline-flex items-center gap-1">
                           <CalendarDays className="w-3.5 h-3.5" />
-                          {new Date(p.data_evento).toLocaleDateString("pt-PT")}
+                          {formatarData(p.data_evento)}
                         </span>
                       )}
                       {p.local && (

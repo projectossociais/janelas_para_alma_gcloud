@@ -432,7 +432,12 @@
     "n2449xxXxxXxx": "+244 9XX XXX XXX",
     "porqueQueresSerUm": "Porque queres ser um Kamba?",
     "aSubmeter": "A submeter...",
-    "inscreverMeComoKamba": "Inscrever-me como Kamba"
+    "inscreverMeComoKamba": "Inscrever-me como Kamba",
+    "exemploEmail": "email@exemplo.com",
+    "emailInvalido": "Email inválido",
+    "maximo255Caracteres": "Máximo 255 caracteres",
+    "telefoneEObrigatorio": "Telefone é obrigatório",
+    "maximo20Caracteres": "Máximo 20 caracteres"
   },
   "ConvergenciaExercise": {
     "pts": "{{pontosNoNivel}}/{{pontosParaSubir}} pts",
@@ -927,7 +932,13 @@
     "pedidoEnviadoAEntraremos": "Pedido enviado à {{name}}. Entraremos em contacto para confirmar a sua consulta {{valor}}.",
     "exAnaSilva": "Ex.: Ana Silva",
     "escolherPeriodo": "Escolher período",
-    "descrevaSintomasHistoricoOu": "Descreva sintomas, histórico ou dúvidas específicas."
+    "descrevaSintomasHistoricoOu": "Descreva sintomas, histórico ou dúvidas específicas.",
+    "modalidadeOnline": "online",
+    "modalidadePresencial": "presencial",
+    "emailInvalido": "Email inválido",
+    "maximo255Caracteres": "Máximo 255 caracteres",
+    "telefoneInvalido": "Telefone inválido",
+    "maximo30Caracteres": "Máximo 30 caracteres"
   },
   "Parceiros": {
     "redeDeParceirosDe": "Rede de Parceiros<br/> de Saúde",
@@ -976,7 +987,8 @@
     "seleccioneUmaOpcao": "Seleccione uma opção",
     "conteNosComoGostaria": "Conte-nos como gostaria de colaborar connosco...",
     "aEnviar": "A enviar...",
-    "enviarProposta": "Enviar proposta"
+    "enviarProposta": "Enviar proposta",
+    "exemploEmail": "email@exemplo.com"
   },
   "PerfilJogador": {
     "inclusivamente": "Inclusivamente",
@@ -1252,7 +1264,11 @@
     "descrevaBrevementeOsSeus": "Descreva brevemente os seus sintomas ou dúvidas...",
     "plano": "Plano",
     "beneficiario": "Beneficiário",
-    "aEnviar": "A enviar..."
+    "aEnviar": "A enviar...",
+    "exemploEmail": "voce@exemplo.com",
+    "emailInvalido": "Email inválido",
+    "telefoneInvalido": "Telefone inválido",
+    "useApenasDigitos": "Use apenas dígitos, espaços e os símbolos + ( ) -"
   },
   "RelaxamentoExercise": {
     "duracaoDaSessao": "Duração da sessão",
@@ -1469,7 +1485,14 @@
     "pdfContactos": "Contactos",
     "pdfEmitidoEm": "Emitido em {{formatted}}",
     "pdfContacto": "Contacto: {{phoneDisplay}}",
-    "pdfPagina": "Página {{i}} de {{pageCount}}"
+    "pdfPagina": "Página {{i}} de {{pageCount}}",
+    "diagEsotropia": "Esotropia",
+    "diagExotropia": "Exotropia",
+    "diagHipertropia": "Hipertropia",
+    "diagHipotropia": "Hipotropia",
+    "diagNormal": "Alinhamento Fisiológico Normal",
+    "diagAvaliacao": "Necessária Avaliação Oftalmológica",
+    "pdfNomeFicheiro": "relatorio-janelas"
   },
   "SiteBanner": {
     "fechar": "Fechar"
@@ -1676,7 +1699,12 @@
     "n2449xxXxxXxx": "+244 9XX XXX XXX",
     "porqueQueresSerUm": "Porque queres ser um Kamba?",
     "aSubmeter": "A submeter...",
-    "inscreverMeComoKamba": "Inscrever-me como Kamba"
+    "inscreverMeComoKamba": "Inscrever-me como Kamba",
+    "exemploEmail": "email@exemplo.com",
+    "emailInvalido": "Email inválido",
+    "maximo255Caracteres": "Máximo 255 caracteres",
+    "telefoneEObrigatorio": "Telefone é obrigatório",
+    "maximo20Caracteres": "Máximo 20 caracteres"
   },
   "apiClient": {
     "ocorreuUmErroTente": "Ocorreu um erro. Tente novamente."
@@ -1702,7 +1730,6 @@
     "dalvaEtelvinaBenguelaFilipe": "Dalva Etelvina Benguela Filipe"
   },
   "screeningApi": {
-    "bearer": "Bearer {{token}}",
     "erroNaAnalise": "Erro na análise ({{status}}): {{errorText}}"
   },
   "useEyeTracking": {
@@ -1713,5 +1740,36 @@
     "aPalavraPasseDeve": "A palavra-passe deve ter pelo menos {{PASSWORD_MIN_LEN}} caracteres.",
     "aPalavraPassePrecisa": "A palavra-passe precisa de pelo menos uma letra.",
     "aPalavraPassePrecisa2": "A palavra-passe precisa de pelo menos um número."
+  },
+  "erroApi": {
+    "rede": "Não foi possível ligar ao servidor. Verifique a sua ligação à internet e tente novamente.",
+    "servidor": "Ocorreu um erro do nosso lado. Tente novamente dentro de alguns minutos.",
+    "naoAutenticado": "A sua sessão terminou. Inicie sessão para continuar.",
+    "semPermissao": "Não tem permissão para realizar esta acção.",
+    "naoEncontrado": "Não encontrámos o que procura.",
+    "conflito": "Este pedido entra em conflito com dados já existentes.",
+    "ficheiroGrande": "O ficheiro é demasiado grande.",
+    "demasiadosPedidos": "Fez demasiados pedidos seguidos. Aguarde um momento e tente novamente.",
+    "pedidoInvalido": "Alguns dados não são válidos. Reveja-os e tente novamente.",
+    "emailJaRegistado": "Este email já está registado.",
+    "credenciaisInvalidas": "Email ou palavra-passe incorrectos.",
+    "confirmarEmailPrimeiro": "Confirme o seu email antes de entrar.",
+    "linkConfirmacaoInvalido": "Este link de confirmação é inválido ou expirou.",
+    "linkRecuperacaoInvalido": "Este link de recuperação é inválido ou expirou.",
+    "passwordActualIncorrecta": "A palavra-passe actual está incorrecta.",
+    "googleEmailNaoConfirmado": "O Google não confirma que este email é seu.",
+    "sessaoTerminada": "A sua sessão terminou. Inicie sessão para continuar.",
+    "seleccioneMaterial": "Seleccione pelo menos um tipo de material.",
+    "tipoFicheiroImagem": "Tipo de ficheiro não permitido. Use PNG, JPEG ou WebP.",
+    "tipoFicheiroComprovativo": "Tipo de ficheiro não permitido. Use PNG, JPEG, WebP ou PDF.",
+    "comprovativoInvalido": "Este comprovativo não é válido.",
+    "candidaturaExistente": "Já tem uma candidatura pendente ou aprovada.",
+    "soVoluntariosActivos": "Só voluntários activos se podem inscrever em actividades.",
+    "jaInscrito": "Já está inscrito nesta actividade.",
+    "naoInscrito": "Não está inscrito nesta actividade.",
+    "semVagas": "Já não há vagas.",
+    "actividadeIndisponivel": "Esta actividade já não está disponível.",
+    "publicacaoNaoEncontrada": "Publicação não encontrada.",
+    "semPerguntas": "Não há perguntas disponíveis de momento."
   }
 }

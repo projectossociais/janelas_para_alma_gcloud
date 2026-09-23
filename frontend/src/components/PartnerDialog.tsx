@@ -23,16 +23,18 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useTranslation } from "react-i18next";
-import i18n from "@/i18n";
+import { tPt } from "@/i18n";
 
-const partnershipTypes = () => [
-  i18n.t("PartnerDialog.clinicaOftalmologica"),
-  i18n.t("PartnerDialog.medicoEspecialista"),
-  i18n.t("PartnerDialog.optica"),
-  i18n.t("PartnerDialog.investidor"),
-  i18n.t("PartnerDialog.voluntario"),
-  i18n.t("PartnerDialog.outro"),
-];
+/** Chaves dos tipos de parceria. O valor enviado é sempre o texto português
+ *  (tPt); o rótulo mostrado segue o idioma da página. */
+const TIPOS_PARCERIA = [
+  "clinicaOftalmologica",
+  "medicoEspecialista",
+  "optica",
+  "investidor",
+  "voluntario",
+  "outro",
+] as const;
 
 const initialFormData = {
   Nome: "",
@@ -142,7 +144,7 @@ const PartnerDialog = () => {
                 required
                 value={formData.Email}
                 onChange={(event) => updateField("Email", event.target.value)}
-                placeholder="email@exemplo.com"
+                placeholder={t("PartnerDialog.exemploEmail")}
               />
             </div>
 
@@ -169,9 +171,9 @@ const PartnerDialog = () => {
                 <SelectValue placeholder={t("PartnerDialog.seleccioneUmaOpcao")} />
               </SelectTrigger>
               <SelectContent>
-                {partnershipTypes().map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type}
+                {TIPOS_PARCERIA.map((tipo) => (
+                  <SelectItem key={tipo} value={tPt(`PartnerDialog.${tipo}`)}>
+                    {t(`PartnerDialog.${tipo}`)}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import { optioptika, OPTIOPTIKA_YELLOW } from "@/data/optioptika";
 import { Trans, useTranslation } from "react-i18next";
 import i18n from "@/i18n";
+import { formatarDataHora } from "@/i18n/formatar";
 
 const appointmentSchema = () => z.object({
   name: z
@@ -35,13 +36,13 @@ const appointmentSchema = () => z.object({
   email: z
     .string()
     .trim()
-    .email("Email inválido")
-    .max(255, "Máximo 255 caracteres"),
+    .email(i18n.t("OptioptikaBookingDialog.emailInvalido"))
+    .max(255, i18n.t("OptioptikaBookingDialog.maximo255Caracteres")),
   phone: z
     .string()
     .trim()
-    .min(6, "Telefone inválido")
-    .max(30, "Máximo 30 caracteres"),
+    .min(6, i18n.t("OptioptikaBookingDialog.telefoneInvalido"))
+    .max(30, i18n.t("OptioptikaBookingDialog.maximo30Caracteres")),
   date: z.string().min(1, i18n.t("OptioptikaBookingDialog.escolhaUmaData")),
   period: z.string().min(1, i18n.t("OptioptikaBookingDialog.escolhaUmPeriodo")),
   notes: z.string().trim().max(500, i18n.t("OptioptikaBookingDialog.maximo500Caracteres")).optional(),
@@ -87,13 +88,13 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
     // Optimistic UI: create + show booking receipt instantly.
     const booking: BookingReceipt = {
       id: `OPT-${Date.now().toString(36).toUpperCase()}`,
-      createdAt: new Date().toLocaleString("pt-PT"),
+      createdAt: formatarDataHora(new Date()),
       mode,
       ...result.data,
     };
     setReceipt(booking);
     toast.success(
-      t("OptioptikaBookingDialog.pedidoEnviadoAEntraremos", { name: optioptika.name, valor: mode === "online" ? "online" : "presencial" }),
+      t("OptioptikaBookingDialog.pedidoEnviadoAEntraremos", { name: optioptika.name, valor: mode === "online" ? t("OptioptikaBookingDialog.modalidadeOnline") : t("OptioptikaBookingDialog.modalidadePresencial") }),
     );
     setForm(emptyForm);
   };

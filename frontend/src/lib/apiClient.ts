@@ -1,4 +1,5 @@
 import i18n from "@/i18n";
+import { IDIOMA_EN } from "@/i18n/idiomas";
 /**
  * Cliente fino para a API própria (FastAPI). Nunca guarda tokens — a sessão
  * viaja em cookies `httpOnly` que o browser gere sozinho; por isso todo o
@@ -41,7 +42,58 @@ export class ApiError extends Error {
 export function mensagemDeErroApi(err: unknown, fallback: string): string {
   const status = (err as { status?: unknown } | null)?.status;
   const message = (err as { message?: unknown } | null)?.message;
+  if (i18n.language === IDIOMA_EN) return mensagemDeErroEmIngles(err, status, message, fallback);
   return typeof status === "number" && typeof message === "string" ? message : fallback;
+}
+
+/**
+ * Mensagens de erro conhecidas da API (sempre em português, campo `detail`)
+ * e a chave inglesa equivalente. Só os fluxos públicos -- o admin é só PT.
+ * Se o backend mudar o texto, o erro cai na mensagem genérica do seu código
+ * HTTP: perde-se detalhe, nunca aparece português numa página inglesa.
+ */
+const DETALHES_CONHECIDOS: readonly [RegExp, string][] = [
+  [/^o email .+ já está registado$/i, "erroApi.emailJaRegistado"],
+  [/^email ou password incorretos$/i, "erroApi.credenciaisInvalidas"],
+  [/^confirme o seu email antes de entrar$/i, "erroApi.confirmarEmailPrimeiro"],
+  [/^este link de confirmação é inválido ou expirou$/i, "erroApi.linkConfirmacaoInvalido"],
+  [/^este link de recuperação é inválido ou expirou$/i, "erroApi.linkRecuperacaoInvalido"],
+  [/^password atual incorreta$/i, "erroApi.passwordActualIncorrecta"],
+  [/^o Google não confirma que este email é seu$/i, "erroApi.googleEmailNaoConfirmado"],
+  [/^(sem sessão|utilizador já não existe)$/i, "erroApi.sessaoTerminada"],
+  [/^selecione pelo menos um tipo de material$/i, "erroApi.seleccioneMaterial"],
+  [/^tipo de ficheiro não permitido \(só PNG, JPEG ou WebP\)$/i, "erroApi.tipoFicheiroImagem"],
+  [/^tipo de ficheiro não permitido \(PNG, JPEG, WebP ou PDF\)$/i, "erroApi.tipoFicheiroComprovativo"],
+  [/^essa chave não é um comprovativo válido$/i, "erroApi.comprovativoInvalido"],
+  [/^já tem uma candidatura pendente ou aprovada$/i, "erroApi.candidaturaExistente"],
+  [/^só voluntários activos se podem inscrever em actividades$/i, "erroApi.soVoluntariosActivos"],
+  [/^já está inscrito nesta actividade$/i, "erroApi.jaInscrito"],
+  [/^não está inscrito nesta actividade$/i, "erroApi.naoInscrito"],
+  [/^já não há vagas$/i, "erroApi.semVagas"],
+  [/^(esta actividade já não está disponível|actividade não encontrada)$/i, "erroApi.actividadeIndisponivel"],
+  [/^publicação não encontrada$/i, "erroApi.publicacaoNaoEncontrada"],
+  [/^sem perguntas disponíveis$/i, "erroApi.semPerguntas"],
+];
+
+function mensagemDeErroEmIngles(err: unknown, status: unknown, message: unknown, fallback: string): string {
+  if (typeof status !== "number") {
+    // fetch() só rejeita com TypeError quando o pedido nem chegou ao servidor.
+    return err instanceof TypeError ? i18n.t("erroApi.rede") : fallback;
+  }
+  if (typeof message === "string") {
+    const conhecido = DETALHES_CONHECIDOS.find(([padrao]) => padrao.test(message.trim()));
+    if (conhecido) return i18n.t(conhecido[1]);
+  }
+  if (status >= 500) return i18n.t("erroApi.servidor");
+  const porCodigo: Record<number, string> = {
+    401: "erroApi.naoAutenticado",
+    403: "erroApi.semPermissao",
+    404: "erroApi.naoEncontrado",
+    409: "erroApi.conflito",
+    413: "erroApi.ficheiroGrande",
+    429: "erroApi.demasiadosPedidos",
+  };
+  return i18n.t(porCodigo[status] ?? "erroApi.pedidoInvalido");
 }
 
 interface CorpoDeErro {
