@@ -1134,8 +1134,8 @@
     "codigosQrParaDescarregar": "QR codes to download the Optioptika app on Google Play and the App Store"
   },
   "PremiumExercicioEsqueleto": {
-    "voltarAoMenu": "",
-    "esteExercicioAindaEsta": ""
+    "voltarAoMenu": "Back to Menu",
+    "esteExercicioAindaEsta": "This exercise is still being prepared and is coming soon. Your Premium access is already active, so you'll be able to use it as soon as it's ready."
   },
   "PremiumPaywallModal": {
     "desbloqueieOSeuPotencial": "",
