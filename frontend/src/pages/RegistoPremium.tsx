@@ -5,7 +5,7 @@ import {
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
-  Sparkles,
+  Crown,
   Stethoscope,
   Activity,
   Eye,
@@ -275,7 +275,7 @@ const RegistoPremium = () => {
           <div className="max-w-md space-y-8">
             <div>
               <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-gold">
-                <Sparkles className="w-3.5 h-3.5" />{" "}{t("RegistoPremium.acessoPremium")}
+                <Crown className="w-3.5 h-3.5" />{" "}{t("RegistoPremium.acessoPremium")}
               </span>
               <h2 className="mt-3 text-3xl xl:text-4xl font-bold leading-tight">
                 {t("RegistoPremium.umOlharAlinhadoUma")}

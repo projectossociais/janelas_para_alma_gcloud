@@ -59,6 +59,12 @@ class Utilizador(Base):
     """Identidade + perfil, num só sítio. Ver nota no topo do ficheiro."""
 
     __tablename__ = "utilizadores"
+    __table_args__ = (
+        CheckConstraint(
+            "(trial_iniciado_em IS NULL) = (trial_termina_em IS NULL)",
+            name="ck_utilizadores_trial_consistente",
+        ),
+    )
 
     id: Mapped[uuid.UUID] = _uuid_pk()
     email: Mapped[str] = mapped_column(String(320), unique=True, nullable=False, index=True)
@@ -84,6 +90,14 @@ class Utilizador(Base):
     # desligar nada. Ver docs/BACKLOG.md, W-11.
     premium_ativo: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     premium_expira_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    # Teste de 7 dias aos 4 exercícios base — uma única vez por conta.
+    # `trial_iniciado_em IS NULL` = trial ainda disponível (é o estado de
+    # todas as contas que já existiam antes desta coluna). Iniciado só pelo
+    # próprio utilizador, por `AcessoExerciciosService.iniciar_trial`; tal
+    # como o Premium, a validade é verificada na leitura, sem job nenhum.
+    trial_iniciado_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    trial_termina_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     notificacoes_projetos: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     notificacoes_lembretes: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")

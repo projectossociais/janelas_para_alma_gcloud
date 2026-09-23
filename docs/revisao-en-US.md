@@ -4,11 +4,11 @@ Gerado por `frontend/scripts/gerar-revisao-en.mjs` a partir de `src/i18n/revisao
 
 | Categoria | Chaves |
 |---|---|
-| Saúde (AMA) | 178 |
+| Saúde (AMA) | 171 |
 | Legal | 80 |
-| Dúvidas | 41 |
+| Dúvidas | 39 |
 
-## Saúde (AMA) (178)
+## Saúde (AMA) (171)
 
 Afirmações médicas ou de saúde. Validar com um profissional antes de publicar.
 
@@ -43,12 +43,6 @@ Afirmações médicas ou de saúde. Validar com um profissional antes de publica
 | `oclusoresOftalmologicosParaTratamento` | Oclusores oftalmológicos para tratamento de ambliopia. | Ophthalmic occluders for amblyopia treatment. |  |
 | `viabilizaUmaCampanhaComunitaria` | Viabiliza uma campanha comunitária inteira, incluindo cirurgias correctivas em grupo. | Makes an entire community campaign possible, including group corrective surgeries. |  |
 
-### BaseExercise
-
-| Chave | Português | Inglês | Nota |
-|---|---|---|---|
-| `esteExercicioEstaDisponivel` | Este exercício está disponível para contas com acesso premium. Faça upgrade para continuar a sua reabilitação visual sem limites. | This exercise is available to accounts with Premium access. Upgrade to continue your vision rehabilitation without limits. |  |
-
 ### CampanhaGamek
 
 | Chave | Português | Inglês | Nota |
@@ -76,12 +70,6 @@ Afirmações médicas ou de saúde. Validar com um profissional antes de publica
 | `oftalmologiaPediatricaNeonatalE` | Oftalmologia pediátrica, neonatal e teste do olhinho. | Pediatric and neonatal ophthalmology, and the red reflex test. | 'teste do olhinho' traduzido pelo nome clínico em inglês: 'red reflex test'. |
 | `rastreioEAcompanhamentoDe` | Rastreio e acompanhamento de catarata, glaucoma e visão das cores. | Screening and follow-up for cataracts, glaucoma and color vision. |  |
 | `retinografiaCampimetriaTopografiaCorneal` | Retinografia, campimetria, topografia corneal, OCT e tonometria. | Retinography, perimetry, corneal topography, OCT and tonometry. |  |
-
-### ConscienciaPerifericaExercise
-
-| Chave | Português | Inglês | Nota |
-|---|---|---|---|
-| `detecteEstimulosNaPeriferia` | Detecte estímulos na periferia do campo visual sem desviar o olhar do centro. | Detect stimuli at the edges of your visual field without shifting your gaze from the center. |  |
 
 ### ContactSection
 
@@ -131,12 +119,9 @@ Afirmações médicas ou de saúde. Validar com um profissional antes de publica
 
 | Chave | Português | Inglês | Nota |
 |---|---|---|---|
-| `alternaEntreConvergenciaE` | Alterna entre convergência e divergência em ciclos cronometrados para ganhar resistência binocular. | Alternate between convergence and divergence in timed cycles to build binocular endurance. |  |
 | `alternaRapidamenteOFoco` | Alterna rapidamente o foco entre alvos próximos e distantes, treinando a convergência dinâmica. | Quickly shift focus between near and far targets, training dynamic convergence. |  |
 | `aprendeTecnicasSimplesE` | Aprende técnicas simples e interactivas para fortalecer a tua visão no dia-a-dia. | Learn simple, interactive techniques to strengthen your vision in everyday life. |  |
-| `detecteEstimulosNaPeriferia` | Detecte estímulos na periferia do campo visual sem desviar o olhar do centro. | Detect stimuli at the edges of your visual field without shifting your gaze from the center. |  |
 | `encontreEFixeO` | Encontre e fixe o olhar na forma que pulsa entre as restantes, treinando o foco e a atenção visual. | Find the shape that pulses among the others and hold your gaze on it, training focus and visual attention. |  |
-| `encontreOAlvoCerto` | Encontre o alvo certo entre distractores em movimento, apurando o controlo dos movimentos sacádicos. | Find the right target among moving distractors, sharpening control of saccadic eye movements. |  |
 | `encontreOAlvoEntre` | Encontre o alvo entre distractores cada vez mais parecidos, forçando o olho mais fraco a trabalhar sozinho. | Find the target among distractors that look more and more alike, making the weaker eye work on its own. |  |
 | `foqueNosPontosEnquanto` | Foque nos pontos enquanto eles se unem no centro. Tente manter a imagem única o máximo de tempo possível. | Focus on the dots as they come together in the center. Try to keep a single image for as long as possible. |  |
 | `mudaDeFocoEntre` | Muda de foco entre perto e longe a um ritmo crescente para treinar a rapidez de acomodação do olho. | Shift focus between near and far at an increasing pace to train how quickly the eye accommodates. |  |
@@ -153,12 +138,6 @@ Afirmações médicas ou de saúde. Validar com um profissional antes de publica
 | `quatroExerciciosInteractivosCurtos` | Quatro exercícios interactivos, curtos e cientificamente inspirados para fortalecer os músculos oculares, aliviar a tensão e melhorar o foco. | Four short, interactive, scientifically inspired exercises to strengthen the eye muscles, relieve strain and improve focus. | 'cientificamente inspirados' → 'scientifically inspired'. Afirmação vaga mas fiel ao PT; o AMA desaconselha sugerir evidência que não é citada. |
 | `sincronizeRespiracaoEPiscar` | Sincronize respiração e piscar para aliviar a tensão dos ecrãs. | Sync your breathing and blinking to relieve screen strain. |  |
 | `treineACoordenacaoBinocular` | Treine a coordenação binocular, unindo os pontos no centro do olhar. | Train binocular coordination by bringing the dots together at the center of your gaze. |  |
-
-### FacilidadeVergenciaExercise
-
-| Chave | Português | Inglês | Nota |
-|---|---|---|---|
-| `alternaEntreConvergenciaE` | Alterna entre convergência e divergência em ciclos cronometrados para ganhar resistência binocular. | Alternate between convergence and divergence in timed cycles to build binocular endurance. |  |
 
 ### Faq
 
@@ -279,12 +258,6 @@ Afirmações médicas ou de saúde. Validar com um profissional antes de publica
 | Chave | Português | Inglês | Nota |
 |---|---|---|---|
 | `alternaRapidamenteOFoco` | Alterna rapidamente o foco entre alvos próximos e distantes, treinando a convergência dinâmica. | Quickly shift focus between near and far targets, training dynamic convergence. |  |
-
-### SacadasDistratoresExercise
-
-| Chave | Português | Inglês | Nota |
-|---|---|---|---|
-| `encontreOAlvoCerto` | Encontre o alvo certo entre distractores em movimento, apurando o controlo dos movimentos sacádicos. | Find the right target among moving distractors, sharpening control of saccadic eye movements. |  |
 
 ### Scanner
 
@@ -524,7 +497,7 @@ Política de Privacidade, Termos e textos com efeito jurídico. Rascunho: não �
 | `todosOsConteudosDisponibilizados` | Todos os conteúdos disponibilizados no website (textos, imagens, logótipos, código, metodologia dos exercícios de terapia visual e demais materiais) são propriedade do Janelas Para a Alma ou dos seus licenciadores. Nos termos do princípio da <strong>liberdade contratual</strong> (artigo 405.º, n.º 1, do Código Civil), é concedida ao utilizador uma licença limitada, pessoal, não exclusiva e não transferível de utilização destes conteúdos, sendo proibida a sua reprodução, modificação, distribuição ou exploração comercial sem autorização prévia e expressa. Esta licença, tal como os demais termos aqui fixados, tem força obrigatória entre as partes e só pode ser alterada nos termos previstos nestes Termos de Utilização ou por mútuo consentimento, nos termos do <strong>artigo 406.º, n.º 1, do Código Civil</strong>. | All content made available on the website (text, images, logos, code, the methodology of the vision therapy exercises and other materials) is the property of Janelas para a Alma or its licensors. Under the principle of <strong>freedom of contract</strong> (Article 405(1) of the Civil Code), you are granted a limited, personal, nonexclusive and nontransferable license to use this content; its reproduction, modification, distribution or commercial exploitation without prior express authorization is prohibited. This license, like the other terms set out here, is binding on the parties and may be changed only as provided for in these Terms of Use or by mutual consent, under <strong>Article 406(1) of the Civil Code</strong>. |  |
 | `ultimaActualizacaoSetembroDe` | Última actualização: Setembro de 2026. Para dúvidas legais, contacte <a>janelasparaalma18@gmail.com</a>. | Last updated: September 2026. For legal questions, contact <a>janelasparaalma18@gmail.com</a>. |  |
 
-## Dúvidas (41)
+## Dúvidas (39)
 
 Escolhas de tradução ambíguas ou problemas já existentes no português.
 
@@ -677,23 +650,11 @@ Escolhas de tradução ambíguas ou problemas já existentes no português.
 | `segundaAQuinta` | Segunda a Quinta | Monday to Thursday | O horário diz 'Segunda a Quinta' e depois 'Sábado'; sexta-feira não aparece. Traduzido como está; confirmar com a clínica. |
 | `umCentroDeSaude` | Um centro de saúde ocular em Luanda e a primeira Carteira de Desconto Digital em Angola. Baixe a aplicação e receba 5.000Kz no seu cartão virtual. | An eye health center in Luanda and the first digital discount wallet in Angola. Download the app and get 5.000 Kz on your virtual card. | Afirmação comercial do parceiro ('a primeira Carteira de Desconto Digital em Angola', 5.000 Kz): traduzida à letra; é da responsabilidade da Optioptika confirmar. |
 
-### ProgramaIaExercise
-
-| Chave | Português | Inglês | Nota |
-|---|---|---|---|
-| `umAlgoritmoAjustaA` | Um algoritmo ajusta a dificuldade de cada sessão em tempo real, de acordo com o seu progresso. | An algorithm adjusts the difficulty of each session in real time, based on your progress. | Descreve um algoritmo que ajusta a dificuldade em tempo real; a página deste exercício é ainda um esqueleto 'em breve'. Confirmar que a afirmação corresponde ao que existe. |
-
 ### Publicacoes
 
 | Chave | Português | Inglês | Nota |
 |---|---|---|---|
 | `accoesRecentes` | Acções Recentes | Recent Activities | 'Publicações' → 'posts' no texto corrido e 'Publications' só no URL (/en/publications), já aprovado. Confirmar se preferem 'News'. |
-
-### RegistoPremium
-
-| Chave | Português | Inglês | Nota |
-|---|---|---|---|
-| `acessoIlimitadoA8` | Acesso ilimitado a 8 exercícios avançados | Unlimited access to 8 advanced exercises | '8 exercícios avançados': o site diz noutros sítios que só 3 dos 8 Premium estão construídos. Confirmar a promessa. |
 
 ### Scanner
 

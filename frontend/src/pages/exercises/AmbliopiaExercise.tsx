@@ -731,7 +731,8 @@ const AmbliopiaExercise = () => {
           <BaseExercise
             title={t("AmbliopiaExercise.antiSupressaoAmbliopia")}
             description={t("AmbliopiaExercise.cubraOOlhoMais3")}
-            isPremium={true}
+            exercicioId={EXERCICIO_ID}
+            grupo="premium"
             durationSeconds={duracaoSegundos}
           >
             <AmbliopiaGame duracaoSegundos={duracaoSegundos} onEscolherDuracao={setDuracaoSegundos} />

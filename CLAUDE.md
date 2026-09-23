@@ -62,8 +62,17 @@ locais). Ver histórico do repositório antigo se for preciso consultar o que fa
 Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
 
 - **Rastreio ocular** por webcam (MediaPipe FaceMesh) — deteta sinais, encaminha para clínica
-- **Exercícios de terapia visual** com rastreio ocular — 4 gratuitos, 8 premium (todos construídos e com rota própria — confirmado 2026-09-23 ao corrigir `DashboardUser.tsx`; a nota antiga "3 construídos" já não era verdade)
-- **Modelo freemium** — Premium a 15.000 Kz/mês (pagamento por transferência + comprovativo)
+- **Exercícios de terapia visual** com rastreio ocular — **8, todos pagos** (desde 2026-09-23;
+  eram 4 gratuitos + 8 premium, e 4 premium foram eliminados). 4 estão incluídos num **teste
+  de 7 dias** (`figure8`, `convergence`, `cerebro`, `relax`), os outros 4 só com Premium
+  (`ambliopia`, `sacadas-convergencia`, `flexibilidade-acomodativa`, `estereopsia`)
+- **Modelo de acesso** — Premium a 15.000 Kz/mês (pagamento por transferência + comprovativo)
+  dá os 8; o teste de 7 dias (`utilizadores.trial_iniciado_em`/`trial_termina_em`, UTC) é
+  iniciado pelo próprio utilizador, uma única vez por conta, e dá só os 4 do teste. Regra
+  única em `api/app/services/acesso_exercicios_service.py`; a API recusa com 403 sessões
+  (`POST /sessoes-exercicio`) e vídeos (`GET /exercicios/{id}/video`) sem direito de acesso.
+  O frontend (`AcessoExerciciosContext`) só espelha `GET /exercicios/acesso`. Os vídeos vivem
+  num bucket R2 **privado** à parte (`r2_bucket_videos`), nunca no bucket público
 - **Rede de clínicas parceiras**, doações, programa de voluntariado, painel administrativo
 
 Público-alvo inclui **crianças**. Todo o tratamento de dados deve assumir isso.

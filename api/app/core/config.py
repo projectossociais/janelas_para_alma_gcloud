@@ -36,6 +36,14 @@ class Settings(BaseSettings):
     # Segundos de validade do URL de upload assinado — curto de propósito:
     # é entregue ao browser mesmo antes de ele escolher o ficheiro.
     r2_upload_url_expira_segundos: int = 300
+    # Vídeos dos exercícios (pagos): bucket **privado** à parte, sem domínio
+    # público ligado — o `r2_bucket` acima é servido publicamente por
+    # `r2_public_base_url`, por isso um vídeo lá dentro ficaria acessível a
+    # quem adivinhasse o URL. Só se lê por URL assinado, emitido por
+    # `GET /exercicios/{id}/video` depois de verificar o acesso. Vazio até
+    # os vídeos existirem — o endpoint responde 503 nesse caso.
+    r2_bucket_videos: str = ""
+    r2_video_url_expira_segundos: int = 900
 
     # CORS — origens do frontend com permissão para pedidos com cookies.
     # Em dev sem Docker, frontend (npm run dev, porta 8080) e API (porta

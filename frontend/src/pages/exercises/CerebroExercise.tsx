@@ -662,7 +662,8 @@ const CerebroExercise = () => {
           <BaseExercise
             title={t("CerebroExercise.focoDinamico")}
             description={t("CerebroExercise.encontreEFixeO")}
-            isPremium={false}
+            exercicioId={EXERCICIO_ID}
+            grupo="trial"
             durationSeconds={duracaoSegundos}
           >
             <CerebroGame duracaoSegundos={duracaoSegundos} onEscolherDuracao={setDuracaoSegundos} />
