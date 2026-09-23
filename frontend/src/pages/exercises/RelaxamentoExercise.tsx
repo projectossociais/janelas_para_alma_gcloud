@@ -10,15 +10,26 @@ import { useFeedback } from "@/contexts/FeedbackContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { sessoesExercicioApi } from "@/lib/apiClient";
 import FeedbackWidget from "@/components/FeedbackWidget";
+import { Trans, useTranslation } from "react-i18next";
+import i18n from "@/i18n";
+import { localizar } from "@/i18n/rotas";
 
 const EXERCICIO_ID = "relax";
 
 const DURACOES_PREDEFINIDAS = [
   { label: "30s", segundos: 30 },
-  { label: "1 min", segundos: 60 },
-  { label: "1.5 min", segundos: 90 },
-  { label: "2 min", segundos: 120 },
-  { label: "3 min", segundos: 180 },
+  { get label() {
+    return i18n.t("RelaxamentoExercise.n1Min");
+  }, segundos: 60 },
+  { get label() {
+    return i18n.t("RelaxamentoExercise.n15Min");
+  }, segundos: 90 },
+  { get label() {
+    return i18n.t("RelaxamentoExercise.n2Min");
+  }, segundos: 120 },
+  { get label() {
+    return i18n.t("RelaxamentoExercise.n3Min");
+  }, segundos: 180 },
 ];
 const DURACAO_CUSTOM_MIN_SEGUNDOS = 10;
 const DURACAO_CUSTOM_MAX_SEGUNDOS = 900;
@@ -27,9 +38,15 @@ const DURACAO_CUSTOM_MAX_SEGUNDOS = 900;
 // uma técnica clássica de relaxamento. Roda continuamente enquanto a
 // sessão decorre -- ver o requestAnimationFrame em "animar".
 const FASES_RESPIRACAO = [
-  { nome: "Inspire..." },
-  { nome: "Sustenha..." },
-  { nome: "Expire..." },
+  { get nome() {
+    return i18n.t("RelaxamentoExercise.inspire");
+  } },
+  { get nome() {
+    return i18n.t("RelaxamentoExercise.sustenha");
+  } },
+  { get nome() {
+    return i18n.t("RelaxamentoExercise.expire");
+  } },
 ] as const;
 const DURACOES_FASE_MS = [4000, 7000, 8000] as const;
 const CICLO_RESPIRACAO_MS = DURACOES_FASE_MS.reduce((soma, ms) => soma + ms, 0);
@@ -89,6 +106,7 @@ const RelaxamentoGame = ({ duracaoSegundos, onEscolherDuracao }: RelaxamentoGame
 };
 
 const RelaxamentoGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: RelaxamentoGameProps) => {
+  const { t } = useTranslation();
   const { isRunning, remainingSeconds } = useExerciseSession();
   // Uso passivo: só isTracking interessa aqui (detectar Palming), nunca se
   // desenha o gaze nem se pede calibração -- este exercício não tem alvo
@@ -157,7 +175,7 @@ const RelaxamentoGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: Relaxament
     void registarSessao();
     openFeedback({
       context: "exercicio-relaxamento",
-      question: "Como avalia o exercício de Relaxamento e Respiração?",
+      question: t("RelaxamentoExercise.comoAvaliaOExercicio"),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [remainingSeconds]);
@@ -235,7 +253,7 @@ const RelaxamentoGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: Relaxament
               className="relative z-10 text-center text-lg font-semibold transition-colors duration-700"
               style={{ color: modoPalming ? "hsl(var(--teal-foreground))" : "hsl(var(--foreground))" }}
             >
-              {modoPalming ? "Olhos cobertos. Relaxe e respire profundamente..." : faseAtual.nome}
+              {modoPalming ? t("RelaxamentoExercise.olhosCobertosRelaxeE") : faseAtual.nome}
             </p>
           </>
         )}
@@ -244,16 +262,16 @@ const RelaxamentoGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: Relaxament
           <div className="flex flex-col items-center gap-4 p-6 text-center">
             <p className="text-sm text-muted-foreground">
               {remainingSeconds === 0
-                ? "Sessão concluída."
+                ? t("RelaxamentoExercise.sessaoConcluida")
                 : aindaNaoIniciou
-                  ? "Escolha a duração e prima Iniciar."
-                  : "Em pausa. Prima Iniciar para continuar."}
+                  ? t("RelaxamentoExercise.escolhaADuracaoE")
+                  : t("RelaxamentoExercise.emPausaPrimaIniciar")}
             </p>
 
             {mostrarSeletorDuracao && (
               <div className="flex flex-col items-center gap-2">
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Duração da sessão
+                  {t("RelaxamentoExercise.duracaoDaSessao")}
                 </span>
                 <div className="flex flex-wrap items-center justify-center gap-2">
                   {DURACOES_PREDEFINIDAS.map((d) => (
@@ -279,7 +297,7 @@ const RelaxamentoGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: Relaxament
                       setPersonalizarAberto((v) => !v);
                     }}
                   >
-                    Personalizar
+                    {t("RelaxamentoExercise.personalizar")}
                   </Button>
                 </div>
                 {personalizarAberto && (
@@ -296,11 +314,11 @@ const RelaxamentoGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: Relaxament
                         if (e.key === "Enter") aplicarDuracaoCustom();
                       }}
                       className="w-20 rounded-md border border-border bg-background px-2 py-1 text-center text-sm text-foreground"
-                      aria-label="Duração personalizada, em segundos"
+                      aria-label={t("RelaxamentoExercise.duracaoPersonalizadaEmSegundos")}
                     />
-                    <span className="text-xs text-muted-foreground">segundos</span>
+                    <span className="text-xs text-muted-foreground">{t("RelaxamentoExercise.segundos")}</span>
                     <Button type="button" size="sm" onClick={aplicarDuracaoCustom}>
-                      Aplicar
+                      {t("RelaxamentoExercise.aplicar")}
                     </Button>
                   </div>
                 )}
@@ -312,16 +330,16 @@ const RelaxamentoGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: Relaxament
 
       <div className="mt-4 text-xs text-muted-foreground">
         <p>
-          Sincronize a respiração com a orbe. Pode fechar ou cobrir os olhos com as mãos a
-          qualquer momento (Palming) para relaxar ainda mais.
+          {t("RelaxamentoExercise.sincronizeARespiracaoCom")}
         </p>
-        {error && <p className="mt-1 text-destructive">{error} A respiração guiada funciona à mesma.</p>}
+        {error && <p className="mt-1 text-destructive"><Trans i18nKey="RelaxamentoExercise.aRespiracaoGuiadaFunciona" values={{ error }} /></p>}
       </div>
     </div>
   );
 };
 
 const RelaxamentoExercise = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [duracaoSegundos, setDuracaoSegundos] = useState(DURACOES_PREDEFINIDAS[1].segundos);
 
@@ -329,7 +347,7 @@ const RelaxamentoExercise = () => {
     if (window.history.length > 1) {
       navigate(-1);
     } else {
-      navigate("/exercicios");
+      navigate(localizar("/exercicios"));
     }
   };
 
@@ -340,12 +358,12 @@ const RelaxamentoExercise = () => {
         <div className="container max-w-4xl mx-auto">
           <Button variant="ghost" className="mb-6" onClick={handleVoltar}>
             <ArrowLeft className="w-4 h-4" />
-            Voltar ao Menu
+            {t("RelaxamentoExercise.voltarAoMenu")}
           </Button>
 
           <BaseExercise
-            title="Relaxamento e Respiração"
-            description="Sincronize a respiração com a orbe e relaxe a vista."
+            title={t("RelaxamentoExercise.relaxamentoERespiracao")}
+            description={t("RelaxamentoExercise.sincronizeARespiracaoCom2")}
             isPremium={false}
             durationSeconds={duracaoSegundos}
           >

@@ -1,4 +1,5 @@
-import { ALIASES_PT, ROTAS, caminhoEmIngles, caminhoEmPortugues } from "./rotas";
+import i18n from "./index";
+import { ALIASES_PT, ROTAS, caminhoEmIngles, caminhoEmPortugues, localizar } from "./rotas";
 
 describe("mapa de rotas PT <-> EN", () => {
   it("os pares pedidos estão mapeados", () => {
@@ -63,5 +64,33 @@ describe("mapa de rotas PT <-> EN", () => {
   it("pedir o idioma em que já se está devolve o mesmo sítio", () => {
     expect(caminhoEmPortugues("/faq")).toBe("/faq");
     expect(caminhoEmIngles("/en/faq")).toBe("/en/faq");
+  });
+});
+
+describe("localizar (links internos escritos em português)", () => {
+  afterEach(() => void i18n.changeLanguage("pt-AO"));
+
+  it("em português devolve o caminho tal como está", () => {
+    void i18n.changeLanguage("pt-AO");
+    expect(localizar("/faq")).toBe("/faq");
+    expect(localizar("/publicacoes/um-slug?x=1#topo")).toBe("/publicacoes/um-slug?x=1#topo");
+  });
+
+  it("em inglês devolve o equivalente /en/...", () => {
+    void i18n.changeLanguage("en-US");
+    expect(localizar("/faq")).toBe("/en/faq");
+    expect(localizar("/junte-se")).toBe("/en/contact");
+    expect(localizar("/#sobre")).toBe("/en#sobre");
+    expect(localizar("/publicacoes/um-slug?x=1")).toBe("/en/publications/um-slug?x=1");
+  });
+
+  it("em inglês, páginas fora do mapa (admin) ficam como estão -- não vão parar à página inicial", () => {
+    void i18n.changeLanguage("en-US");
+    expect(localizar("/admin/utilizadores")).toBe("/admin/utilizadores");
+  });
+
+  it("um caminho que já é inglês não é traduzido outra vez", () => {
+    void i18n.changeLanguage("en-US");
+    expect(localizar("/en/faq")).toBe("/en/faq");
   });
 });

@@ -1,10 +1,11 @@
 import { Instagram, Facebook, Linkedin, MapPin, Phone, Mail, ChevronRight } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { IDIOMA_EN, IDIOMA_PT, inglesAtivo } from "@/i18n/idiomas";
 import { caminhoNoIdioma } from "@/i18n/rotas";
 import { useIdioma } from "@/i18n/useIdioma";
 import logoIcon from "@/assets/logo-icon.png";
+import { localizar } from "@/i18n/rotas";
 
 /**
  * Botão único de idioma: "EN" no site português, "PT" no inglês. Leva à mesma
@@ -30,6 +31,7 @@ const AlternarIdioma = () => {
 };
 
 const Footer = () => {
+  const { t } = useTranslation();
   return (
     <footer className="bg-slate-50 text-slate-700 border-t border-slate-200">
       <div className="container py-14 md:py-16">
@@ -47,8 +49,7 @@ const Footer = () => {
               </span>
             </div>
             <p className="text-sm leading-relaxed text-slate-600 text-justify">
-              Uma instituição angolana que promove a inclusão visual alinhada à
-              economia circular e inovação tecnológica.
+              {t("Footer.umaInstituicaoAngolanaQue")}
             </p>
             <div className="flex items-center gap-3 pt-1">
               <a
@@ -83,13 +84,13 @@ const Footer = () => {
 
           {/* Column 2: Links Rápidos */}
           <div className="flex flex-col gap-4">
-            <h3 className="font-bold text-base text-slate-900">Links Rápidos</h3>
+            <h3 className="font-bold text-base text-slate-900">{t("Footer.linksRapidos")}</h3>
             <ul className="flex flex-col gap-2.5 text-sm">
               {[
-                { label: "Início", to: "/" },
-                { label: "Sobre Nós", to: "/impacto" },
-                { label: "Apoiar a Causa", to: "/apoiar" },
-                { label: "Contactos", to: "/junte-se" },
+                { label: t("Footer.inicio"), to: localizar("/") },
+                { label: t("Footer.sobreNos"), to: localizar("/impacto") },
+                { label: t("Footer.apoiarACausa"), to: localizar("/apoiar") },
+                { label: t("Footer.contactos"), to: localizar("/junte-se") },
               ].map((l) => (
                 <li key={l.to}>
                   <Link
@@ -105,12 +106,12 @@ const Footer = () => {
 
           {/* Column 3: Pilares */}
           <div className="flex flex-col gap-4">
-            <h3 className="font-bold text-base text-slate-900">Nossos Serviços</h3>
+            <h3 className="font-bold text-base text-slate-900">{t("Footer.nossosServicos")}</h3>
             <ul className="flex flex-col gap-2.5 text-sm">
               {[
-                { label: "Scanner de Estrabismo", to: "/scanner" },
-                { label: "Exercícios Visuais", to: "/exercicios" },
-                { label: "Doação de Óculos", to: "/circular" },
+                { label: t("Footer.scannerDeEstrabismo"), to: localizar("/scanner") },
+                { label: t("Footer.exerciciosVisuais"), to: localizar("/exercicios") },
+                { label: t("Footer.doacaoDeOculos"), to: localizar("/circular") },
               ].map((l) => (
                 <li key={l.to}>
                   <Link
@@ -127,7 +128,7 @@ const Footer = () => {
 
           {/* Column 4: Contactos */}
           <div className="flex flex-col gap-4">
-            <h3 className="font-bold text-base text-slate-900">Contactos</h3>
+            <h3 className="font-bold text-base text-slate-900">{t("Footer.contactos")}</h3>
             <ul className="flex flex-col gap-3 text-sm">
               <li>
                 <a
@@ -137,7 +138,7 @@ const Footer = () => {
                   className="flex items-start gap-3 text-slate-600 hover:text-primary transition-colors"
                 >
                   <MapPin className="w-4 h-4 mt-0.5 text-primary shrink-0" />
-                  <span>Luanda, Angola</span>
+                  <span>{t("Footer.luandaAngola")}</span>
                 </a>
               </li>
 
@@ -167,17 +168,17 @@ const Footer = () => {
       {/* Bottom bar */}
       <div className="border-t border-slate-200">
         <div className="container py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-          <p>© {new Date().getFullYear()} Janelas Para a Alma. Todos os direitos reservados.</p>
+          <p><Trans i18nKey="Footer.janelasParaAAlma" values={{ valor: new Date().getFullYear() }} /></p>
           <div className="flex items-center gap-5">
             {inglesAtivo() && <AlternarIdioma />}
-            <Link to="/politica-de-privacidade" className="hover:text-primary transition-colors">
-              Política de Privacidade
+            <Link to={localizar("/politica-de-privacidade")} className="hover:text-primary transition-colors">
+              {t("Footer.politicaDePrivacidade")}
             </Link>
-            <Link to="/termos-de-utilizacao" className="hover:text-primary transition-colors">
-              Termos de Utilização
+            <Link to={localizar("/termos-de-utilizacao")} className="hover:text-primary transition-colors">
+              {t("Footer.termosDeUtilizacao")}
             </Link>
-            <Link to="/faq" className="hover:text-primary transition-colors">
-              Faq
+            <Link to={localizar("/faq")} className="hover:text-primary transition-colors">
+              {t("Footer.faq")}
             </Link>
           </div>
         </div>

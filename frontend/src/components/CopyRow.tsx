@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Copy, Check } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface CopyRowProps {
   label: string;
@@ -12,6 +13,7 @@ interface CopyRowProps {
 /** Linha de dado bancário com botão "Copiar" -- partilhada entre qualquer
  * fluxo de pagamento manual (doações, checkout Premium). */
 const CopyRow = ({ label, value, displayValue }: CopyRowProps) => {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const handleCopy = async () => {
     try {
@@ -34,7 +36,7 @@ const CopyRow = ({ label, value, displayValue }: CopyRowProps) => {
         className="shrink-0 inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
       >
         {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-        {copied ? "Copiado" : "Copiar"}
+        {copied ? t("CopyRow.copiado") : t("CopyRow.copiar")}
       </button>
     </div>
   );

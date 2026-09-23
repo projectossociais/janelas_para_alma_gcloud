@@ -2,37 +2,51 @@ import { Link } from "react-router-dom";
 import { ArrowUpRight, Gamepad2 } from "lucide-react";
 import teamGroupPhoto from "@/assets/team-group-stairs.jpg";
 import saudeMundialPhoto from "@/assets/novidade-saude-mundial.jpg";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
+import { localizar } from "@/i18n/rotas";
 
 const novidades = [
   {
-    title: "Campanha de Consciencialização na Gamek",
-    to: "/meu-kamba/campanha-gamek",
+    get title() {
+      return i18n.t("NovidadesSection.campanhaDeConsciencializacaoNa");
+    },
+    get to() {
+      return localizar("/meu-kamba/campanha-gamek");
+    },
     external: false,
     image: teamGroupPhoto,
   },
   {
-    title: "Notícias sobre a Saúde Visual no Mundo",
+    get title() {
+      return i18n.t("NovidadesSection.noticiasSobreASaude");
+    },
     to: "https://www.cnnbrasil.com.br/tudo-sobre/saude-ocular/",
     external: true,
     image: saudeMundialPhoto,
   },
   {
-    title: "Lançamento do nosso jogo: Inclusivamente",
-    to: "/jogo-curiosidades",
+    get title() {
+      return i18n.t("NovidadesSection.lancamentoDoNossoJogo");
+    },
+    get to() {
+      return localizar("/jogo-curiosidades");
+    },
     external: false,
     image: null,
   },
 ];
 
 const NovidadesSection = () => {
+  const { t } = useTranslation();
   return (
     <section className="py-16 md:py-24 bg-background">
       <div className="container">
         <div className="text-center mb-12 space-y-4">
           <span className="text-sm font-medium tracking-widest uppercase text-teal">
-            Fique por dentro
+            {t("NovidadesSection.fiquePorDentro")}
           </span>
-          <h2 className="text-3xl md:text-5xl font-bold text-foreground">Novidades</h2>
+          <h2 className="text-3xl md:text-5xl font-bold text-foreground">{t("NovidadesSection.novidades")}</h2>
         </div>
 
         <div className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-4 scrollbar-hide touch-pan-x">
@@ -54,7 +68,7 @@ const NovidadesSection = () => {
                   )}
                   {item.external && (
                     <span className="absolute top-4 left-4 bg-navy text-navy-foreground px-3 py-1 rounded-lg font-semibold text-xs">
-                      Externo
+                      {t("NovidadesSection.externo")}
                     </span>
                   )}
                 </div>
@@ -63,7 +77,7 @@ const NovidadesSection = () => {
                     {item.title}
                   </h3>
                   <span className="inline-flex items-center gap-1 text-sm text-teal font-medium mt-auto pt-2">
-                    Saiba mais...
+                    {t("NovidadesSection.saibaMais")}
                     {item.external && <ArrowUpRight className="w-4 h-4" />}
                   </span>
                 </div>

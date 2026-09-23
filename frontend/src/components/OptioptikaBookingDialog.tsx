@@ -23,13 +23,15 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { optioptika, OPTIOPTIKA_YELLOW } from "@/data/optioptika";
+import { Trans, useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
-const appointmentSchema = z.object({
+const appointmentSchema = () => z.object({
   name: z
     .string()
     .trim()
-    .min(2, "Indique o seu nome")
-    .max(100, "Máximo 100 caracteres"),
+    .min(2, i18n.t("OptioptikaBookingDialog.indiqueOSeuNome"))
+    .max(100, i18n.t("OptioptikaBookingDialog.maximo100Caracteres")),
   email: z
     .string()
     .trim()
@@ -40,9 +42,9 @@ const appointmentSchema = z.object({
     .trim()
     .min(6, "Telefone inválido")
     .max(30, "Máximo 30 caracteres"),
-  date: z.string().min(1, "Escolha uma data"),
-  period: z.string().min(1, "Escolha um período"),
-  notes: z.string().trim().max(500, "Máximo 500 caracteres").optional(),
+  date: z.string().min(1, i18n.t("OptioptikaBookingDialog.escolhaUmaData")),
+  period: z.string().min(1, i18n.t("OptioptikaBookingDialog.escolhaUmPeriodo")),
+  notes: z.string().trim().max(500, i18n.t("OptioptikaBookingDialog.maximo500Caracteres")).optional(),
 });
 
 type Mode = "online" | "presencial";
@@ -67,6 +69,7 @@ interface OptioptikaBookingDialogProps {
 }
 
 const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialogProps) => {
+  const { t } = useTranslation();
   const [mode, setMode] = useState<Mode>("presencial");
   const [receipt, setReceipt] = useState<BookingReceipt | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -76,9 +79,9 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const result = appointmentSchema.safeParse(form);
+    const result = appointmentSchema().safeParse(form);
     if (!result.success) {
-      toast.error(result.error.issues[0]?.message ?? "Verifique os campos do formulário.");
+      toast.error(result.error.issues[0]?.message ?? t("OptioptikaBookingDialog.verifiqueOsCamposDo"));
       return;
     }
     // Optimistic UI: create + show booking receipt instantly.
@@ -90,7 +93,7 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
     };
     setReceipt(booking);
     toast.success(
-      `Pedido enviado à ${optioptika.name}. Entraremos em contacto para confirmar a sua consulta ${mode === "online" ? "online" : "presencial"}.`,
+      t("OptioptikaBookingDialog.pedidoEnviadoAEntraremos", { name: optioptika.name, valor: mode === "online" ? "online" : "presencial" }),
     );
     setForm(emptyForm);
   };
@@ -111,36 +114,35 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-xl">
                 <CalendarPlus className="w-5 h-5 text-black" />
-                Pedido de Consulta Confirmado
+                {t("OptioptikaBookingDialog.pedidoDeConsultaConfirmado")}
               </DialogTitle>
               <DialogDescription>
-                A {optioptika.name} entrará em contacto por email ou telefone para
-                confirmar o horário definitivo.
+                <Trans i18nKey="OptioptikaBookingDialog.aEntraraEmContacto" values={{ name: optioptika.name }} />
               </DialogDescription>
             </DialogHeader>
             <div className="rounded-lg border border-border bg-muted/40 p-4 space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Nº do pedido</span>
+                <span className="text-muted-foreground">{t("OptioptikaBookingDialog.nDoPedido")}</span>
                 <span className="font-mono font-semibold">{receipt.id}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Emitido</span>
+                <span className="text-muted-foreground">{t("OptioptikaBookingDialog.emitido")}</span>
                 <span>{receipt.createdAt}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Modalidade</span>
+                <span className="text-muted-foreground">{t("OptioptikaBookingDialog.modalidade")}</span>
                 <span className="capitalize">{receipt.mode}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Nome</span>
+                <span className="text-muted-foreground">{t("OptioptikaBookingDialog.nome")}</span>
                 <span>{receipt.name}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Contactos</span>
+                <span className="text-muted-foreground">{t("OptioptikaBookingDialog.contactos")}</span>
                 <span className="text-right">{receipt.email}<br/>{receipt.phone}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Data / Período</span>
+                <span className="text-muted-foreground">{t("OptioptikaBookingDialog.dataPeriodo")}</span>
                 <span>{receipt.date}, {receipt.period}</span>
               </div>
             </div>
@@ -149,7 +151,7 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
                 onClick={() => handleOpenChange(false)}
                 className="w-full bg-black text-white hover:bg-black/80"
               >
-                Fechar
+                {t("OptioptikaBookingDialog.fechar")}
               </Button>
             </DialogFooter>
           </>
@@ -158,10 +160,10 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-xl">
                 <CalendarPlus className="w-5 h-5 text-black" />
-                Agendar Consulta na {optioptika.name}
+                <Trans i18nKey="OptioptikaBookingDialog.agendarConsultaNa" values={{ name: optioptika.name }} />
               </DialogTitle>
               <DialogDescription>
-                Escolha a modalidade e preencha os seus dados. A clínica confirmará o horário por email ou telefone.
+                {t("OptioptikaBookingDialog.escolhaAModalidadeE")}
               </DialogDescription>
             </DialogHeader>
 
@@ -172,25 +174,25 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
                   className="flex items-center gap-2 py-2.5 data-[state=active]:bg-black data-[state=active]:text-white"
                 >
                   <MapPinned className="w-4 h-4" />
-                  Presencial
+                  {t("OptioptikaBookingDialog.presencial")}
                 </TabsTrigger>
                 <TabsTrigger
                   value="online"
                   className="flex items-center gap-2 py-2.5 data-[state=active]:bg-[#FFD500] data-[state=active]:text-black"
                 >
                   <Video className="w-4 h-4" />
-                  Online
+                  {t("OptioptikaBookingDialog.online")}
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="presencial" className="mt-0 mb-4">
                 <div className="rounded-lg border border-black/20 bg-black/5 p-4 text-sm text-muted-foreground">
-                  Consulta presencial na clínica <strong className="text-foreground">{optioptika.name}</strong> em {optioptika.location}. Traga documento de identificação e prescrições anteriores, se disponíveis.
+                  <Trans i18nKey="OptioptikaBookingDialog.consultaPresencialNaClinica" components={{ strong: <strong className="text-foreground" /> }} values={{ name: optioptika.name, location: optioptika.location }} />
                 </div>
               </TabsContent>
               <TabsContent value="online" className="mt-0 mb-4">
                 <div className="rounded-lg border border-[#FFD500]/50 bg-[#FFD500]/10 p-4 text-sm text-muted-foreground">
-                  Consulta por videochamada. Receberá um link seguro por email antes da hora marcada. Ideal para triagem inicial e acompanhamento.
+                  {t("OptioptikaBookingDialog.consultaPorVideochamadaRecebera")}
                 </div>
               </TabsContent>
             </Tabs>
@@ -198,18 +200,18 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5 sm:col-span-2">
-                  <Label htmlFor="ap-name">Nome completo</Label>
+                  <Label htmlFor="ap-name">{t("OptioptikaBookingDialog.nomeCompleto")}</Label>
                   <Input
                     id="ap-name"
                     value={form.name}
                     onChange={(e) => update("name", e.target.value)}
                     maxLength={100}
                     required
-                    placeholder="Ex.: Ana Silva"
+                    placeholder={t("OptioptikaBookingDialog.exAnaSilva")}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="ap-email">Email</Label>
+                  <Label htmlFor="ap-email">{t("OptioptikaBookingDialog.email")}</Label>
                   <Input
                     id="ap-email"
                     type="email"
@@ -221,7 +223,7 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="ap-phone">Telefone</Label>
+                  <Label htmlFor="ap-phone">{t("OptioptikaBookingDialog.telefone")}</Label>
                   <Input
                     id="ap-phone"
                     type="tel"
@@ -233,7 +235,7 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="ap-date">Data preferida</Label>
+                  <Label htmlFor="ap-date">{t("OptioptikaBookingDialog.dataPreferida")}</Label>
                   <Input
                     id="ap-date"
                     type="date"
@@ -243,30 +245,30 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="ap-period">Período</Label>
+                  <Label htmlFor="ap-period">{t("OptioptikaBookingDialog.periodo")}</Label>
                   <Select
                     value={form.period}
                     onValueChange={(v) => update("period", v)}
                   >
                     <SelectTrigger id="ap-period">
-                      <SelectValue placeholder="Escolher período" />
+                      <SelectValue placeholder={t("OptioptikaBookingDialog.escolherPeriodo")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="manha">Manhã (08h30 às 12h00)</SelectItem>
-                      <SelectItem value="tarde">Tarde (14h00 às 18h00)</SelectItem>
-                      <SelectItem value="sabado">Sábado (09h00 às 13h00)</SelectItem>
+                      <SelectItem value="manha">{t("OptioptikaBookingDialog.manha08h30As12h00")}</SelectItem>
+                      <SelectItem value="tarde">{t("OptioptikaBookingDialog.tarde14h00As18h00")}</SelectItem>
+                      <SelectItem value="sabado">{t("OptioptikaBookingDialog.sabado09h00As13h00")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1.5 sm:col-span-2">
-                  <Label htmlFor="ap-notes">Motivo da consulta (opcional)</Label>
+                  <Label htmlFor="ap-notes">{t("OptioptikaBookingDialog.motivoDaConsultaOpcional")}</Label>
                   <Textarea
                     id="ap-notes"
                     value={form.notes}
                     onChange={(e) => update("notes", e.target.value)}
                     maxLength={500}
                     rows={3}
-                    placeholder="Descreva sintomas, histórico ou dúvidas específicas."
+                    placeholder={t("OptioptikaBookingDialog.descrevaSintomasHistoricoOu")}
                   />
                 </div>
               </div>
@@ -276,7 +278,7 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
                   type="submit"
                   className={`w-full font-semibold ${mode === "online" ? "bg-[#FFD500] text-black hover:opacity-90" : "bg-black text-white hover:bg-black/80"}`}
                 >
-                  Solicitar Consulta {mode === "online" ? "Online" : "Presencial"}
+                  {t("OptioptikaBookingDialog.solicitarConsulta")}{" "}{mode === "online" ? t("OptioptikaBookingDialog.online") : t("OptioptikaBookingDialog.presencial")}
                 </Button>
               </DialogFooter>
             </form>

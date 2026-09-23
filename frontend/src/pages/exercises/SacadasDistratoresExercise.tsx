@@ -1,12 +1,16 @@
 import { Focus } from "lucide-react";
 import PremiumExercicioEsqueleto from "@/components/exercises/PremiumExercicioEsqueleto";
+import { useTranslation } from "react-i18next";
 
-const SacadasDistratoresExercise = () => (
+const SacadasDistratoresExercise = () => {
+  const { t } = useTranslation();
+  return (
   <PremiumExercicioEsqueleto
-    title="Sacadas com Distratores"
-    description="Encontre o alvo certo entre distractores em movimento, apurando o controlo dos movimentos sacádicos."
+    title={t("SacadasDistratoresExercise.sacadasComDistratores")}
+    description={t("SacadasDistratoresExercise.encontreOAlvoCerto")}
     icon={Focus}
   />
 );
+};
 
 export default SacadasDistratoresExercise;

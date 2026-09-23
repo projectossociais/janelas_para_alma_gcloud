@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { notificacoesApi, mensagemDeErroApi, type NotificacaoPublica } from "@/lib/apiClient";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 // ADMIN-04: substitui o antigo AdminNotifications.tsx, que "enviava" para
 // uma tabela do Supabase sem nenhum consumidor real -- este sino é esse
@@ -15,6 +16,7 @@ interface NotificationBellProps {
 }
 
 const NotificationBell = ({ claro }: NotificationBellProps) => {
+  const { t } = useTranslation();
   const [aberto, setAberto] = useState(false);
   const [contagem, setContagem] = useState(0);
   const [notificacoes, setNotificacoes] = useState<NotificacaoPublica[] | null>(null);
@@ -40,7 +42,7 @@ const NotificationBell = ({ claro }: NotificationBellProps) => {
     try {
       setNotificacoes(await notificacoesApi.listarMinhas());
     } catch (err) {
-      toast.error(mensagemDeErroApi(err, "Não foi possível carregar as notificações."));
+      toast.error(mensagemDeErroApi(err, t("NotificationBell.naoFoiPossivelCarregar")));
     }
   };
 
@@ -50,7 +52,7 @@ const NotificationBell = ({ claro }: NotificationBellProps) => {
       setNotificacoes((atual) => atual?.map((n) => (n.id === id ? { ...n, lida: true } : n)) ?? null);
       setContagem((atual) => Math.max(0, atual - 1));
     } catch (err) {
-      toast.error(mensagemDeErroApi(err, "Não foi possível marcar como lida."));
+      toast.error(mensagemDeErroApi(err, t("NotificationBell.naoFoiPossivelMarcar")));
     }
   };
 
@@ -60,7 +62,7 @@ const NotificationBell = ({ claro }: NotificationBellProps) => {
       setNotificacoes((atual) => atual?.map((n) => ({ ...n, lida: true })) ?? null);
       setContagem(0);
     } catch (err) {
-      toast.error(mensagemDeErroApi(err, "Não foi possível marcar tudo como lido."));
+      toast.error(mensagemDeErroApi(err, t("NotificationBell.naoFoiPossivelMarcar2")));
     }
   };
 
@@ -71,7 +73,7 @@ const NotificationBell = ({ claro }: NotificationBellProps) => {
           className={`relative p-2 rounded-lg transition-colors ${
             claro ? "text-primary-foreground hover:bg-primary-foreground/10" : "text-foreground hover:bg-muted"
           }`}
-          aria-label={`Notificações${contagem > 0 ? ` (${contagem} por ler)` : ""}`}
+          aria-label={contagem > 0 ? t("NotificationBell.notificacoesPorLer", { contagem }) : t("NotificationBell.notificacoes")}
         >
           <Bell className="w-5 h-5" />
           {contagem > 0 && (
@@ -83,10 +85,10 @@ const NotificationBell = ({ claro }: NotificationBellProps) => {
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 p-0">
         <div className="flex items-center justify-between p-3 border-b">
-          <span className="font-semibold text-sm">Notificações</span>
+          <span className="font-semibold text-sm">{t("NotificationBell.notificacoes")}</span>
           {contagem > 0 && (
             <button onClick={marcarTodasLidas} className="text-xs text-primary hover:underline">
-              Marcar tudo como lido
+              {t("NotificationBell.marcarTudoComoLido")}
             </button>
           )}
         </div>
@@ -115,7 +117,7 @@ const NotificationBell = ({ claro }: NotificationBellProps) => {
             </button>
           ))}
           {notificacoes?.length === 0 && (
-            <p className="text-center text-sm text-muted-foreground py-8">Sem notificações.</p>
+            <p className="text-center text-sm text-muted-foreground py-8">{t("NotificationBell.semNotificacoes")}</p>
           )}
         </ScrollArea>
       </PopoverContent>

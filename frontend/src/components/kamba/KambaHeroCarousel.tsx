@@ -8,12 +8,14 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
-const objectives = [
-  "Mobilizar jovens voluntários",
-  "Promover a desestigmatização através da empatia",
-  "Estabelecer uma rede activa de apoio comunitário",
-  "Implementar acções de inclusão social, visual e ecológica",
+const objectives = () => [
+  i18n.t("KambaHeroCarousel.mobilizarJovensVoluntarios"),
+  i18n.t("KambaHeroCarousel.promoverADesestigmatizacaoAtraves"),
+  i18n.t("KambaHeroCarousel.estabelecerUmaRedeActiva"),
+  i18n.t("KambaHeroCarousel.implementarAccoesDeInclusao"),
 ];
 
 interface KambaHeroCarouselProps {
@@ -21,6 +23,7 @@ interface KambaHeroCarouselProps {
 }
 
 const KambaHeroCarousel = ({ onOpenForm }: KambaHeroCarouselProps) => {
+  const { t } = useTranslation();
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
   const groupVideoRef = useRef<HTMLVideoElement>(null);
@@ -65,14 +68,13 @@ const KambaHeroCarousel = ({ onOpenForm }: KambaHeroCarouselProps) => {
             <div className="container">
               <div className="max-w-4xl mx-auto text-center space-y-6 py-4">
                 <span className="text-sm font-medium tracking-widest uppercase text-teal">
-                  Programa Meu Kamba Estrábico
+                  {t("KambaHeroCarousel.programaMeuKambaEstrabico")}
                 </span>
                 <h2 className="text-3xl md:text-5xl font-bold">
-                  Torna-te um Kamba
+                  {t("KambaHeroCarousel.tornaTeUmKamba")}
                 </h2>
                 <p className="text-lg text-navy-foreground/70 max-w-2xl mx-auto">
-                  Junta-te a nós como voluntário e ajuda a transformar vidas. Cada
-                  "kamba" (amigo) conta na luta pela inclusão visual.
+                  {t("KambaHeroCarousel.juntaTeANos")}
                 </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                   <button
@@ -80,7 +82,7 @@ const KambaHeroCarousel = ({ onOpenForm }: KambaHeroCarouselProps) => {
                     className="inline-flex items-center gap-3 px-10 py-5 rounded-xl bg-teal text-teal-foreground font-bold text-lg transition-all hover:opacity-90 hover:translate-y-[-2px] hover:shadow-2xl shadow-elevated"
                   >
                     <HeartHandshake className="w-6 h-6" />
-                    Quero ser um Kamba
+                    {t("KambaHeroCarousel.queroSerUmKamba")}
                   </button>
                 </div>
               </div>
@@ -88,13 +90,10 @@ const KambaHeroCarousel = ({ onOpenForm }: KambaHeroCarouselProps) => {
               <div className="max-w-4xl mx-auto mt-12 text-left space-y-3">
                 <h3 className="text-base font-semibold text-navy-foreground flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-teal" />
-                  Sobre o Programa
+                  {t("KambaHeroCarousel.sobreOPrograma")}
                 </h3>
                 <p className="text-navy-foreground/70 leading-relaxed">
-                  O programa é uma iniciativa estratégica do Janelas para a Alma que busca criar uma rede de apoio nas comunidades,
-                  promovendo a inclusão e a solidariedade em torno do estrabismo. O nome visa
-                  desestigmatizar a condição por meio do afecto, mobilizando jovens voluntários como
-                  "Kambas" (Embaixadores da inclusão visual e ecológica).
+                  {t("KambaHeroCarousel.oProgramaEUma")}
                 </p>
               </div>
 
@@ -102,10 +101,10 @@ const KambaHeroCarousel = ({ onOpenForm }: KambaHeroCarouselProps) => {
                 <div className="rounded-2xl bg-navy-foreground/5 border border-navy-foreground/10 p-6 space-y-3">
                   <h3 className="text-base font-semibold text-navy-foreground flex items-center gap-2">
                     <Target className="w-4 h-4 text-teal" />
-                    Objectivos
+                    {t("KambaHeroCarousel.objectivos")}
                   </h3>
                   <ul className="space-y-2">
-                    {objectives.map((obj, i) => (
+                    {objectives().map((obj, i) => (
                       <li key={i} className="flex items-start gap-3">
                         <ChevronRight className="w-4 h-4 text-teal shrink-0 mt-1" />
                         <span className="text-navy-foreground/70 leading-relaxed text-sm">{obj}</span>
@@ -117,17 +116,17 @@ const KambaHeroCarousel = ({ onOpenForm }: KambaHeroCarouselProps) => {
                 <div className="rounded-2xl bg-navy-foreground/5 border border-navy-foreground/10 p-6 space-y-3">
                   <h3 className="text-base font-semibold text-navy-foreground flex items-center gap-2">
                     <Users className="w-4 h-4 text-teal" />
-                    Público-Alvo
+                    {t("KambaHeroCarousel.publicoAlvo")}
                   </h3>
                   <div className="space-y-2">
                     <div className="p-3 rounded-xl bg-teal/10 border border-teal/20">
-                      <p className="text-sm font-medium text-navy-foreground mb-1">Primário</p>
-                      <p className="text-navy-foreground/70 text-sm">Pessoas estrábicas e com deficiência visual.</p>
+                      <p className="text-sm font-medium text-navy-foreground mb-1">{t("KambaHeroCarousel.primario")}</p>
+                      <p className="text-navy-foreground/70 text-sm">{t("KambaHeroCarousel.pessoasEstrabicasECom")}</p>
                     </div>
                     <div className="p-3 rounded-xl bg-navy-foreground/5 border border-navy-foreground/10">
-                      <p className="text-sm font-medium text-navy-foreground mb-1">Secundário</p>
+                      <p className="text-sm font-medium text-navy-foreground mb-1">{t("KambaHeroCarousel.secundario")}</p>
                       <p className="text-navy-foreground/70 text-sm">
-                        Famílias, voluntários, líderes comunitários, escolas e parceiros locais.
+                        {t("KambaHeroCarousel.familiasVoluntariosLideresComunitarios")}
                       </p>
                     </div>
                   </div>
@@ -142,15 +141,13 @@ const KambaHeroCarousel = ({ onOpenForm }: KambaHeroCarouselProps) => {
               <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-8 items-center py-4">
                 <div className="text-center md:text-left space-y-5">
                   <span className="text-sm font-medium tracking-widest uppercase text-teal">
-                    Acção no Terreno
+                    {t("KambaHeroCarousel.accaoNoTerreno")}
                   </span>
                   <h2 className="text-3xl md:text-4xl font-bold leading-tight">
-                    Campanha de Consciencialização na Gamek
+                    {t("KambaHeroCarousel.campanhaDeConsciencializacaoNa")}
                   </h2>
                   <p className="text-lg text-navy-foreground/70">
-                    A comunidade Meu Kamba Estrábico esteve nas ruas da Gamek, em
-                    Luanda, a sensibilizar a população sobre o estrabismo e a
-                    apresentar a plataforma Janelas para a Alma.
+                    {t("KambaHeroCarousel.aComunidadeMeuKamba")}
                   </p>
                   <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4">
                     <button
@@ -158,7 +155,7 @@ const KambaHeroCarousel = ({ onOpenForm }: KambaHeroCarouselProps) => {
                       className="inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-teal text-teal-foreground font-bold transition-all hover:opacity-90 hover:translate-y-[-2px] hover:shadow-2xl shadow-elevated"
                     >
                       <Images className="w-5 h-5" />
-                      Ver Galeria da Acção
+                      {t("KambaHeroCarousel.verGaleriaDaAccao")}
                     </button>
                   </div>
                 </div>
@@ -183,15 +180,13 @@ const KambaHeroCarousel = ({ onOpenForm }: KambaHeroCarouselProps) => {
               <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-8 items-center py-4">
                 <div className="text-center md:text-left space-y-5">
                   <span className="text-sm font-medium tracking-widest uppercase text-teal">
-                    A Nossa Equipa
+                    {t("KambaHeroCarousel.aNossaEquipa")}
                   </span>
                   <h2 className="text-3xl md:text-4xl font-bold leading-tight">
-                    Kambas Unidos pela Mesma Causa
+                    {t("KambaHeroCarousel.kambasUnidosPelaMesma")}
                   </h2>
                   <p className="text-lg text-navy-foreground/70">
-                    Voluntários, embaixadores e parceiros que dão vida ao
-                    programa Meu Kamba Estrábico, em cada acção e em cada
-                    encontro pela inclusão visual.
+                    {t("KambaHeroCarousel.voluntariosEmbaixadoresEParceiros")}
                   </p>
                   <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4">
                     <button
@@ -199,14 +194,14 @@ const KambaHeroCarousel = ({ onOpenForm }: KambaHeroCarouselProps) => {
                       className="inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-teal text-teal-foreground font-bold transition-all hover:opacity-90 hover:translate-y-[-2px] hover:shadow-2xl shadow-elevated"
                     >
                       <HeartHandshake className="w-5 h-5" />
-                      Quero ser um Kamba
+                      {t("KambaHeroCarousel.queroSerUmKamba")}
                     </button>
                   </div>
                 </div>
                 <div className="rounded-2xl overflow-hidden shadow-elevated border border-navy-foreground/10 aspect-[4/5] md:aspect-square">
                   <img
                     src="/assets/kamba/equipa-auditorio.jpg"
-                    alt="Equipa Meu Kamba Estrábico reunida num auditório"
+                    alt={t("KambaHeroCarousel.equipaMeuKambaEstrabico")}
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -220,7 +215,7 @@ const KambaHeroCarousel = ({ onOpenForm }: KambaHeroCarouselProps) => {
         {[0, 1, 2].map((index) => (
           <button
             key={index}
-            aria-label={`Ir para o slide ${index + 1}`}
+            aria-label={t("KambaHeroCarousel.irParaOSlide", { valor: index + 1 })}
             onClick={() => api?.scrollTo(index)}
             className={cn(
               "h-2.5 rounded-full transition-all",

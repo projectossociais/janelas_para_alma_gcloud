@@ -1,13 +1,25 @@
+import i18n from "@/i18n";
 export const OPTIOPTIKA_YELLOW = "#FFD500";
 
 export const optioptika = {
-  name: "Óptica Optioptika",
-  tagline: "Visão da Banda",
-  location: "Urbanização Nova Vida, Rua 54, Centro Empresarial Living-Luanda",
+  get name() {
+    return i18n.t("optioptika.opticaOptioptika");
+  },
+  get tagline() {
+    return i18n.t("optioptika.visaoDaBanda");
+  },
+  get location() {
+    return i18n.t("optioptika.urbanizacaoNovaVidaRua");
+  },
   phone: "+244 931 240 304",
   email: "geral@optioptika.com",
-  hours: "Seg–Qui · 08h–17h · Sáb · 08h–13h",
-  description:
-    "Parceiro clínico oficial do Janelas para a Alma, a Optioptika reúne uma equipa multidisciplinar dedicada à saúde visual, do rastreio à correcção óptica, com atendimento humanizado e tecnologia moderna.",
-  badges: ["Parceiro Oficial", "Consultas Presenciais e Online", "Equipa Certificada"],
+  get hours() {
+    return i18n.t("optioptika.segQui08h17h");
+  },
+  get description() {
+    return i18n.t("optioptika.parceiroClinicoOficialDo");
+  },
+  get badges() {
+    return [i18n.t("optioptika.parceiroOficial"), i18n.t("optioptika.consultasPresenciaisEOnline"), i18n.t("optioptika.equipaCertificada")];
+  },
 };

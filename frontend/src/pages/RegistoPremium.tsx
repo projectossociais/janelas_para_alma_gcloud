@@ -33,11 +33,14 @@ import {
   TIPOS_DE_COMPROVATIVO_ACEITES,
 } from "@/lib/apiClient";
 import { DEFAULT_BANK_DATA, ofuscarValor } from "@/lib/pagamento";
+import { Trans, useTranslation } from "react-i18next";
+import i18n from "@/i18n";
+import { localizar } from "@/i18n/rotas";
 
 const doctorImage = "/registo-premium-doctor.webp";
 
-const step1Schema = z.object({
-  nome: z.string().trim().min(2, "Nome muito curto").max(100),
+const step1Schema = () => z.object({
+  nome: z.string().trim().min(2, i18n.t("RegistoPremium.nomeMuitoCurto")).max(100),
   email: z.string().trim().email("Email inválido").max(255),
   telefone: z
     .string()
@@ -47,23 +50,33 @@ const step1Schema = z.object({
     .regex(/^[+()\d\s-]+$/, "Use apenas dígitos, espaços e os símbolos + ( ) -"),
 });
 
-const step2Schema = z.object({
+const step2Schema = () => z.object({
   para: z
     .string()
-    .refine((v) => ["mim", "filho", "familiar"].includes(v), "Seleccione uma opção"),
+    .refine((v) => ["mim", "filho", "familiar"].includes(v), i18n.t("RegistoPremium.seleccioneUmaOpcao")),
   diagnostico: z
     .string()
-    .refine((v) => ["sim", "nao", "duvida"].includes(v), "Seleccione uma opção"),
+    .refine((v) => ["sim", "nao", "duvida"].includes(v), i18n.t("RegistoPremium.seleccioneUmaOpcao")),
 });
 
 type Step = 1 | 2 | 3 | 4 | 5;
 
 const steps = [
-  { n: 1, label: "Dados Pessoais" },
-  { n: 2, label: "Perfil Clínico" },
-  { n: 3, label: "Escolha do Plano" },
-  { n: 4, label: "Pagamento" },
-  { n: 5, label: "Conclusão" },
+  { n: 1, get label() {
+    return i18n.t("RegistoPremium.dadosPessoais");
+  } },
+  { n: 2, get label() {
+    return i18n.t("RegistoPremium.perfilClinico");
+  } },
+  { n: 3, get label() {
+    return i18n.t("RegistoPremium.escolhaDoPlano");
+  } },
+  { n: 4, get label() {
+    return i18n.t("RegistoPremium.pagamento");
+  } },
+  { n: 5, get label() {
+    return i18n.t("RegistoPremium.conclusao");
+  } },
 ];
 
 interface PlanoOpcao {
@@ -77,35 +90,64 @@ interface PlanoOpcao {
 const PLANOS: PlanoOpcao[] = [
   {
     id: "mensal",
-    label: "Plano Mensal",
-    preco: "15.000 Kz",
-    detalhe: "Cobrança todos os meses",
-    beneficios: [
-      "Acesso ilimitado a 8 exercícios avançados",
-      "Acompanhamento de métricas de evolução",
-      "Suporte prioritário",
-    ],
+    get label() {
+      return i18n.t("RegistoPremium.planoMensal");
+    },
+    get preco() {
+      return i18n.t("RegistoPremium.n15000Kz");
+    },
+    get detalhe() {
+      return i18n.t("RegistoPremium.cobrancaTodosOsMeses");
+    },
+    get beneficios() {
+      return [
+      i18n.t("RegistoPremium.acessoIlimitadoA8"),
+      i18n.t("RegistoPremium.acompanhamentoDeMetricasDe"),
+      i18n.t("RegistoPremium.suportePrioritario"),
+    ];
+    },
   },
   {
     id: "anual",
-    label: "Plano Anual",
-    preco: "150.000 Kz",
-    detalhe: "Poupe 2 meses",
-    beneficios: [
-      "Todos os benefícios do plano mensal",
-      "2 meses de oferta",
-      "Sessão de triagem online com oftalmologista",
-    ],
+    get label() {
+      return i18n.t("RegistoPremium.planoAnual");
+    },
+    get preco() {
+      return i18n.t("RegistoPremium.n150000Kz");
+    },
+    get detalhe() {
+      return i18n.t("RegistoPremium.poupe2Meses");
+    },
+    get beneficios() {
+      return [
+      i18n.t("RegistoPremium.todosOsBeneficiosDo"),
+      i18n.t("RegistoPremium.n2MesesDeOferta"),
+      i18n.t("RegistoPremium.sessaoDeTriagemOnline"),
+    ];
+    },
   },
 ];
 
 const benefits = [
-  { icon: Eye, title: "Triagem visual assistida", desc: "Detecção precoce de sinais de estrabismo." },
-  { icon: Activity, title: "Acompanhamento contínuo", desc: "Métricas e evolução personalizadas." },
-  { icon: Stethoscope, title: "Exercícios guiados", desc: "Programa clínico validado por oftalmologistas." },
+  { icon: Eye, get title() {
+    return i18n.t("RegistoPremium.triagemVisualAssistida");
+  }, get desc() {
+    return i18n.t("RegistoPremium.deteccaoPrecoceDeSinais");
+  } },
+  { icon: Activity, get title() {
+    return i18n.t("RegistoPremium.acompanhamentoContinuo");
+  }, get desc() {
+    return i18n.t("RegistoPremium.metricasEEvolucaoPersonalizadas");
+  } },
+  { icon: Stethoscope, get title() {
+    return i18n.t("RegistoPremium.exerciciosGuiados");
+  }, get desc() {
+    return i18n.t("RegistoPremium.programaClinicoValidadoPor");
+  } },
 ];
 
 const RegistoPremium = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>(1);
 
@@ -122,7 +164,7 @@ const RegistoPremium = () => {
 
   const handleStep1 = (e: React.FormEvent) => {
     e.preventDefault();
-    const result = step1Schema.safeParse({ nome, email, telefone });
+    const result = step1Schema().safeParse({ nome, email, telefone });
     if (!result.success) {
       const fe: Record<string, string> = {};
       result.error.issues.forEach((err) => {
@@ -137,7 +179,7 @@ const RegistoPremium = () => {
 
   const handleStep2 = (e: React.FormEvent) => {
     e.preventDefault();
-    const result = step2Schema.safeParse({ para, diagnostico });
+    const result = step2Schema().safeParse({ para, diagnostico });
     if (!result.success) {
       const fe: Record<string, string> = {};
       result.error.issues.forEach((err) => {
@@ -153,24 +195,24 @@ const RegistoPremium = () => {
   const handlePagamento = async () => {
     if (!plano) {
       toast({
-        title: "Escolha um plano",
-        description: "Seleccione o plano mensal ou anual para continuar.",
+        title: t("RegistoPremium.escolhaUmPlano"),
+        description: t("RegistoPremium.seleccioneOPlanoMensal"),
         variant: "destructive",
       });
       return;
     }
     if (!comprovativo) {
       toast({
-        title: "Anexe o comprovativo",
-        description: "É necessário anexar o comprovativo do pagamento.",
+        title: t("RegistoPremium.anexeOComprovativo"),
+        description: t("RegistoPremium.eNecessarioAnexarO"),
         variant: "destructive",
       });
       return;
     }
     if (!TIPOS_DE_COMPROVATIVO_ACEITES.includes(comprovativo.type as never)) {
       toast({
-        title: "Formato não suportado",
-        description: "Use PNG, JPEG, WebP ou PDF.",
+        title: t("RegistoPremium.formatoNaoSuportado"),
+        description: t("RegistoPremium.usePngJpegWebp"),
         variant: "destructive",
       });
       return;
@@ -188,14 +230,14 @@ const RegistoPremium = () => {
 
       setStep(5);
       toast({
-        title: "Pagamento recebido",
-        description: "A nossa equipa vai confirmar o seu pagamento e activar a subscrição em breve.",
+        title: t("RegistoPremium.pagamentoRecebido"),
+        description: t("RegistoPremium.aNossaEquipaVai"),
       });
     } catch (err) {
       console.error("Falha ao processar o pagamento Premium:", err);
       toast({
-        title: "Não foi possível concluir",
-        description: mensagemDeErroApi(err, "Tente novamente dentro de momentos."),
+        title: t("RegistoPremium.naoFoiPossivelConcluir"),
+        description: mensagemDeErroApi(err, t("RegistoPremium.tenteNovamenteDentroDe")),
         variant: "destructive",
       });
     } finally {
@@ -214,7 +256,7 @@ const RegistoPremium = () => {
       <aside className="relative hidden lg:flex bg-navy text-primary-foreground overflow-hidden">
         <img
           src={doctorImage}
-          alt="Especialista sorridente do programa Janelas Para a Alma"
+          alt={t("RegistoPremium.especialistaSorridenteDoPrograma")}
           width={1024}
           height={1280}
           className="absolute inset-0 w-full h-full object-cover object-center opacity-55"
@@ -223,28 +265,27 @@ const RegistoPremium = () => {
         <div className="relative z-10 flex flex-col justify-between p-12 xl:p-16 w-full">
           <div>
             <Link
-              to="/"
+              to={localizar("/")}
               className="inline-flex items-center gap-2 text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors"
             >
-              <ArrowLeft className="w-4 h-4" /> Voltar
+              <ArrowLeft className="w-4 h-4" />{" "}{t("RegistoPremium.voltar")}
             </Link>
           </div>
 
           <div className="max-w-md space-y-8">
             <div>
               <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-gold">
-                <Sparkles className="w-3.5 h-3.5" /> Acesso Premium
+                <Sparkles className="w-3.5 h-3.5" />{" "}{t("RegistoPremium.acessoPremium")}
               </span>
               <h2 className="mt-3 text-3xl xl:text-4xl font-bold leading-tight">
-                Um olhar alinhado, uma vida transformada.
+                {t("RegistoPremium.umOlharAlinhadoUma")}
               </h2>
             </div>
 
             <blockquote className="border-l-2 border-gold pl-4 text-primary-foreground/90 text-base leading-relaxed">
-              &ldquo;O programa devolveu-me a confiança de olhar as pessoas nos olhos.
-              Ter acompanhamento perto de casa mudou tudo.&rdquo;
+              {t("RegistoPremium.oProgramaDevolveuMe")}
               <footer className="mt-2 text-sm text-primary-foreground/70">
-                — Kamba do programa, Luanda
+                {t("RegistoPremium.kambaDoProgramaLuanda")}
               </footer>
             </blockquote>
 
@@ -264,7 +305,7 @@ const RegistoPremium = () => {
           </div>
 
           <p className="text-xs text-primary-foreground/60">
-            © 2026 Janelas Para a Alma
+            {t("RegistoPremium.n2026JanelasParaA")}
           </p>
         </div>
       </aside>
@@ -273,8 +314,8 @@ const RegistoPremium = () => {
       <section className="flex flex-col bg-background">
         <div className="lg:hidden border-b border-border">
           <div className="container py-4">
-            <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-              <ArrowLeft className="w-4 h-4" /> Voltar
+            <Link to={localizar("/")} className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+              <ArrowLeft className="w-4 h-4" />{" "}{t("RegistoPremium.voltar")}
             </Link>
           </div>
         </div>
@@ -317,27 +358,27 @@ const RegistoPremium = () => {
               <form onSubmit={handleStep1} className="space-y-5 animate-fade-in">
                 <div>
                   <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-                    Dados Pessoais
+                    {t("RegistoPremium.dadosPessoais")}
                   </h1>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Conte-nos um pouco sobre si para começarmos.
+                    {t("RegistoPremium.conteNosUmPouco")}
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="nome">Nome Completo</Label>
+                  <Label htmlFor="nome">{t("RegistoPremium.nomeCompleto")}</Label>
                   <Input
                     id="nome"
                     value={nome}
                     onChange={(e) => setNome(e.target.value)}
-                    placeholder="O seu nome"
+                    placeholder={t("RegistoPremium.oSeuNome")}
                     maxLength={100}
                   />
                   {errors.nome && <p className="text-xs text-destructive">{errors.nome}</p>}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t("RegistoPremium.email")}</Label>
                   <Input
                     id="email"
                     type="email"
@@ -350,7 +391,7 @@ const RegistoPremium = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="telefone">Telefone (WhatsApp)</Label>
+                  <Label htmlFor="telefone">{t("RegistoPremium.telefoneWhatsapp")}</Label>
                   <Input
                     id="telefone"
                     type="tel"
@@ -369,7 +410,7 @@ const RegistoPremium = () => {
                   size="lg"
                   className="w-full bg-gradient-to-r from-teal to-navy text-primary-foreground hover:opacity-90"
                 >
-                  Continuar <ArrowRight className="w-4 h-4" />
+                  {t("RegistoPremium.continuar")}{" "}<ArrowRight className="w-4 h-4" />
                 </Button>
               </form>
             )}
@@ -378,39 +419,39 @@ const RegistoPremium = () => {
               <form onSubmit={handleStep2} className="space-y-6 animate-fade-in">
                 <div>
                   <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-                    Perfil Clínico
+                    {t("RegistoPremium.perfilClinico")}
                   </h1>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Ajuda-nos a personalizar o seu acompanhamento.
+                    {t("RegistoPremium.ajudaNosAPersonalizar")}
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="para">A subscrição é para quem?</Label>
+                  <Label htmlFor="para">{t("RegistoPremium.aSubscricaoEPara")}</Label>
                   <Select value={para} onValueChange={setPara}>
                     <SelectTrigger id="para">
-                      <SelectValue placeholder="Seleccione uma opção" />
+                      <SelectValue placeholder={t("RegistoPremium.seleccioneUmaOpcao")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="mim">Para mim</SelectItem>
-                      <SelectItem value="filho">Para o meu filho/a</SelectItem>
-                      <SelectItem value="familiar">Outro familiar</SelectItem>
+                      <SelectItem value="mim">{t("RegistoPremium.paraMim")}</SelectItem>
+                      <SelectItem value="filho">{t("RegistoPremium.paraOMeuFilho")}</SelectItem>
+                      <SelectItem value="familiar">{t("RegistoPremium.outroFamiliar")}</SelectItem>
                     </SelectContent>
                   </Select>
                   {errors.para && <p className="text-xs text-destructive">{errors.para}</p>}
                 </div>
 
                 <div className="space-y-3">
-                  <Label>Já tem um diagnóstico médico de estrabismo?</Label>
+                  <Label>{t("RegistoPremium.jaTemUmDiagnostico")}</Label>
                   <RadioGroup
                     value={diagnostico}
                     onValueChange={setDiagnostico}
                     className="space-y-2"
                   >
                     {[
-                      { v: "sim", l: "Sim" },
-                      { v: "nao", l: "Não" },
-                      { v: "duvida", l: "Não tenho a certeza" },
+                      { v: "sim", l: t("RegistoPremium.sim") },
+                      { v: "nao", l: t("RegistoPremium.nao") },
+                      { v: "duvida", l: t("RegistoPremium.naoTenhoACerteza") },
                     ].map((opt) => (
                       <div key={opt.v}>
                         <label
@@ -422,17 +463,14 @@ const RegistoPremium = () => {
                         </label>
                         {opt.v === "nao" && diagnostico === "nao" && (
                           <p className="mt-3 text-sm text-muted-foreground ml-7">
-                            Recomendamos uma avaliação prévia.{" "}
-                            <Link to="/parceiros?agendar=optiotica" className="text-teal underline font-medium">
-                              Marque uma teleconsulta com a nossa equipa.
-                            </Link>
+                            <Trans i18nKey="RegistoPremium.recomendamosUmaAvaliacaoPrevia" components={{ ligacao: <Link to={localizar("/parceiros?agendar=optiotica")} className="text-teal underline font-medium" /> }} />
                           </p>
                         )}
                         {opt.v === "duvida" && diagnostico === "duvida" && (
                           <Textarea
                             className="mt-3 ml-7"
                             onChange={(e) => setDetalhesDiagnostico(e.target.value)}
-                            placeholder="Descreva brevemente os seus sintomas ou dúvidas..."
+                            placeholder={t("RegistoPremium.descrevaBrevementeOsSeus")}
                             value={detalhesDiagnostico}
                           />
                         )}
@@ -452,14 +490,14 @@ const RegistoPremium = () => {
                     onClick={() => setStep(1)}
                     className="flex-1"
                   >
-                    <ArrowLeft className="w-4 h-4" /> Voltar
+                    <ArrowLeft className="w-4 h-4" />{" "}{t("RegistoPremium.voltar")}
                   </Button>
                   <Button
                     type="submit"
                     size="lg"
                     className="flex-[2] bg-gradient-to-r from-teal to-navy text-primary-foreground hover:opacity-90"
                   >
-                    Continuar <ArrowRight className="w-4 h-4" />
+                    {t("RegistoPremium.continuar")}{" "}<ArrowRight className="w-4 h-4" />
                   </Button>
                 </div>
               </form>
@@ -469,10 +507,10 @@ const RegistoPremium = () => {
               <div className="space-y-6 animate-fade-in">
                 <div>
                   <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-                    Escolha o Plano
+                    {t("RegistoPremium.escolhaOPlano")}
                   </h1>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Escolha o plano que melhor se adapta a si.
+                    {t("RegistoPremium.escolhaOPlanoQue")}
                   </p>
                 </div>
 
@@ -493,7 +531,7 @@ const RegistoPremium = () => {
                       >
                         {p.id === "anual" && (
                           <span className="absolute -top-3 left-4 rounded-full bg-gold px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gold-foreground">
-                            Melhor Valor
+                            {t("RegistoPremium.melhorValor")}
                           </span>
                         )}
                         <span
@@ -529,7 +567,7 @@ const RegistoPremium = () => {
                     onClick={() => setStep(2)}
                     className="flex-1"
                   >
-                    <ArrowLeft className="w-4 h-4" /> Voltar
+                    <ArrowLeft className="w-4 h-4" />{" "}{t("RegistoPremium.voltar")}
                   </Button>
                   <Button
                     type="button"
@@ -538,7 +576,7 @@ const RegistoPremium = () => {
                     disabled={!plano}
                     className="flex-[2] bg-gradient-to-r from-teal to-navy text-primary-foreground hover:opacity-90"
                   >
-                    Continuar para Pagamento <ArrowRight className="w-4 h-4" />
+                    {t("RegistoPremium.continuarParaPagamento")}{" "}<ArrowRight className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
@@ -548,22 +586,22 @@ const RegistoPremium = () => {
               <div className="flex flex-col space-y-6 animate-fade-in">
                 <div>
                   <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-                    Pagamento
+                    {t("RegistoPremium.pagamento")}
                   </h1>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Confirme o resumo e envie o comprovativo do pagamento.
+                    {t("RegistoPremium.confirmeOResumoE")}
                   </p>
                 </div>
 
                 {/* Resumo do Pedido */}
                 <div className="space-y-2">
                   <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                    Resumo do Pedido
+                    {t("RegistoPremium.resumoDoPedido")}
                   </p>
                   <div className="rounded-xl border border-border bg-card p-4">
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-sm font-semibold text-foreground">
-                        {planoEscolhido?.label ?? "Plano"}
+                        {planoEscolhido?.label ?? t("RegistoPremium.plano")}
                       </span>
                       <span className="text-xs text-muted-foreground">
                         {planoEscolhido?.detalhe}
@@ -571,7 +609,7 @@ const RegistoPremium = () => {
                     </div>
                     <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
                       <span className="text-sm font-semibold text-foreground">
-                        Total a Pagar Hoje
+                        {t("RegistoPremium.totalAPagarHoje")}
                       </span>
                       <span className="text-xl font-bold text-navy">
                         {planoEscolhido?.preco}
@@ -583,10 +621,10 @@ const RegistoPremium = () => {
                 {/* Dados Bancários */}
                 <div className="space-y-2">
                   <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                    Dados Bancários
+                    {t("RegistoPremium.dadosBancarios")}
                   </p>
                   <div className="rounded-lg border border-navy/20 bg-navy/5 p-4 space-y-1 divide-y divide-navy/10">
-                    <CopyRow label="Beneficiário" value={DEFAULT_BANK_DATA.beneficiario} />
+                    <CopyRow label={t("RegistoPremium.beneficiario")} value={DEFAULT_BANK_DATA.beneficiario} />
                     <CopyRow
                       label={DEFAULT_BANK_DATA.pagamento_rapido.metodo}
                       value={DEFAULT_BANK_DATA.pagamento_rapido.telefone}
@@ -604,7 +642,7 @@ const RegistoPremium = () => {
 
                 {/* Envio do Comprovativo */}
                 <div className="space-y-2">
-                  <h3 className="font-semibold text-foreground mb-1">2. Anexe o Comprovativo</h3>
+                  <h3 className="font-semibold text-foreground mb-1">{t("RegistoPremium.n2AnexeOComprovativo")}</h3>
                   <FileDropzone file={comprovativo} onFileChange={setComprovativo} />
                 </div>
 
@@ -617,7 +655,7 @@ const RegistoPremium = () => {
                     disabled={submitting}
                     className="flex-1"
                   >
-                    <ArrowLeft className="w-4 h-4" /> Voltar
+                    <ArrowLeft className="w-4 h-4" />{" "}{t("RegistoPremium.voltar")}
                   </Button>
                   <Button
                     type="button"
@@ -626,9 +664,9 @@ const RegistoPremium = () => {
                     disabled={submitting || !plano || !comprovativo}
                     className="flex-[2] bg-gradient-to-r from-teal to-navy text-primary-foreground hover:opacity-90"
                   >
-                    {submitting ? "A enviar..." : (
+                    {submitting ? t("RegistoPremium.aEnviar") : (
                       <>
-                        Concluir Assinatura <ArrowRight className="w-4 h-4" />
+                        {t("RegistoPremium.concluirAssinatura")}{" "}<ArrowRight className="w-4 h-4" />
                       </>
                     )}
                   </Button>
@@ -642,21 +680,17 @@ const RegistoPremium = () => {
                   <CheckCircle2 className="w-12 h-12 text-green" strokeWidth={2.5} />
                 </div>
                 <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
-                  Pedido Recebido com Sucesso!
+                  {t("RegistoPremium.pedidoRecebidoComSucesso")}
                 </h1>
                 <p className="text-muted-foreground leading-relaxed mb-8">
-                  Recebemos o seu pedido e o comprovativo de pagamento. Para garantir
-                  que recebe o acompanhamento correcto, um dos nossos especialistas em
-                  triagem vai confirmar o pagamento e entrar em contacto consigo via
-                  WhatsApp nas próximas 24 horas para activar a sua subscrição e agendar
-                  a sua primeira teleconsulta.
+                  {t("RegistoPremium.recebemosOSeuPedido")}
                 </p>
                 <Button
                   size="lg"
-                  onClick={() => navigate("/")}
+                  onClick={() => navigate(localizar("/"))}
                   className="bg-gradient-to-r from-teal to-navy text-primary-foreground hover:opacity-90"
                 >
-                  Voltar à Página Inicial
+                  {t("RegistoPremium.voltarAPaginaInicial")}
                 </Button>
               </div>
             )}

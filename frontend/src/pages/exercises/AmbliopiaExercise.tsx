@@ -10,6 +10,9 @@ import { useFeedback } from "@/contexts/FeedbackContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { sessoesExercicioApi } from "@/lib/apiClient";
 import FeedbackWidget from "@/components/FeedbackWidget";
+import { Trans, useTranslation } from "react-i18next";
+import i18n from "@/i18n";
+import { localizar } from "@/i18n/rotas";
 
 const EXERCICIO_ID = "ambliopia";
 
@@ -70,18 +73,32 @@ const escolherDistratores = (evitar: number, quantidade: number): number[] => {
 
 const DURACOES_PREDEFINIDAS = [
   { label: "30s", segundos: 30 },
-  { label: "1 min", segundos: 60 },
-  { label: "1.5 min", segundos: 90 },
-  { label: "2 min", segundos: 120 },
-  { label: "3 min", segundos: 180 },
+  { get label() {
+    return i18n.t("AmbliopiaExercise.n1Min");
+  }, segundos: 60 },
+  { get label() {
+    return i18n.t("AmbliopiaExercise.n15Min");
+  }, segundos: 90 },
+  { get label() {
+    return i18n.t("AmbliopiaExercise.n2Min");
+  }, segundos: 120 },
+  { get label() {
+    return i18n.t("AmbliopiaExercise.n3Min");
+  }, segundos: 180 },
 ];
 const DURACAO_CUSTOM_MIN_SEGUNDOS = 10;
 const DURACAO_CUSTOM_MAX_SEGUNDOS = 900;
 
 const VELOCIDADES = [
-  { label: "Lento", multiplicador: 0.6 },
-  { label: "Normal", multiplicador: 1 },
-  { label: "Rápido", multiplicador: 1.6 },
+  { get label() {
+    return i18n.t("AmbliopiaExercise.lento");
+  }, multiplicador: 0.6 },
+  { get label() {
+    return i18n.t("AmbliopiaExercise.normal");
+  }, multiplicador: 1 },
+  { get label() {
+    return i18n.t("AmbliopiaExercise.rapido");
+  }, multiplicador: 1.6 },
 ];
 
 /**
@@ -99,9 +116,15 @@ interface NivelDificuldade {
   contraste: number;
 }
 const NIVEIS_DIFICULDADE: NivelDificuldade[] = [
-  { label: "Fácil", numDistratoresAtivos: 4, contraste: 0.15 },
-  { label: "Médio", numDistratoresAtivos: 8, contraste: 0.5 },
-  { label: "Difícil", numDistratoresAtivos: 12, contraste: 0.85 },
+  { get label() {
+    return i18n.t("AmbliopiaExercise.facil");
+  }, numDistratoresAtivos: 4, contraste: 0.15 },
+  { get label() {
+    return i18n.t("AmbliopiaExercise.medio");
+  }, numDistratoresAtivos: 8, contraste: 0.5 },
+  { get label() {
+    return i18n.t("AmbliopiaExercise.dificil");
+  }, numDistratoresAtivos: 12, contraste: 0.85 },
 ];
 
 /** Cor do alvo (e dos distractores-quase-alvo) segundo o nível de contraste:
@@ -135,7 +158,7 @@ const calcularNivel = (score: number): NivelInfo => {
   if (score >= PONTOS_NIVEL_MESTRE) {
     return {
       nivel: Infinity,
-      nome: "Nível Mestre",
+      nome: i18n.t("AmbliopiaExercise.nivelMestre"),
       ehMestre: true,
       pontosNoNivel: 0,
       pontosParaSubir: 0,
@@ -146,7 +169,7 @@ const calcularNivel = (score: number): NivelInfo => {
   const pontosNoNivel = score - (numeroNivel - 1) * PONTOS_POR_NIVEL;
   return {
     nivel: numeroNivel,
-    nome: `Nível ${numeroNivel}`,
+    nome: i18n.t("AmbliopiaExercise.nivel", { numeroNivel }),
     ehMestre: false,
     pontosNoNivel,
     pontosParaSubir: PONTOS_POR_NIVEL,
@@ -175,6 +198,7 @@ const AmbliopiaGame = ({ duracaoSegundos, onEscolherDuracao }: AmbliopiaGameProp
 };
 
 const AmbliopiaGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: AmbliopiaGameProps) => {
+  const { t: tr } = useTranslation();
   const { isRunning, score, remainingSeconds, addScore } = useExerciseSession();
   const { videoRef, gaze, isTracking, isCalibrating, calibrate, error } = useEyeTracking();
   const { profile } = useProfile();
@@ -273,7 +297,7 @@ const AmbliopiaGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: AmbliopiaGam
 
       const texto =
         pontosGanhos > COMBO_PONTOS_BASE
-          ? `+${pontosGanhos} Combo x${comboAtualRef.current}!`
+          ? tr("AmbliopiaExercise.comboX", { pontosGanhos, current: comboAtualRef.current })
           : `+${pontosGanhos}`;
       const id = proximoFeedbackIdRef.current++;
       setFeedbacksFlutuantes((prev) => [...prev, { id, texto, x: alvoX, y: alvoY }]);
@@ -333,7 +357,7 @@ const AmbliopiaGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: AmbliopiaGam
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     };
-  }, [isRunning, containerSize.width, containerSize.height, velocidade, addScore]);
+  }, [isRunning, containerSize.width, containerSize.height, velocidade, addScore, tr]);
 
   useEffect(() => {
     if (!isRunning) return;
@@ -403,7 +427,7 @@ const AmbliopiaGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: AmbliopiaGam
     void registarSessao();
     openFeedback({
       context: "exercicio-ambliopia",
-      question: "Como avalia o exercício Anti-Supressão / Ambliopia?",
+      question: tr("AmbliopiaExercise.comoAvaliaOExercicio"),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [remainingSeconds]);
@@ -439,7 +463,7 @@ const AmbliopiaGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: AmbliopiaGam
             <span className="text-sm font-semibold text-foreground">{nivelInfo.nome}</span>
             {!nivelInfo.ehMestre && (
               <span className="text-xs text-muted-foreground">
-                {nivelInfo.pontosNoNivel}/{nivelInfo.pontosParaSubir} pts
+                <Trans i18nKey="AmbliopiaExercise.pts" values={{ pontosNoNivel: nivelInfo.pontosNoNivel, pontosParaSubir: nivelInfo.pontosParaSubir }} />
               </span>
             )}
           </div>
@@ -514,7 +538,7 @@ const AmbliopiaGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: AmbliopiaGam
         {!isTracking && isRunning && (
           <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full border border-border bg-card/80 px-3 py-1 text-xs text-muted-foreground backdrop-blur-sm">
             <EyeOff className="h-3.5 w-3.5" />
-            Rosto não detectado
+            {tr("AmbliopiaExercise.rostoNaoDetectado")}
           </div>
         )}
 
@@ -528,16 +552,13 @@ const AmbliopiaGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: AmbliopiaGam
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 overflow-y-auto p-6 text-center">
             <Eye className="h-10 w-10 text-teal" />
             <div className="max-w-sm space-y-2">
-              <h3 className="text-base font-bold text-foreground">Antes de começar</h3>
+              <h3 className="text-base font-bold text-foreground">{tr("AmbliopiaExercise.antesDeComecar")}</h3>
               <p className="text-sm text-muted-foreground">
-                Cubra o <strong className="text-foreground">olho mais forte</strong> com a mão ou um
-                penso ocular. Este exercício só é eficaz se for o{" "}
-                <strong className="text-foreground">olho mais fraco</strong> a procurar o alvo
-                sozinho.
+                <Trans i18nKey="AmbliopiaExercise.cubraOOlhoMais" components={{ strong: <strong className="text-foreground" /> }} />
               </p>
             </div>
             <Button type="button" onClick={() => setInstrucaoConfirmada(true)}>
-              Já cobri o olho mais forte, continuar
+              {tr("AmbliopiaExercise.jaCobriOOlho")}
             </Button>
           </div>
         )}
@@ -546,17 +567,17 @@ const AmbliopiaGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: AmbliopiaGam
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 overflow-y-auto p-6 text-center">
             <p className="text-sm text-muted-foreground">
               {remainingSeconds === 0
-                ? "Sessão concluída."
+                ? tr("AmbliopiaExercise.sessaoConcluida")
                 : aindaNaoIniciou
-                  ? "Escolha a duração e a dificuldade, calibre o olhar a olhar para o centro e prima Iniciar."
-                  : "Em pausa. Prima Iniciar para continuar."}
+                  ? tr("AmbliopiaExercise.escolhaADuracaoE")
+                  : tr("AmbliopiaExercise.emPausaPrimaIniciar")}
             </p>
 
             {mostrarSeletorDuracao && (
               <div className="flex flex-wrap items-start justify-center gap-6">
                 <div className="flex flex-col items-center gap-2">
                   <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Duração da sessão
+                    {tr("AmbliopiaExercise.duracaoDaSessao")}
                   </span>
                   <div className="flex flex-wrap items-center justify-center gap-2">
                     {DURACOES_PREDEFINIDAS.map((d) => (
@@ -582,7 +603,7 @@ const AmbliopiaGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: AmbliopiaGam
                         setPersonalizarAberto((v) => !v);
                       }}
                     >
-                      Personalizar
+                      {tr("AmbliopiaExercise.personalizar")}
                     </Button>
                   </div>
                   {personalizarAberto && (
@@ -599,11 +620,11 @@ const AmbliopiaGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: AmbliopiaGam
                           if (e.key === "Enter") aplicarDuracaoCustom();
                         }}
                         className="w-20 rounded-md border border-border bg-background px-2 py-1 text-center text-sm text-foreground"
-                        aria-label="Duração personalizada, em segundos"
+                        aria-label={tr("AmbliopiaExercise.duracaoPersonalizadaEmSegundos")}
                       />
-                      <span className="text-xs text-muted-foreground">segundos</span>
+                      <span className="text-xs text-muted-foreground">{tr("AmbliopiaExercise.segundos")}</span>
                       <Button type="button" size="sm" onClick={aplicarDuracaoCustom}>
-                        Aplicar
+                        {tr("AmbliopiaExercise.aplicar")}
                       </Button>
                     </div>
                   )}
@@ -611,7 +632,7 @@ const AmbliopiaGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: AmbliopiaGam
 
                 <div className="flex flex-col items-center gap-2">
                   <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Dificuldade
+                    {tr("AmbliopiaExercise.dificuldade")}
                   </span>
                   <div className="flex items-center justify-center gap-2">
                     {NIVEIS_DIFICULDADE.map((d, i) => (
@@ -630,7 +651,7 @@ const AmbliopiaGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: AmbliopiaGam
 
                 <div className="flex flex-col items-center gap-2">
                   <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Velocidade dos alvos
+                    {tr("AmbliopiaExercise.velocidadeDosAlvos")}
                   </span>
                   <div className="flex items-center justify-center gap-2">
                     {VELOCIDADES.map((v, i) => (
@@ -664,7 +685,7 @@ const AmbliopiaGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: AmbliopiaGam
                   disabled={isCalibrating}
                 >
                   <Crosshair className="h-4 w-4" />
-                  {isCalibrating ? "A calibrar..." : "Calibrar Olhar"}
+                  {isCalibrating ? tr("AmbliopiaExercise.aCalibrar") : tr("AmbliopiaExercise.calibrarOlhar")}
                 </Button>
               )
             )}
@@ -673,10 +694,10 @@ const AmbliopiaGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: AmbliopiaGam
       </div>
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-        <p>Cubra o olho mais forte e mantenha o olhar sobre a forma que pulsa entre as restantes.</p>
+        <p>{tr("AmbliopiaExercise.cubraOOlhoMais2")}</p>
         {precisaoAoVivo !== null && (
           <span className="font-semibold text-foreground">
-            Precisão: {precisaoAoVivo.toFixed(0)}%
+            <Trans i18nKey="AmbliopiaExercise.precisao" values={{ valor: precisaoAoVivo.toFixed(0) }} />
           </span>
         )}
       </div>
@@ -685,6 +706,7 @@ const AmbliopiaGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: AmbliopiaGam
 };
 
 const AmbliopiaExercise = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [duracaoSegundos, setDuracaoSegundos] = useState(DURACOES_PREDEFINIDAS[1].segundos);
 
@@ -692,7 +714,7 @@ const AmbliopiaExercise = () => {
     if (window.history.length > 1) {
       navigate(-1);
     } else {
-      navigate("/exercicios");
+      navigate(localizar("/exercicios"));
     }
   };
 
@@ -703,12 +725,12 @@ const AmbliopiaExercise = () => {
         <div className="container max-w-4xl mx-auto">
           <Button variant="ghost" className="mb-6" onClick={handleVoltar}>
             <ArrowLeft className="w-4 h-4" />
-            Voltar ao Menu
+            {t("AmbliopiaExercise.voltarAoMenu")}
           </Button>
 
           <BaseExercise
-            title="Anti-Supressão / Ambliopia"
-            description="Cubra o olho mais forte e encontre o alvo entre distractores cada vez mais parecidos."
+            title={t("AmbliopiaExercise.antiSupressaoAmbliopia")}
+            description={t("AmbliopiaExercise.cubraOOlhoMais3")}
             isPremium={true}
             durationSeconds={duracaoSegundos}
           >

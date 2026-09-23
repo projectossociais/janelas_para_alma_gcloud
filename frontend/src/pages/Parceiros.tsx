@@ -7,26 +7,41 @@ import PartnerDialog from "@/components/PartnerDialog";
 import ClinicalPartners from "@/components/ClinicalPartners";
 import { useAuth } from "@/contexts/AuthContext";
 import heroImg from "@/assets/parceiros-hero.jpg";
+import { Trans, useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
 const benefits = [
   {
     icon: Eye,
-    title: "Acesso Facilitado",
-    text: "Acesso directo a rastreios e consultas de especialidade para tratar casos complexos identificados nas nossas campanhas.",
+    get title() {
+      return i18n.t("Parceiros.acessoFacilitado");
+    },
+    get text() {
+      return i18n.t("Parceiros.acessoDirectoARastreios");
+    },
   },
   {
     icon: Tag,
-    title: "Preços Adaptados",
-    text: "Estruturação de acordos e serviços com preços ajustados à realidade dos nossos utilizadores, promovendo a inclusão.",
+    get title() {
+      return i18n.t("Parceiros.precosAdaptados");
+    },
+    get text() {
+      return i18n.t("Parceiros.estruturacaoDeAcordosE");
+    },
   },
   {
     icon: Handshake,
-    title: "Maior Inclusão",
-    text: "Eliminação de barreiras geográficas e socioeconómicas, tornando os cuidados visuais verdadeiramente acessíveis a todos.",
+    get title() {
+      return i18n.t("Parceiros.maiorInclusao");
+    },
+    get text() {
+      return i18n.t("Parceiros.eliminacaoDeBarreirasGeograficas");
+    },
   },
 ];
 
 const Parceiros = () => {
+  const { t } = useTranslation();
   const { user, loading } = useAuth();
   const canViewPartnerSections = !loading && (user?.role === "admin" || user?.role === "profissional");
   const [searchParams] = useSearchParams();
@@ -41,7 +56,7 @@ const Parceiros = () => {
         <div className="absolute inset-0">
           <img
             src={heroImg}
-            alt="Especialistas em saúde visual a realizar exame oftalmológico"
+            alt={t("Parceiros.especialistasEmSaudeVisual")}
             className="w-full h-full object-cover"
             width={1920}
             height={1080}
@@ -51,10 +66,10 @@ const Parceiros = () => {
 
         <div className="relative z-10 container text-center px-6 animate-fade-in">
           <h1 className="text-4xl md:text-6xl font-bold leading-tight tracking-tight text-primary-foreground mb-6">
-            Rede de Parceiros<br className="hidden md:block" /> de Saúde
+            <Trans i18nKey="Parceiros.redeDeParceirosDe" components={{ br: <br className="hidden md:block" /> }} />
           </h1>
           <p className="text-lg md:text-2xl text-primary-foreground/85 max-w-3xl mx-auto leading-relaxed">
-            Conectando especialistas a quem mais precisa. Junte-se a nós e ajude a levar cuidados visuais a mais pessoas em Angola.
+            {t("Parceiros.conectandoEspecialistasAQuem")}
           </p>
         </div>
       </section>
@@ -69,10 +84,10 @@ const Parceiros = () => {
           <div className="container px-6">
             <div className="text-center max-w-2xl mx-auto mb-14 animate-fade-in">
               <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
-                Benefícios para Parceiros
+                {t("Parceiros.beneficiosParaParceiros")}
               </h2>
               <p className="text-primary-foreground/80 text-lg">
-                Vantagens estratégicas ao integrar a Rede Janelas Para a Alma.
+                {t("Parceiros.vantagensEstrategicasAoIntegrar")}
               </p>
             </div>
 
@@ -106,10 +121,10 @@ const Parceiros = () => {
               <div className="absolute inset-0 bg-gradient-to-br from-teal/20 via-transparent to-transparent" />
               <div className="relative">
                 <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                  Faça parte desta visão.
+                  {t("Parceiros.facaParteDestaVisao")}
                 </h2>
                 <p className="text-primary-foreground/85 text-lg mb-8 max-w-2xl mx-auto leading-relaxed">
-                  Representa uma clínica (como a Centroptico), uma óptica ou é profissional de saúde visual? Seja um dos nossos parceiros oftalmológicos pioneiros na transformação social.
+                  {t("Parceiros.representaUmaClinicaComo")}
                 </p>
                 <PartnerDialog />
               </div>

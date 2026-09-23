@@ -1,4 +1,5 @@
 import { generatePath, matchPath } from "react-router-dom";
+import i18n from "./index";
 import { IDIOMA_EN, IDIOMA_PT, eRotaInglesa, type Idioma } from "./idiomas";
 
 /**
@@ -85,9 +86,14 @@ function caminhoDe(chave: ChaveRota, idioma: Idioma): string {
 /**
  * O mesmo sítio noutro idioma, preservando parâmetros (`:slug`), query string
  * e âncora. Uma página fora do mapa (ex.: `/admin`) leva à página inicial do
- * idioma de destino -- nunca a um URL inventado que daria 404.
+ * idioma de destino -- nunca a um URL inventado que daria 404 -- a não ser que
+ * se peça `foraDoMapa: "manter"` (links internos para páginas só em PT).
  */
-export function caminhoNoIdioma(url: string, destino: Idioma): string {
+export function caminhoNoIdioma(
+  url: string,
+  destino: Idioma,
+  { foraDoMapa = "inicio" }: { foraDoMapa?: "inicio" | "manter" } = {},
+): string {
   const parsed = new URL(url, "http://x");
   const { pathname, search, hash } = parsed;
   const origemEn = eRotaInglesa(pathname);
@@ -102,8 +108,20 @@ export function caminhoNoIdioma(url: string, destino: Idioma): string {
       return generatePath(caminhoDe(chave, destino), match.params) + search + hash;
     }
   }
-  return caminhoDe("inicio", destino);
+  return foraDoMapa === "manter" ? url : caminhoDe("inicio", destino);
 }
 
 export const caminhoEmIngles = (url: string) => caminhoNoIdioma(url, IDIOMA_EN);
 export const caminhoEmPortugues = (url: string) => caminhoNoIdioma(url, IDIOMA_PT);
+
+/**
+ * Link interno escrito em português, no idioma da página actual. É o que os
+ * componentes usam em `to`, `href` e `navigate(...)`: em português devolve o
+ * caminho tal como está; em inglês devolve o equivalente `/en/...`. Páginas
+ * fora do mapa (admin, roadmap) ficam como estão.
+ */
+export function localizar(caminhoPt: string): string {
+  if (i18n.language !== IDIOMA_EN) return caminhoPt;
+  if (eRotaInglesa(new URL(caminhoPt, "http://x").pathname)) return caminhoPt;
+  return caminhoNoIdioma(caminhoPt, IDIOMA_EN, { foraDoMapa: "manter" });
+}

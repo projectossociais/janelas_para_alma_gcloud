@@ -1,12 +1,16 @@
 import { RefreshCw } from "lucide-react";
 import PremiumExercicioEsqueleto from "@/components/exercises/PremiumExercicioEsqueleto";
+import { useTranslation } from "react-i18next";
 
-const FlexibilidadeAcomodativaExercise = () => (
+const FlexibilidadeAcomodativaExercise = () => {
+  const { t } = useTranslation();
+  return (
   <PremiumExercicioEsqueleto
-    title="Flexibilidade Acomodativa"
-    description="Muda de foco entre perto e longe a um ritmo crescente para treinar a rapidez de acomodação do olho."
+    title={t("FlexibilidadeAcomodativaExercise.flexibilidadeAcomodativa")}
+    description={t("FlexibilidadeAcomodativaExercise.mudaDeFocoEntre")}
     icon={RefreshCw}
   />
 );
+};
 
 export default FlexibilidadeAcomodativaExercise;

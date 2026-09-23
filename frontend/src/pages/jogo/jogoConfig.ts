@@ -1,4 +1,5 @@
 import type { RespostaOpcaoJogo } from "@/lib/apiClient";
+import i18n from "@/i18n";
 
 export const TOTAL_PATAMARES = 15;
 export const OPCOES: RespostaOpcaoJogo[] = ["A", "B", "C", "D"];
@@ -30,7 +31,7 @@ export const PATAMARES: Patamar[] = [
 // 10.000 (dá "1000" mas "12 500") -- em vez de depender disso, formatamos
 // os milhares à mão com "." (mesma escrita usada em Angola/Portugal).
 export const formatarKz = (valor: number) =>
-  `Kz ${valor.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
+  i18n.t("jogoConfig.kz", { valor: valor.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") });
 
 export const valorDoPatamar = (numero: number) =>
   PATAMARES.find((p) => p.numero === numero)?.valorKz ?? 0;

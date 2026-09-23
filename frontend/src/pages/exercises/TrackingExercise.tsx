@@ -10,6 +10,9 @@ import { useFeedback } from "@/contexts/FeedbackContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { sessoesExercicioApi } from "@/lib/apiClient";
 import FeedbackWidget from "@/components/FeedbackWidget";
+import { Trans, useTranslation } from "react-i18next";
+import i18n from "@/i18n";
+import { localizar } from "@/i18n/rotas";
 
 const EXERCICIO_ID = "figure8";
 // Estrita de propósito: as bolas têm de se tocar a sério. Um hit-box
@@ -43,18 +46,32 @@ const VELOCIDADE_ANGULAR_BASE = (Math.PI * 2) / (DURACAO_CICLO_MS / 1000);
 
 const DURACOES_PREDEFINIDAS = [
   { label: "30s", segundos: 30 },
-  { label: "1 min", segundos: 60 },
-  { label: "1.5 min", segundos: 90 },
-  { label: "2 min", segundos: 120 },
-  { label: "3 min", segundos: 180 },
+  { get label() {
+    return i18n.t("TrackingExercise.n1Min");
+  }, segundos: 60 },
+  { get label() {
+    return i18n.t("TrackingExercise.n15Min");
+  }, segundos: 90 },
+  { get label() {
+    return i18n.t("TrackingExercise.n2Min");
+  }, segundos: 120 },
+  { get label() {
+    return i18n.t("TrackingExercise.n3Min");
+  }, segundos: 180 },
 ];
 const DURACAO_CUSTOM_MIN_SEGUNDOS = 10;
 const DURACAO_CUSTOM_MAX_SEGUNDOS = 900;
 
 const VELOCIDADES = [
-  { label: "Lento", multiplicador: 0.6 },
-  { label: "Normal", multiplicador: 1 },
-  { label: "Rápido", multiplicador: 1.6 },
+  { get label() {
+    return i18n.t("TrackingExercise.lento");
+  }, multiplicador: 0.6 },
+  { get label() {
+    return i18n.t("TrackingExercise.normal");
+  }, multiplicador: 1 },
+  { get label() {
+    return i18n.t("TrackingExercise.rapido");
+  }, multiplicador: 1.6 },
 ];
 
 /** Posição no oito (curva de Lissajova/lemniscata a=1, b=2), como offset em
@@ -91,7 +108,7 @@ const calcularNivel = (score: number): NivelInfo => {
   if (score >= PONTOS_NIVEL_MESTRE) {
     return {
       nivel: Infinity,
-      nome: "Nível Mestre",
+      nome: i18n.t("TrackingExercise.nivelMestre"),
       ehMestre: true,
       pontosNoNivel: 0,
       pontosParaSubir: 0,
@@ -102,7 +119,7 @@ const calcularNivel = (score: number): NivelInfo => {
   const pontosNoNivel = score - (numeroNivel - 1) * PONTOS_POR_NIVEL;
   return {
     nivel: numeroNivel,
-    nome: `Nível ${numeroNivel}`,
+    nome: i18n.t("TrackingExercise.nivel", { numeroNivel }),
     ehMestre: false,
     pontosNoNivel,
     pontosParaSubir: PONTOS_POR_NIVEL,
@@ -139,6 +156,7 @@ const TrackingGame = ({ duracaoSegundos, onEscolherDuracao }: TrackingGameProps)
 };
 
 const TrackingGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: TrackingGameProps) => {
+  const { t } = useTranslation();
   const { isRunning, score, remainingSeconds, addScore } = useExerciseSession();
   const { videoRef, gaze, isTracking, isCalibrating, calibrate, error } = useEyeTracking();
   const { profile } = useProfile();
@@ -223,7 +241,7 @@ const TrackingGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: TrackingGameP
 
       const texto =
         pontosGanhos > COMBO_PONTOS_BASE
-          ? `+${pontosGanhos} Combo x${comboAtualRef.current}!`
+          ? t("TrackingExercise.comboX", { pontosGanhos, current: comboAtualRef.current })
           : `+${pontosGanhos}`;
       const id = proximoFeedbackIdRef.current++;
       setFeedbacksFlutuantes((prev) => [...prev, { id, texto, x: alvoX, y: alvoY }]);
@@ -272,7 +290,7 @@ const TrackingGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: TrackingGameP
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     };
-  }, [isRunning, containerSize.width, containerSize.height, velocidade, addScore]);
+  }, [isRunning, containerSize.width, containerSize.height, velocidade, addScore, t]);
 
   // Métrica de precisão a um ritmo fixo (tempo em cima do alvo / tempo
   // total activo) -- independente da pontuação por Hits discretos acima:
@@ -333,7 +351,7 @@ const TrackingGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: TrackingGameP
     void registarSessao();
     openFeedback({
       context: "exercicio-tracking",
-      question: "Como avalia o exercício de Acompanhamento em Oito?",
+      question: t("TrackingExercise.comoAvaliaOExercicio"),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [remainingSeconds]);
@@ -362,7 +380,7 @@ const TrackingGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: TrackingGameP
             <span className="text-sm font-semibold text-foreground">{nivelInfo.nome}</span>
             {!nivelInfo.ehMestre && (
               <span className="text-xs text-muted-foreground">
-                {nivelInfo.pontosNoNivel}/{nivelInfo.pontosParaSubir} pts
+                <Trans i18nKey="TrackingExercise.pts" values={{ pontosNoNivel: nivelInfo.pontosNoNivel, pontosParaSubir: nivelInfo.pontosParaSubir }} />
               </span>
             )}
           </div>
@@ -420,7 +438,7 @@ const TrackingGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: TrackingGameP
         {!isTracking && isRunning && (
           <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full border border-border bg-card/80 px-3 py-1 text-xs text-muted-foreground backdrop-blur-sm">
             <EyeOff className="h-3.5 w-3.5" />
-            Rosto não detectado
+            {t("TrackingExercise.rostoNaoDetectado")}
           </div>
         )}
 
@@ -434,17 +452,17 @@ const TrackingGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: TrackingGameP
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 overflow-y-auto p-6 text-center">
             <p className="text-sm text-muted-foreground">
               {remainingSeconds === 0
-                ? "Sessão concluída."
+                ? t("TrackingExercise.sessaoConcluida")
                 : aindaNaoIniciou
-                  ? "Escolha a duração, calibre o olhar a olhar para o centro e prima Iniciar."
-                  : "Em pausa. Prima Iniciar para continuar."}
+                  ? t("TrackingExercise.escolhaADuracaoCalibre")
+                  : t("TrackingExercise.emPausaPrimaIniciar")}
             </p>
 
             {mostrarSeletorDuracao && (
               <div className="flex flex-wrap items-start justify-center gap-6">
                 <div className="flex flex-col items-center gap-2">
                   <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Duração da sessão
+                    {t("TrackingExercise.duracaoDaSessao")}
                   </span>
                   <div className="flex flex-wrap items-center justify-center gap-2">
                     {DURACOES_PREDEFINIDAS.map((d) => (
@@ -470,7 +488,7 @@ const TrackingGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: TrackingGameP
                         setPersonalizarAberto((v) => !v);
                       }}
                     >
-                      Personalizar
+                      {t("TrackingExercise.personalizar")}
                     </Button>
                   </div>
                   {personalizarAberto && (
@@ -487,11 +505,11 @@ const TrackingGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: TrackingGameP
                           if (e.key === "Enter") aplicarDuracaoCustom();
                         }}
                         className="w-20 rounded-md border border-border bg-background px-2 py-1 text-center text-sm text-foreground"
-                        aria-label="Duração personalizada, em segundos"
+                        aria-label={t("TrackingExercise.duracaoPersonalizadaEmSegundos")}
                       />
-                      <span className="text-xs text-muted-foreground">segundos</span>
+                      <span className="text-xs text-muted-foreground">{t("TrackingExercise.segundos")}</span>
                       <Button type="button" size="sm" onClick={aplicarDuracaoCustom}>
-                        Aplicar
+                        {t("TrackingExercise.aplicar")}
                       </Button>
                     </div>
                   )}
@@ -499,7 +517,7 @@ const TrackingGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: TrackingGameP
 
                 <div className="flex flex-col items-center gap-2">
                   <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Velocidade do alvo
+                    {t("TrackingExercise.velocidadeDoAlvo")}
                   </span>
                   <div className="flex items-center justify-center gap-2">
                     {VELOCIDADES.map((v, i) => (
@@ -532,7 +550,7 @@ const TrackingGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: TrackingGameP
                   disabled={isCalibrating}
                 >
                   <Crosshair className="h-4 w-4" />
-                  {isCalibrating ? "A calibrar..." : "Calibrar Olhar"}
+                  {isCalibrating ? t("TrackingExercise.aCalibrar") : t("TrackingExercise.calibrarOlhar")}
                 </Button>
               )
             )}
@@ -541,10 +559,10 @@ const TrackingGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: TrackingGameP
       </div>
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-        <p>Siga o ponto com o olhar, sem mover a cabeça, ao longo da trajectória em forma de oito.</p>
+        <p>{t("TrackingExercise.sigaOPontoCom")}</p>
         {precisaoAoVivo !== null && (
           <span className="font-semibold text-foreground">
-            Precisão: {precisaoAoVivo.toFixed(0)}%
+            <Trans i18nKey="TrackingExercise.precisao" values={{ valor: precisaoAoVivo.toFixed(0) }} />
           </span>
         )}
       </div>
@@ -553,6 +571,7 @@ const TrackingGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: TrackingGameP
 };
 
 const TrackingExercise = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [duracaoSegundos, setDuracaoSegundos] = useState(DURACOES_PREDEFINIDAS[1].segundos);
 
@@ -560,7 +579,7 @@ const TrackingExercise = () => {
     if (window.history.length > 1) {
       navigate(-1);
     } else {
-      navigate("/exercicios");
+      navigate(localizar("/exercicios"));
     }
   };
 
@@ -571,12 +590,12 @@ const TrackingExercise = () => {
         <div className="container max-w-4xl mx-auto">
           <Button variant="ghost" className="mb-6" onClick={handleVoltar}>
             <ArrowLeft className="w-4 h-4" />
-            Voltar ao Menu
+            {t("TrackingExercise.voltarAoMenu")}
           </Button>
 
           <BaseExercise
-            title="Acompanhamento em Oito"
-            description="Siga o alvo com o olhar ao longo de uma trajectória em forma de oito."
+            title={t("TrackingExercise.acompanhamentoEmOito")}
+            description={t("TrackingExercise.sigaOAlvoCom")}
             isPremium={false}
             durationSeconds={duracaoSegundos}
           >

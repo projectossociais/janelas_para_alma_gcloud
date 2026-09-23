@@ -24,6 +24,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useSiteBannerAltura } from "@/contexts/SiteBannerContext";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
+import { localizar } from "@/i18n/rotas";
 
 
 interface SearchItem {
@@ -38,103 +41,207 @@ interface SearchItem {
 const searchIndex: SearchItem[] = [
   {
     id: "sobre",
-    title: "Sobre o Janelas para a Alma",
-    description: "Janelas Para a Alma é uma start up angolana dedicada à saúde visual, inclusão e sustentabilidade.",
-    keywords: "sobre, start up, janelas para a alma, missão, visão, saúde visual, inclusão, sustentabilidade, angola",
-    route: "/impacto",
+    get title() {
+      return i18n.t("Navbar.sobreOJanelasPara");
+    },
+    get description() {
+      return i18n.t("Navbar.janelasParaAAlma");
+    },
+    get keywords() {
+      return i18n.t("Navbar.sobreStartUpJanelas");
+    },
+    get route() {
+      return localizar("/impacto");
+    },
     elementId: "sobre",
   },
   {
     id: "estrabismo",
-    title: "Compreender o Estrabismo",
-    description: "O que é o estrabismo, causas, tipos, consequências e tratamento.",
-    keywords: "estrabismo, definição, causas, tipos, esotropia, exotropia, ambliopia, tratamento, cirurgia, óculos, olho, visão, desalinhamento",
-    route: "/sobre",
+    get title() {
+      return i18n.t("Navbar.compreenderOEstrabismo");
+    },
+    get description() {
+      return i18n.t("Navbar.oQueEO");
+    },
+    get keywords() {
+      return i18n.t("Navbar.estrabismoDefinicaoCausasTipos");
+    },
+    get route() {
+      return localizar("/sobre");
+    },
     elementId: "estrabismo",
   },
   {
     id: "pilares-economia",
-    title: "Pilar: Economia Circular",
-    description: "Transformar resíduos em recursos através de práticas sustentáveis e economia circular.",
-    keywords: "economia circular, reciclagem, sustentabilidade, resíduos, recursos, pilar",
-    route: "/",
+    get title() {
+      return i18n.t("Navbar.pilarEconomiaCircular");
+    },
+    get description() {
+      return i18n.t("Navbar.transformarResiduosEmRecursos");
+    },
+    get keywords() {
+      return i18n.t("Navbar.economiaCircularReciclagemSustentabilida");
+    },
+    get route() {
+      return localizar("/");
+    },
     elementId: "pilares",
   },
   {
     id: "pilares-educacao",
-    title: "Pilar: Educação",
-    description: "Promover a educação inclusiva e o acesso ao conhecimento para todos.",
-    keywords: "educação, inclusão, conhecimento, escola, formação, pilar",
-    route: "/",
+    get title() {
+      return i18n.t("Navbar.pilarEducacao");
+    },
+    get description() {
+      return i18n.t("Navbar.promoverAEducacaoInclusiva");
+    },
+    get keywords() {
+      return i18n.t("Navbar.educacaoInclusaoConhecimentoEscola");
+    },
+    get route() {
+      return localizar("/");
+    },
     elementId: "pilares",
   },
   {
     id: "pilares-saude",
-    title: "Pilar: Saúde Visual",
-    description: "Garantir acesso a cuidados de saúde visual e sensibilização comunitária.",
-    keywords: "saúde, visual, oftalmologia, óculos, estrabismo, cuidados, pilar",
-    route: "/",
+    get title() {
+      return i18n.t("Navbar.pilarSaudeVisual");
+    },
+    get description() {
+      return i18n.t("Navbar.garantirAcessoACuidados");
+    },
+    get keywords() {
+      return i18n.t("Navbar.saudeVisualOftalmologiaOculos");
+    },
+    get route() {
+      return localizar("/");
+    },
     elementId: "pilares",
   },
   {
     id: "impacto",
-    title: "Impacto",
-    description: "Dados e estatísticas sobre o impacto social, educacional, ecológico e climático.",
-    keywords: "impacto, estatísticas, social, educacional, ecológico, climático, oms, dados",
-    route: "/",
+    get title() {
+      return i18n.t("Navbar.impacto");
+    },
+    get description() {
+      return i18n.t("Navbar.dadosEEstatisticasSobre");
+    },
+    get keywords() {
+      return i18n.t("Navbar.impactoEstatisticasSocialEducacional");
+    },
+    get route() {
+      return localizar("/");
+    },
     elementId: "impacto",
   },
   {
     id: "equipa",
-    title: "A Nossa Equipa",
-    description: "Conheça os membros da equipa Janelas Para a Alma.",
-    keywords: "equipa, membros, fundadores, voluntários, pessoas, team",
-    route: "/equipa",
+    get title() {
+      return i18n.t("Navbar.aNossaEquipa");
+    },
+    get description() {
+      return i18n.t("Navbar.conhecaOsMembrosDa");
+    },
+    get keywords() {
+      return i18n.t("Navbar.equipaMembrosFundadoresVoluntarios");
+    },
+    get route() {
+      return localizar("/equipa");
+    },
   },
   {
     id: "voluntariado",
-    title: "Voluntariado",
-    description: "Junte-se como voluntário e faça a diferença na comunidade.",
-    keywords: "voluntariado, voluntário, inscrição, juntar, ajudar, kamba",
-    route: "/kamba",
+    get title() {
+      return i18n.t("Navbar.voluntariado");
+    },
+    get description() {
+      return i18n.t("Navbar.junteSeComoVoluntario");
+    },
+    get keywords() {
+      return i18n.t("Navbar.voluntariadoVoluntarioInscricaoJuntar");
+    },
+    get route() {
+      return localizar("/kamba");
+    },
     elementId: "voluntariado",
   },
   {
     id: "programa-kamba",
-    title: "Programa Meu Kamba Estrábico",
-    description: "Rede de apoio comunitário para inclusão e solidariedade em torno do estrabismo.",
-    keywords: "kamba, estrábico, programa, embaixadores, inclusão, estrabismo, objectivos, etapas, voluntários",
-    route: "/kamba",
+    get title() {
+      return i18n.t("Navbar.programaMeuKambaEstrabico");
+    },
+    get description() {
+      return i18n.t("Navbar.redeDeApoioComunitario");
+    },
+    get keywords() {
+      return i18n.t("Navbar.kambaEstrabicoProgramaEmbaixadores");
+    },
+    get route() {
+      return localizar("/kamba");
+    },
     elementId: "voluntariado",
   },
   {
     id: "contacto",
-    title: "Contacto",
-    description: "Entre em contacto connosco por email ou formulário.",
-    keywords: "contacto, email, formulário, mensagem, falar, comunicar",
-    route: "/",
+    get title() {
+      return i18n.t("Navbar.contacto");
+    },
+    get description() {
+      return i18n.t("Navbar.entreEmContactoConnosco");
+    },
+    get keywords() {
+      return i18n.t("Navbar.contactoEmailFormularioMensagem");
+    },
+    get route() {
+      return localizar("/");
+    },
     elementId: "contacto",
   },
   {
     id: "parceiros",
-    title: "Rede de Parceiros de Saúde",
-    description: "Clínicas, ópticas e especialistas: junte-se à plataforma que vai democratizar o acesso à saúde visual em Angola.",
-    keywords: "parceiros, clínicas, ópticas, especialistas, saúde visual, oftalmologia, centroptico, rede, plataforma",
-    route: "/parceiros",
+    get title() {
+      return i18n.t("Navbar.redeDeParceirosDe");
+    },
+    get description() {
+      return i18n.t("Navbar.clinicasOpticasEEspecialistas");
+    },
+    get keywords() {
+      return i18n.t("Navbar.parceirosClinicasOpticasEspecialistas");
+    },
+    get route() {
+      return localizar("/parceiros");
+    },
   },
   {
     id: "tecnologia",
-    title: "Interface Tecnológica",
-    description: "Plataforma intuitiva que centraliza agendamentos, marketplace e comunicação para democratizar o acesso à saúde visual.",
-    keywords: "tecnologia, interface, app, plataforma, agendamento, marketplace, comunicação, digital, mobile, acessibilidade",
-    route: "/tecnologia",
+    get title() {
+      return i18n.t("Navbar.interfaceTecnologica");
+    },
+    get description() {
+      return i18n.t("Navbar.plataformaIntuitivaQueCentraliza");
+    },
+    get keywords() {
+      return i18n.t("Navbar.tecnologiaInterfaceAppPlataforma");
+    },
+    get route() {
+      return localizar("/tecnologia");
+    },
   },
   {
     id: "scanner",
-    title: "Scanner de Estrabismo (IA)",
-    description: "Diagnóstico assistido por inteligência artificial: carregue uma foto ou use a câmara e receba uma análise orientadora em segundos.",
-    keywords: "scanner, ia, ai, inteligência artificial, diagnóstico, esotropia, exotropia, estrabismo, análise, foto, câmara",
-    route: "/scanner",
+    get title() {
+      return i18n.t("Navbar.scannerDeEstrabismoIa");
+    },
+    get description() {
+      return i18n.t("Navbar.diagnosticoAssistidoPorInteligencia");
+    },
+    get keywords() {
+      return i18n.t("Navbar.scannerIaAiInteligencia");
+    },
+    get route() {
+      return localizar("/scanner");
+    },
   },
 ];
 
@@ -145,39 +252,147 @@ interface NavItem {
 }
 
 const baseLinks: NavItem[] = [
-  { label: "Sobre Nós", route: "/impacto" },
-  { label: "Sobre o Estrabismo", route: "/sobre" },
-  { label: "A Nossa Equipa", route: "/equipa" },
-  { label: "Triagem Ocular", route: "/scanner" },
-  { label: "Meu Kamba Estrábico", route: "/kamba" },
-  { label: "Exercícios Visuais", route: "/exercicios" },
-  { label: "Portal Clínico", route: "/parceiros" },
-  { label: "Contactos", route: "/junte-se" },
-  { label: "Inclusivamente", route: "/jogo-curiosidades" },
+  { get label() {
+    return i18n.t("Navbar.sobreNos");
+  }, get route() {
+    return localizar("/impacto");
+  } },
+  { get label() {
+    return i18n.t("Navbar.sobreOEstrabismo");
+  }, get route() {
+    return localizar("/sobre");
+  } },
+  { get label() {
+    return i18n.t("Navbar.aNossaEquipa");
+  }, get route() {
+    return localizar("/equipa");
+  } },
+  { get label() {
+    return i18n.t("Navbar.triagemOcular");
+  }, get route() {
+    return localizar("/scanner");
+  } },
+  { get label() {
+    return i18n.t("Navbar.meuKambaEstrabico");
+  }, get route() {
+    return localizar("/kamba");
+  } },
+  { get label() {
+    return i18n.t("Navbar.exerciciosVisuais");
+  }, get route() {
+    return localizar("/exercicios");
+  } },
+  { get label() {
+    return i18n.t("Navbar.portalClinico");
+  }, get route() {
+    return localizar("/parceiros");
+  } },
+  { get label() {
+    return i18n.t("Navbar.contactos");
+  }, get route() {
+    return localizar("/junte-se");
+  } },
+  { get label() {
+    return i18n.t("Navbar.inclusivamente");
+  }, get route() {
+    return localizar("/jogo-curiosidades");
+  } },
 ];
 
 const estrabicoLinks: NavItem[] = [
-  { label: "Sobre Nós", route: "/impacto" },
-  { label: "Sobre o Estrabismo", route: "/sobre" },
-  { label: "A Nossa Equipa", route: "/equipa" },
-  { label: "Triagem Ocular", route: "/scanner" },
-  { label: "Meu Kamba Estrábico", route: "/kamba" },
-  { label: "Exercícios Visuais", route: "/exercicios" },
-  { label: "Portal Clínico", route: "/parceiros" },
-  { label: "Contactos", route: "/junte-se" },
-  { label: "Inclusivamente", route: "/jogo-curiosidades" },
+  { get label() {
+    return i18n.t("Navbar.sobreNos");
+  }, get route() {
+    return localizar("/impacto");
+  } },
+  { get label() {
+    return i18n.t("Navbar.sobreOEstrabismo");
+  }, get route() {
+    return localizar("/sobre");
+  } },
+  { get label() {
+    return i18n.t("Navbar.aNossaEquipa");
+  }, get route() {
+    return localizar("/equipa");
+  } },
+  { get label() {
+    return i18n.t("Navbar.triagemOcular");
+  }, get route() {
+    return localizar("/scanner");
+  } },
+  { get label() {
+    return i18n.t("Navbar.meuKambaEstrabico");
+  }, get route() {
+    return localizar("/kamba");
+  } },
+  { get label() {
+    return i18n.t("Navbar.exerciciosVisuais");
+  }, get route() {
+    return localizar("/exercicios");
+  } },
+  { get label() {
+    return i18n.t("Navbar.portalClinico");
+  }, get route() {
+    return localizar("/parceiros");
+  } },
+  { get label() {
+    return i18n.t("Navbar.contactos");
+  }, get route() {
+    return localizar("/junte-se");
+  } },
+  { get label() {
+    return i18n.t("Navbar.inclusivamente");
+  }, get route() {
+    return localizar("/jogo-curiosidades");
+  } },
 ];
 
 const profissionalLinks: NavItem[] = [
-  { label: "Sobre Nós", route: "/impacto" },
-  { label: "Sobre o Estrabismo", route: "/sobre" },
-  { label: "Meu Kamba Estrábico", route: "/kamba" },
-  { label: "A Nossa Equipa", route: "/equipa" },
-  { label: "Triagem Ocular", route: "/scanner" },
-  { label: "Exercícios Visuais", route: "/exercicios" },
-  { label: "Contactos", route: "/junte-se" },
-  { label: "Portal Clínico", route: "/parceiros" },
-  { label: "Inclusivamente", route: "/jogo-curiosidades" },
+  { get label() {
+    return i18n.t("Navbar.sobreNos");
+  }, get route() {
+    return localizar("/impacto");
+  } },
+  { get label() {
+    return i18n.t("Navbar.sobreOEstrabismo");
+  }, get route() {
+    return localizar("/sobre");
+  } },
+  { get label() {
+    return i18n.t("Navbar.meuKambaEstrabico");
+  }, get route() {
+    return localizar("/kamba");
+  } },
+  { get label() {
+    return i18n.t("Navbar.aNossaEquipa");
+  }, get route() {
+    return localizar("/equipa");
+  } },
+  { get label() {
+    return i18n.t("Navbar.triagemOcular");
+  }, get route() {
+    return localizar("/scanner");
+  } },
+  { get label() {
+    return i18n.t("Navbar.exerciciosVisuais");
+  }, get route() {
+    return localizar("/exercicios");
+  } },
+  { get label() {
+    return i18n.t("Navbar.contactos");
+  }, get route() {
+    return localizar("/junte-se");
+  } },
+  { get label() {
+    return i18n.t("Navbar.portalClinico");
+  }, get route() {
+    return localizar("/parceiros");
+  } },
+  { get label() {
+    return i18n.t("Navbar.inclusivamente");
+  }, get route() {
+    return localizar("/jogo-curiosidades");
+  } },
 ];
 
 
@@ -185,6 +400,7 @@ const profissionalLinks: NavItem[] = [
 
 
 const Navbar = () => {
+  const { t } = useTranslation();
   const [scrolled, setScrolled] = useState(false);
   const [isScrollingDown, setIsScrollingDown] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -217,8 +433,8 @@ const Navbar = () => {
   const handleLogout = () => {
     logout();
     setProfileOpen(false);
-    toast.success("Sessão terminada.");
-    navigate("/");
+    toast.success(t("Navbar.sessaoTerminada"));
+    navigate(localizar("/"));
   };
 
 
@@ -309,7 +525,7 @@ const Navbar = () => {
                 <button
                   onClick={() => setProfileOpen(true)}
                   className="rounded-full ring-2 ring-transparent hover:ring-primary/40 transition-all shrink-0"
-                  aria-label="Abrir perfil"
+                  aria-label={t("Navbar.abrirPerfil")}
                 >
                   <Avatar className="h-8 w-8 sm:h-9 sm:w-9">
                     {displayAvatarUrl && <AvatarImage src={displayAvatarUrl} alt={displayName} />}
@@ -320,7 +536,7 @@ const Navbar = () => {
                 </button>
               )}
               <button onClick={() => navigateTo("/")} className="flex items-center gap-3 shrink-0">
-                <img src={logoIcon} alt="Logo" className="h-10 w-auto object-contain shrink-0" />
+                <img src={logoIcon} alt={t("Navbar.logo")} className="h-10 w-auto object-contain shrink-0" />
                 <span className={`hidden md:inline-block font-bold text-base md:text-lg whitespace-nowrap transition-colors ${useSolidNav ? "text-foreground" : "text-primary-foreground"}`}>
                   Janelas Para a Alma
                 </span>
@@ -331,9 +547,9 @@ const Navbar = () => {
             {/* Top nav quick links */}
             <div className="hidden lg:flex items-center justify-end gap-6 flex-1">
               {[
-                { label: "Sobre nós", route: "/impacto" },
-                { label: "Triagem Ocular", route: "/scanner" },
-                { label: "Exercícios Visuais", route: "/exercicios" },
+                { label: t("Navbar.sobreNos2"), route: localizar("/impacto") },
+                { label: t("Navbar.triagemOcular"), route: localizar("/scanner") },
+                { label: t("Navbar.exerciciosVisuais"), route: localizar("/exercicios") },
               ].map((link) => (
                 <button
                   key={link.label}
@@ -355,20 +571,20 @@ const Navbar = () => {
               <button
                 onClick={() => navigateTo("/jogo-curiosidades")}
                 className="p-2 rounded-lg bg-teal/15 text-teal hover:bg-teal/25 transition-colors shrink-0"
-                aria-label="Jogo: Inclusivamente"
-                title="Jogo: Inclusivamente"
+                aria-label={t("Navbar.jogoInclusivamente")}
+                title={t("Navbar.jogoInclusivamente")}
               >
                 <Gamepad2 className="w-5 h-5" />
               </button>
 
               {!isLoggedIn && (
                 <button
-                  onClick={() => navigate("/auth")}
+                  onClick={() => navigate(localizar("/auth"))}
                   className={`hidden sm:inline-flex items-center gap-1.5 text-sm font-medium transition-colors shrink-0 ${
                     useSolidNav ? "text-foreground/80 hover:text-primary" : "text-primary-foreground/85 hover:text-primary-foreground"
                   }`}
                 >
-                  <LogIn className="w-4 h-4" /> Entrar
+                  <LogIn className="w-4 h-4" />{" "}{t("Navbar.entrar")}
                 </button>
               )}
 
@@ -383,7 +599,7 @@ const Navbar = () => {
                 className={`p-2 rounded-lg transition-colors shrink-0 ${
                   useSolidNav ? "text-foreground hover:bg-muted" : "text-primary-foreground hover:bg-primary-foreground/10"
                 }`}
-                aria-label="Pesquisar"
+                aria-label={t("Navbar.pesquisar")}
               >
                 <Search className="w-5 h-5" />
               </button>
@@ -392,7 +608,7 @@ const Navbar = () => {
                 className={`p-2 rounded-lg transition-colors shrink-0 ${
                   useSolidNav ? "text-foreground hover:bg-muted" : "text-primary-foreground hover:bg-primary-foreground/10"
                 }`}
-                aria-label="Abrir menu"
+                aria-label={t("Navbar.abrirMenu")}
               >
 
                 <Menu className="w-6 h-6" />
@@ -407,7 +623,7 @@ const Navbar = () => {
       <Sheet open={profileOpen} onOpenChange={setProfileOpen}>
         <SheetContent side="left" className="w-80 bg-card border-r border-border p-0 flex flex-col">
           <SheetHeader className="p-6 pb-4 border-b border-border/50 text-left">
-            <SheetTitle className="sr-only">Perfil</SheetTitle>
+            <SheetTitle className="sr-only">{t("Navbar.perfil")}</SheetTitle>
             {user && (
               <div className="flex flex-col items-start gap-3">
                 <Avatar className="h-16 w-16">
@@ -426,34 +642,34 @@ const Navbar = () => {
           <nav className="flex flex-col px-4 py-4 gap-1 flex-1">
             {isAdmin && (
               <button
-                onClick={() => { setProfileOpen(false); navigate("/admin"); }}
+                onClick={() => { setProfileOpen(false); navigate(localizar("/admin")); }}
                 className="flex items-center gap-3 px-3 py-3 rounded-xl bg-primary/10 text-primary hover:bg-primary/15 transition-colors text-sm font-semibold mb-1"
               >
-                <LayoutDashboard className="w-4 h-4" /> Painel Admin
+                <LayoutDashboard className="w-4 h-4" />{" "}{t("Navbar.painelAdmin")}
               </button>
             )}
             <button
-              onClick={() => { setProfileOpen(false); navigate("/editar-perfil"); }}
+              onClick={() => { setProfileOpen(false); navigate(localizar("/editar-perfil")); }}
               className="flex items-center gap-3 px-3 py-3 rounded-xl text-foreground hover:bg-muted transition-colors text-sm font-medium"
             >
-              <User className="w-4 h-4 text-muted-foreground" /> Editar Perfil
+              <User className="w-4 h-4 text-muted-foreground" />{" "}{t("Navbar.editarPerfil")}
             </button>
             <button
-              onClick={() => { setProfileOpen(false); navigate("/configuracoes"); }}
+              onClick={() => { setProfileOpen(false); navigate(localizar("/configuracoes")); }}
               className="flex items-center gap-3 px-3 py-3 rounded-xl text-foreground hover:bg-muted transition-colors text-sm font-medium"
             >
-              <Settings className="w-4 h-4 text-muted-foreground" /> Configurações
+              <Settings className="w-4 h-4 text-muted-foreground" />{" "}{t("Navbar.configuracoes")}
             </button>
             <button
-              onClick={() => { setProfileOpen(false); navigate("/politica-de-privacidade"); }}
+              onClick={() => { setProfileOpen(false); navigate(localizar("/politica-de-privacidade")); }}
               className="flex items-center gap-3 px-3 py-3 rounded-xl text-foreground hover:bg-muted transition-colors text-sm font-medium"
             >
-              <Shield className="w-4 h-4 text-muted-foreground" /> Políticas e Privacidade
+              <Shield className="w-4 h-4 text-muted-foreground" />{" "}{t("Navbar.politicasEPrivacidade")}
             </button>
           </nav>
           <div className="p-4 border-t border-border/50">
             <Button variant="destructive" className="w-full" onClick={handleLogout}>
-              <LogOut className="w-4 h-4 mr-2" /> Sair
+              <LogOut className="w-4 h-4 mr-2" />{" "}{t("Navbar.sair")}
             </Button>
           </div>
         </SheetContent>
@@ -463,15 +679,15 @@ const Navbar = () => {
       <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
         <SheetContent side="right" className="w-80 bg-card border-l border-border p-0">
           <SheetHeader className="p-6 pb-4 border-b border-border/50">
-            <SheetTitle className="text-lg font-semibold text-foreground">Menu</SheetTitle>
+            <SheetTitle className="text-lg font-semibold text-foreground">{t("Navbar.menu")}</SheetTitle>
           </SheetHeader>
           <nav className="flex flex-col px-6 py-4 gap-1">
             {isAdmin && (
               <button
-                onClick={() => { setDrawerOpen(false); navigate("/admin"); }}
+                onClick={() => { setDrawerOpen(false); navigate(localizar("/admin")); }}
                 className="text-left flex items-center gap-3 px-4 py-3 mb-2 rounded-xl bg-primary/10 text-primary font-semibold text-base hover:bg-primary/15 transition-colors"
               >
-                <LayoutDashboard className="w-4 h-4" /> Painel Admin
+                <LayoutDashboard className="w-4 h-4" />{" "}{t("Navbar.painelAdmin")}
               </button>
             )}
             {allLinks.map((link) => (
@@ -486,8 +702,8 @@ const Navbar = () => {
             ))}
             {!isLoggedIn && (
               <div className="mt-4 pt-4 border-t border-border/50 flex flex-col gap-2 sm:hidden">
-                <Button onClick={() => { setDrawerOpen(false); navigate("/auth"); }}>
-                  <LogIn className="w-4 h-4 mr-2" /> Entrar / Registar
+                <Button onClick={() => { setDrawerOpen(false); navigate(localizar("/auth")); }}>
+                  <LogIn className="w-4 h-4 mr-2" />{" "}{t("Navbar.entrarRegistar")}
                 </Button>
               </div>
             )}
@@ -507,13 +723,13 @@ const Navbar = () => {
           <DialogHeader className="px-6 pt-6 pb-3">
             <DialogTitle className="flex items-center gap-3">
               <Search className="w-5 h-5 text-teal" />
-              Pesquisar
+              {t("Navbar.pesquisar")}
             </DialogTitle>
-            <DialogDescription>Encontre secções e conteúdos do site.</DialogDescription>
+            <DialogDescription>{t("Navbar.encontreSeccoesEConteudos")}</DialogDescription>
           </DialogHeader>
           <div className="px-6 pb-2">
             <Input
-              placeholder="O que procura?"
+              placeholder={t("Navbar.oQueProcura")}
               autoFocus
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -524,7 +740,7 @@ const Navbar = () => {
             <div className="px-4 pb-4">
               {searchQuery.trim() && searchResults.length === 0 && (
                 <p className="text-sm text-muted-foreground text-center py-6">
-                  Nenhum resultado encontrado.
+                  {t("Navbar.nenhumResultadoEncontrado")}
                 </p>
               )}
               {searchResults.map((item) => (

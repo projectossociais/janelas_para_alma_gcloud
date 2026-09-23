@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 export interface ScreeningResponse {
   estado: string;
   posicoes?: Array<{
@@ -48,7 +49,7 @@ export async function submeterRastreioMultiGaze(
 
   const headers: Record<string, string> = {};
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers['Authorization'] = i18n.t("screeningApi.bearer", { token });
   }
 
   const response = await fetch(`${API_BASE}/screening/multi-gaze`, {
@@ -59,7 +60,7 @@ export async function submeterRastreioMultiGaze(
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Erro na análise (${response.status}): ${errorText}`);
+    throw new Error(i18n.t("screeningApi.erroNaAnalise", { status: response.status, errorText }));
   }
 
   return response.json();

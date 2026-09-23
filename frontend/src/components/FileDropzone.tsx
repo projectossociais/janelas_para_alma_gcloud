@@ -1,6 +1,8 @@
 import { useRef, useState, type ChangeEvent, type DragEvent, type KeyboardEvent } from "react";
 import { UploadCloud, File as FileIcon, X } from "lucide-react";
 import { toast } from "sonner";
+import { Trans, useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
 interface FileDropzoneProps {
   file: File | null;
@@ -12,15 +14,16 @@ const TAMANHO_MAXIMO_BYTES = 5 * 1024 * 1024; // 5MB, igual ao indicado na UI
 
 const validarFicheiro = (file: File): string | null => {
   if (!TIPOS_ACEITES.includes(file.type)) {
-    return "Formato não suportado. Envie um PDF, PNG, JPG ou WEBP.";
+    return i18n.t("FileDropzone.formatoNaoSuportadoEnvie");
   }
   if (file.size > TAMANHO_MAXIMO_BYTES) {
-    return "O ficheiro excede o limite de 5MB.";
+    return i18n.t("FileDropzone.oFicheiroExcedeO");
   }
   return null;
 };
 
 const FileDropzone = ({ file, onFileChange }: FileDropzoneProps) => {
+  const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -74,7 +77,7 @@ const FileDropzone = ({ file, onFileChange }: FileDropzoneProps) => {
               {file.name}
             </p>
             <p className="text-[11px] text-muted-foreground">
-              {(file.size / 1024).toFixed(0)} KB
+              <Trans i18nKey="FileDropzone.kb" values={{ valor: (file.size / 1024).toFixed(0) }} />
             </p>
           </div>
         </div>
@@ -82,8 +85,8 @@ const FileDropzone = ({ file, onFileChange }: FileDropzoneProps) => {
           type="button"
           onClick={() => onFileChange(null)}
           className="shrink-0 p-1.5 rounded-md text-muted-foreground hover:bg-black/10 hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-teal focus:ring-offset-2"
-          aria-label={`Remover ficheiro ${file.name}`}
-          title="Remover ficheiro"
+          aria-label={t("FileDropzone.removerFicheiro", { name: file.name })}
+          title={t("FileDropzone.removerFicheiro2")}
         >
           <X className="h-4 w-4" />
         </button>
@@ -95,7 +98,7 @@ const FileDropzone = ({ file, onFileChange }: FileDropzoneProps) => {
     <div
       role="button"
       tabIndex={0}
-      aria-label="Anexar comprovativo: clique ou arraste um ficheiro PDF, PNG, JPG ou WEBP, até 5MB"
+      aria-label={t("FileDropzone.anexarComprovativoCliqueOu")}
       onClick={() => inputRef.current?.click()}
       onKeyDown={onKeyDown}
       onDragOver={onDragOver}
@@ -120,10 +123,10 @@ const FileDropzone = ({ file, onFileChange }: FileDropzoneProps) => {
       </div>
       <div className="text-center">
         <p className="text-sm font-medium text-foreground">
-          Clique ou arraste para anexar
+          {t("FileDropzone.cliqueOuArrastePara")}
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
-          PDF, PNG, JPG ou WEBP (Máx. 5MB)
+          {t("FileDropzone.pdfPngJpgOu")}
         </p>
       </div>
     </div>

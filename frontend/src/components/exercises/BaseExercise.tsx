@@ -10,6 +10,8 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useProfile } from "@/contexts/ProfileContext";
 import { Clock, Lock, LogOut, Pause, Play, Sparkles, Trophy } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { localizar } from "@/i18n/rotas";
 
 const DURACAO_PADRAO_SEGUNDOS = 5 * 60; // 5 minutos
 
@@ -77,6 +79,7 @@ const BaseExercise = ({
   durationSeconds = DURACAO_PADRAO_SEGUNDOS,
   children,
 }: BaseExerciseProps) => {
+  const { t } = useTranslation();
   const { profile } = useProfile();
 
   const locked = isPremium && !(profile && (profile.premium_ativo || profile.papel === "admin"));
@@ -138,7 +141,7 @@ const BaseExercise = ({
 
     const iniciarWebcam = async () => {
       if (!navigator.mediaDevices?.getUserMedia) {
-        setErroWebcam("Câmara não suportada neste navegador.");
+        setErroWebcam(t("BaseExercise.camaraNaoSuportadaNeste"));
         return;
       }
       try {
@@ -158,7 +161,7 @@ const BaseExercise = ({
           videoRef.current.srcObject = stream;
         }
       } catch {
-        if (!cancelado) setErroWebcam("Não foi possível aceder à câmara.");
+        if (!cancelado) setErroWebcam(t("BaseExercise.naoFoiPossivelAceder"));
       }
     };
 
@@ -169,7 +172,7 @@ const BaseExercise = ({
       streamRef.current?.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     };
-  }, [locked]);
+  }, [locked, t]);
 
   const sessionValue: ExerciseSessionContextValue = {
     score,
@@ -189,9 +192,9 @@ const BaseExercise = ({
           <p className="truncate text-sm text-muted-foreground">{description}</p>
         </div>
         <Button variant="ghost" size="sm" asChild className="shrink-0 gap-2">
-          <Link to="/exercicios" aria-label="Sair do exercício">
+          <Link to={localizar("/exercicios")} aria-label={t("BaseExercise.sairDoExercicio")}>
             <LogOut className="h-4 w-4" />
-            Sair
+            {t("BaseExercise.sair")}
           </Link>
         </Button>
       </div>
@@ -201,14 +204,14 @@ const BaseExercise = ({
         <div className="flex items-center gap-4">
           <div
             className="flex items-center gap-1.5 text-sm font-semibold text-foreground"
-            aria-label={`Tempo restante: ${formatarTempo(remainingSeconds)}`}
+            aria-label={t("BaseExercise.tempoRestante", { valor: formatarTempo(remainingSeconds) })}
           >
             <Clock className="h-4 w-4 text-teal" />
             <span className="tabular-nums">{formatarTempo(remainingSeconds)}</span>
           </div>
           <div
             className="flex items-center gap-1.5 text-sm font-semibold text-foreground"
-            aria-label={`Pontuação actual: ${score}`}
+            aria-label={t("BaseExercise.pontuacaoActual", { score })}
           >
             <Trophy className="h-4 w-4 text-gold" />
             <span className="tabular-nums">{score}</span>
@@ -223,12 +226,12 @@ const BaseExercise = ({
           {isRunning ? (
             <>
               <Pause className="h-4 w-4" />
-              Pausar
+              {t("BaseExercise.pausar")}
             </>
           ) : (
             <>
               <Play className="h-4 w-4" />
-              Iniciar
+              {t("BaseExercise.iniciar")}
             </>
           )}
         </Button>
@@ -244,7 +247,7 @@ const BaseExercise = ({
           {/* Canto com a pré-visualização da câmara */}
           <div
             className="pointer-events-none absolute bottom-3 right-3 h-28 w-28 overflow-hidden rounded-xl border-2 border-background bg-navy shadow-elevated sm:h-36 sm:w-36"
-            aria-label="Pré-visualização da câmara"
+            aria-label={t("BaseExercise.preVisualizacaoDaCamara")}
           >
             <video
               ref={videoRef}
@@ -268,22 +271,21 @@ const BaseExercise = ({
                 <Lock className="h-7 w-7 text-primary-foreground" />
               </div>
               <p className="mb-1 text-xs font-bold uppercase tracking-widest text-teal">
-                Conteúdo Premium
+                {t("BaseExercise.conteudoPremium")}
               </p>
               <h3 className="mb-2 text-lg font-bold text-foreground">
-                Faça upgrade para desbloquear
+                {t("BaseExercise.facaUpgradeParaDesbloquear")}
               </h3>
               <p className="mb-4 text-sm text-muted-foreground">
-                Este exercício está disponível para contas com acesso premium.
-                Faça upgrade para continuar a sua reabilitação visual sem limites.
+                {t("BaseExercise.esteExercicioEstaDisponivel")}
               </p>
               <Button
                 asChild
                 className="w-full gap-2 bg-gradient-to-r from-teal to-navy text-primary-foreground hover:opacity-90"
               >
-                <Link to="/registo-premium">
+                <Link to={localizar("/registo-premium")}>
                   <Sparkles className="h-4 w-4" />
-                  Desbloquear Acesso Premium
+                  {t("BaseExercise.desbloquearAcessoPremium")}
                 </Link>
               </Button>
             </div>

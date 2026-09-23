@@ -3,8 +3,10 @@ import { bannersApi, type BannerPublico } from "@/lib/apiClient";
 import { X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useDefinirSiteBannerAltura } from "@/contexts/SiteBannerContext";
+import { useTranslation } from "react-i18next";
 
 const SiteBanner = () => {
+  const { t } = useTranslation();
   const [banner, setBanner] = useState<BannerPublico | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -69,7 +71,7 @@ const SiteBanner = () => {
       <button
         onClick={dismiss}
         className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-black/10"
-        aria-label="Fechar"
+        aria-label={t("SiteBanner.fechar")}
       >
         <X className="w-4 h-4" />
       </button>

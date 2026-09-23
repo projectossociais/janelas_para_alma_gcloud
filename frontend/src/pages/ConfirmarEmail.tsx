@@ -6,6 +6,8 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { authApi, mensagemDeErroApi } from "@/lib/apiClient";
+import { useTranslation } from "react-i18next";
+import { localizar } from "@/i18n/rotas";
 
 type Estado = "a-confirmar" | "confirmado" | "erro";
 
@@ -17,6 +19,7 @@ type Estado = "a-confirmar" | "confirmado" | "erro";
  * parte de entrar). Depois de confirmada, a pessoa faz login normalmente.
  */
 const ConfirmarEmail = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token") ?? "";
@@ -30,7 +33,7 @@ const ConfirmarEmail = () => {
   useEffect(() => {
     if (!token) {
       setEstado("erro");
-      setMensagemErro("Este link de confirmação é inválido.");
+      setMensagemErro(t("ConfirmarEmail.esteLinkDeConfirmacao"));
       return;
     }
     if (jaTentou.current) return;
@@ -41,9 +44,9 @@ const ConfirmarEmail = () => {
       .then(() => setEstado("confirmado"))
       .catch((err) => {
         setEstado("erro");
-        setMensagemErro(mensagemDeErroApi(err, "Este link de confirmação é inválido ou expirou."));
+        setMensagemErro(mensagemDeErroApi(err, t("ConfirmarEmail.esteLinkDeConfirmacao2")));
       });
-  }, [token]);
+  }, [token, t]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-muted/40">
@@ -57,20 +60,20 @@ const ConfirmarEmail = () => {
               <XCircle className="w-10 h-10 text-destructive mx-auto" />
             ) : null}
             <CardTitle className="text-2xl md:text-3xl font-bold">
-              {estado === "a-confirmar" && "A confirmar a sua conta..."}
-              {estado === "confirmado" && "Conta confirmada!"}
-              {estado === "erro" && "Não foi possível confirmar"}
+              {estado === "a-confirmar" && t("ConfirmarEmail.aConfirmarASua")}
+              {estado === "confirmado" && t("ConfirmarEmail.contaConfirmada")}
+              {estado === "erro" && t("ConfirmarEmail.naoFoiPossivelConfirmar")}
             </CardTitle>
             <CardDescription>
-              {estado === "a-confirmar" && "Um momento."}
-              {estado === "confirmado" && "Já pode entrar com o seu email e palavra-passe."}
+              {estado === "a-confirmar" && t("ConfirmarEmail.umMomento")}
+              {estado === "confirmado" && t("ConfirmarEmail.jaPodeEntrarCom")}
               {estado === "erro" && mensagemErro}
             </CardDescription>
           </CardHeader>
           {estado !== "a-confirmar" && (
             <CardContent>
-              <Button size="lg" className="w-full" onClick={() => navigate("/auth", { replace: true })}>
-                Ir para o login <ArrowRight className="w-4 h-4 ml-2" />
+              <Button size="lg" className="w-full" onClick={() => navigate(localizar("/auth"), { replace: true })}>
+                {t("ConfirmarEmail.irParaOLogin")}{" "}<ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </CardContent>
           )}

@@ -18,30 +18,43 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
-const contactSchema = z.object({
-  name: z.string().trim().min(1, "Nome é obrigatório").max(100, "Máximo 100 caracteres"),
+const contactSchema = () => z.object({
+  name: z.string().trim().min(1, i18n.t("ContactSection.nomeEObrigatorio")).max(100, i18n.t("ContactSection.maximo100Caracteres")),
   email: z.string().trim().email("Email inválido").max(255, "Máximo 255 caracteres"),
-  message: z.string().trim().min(1, "Mensagem é obrigatória").max(1000, "Máximo 1000 caracteres"),
+  message: z.string().trim().min(1, i18n.t("ContactSection.mensagemEObrigatoria")).max(1000, i18n.t("ContactSection.maximo1000Caracteres")),
 });
 
-const volunteerSchema = z.object({
-  name: z.string().trim().min(1, "Nome é obrigatório").max(100, "Máximo 100 caracteres"),
+const volunteerSchema = () => z.object({
+  name: z.string().trim().min(1, i18n.t("ContactSection.nomeEObrigatorio")).max(100, i18n.t("ContactSection.maximo100Caracteres")),
   email: z.string().trim().email("Email inválido").max(255, "Máximo 255 caracteres"),
   phone: z.string().trim().min(1, "Telefone é obrigatório").max(20, "Máximo 20 caracteres"),
-  motivation: z.string().trim().min(1, "Motivação é obrigatória").max(1000, "Máximo 1000 caracteres"),
+  motivation: z.string().trim().min(1, i18n.t("ContactSection.motivacaoEObrigatoria")).max(1000, i18n.t("ContactSection.maximo1000Caracteres")),
 });
 
 
 const volunteerBenefits = [
-  { icon: Star, text: "Certificado de participação em iniciativa social" },
-  { icon: Users, text: "Integração numa rede de jovens activistas" },
-  { icon: Award, text: "Desenvolvimento de competências de liderança" },
-  { icon: Heart, text: "Impacto directo na vida de pessoas com estrabismo" },
-  { icon: CheckCircle, text: "Experiência prática em economia circular" },
+  { icon: Star, get text() {
+    return i18n.t("ContactSection.certificadoDeParticipacaoEm");
+  } },
+  { icon: Users, get text() {
+    return i18n.t("ContactSection.integracaoNumaRedeDe");
+  } },
+  { icon: Award, get text() {
+    return i18n.t("ContactSection.desenvolvimentoDeCompetenciasDe");
+  } },
+  { icon: Heart, get text() {
+    return i18n.t("ContactSection.impactoDirectoNaVida");
+  } },
+  { icon: CheckCircle, get text() {
+    return i18n.t("ContactSection.experienciaPraticaEmEconomia");
+  } },
 ];
 
 const ContactSection = () => {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [contactOpen, setContactOpen] = useState(false);
   const [volunteerInfoOpen, setVolunteerInfoOpen] = useState(false);
@@ -66,7 +79,7 @@ const ContactSection = () => {
       message: formData.get("message") as string,
     };
 
-    const result = contactSchema.safeParse(data);
+    const result = contactSchema().safeParse(data);
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
       result.error.issues.forEach((err) => {
@@ -83,16 +96,16 @@ const ContactSection = () => {
       // se perde, e nunca mostramos "enviado" sem a gravação confirmar.
       await contactMessagesApi.enviar(result.data.name, result.data.email, result.data.message);
       toast({
-        title: "Mensagem registada!",
-        description: "Obrigado pelo contacto. A nossa equipa vai analisar e responder-lhe.",
+        title: t("ContactSection.mensagemRegistada"),
+        description: t("ContactSection.obrigadoPeloContactoA"),
       });
       setContactOpen(false);
       (e.target as HTMLFormElement).reset();
     } catch (err) {
       console.error("Contact form error:", err);
       toast({
-        title: "Erro ao enviar",
-        description: mensagemDeErroApi(err, "Verifique a sua ligação à internet e tente novamente."),
+        title: t("ContactSection.erroAoEnviar"),
+        description: mensagemDeErroApi(err, t("ContactSection.verifiqueASuaLigacao")),
         variant: "destructive",
       });
     } finally {
@@ -112,7 +125,7 @@ const ContactSection = () => {
       motivation: formData.get("motivation") as string,
     };
 
-    const result = volunteerSchema.safeParse(data);
+    const result = volunteerSchema().safeParse(data);
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
       result.error.issues.forEach((err) => {
@@ -127,16 +140,16 @@ const ContactSection = () => {
       const resp = await sendToEdgeFunction("send-volunteer-email", result.data);
       if (resp?.error) throw new Error(resp.error);
       toast({
-        title: "Inscrição submetida com sucesso!",
-        description: "Bem-vindo(a) à equipa! Entraremos em contacto em breve.",
+        title: t("ContactSection.inscricaoSubmetidaComSucesso"),
+        description: t("ContactSection.bemVindoAA"),
       });
       setSignupOpen(false);
       (e.target as HTMLFormElement).reset();
     } catch (err) {
       console.error("Volunteer form error:", err);
       toast({
-        title: "Erro ao submeter",
-        description: err instanceof Error ? err.message : "Verifique a sua ligação à internet e tente novamente.",
+        title: t("ContactSection.erroAoSubmeter"),
+        description: err instanceof Error ? err.message : t("ContactSection.verifiqueASuaLigacao"),
         variant: "destructive",
       });
     } finally {
@@ -157,15 +170,13 @@ const ContactSection = () => {
         <div className="max-w-5xl mx-auto">
           <div className="text-center space-y-6 mb-12">
             <span className="text-sm font-medium tracking-widest uppercase text-teal">
-              Junte-se a Nós
+              {t("ContactSection.junteSeANos")}
             </span>
             <h2 className="text-3xl md:text-5xl font-bold text-foreground">
-              Faça parte desta transformação
+              {t("ContactSection.facaParteDestaTransformacao")}
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Quer seja através de voluntariado, doação de óculos, parceria
-              institucional ou apoio financeiro: cada contribuição
-              conta.
+              {t("ContactSection.querSejaAtravesDe")}
             </p>
           </div>
 
@@ -178,11 +189,11 @@ const ContactSection = () => {
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-teal/10 text-teal mx-auto">
                 <Heart className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold text-foreground">Voluntariado</h3>
+              <h3 className="text-lg font-bold text-foreground">{t("ContactSection.voluntariado")}</h3>
               <p className="text-muted-foreground text-sm">
-                Participe nas nossas acções comunitárias e faça a diferença.
+                {t("ContactSection.participeNasNossasAccoes")}
               </p>
-              <p className="text-xs text-teal font-medium">Ver benefícios →</p>
+              <p className="text-xs text-teal font-medium">{t("ContactSection.verBeneficios")}</p>
             </button>
 
             {/* Email card */}
@@ -195,11 +206,11 @@ const ContactSection = () => {
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gold/10 text-gold mx-auto">
                 <Mail className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold text-foreground">Email</h3>
+              <h3 className="text-lg font-bold text-foreground">{t("ContactSection.email")}</h3>
               <p className="text-muted-foreground text-sm">
                 janelasparaalma18@gmail.com
               </p>
-              <p className="text-xs text-gold font-medium">Enviar mensagem →</p>
+              <p className="text-xs text-gold font-medium">{t("ContactSection.enviarMensagem")}</p>
             </a>
 
             {/* Localização card */}
@@ -212,9 +223,9 @@ const ContactSection = () => {
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-green/10 text-green mx-auto">
                 <MapPin className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold text-foreground">Localização</h3>
-              <p className="text-muted-foreground text-sm">Luanda, Angola</p>
-              <p className="text-xs text-green font-medium">Ver no Google Maps →</p>
+              <h3 className="text-lg font-bold text-foreground">{t("ContactSection.localizacao")}</h3>
+              <p className="text-muted-foreground text-sm">{t("ContactSection.luandaAngola")}</p>
+              <p className="text-xs text-green font-medium">{t("ContactSection.verNoGoogleMaps")}</p>
             </a>
           </div>
 
@@ -224,7 +235,7 @@ const ContactSection = () => {
               className="inline-flex items-center gap-3 px-10 py-5 rounded-xl bg-teal text-teal-foreground font-bold text-lg transition-all hover:opacity-90 hover:translate-y-[-2px] hover:shadow-2xl shadow-elevated"
             >
               <Send className="w-5 h-5" />
-              Envie-nos uma mensagem
+              {t("ContactSection.envieNosUmaMensagem")}
             </button>
           </div>
         </div>
@@ -238,27 +249,27 @@ const ContactSection = () => {
               <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-teal/10 text-teal">
                 <Send className="w-5 h-5" />
               </div>
-              Envie-nos uma mensagem
+              {t("ContactSection.envieNosUmaMensagem")}
             </DialogTitle>
             <DialogDescription>
-              Preencha os campos abaixo e entraremos em contacto consigo.
+              {t("ContactSection.preenchaOsCamposAbaixo")}
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-5 pt-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Nome</label>
-              <Input name="name" placeholder="O seu nome" maxLength={100} />
+              <label className="text-sm font-medium">{t("ContactSection.nome")}</label>
+              <Input name="name" placeholder={t("ContactSection.oSeuNome")} maxLength={100} />
               {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Email</label>
+              <label className="text-sm font-medium">{t("ContactSection.email")}</label>
               <Input name="email" type="email" placeholder="email@exemplo.com" maxLength={255} />
               {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Mensagem</label>
-              <Textarea name="message" placeholder="Como podemos ajudar?" maxLength={1000} rows={4} />
+              <label className="text-sm font-medium">{t("ContactSection.mensagem")}</label>
+              <Textarea name="message" placeholder={t("ContactSection.comoPodemosAjudar")} maxLength={1000} rows={4} />
               {errors.message && <p className="text-sm text-destructive">{errors.message}</p>}
             </div>
             <button
@@ -266,7 +277,7 @@ const ContactSection = () => {
               disabled={loading}
               className="w-full inline-flex items-center justify-center px-6 py-3 rounded-lg bg-teal text-teal-foreground font-medium transition-all hover:opacity-90 shadow-elevated disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "A enviar..." : "Enviar Mensagem"}
+              {loading ? t("ContactSection.aEnviar") : t("ContactSection.enviarMensagem2")}
             </button>
           </form>
         </DialogContent>
@@ -280,10 +291,10 @@ const ContactSection = () => {
               <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-teal/10 text-teal">
                 <Heart className="w-5 h-5" />
               </div>
-              Benefícios de ser um Kamba
+              {t("ContactSection.beneficiosDeSerUm")}
             </DialogTitle>
             <DialogDescription>
-              Descobre as vantagens de te juntares à nossa equipa de voluntários.
+              {t("ContactSection.descobreAsVantagensDe")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-5 pt-2">
@@ -318,7 +329,7 @@ const ContactSection = () => {
                 }}
                 className="w-full inline-flex items-center justify-center px-6 py-3 rounded-lg bg-teal text-teal-foreground font-medium transition-all hover:opacity-90 shadow-elevated"
               >
-                Quero ser um Kamba
+                {t("ContactSection.queroSerUmKamba")}
               </button>
               <button
                 onClick={() => {
@@ -328,7 +339,7 @@ const ContactSection = () => {
                 className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg border border-border bg-background text-foreground font-medium transition-all hover:bg-muted"
               >
                 <BookOpen className="w-4 h-4" />
-                Saber mais sobre o Programa
+                {t("ContactSection.saberMaisSobreO")}
               </button>
             </div>
           </div>
@@ -343,33 +354,33 @@ const ContactSection = () => {
               <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-teal/10 text-teal">
                 <Heart className="w-5 h-5" />
               </div>
-              Formulário de Inscrição
+              {t("ContactSection.formularioDeInscricao")}
             </DialogTitle>
             <DialogDescription>
-              Preenche os campos abaixo para te inscreveres como voluntário.
+              {t("ContactSection.preencheOsCamposAbaixo")}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSignup} className="space-y-5 pt-2">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Nome completo</label>
-                <Input name="name" placeholder="O teu nome" maxLength={100} />
+                <label className="text-sm font-medium">{t("ContactSection.nomeCompleto")}</label>
+                <Input name="name" placeholder={t("ContactSection.oTeuNome")} maxLength={100} />
                 {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Email</label>
+                <label className="text-sm font-medium">{t("ContactSection.email")}</label>
                 <Input name="email" type="email" placeholder="email@exemplo.com" maxLength={255} />
                 {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Telefone</label>
-              <Input name="phone" placeholder="+244 9XX XXX XXX" maxLength={20} />
+              <label className="text-sm font-medium">{t("ContactSection.telefone")}</label>
+              <Input name="phone" placeholder={t("ContactSection.n2449xxXxxXxx")} maxLength={20} />
               {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Breve Motivação</label>
-              <Textarea name="motivation" placeholder="Porque queres ser um Kamba?" maxLength={1000} rows={4} />
+              <label className="text-sm font-medium">{t("ContactSection.breveMotivacao")}</label>
+              <Textarea name="motivation" placeholder={t("ContactSection.porqueQueresSerUm")} maxLength={1000} rows={4} />
               {errors.motivation && <p className="text-sm text-destructive">{errors.motivation}</p>}
             </div>
             <button
@@ -377,7 +388,7 @@ const ContactSection = () => {
               disabled={loading}
               className="w-full inline-flex items-center justify-center px-6 py-3 rounded-lg bg-teal text-teal-foreground font-medium transition-all hover:opacity-90 shadow-elevated disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "A submeter..." : "Inscrever-me como Kamba"}
+              {loading ? t("ContactSection.aSubmeter") : t("ContactSection.inscreverMeComoKamba")}
             </button>
           </form>
         </DialogContent>

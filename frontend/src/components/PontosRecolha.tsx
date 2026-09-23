@@ -1,4 +1,5 @@
 import { Clock, MapPin, User } from "lucide-react";
+import i18n from "@/i18n";
 
 interface PontoRecolha {
   id: string;
@@ -11,18 +12,33 @@ interface PontoRecolha {
 const pontosRecolha: PontoRecolha[] = [
   {
     id: "luanda-centro",
-    nome: "Luanda Centro",
-    responsavel: "Dalva Filipe",
-    morada:
-      "Ingombotas, Rua do assalto ao quartel da Moncada, perto do edifício da Planad",
-    horario: ["Seg. a Sex.: 8h às 12h", "Sáb. e Dom.: 10h às 16h"],
+    get nome() {
+      return i18n.t("PontosRecolha.luandaCentro");
+    },
+    get responsavel() {
+      return i18n.t("PontosRecolha.dalvaFilipe");
+    },
+    get morada() {
+      return i18n.t("PontosRecolha.ingombotasRuaDoAssalto");
+    },
+    get horario() {
+      return [i18n.t("PontosRecolha.segASex8h"), i18n.t("PontosRecolha.sabEDom10h")];
+    },
   },
   {
     id: "luanda-sul",
-    nome: "Luanda Sul",
-    responsavel: "Kássia Nunda",
-    morada: "Benfica / Zona Verde / Condomínio Villa Israel",
-    horario: ["Seg. a Sex.: 12h às 16h"],
+    get nome() {
+      return i18n.t("PontosRecolha.luandaSul");
+    },
+    get responsavel() {
+      return i18n.t("PontosRecolha.kassiaNunda");
+    },
+    get morada() {
+      return i18n.t("PontosRecolha.benficaZonaVerdeCondominio");
+    },
+    get horario() {
+      return [i18n.t("PontosRecolha.segASex12h")];
+    },
   },
 ];
 

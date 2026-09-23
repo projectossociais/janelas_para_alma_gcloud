@@ -38,6 +38,8 @@ import {
 } from "@/lib/apiClient";
 import { OPCOES, PATAMARES, TOTAL_PATAMARES, calcularRecompensaCliente, formatarKz, valorDoPatamar } from "./jogoConfig";
 import { obterPerguntaOfflineNaoVista, obterPerguntaOfflinePorId, obterPerguntasDoPatamar } from "./perguntasOffline";
+import { Trans, useTranslation } from "react-i18next";
+import { localizar } from "@/i18n/rotas";
 
 const TEMPO_SPLASH_MS = 2500;
 
@@ -75,6 +77,7 @@ const gerarOpiniaoPublico = (correta: RespostaOpcaoJogo): Record<RespostaOpcaoJo
 };
 
 const JogoCuriosidades = () => {
+  const { t: tr } = useTranslation();
   const { profile } = useProfile();
 
   const [mostrarSplash, setMostrarSplash] = useState(true);
@@ -269,7 +272,7 @@ const JogoCuriosidades = () => {
         tempoEsgotado: true,
       });
     } catch (err) {
-      toast.error(mensagemDeErroApi(err, "Não foi possível terminar a pergunta."));
+      toast.error(mensagemDeErroApi(err, tr("JogoCuriosidades.naoFoiPossivelTerminar")));
     } finally {
       setAValidar(false);
     }
@@ -292,7 +295,7 @@ const JogoCuriosidades = () => {
         tempoEsgotado: false,
       });
     } catch (err) {
-      toast.error(mensagemDeErroApi(err, "Não foi possível validar a resposta. Tente outra vez."));
+      toast.error(mensagemDeErroApi(err, tr("JogoCuriosidades.naoFoiPossivelValidar")));
       setOpcaoSelecionada(null);
     } finally {
       setAValidar(false);
@@ -317,7 +320,7 @@ const JogoCuriosidades = () => {
       const paraEsconder = erradas.sort(() => Math.random() - 0.5).slice(0, 2);
       setOpcoesEliminadas(paraEsconder);
     } catch (err) {
-      toast.error(mensagemDeErroApi(err, "Não foi possível usar a ajuda 50:50."));
+      toast.error(mensagemDeErroApi(err, tr("JogoCuriosidades.naoFoiPossivelUsar")));
       setAjudaCincoUsada(false);
     }
   };
@@ -338,7 +341,7 @@ const JogoCuriosidades = () => {
       setOpiniaoPublico(gerarOpiniaoPublico(resp.resposta_correta));
       setMostrarModalPublico(true);
     } catch (err) {
-      toast.error(mensagemDeErroApi(err, "Não foi possível consultar a opinião do público."));
+      toast.error(mensagemDeErroApi(err, tr("JogoCuriosidades.naoFoiPossivelConsultar")));
       setAjudaPublicoUsada(false);
     }
   };
@@ -380,11 +383,11 @@ const JogoCuriosidades = () => {
 
   const partilhar = async () => {
     const texto =
-      'Completei o jogo "Inclusivamente" da Janelas Para a Alma e dominei o conhecimento em saúde ocular!';
+      tr("JogoCuriosidades.completeiOJogoInclusivamente");
     const url = window.location.href;
     if (navigator.share) {
       try {
-        await navigator.share({ title: "Inclusivamente", text: texto, url });
+        await navigator.share({ title: tr("JogoCuriosidades.inclusivamente"), text: texto, url });
       } catch {
         // utilizador cancelou a partilha -- não é um erro a reportar.
       }
@@ -392,9 +395,9 @@ const JogoCuriosidades = () => {
     }
     try {
       await navigator.clipboard.writeText(`${texto} ${url}`);
-      toast.success("Link copiado! Partilhe com os seus amigos.");
+      toast.success(tr("JogoCuriosidades.linkCopiadoPartilheCom"));
     } catch {
-      toast.error("Não foi possível copiar o link.");
+      toast.error(tr("JogoCuriosidades.naoFoiPossivelCopiar"));
     }
   };
 
@@ -406,7 +409,7 @@ const JogoCuriosidades = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
-      <BackButton fallbackPath="/jogo-curiosidades" label="Voltar ao menu" />
+      <BackButton fallbackPath={localizar("/jogo-curiosidades")} label={tr("JogoCuriosidades.voltarAoMenu")} />
 
       <main className="flex-1">
         <div className="container pb-16">
@@ -414,13 +417,13 @@ const JogoCuriosidades = () => {
             <div className="max-w-lg mx-auto rounded-2xl bg-card border border-border/60 shadow-elevated p-6 sm:p-8 text-center space-y-6 animate-scale-in">
               <div>
                 <span className="text-sm font-medium tracking-widest uppercase text-teal">
-                  Inclusivamente
+                  {tr("JogoCuriosidades.inclusivamente")}
                 </span>
                 <h1 className="text-2xl md:text-3xl font-bold text-foreground mt-1">
-                  Prepare-se para subir a escada
+                  {tr("JogoCuriosidades.prepareSeParaSubir")}
                 </h1>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Responda correctamente e avance patamar a patamar até {formatarKz(valorDoPatamar(TOTAL_PATAMARES))}.
+                  <Trans i18nKey="JogoCuriosidades.respondaCorrectamenteEAvance" values={{ valor: formatarKz(valorDoPatamar(TOTAL_PATAMARES)) }} />
                 </p>
               </div>
               <EscadaPatamares patamarAtual={1} />
@@ -429,20 +432,20 @@ const JogoCuriosidades = () => {
                 size="lg"
                 className="w-full bg-teal text-teal-foreground hover:bg-teal/90"
               >
-                Começar
+                {tr("JogoCuriosidades.comecar")}
               </Button>
             </div>
           ) : (
             <>
               <header className="max-w-2xl mx-auto text-center space-y-3 mb-8">
                 <span className="text-sm font-medium tracking-widest uppercase text-teal">
-                  Inclusivamente
+                  {tr("JogoCuriosidades.inclusivamente")}
                 </span>
                 <h1 className="text-3xl md:text-4xl font-bold text-foreground">
-                  O Jogo da Saúde Ocular
+                  {tr("JogoCuriosidades.oJogoDaSaude")}
                 </h1>
                 <p className="text-muted-foreground">
-                  Suba os 15 patamares respondendo a perguntas reais sobre visão e estrabismo.
+                  {tr("JogoCuriosidades.subaOs15Patamares")}
                 </p>
               </header>
 
@@ -455,7 +458,7 @@ const JogoCuriosidades = () => {
                       className="w-full flex items-center justify-between rounded-2xl bg-card border border-border/60 shadow-card px-5 py-4"
                     >
                       <span className="text-sm text-muted-foreground">
-                        Patamar <span className="font-bold text-foreground">{patamar}</span> de {TOTAL_PATAMARES}
+                        <Trans i18nKey="JogoCuriosidades.patamarDe" components={{ span: <span className="font-bold text-foreground" /> }} values={{ patamar, TOTAL_PATAMARES }} />
                       </span>
                       <span className="inline-flex items-center gap-2 font-bold text-gold">
                         {formatarKz(valorDoPatamar(patamar))}
@@ -465,7 +468,7 @@ const JogoCuriosidades = () => {
                   </SheetTrigger>
                   <SheetContent side="bottom" className="max-h-[75vh] overflow-y-auto rounded-t-2xl">
                     <SheetHeader>
-                      <SheetTitle>Escada de prémios</SheetTitle>
+                      <SheetTitle>{tr("JogoCuriosidades.escadaDePremios")}</SheetTitle>
                     </SheetHeader>
                     <EscadaPatamares patamarAtual={patamar} className="mt-4" />
                   </SheetContent>
@@ -486,20 +489,20 @@ const JogoCuriosidades = () => {
                       <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-gold to-teal mx-auto shadow-elevated">
                         <Trophy className="w-8 h-8 text-navy" />
                       </div>
-                      <h2 className="text-2xl md:text-3xl font-bold text-foreground">Parabéns!</h2>
+                      <h2 className="text-2xl md:text-3xl font-bold text-foreground">{tr("JogoCuriosidades.parabens")}</h2>
                       <p className="text-muted-foreground max-w-md mx-auto">
-                        Completou os 15 patamares e mostrou que domina o conhecimento em saúde ocular.
+                        {tr("JogoCuriosidades.completouOs15Patamares")}
                       </p>
                       <p className="text-3xl font-bold text-gold">{formatarKz(valorDoPatamar(TOTAL_PATAMARES))}</p>
                       <RecompensaGanha recompensa={recompensaLocal} autenticado={!!profile?.id} />
                       <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
                         <Button onClick={partilhar} variant="outline" className="border-teal text-teal hover:bg-teal/10">
                           <Share2 className="w-4 h-4" />
-                          Partilhar
+                          {tr("JogoCuriosidades.partilhar")}
                         </Button>
                         <Button onClick={reiniciarJogo} className="bg-teal text-teal-foreground hover:bg-teal/90">
                           <RefreshCw className="w-4 h-4" />
-                          Jogar novamente
+                          {tr("JogoCuriosidades.jogarNovamente")}
                         </Button>
                       </div>
                     </div>
@@ -510,13 +513,13 @@ const JogoCuriosidades = () => {
                       <div className="flex items-center justify-between gap-4">
                         <div>
                           <p className="text-xs font-medium tracking-widest uppercase text-muted-foreground">
-                            Patamar {patamar} de {TOTAL_PATAMARES}
+                            <Trans i18nKey="JogoCuriosidades.patamarDe2" values={{ patamar, TOTAL_PATAMARES }} />
                           </p>
                           <p className="text-2xl font-bold text-gold">{formatarKz(valorDoPatamar(patamar))}</p>
                           {emModoOffline && (
                             <span className="inline-flex items-center gap-1 mt-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground bg-muted rounded-full px-2 py-0.5">
                               <WifiOff className="w-3 h-3" />
-                              Modo offline
+                              {tr("JogoCuriosidades.modoOffline")}
                             </span>
                           )}
                         </div>
@@ -584,7 +587,7 @@ const JogoCuriosidades = () => {
                           className="border-teal/50 text-teal hover:bg-teal/10"
                         >
                           <Users className="w-4 h-4" />
-                          Opinião do público
+                          {tr("JogoCuriosidades.opiniaoDoPublico")}
                         </Button>
                         <Button
                           variant="outline"
@@ -593,7 +596,7 @@ const JogoCuriosidades = () => {
                           className="border-teal/50 text-teal hover:bg-teal/10"
                         >
                           <Shuffle className="w-4 h-4" />
-                          Trocar pergunta
+                          {tr("JogoCuriosidades.trocarPergunta")}
                         </Button>
                       </div>
                     </div>
@@ -619,10 +622,10 @@ const JogoCuriosidades = () => {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-xl">
-              {resultado?.tempoEsgotado ? "Tempo esgotado!" : "Essa não era a resposta certa"}
+              {resultado?.tempoEsgotado ? tr("JogoCuriosidades.tempoEsgotado") : tr("JogoCuriosidades.essaNaoEraA")}
             </DialogTitle>
             <DialogDescription>
-              Veja a resposta certa e a explicação antes de tentar novamente.
+              {tr("JogoCuriosidades.vejaARespostaCerta")}
             </DialogDescription>
           </DialogHeader>
 
@@ -630,7 +633,7 @@ const JogoCuriosidades = () => {
             <div className="space-y-4">
               <div className="rounded-xl bg-green/10 border border-green/30 p-4">
                 <p className="text-xs font-medium uppercase tracking-wide text-green mb-1">
-                  Resposta correcta
+                  {tr("JogoCuriosidades.respostaCorrecta")}
                 </p>
                 <p className="text-sm font-semibold text-foreground">
                   {resultado.resposta_correta}) {textoDaOpcao(resultado.resposta_correta)}
@@ -640,7 +643,7 @@ const JogoCuriosidades = () => {
                 <p className="text-sm text-muted-foreground leading-relaxed">{resultado.explicacao}</p>
               )}
               <p className="text-sm text-foreground">
-                Chegou ao patamar {patamar} de {TOTAL_PATAMARES}. Volte a tentar para chegar mais longe.
+                <Trans i18nKey="JogoCuriosidades.chegouAoPatamarDe" values={{ patamar, TOTAL_PATAMARES }} />
               </p>
               <RecompensaGanha recompensa={recompensaLocal} autenticado={!!profile?.id} />
             </div>
@@ -649,7 +652,7 @@ const JogoCuriosidades = () => {
           <DialogFooter>
             <Button onClick={reiniciarJogo} className="w-full bg-teal text-teal-foreground hover:bg-teal/90">
               <RefreshCw className="w-4 h-4" />
-              Tentar novamente
+              {tr("JogoCuriosidades.tentarNovamente")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -658,9 +661,9 @@ const JogoCuriosidades = () => {
       <Dialog open={mostrarModalPublico} onOpenChange={setMostrarModalPublico}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Opinião do público</DialogTitle>
+            <DialogTitle>{tr("JogoCuriosidades.opiniaoDoPublico")}</DialogTitle>
             <DialogDescription>
-              Assim responderam outros jogadores a perguntas parecidas com esta.
+              {tr("JogoCuriosidades.assimResponderamOutrosJogadores")}
             </DialogDescription>
           </DialogHeader>
 
@@ -669,7 +672,7 @@ const JogoCuriosidades = () => {
               {OPCOES.map((opcao) => (
                 <div key={opcao} className="space-y-1.5">
                   <div className="flex items-center justify-between text-sm font-semibold text-foreground">
-                    <span>Opção {opcao}</span>
+                    <span><Trans i18nKey="JogoCuriosidades.opcao" values={{ opcao }} /></span>
                     <span className="text-teal">{opiniaoPublico[opcao]}%</span>
                   </div>
                   <div className="h-3 rounded-full bg-muted overflow-hidden">
@@ -688,7 +691,7 @@ const JogoCuriosidades = () => {
               onClick={() => setMostrarModalPublico(false)}
               className="w-full bg-teal text-teal-foreground hover:bg-teal/90"
             >
-              Continuar a jogar
+              {tr("JogoCuriosidades.continuarAJogar")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -705,10 +708,11 @@ interface RecompensaGanhaProps {
 }
 
 const RecompensaGanha = ({ recompensa, autenticado }: RecompensaGanhaProps) => {
+  const { t } = useTranslation();
   if (!recompensa) return null;
   return (
     <div className="rounded-xl bg-muted/60 border border-border/50 p-4 space-y-2">
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Prémio ganho</p>
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("JogoCuriosidades.premioGanho")}</p>
       <div className="flex items-center justify-center gap-6">
         <span className="inline-flex items-center gap-1.5 font-bold text-gold">
           <Coins className="w-4 h-4" />+{recompensa.moedas}
@@ -719,7 +723,7 @@ const RecompensaGanha = ({ recompensa, autenticado }: RecompensaGanhaProps) => {
       </div>
       {!autenticado && (
         <p className="text-xs text-muted-foreground">
-          Inicie sessão para guardar estes prémios na sua conta.
+          {t("JogoCuriosidades.inicieSessaoParaGuardar")}
         </p>
       )}
     </div>
@@ -737,6 +741,7 @@ const RAIO_TEMPORIZADOR = (TAMANHO_TEMPORIZADOR - ESPESSURA_TEMPORIZADOR) / 2;
 const CIRCUNFERENCIA_TEMPORIZADOR = 2 * Math.PI * RAIO_TEMPORIZADOR;
 
 const TemporizadorCircular = ({ tempoRestante, tempoTotal }: TemporizadorCircularProps) => {
+  const { t } = useTranslation();
   const fracao = Math.max(0, Math.min(1, tempoRestante / tempoTotal));
   const offset = CIRCUNFERENCIA_TEMPORIZADOR * (1 - fracao);
   const urgente = tempoRestante <= 10;
@@ -746,7 +751,7 @@ const TemporizadorCircular = ({ tempoRestante, tempoTotal }: TemporizadorCircula
       className="relative shrink-0"
       style={{ width: TAMANHO_TEMPORIZADOR, height: TAMANHO_TEMPORIZADOR }}
       role="timer"
-      aria-label={`${tempoRestante} segundos restantes`}
+      aria-label={t("JogoCuriosidades.segundosRestantes", { tempoRestante })}
     >
       <svg width={TAMANHO_TEMPORIZADOR} height={TAMANHO_TEMPORIZADOR} className="-rotate-90">
         <circle

@@ -1,12 +1,16 @@
 import { Zap } from "lucide-react";
 import PremiumExercicioEsqueleto from "@/components/exercises/PremiumExercicioEsqueleto";
+import { useTranslation } from "react-i18next";
 
-const SacadasConvergenciaExercise = () => (
+const SacadasConvergenciaExercise = () => {
+  const { t } = useTranslation();
+  return (
   <PremiumExercicioEsqueleto
-    title="Convergência com Saltos (Sacadas)"
-    description="Alterna rapidamente o foco entre alvos próximos e distantes, treinando a convergência dinâmica."
+    title={t("SacadasConvergenciaExercise.convergenciaComSaltosSacadas")}
+    description={t("SacadasConvergenciaExercise.alternaRapidamenteOFoco")}
     icon={Zap}
   />
 );
+};
 
 export default SacadasConvergenciaExercise;

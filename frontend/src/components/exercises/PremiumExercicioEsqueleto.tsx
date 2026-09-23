@@ -4,6 +4,8 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import BaseExercise from "@/components/exercises/BaseExercise";
+import { useTranslation } from "react-i18next";
+import { localizar } from "@/i18n/rotas";
 
 interface PremiumExercicioEsqueletoProps {
   title: string;
@@ -22,15 +24,16 @@ const PremiumExercicioEsqueleto = ({
   description,
   icon: Icon,
 }: PremiumExercicioEsqueletoProps) => {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-1 pt-24 pb-16">
         <div className="container max-w-4xl mx-auto">
           <Button variant="ghost" asChild className="mb-6">
-            <Link to="/exercicios">
+            <Link to={localizar("/exercicios")}>
               <ArrowLeft className="w-4 h-4" />
-              Voltar ao Menu
+              {t("PremiumExercicioEsqueleto.voltarAoMenu")}
             </Link>
           </Button>
 
@@ -38,9 +41,7 @@ const PremiumExercicioEsqueleto = ({
             <div className="flex h-[350px] flex-col items-center justify-center gap-4 p-6 text-center">
               <Icon className="h-10 w-10 text-teal" />
               <p className="max-w-sm text-sm text-muted-foreground">
-                Este exercício ainda está a ser preparado e chega em breve. O seu
-                acesso Premium já está activo, por isso vai poder usá-lo assim que
-                estiver pronto.
+                {t("PremiumExercicioEsqueleto.esteExercicioAindaEsta")}
               </p>
             </div>
           </BaseExercise>

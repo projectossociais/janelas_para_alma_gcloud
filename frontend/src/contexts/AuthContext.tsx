@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { toast } from "sonner";
 import { authApi, mensagemDeErroApi, type UtilizadorPublico } from "@/lib/apiClient";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
 export type UserRole = "admin" | "comum" | "voluntario" | "oftalmologista" | "profissional" | "estrabico";
 
@@ -68,6 +70,7 @@ const mensagemDeFalha = mensagemDeErroApi;
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const { t } = useTranslation();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -101,7 +104,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       return { ok: true };
     } catch (err) {
-      return { ok: false, error: mensagemDeFalha(err, "Não foi possível criar a conta.") };
+      return { ok: false, error: mensagemDeFalha(err, t("AuthContext.naoFoiPossivelCriar")) };
     }
   };
 
@@ -112,11 +115,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Ver Configuracoes.tsx: eliminar a conta agenda para 30 dias, não
       // apaga na hora. Voltar a entrar dentro do prazo cancela o pedido.
       if (utilizador.eliminacao_cancelada) {
-        toast.success("A eliminação da sua conta foi cancelada. Bem-vindo de volta.");
+        toast.success(t("AuthContext.aEliminacaoDaSua"));
       }
       return { ok: true };
     } catch (err) {
-      return { ok: false, error: mensagemDeFalha(err, "Email ou palavra-passe incorrectos.") };
+      return { ok: false, error: mensagemDeFalha(err, t("AuthContext.emailOuPalavraPasse")) };
     }
   };
 
@@ -125,11 +128,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const utilizador = await authApi.entrarComGoogle(idToken);
       setUser(paraAuthUser(utilizador));
       if (utilizador.eliminacao_cancelada) {
-        toast.success("A eliminação da sua conta foi cancelada. Bem-vindo de volta.");
+        toast.success(t("AuthContext.aEliminacaoDaSua"));
       }
       return { ok: true };
     } catch (err) {
-      return { ok: false, error: mensagemDeFalha(err, "Não foi possível entrar com o Google.") };
+      return { ok: false, error: mensagemDeFalha(err, t("AuthContext.naoFoiPossivelEntrar")) };
     }
   };
 
@@ -198,10 +201,22 @@ export const PROVINCES = [
 ];
 
 export const ROLE_LABEL: Record<UserRole, string> = {
-  admin: "Administrador",
-  comum: "Pessoa Comum",
-  estrabico: "Pessoa com Estrabismo",
-  profissional: "Profissional de Saúde",
-  oftalmologista: "Oftalmologista",
-  voluntario: "Voluntário",
+  get admin() {
+    return i18n.t("AuthContext.administrador");
+  },
+  get comum() {
+    return i18n.t("AuthContext.pessoaComum");
+  },
+  get estrabico() {
+    return i18n.t("AuthContext.pessoaComEstrabismo");
+  },
+  get profissional() {
+    return i18n.t("AuthContext.profissionalDeSaude");
+  },
+  get oftalmologista() {
+    return i18n.t("AuthContext.oftalmologista");
+  },
+  get voluntario() {
+    return i18n.t("AuthContext.voluntario");
+  },
 };

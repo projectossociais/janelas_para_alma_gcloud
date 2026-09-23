@@ -3,32 +3,44 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
 import heroImg from "@/assets/circular-hero.jpg";
+import { Trans, useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
 const steps = [
   {
     icon: Recycle,
     number: "01",
-    title: "Recolha de Armações Usadas",
-    description:
-      "Implementação de canais de recolha em parceria com clínicas, ópticas e comunidades. Cada par de óculos doado ganha uma nova vida.",
+    get title() {
+      return i18n.t("Circular.recolhaDeArmacoesUsadas");
+    },
+    get description() {
+      return i18n.t("Circular.implementacaoDeCanaisDe");
+    },
   },
   {
     icon: Wrench,
     number: "02",
-    title: "Recondicionamento",
-    description:
-      "Processo rigoroso de limpeza, reparação e validação técnica. Garantimos que cada armação cumpre os padrões necessários para reutilização.",
+    get title() {
+      return i18n.t("Circular.recondicionamento");
+    },
+    get description() {
+      return i18n.t("Circular.processoRigorosoDeLimpeza");
+    },
   },
   {
     icon: Sparkles,
     number: "03",
-    title: "Reutilização Terapêutica",
-    description:
-      "Transformamos resíduos em materiais terapêuticos: armações recondicionadas e kits sustentáveis para tratamento e prevenção em comunidades vulneráveis.",
+    get title() {
+      return i18n.t("Circular.reutilizacaoTerapeutica");
+    },
+    get description() {
+      return i18n.t("Circular.transformamosResiduosEmMateriais");
+    },
   },
 ];
 
 const Circular = () => {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
@@ -37,7 +49,7 @@ const Circular = () => {
         <section className="relative min-h-[70vh] flex items-center overflow-hidden">
           <img
             src={heroImg}
-            alt="Óculos a serem reciclados num ambiente sustentável"
+            alt={t("Circular.oculosASeremReciclados")}
             className="absolute inset-0 w-full h-full object-cover"
             width={1920}
             height={1088}
@@ -46,13 +58,13 @@ const Circular = () => {
           <div className="container relative z-10 py-24 md:py-32">
             <div className="max-w-2xl animate-fade-in">
               <span className="inline-block px-4 py-1.5 rounded-full bg-green/20 text-primary-foreground border border-green/40 text-sm font-medium mb-6 backdrop-blur-sm">
-                Sustentabilidade
+                {t("Circular.sustentabilidade")}
               </span>
               <h1 className="text-4xl md:text-6xl font-bold text-primary-foreground leading-tight mb-6">
-                Logística de Economia Circular
+                {t("Circular.logisticaDeEconomiaCircular")}
               </h1>
               <p className="text-lg md:text-xl text-primary-foreground/90 leading-relaxed">
-                Cuidamos da saúde visual e do futuro do nosso planeta.
+                {t("Circular.cuidamosDaSaudeVisual")}
               </p>
             </div>
           </div>
@@ -65,10 +77,10 @@ const Circular = () => {
           <div className="container">
             <div className="text-center max-w-2xl mx-auto mb-14">
               <h2 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">
-                O Nosso Processo Circular
+                {t("Circular.oNossoProcessoCircular")}
               </h2>
               <p className="text-muted-foreground mt-4">
-                Três etapas que transformam resíduos em oportunidade.
+                {t("Circular.tresEtapasQueTransformam")}
               </p>
             </div>
 
@@ -97,9 +109,7 @@ const Circular = () => {
             <div className="max-w-4xl mx-auto text-center">
               <Recycle className="w-12 h-12 text-green mx-auto mb-6" />
               <p className="text-2xl md:text-4xl font-bold text-primary-foreground leading-tight">
-                A nossa logística reduz drasticamente os{" "}
-                <span className="text-green">custos para as famílias</span> e o{" "}
-                <span className="text-green">impacto ambiental</span> das cidades angolanas.
+                <Trans i18nKey="Circular.aNossaLogisticaReduz" components={{ span: <span className="text-green" /> }} />
               </p>
             </div>
           </div>

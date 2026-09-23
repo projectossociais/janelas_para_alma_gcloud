@@ -32,8 +32,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Bell, Lock, ShieldAlert, KeyRound, Trash2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { Trans, useTranslation } from "react-i18next";
+import { localizar } from "@/i18n/rotas";
 
 const Configuracoes = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { isLoggedIn, logout } = useAuth();
   const { profile, setProfile } = useProfile();
@@ -72,7 +75,7 @@ const Configuracoes = () => {
 
   const handleToggle = async (key: keyof typeof notif) => {
     if (!profile) {
-      toast.error("Inicie sessão para guardar as suas preferências.");
+      toast.error(t("Configuracoes.inicieSessaoParaGuardar2"));
       return;
     }
 
@@ -82,21 +85,21 @@ const Configuracoes = () => {
     try {
       const data = await perfilApi.atualizar({ [key]: novoValor });
       setProfile({ ...profile, ...data, nome_completo: data.nome_completo ?? "" });
-      toast.success("Preferência guardada", { duration: 1800 });
+      toast.success(t("Configuracoes.preferenciaGuardada"), { duration: 1800 });
     } catch {
       setNotif((p) => ({ ...p, [key]: !novoValor })); // reverte
-      toast.error("Não foi possível guardar. Tente novamente.");
+      toast.error(t("Configuracoes.naoFoiPossivelGuardar"));
     }
   };
 
   const handlePublicToggle = () => {
     setPublicProfile((v) => !v);
-    toast.success("Preferências guardadas");
+    toast.success(t("Configuracoes.preferenciasGuardadas"));
   };
 
   const handlePasswordSubmit = async () => {
     if (!currentPw || !newPw || newPw !== confirmPw) {
-      toast.error("Verifique os campos da palavra-passe.");
+      toast.error(t("Configuracoes.verifiqueOsCamposDa"));
       return;
     }
     const erroPassword = erroDePasswordFraca(newPw);
@@ -115,9 +118,9 @@ const Configuracoes = () => {
       setCurrentPw("");
       setNewPw("");
       setConfirmPw("");
-      toast.success("Palavra-passe actualizada com sucesso.");
+      toast.success(t("Configuracoes.palavraPasseActualizadaCom"));
     } catch (err) {
-      toast.error(mensagemDeErroApi(err, "Não foi possível actualizar a palavra-passe. Tente novamente."));
+      toast.error(mensagemDeErroApi(err, t("Configuracoes.naoFoiPossivelActualizar")));
     } finally {
       setPasswordLoading(false);
     }
@@ -129,7 +132,7 @@ const Configuracoes = () => {
     // sucesso sem verificar o resultado real da chamada.
     e.preventDefault();
     if (!profile?.id) {
-      toast.error("Não foi possível confirmar a sua conta. Tente novamente mais tarde.");
+      toast.error(t("Configuracoes.naoFoiPossivelConfirmar"));
       return;
     }
 
@@ -143,11 +146,11 @@ const Configuracoes = () => {
       setDeleteOpen(false);
       logout();
       toast.success(
-        "Conta agendada para eliminação dentro de 30 dias. Iniciar sessão de novo antes dessa data cancela o pedido."
+        t("Configuracoes.contaAgendadaParaEliminacao")
       );
-      navigate("/");
+      navigate(localizar("/"));
     } catch (err) {
-      toast.error(mensagemDeErroApi(err, "Não foi possível agendar a eliminação. Tente novamente."));
+      toast.error(mensagemDeErroApi(err, t("Configuracoes.naoFoiPossivelAgendar")));
     } finally {
       setDeleteLoading(false);
     }
@@ -160,9 +163,9 @@ const Configuracoes = () => {
         <div className="container max-w-3xl">
           <BackButton />
           <header className="mb-8 mt-4">
-            <h1 className="text-3xl md:text-4xl font-bold text-primary">Configurações da Conta</h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-primary">{t("Configuracoes.configuracoesDaConta")}</h1>
             <p className="text-muted-foreground mt-2">
-              Gira as suas preferências, notificações e dados pessoais.
+              {t("Configuracoes.giraAsSuasPreferencias")}
             </p>
           </header>
 
@@ -170,9 +173,9 @@ const Configuracoes = () => {
             <Card className="mb-6 border-teal/40 bg-teal/5">
               <CardContent className="py-4 flex items-center justify-between gap-4">
                 <p className="text-sm text-foreground">
-                  Inicie sessão para guardar as suas preferências permanentemente.
+                  {t("Configuracoes.inicieSessaoParaGuardar")}
                 </p>
-                <Button size="sm" onClick={() => navigate("/auth")}>Entrar</Button>
+                <Button size="sm" onClick={() => navigate(localizar("/auth"))}>{t("Configuracoes.entrar")}</Button>
               </CardContent>
             </Card>
           )}
@@ -181,15 +184,15 @@ const Configuracoes = () => {
           <Card className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-primary">
-                <Bell className="w-5 h-5 text-teal" /> Preferências de Notificação
+                <Bell className="w-5 h-5 text-teal" />{" "}{t("Configuracoes.preferenciasDeNotificacao")}
               </CardTitle>
-              <CardDescription>Escolha os emails que deseja receber de nós.</CardDescription>
+              <CardDescription>{t("Configuracoes.escolhaOsEmailsQue")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <Label htmlFor="n-updates" className="font-medium">Actualizações de Projectos e Doações</Label>
-                  <p className="text-xs text-muted-foreground mt-1">Receba emails sobre o nosso impacto.</p>
+                  <Label htmlFor="n-updates" className="font-medium">{t("Configuracoes.actualizacoesDeProjectosE")}</Label>
+                  <p className="text-xs text-muted-foreground mt-1">{t("Configuracoes.recebaEmailsSobreO")}</p>
                 </div>
                 <Switch
                   id="n-updates"
@@ -199,8 +202,8 @@ const Configuracoes = () => {
               </div>
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <Label htmlFor="n-ex" className="font-medium">Lembretes de Exercícios Visuais</Label>
-                  <p className="text-xs text-muted-foreground mt-1">Lembretes semanais para praticar.</p>
+                  <Label htmlFor="n-ex" className="font-medium">{t("Configuracoes.lembretesDeExerciciosVisuais")}</Label>
+                  <p className="text-xs text-muted-foreground mt-1">{t("Configuracoes.lembretesSemanaisParaPraticar")}</p>
                 </div>
                 <Switch
                   id="n-ex"
@@ -210,8 +213,8 @@ const Configuracoes = () => {
               </div>
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <Label htmlFor="n-com" className="font-medium">Novas Histórias da Comunidade</Label>
-                  <p className="text-xs text-muted-foreground mt-1">Alertas para novas publicações da comunidade.</p>
+                  <Label htmlFor="n-com" className="font-medium">{t("Configuracoes.novasHistoriasDaComunidade")}</Label>
+                  <p className="text-xs text-muted-foreground mt-1">{t("Configuracoes.alertasParaNovasPublicacoes")}</p>
                 </div>
                 <Switch
                   id="n-com"
@@ -226,25 +229,25 @@ const Configuracoes = () => {
           <Card className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-primary">
-                <Lock className="w-5 h-5 text-teal" /> Privacidade e Segurança
+                <Lock className="w-5 h-5 text-teal" />{" "}{t("Configuracoes.privacidadeESeguranca")}
               </CardTitle>
-              <CardDescription>Controle o acesso à sua conta e ao seu perfil.</CardDescription>
+              <CardDescription>{t("Configuracoes.controleOAcessoA")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="font-medium">Palavra-passe</p>
-                  <p className="text-xs text-muted-foreground mt-1">Altere a sua palavra-passe regularmente.</p>
+                  <p className="font-medium">{t("Configuracoes.palavraPasse")}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t("Configuracoes.altereASuaPalavra")}</p>
                 </div>
                 <Button variant="outline" onClick={() => setPasswordOpen(true)}>
-                  <KeyRound className="w-4 h-4 mr-2" /> Mudar Palavra-passe
+                  <KeyRound className="w-4 h-4 mr-2" />{" "}{t("Configuracoes.mudarPalavraPasse")}
                 </Button>
               </div>
               <div className="flex items-start justify-between gap-4 pt-2 border-t border-border/50">
                 <div className="pt-4">
-                  <Label htmlFor="pub" className="font-medium">Perfil Público</Label>
+                  <Label htmlFor="pub" className="font-medium">{t("Configuracoes.perfilPublico")}</Label>
                   <p className="text-xs text-muted-foreground mt-1 max-w-md">
-                    Permitir que a equipa médica e outros utilizadores vejam o meu progresso básico.
+                    {t("Configuracoes.permitirQueAEquipa")}
                   </p>
                 </div>
                 <div className="pt-4">
@@ -258,19 +261,19 @@ const Configuracoes = () => {
           <Card className="border-destructive/50 bg-destructive/5">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-destructive">
-                <ShieldAlert className="w-5 h-5" /> Zona de Perigo
+                <ShieldAlert className="w-5 h-5" />{" "}{t("Configuracoes.zonaDePerigo")}
               </CardTitle>
-              <CardDescription>Acções irreversíveis relacionadas com a sua conta.</CardDescription>
+              <CardDescription>{t("Configuracoes.accoesIrreversiveisRelacionadasCom")}</CardDescription>
             </CardHeader>
             <CardContent className="flex items-center justify-between gap-4">
               <div>
-                <p className="font-medium text-foreground">Eliminar Conta</p>
+                <p className="font-medium text-foreground">{t("Configuracoes.eliminarConta")}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Apaga permanentemente o seu perfil, histórico e preferências.
+                  {t("Configuracoes.apagaPermanentementeOSeu")}
                 </p>
               </div>
               <Button variant="destructive" onClick={() => setDeleteOpen(true)}>
-                <Trash2 className="w-4 h-4 mr-2" /> Eliminar Conta
+                <Trash2 className="w-4 h-4 mr-2" />{" "}{t("Configuracoes.eliminarConta")}
               </Button>
             </CardContent>
           </Card>
@@ -282,31 +285,31 @@ const Configuracoes = () => {
       <Dialog open={passwordOpen} onOpenChange={setPasswordOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Mudar Palavra-passe</DialogTitle>
+            <DialogTitle>{t("Configuracoes.mudarPalavraPasse")}</DialogTitle>
             <DialogDescription>
-              Introduza a sua palavra-passe actual e escolha uma nova.
+              {t("Configuracoes.introduzaASuaPalavra")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1">
-              <Label htmlFor="cur">Palavra-passe actual</Label>
+              <Label htmlFor="cur">{t("Configuracoes.palavraPasseActual")}</Label>
               <Input id="cur" type="password" value={currentPw} onChange={(e) => setCurrentPw(e.target.value)} />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="new">Nova palavra-passe</Label>
+              <Label htmlFor="new">{t("Configuracoes.novaPalavraPasse")}</Label>
               <Input id="new" type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="conf">Confirmar nova palavra-passe</Label>
+              <Label htmlFor="conf">{t("Configuracoes.confirmarNovaPalavraPasse")}</Label>
               <Input id="conf" type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setPasswordOpen(false)} disabled={passwordLoading}>
-              Cancelar
+              {t("Configuracoes.cancelar")}
             </Button>
             <Button onClick={handlePasswordSubmit} disabled={passwordLoading}>
-              {passwordLoading ? "A guardar…" : "Guardar"}
+              {passwordLoading ? t("Configuracoes.aGuardar") : t("Configuracoes.guardar")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -316,22 +319,19 @@ const Configuracoes = () => {
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Tem a certeza?</AlertDialogTitle>
+            <AlertDialogTitle>{t("Configuracoes.temACerteza")}</AlertDialogTitle>
             <AlertDialogDescription>
-              A sua conta ficará agendada para eliminação definitiva dentro de{" "}
-              <strong>30 dias</strong>. Serão apagados o perfil, o histórico de exercícios e a ligação
-              de pedidos de doação ou Premium à sua identidade. Se voltar a iniciar
-              sessão antes dessa data, o pedido é cancelado automaticamente.
+              <Trans i18nKey="Configuracoes.aSuaContaFicara" components={{ strong: <strong /> }} />
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteLoading}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteLoading}>{t("Configuracoes.cancelar")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={deleteLoading}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deleteLoading ? "A agendar…" : "Agendar eliminação"}
+              {deleteLoading ? t("Configuracoes.aAgendar") : t("Configuracoes.agendarEliminacao")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

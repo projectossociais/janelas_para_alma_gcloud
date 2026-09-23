@@ -1,12 +1,16 @@
 import { Sparkles } from "lucide-react";
 import PremiumExercicioEsqueleto from "@/components/exercises/PremiumExercicioEsqueleto";
+import { useTranslation } from "react-i18next";
 
-const ProgramaIaExercise = () => (
+const ProgramaIaExercise = () => {
+  const { t } = useTranslation();
+  return (
   <PremiumExercicioEsqueleto
-    title="Programa Adaptativo com IA"
-    description="Um algoritmo ajusta a dificuldade de cada sessão em tempo real, de acordo com o seu progresso."
+    title={t("ProgramaIaExercise.programaAdaptativoComIa")}
+    description={t("ProgramaIaExercise.umAlgoritmoAjustaA")}
     icon={Sparkles}
   />
 );
+};
 
 export default ProgramaIaExercise;

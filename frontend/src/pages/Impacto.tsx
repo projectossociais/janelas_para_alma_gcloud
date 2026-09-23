@@ -4,25 +4,41 @@ import Navbar from "@/components/Navbar";
 import AboutSection from "@/components/AboutSection";
 import ImpactSection from "@/components/ImpactSection";
 import Footer from "@/components/Footer";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
+import { localizar } from "@/i18n/rotas";
 
 const valueProps = [
   {
     icon: Handshake,
-    title: "Rede de Parceiros",
-    description: "Sistema que conecta pacientes a parceiros de saúde visual, facilitando o acesso a rastreios e consultas através de preços ajustados à realidade do utilizador.",
+    get title() {
+      return i18n.t("Impacto.redeDeParceiros");
+    },
+    get description() {
+      return i18n.t("Impacto.sistemaQueConectaPacientes");
+    },
     color: "text-teal bg-teal/10",
-    to: "/parceiros",
+    get to() {
+      return localizar("/parceiros");
+    },
   },
   {
     icon: Recycle,
-    title: "Logística de Economia Circular",
-    description: "Canal dedicado à recolha e reutilização de armações. Transformamos resíduos em materiais terapêuticos, reduzindo os custos para os pacientes e o impacto ambiental.",
+    get title() {
+      return i18n.t("Impacto.logisticaDeEconomiaCircular");
+    },
+    get description() {
+      return i18n.t("Impacto.canalDedicadoARecolha");
+    },
     color: "text-green bg-green/10",
-    to: "/circular",
+    get to() {
+      return localizar("/circular");
+    },
   },
 ];
 
 const Impacto = () => {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -35,10 +51,10 @@ const Impacto = () => {
         <section className="py-20 bg-background">
           <div className="container">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground text-center max-w-3xl mx-auto leading-tight">
-              A Nossa Proposta de Valor: Unindo Saúde, Ecologia e Inclusão
+              {t("Impacto.aNossaPropostaDe")}
             </h2>
             <p className="text-muted-foreground text-center mt-4 max-w-xl mx-auto">
-              Uma abordagem integrada para transformar a saúde visual em Angola.
+              {t("Impacto.umaAbordagemIntegradaPara")}
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-14 max-w-4xl mx-auto">
@@ -54,7 +70,7 @@ const Impacto = () => {
                   <h3 className="text-lg font-semibold text-foreground mb-2">{item.title}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
                   <div className="mt-4 flex items-center justify-end gap-1.5 text-sm font-medium text-green/70 group-hover:text-green transition-colors">
-                    <span>Saber mais</span>
+                    <span>{t("Impacto.saberMais")}</span>
                     <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                   </div>
                 </Link>
