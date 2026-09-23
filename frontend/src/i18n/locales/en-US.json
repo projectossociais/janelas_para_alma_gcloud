@@ -648,14 +648,14 @@
     "deixeUmComentarioOpcional": "Leave a comment (optional)"
   },
   "FileDropzone": {
-    "kb": "",
-    "cliqueOuArrastePara": "",
-    "pdfPngJpgOu": "",
-    "formatoNaoSuportadoEnvie": "",
-    "oFicheiroExcedeO": "",
-    "removerFicheiro": "",
-    "removerFicheiro2": "",
-    "anexarComprovativoCliqueOu": ""
+    "kb": "{{valor}} KB",
+    "cliqueOuArrastePara": "Click or drag to attach",
+    "pdfPngJpgOu": "PDF, PNG, JPG or WEBP (max. 5 MB)",
+    "formatoNaoSuportadoEnvie": "Unsupported format. Upload a PDF, PNG, JPG or WEBP.",
+    "oFicheiroExcedeO": "The file exceeds the 5 MB limit.",
+    "removerFicheiro": "Remove file {{name}}",
+    "removerFicheiro2": "Remove file",
+    "anexarComprovativoCliqueOu": "Attach proof of payment: click or drag a PDF, PNG, JPG or WEBP file, up to 5 MB"
   },
   "FlexibilidadeAcomodativaExercise": {
     "flexibilidadeAcomodativa": "",
