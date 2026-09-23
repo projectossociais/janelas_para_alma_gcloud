@@ -58,11 +58,3 @@ class PerfilJogadorPublico(BaseModel):
     patamar_maximo_alcancado: int
 
     model_config = {"from_attributes": True}
-
-
-class RecompensaRequest(BaseModel):
-    """Só o patamar alcançado -- nunca as moedas/diamantes em si. Quem
-    calcula quanto isso vale é sempre o servidor (`calcular_recompensa`),
-    para um pedido forjado não poder "imprimir" moedas."""
-
-    patamar_alcancado: int = Field(ge=0, le=15)

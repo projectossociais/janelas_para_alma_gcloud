@@ -6,14 +6,21 @@ nem `explicacao`) e só `POST /jogo/validar` -- que compara no servidor --
 é que revela qual era a certa.
 
 Mesma fronteira de confiança na economia virtual: `POST /jogo/recompensas`
-recebe só o patamar alcançado, nunca moedas/diamantes -- é sempre o
-servidor (`calcular_recompensa`) que decide quanto isso vale.
+não recebe nenhum patamar do cliente -- lê sempre o progresso que o próprio
+servidor rastreou (`JogoService`, a partir de respostas certas confirmadas
+em `/jogo/validar`). `/jogo/validar` aceita sessão opcional (quem joga sem
+conta continua a ver as respostas, só não acumula progresso nenhum -- sem
+sessão nunca chega a `/jogo/recompensas`, que exige sessão).
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.core.dependencies import obter_utilizador_admin, obter_utilizador_atual
+from app.core.dependencies import (
+    obter_utilizador_admin,
+    obter_utilizador_atual,
+    obter_utilizador_atual_opcional,
+)
 from app.db import obter_sessao
 from app.repositories.jogo_repository import (
     PerguntaJogoRegisto,
@@ -23,7 +30,6 @@ from app.repositories.jogo_repository import (
 from app.repositories.perfil_jogador_repository import (
     PerfilJogadorRegisto,
     SQLAlchemyPerfilJogadorRepository,
-    calcular_recompensa,
 )
 from app.repositories.utilizadores_repository import UtilizadorRegisto
 from app.schemas.jogo import (
@@ -31,10 +37,10 @@ from app.schemas.jogo import (
     PerguntaAdmin,
     PerguntaCriar,
     PerguntaPublica,
-    RecompensaRequest,
     ValidarRespostaRequest,
     ValidarRespostaResponse,
 )
+from app.services.jogo_service import JogoService, PerguntaNaoEncontradaError, ResultadoResposta
 
 router = APIRouter(tags=["jogo"])
 
@@ -49,6 +55,13 @@ def obter_perfil_jogador_repository(
     sessao: Session = Depends(obter_sessao),
 ) -> SQLAlchemyPerfilJogadorRepository:
     return SQLAlchemyPerfilJogadorRepository(sessao)
+
+
+def obter_jogo_service(
+    perguntas: SQLAlchemyPerguntaJogoRepository = Depends(obter_pergunta_jogo_repository),
+    perfis: SQLAlchemyPerfilJogadorRepository = Depends(obter_perfil_jogador_repository),
+) -> JogoService:
+    return JogoService(perguntas, perfis)
 
 
 @router.get("/jogo/pergunta-aleatoria", response_model=PerguntaPublica)
@@ -66,16 +79,15 @@ def obter_pergunta_aleatoria(
 @router.post("/jogo/validar", response_model=ValidarRespostaResponse)
 def validar_resposta(
     dados: ValidarRespostaRequest,
-    repo: SQLAlchemyPerguntaJogoRepository = Depends(obter_pergunta_jogo_repository),
-) -> ValidarRespostaResponse:
-    pergunta = repo.obter_por_id(dados.pergunta_id)
-    if pergunta is None:
+    utilizador: UtilizadorRegisto | None = Depends(obter_utilizador_atual_opcional),
+    servico: JogoService = Depends(obter_jogo_service),
+) -> ResultadoResposta:
+    try:
+        return servico.responder(
+            utilizador.id if utilizador else None, dados.pergunta_id, dados.resposta_usuario
+        )
+    except PerguntaNaoEncontradaError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="pergunta não encontrada")
-    return ValidarRespostaResponse(
-        correta=dados.resposta_usuario == pergunta.resposta_correta,
-        resposta_correta=pergunta.resposta_correta,
-        explicacao=pergunta.explicacao,
-    )
 
 
 # --- Perfil e economia (exige sessão) ---------------------------------------
@@ -91,14 +103,10 @@ def obter_perfil_jogador(
 
 @router.post("/jogo/recompensas", response_model=PerfilJogadorPublico)
 def registar_recompensa(
-    dados: RecompensaRequest,
     utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
-    repo: SQLAlchemyPerfilJogadorRepository = Depends(obter_perfil_jogador_repository),
+    servico: JogoService = Depends(obter_jogo_service),
 ) -> PerfilJogadorRegisto:
-    moedas_ganhas, diamantes_ganhos = calcular_recompensa(dados.patamar_alcancado)
-    return repo.registar_recompensa(
-        utilizador.id, moedas_ganhas, diamantes_ganhos, dados.patamar_alcancado
-    )
+    return servico.reclamar_recompensa(utilizador.id)
 
 
 # --- Gestão (só admin) ------------------------------------------------------

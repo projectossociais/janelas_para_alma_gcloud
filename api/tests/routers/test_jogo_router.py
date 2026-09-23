@@ -72,8 +72,15 @@ class RepositorioPerfilJogadorFalso:
                 diamantes=0,
                 partidas_jogadas=0,
                 patamar_maximo_alcancado=0,
+                patamar_em_curso=0,
             )
         return self._perfis[utilizador_id]
+
+    def atualizar_patamar_em_curso(self, utilizador_id: str, patamar_em_curso: int) -> PerfilJogadorRegisto:
+        atual = self.obter_ou_criar(utilizador_id)
+        atualizado = PerfilJogadorRegisto(**{**atual.__dict__, "patamar_em_curso": patamar_em_curso})
+        self._perfis[utilizador_id] = atualizado
+        return atualizado
 
     def registar_recompensa(
         self, utilizador_id: str, moedas_ganhas: int, diamantes_ganhos: int, patamar_alcancado: int
@@ -86,6 +93,7 @@ class RepositorioPerfilJogadorFalso:
             diamantes=atual.diamantes + diamantes_ganhos,
             partidas_jogadas=atual.partidas_jogadas + 1,
             patamar_maximo_alcancado=max(atual.patamar_maximo_alcancado, patamar_alcancado),
+            patamar_em_curso=0,
         )
         self._perfis[utilizador_id] = atualizado
         return atualizado
@@ -283,17 +291,39 @@ def test_obter_perfil_cria_um_perfil_zerado_na_primeira_vez(ambiente) -> None:
 
 def test_registar_recompensa_sem_sessao_devolve_401(ambiente) -> None:
     c, *_ = ambiente
-    resposta = c.post("/jogo/recompensas", json={"patamar_alcancado": 5})
-    assert resposta.status_code == 401
+    assert c.post("/jogo/recompensas").status_code == 401
 
 
-def test_registar_recompensa_calcula_moedas_e_diamantes_no_servidor(ambiente) -> None:
-    # O pedido só manda o patamar -- o cliente nunca diz quantas moedas
-    # ganhou, precisamente para não poder inventar um valor maior.
+def _responder_certo(c, repo, texto: str, nivel: int) -> None:
+    pergunta = repo.criar(texto, "a", "b", "c", "d", "A", nivel, None)
+    resposta = c.post("/jogo/validar", json={"pergunta_id": pergunta.id, "resposta_usuario": "A"})
+    assert resposta.status_code == 200
+    assert resposta.json()["correta"] is True
+
+
+def test_registar_recompensa_sem_ter_respondido_nada_nao_paga_nada(ambiente) -> None:
+    # O buraco original: chamar /jogo/recompensas directamente (o endpoint
+    # já não aceita sequer um `patamar_alcancado` no corpo) sem nunca ter
+    # respondido a uma pergunta. Antes desta correcção, um pedido forjado a
+    # mandar {"patamar_alcancado": 15} dava o prémio máximo.
     c, _, _, token_comum, _ = ambiente
     c.cookies.set("access_token", token_comum)
 
-    resposta = c.post("/jogo/recompensas", json={"patamar_alcancado": 5})
+    resposta = c.post("/jogo/recompensas")
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["moedas"] == 0
+    assert corpo["diamantes"] == 0
+
+
+def test_registar_recompensa_calcula_moedas_e_diamantes_a_partir_do_progresso_real(ambiente) -> None:
+    c, repo, _, token_comum, _ = ambiente
+    c.cookies.set("access_token", token_comum)
+
+    for i in range(5):
+        _responder_certo(c, repo, f"pergunta {i}", nivel=1)
+
+    resposta = c.post("/jogo/recompensas")
     assert resposta.status_code == 200
     corpo = resposta.json()
     assert corpo["moedas"] == 250  # 5 patamares x 50 moedas
@@ -303,11 +333,16 @@ def test_registar_recompensa_calcula_moedas_e_diamantes_no_servidor(ambiente) ->
 
 
 def test_registar_recompensa_acumula_entre_partidas(ambiente) -> None:
-    c, _, _, token_comum, _ = ambiente
+    c, repo, _, token_comum, _ = ambiente
     c.cookies.set("access_token", token_comum)
 
-    c.post("/jogo/recompensas", json={"patamar_alcancado": 3})
-    resposta = c.post("/jogo/recompensas", json={"patamar_alcancado": 2})
+    for i in range(3):
+        _responder_certo(c, repo, f"pergunta a {i}", nivel=1)
+    c.post("/jogo/recompensas")
+
+    for i in range(2):
+        _responder_certo(c, repo, f"pergunta b {i}", nivel=1)
+    resposta = c.post("/jogo/recompensas")
 
     corpo = resposta.json()
     assert corpo["moedas"] == 250  # (3 + 2) x 50
@@ -316,19 +351,44 @@ def test_registar_recompensa_acumula_entre_partidas(ambiente) -> None:
     assert corpo["patamar_maximo_alcancado"] == 3
 
 
-def test_registar_recompensa_vitoria_completa_da_o_bonus_maximo_de_diamantes(ambiente) -> None:
+def test_um_pedido_forjado_com_patamar_no_corpo_e_ignorado(ambiente) -> None:
+    # A correcção central: mesmo mandando um `patamar_alcancado` forjado no
+    # corpo (campo que o schema já nem declara), o servidor ignora-o por
+    # completo -- paga sempre com base no que rastreou.
     c, _, _, token_comum, _ = ambiente
     c.cookies.set("access_token", token_comum)
 
     resposta = c.post("/jogo/recompensas", json={"patamar_alcancado": 15})
+    assert resposta.status_code == 200
     corpo = resposta.json()
-    assert corpo["moedas"] == 750  # 15 x 50
-    assert corpo["diamantes"] == 5
+    assert corpo["moedas"] == 0
+    assert corpo["diamantes"] == 0
 
 
-def test_registar_recompensa_com_patamar_fora_do_intervalo_devolve_422(ambiente) -> None:
-    c, _, _, token_comum, _ = ambiente
+def test_responder_de_nivel_errado_nao_conta_para_a_recompensa(ambiente) -> None:
+    # Reutilizar perguntas fáceis (nível 1) depois de já se ter esgotado
+    # esse nível não infla o patamar em curso nem a recompensa.
+    c, repo, _, token_comum, _ = ambiente
     c.cookies.set("access_token", token_comum)
 
-    assert c.post("/jogo/recompensas", json={"patamar_alcancado": -1}).status_code == 422
-    assert c.post("/jogo/recompensas", json={"patamar_alcancado": 16}).status_code == 422
+    for i in range(5):
+        _responder_certo(c, repo, f"facil {i}", nivel=1)
+    # Nível 1 esgotado (patamar_em_curso == 5) -- mais uma pergunta fácil.
+    _responder_certo(c, repo, "facil extra", nivel=1)
+
+    resposta = c.post("/jogo/recompensas")
+    assert resposta.json()["moedas"] == 250  # continua só 5 patamares, não 6
+
+
+def test_validar_sem_sessao_funciona_mas_nao_faz_ninguem_ganhar_nada(ambiente) -> None:
+    # Jogar sem conta continua a mostrar as respostas certas -- só não
+    # acumula progresso nenhum (não há perfil para guardar; e sem sessão
+    # nunca chega a /jogo/recompensas, que exige sessão).
+    c, repo, _, _, repo_perfil = ambiente
+    pergunta = repo.criar("2+2?", "1", "2", "3", "4", "A", 1, None)
+
+    resposta = c.post("/jogo/validar", json={"pergunta_id": pergunta.id, "resposta_usuario": "A"})
+
+    assert resposta.status_code == 200
+    assert resposta.json()["correta"] is True
+    assert repo_perfil._perfis == {}

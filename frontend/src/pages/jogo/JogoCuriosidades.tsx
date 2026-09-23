@@ -222,13 +222,20 @@ const JogoCuriosidades = () => {
   // só localmente para mostrar no ecrã; mesmo padrão de
   // `sessoesExercicioApi.registar` (CerebroExercise.tsx): nunca bloqueia o
   // ecrã final, uma falha de rede só fica no `console.error`.
+  //
+  // `registarRecompensa` já não recebe o patamar -- o servidor paga com
+  // base no progresso que ele próprio rastreou a partir das respostas
+  // certas confirmadas em `validarResposta` (JogoService). O valor local
+  // (`calcularRecompensaCliente`) é só para o ecrã não ficar vazio antes da
+  // resposta do servidor chegar; se os dois divergirem (ex.: perguntas
+  // reutilizadas de nível errado), quem manda é sempre o servidor.
   useEffect(() => {
     if (recompensaEnviada || (!jogoTerminado && !mostrarModalErrado)) return;
     const patamarAlcancado = jogoTerminado ? TOTAL_PATAMARES : Math.max(patamar - 1, 0);
     setRecompensaEnviada(true);
     setRecompensaLocal(calcularRecompensaCliente(patamarAlcancado));
     if (!profile?.id) return;
-    jogoApi.registarRecompensa(patamarAlcancado).catch((err: unknown) => {
+    jogoApi.registarRecompensa().catch((err: unknown) => {
       console.error("Falha ao sincronizar a recompensa do jogo:", err);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

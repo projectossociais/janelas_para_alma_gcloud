@@ -1003,12 +1003,10 @@ export const jogoApi = {
   // Exige sessão -- só tem sentido para quem tem conta (ver `useProfile`).
   obterPerfil: () => pedido<PerfilJogadorPublico>("/jogo/perfil"),
 
-  // Só manda o patamar alcançado -- quem calcula quanto isso vale em moedas
-  // e diamantes é sempre o servidor (`calcular_recompensa`), nunca o
-  // cliente, para não dar para "inventar" prémios com um pedido forjado.
-  registarRecompensa: (patamarAlcancado: number) =>
-    pedido<PerfilJogadorPublico>("/jogo/recompensas", {
-      method: "POST",
-      body: JSON.stringify({ patamar_alcancado: patamarAlcancado }),
-    }),
+  // Sem corpo nenhum -- o servidor paga com base no progresso que ele
+  // próprio rastreou a partir de respostas certas confirmadas em
+  // `validarResposta` (ver JogoService), nunca num patamar que o cliente
+  // diga ter alcançado. Corrigido 2026-09-23: antes disto o patamar vinha
+  // do corpo do pedido, e dava para "inventar" prémios com um pedido forjado.
+  registarRecompensa: () => pedido<PerfilJogadorPublico>("/jogo/recompensas", { method: "POST" }),
 };
