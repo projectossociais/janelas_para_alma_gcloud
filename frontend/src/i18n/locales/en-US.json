@@ -1710,8 +1710,8 @@
     "ocorreuUmErroTente": "Something went wrong. Please try again."
   },
   "edgeFunction": {
-    "falhaDeLigacaoVerifique": "",
-    "erroAoContactarO": ""
+    "falhaDeLigacaoVerifique": "Connection failed. Check your internet (Wi-Fi or mobile data) and try again.",
+    "erroAoContactarO": "Error {{status}} while contacting the server. Please try again."
   },
   "jogoConfig": {
     "kz": ""
