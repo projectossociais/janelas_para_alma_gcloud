@@ -1174,12 +1174,12 @@
     "umAlgoritmoAjustaA": "An algorithm adjusts the difficulty of each session in real time, based on your progress."
   },
   "PublicacaoDetalhe": {
-    "publicacaoNaoEncontrada": "",
-    "estaPublicacaoPodeTer": "",
-    "verTodasAsPublicacoes": "",
-    "galeriaDeFotos": "",
-    "naoFoiPossivelCarregar": "",
-    "voltarAsPublicacoes": ""
+    "publicacaoNaoEncontrada": "Post not found",
+    "estaPublicacaoPodeTer": "This post may have been removed or has not been published yet.",
+    "verTodasAsPublicacoes": "View all posts",
+    "galeriaDeFotos": "Photo Gallery",
+    "naoFoiPossivelCarregar": "We couldn't load this post.",
+    "voltarAsPublicacoes": "Back to posts"
   },
   "Publicacoes": {
     "accoesRecentes": "",
