@@ -26,7 +26,7 @@ import { useSiteBannerAltura } from "@/contexts/SiteBannerContext";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
-import { localizar } from "@/i18n/rotas";
+import { disponivelNoIdiomaActual, localizar } from "@/i18n/rotas";
 
 
 interface SearchItem {
@@ -411,14 +411,17 @@ const Navbar = () => {
   const location = useLocation();
   const { isLoggedIn, user, logout, isAdmin } = useAuth();
   const { profile } = useProfile();
-  const isHome = location.pathname === "/";
+  const isHome = location.pathname === "/" || location.pathname === "/en";
   const useSolidNav = !isHome || scrolled || drawerOpen || profileOpen || searchOpen;
 
   const allLinks: NavItem[] = useMemo(() => {
-    if (!isLoggedIn) return baseLinks;
-    if (user?.role === "estrabico") return estrabicoLinks;
-    if (user?.role === "profissional") return profissionalLinks;
-    return baseLinks;
+    const links =
+      !isLoggedIn ? baseLinks
+      : user?.role === "estrabico" ? estrabicoLinks
+      : user?.role === "profissional" ? profissionalLinks
+      : baseLinks;
+    // No site inglês, esconde links para páginas só em português (o jogo).
+    return links.filter((l) => disponivelNoIdiomaActual(l.route));
   }, [isLoggedIn, user?.role]);
 
   const displayName = profile?.nome_completo || user?.name || "";
@@ -568,6 +571,7 @@ const Navbar = () => {
 
             <div className="flex items-center gap-0.5 sm:gap-2 shrink-0">
 
+              {disponivelNoIdiomaActual("/jogo-curiosidades") && (
               <button
                 onClick={() => navigateTo("/jogo-curiosidades")}
                 className="p-2 rounded-lg bg-teal/15 text-teal hover:bg-teal/25 transition-colors shrink-0"
@@ -576,6 +580,7 @@ const Navbar = () => {
               >
                 <Gamepad2 className="w-5 h-5" />
               </button>
+              )}
 
               {!isLoggedIn && (
                 <button

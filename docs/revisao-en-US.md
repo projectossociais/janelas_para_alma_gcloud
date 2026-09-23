@@ -5,7 +5,7 @@ Gerado por `frontend/scripts/gerar-revisao-en.mjs` a partir de `src/i18n/revisao
 | Categoria | Chaves |
 |---|---|
 | Saúde (AMA) | 178 |
-| Legal | 79 |
+| Legal | 80 |
 | Dúvidas | 41 |
 
 ## Saúde (AMA) (178)
@@ -410,7 +410,7 @@ Afirmações médicas ou de saúde. Validar com um profissional antes de publica
 | `sigaOAlvoCom` | Siga o alvo com o olhar ao longo de uma trajectória em forma de oito. | Follow the target with your eyes along a figure-eight path. |  |
 | `sigaOPontoCom` | Siga o ponto com o olhar, sem mover a cabeça, ao longo da trajectória em forma de oito. | Follow the dot with your eyes along the figure-eight path, without moving your head. |  |
 
-## Legal (79)
+## Legal (80)
 
 Política de Privacidade, Termos e textos com efeito jurídico. Rascunho: não é uma tradução jurídica validada.
 
@@ -428,6 +428,12 @@ Política de Privacidade, Termos e textos com efeito jurídico. Rascunho: não �
 | `simOsDadosDe` | Sim. Os dados de saúde (como os resultados do rastreio de estrabismo) são tratados como categoria especial de dados, só são recolhidos mediante o seu consentimento explícito e são protegidos com medidas técnicas de segurança adequadas. Consulte as secções 3 e 9 da nossa <ligacao>Política de Privacidade</ligacao> para mais detalhes. | Yes. Health data (such as your strabismus screening results) is treated as a special category of data, is collected only with your explicit consent and is protected by appropriate technical security measures. See sections 3 and 9 of our <ligacao>Privacy Policy</ligacao> for more details. |  |
 | `soQuandoOUtilizador` | Só quando o utilizador demonstra interesse directo em ser encaminhado, mediante consentimento explícito. Não vendemos nem cedemos dados para fins comerciais de terceiros. Ver secção 5 (<ligacao>Partilha de Dados com Terceiros</ligacao>). | Only when you express a direct interest in being referred, and with your explicit consent. We do not sell or share data for third-party commercial purposes. See section 5 (<ligacao>Sharing Data With Third Parties</ligacao>). |  |
 | `utilizamosApenasCookiesTecnicos` | Utilizamos apenas cookies técnicos essenciais e, quando aplicável, cookies estatísticos para melhorar a experiência de utilização, nunca para fins publicitários de terceiros. Ver secção 11 (<ligacao>Cookies</ligacao>). | We use only essential technical cookies and, where applicable, analytics cookies to improve your experience, never for third-party advertising. See section 11 (<ligacao>Cookies</ligacao>). |  |
+
+### legal
+
+| Chave | Português | Inglês | Nota |
+|---|---|---|---|
+| `notaTraducao` | Esta tradução inglesa é disponibilizada por conveniência. Prevalece a versão portuguesa. | This English translation is provided for convenience. The Portuguese version prevails. |  |
 
 ### PoliticaPrivacidade
 

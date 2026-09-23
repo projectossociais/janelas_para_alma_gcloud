@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Lightbulb, Gamepad2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
-import { localizar } from "@/i18n/rotas";
+import { disponivelNoIdiomaActual, localizar } from "@/i18n/rotas";
 
 const CURIOSIDADES = () => [
   i18n.t("CuriosidadesSection.oEstrabismoAfectaCerca"),
@@ -42,6 +42,7 @@ const CuriosidadesSection = () => {
             {curiosidade}
           </p>
 
+          {disponivelNoIdiomaActual("/jogo-curiosidades") && (
           <div className="border-t border-border/50 pt-5">
             <button
               onClick={() => navigate(localizar("/jogo-curiosidades"))}
@@ -51,6 +52,7 @@ const CuriosidadesSection = () => {
               {t("CuriosidadesSection.tenteONossoJogo")}
             </button>
           </div>
+          )}
         </div>
       </div>
     </section>

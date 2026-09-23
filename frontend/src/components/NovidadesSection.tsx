@@ -4,7 +4,7 @@ import teamGroupPhoto from "@/assets/team-group-stairs.jpg";
 import saudeMundialPhoto from "@/assets/novidade-saude-mundial.jpg";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
-import { localizar } from "@/i18n/rotas";
+import { disponivelNoIdiomaActual, localizar } from "@/i18n/rotas";
 
 const novidades = [
   {
@@ -50,7 +50,7 @@ const NovidadesSection = () => {
         </div>
 
         <div className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-4 scrollbar-hide touch-pan-x">
-          {novidades.map((item) => {
+          {novidades.filter((item) => !item.to || disponivelNoIdiomaActual(item.to)).map((item) => {
             const cardContent = (
               <>
                 <div className="relative w-full h-48 overflow-hidden">

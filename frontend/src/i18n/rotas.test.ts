@@ -1,5 +1,15 @@
 import i18n from "./index";
-import { ALIASES_PT, ROTAS, caminhoEmIngles, caminhoEmPortugues, localizar } from "./rotas";
+import {
+  ALIASES_PT,
+  ROTAS,
+  ROTAS_BILINGUES,
+  SITE,
+  caminhoEmIngles,
+  caminhoEmPortugues,
+  disponivelNoIdiomaActual,
+  localizar,
+  metadadosSeo,
+} from "./rotas";
 
 describe("mapa de rotas PT <-> EN", () => {
   it("os pares pedidos estão mapeados", () => {
@@ -25,8 +35,8 @@ describe("mapa de rotas PT <-> EN", () => {
     expect(unicos(ROTAS.map((r) => r.en))).toBe(true);
   });
 
-  it("ida e volta dá sempre a página de partida, nos dois sentidos", () => {
-    for (const r of ROTAS) {
+  it("ida e volta dá sempre a página de partida, nos dois sentidos (páginas bilingues)", () => {
+    for (const r of ROTAS_BILINGUES) {
       const pt = r.pt.replace(":slug", "um-slug");
       const en = r.en.replace(":slug", "um-slug");
       expect(caminhoEmIngles(pt)).toBe(en);
@@ -92,5 +102,79 @@ describe("localizar (links internos escritos em português)", () => {
   it("um caminho que já é inglês não é traduzido outra vez", () => {
     void i18n.changeLanguage("en-US");
     expect(localizar("/en/faq")).toBe("/en/faq");
+  });
+});
+
+describe("páginas só em português (o jogo)", () => {
+  afterEach(() => void i18n.changeLanguage("pt-AO"));
+
+  it("não têm versão inglesa: o botão EN leva à página inicial inglesa", () => {
+    expect(caminhoEmIngles("/jogo-curiosidades")).toBe("/en");
+    expect(caminhoEmIngles("/jogo-curiosidades/jogar")).toBe("/en");
+    expect(ROTAS_BILINGUES.some((r) => r.pt.startsWith("/jogo-curiosidades"))).toBe(false);
+  });
+
+  it("um URL /en/trivia-game não corresponde a nenhuma página", () => {
+    expect(caminhoEmPortugues("/en/trivia-game")).toBe("/");
+  });
+
+  it("localizar() mantém o caminho PT delas, para o link poder ser reconhecido e escondido", () => {
+    void i18n.changeLanguage("en-US");
+    expect(localizar("/jogo-curiosidades")).toBe("/jogo-curiosidades");
+    expect(disponivelNoIdiomaActual(localizar("/jogo-curiosidades"))).toBe(false);
+  });
+
+  it("os links para elas escondem-se só no site inglês", () => {
+    void i18n.changeLanguage("pt-AO");
+    expect(disponivelNoIdiomaActual("/jogo-curiosidades")).toBe(true);
+    void i18n.changeLanguage("en-US");
+    expect(disponivelNoIdiomaActual("/jogo-curiosidades")).toBe(false);
+    expect(disponivelNoIdiomaActual("/jogo-curiosidades/perfil")).toBe(false);
+    expect(disponivelNoIdiomaActual("/faq")).toBe(true);
+    expect(disponivelNoIdiomaActual("https://www.exemplo.com/noticia")).toBe(true);
+  });
+});
+
+describe("metadadosSeo (canonical + hreflang)", () => {
+  const exemplo = (p: string) => p.replace(":slug", "um-slug");
+
+  it("hreflang recíproco em todas as páginas com par: a página PT e a EN declaram o mesmo conjunto", () => {
+    for (const r of ROTAS_BILINGUES) {
+      const pt = metadadosSeo(exemplo(r.pt), true);
+      const en = metadadosSeo(exemplo(r.en), true);
+      expect(pt.alternativas).toEqual(en.alternativas);
+      expect(pt.alternativas).toEqual([
+        { hreflang: "pt-AO", href: SITE + exemplo(r.pt) },
+        { hreflang: "en-US", href: SITE + exemplo(r.en) },
+        { hreflang: "x-default", href: SITE + exemplo(r.pt) },
+      ]);
+      // cada página aponta para si própria como canónica
+      expect(pt.canonical).toBe(SITE + exemplo(r.pt));
+      expect(en.canonical).toBe(SITE + exemplo(r.en));
+    }
+  });
+
+  it("URLs sempre absolutos no domínio de produção", () => {
+    const { canonical, alternativas } = metadadosSeo("/faq", true);
+    for (const href of [canonical, ...alternativas.map((a) => a.href)]) expect(href).toMatch(/^https:\/\/www\.janelasparaalma\.com\//);
+  });
+
+  it("páginas só em português não levam hreflang para inglês", () => {
+    expect(metadadosSeo("/jogo-curiosidades", true)).toEqual({ canonical: SITE + "/jogo-curiosidades", alternativas: [] });
+  });
+
+  it("com a versão inglesa desligada, não há hreflang (as páginas /en dariam 404)", () => {
+    expect(metadadosSeo("/faq", false)).toEqual({ canonical: SITE + "/faq", alternativas: [] });
+  });
+
+  it("aliases apontam para o URL canónico da página", () => {
+    expect(metadadosSeo("/auth", true).canonical).toBe(SITE + "/login");
+    expect(metadadosSeo("/registo", false).canonical).toBe(SITE + "/login");
+  });
+
+  it("páginas fora do mapa (admin, 404) não têm canonical nem hreflang", () => {
+    expect(metadadosSeo("/admin/utilizadores", true)).toEqual({ canonical: null, alternativas: [] });
+    expect(metadadosSeo("/nao-existe", true)).toEqual({ canonical: null, alternativas: [] });
+    expect(metadadosSeo("/en/trivia-game", true)).toEqual({ canonical: null, alternativas: [] });
   });
 });

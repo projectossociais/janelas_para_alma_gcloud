@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactElement } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProfileProvider } from "@/contexts/ProfileContext";
 import { FeedbackProvider } from "@/contexts/FeedbackContext";
@@ -69,7 +70,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import NotFound from "./pages/NotFound";
 import IdiomaDaRota from "./i18n/IdiomaDaRota";
 import { inglesAtivo } from "./i18n/idiomas";
-import { ALIASES_PT, ROTAS, type ChaveRota } from "./i18n/rotas";
+import { ALIASES_PT, ROTAS, ROTAS_BILINGUES, type ChaveRota } from "./i18n/rotas";
 
 /**
  * Que componente renderiza cada página do mapa de rotas (`src/i18n/rotas.ts`).
@@ -126,6 +127,7 @@ const PAGINAS: Record<ChaveRota, ReactElement> = {
 const queryClient = new QueryClient();
 
 const App = () => (
+  <HelmetProvider>
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
@@ -145,9 +147,9 @@ const App = () => (
                 {ALIASES_PT.map((a) => (
                   <Route key={a.pt} path={a.pt} element={PAGINAS[a.chave]} />
                 ))}
-                {/* Versão inglesa: só existe com VITE_ENABLE_EN=true; sem ela, /en/* cai no 404. */}
+                {/* Versão inglesa: só existe com VITE_ENABLE_EN=true; sem ela, /en/* cai no 404. Páginas só em PT (jogo) não têm rota inglesa. */}
                 {inglesAtivo() &&
-                  ROTAS.map((r) => (
+                  ROTAS_BILINGUES.map((r) => (
                     <Route key={`en:${r.chave}`} path={r.en} element={PAGINAS[r.chave]} />
                   ))}
                 {/* Internas, só em português -- de propósito fora do mapa de rotas. */}
@@ -176,6 +178,7 @@ const App = () => (
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
+  </HelmetProvider>
 );
 
 export default App;

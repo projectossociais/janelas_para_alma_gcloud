@@ -47,6 +47,13 @@ describe("com VITE_ENABLE_EN desligada (omissão)", () => {
     expect(rodape().getByRole("link", { name: "Política de Privacidade" })).toHaveAttribute("href", "/politica-de-privacidade");
   });
 
+  it("em português o jogo continua visível e as páginas legais não têm a nota da tradução", async () => {
+    abrir("/termos-de-utilizacao");
+    await screen.findByRole("heading", { name: "Termos de Utilização" });
+    expect(screen.queryByRole("note")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Jogo: Inclusivamente" })).toBeInTheDocument();
+  });
+
   it("o site é português e o botão EN não aparece", async () => {
     abrir("/faq");
     expect(await screen.findByRole("heading", { name: "Perguntas Frequentes" })).toBeInTheDocument();
@@ -105,6 +112,36 @@ describe("com VITE_ENABLE_EN=true", () => {
     i18n.addResource("pt-AO", "translation", "Teste.chaveNova", "Texto novo");
     i18n.addResource("en-US", "translation", "Teste.chaveNova", "");
     expect(i18n.t("Teste.chaveNova")).toBe("Texto novo");
+  });
+
+  it("o <head> leva canonical e hreflang recíprocos, com URLs absolutos", async () => {
+    abrir("/en/faq");
+    await screen.findByRole("heading", { name: "Frequently Asked Questions" });
+    await waitFor(() => expect(document.head.querySelector('link[rel="canonical"]')).not.toBeNull());
+    expect(document.head.querySelector('link[rel="canonical"]')).toHaveAttribute("href", "https://www.janelasparaalma.com/en/faq");
+    const alt = [...document.head.querySelectorAll('link[rel="alternate"]')].map((l) => `${l.getAttribute("hreflang")} ${l.getAttribute("href")}`);
+    expect(alt).toEqual([
+      "pt-AO https://www.janelasparaalma.com/faq",
+      "en-US https://www.janelasparaalma.com/en/faq",
+      "x-default https://www.janelasparaalma.com/faq",
+    ]);
+    await waitFor(() => expect(document.title).toBe("Janelas para a Alma | Visual Inclusion and the Fight Against Strabismus"));
+  });
+
+  it("o jogo não existe em inglês: /en/trivia-game dá 404 com noindex, e os links para o jogo desaparecem", async () => {
+    abrir("/en/trivia-game");
+    expect(await screen.findByRole("heading", { name: "404" })).toBeInTheDocument();
+    await waitFor(() => expect(document.head.querySelector('meta[name="robots"][content="noindex"]')).not.toBeNull());
+    abrir("/en");
+    await waitFor(() => expect(document.documentElement.lang).toBe("en-US"));
+    expect(screen.queryByRole("button", { name: "Game: Inclusivamente" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Launching our game: Inclusivamente")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Try our game/ })).not.toBeInTheDocument();
+  });
+
+  it("as páginas legais em inglês avisam que prevalece a versão portuguesa", async () => {
+    abrir("/en/terms-of-use");
+    expect(await screen.findByRole("note")).toHaveTextContent("The Portuguese version prevails.");
   });
 
   it("voltar a uma rota portuguesa repõe pt-AO", async () => {
