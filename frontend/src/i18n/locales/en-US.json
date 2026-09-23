@@ -679,11 +679,11 @@
     "doacaoDeOculos": "Eyeglass Donation"
   },
   "HeroSection": {
-    "janelasParaAAlma": "",
-    "umOlharAlinhadoUma": "",
-    "umaInstituicaoAngolanaQue": "",
-    "apoiar": "",
-    "logo": ""
+    "janelasParaAAlma": "Janelas<br/>Para a Alma",
+    "umOlharAlinhadoUma": "An Aligned Gaze, a Transformed Life",
+    "umaInstituicaoAngolanaQue": "An Angolan organization promoting visual inclusion alongside the circular economy and technological innovation.",
+    "apoiar": "Donate",
+    "logo": "Logo"
   },
   "ImpactSection": {
     "impacto": "",
