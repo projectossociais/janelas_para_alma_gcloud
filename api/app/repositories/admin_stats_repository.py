@@ -18,7 +18,7 @@ from app.repositories.orm_models import (
     CandidaturaVoluntariado,
     ContactMessage,
     PremiumRequest,
-    ScannerAnalysis,
+    Screening,
     SessaoExercicio,
     Utilizador,
 )
@@ -110,7 +110,11 @@ class SQLAlchemyAdminStatsRepository:
             )
         ) or 0
         sessoes_exercicio = self._contar(SessaoExercicio, SessaoExercicio.created_at >= desde)
-        analises_scanner = self._contar(ScannerAnalysis, ScannerAnalysis.created_at >= desde)
+        # `screenings` -- não a antiga `scanner_analyses`, órfã desde que o
+        # scanner passou a persistir na API própria (ver PR de migração do
+        # Scanner.tsx, 2026-09-17). Antes desta correcção este número ficava
+        # sempre a 0, por mais análises reais que acontecessem.
+        analises_scanner = self._contar(Screening, Screening.criado_em >= desde)
         pedidos_premium = self._contar(PremiumRequest, PremiumRequest.created_at >= desde)
         mensagens_contacto = self._contar(ContactMessage, ContactMessage.created_at >= desde)
 

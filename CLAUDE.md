@@ -389,7 +389,7 @@ Não imitar estes padrões enquanto a migração módulo-a-módulo decorre (ver 
 | `ContactSection.tsx` ("Quero ser um Kamba"), `VolunteerSection.tsx` (`/kamba`) | **Bug activo, não só dívida de migração:** os dois formulários públicos de candidatura a voluntário chamam `sendToEdgeFunction("send-volunteer-email", ...)` — uma Edge Function do Supabase que só manda um email — e nunca `POST /voluntariado/candidatura`, o endpoint real já construído e testado que `AdminVoluntariado.tsx` usa para aprovar candidaturas. Resultado: ninguém que se candidata pelos formulários públicos aparece para um admin aprovar. Confirmado 2026-09-17, ainda por corrigir |
 | `frontend/src/lib/edgeFunction.ts` | Chama Edge Functions do Supabase directamente (usado só pelos dois formulários acima) — a substituir pela API própria junto com a correcção de cima |
 | `ClinicalPartners.tsx` | Formulário de agendamento não persiste nada — só mostra um toast |
-| `AdminOverview.tsx` (`admin_stats_repository.py`) | `analises_scanner` ainda conta a tabela `scanner_analyses`, órfã desde que ninguém escreve lá — devia passar a contar `screenings` |
+| `ScannerAnalysis` (`orm_models.py`) | Modelo e tabela `scanner_analyses` ficaram órfãos depois de `analises_scanner` passar a contar `screenings` (corrigido 2026-09-23) — nada mais lê nem escreve esta tabela. Não apagada agora (dropar tabela é decisão à parte, ver CLAUDE.md §10); útil só se algum dado antigo lá dentro precisar de ser consultado uma vez |
 
 Itens antigos desta tabela já confirmados como resolvidos ou obsoletos (2026-09-17), removidos daqui: `ProfileContext.tsx` já usa `perfilApi` por completo (não é Supabase); `Produto.tsx` foi apagado do projecto num refactor antigo e já não existe.
 
