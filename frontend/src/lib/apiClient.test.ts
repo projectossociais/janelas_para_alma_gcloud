@@ -141,3 +141,42 @@ describe("apiClient — mesma origem", () => {
     await expect(authApi.sair()).resolves.toBeUndefined();
   });
 });
+
+describe("mensagemDeErroApi -- erros da API por idioma", () => {
+  const erroApi = (status: number, message: string) => Object.assign(new Error(message), { status });
+
+  afterEach(async () => {
+    const { default: i18n } = await import("@/i18n");
+    await i18n.changeLanguage("pt-AO");
+  });
+
+  it("em português mostra o detail da API, como sempre", async () => {
+    const { mensagemDeErroApi } = await import("./apiClient");
+    expect(mensagemDeErroApi(erroApi(401, "email ou password incorretos"), "fallback")).toBe("email ou password incorretos");
+    expect(mensagemDeErroApi(new TypeError("Failed to fetch"), "fallback")).toBe("fallback");
+  });
+
+  it("em inglês nunca mostra o detail português: traduz os conhecidos e usa mensagens por tipo nos restantes", async () => {
+    const { default: i18n } = await import("@/i18n");
+    const { mensagemDeErroApi } = await import("./apiClient");
+    await i18n.changeLanguage("en-US");
+
+    expect(mensagemDeErroApi(erroApi(401, "email ou password incorretos"), "fb")).toBe("Incorrect email or password.");
+    expect(mensagemDeErroApi(erroApi(409, "o email ana@exemplo.ao já está registado"), "fb")).toBe("This email is already registered.");
+    expect(mensagemDeErroApi(erroApi(404, "algo que o frontend não conhece"), "fb")).toBe(
+      "We couldn't find what you were looking for.",
+    );
+    expect(mensagemDeErroApi(erroApi(422, "detalhe desconhecido"), "fb")).toBe(
+      "Some of the information isn't valid. Please review it and try again.",
+    );
+    expect(mensagemDeErroApi(erroApi(503, "serviço indisponível"), "fb")).toBe(
+      "Something went wrong on our end. Please try again in a few minutes.",
+    );
+    // rede: o pedido nem chegou ao servidor
+    expect(mensagemDeErroApi(new TypeError("Failed to fetch"), "fb")).toBe(
+      "We couldn't reach the server. Check your internet connection and try again.",
+    );
+    // erro local (não é da API nem de rede): fica a mensagem de contexto, já traduzida
+    expect(mensagemDeErroApi(new Error("falha local"), "Context message")).toBe("Context message");
+  });
+});

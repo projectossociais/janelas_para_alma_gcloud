@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
@@ -228,5 +228,44 @@ describe("Apoiar — doação financeira (comprovativo via R2, CROSS-02)", () =>
       expect.any(String),
       "comprovativos/x.pdf",
     );
+  });
+});
+
+describe("Apoiar -- em inglês, o que vai para a API continua em português", () => {
+  beforeEach(() => {
+    registarFinanceira.mockReset();
+    prepararComprovativo.mockReset();
+    enviarParaStorage.mockReset();
+    toastSuccess.mockReset();
+    toastError.mockReset();
+  });
+  afterEach(async () => {
+    const { default: i18n } = await import("@/i18n");
+    await i18n.changeLanguage("pt-AO");
+  });
+
+  it("os detalhes do donativo usam o nome e o intervalo do nível em português, com a página em inglês", async () => {
+    const { default: i18n } = await import("@/i18n");
+    await i18n.changeLanguage("en-US");
+    prepararComprovativo.mockResolvedValue({
+      url_de_upload: "https://r2.exemplo.test/comprovativos/x.pdf?sig=1",
+      chave: "comprovativos/x.pdf",
+      url_publico: "https://cdn.exemplo.test/comprovativos/x.pdf",
+    });
+    enviarParaStorage.mockResolvedValue(undefined);
+    registarFinanceira.mockResolvedValue({ id: "doacao-3", recibo_id: "FIN-EN", tipo: "financeiro" });
+
+    const user = userEvent.setup();
+    render(<Apoiar />, { wrapper: MemoryRouter });
+    await user.click(screen.getByRole("tab", { name: /Financial Support/i }));
+    await user.click(screen.getByRole("button", { name: /Ally/i }));
+    await user.click(screen.getByRole("button", { name: /^Give as Ally$/i }));
+    await user.type(await screen.findByLabelText(/receive your receipt/i), "doador@example.com");
+    await user.click(screen.getByRole("button", { name: /Continue/i }));
+    await user.upload(await screen.findByTestId("file-input"), new File(["x"], "c.pdf", { type: "application/pdf" }));
+    await user.click(screen.getByRole("button", { name: /Complete Donation/i }));
+
+    await waitFor(() => expect(registarFinanceira).toHaveBeenCalled());
+    expect(registarFinanceira).toHaveBeenCalledWith("doador@example.com", "Aliado (10.000 a 250.000 Kz)", "comprovativos/x.pdf");
   });
 });
