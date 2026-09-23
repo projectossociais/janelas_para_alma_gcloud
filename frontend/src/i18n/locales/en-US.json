@@ -610,19 +610,19 @@
     "alternaEntreConvergenciaE": "Alternate between convergence and divergence in timed cycles to build binocular endurance."
   },
   "Faq": {
-    "simOsDadosDe": "",
-    "simAQualquerMomento": "",
-    "naoORastreioDigital": "",
-    "soQuandoOUtilizador": "",
-    "utilizamosApenasCookiesTecnicos": "",
-    "perguntasFrequentes": "",
-    "respostasRapidasSobrePrivacidade": "",
-    "naoEncontrouAResposta": "",
-    "osMeusDadosDe": "",
-    "possoApagarAMinha": "",
-    "oResultadoDaTriagem": "",
-    "aPlataformaPartilhaOs": "",
-    "oSiteUtilizaCookies": ""
+    "simOsDadosDe": "Yes. Health data (such as your strabismus screening results) is treated as a special category of data, is collected only with your explicit consent and is protected by appropriate technical security measures. See sections 3 and 9 of our <ligacao>Privacy Policy</ligacao> for more details.",
+    "simAQualquerMomento": "Yes, at any time. You can request the deletion of your account and its associated data in Settings or by contacting us directly. This is one of your rights as a data subject. See section 7 (<ligacao>Data Subject Rights</ligacao>) of the Privacy Policy.",
+    "naoORastreioDigital": "No. The digital screening and the interactive exercises are preventive and for guidance only: they are not a medical diagnosis and do not replace an in-person eye exam. See the Medical and Legal Notice in section 5 of the <ligacao>Terms of Use</ligacao>.",
+    "soQuandoOUtilizador": "Only when you express a direct interest in being referred, and with your explicit consent. We do not sell or share data for third-party commercial purposes. See section 5 (<ligacao>Sharing Data With Third Parties</ligacao>).",
+    "utilizamosApenasCookiesTecnicos": "We use only essential technical cookies and, where applicable, analytics cookies to improve your experience, never for third-party advertising. See section 11 (<ligacao>Cookies</ligacao>).",
+    "perguntasFrequentes": "Frequently Asked Questions",
+    "respostasRapidasSobrePrivacidade": "Quick answers about privacy, health data and using the Janelas para a Alma platform.",
+    "naoEncontrouAResposta": "Didn't find the answer you were looking for? Contact us at <a>janelasparaalma18@gmail.com</a>.",
+    "osMeusDadosDe": "Is my health data protected?",
+    "possoApagarAMinha": "Can I delete my account and my data?",
+    "oResultadoDaTriagem": "Does the screening result replace a medical appointment?",
+    "aPlataformaPartilhaOs": "Does the platform share my data with partner clinics?",
+    "oSiteUtilizaCookies": "Does the site use cookies?"
   },
   "FeedbackWidget": {
     "feedback": "",
