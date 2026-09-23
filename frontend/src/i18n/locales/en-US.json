@@ -889,13 +889,13 @@
     "notificacoesPorLer": "Notifications ({{contagem}} unread)"
   },
   "NovidadesSection": {
-    "fiquePorDentro": "",
-    "novidades": "",
-    "externo": "",
-    "saibaMais": "",
-    "campanhaDeConsciencializacaoNa": "",
-    "noticiasSobreASaude": "",
-    "lancamentoDoNossoJogo": ""
+    "fiquePorDentro": "Stay informed",
+    "novidades": "News",
+    "externo": "External",
+    "saibaMais": "Learn more...",
+    "campanhaDeConsciencializacaoNa": "Awareness Campaign in Gamek",
+    "noticiasSobreASaude": "News on Vision Health Around the World",
+    "lancamentoDoNossoJogo": "Launching our game: Inclusivamente"
   },
   "OptioptikaBookingDialog": {
     "pedidoDeConsultaConfirmado": "",
