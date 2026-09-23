@@ -1,4 +1,5 @@
 import "@testing-library/jest-dom";
+import "@/i18n";
 
 // jsdom não implementa ResizeObserver nem a Pointer Capture API; vários
 // componentes Radix (RadioGroup, Select, ...) tocam-lhes ao montar/interagir.
