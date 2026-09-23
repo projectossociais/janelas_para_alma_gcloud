@@ -956,11 +956,11 @@
     "especialistasEmSaudeVisual": "Vision health specialists performing an eye exam"
   },
   "ParceirosSection": {
-    "juntosVemosMaisLonge": "",
-    "parceiros": "",
-    "desafioGenial": "",
-    "opticaOptioptika": "",
-    "neltGroup": ""
+    "juntosVemosMaisLonge": "Together, we see further",
+    "parceiros": "Partners",
+    "desafioGenial": "Desafio Genial",
+    "opticaOptioptika": "Optioptika Optical",
+    "neltGroup": "Nelt Group"
   },
   "PartnerDialog": {
     "queroSerParceiro": "",
