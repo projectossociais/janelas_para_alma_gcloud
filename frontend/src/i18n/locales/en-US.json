@@ -1182,12 +1182,12 @@
     "voltarAsPublicacoes": "Back to posts"
   },
   "Publicacoes": {
-    "accoesRecentes": "",
-    "noTerrenoComA": "",
-    "actividadesCampanhasENoticias": "",
-    "aindaNaoHaPublicacoes": "",
-    "naoFoiPossivelCarregar": "",
-    "voltar": ""
+    "accoesRecentes": "Recent Activities",
+    "noTerrenoComA": "Out in the Community",
+    "actividadesCampanhasENoticias": "Activities, campaigns and news from Janelas para a Alma.",
+    "aindaNaoHaPublicacoes": "No posts yet. Check back soon to follow our activities.",
+    "naoFoiPossivelCarregar": "We couldn't load the posts.",
+    "voltar": "Back"
   },
   "RegistoPremium": {
     "voltar": "",
