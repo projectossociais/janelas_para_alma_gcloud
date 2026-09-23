@@ -650,24 +650,27 @@ Não depende de infraestrutura nova. Dias, não semanas.
 - **O que ainda faltava e foi corrigido agora:** o botão "Carregar Fotografia" (upload de uma única imagem) nunca chamava esse microserviço — caía sempre no `Math.random()`. Removido por completo: só fica a captura guiada, que exige as 3 poses para o cálculo real
 - **Pronto quando:** nenhum ecrã apresenta um resultado clínico que não tenha sido calculado a partir de medições reais — ✅
 
-### W-16 · Candidaturas a voluntário nunca chegam à base de dados — descoberto 2026-09-17
-- **Onde:** `src/components/ContactSection.tsx` (modal "Quero ser um Kamba", homepage) e
+### W-16 (candidaturas) · Candidaturas a voluntário nunca chegavam à base de dados — ✅ **FEITO 2026-09-23**
+*(Nota: há outro item chamado W-16 mais abaixo, "Validação contra casos reais", do scanner —
+colisão de numeração pré-existente na Sprint 3, não corrigida aqui para não gerar mais churn.)*
+- **Onde:** `src/components/ContactSection.tsx` (modal "Quero ser um Kamba", página `/junte-se`) e
   `src/components/VolunteerSection.tsx` (página `/kamba`), ambos via `src/lib/edgeFunction.ts`
-- **Hoje:** os dois formulários chamam `sendToEdgeFunction("send-volunteer-email", dados)` —
-  uma Edge Function do Supabase que só envia um email. Nenhum dos dois chama
-  `POST /voluntariado/candidatura`, o endpoint que já existe na API própria
+- **Antes:** os dois formulários chamavam `sendToEdgeFunction("send-volunteer-email", dados)` —
+  uma Edge Function do Supabase que só enviava um email. Nenhum dos dois chamava
+  `POST /voluntariado/candidatar`, o endpoint que já existia na API própria
   (`app/routers/voluntariado.py`), com serviço, testes, e um ecrã de admin inteiro
-  (`AdminVoluntariado.tsx`) pronto para aprovar candidaturas — só que nunca recebe nenhuma
-  vinda destes dois formulários
-- **Porquê é grave:** não é dívida de arquitectura, é um fluxo activo e visível (o CTA mais
-  proeminente de voluntariado no site) que não faz o que promete. Uma pessoa que se candidata
-  recebe "Bem-vindo(a) à equipa!" e nunca é vista por ninguém do lado do admin
-- **Fazer:** trocar `sendToEdgeFunction(...)` por `voluntariadoApi.candidatar(...)` (já existe em
-  `apiClient.ts`, usado hoje só pelo admin) nos dois formulários. Decidir à parte se a
-  notificação por email ao voluntário/à equipa continua a fazer sentido manter (via `EmailSender`
-  da API própria, não a Edge Function do Supabase)
+  (`AdminVoluntariado.tsx`) pronto para aprovar candidaturas
+- **Descoberta ao planear a correcção:** `POST /voluntariado/candidatar` exige sessão (decisão já
+  tomada e documentada no próprio router — sem conta não há como ligar "as minhas actividades").
+  Os dois formulários, em contraste, pediam nome e email para visitantes sem conta. Decisão
+  tomada com o dono do projecto: **exigir login antes de candidatar**, sem abrir excepção nova
+  no backend
+- **Feito:** os dois formulários passam a chamar `voluntariadoApi.candidatar(motivacao, telefone)`;
+  o botão/CTA de candidatura verifica `isLoggedIn` primeiro e redirecciona para
+  `/auth?next=/junte-se` (ou `/kamba`) em vez de abrir o formulário; os campos Nome e Email saem
+  do formulário (o endpoint real não os aceita); `edgeFunction.ts` removido (zero consumidores)
 - **Pronto quando:** submeter qualquer um dos dois formulários cria uma linha em
-  `candidaturas_voluntariado`, visível em `AdminVoluntariado.tsx`
+  `candidaturas_voluntariado`, visível em `AdminVoluntariado.tsx` — ✅
 - **Testes:** integração — caminho de erro (API recusa/falha) e caminho de sucesso, mesmo
   padrão dos outros formulários já migrados (`ContactSection.tsx` → `contactMessagesApi`)
 
