@@ -1737,9 +1737,9 @@
     "naoFoiPossivelAceder": "We couldn't access the camera."
   },
   "validarPassword": {
-    "aPalavraPasseDeve": "",
-    "aPalavraPassePrecisa": "",
-    "aPalavraPassePrecisa2": ""
+    "aPalavraPasseDeve": "Your password must be at least {{PASSWORD_MIN_LEN}} characters long.",
+    "aPalavraPassePrecisa": "Your password needs at least one letter.",
+    "aPalavraPassePrecisa2": "Your password needs at least one number."
   },
   "erroApi": {
     "rede": "",
