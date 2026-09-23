@@ -591,19 +591,19 @@
     "umAlgoritmoAjustaA": "An algorithm adjusts the difficulty of each session in real time, based on your progress."
   },
   "ExercisesSection": {
-    "exerciciosVisuais": "",
-    "treineASuaVisao": "",
-    "quatroExerciciosInteractivosCurtos": "",
-    "iniciarExercicios": "",
-    "comecar": "",
-    "acompanhamentoEmOito": "",
-    "fortalecaAMusculaturaOcular": "",
-    "convergencia": "",
-    "treineACoordenacaoBinocular": "",
-    "focoDinamico": "",
-    "alterneOFocoEntre": "",
-    "relaxamento": "",
-    "sincronizeRespiracaoEPiscar": ""
+    "exerciciosVisuais": "Vision Exercises",
+    "treineASuaVisao": "Train your vision, every day",
+    "quatroExerciciosInteractivosCurtos": "Four short, interactive, scientifically inspired exercises to strengthen the eye muscles, relieve strain and improve focus.",
+    "iniciarExercicios": "Start Exercises",
+    "comecar": "Start",
+    "acompanhamentoEmOito": "Figure-Eight Tracking",
+    "fortalecaAMusculaturaOcular": "Strengthen your eye muscles by following a smooth figure-eight movement.",
+    "convergencia": "Convergence",
+    "treineACoordenacaoBinocular": "Train binocular coordination by bringing the dots together at the center of your gaze.",
+    "focoDinamico": "Dynamic Focus",
+    "alterneOFocoEntre": "Shift your focus between near and far to work on visual flexibility.",
+    "relaxamento": "Relaxation",
+    "sincronizeRespiracaoEPiscar": "Sync your breathing and blinking to relieve screen strain."
   },
   "FacilidadeVergenciaExercise": {
     "facilidadeDeVergencia": "",
