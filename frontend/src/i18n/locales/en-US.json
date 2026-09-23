@@ -550,8 +550,8 @@
     "salvarAlteracoes": "Save Changes"
   },
   "EstereopsiaExercise": {
-    "estereopsiaVisao3d": "",
-    "padroesEstereoscopicosAvaliamE": ""
+    "estereopsiaVisao3d": "Stereopsis (3D Vision)",
+    "padroesEstereoscopicosAvaliamE": "Stereoscopic patterns assess and train binocular depth perception."
   },
   "Exercicios": {
     "exerciciosVisuaisPraticos": "",
