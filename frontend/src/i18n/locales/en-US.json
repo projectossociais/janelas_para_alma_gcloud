@@ -1707,7 +1707,7 @@
     "maximo20Caracteres": "Maximum 20 characters"
   },
   "apiClient": {
-    "ocorreuUmErroTente": ""
+    "ocorreuUmErroTente": "Something went wrong. Please try again."
   },
   "edgeFunction": {
     "falhaDeLigacaoVerifique": "",
