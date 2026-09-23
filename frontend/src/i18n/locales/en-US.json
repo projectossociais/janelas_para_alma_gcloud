@@ -486,16 +486,16 @@
     "piscarOsOlhosRegularmente": "Blinking regularly while using screens helps prevent eye strain, since we blink far less when we are focused on a screen."
   },
   "DashboardPro": {
-    "areaClinica": "",
-    "bemVindoADr": "",
-    "pacientesAtribuidos": "",
-    "teleconsultasAgendadas": "",
-    "relatoriosPendentes": "",
-    "emBreve": "",
-    "listaDePacientesQue": "",
-    "visualizacaoDeRelatoriosDo": "",
-    "agendaIntegradaDeTeleconsultas": "",
-    "emissaoDeRecomendacoesClinicas": ""
+    "areaClinica": "Clinical Area",
+    "bemVindoADr": "Welcome, Dr.",
+    "pacientesAtribuidos": "Assigned patients",
+    "teleconsultasAgendadas": "Scheduled teleconsultations",
+    "relatoriosPendentes": "Pending reports",
+    "emBreve": "Coming soon",
+    "listaDePacientesQue": "• List of patients who have agreed to share their data.",
+    "visualizacaoDeRelatoriosDo": "• View scanner reports by patient.",
+    "agendaIntegradaDeTeleconsultas": "• Integrated teleconsultation calendar.",
+    "emissaoDeRecomendacoesClinicas": "• Issue clinical recommendations."
   },
   "DashboardUser": {
     "ola": "",
