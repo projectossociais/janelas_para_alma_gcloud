@@ -475,15 +475,15 @@
     "copiar": "Copy"
   },
   "CuriosidadesSection": {
-    "curiosidades": "",
-    "tenteONossoJogo": "",
-    "oEstrabismoAfectaCerca": "",
-    "cercaDe80De": "",
-    "aAmbliopiaOlhoPreguicoso": "",
-    "oculosUsadosEDevidamente": "",
-    "osDoisOlhosTrabalham": "",
-    "emAngolaAMaioria": "",
-    "piscarOsOlhosRegularmente": ""
+    "curiosidades": "Did You Know?",
+    "tenteONossoJogo": "Try our game: Inclusivamente",
+    "oEstrabismoAfectaCerca": "Strabismus affects about 4% of the world's population, but many cases are never diagnosed.",
+    "cercaDe80De": "About 80% of everything we learn about the world reaches us through vision.",
+    "aAmbliopiaOlhoPreguicoso": "Amblyopia (\"lazy eye\") can only be treated successfully if it is identified early, preferably before age 7.",
+    "oculosUsadosEDevidamente": "Used glasses that are properly refurbished can restore clear vision to someone who has never had access to an eye exam.",
+    "osDoisOlhosTrabalham": "The two eyes work as a team: small misalignments can be corrected with vision therapy exercises, without surgery.",
+    "emAngolaAMaioria": "In Angola, most cases of childhood strabismus are only detected once they are already affecting the child's performance at school.",
+    "piscarOsOlhosRegularmente": "Blinking regularly while using screens helps prevent eye strain, since we blink far less when we are focused on a screen."
   },
   "DashboardPro": {
     "areaClinica": "",
