@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { Heart, Mail, MapPin, Send, CheckCircle, Star, Users, Award, BookOpen } from "lucide-react";
 import ProgramModal from "@/components/ProgramModal";
@@ -9,8 +10,9 @@ import benefitCertificate from "@/assets/benefit-certificate.png";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { sendToEdgeFunction } from "@/lib/edgeFunction";
-import { contactMessagesApi, mensagemDeErroApi } from "@/lib/apiClient";
+import { contactMessagesApi, voluntariadoApi, mensagemDeErroApi } from "@/lib/apiClient";
+import { useAuth } from "@/contexts/AuthContext";
+import { localizar } from "@/i18n/rotas";
 import {
   Dialog,
   DialogContent,
@@ -28,9 +30,7 @@ const contactSchema = () => z.object({
 });
 
 const volunteerSchema = () => z.object({
-  name: z.string().trim().min(1, i18n.t("ContactSection.nomeEObrigatorio")).max(100, i18n.t("ContactSection.maximo100Caracteres")),
-  email: z.string().trim().email(i18n.t("ContactSection.emailInvalido")).max(255, i18n.t("ContactSection.maximo255Caracteres")),
-  phone: z.string().trim().min(1, i18n.t("ContactSection.telefoneEObrigatorio")).max(20, i18n.t("ContactSection.maximo20Caracteres")),
+  phone: z.string().trim().max(20, i18n.t("ContactSection.maximo20Caracteres")).optional(),
   motivation: z.string().trim().min(1, i18n.t("ContactSection.motivacaoEObrigatoria")).max(1000, i18n.t("ContactSection.maximo1000Caracteres")),
 });
 
@@ -56,6 +56,8 @@ const volunteerBenefits = [
 const ContactSection = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { isLoggedIn } = useAuth();
   const [contactOpen, setContactOpen] = useState(false);
   const [volunteerInfoOpen, setVolunteerInfoOpen] = useState(false);
   const [signupOpen, setSignupOpen] = useState(false);
@@ -113,14 +115,21 @@ const ContactSection = () => {
     }
   };
 
+  const abrirCandidatura = () => {
+    if (!isLoggedIn) {
+      navigate(localizar("/auth?next=/junte-se"));
+      return;
+    }
+    setVolunteerInfoOpen(false);
+    setTimeout(() => setSignupOpen(true), 150);
+  };
+
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrors({});
 
     const formData = new FormData(e.currentTarget);
     const data = {
-      name: formData.get("name") as string,
-      email: formData.get("email") as string,
       phone: formData.get("phone") as string,
       motivation: formData.get("motivation") as string,
     };
@@ -137,8 +146,7 @@ const ContactSection = () => {
 
     setLoading(true);
     try {
-      const resp = await sendToEdgeFunction("send-volunteer-email", result.data);
-      if (resp?.error) throw new Error(resp.error);
+      await voluntariadoApi.candidatar(result.data.motivation, result.data.phone || undefined);
       toast({
         title: t("ContactSection.inscricaoSubmetidaComSucesso"),
         description: t("ContactSection.bemVindoAA"),
@@ -149,7 +157,7 @@ const ContactSection = () => {
       console.error("Volunteer form error:", err);
       toast({
         title: t("ContactSection.erroAoSubmeter"),
-        description: err instanceof Error ? err.message : t("ContactSection.verifiqueASuaLigacao"),
+        description: mensagemDeErroApi(err, t("ContactSection.verifiqueASuaLigacao")),
         variant: "destructive",
       });
     } finally {
@@ -323,10 +331,7 @@ const ContactSection = () => {
 
             <div className="flex flex-col gap-3">
               <button
-                onClick={() => {
-                  setVolunteerInfoOpen(false);
-                  setTimeout(() => setSignupOpen(true), 150);
-                }}
+                onClick={abrirCandidatura}
                 className="w-full inline-flex items-center justify-center px-6 py-3 rounded-lg bg-teal text-teal-foreground font-medium transition-all hover:opacity-90 shadow-elevated"
               >
                 {t("ContactSection.queroSerUmKamba")}
@@ -361,18 +366,6 @@ const ContactSection = () => {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSignup} className="space-y-5 pt-2">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">{t("ContactSection.nomeCompleto")}</label>
-                <Input name="name" placeholder={t("ContactSection.oTeuNome")} maxLength={100} />
-                {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">{t("ContactSection.email")}</label>
-                <Input name="email" type="email" placeholder={t("ContactSection.exemploEmail")} maxLength={255} />
-                {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
-              </div>
-            </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">{t("ContactSection.telefone")}</label>
               <Input name="phone" placeholder={t("ContactSection.n2449xxXxxXxx")} maxLength={20} />
