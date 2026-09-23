@@ -876,8 +876,8 @@
     "oQueProcura": "What are you looking for?"
   },
   "NotFound": {
-    "oopsPageNotFound": "",
-    "returnToHome": ""
+    "oopsPageNotFound": "Oops! Page not found",
+    "returnToHome": "Return to Home"
   },
   "NotificationBell": {
     "notificacoes": "",
