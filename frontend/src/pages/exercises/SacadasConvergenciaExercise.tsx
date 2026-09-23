@@ -6,6 +6,7 @@ const SacadasConvergenciaExercise = () => {
   const { t } = useTranslation();
   return (
   <PremiumExercicioEsqueleto
+    exercicioId="sacadas-convergencia"
     title={t("SacadasConvergenciaExercise.convergenciaComSaltosSacadas")}
     description={t("SacadasConvergenciaExercise.alternaRapidamenteOFoco")}
     icon={Zap}

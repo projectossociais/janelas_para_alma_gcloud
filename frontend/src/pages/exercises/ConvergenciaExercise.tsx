@@ -585,7 +585,8 @@ const ConvergenciaExercise = () => {
           <BaseExercise
             title={t("ConvergenciaExercise.treinoDeConvergencia")}
             description={t("ConvergenciaExercise.mantenhaOOlharFixo2")}
-            isPremium={false}
+            exercicioId={EXERCICIO_ID}
+            grupo="trial"
             durationSeconds={duracaoSegundos}
           >
             <ConvergenciaGame

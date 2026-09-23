@@ -6,6 +6,7 @@ const FlexibilidadeAcomodativaExercise = () => {
   const { t } = useTranslation();
   return (
   <PremiumExercicioEsqueleto
+    exercicioId="flexibilidade-acomodativa"
     title={t("FlexibilidadeAcomodativaExercise.flexibilidadeAcomodativa")}
     description={t("FlexibilidadeAcomodativaExercise.mudaDeFocoEntre")}
     icon={RefreshCw}

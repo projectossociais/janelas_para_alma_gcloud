@@ -6,6 +6,7 @@ const EstereopsiaExercise = () => {
   const { t } = useTranslation();
   return (
   <PremiumExercicioEsqueleto
+    exercicioId="estereopsia"
     title={t("EstereopsiaExercise.estereopsiaVisao3d")}
     description={t("EstereopsiaExercise.padroesEstereoscopicosAvaliamE")}
     icon={Layers}

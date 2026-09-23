@@ -10,6 +10,7 @@ from app.routers import (
     conta,
     contact_messages,
     doacoes,
+    exercicios,
     feedback,
     jogo,
     notificacoes,
@@ -48,6 +49,7 @@ app.include_router(doacoes.router)
 app.include_router(feedback.router)
 app.include_router(uploads.router)
 app.include_router(sessoes_exercicio.router)
+app.include_router(exercicios.router)
 app.include_router(contact_messages.router)
 app.include_router(premium.router)
 app.include_router(admin.router)

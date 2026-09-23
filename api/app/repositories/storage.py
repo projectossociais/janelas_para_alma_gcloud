@@ -47,3 +47,21 @@ class R2Presigner:
             Params={"Bucket": self._bucket, "Key": chave, "ContentType": content_type},
             ExpiresIn=self._expira,
         )
+
+
+class R2VideosPresigner(R2Presigner):
+    """Leitura assinada no bucket privado dos vídeos dos exercícios
+    (`r2_bucket_videos`) — nunca no bucket público."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        s = obter_settings()
+        self._bucket = s.r2_bucket_videos
+        self._expira = s.r2_video_url_expira_segundos
+
+    def url_de_leitura(self, chave: str) -> str:
+        return self._cliente.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": self._bucket, "Key": chave},
+            ExpiresIn=self._expira,
+        )

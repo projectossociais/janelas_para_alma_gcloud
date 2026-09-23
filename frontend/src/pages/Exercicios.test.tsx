@@ -1,75 +1,173 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, within, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import Exercicios from "./Exercicios";
+import { AcessoExerciciosProvider } from "@/contexts/AcessoExerciciosContext";
 
-// O que importa testar aqui: o acesso aos exercícios premium decide-se por
-// profile.premium_ativo (ou papel admin), nunca mais pelo bypass fixo
-// `temAcessoPremium = true` que existia antes (CLAUDE.md secção 8 — decidir
-// acesso exige teste).
+// Os 8 exercícios são pagos e o acesso decide-se na API (GET /exercicios/acesso).
+// A página tem de mostrar cada estado de forma consistente e nunca
+// desbloquear nada por conta própria (CLAUDE.md secção 8 — decidir acesso
+// exige teste).
 
 vi.mock("@/components/Navbar", () => ({ default: () => null }));
 vi.mock("@/components/Footer", () => ({ default: () => null }));
 vi.mock("@/components/FeedbackWidget", () => ({ default: () => null }));
 
-let mockProfile: Record<string, unknown> | null = null;
+let mockLoggedIn = true;
+vi.mock("@/contexts/AuthContext", () => ({
+  useAuth: () => ({ isLoggedIn: mockLoggedIn, loading: false }),
+}));
 vi.mock("@/contexts/ProfileContext", () => ({
-  useProfile: () => ({ profile: mockProfile, loading: false, refetch: vi.fn(), setProfile: vi.fn() }),
+  useProfile: () => ({ profile: null }),
 }));
 
-const baseProfile = {
-  id: "user-1",
-  nome_completo: "Ana Teste",
-  email: "ana@example.com",
-  biografia: null,
-  data_nascimento: null,
-  genero: null,
-  telefone: null,
-  provincia: null,
-  avatar_url: null,
-  notificacoes_projetos: false,
-  notificacoes_lembretes: false,
-  notificacoes_comunidade: false,
-  created_at: "2026-01-01T00:00:00.000Z",
-};
+const acesso = vi.fn();
+const iniciarTrial = vi.fn();
+vi.mock("@/lib/apiClient", () => ({
+  exerciciosApi: {
+    acesso: (...a: unknown[]) => acesso(...a),
+    iniciarTrial: (...a: unknown[]) => iniciarTrial(...a),
+  },
+  mensagemDeErroApi: (_e: unknown, fallback: string) => fallback,
+}));
+
+const TRIAL = ["figure8", "convergence", "cerebro", "relax"];
+const PREMIUM = ["ambliopia", "sacadas-convergencia", "flexibilidade-acomodativa", "estereopsia"];
+
+const estado = (over: Record<string, unknown>) => ({
+  estado: "trial_disponivel",
+  exercicios_desbloqueados: [],
+  exercicios_trial: TRIAL,
+  exercicios_premium: PREMIUM,
+  trial_iniciado_em: null,
+  trial_termina_em: null,
+  trial_dias_restantes: null,
+  ...over,
+});
 
 const renderPagina = () =>
   render(
     <MemoryRouter>
-      <Exercicios />
+      <AcessoExerciciosProvider>
+        <Exercicios />
+      </AcessoExerciciosProvider>
     </MemoryRouter>,
   );
 
-describe("Exercicios — acesso ao plano Premium", () => {
-  it("sem premium_ativo e sem sessão: exercícios premium ficam bloqueados", () => {
-    mockProfile = null;
-    renderPagina();
+const grupo = (titulo: string) =>
+  screen.getByRole("heading", { level: 2, name: titulo }).closest("section") as HTMLElement;
+const contarDisponiveis = (el: HTMLElement) => within(el).queryAllByText("Disponível").length;
+const contarBloqueados = (el: HTMLElement) =>
+  within(el).queryAllByText("Bloqueado", { selector: "span" }).length;
 
-    expect(screen.getAllByLabelText(/conteúdo bloqueado/i).length).toBeGreaterThan(0);
-    expect(screen.getByRole("button", { name: /desbloquear tudo/i })).toBeInTheDocument();
+describe("Exercicios — 8 exercícios em dois grupos", () => {
+  beforeEach(() => {
+    mockLoggedIn = true;
+    acesso.mockReset();
+    iniciarTrial.mockReset();
   });
 
-  it("com sessão mas premium_ativo=false: continua bloqueado", () => {
-    mockProfile = { ...baseProfile, papel: "comum", premium_ativo: false };
+  it("mostra exactamente 4 no grupo do teste e 4 no Premium, sem os exercícios eliminados", async () => {
+    acesso.mockResolvedValue(estado({}));
     renderPagina();
 
-    expect(screen.getAllByLabelText(/conteúdo bloqueado/i).length).toBeGreaterThan(0);
-    expect(screen.getByRole("button", { name: /desbloquear tudo/i })).toBeInTheDocument();
+    await screen.findByText("Trial disponível");
+    expect(contarBloqueados(grupo("Incluídos no teste de 7 dias"))).toBe(4);
+    expect(contarBloqueados(grupo("Premium"))).toBe(4);
+    for (const eliminado of [
+      /Sacadas com Distratores/i,
+      /Facilidade de Vergência/i,
+      /Consciência Periférica/i,
+      /Programa Adaptativo/i,
+    ]) {
+      expect(screen.queryByText(eliminado)).not.toBeInTheDocument();
+    }
   });
 
-  it("com premium_ativo=true: exercícios premium ficam desbloqueados", () => {
-    mockProfile = { ...baseProfile, papel: "comum", premium_ativo: true };
+  it("visitante sem sessão: tudo bloqueado e CTA para criar conta, sem chamar a API", async () => {
+    mockLoggedIn = false;
     renderPagina();
 
-    expect(screen.queryAllByLabelText(/conteúdo bloqueado/i)).toHaveLength(0);
-    expect(screen.queryByRole("button", { name: /desbloquear tudo/i })).not.toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: /Criar conta e começar teste de 7 dias/i }),
+    ).toBeInTheDocument();
+    expect(contarBloqueados(grupo("Incluídos no teste de 7 dias"))).toBe(4);
+    expect(contarBloqueados(grupo("Premium"))).toBe(4);
+    expect(acesso).not.toHaveBeenCalled();
   });
 
-  it("papel admin sem premium_ativo: também fica desbloqueado", () => {
-    mockProfile = { ...baseProfile, papel: "admin", premium_ativo: false };
+  it("trial disponível: 8 bloqueados e botão para começar o teste", async () => {
+    acesso.mockResolvedValue(estado({ estado: "trial_disponivel" }));
     renderPagina();
 
-    expect(screen.queryAllByLabelText(/conteúdo bloqueado/i)).toHaveLength(0);
-    expect(screen.queryByRole("button", { name: /desbloquear tudo/i })).not.toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: /Começar teste gratuito de 7 dias/i }),
+    ).toBeInTheDocument();
+    expect(contarDisponiveis(grupo("Incluídos no teste de 7 dias"))).toBe(0);
+    expect(contarDisponiveis(grupo("Premium"))).toBe(0);
+  });
+
+  it("trial activo: só os 4 do teste desbloqueados, com os dias que faltam", async () => {
+    acesso.mockResolvedValue(
+      estado({ estado: "trial_ativo", exercicios_desbloqueados: TRIAL, trial_dias_restantes: 5 }),
+    );
+    renderPagina();
+
+    expect(await screen.findByText(/Faltam 5 dias do seu teste gratuito/)).toBeInTheDocument();
+    expect(contarDisponiveis(grupo("Incluídos no teste de 7 dias"))).toBe(4);
+    expect(contarBloqueados(grupo("Premium"))).toBe(4);
+  });
+
+  it("trial terminado: o grupo do teste continua visível mas bloqueado, CTA para Premium", async () => {
+    acesso.mockResolvedValue(estado({ estado: "trial_terminado" }));
+    renderPagina();
+
+    expect(await screen.findByText("Trial terminado")).toBeInTheDocument();
+    expect(contarBloqueados(grupo("Incluídos no teste de 7 dias"))).toBe(4);
+    expect(contarBloqueados(grupo("Premium"))).toBe(4);
+    expect(screen.queryByRole("button", { name: /Começar teste/i })).not.toBeInTheDocument();
+  });
+
+  it("Premium: os 8 desbloqueados, sem CTA de compra", async () => {
+    acesso.mockResolvedValue(estado({ estado: "premium", exercicios_desbloqueados: [...TRIAL, ...PREMIUM] }));
+    renderPagina();
+
+    await screen.findByText(/Tem acesso aos 8 exercícios/);
+    expect(contarDisponiveis(grupo("Incluídos no teste de 7 dias"))).toBe(4);
+    expect(contarDisponiveis(grupo("Premium"))).toBe(4);
+    expect(screen.queryByRole("button", { name: /Ver planos Premium/i })).not.toBeInTheDocument();
+  });
+
+  it("uma falha da API deixa tudo bloqueado -- nunca desbloqueia por omissão", async () => {
+    acesso.mockRejectedValue(new Error("falha de rede"));
+    renderPagina();
+
+    await waitFor(() => expect(contarBloqueados(grupo("Premium"))).toBe(4));
+    expect(contarDisponiveis(grupo("Incluídos no teste de 7 dias"))).toBe(0);
+  });
+
+  it("começar o teste com sucesso desbloqueia os 4 do teste", async () => {
+    acesso.mockResolvedValue(estado({ estado: "trial_disponivel" }));
+    iniciarTrial.mockResolvedValue(
+      estado({ estado: "trial_ativo", exercicios_desbloqueados: TRIAL, trial_dias_restantes: 7 }),
+    );
+    renderPagina();
+
+    fireEvent.click(await screen.findByRole("button", { name: /Começar teste gratuito de 7 dias/i }));
+
+    expect(await screen.findByText(/Faltam 7 dias/)).toBeInTheDocument();
+    expect(iniciarTrial).toHaveBeenCalledTimes(1);
+    expect(contarDisponiveis(grupo("Incluídos no teste de 7 dias"))).toBe(4);
+  });
+
+  it("se a API recusar o início do teste (ex.: 409), nada fica desbloqueado", async () => {
+    acesso.mockResolvedValue(estado({ estado: "trial_disponivel" }));
+    iniciarTrial.mockRejectedValue(Object.assign(new Error("já utilizado"), { status: 409 }));
+    renderPagina();
+
+    fireEvent.click(await screen.findByRole("button", { name: /Começar teste gratuito de 7 dias/i }));
+
+    await waitFor(() => expect(iniciarTrial).toHaveBeenCalled());
+    expect(contarDisponiveis(grupo("Incluídos no teste de 7 dias"))).toBe(0);
   });
 });
