@@ -1,12 +1,16 @@
 import { GitMerge } from "lucide-react";
 import PremiumExercicioEsqueleto from "@/components/exercises/PremiumExercicioEsqueleto";
+import { useTranslation } from "react-i18next";
 
-const FacilidadeVergenciaExercise = () => (
+const FacilidadeVergenciaExercise = () => {
+  const { t } = useTranslation();
+  return (
   <PremiumExercicioEsqueleto
-    title="Facilidade de Vergência"
-    description="Alterna entre convergência e divergência em ciclos cronometrados para ganhar resistência binocular."
+    title={t("FacilidadeVergenciaExercise.facilidadeDeVergencia")}
+    description={t("FacilidadeVergenciaExercise.alternaEntreConvergenciaE")}
     icon={GitMerge}
   />
 );
+};
 
 export default FacilidadeVergenciaExercise;

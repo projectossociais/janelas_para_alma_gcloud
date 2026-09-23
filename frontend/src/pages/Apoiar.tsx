@@ -42,6 +42,8 @@ import {
   TIPOS_DE_COMPROVATIVO_ACEITES,
 } from "@/lib/apiClient";
 import { DEFAULT_BANK_DATA, ofuscarValor } from "@/lib/pagamento";
+import { Trans, useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
 type Mode = "materiais" | "financeiro";
 
@@ -55,20 +57,32 @@ interface MaterialItem {
 const materialItems: MaterialItem[] = [
   {
     id: "armacoes",
-    label: "Armações",
-    description: "Armações novas ou usadas em bom estado para redistribuição.",
+    get label() {
+      return i18n.t("Apoiar.armacoes");
+    },
+    get description() {
+      return i18n.t("Apoiar.armacoesNovasOuUsadas");
+    },
     icon: Glasses,
   },
   {
     id: "tampoes",
-    label: "Tampões / Oclusores",
-    description: "Oclusores oftalmológicos para tratamento de ambliopia.",
+    get label() {
+      return i18n.t("Apoiar.tampoesOclusores");
+    },
+    get description() {
+      return i18n.t("Apoiar.oclusoresOftalmologicosParaTratamento");
+    },
     icon: Eye,
   },
   {
     id: "outros",
-    label: "Outros",
-    description: "Lentes, estojos, produtos de limpeza ou material didáctico.",
+    get label() {
+      return i18n.t("Apoiar.outros");
+    },
+    get description() {
+      return i18n.t("Apoiar.lentesEstojosProdutosDe");
+    },
     icon: Boxes,
   },
 ];
@@ -88,10 +102,18 @@ interface Tier {
 const tiers: Tier[] = [
   {
     id: "tier1",
-    name: "Aliado",
-    range: "10.000 a 250.000 Kz",
-    short: "Um gesto significativo",
-    impact: "Financia consultas de rastreio e um par de óculos graduados para 1 a 2 pessoas.",
+    get name() {
+      return i18n.t("Apoiar.aliado");
+    },
+    get range() {
+      return i18n.t("Apoiar.n10000A250");
+    },
+    get short() {
+      return i18n.t("Apoiar.umGestoSignificativo");
+    },
+    get impact() {
+      return i18n.t("Apoiar.financiaConsultasDeRastreio");
+    },
     icon: Sparkles,
     accent: "text-teal",
     ring: "ring-teal border-teal",
@@ -99,10 +121,18 @@ const tiers: Tier[] = [
   },
   {
     id: "tier2",
-    name: "Padrinho",
-    range: "250.000 a 500.000 Kz",
-    short: "Impacto sustentado",
-    impact: "Cobre um ciclo completo de tratamento (consulta, óculos e terapia) para várias crianças.",
+    get name() {
+      return i18n.t("Apoiar.padrinho");
+    },
+    get range() {
+      return i18n.t("Apoiar.n250000A500");
+    },
+    get short() {
+      return i18n.t("Apoiar.impactoSustentado");
+    },
+    get impact() {
+      return i18n.t("Apoiar.cobreUmCicloCompleto");
+    },
     icon: Heart,
     accent: "text-navy",
     ring: "ring-navy border-navy",
@@ -110,10 +140,18 @@ const tiers: Tier[] = [
   },
   {
     id: "tier3",
-    name: "Benfeitor",
-    range: "Acima de 500.000 Kz",
-    short: "Transformação em escala",
-    impact: "Viabiliza uma campanha comunitária inteira, incluindo cirurgias correctivas em grupo.",
+    get name() {
+      return i18n.t("Apoiar.benfeitor");
+    },
+    get range() {
+      return i18n.t("Apoiar.acimaDe500000");
+    },
+    get short() {
+      return i18n.t("Apoiar.transformacaoEmEscala");
+    },
+    get impact() {
+      return i18n.t("Apoiar.viabilizaUmaCampanhaComunitaria");
+    },
     icon: Crown,
     accent: "text-gold",
     ring: "ring-gold border-gold",
@@ -148,12 +186,13 @@ const StepIndicator = ({
       indicatorClassName={tone === "teal" ? "bg-teal" : "bg-navy"}
     />
     <span className="shrink-0 text-xs font-medium text-muted-foreground">
-      Etapa {current} de {total}
+      <Trans i18nKey="Apoiar.etapaDe" values={{ current, total }} />
     </span>
   </div>
 );
 
 const Apoiar = () => {
+  const { t: tr } = useTranslation();
   const [mode, setMode] = useState<Mode>("materiais");
   const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
   const [materialNotes, setMaterialNotes] = useState("");
@@ -176,7 +215,7 @@ const Apoiar = () => {
 
   const handleMaterialSubmit = () => {
     if (selectedMaterials.length === 0) {
-      toast.error("Seleccione pelo menos um tipo de material.");
+      toast.error(tr("Apoiar.seleccionePeloMenosUm"));
       return;
     }
     setReceipt(null);
@@ -186,7 +225,7 @@ const Apoiar = () => {
 
   const handleFinanceSubmit = () => {
     if (!selectedTier) {
-      toast.error("Seleccione um tier de contribuição.");
+      toast.error(tr("Apoiar.seleccioneUmTierDe"));
       return;
     }
     setStep("form");
@@ -219,12 +258,12 @@ const Apoiar = () => {
           notes: materialNotes,
         });
         setStep("recolha");
-        toast.success("Doação registada! Enviámos um email de confirmação.");
+        toast.success(tr("Apoiar.doacaoRegistadaEnviamosUm"));
         setSelectedMaterials([]);
         setMaterialNotes("");
       } catch (err) {
         console.error("Falha ao registar doação de materiais:", err);
-        toast.error(mensagemDeErroApi(err, "Não foi possível registar a doação. Tente novamente."));
+        toast.error(mensagemDeErroApi(err, tr("Apoiar.naoFoiPossivelRegistar")));
       } finally {
         setSubmitting(false);
       }
@@ -236,11 +275,11 @@ const Apoiar = () => {
 
   const handleConcluirDoacao = async () => {
     if (!comprovativo) {
-      toast.error("Anexe o comprovativo da transferência para continuar.");
+      toast.error(tr("Apoiar.anexeOComprovativoDa2"));
       return;
     }
     if (!TIPOS_DE_COMPROVATIVO_ACEITES.includes(comprovativo.type as never)) {
-      toast.error("Formato não suportado. Use PNG, JPEG, WebP ou PDF.");
+      toast.error(tr("Apoiar.formatoNaoSuportadoUse"));
       return;
     }
 
@@ -248,7 +287,7 @@ const Apoiar = () => {
     try {
       const detalhesDonativo = activeTier
         ? `${activeTier.name} (${activeTier.range})`
-        : "Donativo Financeiro";
+        : tr("Apoiar.donativoFinanceiro");
 
       // Três passos (CROSS-02, mesmo padrão do avatar): a API assina o
       // URL, o browser envia os bytes directamente ao R2, e só depois a
@@ -258,12 +297,12 @@ const Apoiar = () => {
       await comprovativosApi.enviarParaStorage(preparado.url_de_upload, comprovativo);
       await doacoesApi.registarFinanceira(email, detalhesDonativo, preparado.chave);
 
-      toast.success("Comprovativo recebido com sucesso! Enviámos um email de confirmação.");
+      toast.success(tr("Apoiar.comprovativoRecebidoComSucesso"));
       setSelectedTier(null);
       closeDialog();
     } catch (err) {
       console.error("Falha ao processar comprovativo:", err);
-      toast.error(mensagemDeErroApi(err, "Não foi possível enviar o comprovativo. Tente novamente."));
+      toast.error(mensagemDeErroApi(err, tr("Apoiar.naoFoiPossivelEnviar")));
     } finally {
       setSubmitting(false);
     }
@@ -296,10 +335,9 @@ const Apoiar = () => {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary-foreground/10 backdrop-blur mb-6">
                 <Heart className="w-8 h-8 text-gold" />
               </div>
-              <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-4">Faça a Diferença</h1>
+              <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-4">{tr("Apoiar.facaADiferenca")}</h1>
               <p className="text-lg md:text-xl text-primary-foreground/85 leading-relaxed">
-                Escolha como quer contribuir: doe materiais essenciais para os nossos pacientes ou
-                apoie financeiramente a organização.
+                {tr("Apoiar.escolhaComoQuerContribuir")}
               </p>
             </div>
           </div>
@@ -316,14 +354,14 @@ const Apoiar = () => {
                     className="flex items-center gap-2 py-3 text-sm md:text-base data-[state=active]:bg-teal data-[state=active]:text-teal-foreground"
                   >
                     <Package className="w-4 h-4" />
-                    Apoio com Materiais
+                    {tr("Apoiar.apoioComMateriais")}
                   </TabsTrigger>
                   <TabsTrigger
                     value="financeiro"
                     className="flex items-center gap-2 py-3 text-sm md:text-base data-[state=active]:bg-navy data-[state=active]:text-navy-foreground"
                   >
                     <Wallet className="w-4 h-4" />
-                    Apoio Financeiro
+                    {tr("Apoiar.apoioFinanceiro")}
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -332,13 +370,13 @@ const Apoiar = () => {
               <TabsContent value="materiais" className="mt-0">
                 <div className="text-center max-w-2xl mx-auto mb-10 space-y-2">
                   <span className="inline-block text-xs font-bold uppercase tracking-widest text-teal">
-                    Doe o que já não usa
+                    {tr("Apoiar.doeOQueJa")}
                   </span>
                   <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-                    Que materiais gostaria de doar?
+                    {tr("Apoiar.queMateriaisGostariaDe")}
                   </h2>
                   <p className="text-muted-foreground">
-                    Seleccione um ou mais itens. Mostraremos os pontos de recolha disponíveis de imediato.
+                    {tr("Apoiar.seleccioneUmOuMais")}
                   </p>
                 </div>
 
@@ -380,7 +418,7 @@ const Apoiar = () => {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="material-notes" className="text-sm">
-                        Detalhes adicionais (opcional)
+                        {tr("Apoiar.detalhesAdicionaisOpcional")}
                       </Label>
                       <span
                         className={`text-xs tabular-nums ${
@@ -395,7 +433,7 @@ const Apoiar = () => {
                     </div>
                     <Textarea
                       id="material-notes"
-                      placeholder="Quantidade aproximada, estado dos materiais, disponibilidade para entrega…"
+                      placeholder={tr("Apoiar.quantidadeAproximadaEstadoDos")}
                       value={materialNotes}
                       onChange={(e) => setMaterialNotes(e.target.value.slice(0, LIMITE_NOTAS_MATERIAIS))}
                       maxLength={LIMITE_NOTAS_MATERIAIS}
@@ -407,7 +445,7 @@ const Apoiar = () => {
                     className="w-full bg-teal text-teal-foreground hover:bg-teal/90"
                     size="lg"
                   >
-                    Confirmar Doação de Materiais
+                    {tr("Apoiar.confirmarDoacaoDeMateriais")}
                   </Button>
                 </div>
               </TabsContent>
@@ -416,14 +454,13 @@ const Apoiar = () => {
               <TabsContent value="financeiro" className="mt-0">
                 <div className="text-center max-w-2xl mx-auto mb-10 space-y-2">
                   <span className="inline-block text-xs font-bold uppercase tracking-widest text-navy">
-                    Escolha o seu impacto
+                    {tr("Apoiar.escolhaOSeuImpacto")}
                   </span>
                   <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-                    Três tiers, três formas de transformar
+                    {tr("Apoiar.tresTiersTresFormas")}
                   </h2>
                   <p className="text-muted-foreground">
-                    Cada nível corresponde a uma dimensão diferente de impacto na vida dos nossos
-                    beneficiários.
+                    {tr("Apoiar.cadaNivelCorrespondeA")}
                   </p>
                 </div>
 
@@ -477,16 +514,15 @@ const Apoiar = () => {
                     disabled={!selectedTier}
                   >
                     {selectedTier
-                      ? `Apoiar como ${activeTier?.name}`
-                      : "Seleccione um tier para continuar"}
+                      ? tr("Apoiar.apoiarComo", { name: activeTier?.name })
+                      : tr("Apoiar.seleccioneUmTierPara")}
                   </Button>
                 </div>
               </TabsContent>
             </Tabs>
 
             <p className="text-center text-sm text-muted-foreground mt-12 max-w-xl mx-auto">
-              Todos os donativos são geridos com total transparência e revertem integralmente para
-              os pacientes apoiados pelo Janelas Para a Alma.
+              {tr("Apoiar.todosOsDonativosSao")}
             </p>
           </div>
         </section>
@@ -504,10 +540,10 @@ const Apoiar = () => {
                 <StepIndicator current={2} total={2} tone="teal" />
                 <DialogTitle className="flex items-center gap-2">
                   <Check className="w-5 h-5 text-teal" />
-                  Doação registada!
+                  {tr("Apoiar.doacaoRegistada")}
                 </DialogTitle>
                 <DialogDescription>
-                  Escolha o ponto de recolha mais conveniente para si.
+                  {tr("Apoiar.escolhaOPontoDe")}
                 </DialogDescription>
               </DialogHeader>
 
@@ -515,7 +551,7 @@ const Apoiar = () => {
 
               {receipt?.id && (
                 <p className="text-center text-xs text-muted-foreground">
-                  Referência do pedido: <span className="font-mono">{receipt.id}</span>
+                  <Trans i18nKey="Apoiar.referenciaDoPedido" components={{ span: <span className="font-mono" /> }} values={{ id: receipt.id }} />
                 </p>
               )}
 
@@ -524,7 +560,7 @@ const Apoiar = () => {
                   onClick={closeDialog}
                   className="w-full bg-teal text-teal-foreground hover:bg-teal/90"
                 >
-                  Concluir
+                  {tr("Apoiar.concluir")}
                 </Button>
               </DialogFooter>
             </div>
@@ -537,11 +573,10 @@ const Apoiar = () => {
                 <StepIndicator current={2} total={2} tone="navy" />
                 <DialogTitle className="flex items-center gap-2">
                   <UploadCloud className="w-5 h-5 text-navy" />
-                  Enviar Comprovativo
+                  {tr("Apoiar.enviarComprovativo")}
                 </DialogTitle>
                 <DialogDescription>
-                  {activeTier?.name ?? "Donativo"}: {activeTier?.range ?? ""}. Anexe o
-                  comprovativo da transferência para confirmarmos o seu donativo.
+                  {activeTier?.name ?? tr("Apoiar.donativo")}: {activeTier?.range ?? ""}{tr("Apoiar.anexeOComprovativoDa")}
                 </DialogDescription>
               </DialogHeader>
 
@@ -554,10 +589,10 @@ const Apoiar = () => {
                   className="w-full bg-navy text-navy-foreground hover:bg-navy/90"
                 >
                   {submitting
-                    ? "A enviar..."
+                    ? tr("Apoiar.aEnviar")
                     : comprovativo
-                      ? "Concluir Doação"
-                      : "Anexe o comprovativo para continuar"}
+                      ? tr("Apoiar.concluirDoacao")
+                      : tr("Apoiar.anexeOComprovativoPara")}
                 </Button>
                 <Button
                   type="button"
@@ -566,7 +601,7 @@ const Apoiar = () => {
                   disabled={submitting}
                   className="w-full text-muted-foreground"
                 >
-                  Voltar
+                  {tr("Apoiar.voltar")}
                 </Button>
               </DialogFooter>
             </div>
@@ -580,19 +615,19 @@ const Apoiar = () => {
                   ) : (
                     <CreditCard className="w-5 h-5 text-navy" />
                   )}
-                  {mode === "materiais" ? "Combinar Recolha" : "Detalhes para Pagamento"}
+                  {mode === "materiais" ? tr("Apoiar.combinarRecolha") : tr("Apoiar.detalhesParaPagamento")}
                 </DialogTitle>
                 <DialogDescription>
                   {mode === "materiais"
-                    ? "Deixe o seu email e nós mostramos os pontos de recolha disponíveis."
-                    : `${activeTier?.name ?? "Donativo"}: ${activeTier?.range ?? ""}. Obrigado por apoiar a nossa missão.`}
+                    ? tr("Apoiar.deixeOSeuEmail")
+                    : tr("Apoiar.nivelObrigado", { nome: activeTier?.name ?? tr("Apoiar.donativo"), intervalo: activeTier?.range ?? "" })}
                 </DialogDescription>
               </DialogHeader>
 
               <form onSubmit={handleConfirm} className="space-y-4 mt-4">
                 {mode === "financeiro" && (
                   <div className="rounded-lg border border-navy/20 bg-navy/5 p-4 space-y-1 divide-y divide-navy/10">
-                    <CopyRow label="Beneficiário" value={bankData.beneficiario} />
+                    <CopyRow label={tr("Apoiar.beneficiario")} value={bankData.beneficiario} />
                     <CopyRow
                       label={bankData.pagamento_rapido.metodo}
                       value={bankData.pagamento_rapido.telefone}
@@ -609,7 +644,7 @@ const Apoiar = () => {
                 {mode === "materiais" && selectedMaterials.length > 0 && (
                   <div className="rounded-lg border border-teal/20 bg-teal/5 p-4">
                     <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium mb-2">
-                      Materiais seleccionados
+                      {tr("Apoiar.materiaisSeleccionados")}
                     </p>
                     <ul className="space-y-1">
                       {selectedMaterials.map((id) => {
@@ -628,8 +663,8 @@ const Apoiar = () => {
                 <div className="space-y-2">
                   <Label htmlFor="donor-email">
                     {mode === "materiais"
-                      ? "O seu email para contacto"
-                      : "Insira o seu email para receber o comprovativo e agradecimento"}
+                      ? tr("Apoiar.oSeuEmailPara")
+                      : tr("Apoiar.insiraOSeuEmail")}
                   </Label>
                   <Input
                     id="donor-email"
@@ -652,10 +687,10 @@ const Apoiar = () => {
                     }`}
                   >
                     {mode === "materiais" ? (
-                      submitting ? "A enviar..." : "Confirmar Doação"
+                      submitting ? tr("Apoiar.aEnviar") : tr("Apoiar.confirmarDoacao")
                     ) : (
                       <span className="inline-flex items-center gap-2">
-                        Continuar
+                        {tr("Apoiar.continuar")}
                         <ArrowRight className="h-4 w-4" />
                       </span>
                     )}

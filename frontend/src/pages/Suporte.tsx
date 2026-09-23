@@ -4,29 +4,42 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
 import heroImg from "@/assets/suporte-hero.jpg";
+import { Trans, useTranslation } from "react-i18next";
+import i18n from "@/i18n";
+import { localizar } from "@/i18n/rotas";
 
 const features = [
   {
     icon: MessagesSquare,
-    title: "Partilha de Experiências",
-    description:
-      "Um espaço seguro onde utilizadores podem trocar histórias, vitórias e aprendizagens, criando laços de pertença e empatia.",
+    get title() {
+      return i18n.t("Suporte.partilhaDeExperiencias");
+    },
+    get description() {
+      return i18n.t("Suporte.umEspacoSeguroOnde");
+    },
   },
   {
     icon: HeartHandshake,
-    title: "Apoio Emocional",
-    description:
-      "Acompanhamento humano e suporte para lidar com os desafios emocionais associados ao estrabismo, sem julgamentos.",
+    get title() {
+      return i18n.t("Suporte.apoioEmocional");
+    },
+    get description() {
+      return i18n.t("Suporte.acompanhamentoHumanoESuporte");
+    },
   },
   {
     icon: BookOpen,
-    title: "Educação sobre Estrabismo",
-    description:
-      "Informação clara, acessível e baseada em evidências para desmistificar a condição e promover decisões informadas.",
+    get title() {
+      return i18n.t("Suporte.educacaoSobreEstrabismo");
+    },
+    get description() {
+      return i18n.t("Suporte.informacaoClaraAcessivelE");
+    },
   },
 ];
 
 const Suporte = () => {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
@@ -35,7 +48,7 @@ const Suporte = () => {
         <section className="relative min-h-[70vh] flex items-center overflow-hidden">
           <img
             src={heroImg}
-            alt="Comunidade acolhedora a sorrir em conjunto"
+            alt={t("Suporte.comunidadeAcolhedoraASorrir")}
             className="absolute inset-0 w-full h-full object-cover"
             width={1920}
             height={1088}
@@ -44,13 +57,13 @@ const Suporte = () => {
           <div className="container relative z-10 py-24 md:py-32">
             <div className="max-w-2xl animate-fade-in">
               <span className="inline-block px-4 py-1.5 rounded-full bg-gold/20 text-primary-foreground border border-gold/40 text-sm font-medium mb-6 backdrop-blur-sm">
-                Comunidade & Inclusão
+                {t("Suporte.comunidadeInclusao")}
               </span>
               <h1 className="text-4xl md:text-6xl font-bold text-primary-foreground leading-tight mb-6">
-                Programa de Suporte Psicossocial
+                {t("Suporte.programaDeSuportePsicossocial")}
               </h1>
               <p className="text-lg md:text-xl text-primary-foreground/90 leading-relaxed">
-                Não estás sozinho. Uma comunidade digital para combater o estigma e promover a inclusão.
+                {t("Suporte.naoEstasSozinhoUma")}
               </p>
             </div>
           </div>
@@ -63,10 +76,10 @@ const Suporte = () => {
           <div className="container">
             <div className="text-center max-w-2xl mx-auto mb-14">
               <h2 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">
-                Como Te Apoiamos
+                {t("Suporte.comoTeApoiamos")}
               </h2>
               <p className="text-muted-foreground mt-4">
-                Três pilares para que ninguém faça este caminho sozinho.
+                {t("Suporte.tresPilaresParaQue")}
               </p>
             </div>
 
@@ -93,16 +106,16 @@ const Suporte = () => {
           <div className="container">
             <div className="max-w-3xl mx-auto text-center animate-fade-in">
               <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4 leading-tight">
-                Junta-te à nossa comunidade digital e sente-te acolhido.
+                {t("Suporte.juntaTeANossa")}
               </h2>
               <p className="text-primary-foreground/85 text-lg mb-8">
-                Faz parte do programa <strong>Meu Kamba Estrábico</strong> e descobre uma rede que te apoia.
+                <Trans i18nKey="Suporte.fazParteDoPrograma" components={{ strong: <strong /> }} />
               </p>
               <Link
-                to="/kamba"
+                to={localizar("/kamba")}
                 className="inline-flex items-center gap-2 bg-gold text-primary font-semibold px-8 py-4 rounded-xl hover:bg-gold/90 transition-all hover:-translate-y-0.5 shadow-lg"
               >
-                Conhecer o Programa
+                {t("Suporte.conhecerOPrograma")}
                 <ArrowRight className="w-5 h-5" />
               </Link>
             </div>

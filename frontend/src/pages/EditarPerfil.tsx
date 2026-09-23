@@ -26,8 +26,11 @@ import {
   mensagemDeErroApi,
   TIPOS_DE_AVATAR_ACEITES,
 } from "@/lib/apiClient";
+import { useTranslation } from "react-i18next";
+import { localizar } from "@/i18n/rotas";
 
 const EditarPerfil = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { isLoggedIn, loading: authLoading, user, updateUserProfile } = useAuth();
   const { profile, loading: profileLoading, setProfile } = useProfile();
@@ -57,7 +60,7 @@ const EditarPerfil = () => {
     // avatar assim que a resposta chegasse. Mesmo padrão de espera que
     // `ProfileContext.tsx` já usa (`if (!authLoading) ...`).
     if (!authLoading && !isLoggedIn) {
-      navigate("/auth");
+      navigate(localizar("/auth"));
     }
   }, [authLoading, isLoggedIn, navigate]);
 
@@ -80,11 +83,11 @@ const EditarPerfil = () => {
     if (!ficheiro || !profile) return;
 
     if (!(TIPOS_DE_AVATAR_ACEITES as readonly string[]).includes(ficheiro.type)) {
-      toast.error("Use uma imagem PNG, JPEG ou WebP.");
+      toast.error(t("EditarPerfil.useUmaImagemPng"));
       return;
     }
     if (ficheiro.size > 5 * 1024 * 1024) {
-      toast.error("A imagem não pode ter mais de 5 MB.");
+      toast.error(t("EditarPerfil.aImagemNaoPode"));
       return;
     }
 
@@ -101,10 +104,10 @@ const EditarPerfil = () => {
       setAvatarUrl(avatar_url);
       setProfile({ ...profile, avatar_url });
       updateUserProfile({ avatarUrl: avatar_url });
-      toast.success("Foto de perfil actualizada!");
+      toast.success(t("EditarPerfil.fotoDePerfilActualizada"));
     } catch (err) {
       console.error("Falha ao enviar a foto de perfil:", err);
-      toast.error(mensagemDeErroApi(err, "Não foi possível enviar a foto. Tente novamente."));
+      toast.error(mensagemDeErroApi(err, t("EditarPerfil.naoFoiPossivelEnviar")));
     } finally {
       setUploadingAvatar(false);
     }
@@ -143,10 +146,10 @@ const EditarPerfil = () => {
         dataNascimento: data.data_nascimento ?? "",
         gender: data.genero ?? "",
       });
-      toast.success("O seu perfil foi actualizado com sucesso!");
+      toast.success(t("EditarPerfil.oSeuPerfilFoi"));
     } catch (err) {
       console.error("Falha ao guardar o perfil:", err);
-      toast.error(mensagemDeErroApi(err, "Não foi possível guardar as alterações. Tente novamente."));
+      toast.error(mensagemDeErroApi(err, t("EditarPerfil.naoFoiPossivelGuardar")));
     } finally {
       setSaving(false);
     }
@@ -174,9 +177,9 @@ const EditarPerfil = () => {
           <BackButton />
 
           <div className="text-center mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-primary mb-2">Editar Perfil</h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-primary mb-2">{t("EditarPerfil.editarPerfil")}</h1>
             <p className="text-muted-foreground">
-              Actualize as suas informações pessoais, biografia e contactos.
+              {t("EditarPerfil.actualizeAsSuasInformacoes")}
             </p>
           </div>
 
@@ -184,8 +187,8 @@ const EditarPerfil = () => {
             <form onSubmit={handleSubmit}>
               {/* Section 1: Foto e Biografia */}
               <CardHeader>
-                <CardTitle className="text-primary">Foto e Biografia</CardTitle>
-                <CardDescription>Personalize a sua identidade visual e apresentação.</CardDescription>
+                <CardTitle className="text-primary">{t("EditarPerfil.fotoEBiografia")}</CardTitle>
+                <CardDescription>{t("EditarPerfil.personalizeASuaIdentidade")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex flex-col sm:flex-row items-center gap-5">
@@ -205,7 +208,7 @@ const EditarPerfil = () => {
                       type="file"
                       accept="image/png,image/jpeg,image/webp"
                       className="hidden"
-                      aria-label="Carregar foto de perfil"
+                      aria-label={t("EditarPerfil.carregarFotoDePerfil")}
                       onChange={handleAvatarChange}
                       disabled={uploadingAvatar}
                     />
@@ -218,27 +221,27 @@ const EditarPerfil = () => {
                     >
                       {uploadingAvatar ? (
                         <>
-                          <Loader2 className="w-4 h-4 animate-spin" /> A enviar...
+                          <Loader2 className="w-4 h-4 animate-spin" />{" "}{t("EditarPerfil.aEnviar")}
                         </>
                       ) : (
                         <>
-                          <Camera className="w-4 h-4" /> Alterar Foto
+                          <Camera className="w-4 h-4" />{" "}{t("EditarPerfil.alterarFoto")}
                         </>
                       )}
                     </Button>
                     <p className="text-xs text-muted-foreground mt-2">
-                      JPG ou PNG. Máximo 2MB.
+                      {t("EditarPerfil.jpgOuPngMaximo")}
                     </p>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="bio">Biografia</Label>
+                  <Label htmlFor="bio">{t("EditarPerfil.biografia")}</Label>
                   <Textarea
                     id="bio"
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
-                    placeholder="Conte um pouco sobre si, o seu percurso ou como o projecto o tem ajudado..."
+                    placeholder={t("EditarPerfil.conteUmPoucoSobre")}
                     rows={4}
                     className="resize-none"
                   />
@@ -247,19 +250,19 @@ const EditarPerfil = () => {
 
               {/* Section 2: Dados Pessoais */}
               <CardHeader className="border-t border-border/60">
-                <CardTitle className="text-primary">Dados Pessoais</CardTitle>
-                <CardDescription>As suas informações básicas de identificação.</CardDescription>
+                <CardTitle className="text-primary">{t("EditarPerfil.dadosPessoais")}</CardTitle>
+                <CardDescription>{t("EditarPerfil.asSuasInformacoesBasicas")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-5">
                 <div className="space-y-2">
                   <Label htmlFor="name" className="flex items-center gap-2">
-                    <UserIcon className="w-4 h-4 text-muted-foreground" /> Nome Completo
+                    <UserIcon className="w-4 h-4 text-muted-foreground" />{" "}{t("EditarPerfil.nomeCompleto")}
                   </Label>
                   <Input
                     id="name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="O seu nome completo"
+                    placeholder={t("EditarPerfil.oSeuNomeCompleto")}
                     required
                   />
                 </div>
@@ -267,7 +270,7 @@ const EditarPerfil = () => {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="birthdate" className="flex items-center gap-2">
-                      <Cake className="w-4 h-4 text-muted-foreground" /> Data de Nascimento
+                      <Cake className="w-4 h-4 text-muted-foreground" />{" "}{t("EditarPerfil.dataDeNascimento")}
                     </Label>
                     <Input
                       id="birthdate"
@@ -277,15 +280,15 @@ const EditarPerfil = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Género</Label>
+                    <Label>{t("EditarPerfil.genero")}</Label>
                     <Select value={gender} onValueChange={setGender}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Seleccione" />
+                        <SelectValue placeholder={t("EditarPerfil.seleccione")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="masculino">Masculino</SelectItem>
-                        <SelectItem value="feminino">Feminino</SelectItem>
-                        <SelectItem value="nao_dizer">Prefiro não dizer</SelectItem>
+                        <SelectItem value="masculino">{t("EditarPerfil.masculino")}</SelectItem>
+                        <SelectItem value="feminino">{t("EditarPerfil.feminino")}</SelectItem>
+                        <SelectItem value="nao_dizer">{t("EditarPerfil.prefiroNaoDizer")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -294,13 +297,13 @@ const EditarPerfil = () => {
 
               {/* Section 3: Contacto */}
               <CardHeader className="border-t border-border/60">
-                <CardTitle className="text-primary">Informações de Contacto</CardTitle>
-                <CardDescription>Como podemos comunicar consigo.</CardDescription>
+                <CardTitle className="text-primary">{t("EditarPerfil.informacoesDeContacto")}</CardTitle>
+                <CardDescription>{t("EditarPerfil.comoPodemosComunicarConsigo")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-5">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-muted-foreground" /> Email
+                    <Mail className="w-4 h-4 text-muted-foreground" />{" "}{t("EditarPerfil.email")}
                   </Label>
                   <Input
                     id="email"
@@ -310,13 +313,13 @@ const EditarPerfil = () => {
                     className="bg-muted/40 cursor-not-allowed"
                   />
                   <p className="text-xs text-muted-foreground">
-                    O email é o seu identificador principal e não pode ser alterado.
+                    {t("EditarPerfil.oEmailEO")}
                   </p>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="phone" className="flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-muted-foreground" /> Telefone
+                    <Phone className="w-4 h-4 text-muted-foreground" />{" "}{t("EditarPerfil.telefone")}
                   </Label>
                   <Input
                     id="phone"
@@ -329,11 +332,11 @@ const EditarPerfil = () => {
 
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-muted-foreground" /> Província
+                    <MapPin className="w-4 h-4 text-muted-foreground" />{" "}{t("EditarPerfil.provincia")}
                   </Label>
                   <Select value={province} onValueChange={setProvince}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Seleccione a sua província" />
+                      <SelectValue placeholder={t("EditarPerfil.seleccioneASuaProvincia")} />
                     </SelectTrigger>
                     <SelectContent className="max-h-72">
                       {PROVINCES.map((p) => (
@@ -353,15 +356,15 @@ const EditarPerfil = () => {
                   onClick={() => navigate(-1)}
                   disabled={saving}
                 >
-                  Cancelar
+                  {t("EditarPerfil.cancelar")}
                 </Button>
                 <Button type="submit" disabled={saving} className="min-w-[180px]">
                   {saving ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" /> A guardar...
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />{" "}{t("EditarPerfil.aGuardar")}
                     </>
                   ) : (
-                    "Salvar Alterações"
+                    t("EditarPerfil.salvarAlteracoes")
                   )}
                 </Button>
               </CardContent>

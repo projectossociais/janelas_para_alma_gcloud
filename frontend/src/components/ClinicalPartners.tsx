@@ -17,27 +17,46 @@ import { Button } from "@/components/ui/button";
 import OptioptikaBookingDialog from "@/components/OptioptikaBookingDialog";
 import { optioptika, OPTIOPTIKA_YELLOW } from "@/data/optioptika";
 import optioptikaLogo from "@/assets/optioptika-logo.png";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
+import { localizar } from "@/i18n/rotas";
 
 const services = [
   {
     icon: Stethoscope,
-    title: "Optometria e Oftalmologia",
-    text: "Consultas de optometria clínica e oftalmologia geral.",
+    get title() {
+      return i18n.t("ClinicalPartners.optometriaEOftalmologia");
+    },
+    get text() {
+      return i18n.t("ClinicalPartners.consultasDeOptometriaClinica");
+    },
   },
   {
     icon: Baby,
-    title: "Pediátrica e Neonatal",
-    text: "Oftalmologia pediátrica, neonatal e teste do olhinho.",
+    get title() {
+      return i18n.t("ClinicalPartners.pediatricaENeonatal");
+    },
+    get text() {
+      return i18n.t("ClinicalPartners.oftalmologiaPediatricaNeonatalE");
+    },
   },
   {
     icon: ScanEye,
-    title: "Exames de Saúde Ocular",
-    text: "Retinografia, campimetria, topografia corneal, OCT e tonometria.",
+    get title() {
+      return i18n.t("ClinicalPartners.examesDeSaudeOcular");
+    },
+    get text() {
+      return i18n.t("ClinicalPartners.retinografiaCampimetriaTopografiaCorneal");
+    },
   },
   {
     icon: Eye,
-    title: "Catarata, Glaucoma e Cores",
-    text: "Rastreio e acompanhamento de catarata, glaucoma e visão das cores.",
+    get title() {
+      return i18n.t("ClinicalPartners.catarataGlaucomaECores");
+    },
+    get text() {
+      return i18n.t("ClinicalPartners.rastreioEAcompanhamentoDe");
+    },
   },
 ];
 
@@ -46,6 +65,7 @@ interface ClinicalPartnersProps {
 }
 
 const ClinicalPartners = ({ defaultOpen = false }: ClinicalPartnersProps) => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(defaultOpen);
 
   useEffect(() => {
@@ -57,13 +77,13 @@ const ClinicalPartners = ({ defaultOpen = false }: ClinicalPartnersProps) => {
       <div className="container px-6">
         <div className="text-center max-w-2xl mx-auto mb-14 space-y-3">
           <span className="text-sm font-medium tracking-widest uppercase text-teal">
-            Parceiros Clínicos
+            {t("ClinicalPartners.parceirosClinicos")}
           </span>
           <h2 className="text-3xl md:text-5xl font-bold text-foreground leading-tight">
-            Clínicas de confiança da nossa rede
+            {t("ClinicalPartners.clinicasDeConfiancaDa")}
           </h2>
           <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
-            Profissionais e instituições certificadas que colaboram directamente com o Janelas para a Alma no atendimento aos nossos beneficiários.
+            {t("ClinicalPartners.profissionaisEInstituicoesCertificadas")}
           </p>
         </div>
 
@@ -86,14 +106,14 @@ const ClinicalPartners = ({ defaultOpen = false }: ClinicalPartnersProps) => {
               <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-white shadow-card border border-black/10 flex items-center justify-center shrink-0 overflow-hidden">
                 <img
                   src={optioptikaLogo}
-                  alt="Logótipo Óptica Optioptika"
+                  alt={t("ClinicalPartners.logotipoOpticaOptioptika")}
                   className="w-full h-full object-contain p-2"
                 />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 text-black/70 text-sm font-semibold mb-1">
                   <Star className="w-4 h-4 fill-black text-black" />
-                  Parceiro Clínico Oficial
+                  {t("ClinicalPartners.parceiroClinicoOficial")}
                 </div>
                 <h3 className="text-3xl md:text-4xl font-black leading-tight mb-2">
                   {optioptika.name}
@@ -119,7 +139,7 @@ const ClinicalPartners = ({ defaultOpen = false }: ClinicalPartnersProps) => {
                   className="bg-black text-white hover:bg-black/80 font-semibold"
                 >
                   <CalendarPlus className="w-5 h-5 mr-2" />
-                  Agendar Consulta
+                  {t("ClinicalPartners.agendarConsulta")}
                 </Button>
                 <Button
                   asChild
@@ -127,8 +147,8 @@ const ClinicalPartners = ({ defaultOpen = false }: ClinicalPartnersProps) => {
                   variant="outline"
                   className="border-black/30 bg-transparent text-black hover:bg-black/10 font-semibold"
                 >
-                  <Link to="/portal-clinico/optioptika">
-                    Saber mais
+                  <Link to={localizar("/portal-clinico/optioptika")}>
+                    {t("ClinicalPartners.saberMais")}
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Link>
                 </Button>
@@ -142,7 +162,7 @@ const ClinicalPartners = ({ defaultOpen = false }: ClinicalPartnersProps) => {
             <div className="md:col-span-1 p-8 md:border-r border-border/60 space-y-6 bg-background/60">
               <div>
                 <h4 className="text-sm font-bold uppercase tracking-widest text-teal mb-3">
-                  Sobre a Clínica
+                  {t("ClinicalPartners.sobreAClinica")}
                 </h4>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {optioptika.description}
@@ -182,7 +202,7 @@ const ClinicalPartners = ({ defaultOpen = false }: ClinicalPartnersProps) => {
             {/* Right: services */}
             <div className="md:col-span-2 p-8">
               <h4 className="text-sm font-bold uppercase tracking-widest text-teal mb-5">
-                Serviços Disponíveis
+                {t("ClinicalPartners.servicosDisponiveis")}
               </h4>
               <div className="grid sm:grid-cols-2 gap-4">
                 {services.map((s) => (
@@ -205,7 +225,7 @@ const ClinicalPartners = ({ defaultOpen = false }: ClinicalPartnersProps) => {
                 ))}
               </div>
               <p className="text-xs text-muted-foreground italic mt-5">
-                * Valores e disponibilidade confirmados directamente com a clínica no acto do agendamento.
+                {t("ClinicalPartners.valoresEDisponibilidadeConfirmados")}
               </p>
             </div>
           </div>

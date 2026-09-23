@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 /**
  * Cliente fino para a API própria (FastAPI). Nunca guarda tokens — a sessão
  * viaja em cookies `httpOnly` que o browser gere sozinho; por isso todo o
@@ -93,7 +94,7 @@ async function pedido<T>(caminho: string, opcoes: RequestInit = {}, jaTentouReno
   }
 
   if (!resposta.ok) {
-    let mensagem = "Ocorreu um erro. Tente novamente.";
+    let mensagem = i18n.t("apiClient.ocorreuUmErroTente");
     try {
       mensagem = mensagemDeErro(await resposta.json()) ?? mensagem;
     } catch {

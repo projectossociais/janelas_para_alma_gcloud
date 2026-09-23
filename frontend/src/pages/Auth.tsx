@@ -20,8 +20,10 @@ import { useAuth, PROVINCES, UserRole, ROLE_LABEL } from "@/contexts/AuthContext
 import { authApi, mensagemDeErroApi } from "@/lib/apiClient";
 import { erroDePasswordFraca } from "@/lib/validarPassword";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
+import { useTranslation } from "react-i18next";
 
 const Auth = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { signIn, registerUser, signInWithGoogle } = useAuth();
@@ -63,10 +65,10 @@ const Auth = () => {
     try {
       const resultado = await signInWithGoogle(idToken);
       if (!resultado.ok) {
-        toast.error(resultado.error || "Não foi possível entrar com o Google.");
+        toast.error(resultado.error || t("Auth.naoFoiPossivelEntrar"));
         return;
       }
-      toast.success("Sessão iniciada.");
+      toast.success(t("Auth.sessaoIniciada"));
       irParaProximo();
     } finally {
       setGoogleLoading(false);
@@ -76,7 +78,7 @@ const Auth = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!loginEmail || !loginPassword) {
-      toast.error("Preencha email e palavra-passe.");
+      toast.error(t("Auth.preenchaEmailEPalavra"));
       return;
     }
     setLoginLoading(true);
@@ -86,19 +88,19 @@ const Auth = () => {
         // AUTH-02, bloqueio total: a API devolve esta mensagem exacta em
         // 403 quando a password está certa mas o email não. Dá logo a
         // acção óbvia (reenviar o link) em vez de deixar a pessoa presa.
-        if (resultado.error?.includes("confirme o seu email")) {
+        if (resultado.error?.includes(t("Auth.confirmeOSeuEmail"))) {
           toast.error(resultado.error, {
             action: {
-              label: "Reenviar link",
+              label: t("Auth.reenviarLink"),
               onClick: () => void handleReenviarConfirmacao(loginEmail.trim()),
             },
           });
           return;
         }
-        toast.error(resultado.error || "Email ou palavra-passe incorrectos.");
+        toast.error(resultado.error || t("Auth.emailOuPalavraPasse"));
         return;
       }
-      toast.success("Sessão iniciada.");
+      toast.success(t("Auth.sessaoIniciada"));
       irParaProximo();
     } finally {
       setLoginLoading(false);
@@ -110,15 +112,15 @@ const Auth = () => {
       // Resposta sempre igual, exista ou não a conta, esteja ou não já
       // confirmada -- mesmo princípio de handleForgotPassword.
       await authApi.reenviarConfirmacao(email);
-      toast.success("Se existir uma conta por confirmar com este email, foi enviado um novo link.");
+      toast.success(t("Auth.seExistirUmaConta"));
     } catch (err) {
-      toast.error(mensagemDeErroApi(err, "Não foi possível reenviar o link. Tente novamente mais tarde."));
+      toast.error(mensagemDeErroApi(err, t("Auth.naoFoiPossivelReenviar")));
     }
   };
 
   const handleForgotPassword = async () => {
     if (!loginEmail.trim()) {
-      toast.error("Escreva o seu email no campo acima primeiro.");
+      toast.error(t("Auth.escrevaOSeuEmail"));
       return;
     }
     setForgotPasswordLoading(true);
@@ -127,11 +129,11 @@ const Auth = () => {
       // API nunca revela isso (ver auth/recuperar-password). Um "sucesso"
       // aqui só significa "o pedido foi aceite", nunca "o email existe".
       await authApi.recuperarPassword(loginEmail.trim());
-      toast.success("Se existir uma conta com este email, foi enviado um link de recuperação.");
+      toast.success(t("Auth.seExistirUmaConta2"));
     } catch (err) {
       // Aqui sim pode ser um erro real (API em baixo, Resend a falhar) —
       // nunca mostrar a mensagem de sucesso acima a partir de um catch.
-      toast.error(mensagemDeErroApi(err, "Não foi possível pedir a recuperação. Tente novamente mais tarde."));
+      toast.error(mensagemDeErroApi(err, t("Auth.naoFoiPossivelPedir")));
     } finally {
       setForgotPasswordLoading(false);
     }
@@ -140,7 +142,7 @@ const Auth = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email || !password || !confirmPassword || !province || !gender || !role) {
-      toast.error("Por favor, preencha todos os campos.");
+      toast.error(t("Auth.porFavorPreenchaTodos"));
       return;
     }
     // Confirmação é só neste formulário, nunca vai ao servidor — a API só
@@ -148,7 +150,7 @@ const Auth = () => {
     // da password é uma cópia da regra do servidor (validarPassword.ts):
     // dá feedback imediato, mas quem decide de facto é sempre a API.
     if (password !== confirmPassword) {
-      toast.error("As palavras-passe não coincidem.");
+      toast.error(t("Auth.asPalavrasPasseNao"));
       return;
     }
     const erroPassword = erroDePasswordFraca(password);
@@ -167,13 +169,13 @@ const Auth = () => {
         role: role as UserRole,
       });
       if (!resultado.ok) {
-        toast.error(resultado.error || "Não foi possível criar a conta.");
+        toast.error(resultado.error || t("Auth.naoFoiPossivelCriar"));
         return;
       }
       // AUTH-02: a conta existe mas fica por confirmar -- nunca navegar
       // como se já estivesse autenticado. Mostra o próximo passo (confirmar
       // o email) e leva para o login, já com o email preenchido.
-      toast.success(`Conta criada! Enviámos um link de confirmação para ${email.trim()}.`, {
+      toast.success(t("Auth.contaCriadaEnviamosUm", { valor: email.trim() }), {
         duration: 8000,
       });
       const emailRegistado = email.trim();
@@ -198,36 +200,36 @@ const Auth = () => {
       <main className="flex-1 container max-w-md pt-28 pb-16 flex items-center">
         <Card className="w-full shadow-lg border-border/60">
           <CardHeader className="text-center space-y-2">
-            <CardTitle className="text-2xl md:text-3xl font-bold">Bem-vindo(a)</CardTitle>
-            <CardDescription>Entre ou crie a sua conta para continuar.</CardDescription>
+            <CardTitle className="text-2xl md:text-3xl font-bold">{t("Auth.bemVindoA")}</CardTitle>
+            <CardDescription>{t("Auth.entreOuCrieA")}</CardDescription>
           </CardHeader>
           <CardContent>
             {import.meta.env.VITE_GOOGLE_CLIENT_ID && (
               <div className="mb-6 space-y-4">
                 <GoogleSignInButton onCredential={handleGoogleCredential} />
                 {googleLoading && (
-                  <p className="text-center text-sm text-muted-foreground">A entrar…</p>
+                  <p className="text-center text-sm text-muted-foreground">{t("Auth.aEntrar")}</p>
                 )}
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
                     <span className="w-full border-t" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-card px-2 text-muted-foreground">ou</span>
+                    <span className="bg-card px-2 text-muted-foreground">{t("Auth.ou")}</span>
                   </div>
                 </div>
               </div>
             )}
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "login" | "register")} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="login">Entrar</TabsTrigger>
-                <TabsTrigger value="register">Criar Conta</TabsTrigger>
+                <TabsTrigger value="login">{t("Auth.entrar")}</TabsTrigger>
+                <TabsTrigger value="register">{t("Auth.criarConta")}</TabsTrigger>
               </TabsList>
 
               <TabsContent value="login">
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="login-email">Email</Label>
+                    <Label htmlFor="login-email">{t("Auth.email")}</Label>
                     <Input
                       id="login-email"
                       type="email"
@@ -237,7 +239,7 @@ const Auth = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="login-password">Palavra-passe</Label>
+                    <Label htmlFor="login-password">{t("Auth.palavraPasse")}</Label>
                     <Input
                       id="login-password"
                       type="password"
@@ -251,13 +253,13 @@ const Auth = () => {
                       disabled={forgotPasswordLoading}
                       className="text-xs text-muted-foreground hover:text-primary hover:underline transition-colors block ml-auto disabled:opacity-60"
                     >
-                      {forgotPasswordLoading ? "A enviar..." : "Esqueceu a palavra-passe?"}
+                      {forgotPasswordLoading ? t("Auth.aEnviar") : t("Auth.esqueceuAPalavraPasse")}
                     </button>
                   </div>
                   <Button type="submit" size="lg" className="w-full" disabled={loginLoading}>
-                    {loginLoading ? "A entrar…" : (
+                    {loginLoading ? t("Auth.aEntrar") : (
                       <>
-                        Entrar <ArrowRight className="w-4 h-4 ml-2" />
+                        {t("Auth.entrar")}{" "}<ArrowRight className="w-4 h-4 ml-2" />
                       </>
                     )}
                   </Button>
@@ -267,16 +269,16 @@ const Auth = () => {
               <TabsContent value="register">
                 <form onSubmit={handleRegister} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="reg-name">Nome Completo</Label>
+                    <Label htmlFor="reg-name">{t("Auth.nomeCompleto")}</Label>
                     <Input
                       id="reg-name"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="O seu nome"
+                      placeholder={t("Auth.oSeuNome")}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="reg-email">Email</Label>
+                    <Label htmlFor="reg-email">{t("Auth.email")}</Label>
                     <Input
                       id="reg-email"
                       type="email"
@@ -286,7 +288,7 @@ const Auth = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="reg-password">Palavra-passe</Label>
+                    <Label htmlFor="reg-password">{t("Auth.palavraPasse")}</Label>
                     <Input
                       id="reg-password"
                       type="password"
@@ -296,11 +298,11 @@ const Auth = () => {
                       autoComplete="new-password"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Pelo menos 8 caracteres, com letras e números.
+                      {t("Auth.peloMenos8Caracteres")}
                     </p>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="reg-confirm-password">Confirmar Palavra-passe</Label>
+                    <Label htmlFor="reg-confirm-password">{t("Auth.confirmarPalavraPasse")}</Label>
                     <Input
                       id="reg-confirm-password"
                       type="password"
@@ -311,10 +313,10 @@ const Auth = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Província</Label>
+                    <Label>{t("Auth.provincia")}</Label>
                     <Select value={province} onValueChange={setProvince}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Seleccione a sua província" />
+                        <SelectValue placeholder={t("Auth.seleccioneASuaProvincia")} />
                       </SelectTrigger>
                       <SelectContent>
                         {PROVINCES.map((p) => (
@@ -326,23 +328,23 @@ const Auth = () => {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Género</Label>
+                    <Label>{t("Auth.genero")}</Label>
                     <Select value={gender} onValueChange={setGender}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Seleccione o seu género" />
+                        <SelectValue placeholder={t("Auth.seleccioneOSeuGenero")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="masculino">Masculino</SelectItem>
-                        <SelectItem value="feminino">Feminino</SelectItem>
-                        <SelectItem value="nao_dizer">Prefiro não dizer</SelectItem>
+                        <SelectItem value="masculino">{t("Auth.masculino")}</SelectItem>
+                        <SelectItem value="feminino">{t("Auth.feminino")}</SelectItem>
+                        <SelectItem value="nao_dizer">{t("Auth.prefiroNaoDizer")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Perfil de Utente</Label>
+                    <Label>{t("Auth.perfilDeUtente")}</Label>
                     <Select value={role} onValueChange={(v) => setRole(v as UserRole)}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Seleccione o seu perfil" />
+                        <SelectValue placeholder={t("Auth.seleccioneOSeuPerfil")} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="comum">{ROLE_LABEL.comum}</SelectItem>
@@ -352,9 +354,9 @@ const Auth = () => {
                     </Select>
                   </div>
                   <Button type="submit" size="lg" className="w-full" disabled={registerLoading}>
-                    {registerLoading ? "A criar conta…" : (
+                    {registerLoading ? t("Auth.aCriarConta") : (
                       <>
-                        Criar Conta <ArrowRight className="w-4 h-4 ml-2" />
+                        {t("Auth.criarConta")}{" "}<ArrowRight className="w-4 h-4 ml-2" />
                       </>
                     )}
                   </Button>

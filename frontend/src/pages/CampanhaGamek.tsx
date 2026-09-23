@@ -1,6 +1,9 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
+import { localizar } from "@/i18n/rotas";
 
 interface CampaignVideo {
   src: string;
@@ -11,65 +14,78 @@ interface CampaignVideo {
 const campaignVideos: CampaignVideo[] = [
   {
     src: "https://yjzqnjatrdngzfixrxcg.supabase.co/storage/v1/object/public/kamba-media/Campanha%20de%20conscientizacao.mp4#t=0.001",
-    title: "Vozes da Mudança nas Ruas da Gamek",
-    summary:
-      "Voluntários e embaixadores de inclusão visual abordam a comunidade sobre o estrabismo, partilham soluções acessíveis e convidam novos jovens a juntarem-se à causa.",
+    get title() {
+      return i18n.t("CampanhaGamek.vozesDaMudancaNas");
+    },
+    get summary() {
+      return i18n.t("CampanhaGamek.voluntariosEEmbaixadoresDe");
+    },
   },
   {
     src: "https://yjzqnjatrdngzfixrxcg.supabase.co/storage/v1/object/public/kamba-media/Dalva%20Introducao%20ao%20Projecto.mp4#t=0.001",
-    title: "Missão e Propósito Social",
-    summary:
-      "Dalva Filipe explica a importância de levar informação precisa às famílias, combater diagnósticos errados e erradicar o estigma associado ao estrabismo.",
+    get title() {
+      return i18n.t("CampanhaGamek.missaoEPropositoSocial");
+    },
+    get summary() {
+      return i18n.t("CampanhaGamek.dalvaFilipeExplicaA");
+    },
   },
   {
     src: "https://yjzqnjatrdngzfixrxcg.supabase.co/storage/v1/object/public/kamba-media/Kambas.mp4#t=0.001",
-    title: "Histórias Reais e Superação",
-    summary:
-      "Testemunhos inspiradores de Noelma Silvestre, que convive com a condição desde cedo, e dos voluntários Elton Dias e Josefina Afonso sobre o impacto transformador da empatia, da informação e do apoio mútuo na auto-estima.",
+    get title() {
+      return i18n.t("CampanhaGamek.historiasReaisESuperacao");
+    },
+    get summary() {
+      return i18n.t("CampanhaGamek.testemunhosInspiradoresDeNoelma");
+    },
   },
   {
     src: "https://yjzqnjatrdngzfixrxcg.supabase.co/storage/v1/object/public/kamba-media/JPA%20Grupo.mov#t=0.001",
-    title: "Grito de Esperança e União",
-    summary:
-      "O encerramento marcante da nossa equipa celebrando o compromisso conjunto: Um olhar alinhado, uma vida transformada!",
+    get title() {
+      return i18n.t("CampanhaGamek.gritoDeEsperancaE");
+    },
+    get summary() {
+      return i18n.t("CampanhaGamek.oEncerramentoMarcanteDa");
+    },
   },
 ];
 
 const CampanhaGamek = () => {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
-      <BackButton fallbackPath="/kamba" label="Voltar ao Meu Kamba" />
+      <BackButton fallbackPath={localizar("/kamba")} label={t("CampanhaGamek.voltarAoMeuKamba")} />
       <main className="flex-1">
         <div className="container">
           <div className="max-w-3xl mx-auto flex flex-col gap-12 py-10">
             <header className="text-center space-y-2">
               <span className="text-sm font-medium tracking-widest uppercase text-teal">
-                12 de Setembro
+                {t("CampanhaGamek.n12DeSetembro")}
               </span>
               <h1 className="text-3xl md:text-4xl font-bold">
-                Campanha de Consciencialização sobre o Estrabismo na Gamek
+                {t("CampanhaGamek.campanhaDeConsciencializacaoSobre")}
               </h1>
             </header>
 
             <div className="flex flex-col items-center gap-6 bg-slate-50 border border-slate-200 rounded-2xl p-6 sm:p-8">
               <img
                 src="/assets/kamba/campanha-gamek-poster.jpg"
-                alt="Cartaz da Campanha de Consciencialização sobre o Estrabismo na Gamek"
+                alt={t("CampanhaGamek.cartazDaCampanhaDe")}
                 className="w-full max-w-xl mx-auto rounded-xl object-contain"
               />
               <div className="text-muted-foreground leading-relaxed space-y-4">
                 <p>
-                  No dia 12 de Setembro, realizamos a campanha de consciencialização sobre o estrabismo pelas ruas da Gamek, na cidade de Luanda.
+                  {t("CampanhaGamek.noDia12De")}
                 </p>
                 <p>
-                  A comunidade Meu Kamba Estrábico, pertencente ao Janelas para a Alma, efectivou, pelas 9h30, a campanha de consciencialização e sensibilização cujo objectivo principal foi transmitir às pessoas informações importantes sobre a condição e apresentar a nossa proposta de valor, a plataforma Janelas para a Alma, onde foi possível abordar diversas pessoas portadoras da condição ou ainda próximos a pessoas com a condição.
+                  {t("CampanhaGamek.aComunidadeMeuKamba")}
                 </p>
                 <p>
-                  Reafirmamos o nosso compromisso com a difusão da informação sobre o estrabismo e saúde visual.
+                  {t("CampanhaGamek.reafirmamosONossoCompromisso")}
                 </p>
                 <p>
-                  Janelas para a Alma: um olhar alinhado, uma vida transformada.
+                  {t("CampanhaGamek.janelasParaAAlma")}
                 </p>
               </div>
             </div>
@@ -77,7 +93,7 @@ const CampanhaGamek = () => {
             <div className="flex flex-col gap-6">
               <hr className="border-slate-200" />
               <h2 className="text-xl md:text-2xl font-bold text-center">
-                Cobertura em Vídeo da Acção no Terreno
+                {t("CampanhaGamek.coberturaEmVideoDa")}
               </h2>
             </div>
 

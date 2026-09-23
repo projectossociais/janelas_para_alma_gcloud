@@ -13,16 +13,19 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import KambaHeroCarousel from "@/components/kamba/KambaHeroCarousel";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
-const volunteerSchema = z.object({
-  name: z.string().trim().min(1, "Nome é obrigatório").max(100, "Máximo 100 caracteres"),
+const volunteerSchema = () => z.object({
+  name: z.string().trim().min(1, i18n.t("VolunteerSection.nomeEObrigatorio")).max(100, i18n.t("VolunteerSection.maximo100Caracteres")),
   email: z.string().trim().email("Email inválido").max(255, "Máximo 255 caracteres"),
   phone: z.string().trim().min(1, "Telefone é obrigatório").max(20, "Máximo 20 caracteres"),
-  motivation: z.string().trim().min(1, "Motivação é obrigatória").max(1000, "Máximo 1000 caracteres"),
+  motivation: z.string().trim().min(1, i18n.t("VolunteerSection.motivacaoEObrigatoria")).max(1000, i18n.t("VolunteerSection.maximo1000Caracteres")),
 });
 
 
 const VolunteerSection = () => {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -40,7 +43,7 @@ const VolunteerSection = () => {
       motivation: formData.get("motivation") as string,
     };
 
-    const result = volunteerSchema.safeParse(data);
+    const result = volunteerSchema().safeParse(data);
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
       result.error.issues.forEach((err) => {
@@ -55,16 +58,16 @@ const VolunteerSection = () => {
       const resp = await sendToEdgeFunction("send-volunteer-email", result.data);
       if (resp?.error) throw new Error(resp.error);
       toast({
-        title: "Inscrição submetida com sucesso!",
-        description: "Bem-vindo(a) à equipa! Entraremos em contacto em breve.",
+        title: t("VolunteerSection.inscricaoSubmetidaComSucesso"),
+        description: t("VolunteerSection.bemVindoAA"),
       });
       setOpen(false);
       (e.target as HTMLFormElement).reset();
     } catch (err) {
       console.error("Volunteer form error:", err);
       toast({
-        title: "Erro ao submeter",
-        description: err instanceof Error ? err.message : "Verifique a sua ligação à internet e tente novamente.",
+        title: t("VolunteerSection.erroAoSubmeter"),
+        description: err instanceof Error ? err.message : t("VolunteerSection.verifiqueASuaLigacao"),
         variant: "destructive",
       });
     } finally {
@@ -85,34 +88,34 @@ const VolunteerSection = () => {
               <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-teal/10 text-teal">
                 <HeartHandshake className="w-5 h-5" />
               </div>
-              Formulário de Inscrição
+              {t("VolunteerSection.formularioDeInscricao")}
             </DialogTitle>
             <DialogDescription>
-              Preenche os campos abaixo para te inscreveres como voluntário.
+              {t("VolunteerSection.preencheOsCamposAbaixo")}
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-5 pt-2">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Nome completo</label>
-                <Input name="name" placeholder="O teu nome" maxLength={100} />
+                <label className="text-sm font-medium">{t("VolunteerSection.nomeCompleto")}</label>
+                <Input name="name" placeholder={t("VolunteerSection.oTeuNome")} maxLength={100} />
                 {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Email</label>
+                <label className="text-sm font-medium">{t("VolunteerSection.email")}</label>
                 <Input name="email" type="email" placeholder="email@exemplo.com" maxLength={255} />
                 {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Telefone</label>
-              <Input name="phone" placeholder="+244 9XX XXX XXX" maxLength={20} />
+              <label className="text-sm font-medium">{t("VolunteerSection.telefone")}</label>
+              <Input name="phone" placeholder={t("VolunteerSection.n2449xxXxxXxx")} maxLength={20} />
               {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Breve Motivação</label>
-              <Textarea name="motivation" placeholder="Porque queres ser um Kamba?" maxLength={1000} rows={4} />
+              <label className="text-sm font-medium">{t("VolunteerSection.breveMotivacao")}</label>
+              <Textarea name="motivation" placeholder={t("VolunteerSection.porqueQueresSerUm")} maxLength={1000} rows={4} />
               {errors.motivation && <p className="text-sm text-destructive">{errors.motivation}</p>}
             </div>
             <button
@@ -120,7 +123,7 @@ const VolunteerSection = () => {
               disabled={loading}
               className="w-full inline-flex items-center justify-center px-6 py-3 rounded-lg bg-teal text-teal-foreground font-medium transition-all hover:opacity-90 shadow-elevated disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "A submeter..." : "Inscrever-me como Kamba"}
+              {loading ? t("VolunteerSection.aSubmeter") : t("VolunteerSection.inscreverMeComoKamba")}
             </button>
           </form>
         </DialogContent>

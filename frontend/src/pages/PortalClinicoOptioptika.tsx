@@ -21,31 +21,68 @@ import { Button } from "@/components/ui/button";
 import OptioptikaBookingDialog from "@/components/OptioptikaBookingDialog";
 import { OPTIOPTIKA_YELLOW } from "@/data/optioptika";
 import optioptikaAppQr from "@/assets/optioptika-app-qr.png";
+import { Trans, useTranslation } from "react-i18next";
+import i18n from "@/i18n";
+import { localizar } from "@/i18n/rotas";
 
 const consultasBasicas = [
-  { icon: Stethoscope, label: "Optometria Clínica e Oftalmologia" },
-  { icon: Baby, label: "Oftalmologia Pediátrica (1 aos 5 anos)" },
-  { icon: Baby, label: "Oftalmologia Neonatal (1 aos 12 meses)" },
-  { icon: Eye, label: "Teste do Olhinho" },
+  { icon: Stethoscope, get label() {
+    return i18n.t("PortalClinicoOptioptika.optometriaClinicaEOftalmologia");
+  } },
+  { icon: Baby, get label() {
+    return i18n.t("PortalClinicoOptioptika.oftalmologiaPediatrica1Aos");
+  } },
+  { icon: Baby, get label() {
+    return i18n.t("PortalClinicoOptioptika.oftalmologiaNeonatal1Aos");
+  } },
+  { icon: Eye, get label() {
+    return i18n.t("PortalClinicoOptioptika.testeDoOlhinho");
+  } },
 ];
 
 const examesESaude = [
-  { icon: Activity, label: "Catarata" },
-  { icon: Activity, label: "Glaucoma" },
-  { icon: Eye, label: "Visão das Cores" },
-  { icon: ScanEye, label: "Retinografia" },
-  { icon: ScanEye, label: "Campimetria" },
-  { icon: ScanEye, label: "Topografia Corneal" },
-  { icon: Activity, label: "Curva Tensional" },
+  { icon: Activity, get label() {
+    return i18n.t("PortalClinicoOptioptika.catarata");
+  } },
+  { icon: Activity, get label() {
+    return i18n.t("PortalClinicoOptioptika.glaucoma");
+  } },
+  { icon: Eye, get label() {
+    return i18n.t("PortalClinicoOptioptika.visaoDasCores");
+  } },
+  { icon: ScanEye, get label() {
+    return i18n.t("PortalClinicoOptioptika.retinografia");
+  } },
+  { icon: ScanEye, get label() {
+    return i18n.t("PortalClinicoOptioptika.campimetria");
+  } },
+  { icon: ScanEye, get label() {
+    return i18n.t("PortalClinicoOptioptika.topografiaCorneal");
+  } },
+  { icon: Activity, get label() {
+    return i18n.t("PortalClinicoOptioptika.curvaTensional");
+  } },
   { icon: ScanEye, label: "OCT" },
-  { icon: ScanEye, label: "Tonometria" },
+  { icon: ScanEye, get label() {
+    return i18n.t("PortalClinicoOptioptika.tonometria");
+  } },
   { icon: Activity, label: "TSH" },
 ];
 
 const horario = [
-  { dias: "Segunda a Quinta", horas: "8h às 17h00" },
-  { dias: "Sexta-feira", horas: "Fechado" },
-  { dias: "Sábado", horas: "8h às 13h00" },
+  { get dias() {
+    return i18n.t("PortalClinicoOptioptika.segundaAQuinta");
+  }, get horas() {
+    return i18n.t("PortalClinicoOptioptika.n8hAs17h00");
+  } },
+  { dias: "Sexta-feira", get horas() {
+    return i18n.t("PortalClinicoOptioptika.fechado");
+  } },
+  { get dias() {
+    return i18n.t("PortalClinicoOptioptika.sabado");
+  }, get horas() {
+    return i18n.t("PortalClinicoOptioptika.n8hAs13h00");
+  } },
 ];
 
 const enderecoCompleto =
@@ -56,12 +93,13 @@ const siteLink = "https://www.optioptika.com";
 const mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(enderecoCompleto)}`;
 
 const PortalClinicoOptioptika = () => {
+  const { t } = useTranslation();
   const [bookingOpen, setBookingOpen] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
-      <BackButton fallbackPath="/portal-clinico" label="Voltar ao Portal Clínico" />
+      <BackButton fallbackPath={localizar("/portal-clinico")} label={t("PortalClinicoOptioptika.voltarAoPortalClinico")} />
 
       <main className="flex-1">
         {/* Hero */}
@@ -80,17 +118,16 @@ const PortalClinicoOptioptika = () => {
           <div className="container px-6 relative">
             <div className="max-w-3xl mx-auto text-center">
               <span className="inline-block px-4 py-1.5 rounded-full bg-black text-white text-xs font-bold uppercase tracking-widest mb-6">
-                Parceiro Clínico Oficial
+                {t("PortalClinicoOptioptika.parceiroClinicoOficial")}
               </span>
               <h1 className="text-4xl md:text-6xl font-black text-black leading-tight tracking-tight">
                 OPTIOPTIKA
               </h1>
               <p className="text-lg md:text-xl font-semibold text-black/80 mt-2 mb-8">
-                Visão da Banda
+                {t("PortalClinicoOptioptika.visaoDaBanda")}
               </p>
               <p className="text-base md:text-lg text-black/80 max-w-2xl mx-auto leading-relaxed">
-                Um centro de saúde ocular em Luanda e a primeira Carteira de Desconto Digital
-                em Angola. Baixe a aplicação e receba 5.000Kz no seu cartão virtual.
+                {t("PortalClinicoOptioptika.umCentroDeSaude")}
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
                 <Button
@@ -100,7 +137,7 @@ const PortalClinicoOptioptika = () => {
                 >
                   <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
                     <Phone className="w-5 h-5 mr-2" />
-                    Agendar Consulta via WhatsApp
+                    {t("PortalClinicoOptioptika.agendarConsultaViaWhatsapp")}
                   </a>
                 </Button>
                 <Button
@@ -111,7 +148,7 @@ const PortalClinicoOptioptika = () => {
                 >
                   <a href={siteLink} target="_blank" rel="noopener noreferrer">
                     <Globe className="w-5 h-5 mr-2" />
-                    Visitar Site
+                    {t("PortalClinicoOptioptika.visitarSite")}
                   </a>
                 </Button>
               </div>
@@ -127,10 +164,10 @@ const PortalClinicoOptioptika = () => {
                 className="text-sm font-bold tracking-widest uppercase"
                 style={{ color: "#B89600" }}
               >
-                Serviços
+                {t("PortalClinicoOptioptika.servicos")}
               </span>
               <h2 className="text-3xl md:text-4xl font-bold text-foreground">
-                Consultas Básicas e Especiais
+                {t("PortalClinicoOptioptika.consultasBasicasEEspeciais")}
               </h2>
             </div>
             <div className="grid sm:grid-cols-2 gap-4 max-w-4xl mx-auto">
@@ -160,13 +197,13 @@ const PortalClinicoOptioptika = () => {
                 className="text-sm font-bold tracking-widest uppercase"
                 style={{ color: OPTIOPTIKA_YELLOW }}
               >
-                Acompanhamento
+                {t("PortalClinicoOptioptika.acompanhamento")}
               </span>
               <h2 className="text-3xl md:text-4xl font-bold">
-                Exames de Saúde Ocular
+                {t("PortalClinicoOptioptika.examesDeSaudeOcular")}
               </h2>
               <p className="text-white/70">
-                Rastreio e acompanhamento contínuo de Catarata, Glaucoma e Visão das Cores.
+                {t("PortalClinicoOptioptika.rastreioEAcompanhamentoContinuo")}
               </p>
             </div>
             <div className="grid sm:grid-cols-2 md:grid-cols-5 gap-4 max-w-5xl mx-auto">
@@ -201,27 +238,25 @@ const PortalClinicoOptioptika = () => {
                     <Smartphone className="w-7 h-7" />
                   </div>
                   <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
-                    Baixe agora a aplicação Optioptika
+                    {t("PortalClinicoOptioptika.baixeAgoraAAplicacao")}
                   </h2>
                   <p className="text-muted-foreground leading-relaxed mb-2">
-                    Tenha acesso à primeira Carteira de Desconto Digital em Angola e receba
-                    5.000Kz no seu Cartão Virtual.
+                    {t("PortalClinicoOptioptika.tenhaAcessoAPrimeira")}
                   </p>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Marque a sua consulta e exames oculares directamente pelo aplicativo,
-                    disponível na Google Play e App Store.
+                    {t("PortalClinicoOptioptika.marqueASuaConsulta")}
                   </p>
                 </div>
                 <div className="flex flex-col items-center gap-3">
                   <div className="w-full rounded-2xl bg-white border-2 p-4" style={{ borderColor: OPTIOPTIKA_YELLOW }}>
                     <img
                       src={optioptikaAppQr}
-                      alt="Códigos QR para descarregar a aplicação Optioptika na Google Play e App Store"
+                      alt={t("PortalClinicoOptioptika.codigosQrParaDescarregar")}
                       className="w-full h-auto object-contain"
                     />
                   </div>
                   <span className="text-xs text-muted-foreground text-center">
-                    Aponte a câmara do telemóvel a um dos códigos para descarregar
+                    {t("PortalClinicoOptioptika.aponteACamaraDo")}
                   </span>
                 </div>
               </div>
@@ -237,7 +272,7 @@ const PortalClinicoOptioptika = () => {
                 <div className="flex items-center gap-3 mb-6">
                   <Clock className="w-5 h-5" style={{ color: "#B89600" }} />
                   <h3 className="text-xl font-bold text-foreground">
-                    Horário de Funcionamento
+                    {t("PortalClinicoOptioptika.horarioDeFuncionamento")}
                   </h3>
                 </div>
                 <ul className="space-y-4">
@@ -262,15 +297,14 @@ const PortalClinicoOptioptika = () => {
                 <div className="flex items-center gap-3 mb-6">
                   <MapPin className="w-5 h-5" style={{ color: "#B89600" }} />
                   <h3 className="text-xl font-bold text-foreground group-hover:underline">
-                    Onde Estamos
+                    {t("PortalClinicoOptioptika.ondeEstamos")}
                   </h3>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Urbanização Nova Vida, Rua 54 (rua do tribunal provincial), Centro
-                  Empresarial Living-Luanda, Lote 9, Luanda, Angola.
+                  {t("PortalClinicoOptioptika.urbanizacaoNovaVidaRua")}
                 </p>
                 <p className="text-xs font-semibold mt-4" style={{ color: "#B89600" }}>
-                  Ver no Google Maps →
+                  {t("PortalClinicoOptioptika.verNoGoogleMaps")}
                 </p>
               </a>
             </div>
@@ -282,10 +316,10 @@ const PortalClinicoOptioptika = () => {
           <div className="container px-6">
             <div className="max-w-3xl mx-auto text-center mb-10">
               <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
-                Contactos e Agendamento
+                {t("PortalClinicoOptioptika.contactosEAgendamento")}
               </h2>
               <p className="text-muted-foreground">
-                Fale connosco por WhatsApp, email ou visite o nosso site.
+                {t("PortalClinicoOptioptika.faleConnoscoPorWhatsapp")}
               </p>
             </div>
             <div className="grid sm:grid-cols-3 gap-4 max-w-4xl mx-auto mb-10">
@@ -304,7 +338,7 @@ const PortalClinicoOptioptika = () => {
                 className="flex flex-col items-center gap-3 p-6 rounded-xl border border-border/60 bg-card hover:shadow-card transition-all text-center"
               >
                 <Mail className="w-6 h-6" style={{ color: "#B89600" }} />
-                <span className="text-sm font-semibold text-foreground">Email</span>
+                <span className="text-sm font-semibold text-foreground">{t("PortalClinicoOptioptika.email")}</span>
                 <span className="text-xs text-muted-foreground break-all">geral@optioptika.com</span>
               </a>
               <a
@@ -314,7 +348,7 @@ const PortalClinicoOptioptika = () => {
                 className="flex flex-col items-center gap-3 p-6 rounded-xl border border-border/60 bg-card hover:shadow-card transition-all text-center"
               >
                 <Globe className="w-6 h-6" style={{ color: "#B89600" }} />
-                <span className="text-sm font-semibold text-foreground">Site</span>
+                <span className="text-sm font-semibold text-foreground">{t("PortalClinicoOptioptika.site")}</span>
                 <span className="text-xs text-muted-foreground">www.optioptika.com</span>
               </a>
             </div>
@@ -326,7 +360,7 @@ const PortalClinicoOptioptika = () => {
                 style={{ backgroundColor: OPTIOPTIKA_YELLOW }}
               >
                 <CalendarPlus className="w-5 h-5 mr-2" />
-                Agendar a Minha Consulta
+                {t("PortalClinicoOptioptika.agendarAMinhaConsulta")}
               </Button>
             </div>
           </div>
@@ -343,9 +377,7 @@ const PortalClinicoOptioptika = () => {
                 <Radio className="w-6 h-6" />
               </div>
               <p className="text-sm text-white/80 leading-relaxed">
-                Acompanhe o programa <strong className="text-white">"Visão da Banda!"</strong> todas as
-                Quartas-feiras, das 13h às 14h, na rádio MFM 91.7, com o Dr. Djalme Fonseca,
-                Optometrista.
+                <Trans i18nKey="PortalClinicoOptioptika.acompanheOProgramaVisao" components={{ strong: <strong className="text-white" /> }} />
               </p>
             </div>
           </div>

@@ -7,6 +7,8 @@ import teamManuel from "@/assets/team-manuel.png";
 import teamLukeny from "@/assets/team-lukeny.png";
 import teamPedro from "@/assets/team-pedro.png";
 import teamKassia from "@/assets/team-kassia.webp";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
 interface TeamMember {
   id: number;
@@ -23,62 +25,113 @@ interface TeamMember {
 const TEAM_MEMBERS: TeamMember[] = [
   {
     id: 1,
-    name: "Dalva Filipe",
-    role: "Coordenação Geral",
-    description: "Impulsionando a visão do Janelas para a Alma.",
+    get name() {
+      return i18n.t("TeamSection.dalvaFilipe");
+    },
+    get role() {
+      return i18n.t("TeamSection.coordenacaoGeral");
+    },
+    get description() {
+      return i18n.t("TeamSection.impulsionandoAVisaoDo");
+    },
     image: teamDalva,
-    bio: "Sou estudante do terceiro ano do curso de Contabilidade e Finanças no ISAF e bolseira de mérito da Fundação BAI. Natural de Benguela, desenvolvo-me activamente em iniciativas ligadas à educação financeira, liderança juvenil e mercado de capitais.\n\nFaço parte da coordenação do Clube de Finanças do ISAF e desempenho funções de liderança em diversos projectos estudantis e associativos. Paralelamente, sou investidora e tenho interesse em contribuir para a inclusão financeira e o desenvolvimento social.",
-    mission: "O que me move neste projecto é a vontade de dar voz e visibilidade a realidades que muitas vezes passam despercebidas, promovendo empatia, inclusão e consciência social. Acredito que pequenas acções podem gerar grandes mudanças, e este projecto é a minha forma de contribuir para uma sociedade mais humana e atenta às diferenças.\n\n\"O 'Janelas para a Alma' nasceu da necessidade de dar visibilidade ao que muitas vezes é ignorado porque compreender o outro também é uma forma de transformar o mundo.\"",
+    get bio() {
+      return i18n.t("TeamSection.souEstudanteDoTerceiro");
+    },
+    get mission() {
+      return i18n.t("TeamSection.oQueMeMove");
+    },
     linkedin: "https://www.linkedin.com/in/dalva-filipe-b7523129b",
     email: "dalvafilipe182@gmail.com",
   },
   {
     id: 2,
-    name: "Manuel Francisco",
-    role: "Director Financeiro",
-    description: "Investigador e líder jovem dedicado à inclusão visual.",
+    get name() {
+      return i18n.t("TeamSection.manuelFrancisco");
+    },
+    get role() {
+      return i18n.t("TeamSection.directorFinanceiro");
+    },
+    get description() {
+      return i18n.t("TeamSection.investigadorELiderJovem");
+    },
     image: teamManuel,
-    bio: "Sou estudante universitário de Contabilidade e Finanças no ISAF, com forte interesse em investigação científica e liderança.\n\nJuntei-me ao Janelas Para a Alma porque acredito que ver o outro com humanidade é o primeiro passo para transformar qualquer sociedade. Num contexto em que o estrabismo ainda é alvo de estigma, acredito que a educação, a tecnologia e a inclusão são as ferramentas mais poderosas para mudar essa realidade.",
-    mission: "Acredito que a educação, a tecnologia e a inclusão são as ferramentas mais poderosas para transformar realidades marcadas pelo estigma.\n\n\"Ver o outro com humanidade é o primeiro passo para transformar qualquer sociedade.\"",
+    get bio() {
+      return i18n.t("TeamSection.souEstudanteUniversitarioDe");
+    },
+    get mission() {
+      return i18n.t("TeamSection.acreditoQueAEducacao");
+    },
     linkedin: "https://www.linkedin.com/in/manuel-francisco-050428327",
     email: "manuelfrancisco.profissional@gmail.com",
   },
   {
     id: 3,
-    name: "Lukeny Viegas",
-    role: "Director de TI",
-    description: "Amplificando a nossa mensagem e mobilizando a comunidade.",
+    get name() {
+      return i18n.t("TeamSection.lukenyViegas");
+    },
+    get role() {
+      return i18n.t("TeamSection.directorDeTi");
+    },
+    get description() {
+      return i18n.t("TeamSection.amplificandoANossaMensagem");
+    },
     image: teamLukeny,
-    bio: "Estudante universitário, natural de Luanda, Angola. Amante de práticas contabilistas, ESL Student at UofA e graduando em Finance.\n\nInteressado em projectos ligados à acção social desde cedo e almejo contribuir mais para o Projecto \"Janelas Para a Alma\" de modo a torná-lo realidade.",
-    mission: "O forte desejo de ajudar outrem move-me a ajudar os mais necessitados e, para este projecto, ajudar aqueles que sofrem a condição. Este projecto é muito mais abrangente do que eu possa enxergar, as janelas da visão e mentalidade que pretendemos alcançar.\n\n\"Este projecto visa abrir a Janela que sempre ficava fechada, a mentalidade e a alma dos que sofrem a condição e os que nem conhecem\".",
+    get bio() {
+      return i18n.t("TeamSection.estudanteUniversitarioNaturalDe");
+    },
+    get mission() {
+      return i18n.t("TeamSection.oForteDesejoDe");
+    },
     linkedin: "https://www.linkedin.com/in/lukeny-viegas-4524a5356",
     email: "lukenyviegas1@gmail.com",
   },
   {
     id: 4,
-    name: "Pedro Sapalo",
-    role: "Director de Legalização e Logística",
-    description: "Garantindo a conformidade e a eficiência operacional.",
+    get name() {
+      return i18n.t("TeamSection.pedroSapalo");
+    },
+    get role() {
+      return i18n.t("TeamSection.directorDeLegalizacaoE");
+    },
+    get description() {
+      return i18n.t("TeamSection.garantindoAConformidadeE");
+    },
     image: teamPedro,
-    bio: "Sou estudante universitário com forte interesse em pesquisa científica e aplicada. Fora do projecto \"Janelas para a Alma\", coopero activamente em associativismo académico, contribuindo para o fortalecimento da comunidade estudantil e para a promoção de iniciativas de impacto social e educacional.",
-    mission: "O que me inspira neste projecto é a possibilidade de promover a inclusão visual, reconhecimento e valorização das pessoas acometidas com estrabismo e outras deficiências visuais.\n\n\"Juntei-me ao Janelas Para a Alma porque acredito que iniciativas como esta têm o poder de impactar vidas e de nos ensinar a enxergar as diferenças com respeito e humanidade.\"",
+    get bio() {
+      return i18n.t("TeamSection.souEstudanteUniversitarioCom");
+    },
+    get mission() {
+      return i18n.t("TeamSection.oQueMeInspira");
+    },
     linkedin: "https://www.linkedin.com/in/pedrosapalo",
     email: "sapalop15@gmail.com",
   },
   {
     id: 5,
-    name: "Kássia Nunda",
-    role: "Directora de Comunicação e Marketing",
-    description: "Construindo alianças e definindo o rumo do nosso crescimento.",
+    get name() {
+      return i18n.t("TeamSection.kassiaNunda");
+    },
+    get role() {
+      return i18n.t("TeamSection.directoraDeComunicacaoE");
+    },
+    get description() {
+      return i18n.t("TeamSection.construindoAliancasEDefinindo");
+    },
     image: teamKassia,
-    bio: "Sou uma jovem cristã de 22 anos, estudante do 3.º ano da Licenciatura em Contabilidade e Finanças no Instituto Superior de Administração e Finanças (ISAF). Apaixonada por liderança, voluntariado e trabalho em equipa, destaco-me pelo meu envolvimento activo em diversas iniciativas e projectos juvenis.\n\nSou Presidente da Comunidade Nexus, Roteirista oficial e responsável pelas Relações Exteriores do podcast Palco Universitário, Coordenadora auxiliar da Comunidade Estudante Blindado e Responsável pela área financeira do movimento ASG Conexão Mulheres.\n\nNo âmbito profissional, exerço funções como navegadora no Banco BAI, conciliando esta actividade com o meu espírito empreendedor no sector dos cosméticos.",
-    mission: "Acredito que a fé, aliada a um forte sentido de propósito, constitui o alicerce para a minha superação diária e a concretização de objectivos.\n\n\"Integrei o Janelas para a Alma por me sentir genuinamente ligada à sua missão: levar cuidado e esperança a pessoas com estrabismo, um grupo frequentemente invisibilizado em Angola, e assim mudar a vida de quem muito precisa, mas poucas vezes é percebido.\"",
+    get bio() {
+      return i18n.t("TeamSection.souUmaJovemCrista");
+    },
+    get mission() {
+      return i18n.t("TeamSection.acreditoQueAFe");
+    },
     linkedin: "https://www.linkedin.com/in/k%C3%A1ssia-palmira-nunda-4a03b7308",
     email: "kc.nunda@gmail.com",
   },
 ];
 
 const TeamSection = () => {
+  const { t } = useTranslation();
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
 
   return (
@@ -86,14 +139,13 @@ const TeamSection = () => {
       <div className="container">
         <div className="text-center mb-16 space-y-4">
           <span className="text-sm font-medium tracking-widest uppercase text-teal">
-            A Nossa Equipa
+            {t("TeamSection.aNossaEquipa")}
           </span>
           <h2 className="text-3xl md:text-5xl font-bold text-slate-900">
-            As pessoas por trás da missão
+            {t("TeamSection.asPessoasPorTras")}
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Jovens angolanos comprometidos com a inclusão visual e a
-            sustentabilidade ambiental.
+            {t("TeamSection.jovensAngolanosComprometidosCom")}
           </p>
         </div>
 
@@ -160,7 +212,7 @@ const TeamSection = () => {
                 {/* Bio */}
                 <div className="space-y-2">
                   <h4 className="text-sm font-semibold tracking-widest uppercase text-teal">
-                    Sobre Mim
+                    {t("TeamSection.sobreMim")}
                   </h4>
                   <div className="text-muted-foreground leading-relaxed space-y-3">
                     {selectedMember.bio.split("\n\n").map((p, i) => (
@@ -172,7 +224,7 @@ const TeamSection = () => {
                 {/* Mission */}
                 <div className="space-y-2">
                   <h4 className="text-sm font-semibold tracking-widest uppercase text-teal">
-                    A Minha Missão
+                    {t("TeamSection.aMinhaMissao")}
                   </h4>
                   <blockquote className="border-l-4 border-teal/40 bg-teal/5 rounded-r-lg px-5 py-4 italic text-foreground/90 leading-relaxed space-y-3">
                     {selectedMember.mission.split("\n\n").map((p, i) => (
@@ -199,7 +251,7 @@ const TeamSection = () => {
                     className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-border bg-card text-foreground text-sm font-medium hover:bg-accent transition-colors"
                   >
                     <Mail className="w-4 h-4" />
-                    Email
+                    {t("TeamSection.email")}
                   </a>
                 </div>
               </div>

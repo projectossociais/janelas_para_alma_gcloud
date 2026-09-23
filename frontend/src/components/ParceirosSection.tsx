@@ -3,10 +3,14 @@ import logoUnicef from "@/assets/partner-unicef-logo.jpg";
 import logoArotec from "@/assets/partner-arotec-logo.png";
 import logoOptioptika from "@/assets/partner-optioptika-logo.jpg";
 import logoNeltGroup from "@/assets/partner-nelt-group-logo.png";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
 const partners = [
   {
-    name: "Desafio Genial",
+    get name() {
+      return i18n.t("ParceirosSection.desafioGenial");
+    },
     logo: logoDesafioGenial,
     onDark: true,
     url: "https://www.unicef.org/angola/desafio-genial-gera%C3%A7%C3%A3o-digital",
@@ -19,13 +23,17 @@ const partners = [
     url: "https://www.arotec.ao/programas/desafio-genial",
   },
   {
-    name: "Óptica Optioptika",
+    get name() {
+      return i18n.t("ParceirosSection.opticaOptioptika");
+    },
     logo: logoOptioptika,
     onDark: false,
     url: "https://www.optioptika.com/",
   },
   {
-    name: "Nelt Group",
+    get name() {
+      return i18n.t("ParceirosSection.neltGroup");
+    },
     logo: logoNeltGroup,
     onDark: true,
     url: "https://www.nelt.com/en/markets/angola/",
@@ -33,14 +41,15 @@ const partners = [
 ];
 
 const ParceirosSection = () => {
+  const { t } = useTranslation();
   return (
     <section className="py-16 md:py-24 bg-muted/50">
       <div className="container">
         <div className="text-center mb-12 space-y-4">
           <span className="text-sm font-medium tracking-widest uppercase text-teal">
-            Juntos, vemos mais longe
+            {t("ParceirosSection.juntosVemosMaisLonge")}
           </span>
-          <h2 className="text-3xl md:text-5xl font-bold text-foreground">Parceiros</h2>
+          <h2 className="text-3xl md:text-5xl font-bold text-foreground">{t("ParceirosSection.parceiros")}</h2>
         </div>
 
         <div className="flex gap-6 overflow-x-auto snap-x pb-4 -mx-4 px-4 scrollbar-hide touch-pan-x justify-start md:justify-center md:flex-wrap">

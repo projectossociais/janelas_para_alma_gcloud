@@ -8,10 +8,13 @@ import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext
 import Autoplay from "embla-carousel-autoplay";
 import { publicacoesApi, mensagemDeErroApi, type PublicacaoPublica } from "@/lib/apiClient";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
+import { localizar } from "@/i18n/rotas";
 
 const INTERVALO_CARROSSEL_MS = 10_000;
 
 const PublicacaoDetalhe = () => {
+  const { t } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
   const [publicacao, setPublicacao] = useState<PublicacaoPublica | null>(null);
   const [naoEncontrada, setNaoEncontrada] = useState(false);
@@ -36,18 +39,18 @@ const PublicacaoDetalhe = () => {
         if ((err as { status?: unknown } | null)?.status === 404) {
           setNaoEncontrada(true);
         } else {
-          toast.error(mensagemDeErroApi(err, "Não foi possível carregar esta publicação."));
+          toast.error(mensagemDeErroApi(err, t("PublicacaoDetalhe.naoFoiPossivelCarregar")));
         }
       } finally {
         setACarregar(false);
       }
     })();
-  }, [slug]);
+  }, [slug, t]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
-      <BackButton fallbackPath="/publicacoes" label="Voltar às publicações" />
+      <BackButton fallbackPath={localizar("/publicacoes")} label={t("PublicacaoDetalhe.voltarAsPublicacoes")} />
       <main className="flex-1">
         <div className="container py-10">
           {aCarregar && (
@@ -58,12 +61,12 @@ const PublicacaoDetalhe = () => {
 
           {!aCarregar && naoEncontrada && (
             <div className="max-w-md mx-auto text-center py-16 space-y-4">
-              <h1 className="text-2xl font-bold">Publicação não encontrada</h1>
+              <h1 className="text-2xl font-bold">{t("PublicacaoDetalhe.publicacaoNaoEncontrada")}</h1>
               <p className="text-muted-foreground">
-                Esta publicação pode ter sido removida ou ainda não foi publicada.
+                {t("PublicacaoDetalhe.estaPublicacaoPodeTer")}
               </p>
-              <Link to="/publicacoes" className="text-teal font-medium hover:underline">
-                Ver todas as publicações
+              <Link to={localizar("/publicacoes")} className="text-teal font-medium hover:underline">
+                {t("PublicacaoDetalhe.verTodasAsPublicacoes")}
               </Link>
             </div>
           )}
@@ -109,7 +112,7 @@ const PublicacaoDetalhe = () => {
               {publicacao.midias.length > 0 && (
                 <div className="space-y-4">
                   <hr className="border-slate-200" />
-                  <h2 className="text-xl font-bold text-center">Galeria de Fotos</h2>
+                  <h2 className="text-xl font-bold text-center">{t("PublicacaoDetalhe.galeriaDeFotos")}</h2>
                   <Carousel
                     opts={{ loop: true }}
                     plugins={[autoplay.current]}

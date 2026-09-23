@@ -1,23 +1,27 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Lightbulb, Gamepad2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
+import { localizar } from "@/i18n/rotas";
 
-const CURIOSIDADES = [
-  "O estrabismo afecta cerca de 4% da população mundial, mas grande parte dos casos nunca chega a ser diagnosticada.",
-  "Cerca de 80% de tudo o que aprendemos sobre o mundo chega até nós através da visão.",
-  "A ambliopia (\"olho preguiçoso\") só pode ser tratada com sucesso se for identificada cedo, de preferência antes dos 7 anos de idade.",
-  "Óculos usados e devidamente reaproveitados podem devolver a visão nítida a alguém que nunca teve acesso a um exame oftalmológico.",
-  "Os dois olhos trabalham em equipa: pequenos desalinhamentos podem ser corrigidos com exercícios de terapia visual, sem cirurgia.",
-  "Em Angola, a maioria dos casos de estrabismo infantil só é detectada quando já afecta o desempenho escolar da criança.",
-  "Piscar os olhos regularmente ao usar ecrãs ajuda a prevenir fadiga ocular, já que piscamos muito menos quando estamos concentrados num ecrã.",
+const CURIOSIDADES = () => [
+  i18n.t("CuriosidadesSection.oEstrabismoAfectaCerca"),
+  i18n.t("CuriosidadesSection.cercaDe80De"),
+  i18n.t("CuriosidadesSection.aAmbliopiaOlhoPreguicoso"),
+  i18n.t("CuriosidadesSection.oculosUsadosEDevidamente"),
+  i18n.t("CuriosidadesSection.osDoisOlhosTrabalham"),
+  i18n.t("CuriosidadesSection.emAngolaAMaioria"),
+  i18n.t("CuriosidadesSection.piscarOsOlhosRegularmente"),
 ];
 
 const getDailyCuriosidade = () => {
   const dayOfMonth = new Date().getDate();
-  return CURIOSIDADES[dayOfMonth % CURIOSIDADES.length];
+  return CURIOSIDADES()[dayOfMonth % CURIOSIDADES().length];
 };
 
 const CuriosidadesSection = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const curiosidade = useMemo(getDailyCuriosidade, []);
 
@@ -30,7 +34,7 @@ const CuriosidadesSection = () => {
               <Lightbulb className="w-5 h-5" />
             </div>
             <span className="text-sm font-medium tracking-widest uppercase text-teal">
-              Curiosidades
+              {t("CuriosidadesSection.curiosidades")}
             </span>
           </div>
 
@@ -40,11 +44,11 @@ const CuriosidadesSection = () => {
 
           <div className="border-t border-border/50 pt-5">
             <button
-              onClick={() => navigate("/jogo-curiosidades")}
+              onClick={() => navigate(localizar("/jogo-curiosidades"))}
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gold text-gold-foreground font-bold transition-all hover:opacity-90 hover:translate-y-[-2px]"
             >
               <Gamepad2 className="w-5 h-5" />
-              Tente o nosso Jogo: Inclusivamente
+              {t("CuriosidadesSection.tenteONossoJogo")}
             </button>
           </div>
         </div>

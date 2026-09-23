@@ -7,6 +7,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Trans, useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 const pillarSaude = "/pillar-saude.webp";
 const pillarEconomia = "/pillar-economia.webp";
 const pillarEducacao = "/pillar-educacao-kids.webp";
@@ -15,49 +17,68 @@ const pillarEducacao = "/pillar-educacao-kids.webp";
 const pillars = [
   {
     number: "01",
-    title: "Saúde Visual e Psicossocial",
-    shortDescription:
-      "Promovemos o bem-estar físico e psicológico da população afectada pelo estrabismo.",
-    description:
-      "Promovemos o bem-estar físico e psicológico da população afectada pelo estrabismo. Incluímos triagem, rastreio, encaminhamento para tratamento, apoio psicossocial e sessões terapêuticas para restaurar a auto-estima.",
+    get title() {
+      return i18n.t("PillarsSection.saudeVisualEPsicossocial");
+    },
+    get shortDescription() {
+      return i18n.t("PillarsSection.promovemosOBemEstar");
+    },
+    get description() {
+      return i18n.t("PillarsSection.promovemosOBemEstar2");
+    },
     image: pillarSaude,
-    items: [
-      "Triagem e rastreio ocular gratuito",
-      "Encaminhamento para tratamento",
-      "Apoio psicossocial e sessões terapêuticas",
-    ],
+    get items() {
+      return [
+      i18n.t("PillarsSection.triagemERastreioOcular"),
+      i18n.t("PillarsSection.encaminhamentoParaTratamento"),
+      i18n.t("PillarsSection.apoioPsicossocialESessoes"),
+    ];
+    },
   },
   {
     number: "02",
-    title: "Economia Circular",
-    shortDescription:
-      "Sustentabilidade e inovação através do reaproveitamento de materiais e empreendedorismo social.",
-    description:
-      "Focado na sustentabilidade e inovação, este pilar promove o reaproveitamento de materiais e o empreendedorismo social através de campanhas de recolha, reciclagem e redistribuição de óculos.",
+    get title() {
+      return i18n.t("PillarsSection.economiaCircular");
+    },
+    get shortDescription() {
+      return i18n.t("PillarsSection.sustentabilidadeEInovacaoAtraves");
+    },
+    get description() {
+      return i18n.t("PillarsSection.focadoNaSustentabilidadeE");
+    },
     image: pillarEconomia,
-    items: [
-      "Recolha e reciclagem de óculos usados",
-      "Redistribuição a preços simbólicos",
-      "Revenda de materiais reutilizados",
-    ],
+    get items() {
+      return [
+      i18n.t("PillarsSection.recolhaEReciclagemDe"),
+      i18n.t("PillarsSection.redistribuicaoAPrecosSimbolicos"),
+      i18n.t("PillarsSection.revendaDeMateriaisReutilizados"),
+    ];
+    },
   },
   {
     number: "03",
-    title: "Educação Visual e Ambiental",
-    shortDescription:
-      "Transformar mentalidades e promover uma cultura de cuidado com a visão e o meio ambiente.",
-    description:
-      "Transformar mentalidades e promover uma cultura de cuidado com a visão e o meio ambiente por meio de palestras, seminários, rodas de conversa e materiais educativos.",
+    get title() {
+      return i18n.t("PillarsSection.educacaoVisualEAmbiental");
+    },
+    get shortDescription() {
+      return i18n.t("PillarsSection.transformarMentalidadesEPromover");
+    },
+    get description() {
+      return i18n.t("PillarsSection.transformarMentalidadesEPromover2");
+    },
     image: pillarEducacao,
-    items: [
-      "Palestras e seminários educativos",
-      "Combate ao estigma social",
-      "Preservação ambiental",
-    ],
+    get items() {
+      return [
+      i18n.t("PillarsSection.palestrasESeminariosEducativos"),
+      i18n.t("PillarsSection.combateAoEstigmaSocial"),
+      i18n.t("PillarsSection.preservacaoAmbiental"),
+    ];
+    },
   },
 ];
 
 const PillarsSection = () => {
+  const { t } = useTranslation();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -80,9 +101,9 @@ const PillarsSection = () => {
       </div>
       <div className="container">
         <div className="text-center mb-16 space-y-4">
-          <span className="text-sm font-medium tracking-widest uppercase text-teal">Os Nossos Pilares</span>
+          <span className="text-sm font-medium tracking-widest uppercase text-teal">{t("PillarsSection.osNossosPilares")}</span>
           <h2 className="text-3xl md:text-5xl font-bold text-foreground">
-            Três pilares de transformação
+            {t("PillarsSection.tresPilaresDeTransformacao")}
           </h2>
         </div>
 
@@ -114,7 +135,7 @@ const PillarsSection = () => {
                   <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
                     {pillar.shortDescription}
                   </p>
-                  <span className="inline-block text-xs text-teal font-medium">Saber mais →</span>
+                  <span className="inline-block text-xs text-teal font-medium">{t("PillarsSection.saberMais")}</span>
                 </div>
               </button>
             ))}
@@ -124,14 +145,14 @@ const PillarsSection = () => {
           <button
             onClick={() => scroll("left")}
             className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 flex lg:hidden items-center justify-center w-10 h-10 rounded-full bg-card shadow-elevated border border-border/50 text-foreground hover:bg-muted z-10 opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300"
-            aria-label="Anterior"
+            aria-label={t("PillarsSection.anterior")}
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
           <button
             onClick={() => scroll("right")}
             className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 flex lg:hidden items-center justify-center w-10 h-10 rounded-full bg-card shadow-elevated border border-border/50 text-foreground hover:bg-muted z-10 opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300"
-            aria-label="Próximo"
+            aria-label={t("PillarsSection.proximo")}
           >
             <ChevronRight className="w-5 h-5" />
           </button>
@@ -150,7 +171,7 @@ const PillarsSection = () => {
                 {pillar.title}
               </DialogTitle>
               <DialogDescription className="sr-only">
-                Detalhes sobre {pillar.title}
+                <Trans i18nKey="PillarsSection.detalhesSobre" values={{ title: pillar.title }} />
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-5 pt-2">

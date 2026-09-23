@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 /**
  * Regra de força de password (AUTH-01) — espelha
  * `api/app/schemas/auth.py::validar_password_forte`, a única fonte de
@@ -14,13 +15,13 @@ export const PASSWORD_MIN_LEN = 8;
  *  mostrar ao utilizador. */
 export function erroDePasswordFraca(password: string): string | null {
   if (password.length < PASSWORD_MIN_LEN) {
-    return `A palavra-passe deve ter pelo menos ${PASSWORD_MIN_LEN} caracteres.`;
+    return i18n.t("validarPassword.aPalavraPasseDeve", { PASSWORD_MIN_LEN });
   }
   if (!/[A-Za-z]/.test(password)) {
-    return "A palavra-passe precisa de pelo menos uma letra.";
+    return i18n.t("validarPassword.aPalavraPassePrecisa");
   }
   if (!/\d/.test(password)) {
-    return "A palavra-passe precisa de pelo menos um número.";
+    return i18n.t("validarPassword.aPalavraPassePrecisa2");
   }
   return null;
 }

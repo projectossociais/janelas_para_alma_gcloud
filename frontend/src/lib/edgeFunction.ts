@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 // Calls a Supabase Edge Function via direct fetch.
 // Avoids issues seen on some mobile WebViews (Instagram/Facebook/TikTok in-app browsers,
 // older Android Chrome) where supabase.functions.invoke triggers a CORS preflight
@@ -27,7 +28,7 @@ export async function sendToEdgeFunction<T = unknown>(
   } catch (networkErr) {
     console.error(`[${name}] network error:`, networkErr);
     throw new Error(
-      "Falha de ligação. Verifique a sua internet (Wi-Fi/dados móveis) e tente novamente.",
+      i18n.t("edgeFunction.falhaDeLigacaoVerifique"),
     );
   }
 
@@ -41,7 +42,7 @@ export async function sendToEdgeFunction<T = unknown>(
   if (!res.ok) {
     const msg =
       (data && (data.error || data.message)) ||
-      `Erro ${res.status} ao contactar o servidor. Tente novamente.`;
+      i18n.t("edgeFunction.erroAoContactarO", { status: res.status });
     throw new Error(typeof msg === "string" ? msg : JSON.stringify(msg));
   }
 

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
+import { useTranslation } from "react-i18next";
 
 /**
  * Hook de eye tracking baseado no MediaPipe FaceMesh (mesmo modelo usado em
@@ -154,6 +155,7 @@ const eyeGazeRatio = (
 };
 
 export function useEyeTracking(): UseEyeTrackingResult {
+  const { t } = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const faceMeshRef = useRef<FaceMeshInstance | null>(null);
@@ -256,7 +258,7 @@ export function useEyeTracking(): UseEyeTrackingResult {
 
     const startCamera = async () => {
       if (!navigator.mediaDevices?.getUserMedia) {
-        setError("Câmara não suportada neste navegador.");
+        setError(t("useEyeTracking.camaraNaoSuportadaNeste"));
         return;
       }
       try {
@@ -277,7 +279,7 @@ export function useEyeTracking(): UseEyeTrackingResult {
         }
         await startFaceMesh();
       } catch {
-        if (!cancelled) setError("Não foi possível aceder à câmara.");
+        if (!cancelled) setError(t("useEyeTracking.naoFoiPossivelAceder"));
       }
     };
 
@@ -296,7 +298,7 @@ export function useEyeTracking(): UseEyeTrackingResult {
       streamRef.current?.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     };
-  }, []);
+  }, [t]);
 
   const calibrate = useCallback(() => {
     return new Promise<void>((resolve) => {

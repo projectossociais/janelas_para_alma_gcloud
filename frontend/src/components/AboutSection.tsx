@@ -7,57 +7,80 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Trans, useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
 const stats = [
   {
     value: "2.2B",
-    label: "Pessoas com deficiência visual no mundo",
+    get label() {
+      return i18n.t("AboutSection.pessoasComDeficienciaVisual");
+    },
     icon: Eye,
-    modalTitle: "Deficiência Visual no Mundo",
-    modalContent:
-      "Segundo o relatório da Organização Mundial da Saúde (OMS) sobre a saúde visual mundial publicado em 2019, pelo menos 2,2 bilhões de pessoas ao redor do mundo têm deficiência visual. Destas, pelo menos 1 bilhão tem uma deficiência visual que poderia ter sido prevenida ou que ainda não foi tratada. A maioria das pessoas com deficiência visual tem mais de 50 anos, mas a condição afecta pessoas de todas as idades.",
-    sourceLabel: "Ler Relatório Mundial da Visão (OMS) ↗",
+    get modalTitle() {
+      return i18n.t("AboutSection.deficienciaVisualNoMundo");
+    },
+    get modalContent() {
+      return i18n.t("AboutSection.segundoORelatorioDa");
+    },
+    get sourceLabel() {
+      return i18n.t("AboutSection.lerRelatorioMundialDa");
+    },
     sourceUrl: "https://www.who.int/publications/i/item/9789241516570",
   },
   {
     value: "0.8%",
-    label: "Prevalência de estrabismo em África",
+    get label() {
+      return i18n.t("AboutSection.prevalenciaDeEstrabismoEm");
+    },
     icon: Heart,
-    modalTitle: "Prevalência de Estrabismo em África",
-    modalContent:
-       "De acordo a pesquisa feita pela National Library of Medicine através da National Center Of Biotechnology Information em 2023, a prevalência geral de estrabismo na África foi estimada em 0,8%. Esta condição, quando não tratada, pode levar a ambliopia (olho preguiçoso) e perda permanente da visão binocular, afectando significativamente a qualidade de vida e o desenvolvimento educacional das crianças africanas.",
-    sourceLabel: "Ler Artigo Académico sobre Estrabismo ↗",
+    get modalTitle() {
+      return i18n.t("AboutSection.prevalenciaDeEstrabismoEm2");
+    },
+    get modalContent() {
+      return i18n.t("AboutSection.deAcordoAPesquisa");
+    },
+    get sourceLabel() {
+      return i18n.t("AboutSection.lerArtigoAcademicoSobre");
+    },
     sourceUrl: "https://www.tandfonline.com/doi/full/10.1080/09273972.2022.2157023",
   },
   {
     value: "80%",
-    label: "Da informação é captada pela visão",
+    get label() {
+      return i18n.t("AboutSection.daInformacaoECaptada");
+    },
     icon: Leaf,
-    modalTitle: "A Visão como Principal Sentido",
-    modalContent:
-      "Estudos científicos indicam que aproximadamente 80% de toda a informação que o ser humano capta do mundo exterior é processada através da visão. Este dado sublinha a importância crítica da saúde ocular para o desenvolvimento cognitivo, o desempenho escolar e profissional, e a autonomia individual. Quando a visão é comprometida, o impacto estende-se a todas as áreas da vida, desde a aprendizagem até à interacção social e à capacidade de trabalhar.",
-    sourceLabel: "Ler mais sobre percepção visual ↗",
+    get modalTitle() {
+      return i18n.t("AboutSection.aVisaoComoPrincipal");
+    },
+    get modalContent() {
+      return i18n.t("AboutSection.estudosCientificosIndicamQue");
+    },
+    get sourceLabel() {
+      return i18n.t("AboutSection.lerMaisSobrePercepcao");
+    },
     sourceUrl: "https://en.wikipedia.org/wiki/Visual_perception",
   },
 ];
 
 const AboutSection = () => {
+  const { t } = useTranslation();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
     <section id="sobre" className="py-20 md:py-28 bg-background">
       <div className="container">
         <div className="max-w-3xl mx-auto text-center space-y-6 mb-16">
-          <span className="text-sm font-medium tracking-widest uppercase text-teal">Conheça-nos</span>
+          <span className="text-sm font-medium tracking-widest uppercase text-teal">{t("AboutSection.conhecaNos")}</span>
           <h2 className="text-3xl md:text-5xl font-bold text-foreground leading-tight">
-            Um Olhar Alinhado,{" "}
-            <span className="text-gradient-brand">Uma Vida Transformada</span>
+            <Trans i18nKey="AboutSection.umOlharAlinhadoUma" components={{ span: <span className="text-gradient-brand" /> }} />
           </h2>
           <p className="text-lg text-muted-foreground leading-relaxed text-justify">
-            O Janelas para a Alma é uma startup angolana dedicada a pessoas com estrabismo, uma condição que afecta o alinhamento dos olhos, podendo causar visão dupla, ambliopia ou cegueira. Em Angola, muitas crianças, jovens e adultos convivem com esta condição sem o devido apoio, o que pesa na auto-estima, no desempenho escolar e integração social.
+            {t("AboutSection.oJanelasParaA")}
           </p>
           <p className="text-lg text-muted-foreground leading-relaxed text-justify">
-            Ao mesmo tempo, o meio ambiente sofre com o descarte inadequado de resíduos reutilizáveis. O Janelas para a Alma actua na intersecção destas duas problemáticas, propondo soluções que servem as pessoas e o planeta ao mesmo tempo.
+            {t("AboutSection.aoMesmoTempoO")}
           </p>
         </div>
 
@@ -74,7 +97,7 @@ const AboutSection = () => {
               </div>
               <div className="text-4xl font-bold text-foreground mb-2">{stat.value}</div>
               <p className="text-muted-foreground">{stat.label}</p>
-              <p className="text-xs text-teal mt-3 font-medium">Clique para saber mais →</p>
+              <p className="text-xs text-teal mt-3 font-medium">{t("AboutSection.cliqueParaSaberMais")}</p>
             </button>
           ))}
         </div>
@@ -91,7 +114,7 @@ const AboutSection = () => {
                 {stat.modalTitle}
               </DialogTitle>
               <DialogDescription className="sr-only">
-                Detalhes sobre {stat.label}
+                <Trans i18nKey="AboutSection.detalhesSobre" values={{ label: stat.label }} />
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 pt-2">

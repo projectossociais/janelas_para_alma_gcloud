@@ -10,6 +10,9 @@ import { useFeedback } from "@/contexts/FeedbackContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { sessoesExercicioApi } from "@/lib/apiClient";
 import FeedbackWidget from "@/components/FeedbackWidget";
+import { Trans, useTranslation } from "react-i18next";
+import i18n from "@/i18n";
+import { localizar } from "@/i18n/rotas";
 
 const EXERCICIO_ID = "cerebro";
 
@@ -75,18 +78,32 @@ const escolherNovoIndice = (actual: number) => {
 
 const DURACOES_PREDEFINIDAS = [
   { label: "30s", segundos: 30 },
-  { label: "1 min", segundos: 60 },
-  { label: "1.5 min", segundos: 90 },
-  { label: "2 min", segundos: 120 },
-  { label: "3 min", segundos: 180 },
+  { get label() {
+    return i18n.t("CerebroExercise.n1Min");
+  }, segundos: 60 },
+  { get label() {
+    return i18n.t("CerebroExercise.n15Min");
+  }, segundos: 90 },
+  { get label() {
+    return i18n.t("CerebroExercise.n2Min");
+  }, segundos: 120 },
+  { get label() {
+    return i18n.t("CerebroExercise.n3Min");
+  }, segundos: 180 },
 ];
 const DURACAO_CUSTOM_MIN_SEGUNDOS = 10;
 const DURACAO_CUSTOM_MAX_SEGUNDOS = 900;
 
 const VELOCIDADES = [
-  { label: "Lento", multiplicador: 0.6 },
-  { label: "Normal", multiplicador: 1 },
-  { label: "Rápido", multiplicador: 1.6 },
+  { get label() {
+    return i18n.t("CerebroExercise.lento");
+  }, multiplicador: 0.6 },
+  { get label() {
+    return i18n.t("CerebroExercise.normal");
+  }, multiplicador: 1 },
+  { get label() {
+    return i18n.t("CerebroExercise.rapido");
+  }, multiplicador: 1.6 },
 ];
 
 // Gamificação: bandas de 50 pontos por nível (Nível 1: 0-49, Nível 2:
@@ -113,7 +130,7 @@ const calcularNivel = (score: number): NivelInfo => {
   if (score >= PONTOS_NIVEL_MESTRE) {
     return {
       nivel: Infinity,
-      nome: "Nível Mestre",
+      nome: i18n.t("CerebroExercise.nivelMestre"),
       ehMestre: true,
       pontosNoNivel: 0,
       pontosParaSubir: 0,
@@ -124,7 +141,7 @@ const calcularNivel = (score: number): NivelInfo => {
   const pontosNoNivel = score - (numeroNivel - 1) * PONTOS_POR_NIVEL;
   return {
     nivel: numeroNivel,
-    nome: `Nível ${numeroNivel}`,
+    nome: i18n.t("CerebroExercise.nivel", { numeroNivel }),
     ehMestre: false,
     pontosNoNivel,
     pontosParaSubir: PONTOS_POR_NIVEL,
@@ -161,6 +178,7 @@ const CerebroGame = ({ duracaoSegundos, onEscolherDuracao }: CerebroGameProps) =
 };
 
 const CerebroGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: CerebroGameProps) => {
+  const { t } = useTranslation();
   const { isRunning, score, remainingSeconds, addScore } = useExerciseSession();
   const { videoRef, gaze, isTracking, isCalibrating, calibrate, error } = useEyeTracking();
   const { profile } = useProfile();
@@ -248,7 +266,7 @@ const CerebroGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: CerebroGamePro
 
       const texto =
         pontosGanhos > COMBO_PONTOS_BASE
-          ? `+${pontosGanhos} Combo x${comboAtualRef.current}!`
+          ? t("CerebroExercise.comboX", { pontosGanhos, current: comboAtualRef.current })
           : `+${pontosGanhos}`;
       const id = proximoFeedbackIdRef.current++;
       setFeedbacksFlutuantes((prev) => [...prev, { id, texto, x: alvoX, y: alvoY }]);
@@ -310,7 +328,7 @@ const CerebroGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: CerebroGamePro
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     };
-  }, [isRunning, containerSize.width, containerSize.height, velocidade, addScore]);
+  }, [isRunning, containerSize.width, containerSize.height, velocidade, addScore, t]);
 
   // Métrica de precisão a um ritmo fixo (tempo com o olhar sobre o alvo
   // activo / tempo total activo) -- independente da pontuação por Hits
@@ -370,7 +388,7 @@ const CerebroGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: CerebroGamePro
     void registarSessao();
     openFeedback({
       context: "exercicio-cerebro",
-      question: "Como avalia o jogo de Foco Dinâmico?",
+      question: t("CerebroExercise.comoAvaliaOJogo"),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [remainingSeconds]);
@@ -407,7 +425,7 @@ const CerebroGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: CerebroGamePro
             <span className="text-sm font-semibold text-foreground">{nivelInfo.nome}</span>
             {!nivelInfo.ehMestre && (
               <span className="text-xs text-muted-foreground">
-                {nivelInfo.pontosNoNivel}/{nivelInfo.pontosParaSubir} pts
+                <Trans i18nKey="CerebroExercise.pts" values={{ pontosNoNivel: nivelInfo.pontosNoNivel, pontosParaSubir: nivelInfo.pontosParaSubir }} />
               </span>
             )}
           </div>
@@ -486,7 +504,7 @@ const CerebroGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: CerebroGamePro
         {!isTracking && isRunning && (
           <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full border border-border bg-card/80 px-3 py-1 text-xs text-muted-foreground backdrop-blur-sm">
             <EyeOff className="h-3.5 w-3.5" />
-            Rosto não detectado
+            {t("CerebroExercise.rostoNaoDetectado")}
           </div>
         )}
 
@@ -500,17 +518,17 @@ const CerebroGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: CerebroGamePro
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 overflow-y-auto p-6 text-center">
             <p className="text-sm text-muted-foreground">
               {remainingSeconds === 0
-                ? "Sessão concluída."
+                ? t("CerebroExercise.sessaoConcluida")
                 : aindaNaoIniciou
-                  ? "Escolha a duração, calibre o olhar a olhar para o centro e prima Iniciar."
-                  : "Em pausa. Prima Iniciar para continuar."}
+                  ? t("CerebroExercise.escolhaADuracaoCalibre")
+                  : t("CerebroExercise.emPausaPrimaIniciar")}
             </p>
 
             {mostrarSeletorDuracao && (
               <div className="flex flex-wrap items-start justify-center gap-6">
                 <div className="flex flex-col items-center gap-2">
                   <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Duração da sessão
+                    {t("CerebroExercise.duracaoDaSessao")}
                   </span>
                   <div className="flex flex-wrap items-center justify-center gap-2">
                     {DURACOES_PREDEFINIDAS.map((d) => (
@@ -536,7 +554,7 @@ const CerebroGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: CerebroGamePro
                         setPersonalizarAberto((v) => !v);
                       }}
                     >
-                      Personalizar
+                      {t("CerebroExercise.personalizar")}
                     </Button>
                   </div>
                   {personalizarAberto && (
@@ -553,11 +571,11 @@ const CerebroGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: CerebroGamePro
                           if (e.key === "Enter") aplicarDuracaoCustom();
                         }}
                         className="w-20 rounded-md border border-border bg-background px-2 py-1 text-center text-sm text-foreground"
-                        aria-label="Duração personalizada, em segundos"
+                        aria-label={t("CerebroExercise.duracaoPersonalizadaEmSegundos")}
                       />
-                      <span className="text-xs text-muted-foreground">segundos</span>
+                      <span className="text-xs text-muted-foreground">{t("CerebroExercise.segundos")}</span>
                       <Button type="button" size="sm" onClick={aplicarDuracaoCustom}>
-                        Aplicar
+                        {t("CerebroExercise.aplicar")}
                       </Button>
                     </div>
                   )}
@@ -565,7 +583,7 @@ const CerebroGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: CerebroGamePro
 
                 <div className="flex flex-col items-center gap-2">
                   <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Velocidade dos alvos
+                    {t("CerebroExercise.velocidadeDosAlvos")}
                   </span>
                   <div className="flex items-center justify-center gap-2">
                     {VELOCIDADES.map((v, i) => (
@@ -598,7 +616,7 @@ const CerebroGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: CerebroGamePro
                   disabled={isCalibrating}
                 >
                   <Crosshair className="h-4 w-4" />
-                  {isCalibrating ? "A calibrar..." : "Calibrar Olhar"}
+                  {isCalibrating ? t("CerebroExercise.aCalibrar") : t("CerebroExercise.calibrarOlhar")}
                 </Button>
               )
             )}
@@ -607,10 +625,10 @@ const CerebroGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: CerebroGamePro
       </div>
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-        <p>Cubra o olho mais forte e mantenha o olhar sobre a forma que pulsa entre as restantes.</p>
+        <p>{t("CerebroExercise.cubraOOlhoMais")}</p>
         {precisaoAoVivo !== null && (
           <span className="font-semibold text-foreground">
-            Precisão: {precisaoAoVivo.toFixed(0)}%
+            <Trans i18nKey="CerebroExercise.precisao" values={{ valor: precisaoAoVivo.toFixed(0) }} />
           </span>
         )}
       </div>
@@ -619,6 +637,7 @@ const CerebroGameAtivo = ({ duracaoSegundos, onEscolherDuracao }: CerebroGamePro
 };
 
 const CerebroExercise = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [duracaoSegundos, setDuracaoSegundos] = useState(DURACOES_PREDEFINIDAS[1].segundos);
 
@@ -626,7 +645,7 @@ const CerebroExercise = () => {
     if (window.history.length > 1) {
       navigate(-1);
     } else {
-      navigate("/exercicios");
+      navigate(localizar("/exercicios"));
     }
   };
 
@@ -637,12 +656,12 @@ const CerebroExercise = () => {
         <div className="container max-w-4xl mx-auto">
           <Button variant="ghost" className="mb-6" onClick={handleVoltar}>
             <ArrowLeft className="w-4 h-4" />
-            Voltar ao Menu
+            {t("CerebroExercise.voltarAoMenu")}
           </Button>
 
           <BaseExercise
-            title="Foco Dinâmico"
-            description="Encontre e fixe o olhar na forma que pulsa entre as restantes."
+            title={t("CerebroExercise.focoDinamico")}
+            description={t("CerebroExercise.encontreEFixeO")}
             isPremium={false}
             durationSeconds={duracaoSegundos}
           >

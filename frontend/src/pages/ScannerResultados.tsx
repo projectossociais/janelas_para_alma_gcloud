@@ -19,6 +19,9 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
 import logoImg from "@/assets/logo.png";
+import { Trans, useTranslation } from "react-i18next";
+import i18n from "@/i18n";
+import { localizar } from "@/i18n/rotas";
 
 interface LogoBitmap {
   dataUrl: string;
@@ -69,145 +72,227 @@ type DiagnosisInfo = {
 
 const DIAGNOSIS_DATA: Record<DiagnosisKey, DiagnosisInfo> = {
   Esotropia: {
-    short: "Desvio convergente: olho(s) voltado(s) para dentro",
-    description:
-      "Esotropia é um tipo de estrabismo em que um ou ambos os olhos se desviam para dentro, em direcção ao nariz. Pode surgir na infância ou na idade adulta e, quando não tratada, pode causar ambliopia (olho preguiçoso) e perda da visão binocular.",
-    symptoms: [
-      "Olhos voltados para dentro",
-      "Visão dupla (diplopia)",
-      "Fadiga ocular e dores de cabeça",
-      "Inclinação ou rotação da cabeça",
-    ],
-    treatments: [
-      "Óculos com correcção hipermetrópica",
-      "Terapia visual ortóptica",
-      "Oclusão com tampão (ambliopia)",
-      "Toxina botulínica ou cirurgia em casos seleccionados",
-    ],
+    get short() {
+      return i18n.t("ScannerResultados.desvioConvergenteOlhoS");
+    },
+    get description() {
+      return i18n.t("ScannerResultados.esotropiaEUmTipo");
+    },
+    get symptoms() {
+      return [
+      i18n.t("ScannerResultados.olhosVoltadosParaDentro"),
+      i18n.t("ScannerResultados.visaoDuplaDiplopia"),
+      i18n.t("ScannerResultados.fadigaOcularEDores"),
+      i18n.t("ScannerResultados.inclinacaoOuRotacaoDa"),
+    ];
+    },
+    get treatments() {
+      return [
+      i18n.t("ScannerResultados.oculosComCorreccaoHipermetropica"),
+      i18n.t("ScannerResultados.terapiaVisualOrtoptica"),
+      i18n.t("ScannerResultados.oclusaoComTampaoAmbliopia"),
+      i18n.t("ScannerResultados.toxinaBotulinicaOuCirurgia"),
+    ];
+    },
   },
   Exotropia: {
-    short: "Desvio divergente: olho(s) voltado(s) para fora",
-    description:
-      "Exotropia caracteriza-se pelo desvio de um ou ambos os olhos para fora, afastando-se do nariz. Frequentemente é intermitente e mais evidente em situações de fadiga, sonolência ou fixação à distância.",
-    symptoms: [
-      "Olho que se desvia para fora",
-      "Fechar um olho sob luz intensa",
-      "Dificuldade de visão de profundidade",
-      "Fadiga visual em leitura prolongada",
-    ],
-    treatments: [
-      "Exercícios de convergência ocular",
-      "Óculos com prismas",
-      "Terapia visual ortóptica",
-      "Cirurgia muscular extraocular quando indicado",
-    ],
+    get short() {
+      return i18n.t("ScannerResultados.desvioDivergenteOlhoS");
+    },
+    get description() {
+      return i18n.t("ScannerResultados.exotropiaCaracterizaSePelo");
+    },
+    get symptoms() {
+      return [
+      i18n.t("ScannerResultados.olhoQueSeDesvia"),
+      i18n.t("ScannerResultados.fecharUmOlhoSob"),
+      i18n.t("ScannerResultados.dificuldadeDeVisaoDe"),
+      i18n.t("ScannerResultados.fadigaVisualEmLeitura"),
+    ];
+    },
+    get treatments() {
+      return [
+      i18n.t("ScannerResultados.exerciciosDeConvergenciaOcular"),
+      i18n.t("ScannerResultados.oculosComPrismas"),
+      i18n.t("ScannerResultados.terapiaVisualOrtoptica"),
+      i18n.t("ScannerResultados.cirurgiaMuscularExtraocularQuando"),
+    ];
+    },
   },
   Hipertropia: {
-    short: "Desvio vertical: olho(s) voltado(s) para cima",
-    description:
-      "Hipertropia é um desvio vertical no qual um dos olhos se posiciona mais alto do que o outro. Pode estar relacionada a alterações dos músculos oblíquos ou a causas neurológicas e provoca frequentemente visão dupla.",
-    symptoms: [
-      "Visão dupla vertical",
-      "Inclinação da cabeça (torcicolo ocular)",
-      "Tontura e desconforto visual",
-      "Dificuldade ao descer escadas",
-    ],
-    treatments: [
-      "Óculos com prismas verticais",
-      "Avaliação neuroftalmológica",
-      "Toxina botulínica em casos seleccionados",
-      "Cirurgia dos músculos oblíquos",
-    ],
+    get short() {
+      return i18n.t("ScannerResultados.desvioVerticalOlhoS");
+    },
+    get description() {
+      return i18n.t("ScannerResultados.hipertropiaEUmDesvio");
+    },
+    get symptoms() {
+      return [
+      i18n.t("ScannerResultados.visaoDuplaVertical"),
+      i18n.t("ScannerResultados.inclinacaoDaCabecaTorcicolo"),
+      i18n.t("ScannerResultados.tonturaEDesconfortoVisual"),
+      i18n.t("ScannerResultados.dificuldadeAoDescerEscadas"),
+    ];
+    },
+    get treatments() {
+      return [
+      i18n.t("ScannerResultados.oculosComPrismasVerticais"),
+      i18n.t("ScannerResultados.avaliacaoNeuroftalmologica"),
+      i18n.t("ScannerResultados.toxinaBotulinicaEmCasos"),
+      i18n.t("ScannerResultados.cirurgiaDosMusculosObliquos"),
+    ];
+    },
   },
   Hipotropia: {
-    short: "Desvio vertical: olho(s) voltado(s) para baixo",
-    description:
-      "Hipotropia é o desvio vertical em que um dos olhos se posiciona mais baixo do que o outro. Pode resultar de paralisias musculares, traumatismos ou alterações orbitárias e exige avaliação especializada.",
-    symptoms: [
-      "Visão dupla vertical",
-      "Postura anómala da cabeça",
-      "Limitação dos movimentos oculares",
-      "Dificuldade em focar objectos elevados",
-    ],
-    treatments: [
-      "Prismas correctivos nos óculos",
-      "Investigação de causas neurológicas",
-      "Reabilitação ortóptica",
-      "Cirurgia muscular correctiva",
-    ],
+    get short() {
+      return i18n.t("ScannerResultados.desvioVerticalOlhoS2");
+    },
+    get description() {
+      return i18n.t("ScannerResultados.hipotropiaEODesvio");
+    },
+    get symptoms() {
+      return [
+      i18n.t("ScannerResultados.visaoDuplaVertical"),
+      i18n.t("ScannerResultados.posturaAnomalaDaCabeca"),
+      i18n.t("ScannerResultados.limitacaoDosMovimentosOculares"),
+      i18n.t("ScannerResultados.dificuldadeEmFocarObjectos"),
+    ];
+    },
+    get treatments() {
+      return [
+      i18n.t("ScannerResultados.prismasCorrectivosNosOculos"),
+      i18n.t("ScannerResultados.investigacaoDeCausasNeurologicas"),
+      i18n.t("ScannerResultados.reabilitacaoOrtoptica"),
+      i18n.t("ScannerResultados.cirurgiaMuscularCorrectiva"),
+    ];
+    },
   },
   "Alinhamento Fisiológico Normal": {
-    short: "Eixos visuais simétricos e alinhamento dentro dos parâmetros normais",
-    description:
-      "A análise das três posições do olhar não detectou desvios manifestos nem assimetrias corneanas significativas. Os eixos visuais mantêm-se paralelos e com boa resposta de fixação.",
-    symptoms: [
-      "Boa coordenação binocular",
-      "Ausência de diplopia (visão dupla)",
-      "Conforto visual nas posições de fixação",
-    ],
-    treatments: [
-      "Manter consultas oftalmológicas de rotina anuais",
-      "Praticar pausas visuais regulares durante o trabalho com ecrãs",
-      "Utilizar protecção UV ao ar livre",
-    ],
+    get short() {
+      return i18n.t("ScannerResultados.eixosVisuaisSimetricosE");
+    },
+    get description() {
+      return i18n.t("ScannerResultados.aAnaliseDasTres");
+    },
+    get symptoms() {
+      return [
+      i18n.t("ScannerResultados.boaCoordenacaoBinocular"),
+      i18n.t("ScannerResultados.ausenciaDeDiplopiaVisao"),
+      i18n.t("ScannerResultados.confortoVisualNasPosicoes"),
+    ];
+    },
+    get treatments() {
+      return [
+      i18n.t("ScannerResultados.manterConsultasOftalmologicasDe"),
+      i18n.t("ScannerResultados.praticarPausasVisuaisRegulares"),
+      i18n.t("ScannerResultados.utilizarProteccaoUvAo"),
+    ];
+    },
   },
   "Necessária Avaliação Oftalmológica": {
-    short: "Assimetria de reflexos ou padrão de incomitância detectado",
-    description:
-      "A triagem automatizada identificou variações no alinhamento ocular entre as posições de fixação ou qualidade insuficiente para descartar desalinhamento. Recomenda-se exame clínico presencial.",
-    symptoms: [
-      "Possível desvio intermitente nas posições laterais",
-      "Desconforto ou fadiga visual ao mudar o foco",
-      "Dificuldade de fixação prolongada",
-    ],
-    treatments: [
-      "Consulta de oftalmologia ou ortóptica presencial",
-      "Exame de motilidade ocular extrínseca e cover test",
-      "Avaliação de acuidade visual e refracção sob cicloplegia",
-    ],
+    get short() {
+      return i18n.t("ScannerResultados.assimetriaDeReflexosOu");
+    },
+    get description() {
+      return i18n.t("ScannerResultados.aTriagemAutomatizadaIdentificou");
+    },
+    get symptoms() {
+      return [
+      i18n.t("ScannerResultados.possivelDesvioIntermitenteNas"),
+      i18n.t("ScannerResultados.desconfortoOuFadigaVisual"),
+      i18n.t("ScannerResultados.dificuldadeDeFixacaoProlongada"),
+    ];
+    },
+    get treatments() {
+      return [
+      i18n.t("ScannerResultados.consultaDeOftalmologiaOu"),
+      i18n.t("ScannerResultados.exameDeMotilidadeOcular"),
+      i18n.t("ScannerResultados.avaliacaoDeAcuidadeVisual"),
+    ];
+    },
   },
 };
 
 const tabs: { key: TabKey; label: string; icon: typeof Info }[] = [
-  { key: "condicao", label: "O Seu Resultado", icon: Info },
-  { key: "clinicas", label: "Clínicas & Preços", icon: MapPin },
-  { key: "exercicios", label: "Exercícios", icon: Activity },
-  { key: "comunidade", label: "Comunidade", icon: Users },
+  { key: "condicao", get label() {
+    return i18n.t("ScannerResultados.oSeuResultado");
+  }, icon: Info },
+  { key: "clinicas", get label() {
+    return i18n.t("ScannerResultados.clinicasPrecos");
+  }, icon: MapPin },
+  { key: "exercicios", get label() {
+    return i18n.t("ScannerResultados.exercicios");
+  }, icon: Activity },
+  { key: "comunidade", get label() {
+    return i18n.t("ScannerResultados.comunidade");
+  }, icon: Users },
 ];
 
 const ALL_CLINICS = {
   sagrada: {
-    name: "Clínica Sagrada Esperança",
-    city: "Luanda · Ilha de Luanda",
-    specialty: "Oftalmologia geral & estrabismo",
-    price: "25.000 a 40.000 AOA",
+    get name() {
+      return i18n.t("ScannerResultados.clinicaSagradaEsperanca");
+    },
+    get city() {
+      return i18n.t("ScannerResultados.luandaIlhaDeLuanda");
+    },
+    get specialty() {
+      return i18n.t("ScannerResultados.oftalmologiaGeralEstrabismo");
+    },
+    get price() {
+      return i18n.t("ScannerResultados.n25000A40");
+    },
     phone: "+244923167950",
     phoneDisplay: "+244 923 167 950",
     website: "https://www.cse.co.ao",
   },
   optico: {
-    name: "Centro Óptico Angolano",
-    city: "Luanda · Call Center",
-    specialty: "Avaliação visual & óculos",
-    price: "15.000 a 22.000 AOA",
+    get name() {
+      return i18n.t("ScannerResultados.centroOpticoAngolano");
+    },
+    get city() {
+      return i18n.t("ScannerResultados.luandaCallCenter");
+    },
+    get specialty() {
+      return i18n.t("ScannerResultados.avaliacaoVisualOculos");
+    },
+    get price() {
+      return i18n.t("ScannerResultados.n15000A22");
+    },
     phone: "+244923400300",
     phoneDisplay: "+244 923 400 300",
     website: "https://centrooptico.co.ao",
   },
   multiperfil: {
-    name: "Clínica Multiperfil",
-    city: "Luanda · Morro Bento",
-    specialty: "Pediatria & cirurgia oftalmológica",
-    price: "30.000 a 45.000 AOA",
+    get name() {
+      return i18n.t("ScannerResultados.clinicaMultiperfil");
+    },
+    get city() {
+      return i18n.t("ScannerResultados.luandaMorroBento");
+    },
+    get specialty() {
+      return i18n.t("ScannerResultados.pediatriaCirurgiaOftalmologica");
+    },
+    get price() {
+      return i18n.t("ScannerResultados.n30000A45");
+    },
     phone: "+244923501168",
     phoneDisplay: "+244 923 501 168",
     website: "https://www.multiperfil.co.ao",
   },
   girassol: {
-    name: "Hospital Girassol",
-    city: "Luanda · Maianga",
-    specialty: "Neuroftalmologia & exames avançados",
-    price: "35.000 a 55.000 AOA",
+    get name() {
+      return i18n.t("ScannerResultados.hospitalGirassol");
+    },
+    get city() {
+      return i18n.t("ScannerResultados.luandaMaianga");
+    },
+    get specialty() {
+      return i18n.t("ScannerResultados.neuroftalmologiaExamesAvancados");
+    },
+    get price() {
+      return i18n.t("ScannerResultados.n35000A55");
+    },
     phone: "+244222641000",
     phoneDisplay: "+244 222 641 000",
     website: "https://www.hospitalgirassol.co.ao",
@@ -218,37 +303,82 @@ type ClinicRec = (typeof ALL_CLINICS)[keyof typeof ALL_CLINICS] & { subtitle: st
 
 const CLINIC_RECOMMENDATIONS: Record<DiagnosisKey, ClinicRec[]> = {
   Esotropia: [
-    { ...ALL_CLINICS.sagrada, subtitle: "Centro de Excelência em Desvios Convergentes" },
-    { ...ALL_CLINICS.optico, subtitle: "Avaliação refractiva complementar" },
+    { ...ALL_CLINICS.sagrada, get subtitle() {
+      return i18n.t("ScannerResultados.centroDeExcelenciaEm");
+    } },
+    { ...ALL_CLINICS.optico, get subtitle() {
+      return i18n.t("ScannerResultados.avaliacaoRefractivaComplementar");
+    } },
   ],
   Exotropia: [
-    { ...ALL_CLINICS.multiperfil, subtitle: "Especialistas em Cirurgia Divergente" },
-    { ...ALL_CLINICS.optico, subtitle: "Avaliação refractiva complementar" },
+    { ...ALL_CLINICS.multiperfil, get subtitle() {
+      return i18n.t("ScannerResultados.especialistasEmCirurgiaDivergente");
+    } },
+    { ...ALL_CLINICS.optico, get subtitle() {
+      return i18n.t("ScannerResultados.avaliacaoRefractivaComplementar");
+    } },
   ],
   Hipertropia: [
-    { ...ALL_CLINICS.girassol, subtitle: "Unidade Avançada de Neuroftalmologia Vertical" },
+    { ...ALL_CLINICS.girassol, get subtitle() {
+      return i18n.t("ScannerResultados.unidadeAvancadaDeNeuroftalmologia");
+    } },
   ],
   Hipotropia: [
-    { ...ALL_CLINICS.girassol, subtitle: "Unidade Avançada de Neuroftalmologia Vertical" },
+    { ...ALL_CLINICS.girassol, get subtitle() {
+      return i18n.t("ScannerResultados.unidadeAvancadaDeNeuroftalmologia");
+    } },
   ],
   "Alinhamento Fisiológico Normal": [
-    { ...ALL_CLINICS.optico, subtitle: "Exames de rotina & cuidados preventivos" },
-    { ...ALL_CLINICS.sagrada, subtitle: "Check-up oftalmológico anual" },
+    { ...ALL_CLINICS.optico, get subtitle() {
+      return i18n.t("ScannerResultados.examesDeRotinaCuidados");
+    } },
+    { ...ALL_CLINICS.sagrada, get subtitle() {
+      return i18n.t("ScannerResultados.checkUpOftalmologicoAnual");
+    } },
   ],
   "Necessária Avaliação Oftalmológica": [
-    { ...ALL_CLINICS.sagrada, subtitle: "Avaliação ortóptica e estrabismo" },
-    { ...ALL_CLINICS.multiperfil, subtitle: "Diagnóstico diferencial especializado" },
+    { ...ALL_CLINICS.sagrada, get subtitle() {
+      return i18n.t("ScannerResultados.avaliacaoOrtopticaEEstrabismo");
+    } },
+    { ...ALL_CLINICS.multiperfil, get subtitle() {
+      return i18n.t("ScannerResultados.diagnosticoDiferencialEspecializado");
+    } },
   ],
 };
 
 const exercises = [
-  { title: "Convergência", to: "/exercicios/convergencia", desc: "Treina a coordenação binocular." },
-  { title: "Cérebro & Visão", to: "/exercicios/cerebro", desc: "Estímulos cognitivos visuais." },
-  { title: "Tracking Ocular", to: "/exercicios/tracking", desc: "Movimentos suaves de seguimento." },
-  { title: "Relaxamento", to: "/exercicios/relaxamento", desc: "Alivia fadiga ocular." },
+  { get title() {
+    return i18n.t("ScannerResultados.convergencia");
+  }, get to() {
+    return localizar("/exercicios/convergencia");
+  }, get desc() {
+    return i18n.t("ScannerResultados.treinaACoordenacaoBinocular");
+  } },
+  { get title() {
+    return i18n.t("ScannerResultados.cerebroVisao");
+  }, get to() {
+    return localizar("/exercicios/cerebro");
+  }, get desc() {
+    return i18n.t("ScannerResultados.estimulosCognitivosVisuais");
+  } },
+  { get title() {
+    return i18n.t("ScannerResultados.trackingOcular");
+  }, get to() {
+    return localizar("/exercicios/tracking");
+  }, get desc() {
+    return i18n.t("ScannerResultados.movimentosSuavesDeSeguimento");
+  } },
+  { get title() {
+    return i18n.t("ScannerResultados.relaxamento");
+  }, get to() {
+    return localizar("/exercicios/relaxamento");
+  }, get desc() {
+    return i18n.t("ScannerResultados.aliviaFadigaOcular");
+  } },
 ];
 
 const Resultados = () => {
+  const { t: tr } = useTranslation();
   const navigate = useNavigate();
   const [tab, setTab] = useState<TabKey>("condicao");
   const [result, setResult] = useState<{
@@ -261,13 +391,13 @@ const Resultados = () => {
   useEffect(() => {
     const raw = sessionStorage.getItem("scanResult");
     if (!raw) {
-      navigate("/scanner", { replace: true });
+      navigate(localizar("/scanner"), { replace: true });
       return;
     }
     try {
       setResult(JSON.parse(raw));
     } catch {
-      navigate("/scanner", { replace: true });
+      navigate(localizar("/scanner"), { replace: true });
     }
   }, [navigate]);
 
@@ -337,24 +467,21 @@ const Resultados = () => {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     doc.setTextColor(...teal);
-    doc.text("SOBRE A PLATAFORMA", W / 2, y, { align: "center" });
+    doc.text(tr("ScannerResultados.pdfSobreAPlataforma"), W / 2, y, { align: "center" });
     y += 18;
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9.5);
     doc.setTextColor(...ink);
     const introP1 = doc.splitTextToSize(
-      "O Janelas para a Alma é uma startup angolana dedicada a pessoas com estrabismo, " +
-        "uma condição que afecta o alinhamento dos olhos, podendo causar visão dupla, ambliopia ou cegueira.",
+      tr("ScannerResultados.pdfIntroPlataforma"),
       W - M * 2
     );
     doc.text(introP1, W / 2, y, { align: "center" });
     y += introP1.length * 13 + 10;
 
     const introP2 = doc.splitTextToSize(
-      "Este relatório fornece uma orientação com base no alinhamento detectado, por meio de cálculos " +
-        "computacionais geométricos, para averiguar de forma prévia um possível desalinhamento ocular, " +
-        "não constituindo um diagnóstico clínico.",
+      tr("ScannerResultados.pdfIntroRelatorio"),
       W - M * 2
     );
     doc.text(introP2, W / 2, y, { align: "center" });
@@ -364,12 +491,12 @@ const Resultados = () => {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9.5);
     doc.setTextColor(...navy);
-    doc.text("Relatório de Triagem Visual Automática", W - M, y, { align: "right" });
+    doc.text(tr("ScannerResultados.pdfRelatorioTitulo"), W - M, y, { align: "right" });
     y += 13;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8.5);
     doc.setTextColor(...muted);
-    doc.text(`Emitido em ${formatted}`, W - M, y, { align: "right" });
+    doc.text(tr("ScannerResultados.pdfEmitidoEm", { formatted }), W - M, y, { align: "right" });
     y += 24;
 
     // Cartão de diagnóstico — compacto, sem glifo do olho.
@@ -381,7 +508,7 @@ const Resultados = () => {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     doc.setTextColor(...teal);
-    doc.text("DIAGNÓSTICO ORIENTADOR", M + 18, y + 24);
+    doc.text(tr("ScannerResultados.pdfDiagnosticoOrientador"), M + 18, y + 24);
 
     doc.setFontSize(16);
     doc.setTextColor(...corDiagnostico);
@@ -400,7 +527,7 @@ const Resultados = () => {
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
-    doc.text("Confiança", badgeX + badgeW / 2, badgeY + 13, { align: "center" });
+    doc.text(tr("ScannerResultados.pdfConfianca"), badgeX + badgeW / 2, badgeY + 13, { align: "center" });
     doc.setFontSize(12);
     doc.text(`${result.confidence}%`, badgeX + badgeW / 2, badgeY + 27, { align: "center" });
 
@@ -430,7 +557,7 @@ const Resultados = () => {
       y += 6;
     };
 
-    heading("Resultado", red);
+    heading(tr("ScannerResultados.resultado"), red);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.setTextColor(...ink);
@@ -439,15 +566,15 @@ const Resultados = () => {
     y += desc.length * 13 + 16;
 
     if (!isNormal) {
-      heading("Sinais frequentes de estrabismo", gold);
+      heading(tr("ScannerResultados.sinaisFrequentesDeEstrabismo"), gold);
       bullets(info.symptoms);
     }
 
-    heading("Recomendações", green);
+    heading(tr("ScannerResultados.recomendacoes"), green);
     bullets(info.treatments);
 
     if (!isNormal) {
-      heading("Clínicas Recomendadas em Angola", ink);
+      heading(tr("ScannerResultados.clinicasRecomendadasEmAngola"), ink);
       recommendedClinics.forEach((c) => {
         if (y > H - 110) { doc.addPage(); y = M; }
         doc.setFillColor(...soft);
@@ -467,7 +594,7 @@ const Resultados = () => {
         doc.setTextColor(...ink);
         doc.text(`${c.city}  ·  ${c.specialty}`, M + 14, y + 48);
         doc.setTextColor(...muted);
-        doc.text(`Contacto: ${c.phoneDisplay}`, M + 14, y + 62);
+        doc.text(tr("ScannerResultados.pdfContacto", { phoneDisplay: c.phoneDisplay }), M + 14, y + 62);
         doc.setFont("helvetica", "bold");
         doc.setTextColor(...gold);
         doc.text(c.price, W - M - 14, y + 18, { align: "right" });
@@ -475,21 +602,21 @@ const Resultados = () => {
       });
     }
 
-    heading("Recomendações Gerais", blue);
+    heading(tr("ScannerResultados.recomendacoesGerais"), blue);
     bullets(
       isNormal
         ? [
-            "Utilize óculos de sol com protecção UV sempre que estiver ao ar livre.",
-            "Faça pausas visuais regulares com a regra 20-20-20 (a cada 20 min, olhe 20 seg para algo a 6 metros).",
-            "Mantenha exames oftalmológicos de rotina, pelo menos uma vez por ano.",
-            "Junte-se à comunidade Janelas Para a Alma para acompanhar novidades de saúde visual.",
+            tr("ScannerResultados.utilizeOculosDeSol"),
+            tr("ScannerResultados.facaPausasVisuaisRegulares"),
+            tr("ScannerResultados.mantenhaExamesOftalmologicosDe"),
+            tr("ScannerResultados.junteSeAComunidade2"),
           ]
         : [
-            "Procure avaliação presencial com oftalmologista qualificado.",
-            "Realize exames de refracção e teste de cobertura ocular.",
-            "Mantenha pausas visuais regulares (regra 20-20-20).",
-            "Inicie exercícios visuais terapêuticos sob orientação profissional.",
-            "Junte-se à comunidade Janelas Para a Alma para apoio emocional.",
+            tr("ScannerResultados.procureAvaliacaoPresencialCom"),
+            tr("ScannerResultados.realizeExamesDeRefraccao"),
+            tr("ScannerResultados.mantenhaPausasVisuaisRegulares"),
+            tr("ScannerResultados.inicieExerciciosVisuaisTerapeuticos"),
+            tr("ScannerResultados.junteSeAComunidade3"),
           ]
     );
 
@@ -498,7 +625,7 @@ const Resultados = () => {
     y += 10;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
-    const avisoLabel = "AVISO IMPORTANTE";
+    const avisoLabel = tr("ScannerResultados.pdfAvisoImportante");
     const avisoW = doc.getTextWidth(avisoLabel) + 32;
     const avisoH = 26;
     doc.setFillColor(...soft);
@@ -508,10 +635,7 @@ const Resultados = () => {
     y += avisoH + 16;
 
     const discTexto =
-      "Os resultados desta triagem são informativos, baseados em biometria facial, e não substituem " +
-      "uma avaliação oftalmológica presencial. A plataforma Janelas Para a Alma isenta-se de " +
-      "responsabilidade por diagnósticos ou acções médicas tomadas com base neste documento. Em caso " +
-      "de desconforto visual, consulte imediatamente um especialista.";
+      tr("ScannerResultados.pdfAvisoTexto");
     const disc = doc.splitTextToSize(discTexto, W - M * 2 - 48);
     const discBoxH = 32 + disc.length * 15;
     if (y > H - discBoxH - 20) { doc.addPage(); y = M; }
@@ -541,7 +665,7 @@ const Resultados = () => {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(9);
       doc.setTextColor(255, 255, 255);
-      doc.text("Contactos", contatoX, H - footerH + 18);
+      doc.text(tr("ScannerResultados.pdfContactos"), contatoX, H - footerH + 18);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
       doc.setTextColor(200, 220, 235);
@@ -552,7 +676,7 @@ const Resultados = () => {
       doc.setTextColor(255, 255, 255);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
-      doc.text(`Página ${i} de ${pageCount}`, W - M, H - footerH / 2 + 3, { align: "right" });
+      doc.text(tr("ScannerResultados.pdfPagina", { i, pageCount }), W - M, H - footerH / 2 + 3, { align: "right" });
     }
 
     doc.save(`relatorio-janelas-${result.diagnosis.toLowerCase()}-${date.toISOString().slice(0, 10)}.pdf`);
@@ -561,7 +685,7 @@ const Resultados = () => {
   if (!result || !info) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background text-muted-foreground">
-        A carregar resultados…
+        {tr("ScannerResultados.aCarregarResultados")}
       </div>
     );
   }
@@ -569,26 +693,25 @@ const Resultados = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
-      <BackButton fallbackPath="/scanner" label="Nova análise" />
+      <BackButton fallbackPath={localizar("/scanner")} label={tr("ScannerResultados.novaAnalise")} />
       <main className="flex-1">
         <section className="container py-8 md:py-12">
           <div className="max-w-5xl mx-auto rounded-3xl bg-gradient-to-br from-navy to-navy/80 text-navy-foreground p-6 md:p-10 shadow-elevated animate-fade-in">
             <div className="flex items-center gap-2 text-teal text-xs font-bold uppercase tracking-widest">
-              <CheckCircle2 className="w-4 h-4" /> Análise concluída
+              <CheckCircle2 className="w-4 h-4" />{" "}{tr("ScannerResultados.analiseConcluida")}
             </div>
             <h1 className="mt-3 text-3xl md:text-4xl font-bold leading-tight">
-              Diagnóstico: <span className="text-gold">{result.diagnosis}</span>
+              <Trans i18nKey="ScannerResultados.diagnostico" components={{ span: <span className="text-gold" /> }} values={{ diagnosis: result.diagnosis }} />
             </h1>
             <p className="mt-3 text-sm md:text-base text-white/80 max-w-2xl">
-              {result.apiData?.recomendacao || info.short}. Recomenda-se consulta oftalmológica para confirmação e
-              plano terapêutico personalizado.
+              {result.apiData?.recomendacao || info.short}{tr("ScannerResultados.recomendaSeConsultaOftalmologica")}
             </p>
 
             <div className="mt-6 grid sm:grid-cols-3 gap-3">
               {[
-                { l: "Confiança IA", v: `${result.confidence}%` },
-                { l: "Tipo", v: result.diagnosis },
-                { l: "Data", v: new Date(result.date).toLocaleDateString("pt-PT") },
+                { l: tr("ScannerResultados.confiancaIa"), v: `${result.confidence}%` },
+                { l: tr("ScannerResultados.tipo"), v: result.diagnosis },
+                { l: tr("ScannerResultados.data"), v: new Date(result.date).toLocaleDateString("pt-PT") },
               ].map((m) => (
                 <div key={m.l} className="rounded-2xl bg-white/10 backdrop-blur px-4 py-3">
                   <div className="text-xs text-white/70">{m.l}</div>
@@ -598,12 +721,12 @@ const Resultados = () => {
             </div>
 
             <div className="mt-5 flex flex-wrap items-center gap-3 text-xs text-white/70">
-              <span className="inline-flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-teal" /> Dados confidenciais</span>
+              <span className="inline-flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-teal" />{" "}{tr("ScannerResultados.dadosConfidenciais")}</span>
               <button
                 onClick={() => void handleDownload()}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
               >
-                <Download className="w-3.5 h-3.5" /> Descarregar relatório
+                <Download className="w-3.5 h-3.5" />{" "}{tr("ScannerResultados.descarregarRelatorio")}
               </button>
             </div>
           </div>
@@ -611,7 +734,7 @@ const Resultados = () => {
           <div className="max-w-5xl mx-auto mt-5 flex items-start gap-3 p-4 rounded-2xl bg-gold/10 border border-gold/30 text-sm text-foreground">
             <AlertCircle className="w-5 h-5 text-gold shrink-0 mt-0.5" />
             <p>
-              Esta análise é orientadora e <strong>não substitui</strong> avaliação médica. Procure sempre um profissional de saúde visual qualificado.
+              <Trans i18nKey="ScannerResultados.estaAnaliseEOrientadora" components={{ strong: <strong /> }} />
             </p>
           </div>
 
@@ -655,17 +778,19 @@ const Card = ({ children }: { children: React.ReactNode }) => (
   <div className="rounded-2xl bg-card border border-border shadow-card p-6">{children}</div>
 );
 
-const CondicaoPanel = ({ diagnosis, info }: { diagnosis: DiagnosisKey; info: DiagnosisInfo }) => (
+const CondicaoPanel = ({ diagnosis, info }: { diagnosis: DiagnosisKey; info: DiagnosisInfo }) => {
+  const { t: tr } = useTranslation();
+  return (
   <div className="grid md:grid-cols-2 gap-4">
     <Card>
       <div className="flex items-center gap-2 text-teal text-xs font-bold uppercase tracking-widest">
-        <Info className="w-4 h-4" /> O Seu Resultado
+        <Info className="w-4 h-4" />{" "}{tr("ScannerResultados.oSeuResultado")}
       </div>
-      <h2 className="mt-2 text-xl font-bold text-foreground">O que é {diagnosis}?</h2>
+      <h2 className="mt-2 text-xl font-bold text-foreground"><Trans i18nKey="ScannerResultados.oQueE" values={{ diagnosis }} /></h2>
       <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{info.description}</p>
       {diagnosis !== DIAGNOSTICO_NORMAL && (
         <div className="mt-5">
-          <div className="text-xs font-semibold uppercase tracking-wider text-foreground/70 mb-2">Sintomas frequentes</div>
+          <div className="text-xs font-semibold uppercase tracking-wider text-foreground/70 mb-2">{tr("ScannerResultados.sintomasFrequentes")}</div>
           <ul className="space-y-1.5">
             {info.symptoms.map((s) => (
               <li key={s} className="flex items-start gap-2 text-sm text-muted-foreground">
@@ -680,11 +805,11 @@ const CondicaoPanel = ({ diagnosis, info }: { diagnosis: DiagnosisKey; info: Dia
 
     <Card>
       <div className="flex items-center gap-2 text-green text-xs font-bold uppercase tracking-widest">
-        <Stethoscope className="w-4 h-4" /> O que recomendamos
+        <Stethoscope className="w-4 h-4" />{" "}{tr("ScannerResultados.oQueRecomendamos")}
       </div>
-      <h2 className="mt-2 text-xl font-bold text-foreground">Plano terapêutico orientador</h2>
+      <h2 className="mt-2 text-xl font-bold text-foreground">{tr("ScannerResultados.planoTerapeuticoOrientador")}</h2>
       <p className="mt-3 text-sm text-muted-foreground">
-        As opções abaixo são habitualmente utilizadas para casos de {diagnosis}. A escolha final deve ser feita por um oftalmologista.
+        <Trans i18nKey="ScannerResultados.asOpcoesAbaixoSao" values={{ diagnosis }} />
       </p>
       <ul className="mt-4 space-y-2">
         {info.treatments.map((t) => (
@@ -697,13 +822,16 @@ const CondicaoPanel = ({ diagnosis, info }: { diagnosis: DiagnosisKey; info: Dia
     </Card>
   </div>
 );
+};
 
-const ClinicasPanel = ({ clinics, diagnosis }: { clinics: ClinicRec[]; diagnosis: DiagnosisKey }) => (
+const ClinicasPanel = ({ clinics, diagnosis }: { clinics: ClinicRec[]; diagnosis: DiagnosisKey }) => {
+  const { t } = useTranslation();
+  return (
   <div className="space-y-4">
     <div className="flex items-start gap-3 p-4 rounded-2xl bg-teal/5 border border-teal/20">
       <Eye className="w-5 h-5 text-teal shrink-0 mt-0.5" />
       <p className="text-sm text-foreground">
-        Recomendações <strong>personalizadas</strong> com base no diagnóstico de <strong>{diagnosis}</strong>. Estas unidades de saúde dispõem da especialidade mais adequada ao seu caso.
+        <Trans i18nKey="ScannerResultados.recomendacoesPersonalizadasComBase" components={{ strong: <strong /> }} values={{ diagnosis }} />
       </p>
     </div>
     <div className="grid md:grid-cols-2 gap-4">
@@ -731,7 +859,7 @@ const ClinicasPanel = ({ clinics, diagnosis }: { clinics: ClinicRec[]; diagnosis
               onClick={() => window.open(c.website, "_blank", "noopener,noreferrer")}
               className="text-xs font-semibold text-green inline-flex items-center gap-1 hover:gap-2 transition-all"
             >
-              Agendar <ArrowRight className="w-3 h-3" />
+              {t("ScannerResultados.agendar")}{" "}<ArrowRight className="w-3 h-3" />
             </button>
           </div>
         </Card>
@@ -739,8 +867,11 @@ const ClinicasPanel = ({ clinics, diagnosis }: { clinics: ClinicRec[]; diagnosis
     </div>
   </div>
 );
+};
 
-const ExerciciosPanel = () => (
+const ExerciciosPanel = () => {
+  const { t } = useTranslation();
+  return (
   <div className="grid sm:grid-cols-2 gap-4">
     {exercises.map((e) => (
       <Link
@@ -754,33 +885,37 @@ const ExerciciosPanel = () => (
         <h3 className="mt-4 text-base font-bold text-foreground">{e.title}</h3>
         <p className="mt-1 text-sm text-muted-foreground">{e.desc}</p>
         <div className="mt-4 flex items-center gap-1.5 text-sm font-semibold text-green/80 group-hover:text-green">
-          Iniciar <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+          {t("ScannerResultados.iniciar")}{" "}<ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
         </div>
       </Link>
     ))}
   </div>
 );
+};
 
-const ComunidadePanel = () => (
+const ComunidadePanel = () => {
+  const { t } = useTranslation();
+  return (
   <Card>
     <div className="flex flex-col md:flex-row md:items-center gap-6">
       <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal to-green flex items-center justify-center shrink-0">
         <Users className="w-8 h-8 text-white" />
       </div>
       <div className="flex-1">
-        <h2 className="text-xl font-bold text-foreground">Não está sozinho/a neste caminho</h2>
+        <h2 className="text-xl font-bold text-foreground">{t("ScannerResultados.naoEstaSozinhoA")}</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Junte-se à comunidade <strong>Janelas Para a Alma</strong>: partilhe experiências, encontre apoio emocional e ligue-se a outras pessoas que vivem o estrabismo todos os dias.
+          <Trans i18nKey="ScannerResultados.junteSeAComunidade" components={{ strong: <strong /> }} />
         </p>
       </div>
       <Link
-        to="/kamba"
+        to={localizar("/kamba")}
         className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors shrink-0"
       >
-        Juntar-me <ArrowRight className="w-4 h-4" />
+        {t("ScannerResultados.juntarMe")}{" "}<ArrowRight className="w-4 h-4" />
       </Link>
     </div>
   </Card>
 );
+};
 
 export default Resultados;

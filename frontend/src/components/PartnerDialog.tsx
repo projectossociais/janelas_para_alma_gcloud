@@ -22,14 +22,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
-const partnershipTypes = [
-  "Clínica Oftalmológica",
-  "Médico Especialista",
-  "Óptica",
-  "Investidor",
-  "Voluntário",
-  "Outro",
+const partnershipTypes = () => [
+  i18n.t("PartnerDialog.clinicaOftalmologica"),
+  i18n.t("PartnerDialog.medicoEspecialista"),
+  i18n.t("PartnerDialog.optica"),
+  i18n.t("PartnerDialog.investidor"),
+  i18n.t("PartnerDialog.voluntario"),
+  i18n.t("PartnerDialog.outro"),
 ];
 
 const initialFormData = {
@@ -44,6 +46,7 @@ const initialFormData = {
 type PartnerFormData = typeof initialFormData;
 
 const PartnerDialog = () => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState<PartnerFormData>(initialFormData);
@@ -74,16 +77,16 @@ const PartnerDialog = () => {
       );
 
       if (!response.ok) {
-        throw new Error("Erro ao enviar proposta");
+        throw new Error(t("PartnerDialog.erroAoEnviarProposta"));
       }
 
       setFormData(initialFormData);
       setOpen(false);
       toast.success(
-        "Obrigado! A sua proposta de parceria foi enviada e a nossa equipa entrará em contacto em breve.",
+        t("PartnerDialog.obrigadoASuaProposta"),
       );
     } catch {
-      toast.error("Ocorreu um erro ao enviar a proposta. Por favor, tente novamente.");
+      toast.error(t("PartnerDialog.ocorreuUmErroAo"));
     } finally {
       setSubmitting(false);
     }
@@ -93,32 +96,32 @@ const PartnerDialog = () => {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="inline-flex h-auto items-center gap-2 rounded-xl bg-teal px-8 py-4 text-lg font-semibold text-teal-foreground shadow-elevated transition-all hover:-translate-y-0.5 hover:opacity-90">
-          Quero ser parceiro
+          {t("PartnerDialog.queroSerParceiro")}
           <ArrowRight className="h-5 w-5" />
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto pb-16 sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Seja nosso Parceiro</DialogTitle>
+          <DialogTitle>{t("PartnerDialog.sejaNossoParceiro")}</DialogTitle>
           <DialogDescription>
-            Junte-se à nossa missão de transformar a saúde visual em Angola.
+            {t("PartnerDialog.junteSeANossa")}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="partner-nome">Nome</Label>
+            <Label htmlFor="partner-nome">{t("PartnerDialog.nome")}</Label>
             <Input
               id="partner-nome"
               required
               value={formData.Nome}
               onChange={(event) => updateField("Nome", event.target.value)}
-              placeholder="Nome da instituição ou pessoa"
+              placeholder={t("PartnerDialog.nomeDaInstituicaoOu")}
             />
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="partner-contacto">Pessoa de Contacto</Label>
+            <Label htmlFor="partner-contacto">{t("PartnerDialog.pessoaDeContacto")}</Label>
             <Input
               id="partner-contacto"
               required
@@ -126,13 +129,13 @@ const PartnerDialog = () => {
               onChange={(event) =>
                 updateField("Pessoa de Contacto", event.target.value)
               }
-              placeholder="Nome completo"
+              placeholder={t("PartnerDialog.nomeCompleto")}
             />
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
-              <Label htmlFor="partner-email">Email</Label>
+              <Label htmlFor="partner-email">{t("PartnerDialog.email")}</Label>
               <Input
                 id="partner-email"
                 type="email"
@@ -144,29 +147,29 @@ const PartnerDialog = () => {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="partner-telefone">Telefone</Label>
+              <Label htmlFor="partner-telefone">{t("PartnerDialog.telefone")}</Label>
               <Input
                 id="partner-telefone"
                 required
                 value={formData.Telefone}
                 onChange={(event) => updateField("Telefone", event.target.value)}
-                placeholder="+244 9xx xxx xxx"
+                placeholder={t("PartnerDialog.n2449xxXxxXxx")}
               />
             </div>
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="partner-tipo">Tipo de Parceria</Label>
+            <Label htmlFor="partner-tipo">{t("PartnerDialog.tipoDeParceria")}</Label>
             <Select
               required
               value={formData["Tipo de Parceria"]}
               onValueChange={(value) => updateField("Tipo de Parceria", value)}
             >
-              <SelectTrigger id="partner-tipo" aria-label="Tipo de Parceria">
-                <SelectValue placeholder="Seleccione uma opção" />
+              <SelectTrigger id="partner-tipo" aria-label={t("PartnerDialog.tipoDeParceria")}>
+                <SelectValue placeholder={t("PartnerDialog.seleccioneUmaOpcao")} />
               </SelectTrigger>
               <SelectContent>
-                {partnershipTypes.map((type) => (
+                {partnershipTypes().map((type) => (
                   <SelectItem key={type} value={type}>
                     {type}
                   </SelectItem>
@@ -176,14 +179,14 @@ const PartnerDialog = () => {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="partner-mensagem">Mensagem</Label>
+            <Label htmlFor="partner-mensagem">{t("PartnerDialog.mensagem")}</Label>
             <Textarea
               id="partner-mensagem"
               required
               rows={4}
               value={formData.Mensagem}
               onChange={(event) => updateField("Mensagem", event.target.value)}
-              placeholder="Conte-nos como gostaria de colaborar connosco..."
+              placeholder={t("PartnerDialog.conteNosComoGostaria")}
             />
           </div>
 
@@ -193,7 +196,7 @@ const PartnerDialog = () => {
               disabled={submitting}
               className="w-full bg-teal text-teal-foreground hover:opacity-90 sm:w-auto"
             >
-              {submitting ? "A enviar..." : "Enviar proposta"}
+              {submitting ? t("PartnerDialog.aEnviar") : t("PartnerDialog.enviarProposta")}
             </Button>
           </DialogFooter>
         </form>

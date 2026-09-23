@@ -2,8 +2,11 @@ import { useNavigate } from "react-router-dom";
 import { Heart } from "lucide-react";
 import heroImage from "@/assets/hero-bg.jpg";
 import logoIcon from "@/assets/logo-icon.png";
+import { Trans, useTranslation } from "react-i18next";
+import { localizar } from "@/i18n/rotas";
 
 const HeroSection = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   return (
     <section
@@ -33,34 +36,32 @@ const HeroSection = () => {
           <img
             src={logoIcon}
             className="h-28 md:h-40 w-auto object-contain shrink-0 -ml-12 md:-ml-20 lg:-ml-32"
-            alt="Logo"
+            alt={t("HeroSection.logo")}
           />
 
           <div className="flex flex-col items-start">
             <h1 className="text-5xl md:text-7xl font-bold leading-[1.05] tracking-tight m-0 p-0 text-primary-foreground">
-              Janelas
-              <br />
-              Para a Alma
+              <Trans i18nKey="HeroSection.janelasParaAAlma" components={{ br: <br /> }} />
             </h1>
 
             <p className="text-xl md:text-2xl font-medium mt-1 text-teal">
-              Um Olhar Alinhado, Uma Vida Transformada
+              {t("HeroSection.umOlharAlinhadoUma")}
             </p>
           </div>
         </div>
 
         {/* Texto e CTA */}
         <p className="text-xl text-left mb-10 max-w-2xl text-primary-foreground/85">
-          Uma instituição angolana que promove a inclusão visual alinhada à economia circular e inovação tecnológica.
+          {t("HeroSection.umaInstituicaoAngolanaQue")}
         </p>
 
         <div className="flex flex-row justify-start">
           <button
-            onClick={() => navigate("/apoiar")}
+            onClick={() => navigate(localizar("/apoiar"))}
             className="group inline-flex items-center gap-3 px-10 py-5 rounded-xl bg-gold text-navy font-bold text-lg md:text-xl transition-all hover:opacity-95 hover:translate-y-[-2px] shadow-elevated ring-2 ring-gold/40 hover:ring-gold/70"
           >
             <Heart className="w-6 h-6 fill-navy" />
-            Apoiar
+            {t("HeroSection.apoiar")}
           </button>
         </div>
       </div>

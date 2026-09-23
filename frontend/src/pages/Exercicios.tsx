@@ -28,6 +28,9 @@ import LockedVideoOverlay from "@/components/LockedVideoOverlay";
 import PremiumPaywallModal from "@/components/PremiumPaywallModal";
 import FeedbackWidget from "@/components/FeedbackWidget";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
+import { localizar } from "@/i18n/rotas";
 
 interface ExercicioBase {
   id: string;
@@ -40,35 +43,55 @@ interface ExercicioBase {
 const exerciciosBase: ExercicioBase[] = [
   {
     id: "figure8",
-    title: "Acompanhamento Ocular em Oito",
-    description:
-      "Siga o ponto com os olhos o mais suavemente possível, sem mover a cabeça. Ajuda a fortalecer a musculatura ocular.",
+    get title() {
+      return i18n.t("Exercicios.acompanhamentoOcularEmOito");
+    },
+    get description() {
+      return i18n.t("Exercicios.sigaOPontoCom");
+    },
     icon: InfinityIcon,
-    route: "/exercicios/tracking",
+    get route() {
+      return localizar("/exercicios/tracking");
+    },
   },
   {
     id: "convergence",
-    title: "Treino de Convergência",
-    description:
-      "Foque nos pontos enquanto eles se unem no centro. Tente manter a imagem única o máximo de tempo possível.",
+    get title() {
+      return i18n.t("Exercicios.treinoDeConvergencia");
+    },
+    get description() {
+      return i18n.t("Exercicios.foqueNosPontosEnquanto");
+    },
     icon: Minimize2,
-    route: "/exercicios/convergencia",
+    get route() {
+      return localizar("/exercicios/convergencia");
+    },
   },
   {
     id: "depth",
-    title: "Foco Dinâmico",
-    description:
-      "Encontre e fixe o olhar na forma que pulsa entre as restantes, treinando o foco e a atenção visual.",
+    get title() {
+      return i18n.t("Exercicios.focoDinamico");
+    },
+    get description() {
+      return i18n.t("Exercicios.encontreEFixeO");
+    },
     icon: Target,
-    route: "/exercicios/cerebro",
+    get route() {
+      return localizar("/exercicios/cerebro");
+    },
   },
   {
     id: "relax",
-    title: "Relaxamento e Respiração",
-    description:
-      "Sincronize a sua respiração com a orbe. Pode cobrir os olhos a qualquer momento (Palming) para relaxar ainda mais.",
+    get title() {
+      return i18n.t("Exercicios.relaxamentoERespiracao");
+    },
+    get description() {
+      return i18n.t("Exercicios.sincronizeASuaRespiracao");
+    },
     icon: Wind,
-    route: "/exercicios/relaxamento",
+    get route() {
+      return localizar("/exercicios/relaxamento");
+    },
   },
 ];
 
@@ -83,69 +106,112 @@ interface ExercicioPremium {
 const exerciciosPremium: ExercicioPremium[] = [
   {
     id: "ambliopia",
-    title: "Anti-Supressão / Ambliopia",
-    description:
-      "Encontre o alvo entre distractores cada vez mais parecidos, forçando o olho mais fraco a trabalhar sozinho.",
+    get title() {
+      return i18n.t("Exercicios.antiSupressaoAmbliopia");
+    },
+    get description() {
+      return i18n.t("Exercicios.encontreOAlvoEntre");
+    },
     icon: Glasses,
-    route: "/exercicios/ambliopia",
+    get route() {
+      return localizar("/exercicios/ambliopia");
+    },
   },
   {
     id: "sacadas-convergencia",
-    title: "Convergência com Saltos (Sacadas)",
-    description:
-      "Alterna rapidamente o foco entre alvos próximos e distantes, treinando a convergência dinâmica.",
+    get title() {
+      return i18n.t("Exercicios.convergenciaComSaltosSacadas");
+    },
+    get description() {
+      return i18n.t("Exercicios.alternaRapidamenteOFoco");
+    },
     icon: Zap,
-    route: "/exercicios/sacadas-convergencia",
+    get route() {
+      return localizar("/exercicios/sacadas-convergencia");
+    },
   },
   {
     id: "flexibilidade-acomodativa",
-    title: "Flexibilidade Acomodativa",
-    description:
-      "Muda de foco entre perto e longe a um ritmo crescente para treinar a rapidez de acomodação do olho.",
+    get title() {
+      return i18n.t("Exercicios.flexibilidadeAcomodativa");
+    },
+    get description() {
+      return i18n.t("Exercicios.mudaDeFocoEntre");
+    },
     icon: RefreshCw,
-    route: "/exercicios/flexibilidade-acomodativa",
+    get route() {
+      return localizar("/exercicios/flexibilidade-acomodativa");
+    },
   },
   {
     id: "sacadas-distratores",
-    title: "Sacadas com Distratores",
-    description:
-      "Encontre o alvo certo entre distractores em movimento, apurando o controlo dos movimentos sacádicos.",
+    get title() {
+      return i18n.t("Exercicios.sacadasComDistratores");
+    },
+    get description() {
+      return i18n.t("Exercicios.encontreOAlvoCerto");
+    },
     icon: Focus,
-    route: "/exercicios/sacadas-distratores",
+    get route() {
+      return localizar("/exercicios/sacadas-distratores");
+    },
   },
   {
     id: "estereopsia",
-    title: "Estereopsia (Visão 3D)",
-    description: "Padrões estereoscópicos avaliam e treinam a percepção de profundidade binocular.",
+    get title() {
+      return i18n.t("Exercicios.estereopsiaVisao3d");
+    },
+    get description() {
+      return i18n.t("Exercicios.padroesEstereoscopicosAvaliamE");
+    },
     icon: Layers,
-    route: "/exercicios/estereopsia",
+    get route() {
+      return localizar("/exercicios/estereopsia");
+    },
   },
   {
     id: "facilidade-vergencia",
-    title: "Facilidade de Vergência",
-    description:
-      "Alterna entre convergência e divergência em ciclos cronometrados para ganhar resistência binocular.",
+    get title() {
+      return i18n.t("Exercicios.facilidadeDeVergencia");
+    },
+    get description() {
+      return i18n.t("Exercicios.alternaEntreConvergenciaE");
+    },
     icon: GitMerge,
-    route: "/exercicios/facilidade-vergencia",
+    get route() {
+      return localizar("/exercicios/facilidade-vergencia");
+    },
   },
   {
     id: "consciencia-periferica",
-    title: "Consciência Periférica",
-    description: "Detecte estímulos na periferia do campo visual sem desviar o olhar do centro.",
+    get title() {
+      return i18n.t("Exercicios.conscienciaPeriferica");
+    },
+    get description() {
+      return i18n.t("Exercicios.detecteEstimulosNaPeriferia");
+    },
     icon: Radar,
-    route: "/exercicios/consciencia-periferica",
+    get route() {
+      return localizar("/exercicios/consciencia-periferica");
+    },
   },
   {
     id: "programa-ia",
-    title: "Programa Adaptativo com IA",
-    description:
-      "Um algoritmo ajusta a dificuldade de cada sessão em tempo real, de acordo com o seu progresso.",
+    get title() {
+      return i18n.t("Exercicios.programaAdaptativoComIa");
+    },
+    get description() {
+      return i18n.t("Exercicios.umAlgoritmoAjustaA");
+    },
     icon: Sparkles,
-    route: "/exercicios/programa-ia",
+    get route() {
+      return localizar("/exercicios/programa-ia");
+    },
   },
 ];
 
 const Exercicios = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { profile } = useProfile();
   const [paywallAberto, setPaywallAberto] = useState(false);
@@ -160,11 +226,10 @@ const Exercicios = () => {
         <section className="pt-8 pb-12 bg-background">
           <div className="container text-center max-w-2xl mx-auto">
             <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Exercícios Visuais Práticos
+              {t("Exercicios.exerciciosVisuaisPraticos")}
             </h1>
             <p className="text-muted-foreground text-base md:text-lg">
-              Aprende técnicas simples e interactivas para fortalecer a tua visão
-              no dia-a-dia.
+              {t("Exercicios.aprendeTecnicasSimplesE")}
             </p>
           </div>
         </section>
@@ -174,9 +239,9 @@ const Exercicios = () => {
           <div className="container">
             <div className="max-w-5xl mx-auto">
               <div className="mb-8 flex items-center gap-3">
-                <h2 className="text-xl md:text-2xl font-bold text-foreground">Plano Gratuito</h2>
+                <h2 className="text-xl md:text-2xl font-bold text-foreground">{t("Exercicios.planoGratuito")}</h2>
                 <span className="rounded-full bg-teal/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-teal">
-                  Incluído
+                  {t("Exercicios.incluido")}
                 </span>
               </div>
 
@@ -200,7 +265,7 @@ const Exercicios = () => {
                         </p>
                         <Button onClick={() => navigate(ex.route)} className="self-start">
                           <Play className="w-4 h-4" />
-                          Iniciar Exercício Interactivo
+                          {t("Exercicios.iniciarExercicioInteractivo")}
                           <ArrowRight className="w-4 h-4" />
                         </Button>
                       </div>
@@ -218,10 +283,10 @@ const Exercicios = () => {
             <div className="max-w-5xl mx-auto">
               <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <h2 className="text-xl md:text-2xl font-bold text-foreground">Plano Premium</h2>
+                  <h2 className="text-xl md:text-2xl font-bold text-foreground">{t("Exercicios.planoPremium")}</h2>
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-teal to-navy px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary-foreground shadow-sm">
                     <Sparkles className="h-3 w-3" />
-                    Exercícios Avançados
+                    {t("Exercicios.exerciciosAvancados")}
                   </span>
                 </div>
                 {!temAcessoPremium && (
@@ -232,7 +297,7 @@ const Exercicios = () => {
                     onClick={() => setPaywallAberto(true)}
                   >
                     <Crown className="h-4 w-4" />
-                    Desbloquear tudo
+                    {t("Exercicios.desbloquearTudo")}
                   </Button>
                 )}
               </div>
@@ -301,12 +366,10 @@ const Exercicios = () => {
             <div className="max-w-5xl mx-auto">
               <div className="rounded-xl bg-navy text-navy-foreground overflow-hidden flex flex-col justify-center p-8">
                 <h3 className="text-xl font-bold mb-2">
-                  Mais Dicas no Instagram
+                  {t("Exercicios.maisDicasNoInstagram")}
                 </h3>
                 <p className="text-navy-foreground/70 text-sm mb-6 max-w-lg">
-                  Acompanhe a nossa comunidade de Kambas nas redes sociais para
-                  desafios visuais diários, dicas de saúde e actualizações sobre
-                  o projecto.
+                  {t("Exercicios.acompanheANossaComunidade")}
                 </p>
                 <a
                   href="https://www.instagram.com/janelas_para_alma/"
@@ -315,7 +378,7 @@ const Exercicios = () => {
                   className="inline-flex items-center gap-2 self-start rounded-lg bg-navy-foreground text-navy px-5 py-2.5 text-sm font-semibold hover:opacity-90 transition-opacity"
                 >
                   <Instagram className="w-4 h-4" />
-                  Ver no Instagram
+                  {t("Exercicios.verNoInstagram")}
                 </a>
               </div>
             </div>

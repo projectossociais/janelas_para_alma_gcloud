@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { bannerHomepageApi, type BannerHomepagePublico } from "@/lib/apiClient";
+import { useTranslation } from "react-i18next";
 
 /** Secção visual só na homepage, para campanhas/promoções -- distinta da
  * `HeroSection` (fixa, identidade da marca) e da faixa fina de aviso
@@ -9,6 +10,7 @@ import { bannerHomepageApi, type BannerHomepagePublico } from "@/lib/apiClient";
  * a secção simplesmente não aparece, nunca quebra a página (mesmo
  * princípio do SiteBanner). */
 const BannerHomepageSection = () => {
+  const { t } = useTranslation();
   const [banner, setBanner] = useState<BannerHomepagePublico | null>(null);
 
   useEffect(() => {
@@ -35,7 +37,7 @@ const BannerHomepageSection = () => {
         {banner.descricao && <p className="max-w-xl text-white/90">{banner.descricao}</p>}
         {banner.link && (
           <span className="inline-flex items-center gap-1.5 font-semibold mt-1">
-            Saber mais <ArrowRight className="w-4 h-4" />
+            {t("BannerHomepageSection.saberMais")}{" "}<ArrowRight className="w-4 h-4" />
           </span>
         )}
       </div>

@@ -11,47 +11,70 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Trans, useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
 const impacts = [
   {
     icon: Users,
-    title: "Impacto Social",
-    description: "Inclusão visual com óculos acessíveis e métodos de tratamento para maior auto-estima e qualidade de vida.",
+    get title() {
+      return i18n.t("ImpactSection.impactoSocial");
+    },
+    get description() {
+      return i18n.t("ImpactSection.inclusaoVisualComOculos");
+    },
     color: "bg-teal/10 text-teal",
     image: impactSocial,
-    modalContent:
-      "O Janelas para a Alma promove a inclusão visual através da distribuição de óculos acessíveis e métodos de tratamento adaptados à realidade angolana. Ao devolver a capacidade de ver correctamente, restauramos a auto-estima e qualidade de vida de crianças, jovens e adultos que vivem com estrabismo. O impacto estende-se às famílias e comunidades, quebrando o ciclo de exclusão social associado às condições visuais não tratadas.",
+    get modalContent() {
+      return i18n.t("ImpactSection.oJanelasParaA");
+    },
   },
   {
     icon: Recycle,
-    title: "Impacto Ecológico",
-    description: "Redução de resíduos através do reaproveitamento de óculos e materiais recicláveis.",
+    get title() {
+      return i18n.t("ImpactSection.impactoEcologico");
+    },
+    get description() {
+      return i18n.t("ImpactSection.reducaoDeResiduosAtraves");
+    },
     color: "bg-green/10 text-green",
     image: impactEcologico,
-    modalContent:
-      "Através da recolha e reaproveitamento de óculos usados e materiais recicláveis, o Janelas para a Alma contribui directamente para a redução de resíduos sólidos. Cada par de óculos reutilizado representa menos lixo nos aterros e menos recursos naturais consumidos na fabricação de novos. Este modelo de economia circular transforma resíduos em instrumentos de transformação social.",
+    get modalContent() {
+      return i18n.t("ImpactSection.atravesDaRecolhaE");
+    },
   },
   {
     icon: TreePine,
-    title: "Impacto Climático",
-    description: "Menor consumo industrial e pegada de carbono reduzida através de práticas sustentáveis.",
+    get title() {
+      return i18n.t("ImpactSection.impactoClimatico");
+    },
+    get description() {
+      return i18n.t("ImpactSection.menorConsumoIndustrialE");
+    },
     color: "bg-gold/10 text-gold",
     image: impactClimatico,
-    modalContent:
-      "Ao reduzir a necessidade de fabricação de novos óculos e promover práticas sustentáveis, o Janelas para a Alma contribui para a diminuição da pegada de carbono. O menor consumo industrial significa menos emissões de gases de efeito estufa, menos energia consumida e menos recursos naturais extraídos. Cada acção local tem um efeito positivo no combate às alterações climáticas globais.",
+    get modalContent() {
+      return i18n.t("ImpactSection.aoReduzirANecessidade");
+    },
   },
   {
     icon: Glasses,
-    title: "Impacto Educacional",
-    description: "Oficinas e campanhas para formar jovens conscientes e multiplicadores de conhecimento.",
+    get title() {
+      return i18n.t("ImpactSection.impactoEducacional");
+    },
+    get description() {
+      return i18n.t("ImpactSection.oficinasECampanhasPara");
+    },
     color: "bg-sky/10 text-sky",
     image: impactEducacional,
-    modalContent:
-      "As oficinas educativas e campanhas de sensibilização formam jovens conscientes que se tornam multiplicadores de conhecimento nas suas comunidades. Através da educação sobre saúde visual e sustentabilidade ambiental, criamos uma rede de agentes de mudança que perpetuam o impacto do Janelas para a Alma muito além do seu alcance directo.",
+    get modalContent() {
+      return i18n.t("ImpactSection.asOficinasEducativasE");
+    },
   },
 ];
 
 const ImpactSection = () => {
+  const { t } = useTranslation();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -74,12 +97,12 @@ const ImpactSection = () => {
       </div>
       <div className="container">
         <div className="text-center mb-16 space-y-4">
-          <span className="text-sm font-medium tracking-widest uppercase text-teal">Impacto</span>
+          <span className="text-sm font-medium tracking-widest uppercase text-teal">{t("ImpactSection.impacto")}</span>
           <h2 className="text-3xl md:text-5xl font-bold">
-            Cuidar das pessoas e do planeta
+            {t("ImpactSection.cuidarDasPessoasE")}
           </h2>
           <p className="text-lg text-navy-foreground/70 max-w-2xl mx-auto">
-            Ao transformar desafios em oportunidades, o Janelas para a Alma constrói uma ponte entre inclusão social e economia circular.
+            {t("ImpactSection.aoTransformarDesafiosEm")}
           </p>
         </div>
 
@@ -101,7 +124,7 @@ const ImpactSection = () => {
                 </div>
                 <h3 className="text-xl font-bold mb-3 text-navy-foreground">{impact.title}</h3>
                 <p className="text-navy-foreground/70 leading-relaxed text-sm">{impact.description}</p>
-                <p className="text-xs text-teal mt-4 font-medium">Saber mais →</p>
+                <p className="text-xs text-teal mt-4 font-medium">{t("ImpactSection.saberMais")}</p>
               </button>
             ))}
           </div>
@@ -110,14 +133,14 @@ const ImpactSection = () => {
           <button
             onClick={() => scroll("left")}
             className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 flex lg:hidden items-center justify-center w-10 h-10 rounded-full bg-navy-foreground/10 border border-navy-foreground/10 text-navy-foreground hover:bg-navy-foreground/20 z-10 opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300"
-            aria-label="Anterior"
+            aria-label={t("ImpactSection.anterior")}
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
           <button
             onClick={() => scroll("right")}
             className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 flex lg:hidden items-center justify-center w-10 h-10 rounded-full bg-navy-foreground/10 border border-navy-foreground/10 text-navy-foreground hover:bg-navy-foreground/20 z-10 opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300"
-            aria-label="Próximo"
+            aria-label={t("ImpactSection.proximo")}
           >
             <ChevronRight className="w-5 h-5" />
           </button>
@@ -135,7 +158,7 @@ const ImpactSection = () => {
                 {impact.title}
               </DialogTitle>
               <DialogDescription className="sr-only">
-                Detalhes sobre {impact.title}
+                <Trans i18nKey="ImpactSection.detalhesSobre" values={{ title: impact.title }} />
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-5 pt-2">

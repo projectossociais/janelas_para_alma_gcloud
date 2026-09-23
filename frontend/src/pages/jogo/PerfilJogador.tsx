@@ -11,8 +11,11 @@ import { useProfile } from "@/contexts/ProfileContext";
 import { jogoApi, mensagemDeErroApi, type PerfilJogadorPublico } from "@/lib/apiClient";
 import { toast } from "sonner";
 import { TOTAL_PATAMARES, formatarKz, valorDoPatamar } from "./jogoConfig";
+import { useTranslation } from "react-i18next";
+import { localizar } from "@/i18n/rotas";
 
 const PerfilJogador = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { isLoggedIn, loading: authLoading } = useAuth();
   const { profile } = useProfile();
@@ -20,7 +23,7 @@ const PerfilJogador = () => {
   const [aCarregar, setACarregar] = useState(true);
 
   useEffect(() => {
-    if (!authLoading && !isLoggedIn) navigate("/auth");
+    if (!authLoading && !isLoggedIn) navigate(localizar("/auth"));
   }, [authLoading, isLoggedIn, navigate]);
 
   useEffect(() => {
@@ -29,25 +32,25 @@ const PerfilJogador = () => {
       try {
         setPerfilJogo(await jogoApi.obterPerfil());
       } catch (err) {
-        toast.error(mensagemDeErroApi(err, "Não foi possível carregar o seu perfil de jogo."));
+        toast.error(mensagemDeErroApi(err, t("PerfilJogador.naoFoiPossivelCarregar")));
       } finally {
         setACarregar(false);
       }
     })();
-  }, [isLoggedIn]);
+  }, [isLoggedIn, t]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
-      <BackButton fallbackPath="/jogo-curiosidades" label="Voltar ao menu" />
+      <BackButton fallbackPath={localizar("/jogo-curiosidades")} label={t("PerfilJogador.voltarAoMenu")} />
 
       <main className="flex-1">
         <div className="container pb-16 max-w-2xl mx-auto">
           <header className="text-center space-y-3 mb-8">
             <span className="text-sm font-medium tracking-widest uppercase text-teal">
-              Inclusivamente
+              {t("PerfilJogador.inclusivamente")}
             </span>
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground">O Meu Perfil</h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground">{t("PerfilJogador.oMeuPerfil")}</h1>
           </header>
 
           {profile && (
@@ -72,38 +75,38 @@ const PerfilJogador = () => {
                 <div className="rounded-2xl bg-card border border-border/60 shadow-card p-5 text-center space-y-2">
                   <Coins className="w-6 h-6 text-gold mx-auto" />
                   <p className="text-2xl font-bold text-gold">{perfilJogo?.moedas ?? 0}</p>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Moedas</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">{t("PerfilJogador.moedas")}</p>
                 </div>
                 <div className="rounded-2xl bg-card border border-border/60 shadow-card p-5 text-center space-y-2">
                   <Gem className="w-6 h-6 text-teal mx-auto" />
                   <p className="text-2xl font-bold text-teal">{perfilJogo?.diamantes ?? 0}</p>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Diamantes</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">{t("PerfilJogador.diamantes")}</p>
                 </div>
                 <div className="rounded-2xl bg-card border border-border/60 shadow-card p-5 text-center space-y-2">
                   <Swords className="w-6 h-6 text-navy mx-auto" />
                   <p className="text-2xl font-bold text-foreground">{perfilJogo?.partidas_jogadas ?? 0}</p>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Partidas jogadas</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">{t("PerfilJogador.partidasJogadas")}</p>
                 </div>
                 <div className="rounded-2xl bg-card border border-border/60 shadow-card p-5 text-center space-y-2">
                   <Trophy className="w-6 h-6 text-navy mx-auto" />
                   <p className="text-2xl font-bold text-foreground">
                     {perfilJogo?.patamar_maximo_alcancado ?? 0} <span className="text-sm font-normal text-muted-foreground">/ {TOTAL_PATAMARES}</span>
                   </p>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Melhor patamar</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">{t("PerfilJogador.melhorPatamar")}</p>
                 </div>
               </div>
 
               {!!perfilJogo?.patamar_maximo_alcancado && (
                 <div className="rounded-2xl bg-teal/5 border border-teal/30 p-5 text-center">
-                  <p className="text-sm text-muted-foreground">O seu melhor resultado equivale a</p>
+                  <p className="text-sm text-muted-foreground">{t("PerfilJogador.oSeuMelhorResultado")}</p>
                   <p className="text-2xl font-bold text-gold">{formatarKz(valorDoPatamar(perfilJogo.patamar_maximo_alcancado))}</p>
                 </div>
               )}
 
               <Button asChild size="lg" className="w-full bg-teal text-teal-foreground hover:bg-teal/90">
-                <Link to="/jogo-curiosidades/jogar">
+                <Link to={localizar("/jogo-curiosidades/jogar")}>
                   <Play className="w-4 h-4" />
-                  Jogar agora
+                  {t("PerfilJogador.jogarAgora")}
                 </Link>
               </Button>
             </div>

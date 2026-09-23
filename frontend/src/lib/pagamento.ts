@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 export interface DadosBancarios {
   beneficiario: string;
   pagamento_rapido: { metodo: string; telefone: string };
@@ -8,7 +9,9 @@ export interface DadosBancarios {
  * (doações financeiras, checkout Premium) -- fonte única para não haver o
  * risco de dois sítios do site mostrarem dados diferentes. */
 export const DEFAULT_BANK_DATA: DadosBancarios = {
-  beneficiario: "Dalva Etelvina Benguela Filipe",
+  get beneficiario() {
+    return i18n.t("pagamento.dalvaEtelvinaBenguelaFilipe");
+  },
   pagamento_rapido: {
     metodo: "MULTICAIXA EXPRESS",
     telefone: "+244 946 538 507",

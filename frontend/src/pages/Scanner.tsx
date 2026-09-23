@@ -9,13 +9,21 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { submeterRastreioMultiGaze, type ScreeningResponse } from "@/services/api/screeningApi";
 import { screeningsApi, mensagemDeErroApi } from "@/lib/apiClient";
+import { Trans, useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
 
 type TrackingStage = 0 | 1 | 2;
 const TRACKING_STAGES = [
-  { label: "A procurar rosto…", color: "red" as const },
-  { label: "Por favor, aproxime-se e olhe para o centro…", color: "yellow" as const },
-  { label: "Rosto alinhado. Mantenha-se imóvel.", color: "green" as const },
+  { get label() {
+    return i18n.t("Scanner.aProcurarRosto");
+  }, color: "red" as const },
+  { get label() {
+    return i18n.t("Scanner.porFavorAproximeSe");
+  }, color: "yellow" as const },
+  { get label() {
+    return i18n.t("Scanner.rostoAlinhadoMantenhaSe");
+  }, color: "green" as const },
 ];
 
 type CaptureStep = "IDLE" | "CENTER" | "RIGHT" | "LEFT" | "PROCESSING";
@@ -27,10 +35,18 @@ interface ScanShot {
 }
 
 const GUIDED_LABELS: Record<Exclude<CaptureStep, "IDLE">, string> = {
-  CENTER: "1/3: Olhe fixamente para a frente…",
-  RIGHT: "2/3: Olhe para o seu lado direito…",
-  LEFT: "3/3: Olhe para o seu lado esquerdo…",
-  PROCESSING: "A processar diagnóstico clínico…",
+  get CENTER() {
+    return i18n.t("Scanner.n13OlheFixamente");
+  },
+  get RIGHT() {
+    return i18n.t("Scanner.n23OlhePara");
+  },
+  get LEFT() {
+    return i18n.t("Scanner.n33OlhePara");
+  },
+  get PROCESSING() {
+    return i18n.t("Scanner.aProcessarDiagnosticoClinico");
+  },
 };
 
 const MIN_LUMINANCE = 55; // 0-255 average luma threshold
@@ -69,6 +85,7 @@ const persistirScreening = async (apiResult: ScreeningResponse): Promise<string 
 
 
 const Scanner = () => {
+  const { t: tr } = useTranslation();
 
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -208,7 +225,7 @@ const Scanner = () => {
     } catch (err) {
       console.error(err);
       setCameraError(
-        "Não foi possível aceder à câmara. Verifique as permissões do navegador e tente novamente."
+        tr("Scanner.naoFoiPossivelAceder")
       );
     }
   };
@@ -285,12 +302,12 @@ const Scanner = () => {
           const blobDireita = rightShot ? dataUrlToBlob(rightShot.imageBase64) : null;
 
           if (!blobCentro || !blobEsquerda || !blobDireita) {
-            throw new Error("Falha ao preparar as imagens das 3 posições.");
+            throw new Error(tr("Scanner.falhaAoPrepararAs"));
           }
 
           // 2. Executa o cálculo matemático no FastAPI (Python) — o
           // janelas-scanner-api é um microserviço à parte, sem sessão própria.
-          toast.info("A calcular alinhamento ocular na IA...");
+          toast.info(tr("Scanner.aCalcularAlinhamentoOcular"));
           const apiResult = await submeterRastreioMultiGaze({
             centro: blobCentro,
             esquerda: blobEsquerda,
@@ -322,7 +339,7 @@ const Scanner = () => {
         }
       })();
     }
-  }, [captureStep, lowLight, recordPose, stopCamera, finishScan, user]);
+  }, [captureStep, lowLight, recordPose, stopCamera, finishScan, user, tr]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -332,18 +349,17 @@ const Scanner = () => {
         <section className="container py-10 md:py-16">
           <div className="max-w-3xl mx-auto text-center animate-fade-in">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal/10 text-teal text-xs font-semibold tracking-wide uppercase mb-5">
-              <Sparkles className="w-3.5 h-3.5" /> Scanner de Estrabismo · IA
+              <Sparkles className="w-3.5 h-3.5" />{" "}{tr("Scanner.scannerDeEstrabismoIa")}
             </div>
             <h1 className="text-3xl md:text-5xl font-bold text-foreground leading-tight">
-              Área de Diagnóstico Inteligente
+              {tr("Scanner.areaDeDiagnosticoInteligente")}
             </h1>
             <p className="mt-4 text-base md:text-lg text-muted-foreground">
-              Utilize a câmara para uma análise visual guiada, assistida por inteligência
-              artificial. Recebe os resultados em segundos, de forma confidencial e segura.
+              {tr("Scanner.utilizeACamaraPara")}
             </p>
             <div className="mt-4 inline-flex items-center gap-2 text-xs text-muted-foreground">
               <ShieldCheck className="w-4 h-4 text-green" />
-              Esta é uma simulação demonstrativa. Não substitui diagnóstico clínico.
+              {tr("Scanner.estaEUmaSimulacao")}
             </div>
           </div>
 
@@ -383,7 +399,7 @@ const Scanner = () => {
                           color: (captureStep === "PROCESSING" ? "green" : "yellow") as "green" | "yellow",
                         }
                       : lowLight
-                        ? { label: "Ambiente muito escuro. Aumente a iluminação.", color: "yellow" as const }
+                        ? { label: tr("Scanner.ambienteMuitoEscuroAumente"), color: "yellow" as const }
                         : TRACKING_STAGES[trackingStage];
                     const colorMap = {
                       red: { border: "border-red-500", glow: "shadow-[0_0_40px_hsl(0_85%_60%/0.6)]", text: "text-red-400", dot: "bg-red-500", bg: "bg-red-500/15", brd: "border-red-500/40" },
@@ -413,11 +429,10 @@ const Scanner = () => {
                   })()}
 
                   <div className="absolute top-4 left-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur text-white text-xs font-medium">
-                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                    AO VIVO · IA
+                    <Trans i18nKey="Scanner.aoVivoIa" components={{ span: <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" /> }} />
                   </div>
                   <div className="absolute top-4 right-4 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur text-white text-[10px] font-mono tracking-wider">
-                    TRK · {String(trackingStage + 1).padStart(2, "0")}/03
+                    <Trans i18nKey="Scanner.trk03" values={{ valor: String(trackingStage + 1).padStart(2, "0") }} />
                   </div>
                 </div>
                 <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
@@ -428,27 +443,27 @@ const Scanner = () => {
                   >
                     {captureStep === "IDLE" ? (
                       <>
-                        <Camera className="w-4 h-4" /> Iniciar Captura
+                        <Camera className="w-4 h-4" />{" "}{tr("Scanner.iniciarCaptura")}
                       </>
                     ) : captureStep === "CENTER" ? (
                       <>
-                        <Camera className="w-4 h-4" /> Capturar Frente (1/3)
+                        <Camera className="w-4 h-4" />{" "}{tr("Scanner.capturarFrente13")}
                       </>
                     ) : captureStep === "RIGHT" ? (
                       <>
-                        <Camera className="w-4 h-4" /> Capturar Direita (2/3)
+                        <Camera className="w-4 h-4" />{" "}{tr("Scanner.capturarDireita23")}
                       </>
                     ) : captureStep === "LEFT" ? (
                       <>
-                        <Camera className="w-4 h-4" /> Capturar Esquerda (3/3)
+                        <Camera className="w-4 h-4" />{" "}{tr("Scanner.capturarEsquerda33")}
                       </>
                     ) : uploading ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin" /> A enviar imagens para o Supabase… Não feche a página
+                        <Loader2 className="w-4 h-4 animate-spin" />{" "}{tr("Scanner.aEnviarImagensPara")}
                       </>
                     ) : (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin" /> A analisar…
+                        <Loader2 className="w-4 h-4 animate-spin" />{" "}{tr("Scanner.aAnalisar")}
                       </>
                     )}
                   </button>
@@ -456,32 +471,31 @@ const Scanner = () => {
                     onClick={stopCamera}
                     className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-muted text-foreground font-medium text-sm hover:bg-muted/80 transition-colors"
                   >
-                    <CameraOff className="w-4 h-4" /> Cancelar
+                    <CameraOff className="w-4 h-4" />{" "}{tr("Scanner.cancelar")}
                   </button>
                 </div>
 
                 {lowLight && (
                   <div className="mt-4 max-w-2xl mx-auto p-4 rounded-2xl bg-yellow-400/15 border border-yellow-400/40 text-sm text-yellow-700 dark:text-yellow-300 flex items-start gap-2">
                     <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-                    Ambiente muito escuro. Por favor, vá para um local mais iluminado para garantir a
-                    precisão do diagnóstico.
+                    {tr("Scanner.ambienteMuitoEscuroPor")}
                   </div>
                 )}
 
                 {uploadError && (
                   <div className="mt-4 max-w-2xl mx-auto p-4 rounded-2xl bg-destructive/10 border border-destructive/40 text-sm text-destructive flex items-start gap-2">
                     <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-                    <span>Erro ao enviar o exame: {uploadError}</span>
+                    <span><Trans i18nKey="Scanner.erroAoEnviarO" values={{ uploadError }} /></span>
                   </div>
                 )}
 
 
                 <p className="mt-3 text-center text-xs text-muted-foreground">
                   {captureStep === "IDLE"
-                    ? "A captura guiada tem 3 fases (frente, direita, esquerda). Mantenha o rosto centrado."
+                    ? tr("Scanner.aCapturaGuiadaTem")
                     : captureStep === "PROCESSING"
-                      ? "A processar diagnóstico clínico…"
-                      : "Siga as instruções no ecrã. A IA extrai os pontos oculares em cada fase."}
+                      ? tr("Scanner.aProcessarDiagnosticoClinico")
+                      : tr("Scanner.sigaAsInstrucoesNo")}
                 </p>
 
               </div>
@@ -494,18 +508,16 @@ const Scanner = () => {
                   <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center mb-5 group-hover:bg-white/25 transition-colors">
                     <Camera className="w-7 h-7" />
                   </div>
-                  <h3 className="text-xl font-bold">Usar Câmara</h3>
+                  <h3 className="text-xl font-bold">{tr("Scanner.usarCamara")}</h3>
                   <p className="mt-2 text-sm text-white/80">
-                    Capture 3 imagens guiadas (frente, direita, esquerda) para uma análise real do
-                    alinhamento ocular.
+                    {tr("Scanner.capture3ImagensGuiadas")}
                   </p>
                   <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-gold">
-                    Activar câmara →
+                    {tr("Scanner.activarCamara")}
                   </span>
                 </button>
                 <p className="mt-3 text-center text-xs text-muted-foreground">
-                  O diagnóstico é calculado a partir das 3 poses capturadas. Não é possível calculá-lo a
-                  partir de uma única fotografia.
+                  {tr("Scanner.oDiagnosticoECalculado")}
                 </p>
               </div>
             )}
@@ -519,7 +531,7 @@ const Scanner = () => {
                     onClick={startCamera}
                     className="ml-2 inline-flex items-center gap-1 font-semibold underline"
                   >
-                    <RefreshCw className="w-3 h-3" /> Tentar novamente
+                    <RefreshCw className="w-3 h-3" />{" "}{tr("Scanner.tentarNovamente")}
                   </button>
                 </div>
               </div>
@@ -529,9 +541,9 @@ const Scanner = () => {
           {!scanning && !cameraOn && (
             <div className="mt-12 max-w-3xl mx-auto grid sm:grid-cols-3 gap-4 text-center">
               {[
-                { n: "01", t: "Captura", d: "Imagem nítida do rosto" },
-                { n: "02", t: "Análise IA", d: "Processamento em segundos" },
-                { n: "03", t: "Resultado", d: "Diagnóstico orientador" },
+                { n: "01", t: tr("Scanner.captura"), d: tr("Scanner.imagemNitidaDoRosto") },
+                { n: "02", t: tr("Scanner.analiseIa"), d: tr("Scanner.processamentoEmSegundos") },
+                { n: "03", t: tr("Scanner.resultado"), d: tr("Scanner.diagnosticoOrientador") },
               ].map((s) => (
                 <div key={s.n} className="p-5 rounded-2xl bg-card border border-border shadow-card">
                   <div className="text-xs font-bold text-teal tracking-widest">{s.n}</div>
@@ -549,11 +561,12 @@ const Scanner = () => {
 };
 
 const ScanningView = ({ previewUrl }: { previewUrl: string | null }) => {
+  const { t } = useTranslation();
   return (
     <div className="animate-fade-in">
       <div className="relative mx-auto w-full max-w-md aspect-[3/4] rounded-3xl overflow-hidden bg-gradient-to-br from-navy to-navy/70 shadow-elevated">
         {previewUrl ? (
-          <img src={previewUrl} alt="A analisar" className="absolute inset-0 w-full h-full object-cover opacity-90" />
+          <img src={previewUrl} alt={t("Scanner.aAnalisar2")} className="absolute inset-0 w-full h-full object-cover opacity-90" />
         ) : (
           <svg viewBox="0 0 200 260" className="absolute inset-0 w-full h-full text-white/25" fill="currentColor">
             <circle cx="100" cy="85" r="48" />
@@ -578,16 +591,16 @@ const ScanningView = ({ previewUrl }: { previewUrl: string | null }) => {
 
         <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 rounded-full bg-black/40 backdrop-blur text-white text-xs font-medium">
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          A analisar pontos oculares…
+          {t("Scanner.aAnalisarPontosOculares")}
         </div>
       </div>
 
       <div className="mt-6 max-w-md mx-auto text-center">
         <div className="inline-flex items-center gap-2 text-teal text-sm font-semibold">
-          <ScanLine className="w-4 h-4 animate-pulse" /> Processamento IA em curso
+          <ScanLine className="w-4 h-4 animate-pulse" />{" "}{t("Scanner.processamentoIaEmCurso")}
         </div>
         <p className="text-xs text-muted-foreground mt-2">
-          A detectar alinhamento ocular, simetria pupilar e reflexo corneano…
+          {t("Scanner.aDetectarAlinhamentoOcular")}
         </p>
       </div>
 

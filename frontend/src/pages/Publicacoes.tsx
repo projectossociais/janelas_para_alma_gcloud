@@ -7,8 +7,11 @@ import BackButton from "@/components/BackButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { publicacoesApi, mensagemDeErroApi, type PublicacaoPublica } from "@/lib/apiClient";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
+import { localizar } from "@/i18n/rotas";
 
 const Publicacoes = () => {
+  const { t } = useTranslation();
   const [publicacoes, setPublicacoes] = useState<PublicacaoPublica[]>([]);
   const [aCarregar, setACarregar] = useState(true);
 
@@ -17,26 +20,26 @@ const Publicacoes = () => {
       try {
         setPublicacoes(await publicacoesApi.listarPublicadas());
       } catch (err) {
-        toast.error(mensagemDeErroApi(err, "Não foi possível carregar as publicações."));
+        toast.error(mensagemDeErroApi(err, t("Publicacoes.naoFoiPossivelCarregar")));
       } finally {
         setACarregar(false);
       }
     })();
-  }, []);
+  }, [t]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
-      <BackButton fallbackPath="/" label="Voltar" />
+      <BackButton fallbackPath={localizar("/")} label={t("Publicacoes.voltar")} />
       <main className="flex-1">
         <div className="container py-10">
           <header className="max-w-2xl mx-auto text-center space-y-4 mb-12">
             <span className="text-sm font-medium tracking-widest uppercase text-teal">
-              Acções Recentes
+              {t("Publicacoes.accoesRecentes")}
             </span>
-            <h1 className="text-3xl md:text-4xl font-bold">No Terreno com a Comunidade</h1>
+            <h1 className="text-3xl md:text-4xl font-bold">{t("Publicacoes.noTerrenoComA")}</h1>
             <p className="text-muted-foreground">
-              Actividades, campanhas e notícias do Janelas Para a Alma.
+              {t("Publicacoes.actividadesCampanhasENoticias")}
             </p>
           </header>
 
@@ -50,14 +53,14 @@ const Publicacoes = () => {
             <div className="max-w-md mx-auto text-center py-16 space-y-3">
               <Newspaper className="w-10 h-10 mx-auto text-muted-foreground" />
               <p className="text-muted-foreground">
-                Ainda não há publicações. Volte em breve para acompanhar as nossas actividades.
+                {t("Publicacoes.aindaNaoHaPublicacoes")}
               </p>
             </div>
           )}
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {publicacoes.map((p) => (
-              <Link key={p.id} to={`/publicacoes/${p.slug}`}>
+              <Link key={p.id} to={localizar(`/publicacoes/${p.slug}`)}>
                 <Card className="h-full overflow-hidden shadow-elevated hover:-translate-y-1 transition-transform">
                   {p.capa_url && (
                     <img src={p.capa_url} alt={p.titulo} className="w-full h-44 object-cover" loading="lazy" />

@@ -67,7 +67,7 @@ import GlobalBanner from "./components/GlobalBanner";
 import { SiteBannerProvider } from "./contexts/SiteBannerContext";
 import ScrollToTop from "./components/ScrollToTop";
 import NotFound from "./pages/NotFound";
-import SincronizarIdioma from "./i18n/SincronizarIdioma";
+import IdiomaDaRota from "./i18n/IdiomaDaRota";
 import { inglesAtivo } from "./i18n/idiomas";
 import { ALIASES_PT, ROTAS, type ChaveRota } from "./i18n/rotas";
 
@@ -135,8 +135,8 @@ const App = () => (
           <FeedbackProvider>
             <BrowserRouter>
               <SiteBannerProvider>
-              <SincronizarIdioma />
               <ScrollToTop />
+              <IdiomaDaRota>
               <GlobalBanner />
               <Routes>
                 {ROTAS.map((r) => (
@@ -168,6 +168,7 @@ const App = () => (
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              </IdiomaDaRota>
               </SiteBannerProvider>
             </BrowserRouter>
           </FeedbackProvider>

@@ -9,24 +9,28 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
+import { localizar } from "@/i18n/rotas";
 
 interface PremiumPaywallModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-const benefits = [
-  "Acesso ilimitado a exercícios interactivos e vídeos alojados na plataforma.",
-  "Acompanhamento de métricas (KPIs) de evolução.",
-  "Redirecionamento exclusivo e teleconsulta com clínicas parceiras.",
-  "Vídeos explicativos com médicos oftalmologistas parceiros.",
+const benefits = () => [
+  i18n.t("PremiumPaywallModal.acessoIlimitadoAExercicios"),
+  i18n.t("PremiumPaywallModal.acompanhamentoDeMetricasKpis"),
+  i18n.t("PremiumPaywallModal.redirecionamentoExclusivoETeleconsulta"),
+  i18n.t("PremiumPaywallModal.videosExplicativosComMedicos"),
 ];
 
 const PremiumPaywallModal = ({ open, onOpenChange }: PremiumPaywallModalProps) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const goToRegistration = () => {
     onOpenChange(false);
-    navigate("/registo-premium");
+    navigate(localizar("/registo-premium"));
   };
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -37,15 +41,15 @@ const PremiumPaywallModal = ({ open, onOpenChange }: PremiumPaywallModalProps) =
             <Sparkles className="w-7 h-7 text-primary-foreground" />
           </div>
           <DialogTitle className="text-2xl md:text-3xl font-bold text-center">
-            Desbloqueie o Seu Potencial Visual
+            {t("PremiumPaywallModal.desbloqueieOSeuPotencial")}
           </DialogTitle>
           <DialogDescription className="text-center text-base">
-            Faça upgrade para aceder ao nosso programa completo de reabilitação.
+            {t("PremiumPaywallModal.facaUpgradeParaAceder")}
           </DialogDescription>
         </DialogHeader>
 
         <ul className="space-y-3 my-4">
-          {benefits.map((b) => (
+          {benefits().map((b) => (
             <li key={b} className="flex items-start gap-3">
               <span className="mt-0.5 shrink-0 w-6 h-6 rounded-full bg-teal/15 text-teal flex items-center justify-center">
                 <Check className="w-4 h-4" strokeWidth={3} />
@@ -62,7 +66,7 @@ const PremiumPaywallModal = ({ open, onOpenChange }: PremiumPaywallModalProps) =
             className="w-full bg-gradient-to-r from-teal to-navy text-primary-foreground hover:opacity-90"
           >
             <Sparkles className="w-4 h-4" />
-            Registar para Acesso Premium
+            {t("PremiumPaywallModal.registarParaAcessoPremium")}
           </Button>
         </DialogFooter>
       </DialogContent>

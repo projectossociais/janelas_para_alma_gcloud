@@ -41,6 +41,12 @@ describe("com VITE_ENABLE_EN desligada (omissão)", () => {
     expect(screen.queryByRole("heading", { name: "Perguntas Frequentes" })).not.toBeInTheDocument();
   });
 
+  it("em português os links internos ficam exactamente como estavam", async () => {
+    abrir("/faq");
+    await screen.findByRole("heading", { name: "Perguntas Frequentes" });
+    expect(rodape().getByRole("link", { name: "Política de Privacidade" })).toHaveAttribute("href", "/politica-de-privacidade");
+  });
+
   it("o site é português e o botão EN não aparece", async () => {
     abrir("/faq");
     expect(await screen.findByRole("heading", { name: "Perguntas Frequentes" })).toBeInTheDocument();
@@ -75,6 +81,28 @@ describe("com VITE_ENABLE_EN=true", () => {
     expect(pt).toHaveAttribute("href", "/politica-de-privacidade");
     expect(pt).toHaveAttribute("hreflang", "pt-AO");
     expect(pt).toHaveAttribute("lang", "pt");
+  });
+
+  it("numa página inglesa, os links internos levam às rotas /en/...", async () => {
+    abrir("/en/faq");
+    await screen.findByRole("heading", { name: "Perguntas Frequentes" });
+    expect(rodape().getByRole("link", { name: "Política de Privacidade" })).toHaveAttribute("href", "/en/privacy-policy");
+    expect(rodape().getByRole("link", { name: "Termos de Utilização" })).toHaveAttribute("href", "/en/terms-of-use");
+    expect(rodape().getByRole("link", { name: "Faq" })).toHaveAttribute("href", "/en/faq");
+  });
+
+  it("links dentro do conteúdo (respostas da FAQ, definidas ao nível do módulo) também vão para /en/...", async () => {
+    abrir("/en/faq");
+    await screen.findByRole("heading", { name: "Perguntas Frequentes" });
+    const links = screen.getAllByRole("link", { name: "Política de Privacidade" });
+    expect(links.length).toBeGreaterThan(1); // rodapé + resposta aberta por omissão
+    for (const l of links) expect(l).toHaveAttribute("href", "/en/privacy-policy");
+  });
+
+  it("uma chave ainda por traduzir (vazia em en-US) mostra o português, não um espaço em branco", async () => {
+    abrir("/en/faq");
+    expect(await screen.findByRole("heading", { name: "Perguntas Frequentes" })).toBeInTheDocument();
+    expect(i18n.t("Faq.perguntasFrequentes")).toBe("Perguntas Frequentes");
   });
 
   it("voltar a uma rota portuguesa repõe pt-AO", async () => {
