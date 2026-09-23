@@ -1714,7 +1714,7 @@
     "erroAoContactarO": "Error {{status}} while contacting the server. Please try again."
   },
   "jogoConfig": {
-    "kz": ""
+    "kz": "Kz {{valor}}"
   },
   "optioptika": {
     "opticaOptioptika": "",
