@@ -1138,13 +1138,13 @@
     "esteExercicioAindaEsta": "This exercise is still being prepared and is coming soon. Your Premium access is already active, so you'll be able to use it as soon as it's ready."
   },
   "PremiumPaywallModal": {
-    "desbloqueieOSeuPotencial": "",
-    "facaUpgradeParaAceder": "",
-    "registarParaAcessoPremium": "",
-    "acessoIlimitadoAExercicios": "",
-    "acompanhamentoDeMetricasKpis": "",
-    "redirecionamentoExclusivoETeleconsulta": "",
-    "videosExplicativosComMedicos": ""
+    "desbloqueieOSeuPotencial": "Unlock Your Visual Potential",
+    "facaUpgradeParaAceder": "Upgrade to access our full rehabilitation program.",
+    "registarParaAcessoPremium": "Sign Up for Premium Access",
+    "acessoIlimitadoAExercicios": "Unlimited access to interactive exercises and videos hosted on the platform.",
+    "acompanhamentoDeMetricasKpis": "Tracking of progress metrics (KPIs).",
+    "redirecionamentoExclusivoETeleconsulta": "Exclusive referrals and teleconsultations with partner clinics.",
+    "videosExplicativosComMedicos": "Explainer videos with partner ophthalmologists."
   },
   "ProgramModal": {
     "programaMeuKambaEstrabico": "",
