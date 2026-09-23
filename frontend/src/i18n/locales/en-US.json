@@ -1299,8 +1299,8 @@
     "alternaRapidamenteOFoco": "Quickly shift focus between near and far targets, training dynamic convergence."
   },
   "SacadasDistratoresExercise": {
-    "sacadasComDistratores": "",
-    "encontreOAlvoCerto": ""
+    "sacadasComDistratores": "Saccades With Distractors",
+    "encontreOAlvoCerto": "Find the right target among moving distractors, sharpening control of saccadic eye movements."
   },
   "Scanner": {
     "scannerDeEstrabismoIa": "",
