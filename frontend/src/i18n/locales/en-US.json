@@ -606,8 +606,8 @@
     "sincronizeRespiracaoEPiscar": "Sync your breathing and blinking to relieve screen strain."
   },
   "FacilidadeVergenciaExercise": {
-    "facilidadeDeVergencia": "",
-    "alternaEntreConvergenciaE": ""
+    "facilidadeDeVergencia": "Vergence Facility",
+    "alternaEntreConvergenciaE": "Alternate between convergence and divergence in timed cycles to build binocular endurance."
   },
   "Faq": {
     "simOsDadosDe": "",
