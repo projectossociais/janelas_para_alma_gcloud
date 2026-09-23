@@ -1078,15 +1078,15 @@
     "n12AlteracoesAEsta": "12. Changes to This Policy"
   },
   "PontosRecolha": {
-    "luandaCentro": "",
-    "dalvaFilipe": "",
-    "ingombotasRuaDoAssalto": "",
-    "segASex8h": "",
-    "sabEDom10h": "",
-    "luandaSul": "",
-    "kassiaNunda": "",
-    "benficaZonaVerdeCondominio": "",
-    "segASex12h": ""
+    "luandaCentro": "Luanda Centro",
+    "dalvaFilipe": "Dalva Filipe",
+    "ingombotasRuaDoAssalto": "Ingombotas, Rua do assalto ao quartel da Moncada, near the Planad building",
+    "segASex8h": "Mon.–Fri.: 8 a.m. to noon",
+    "sabEDom10h": "Sat. and Sun.: 10 a.m. to 4 p.m.",
+    "luandaSul": "Luanda Sul",
+    "kassiaNunda": "Kássia Nunda",
+    "benficaZonaVerdeCondominio": "Benfica / Zona Verde / Condomínio Villa Israel",
+    "segASex12h": "Mon.–Fri.: noon to 4 p.m."
   },
   "PortalClinicoOptioptika": {
     "parceiroClinicoOficial": "",
