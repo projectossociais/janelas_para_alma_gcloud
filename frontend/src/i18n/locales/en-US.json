@@ -150,18 +150,18 @@
     "nivelObrigado": "{{nome}}: {{intervalo}}. Thank you for supporting our mission."
   },
   "AtualizarPassword": {
-    "definirNovaPalavraPasse": "",
-    "novaPalavraPasse": "",
-    "confirmarPalavraPasse": "",
-    "guardarNovaPalavraPasse": "",
-    "esteLinkDeRecuperacao": "",
-    "preenchaOsDoisCampos": "",
-    "asPalavrasPasseNao": "",
-    "palavraPasseActualizadaCom": "",
-    "esteLinkDeRecuperacao2": "",
-    "escolhaUmaNovaPalavra": "",
-    "esteLinkDeRecuperacao3": "",
-    "aGuardar": ""
+    "definirNovaPalavraPasse": "Set a New Password",
+    "novaPalavraPasse": "New Password",
+    "confirmarPalavraPasse": "Confirm Password",
+    "guardarNovaPalavraPasse": "Save New Password",
+    "esteLinkDeRecuperacao": "This recovery link is invalid. Please request a new one.",
+    "preenchaOsDoisCampos": "Fill in both fields.",
+    "asPalavrasPasseNao": "The passwords don't match.",
+    "palavraPasseActualizadaCom": "Password updated successfully!",
+    "esteLinkDeRecuperacao2": "This recovery link is invalid or has expired. Please request a new one.",
+    "escolhaUmaNovaPalavra": "Choose a new password for your account.",
+    "esteLinkDeRecuperacao3": "This recovery link is invalid.",
+    "aGuardar": "Saving..."
   },
   "Auth": {
     "bemVindoA": "",
