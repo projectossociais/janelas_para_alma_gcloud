@@ -205,16 +205,16 @@
     "aCriarConta": "Creating account…"
   },
   "AuthContext": {
-    "naoFoiPossivelCriar": "",
-    "aEliminacaoDaSua": "",
-    "emailOuPalavraPasse": "",
-    "naoFoiPossivelEntrar": "",
-    "administrador": "",
-    "pessoaComum": "",
-    "pessoaComEstrabismo": "",
-    "profissionalDeSaude": "",
-    "oftalmologista": "",
-    "voluntario": ""
+    "naoFoiPossivelCriar": "We couldn't create your account.",
+    "aEliminacaoDaSua": "Your account deletion has been canceled. Welcome back.",
+    "emailOuPalavraPasse": "Incorrect email or password.",
+    "naoFoiPossivelEntrar": "We couldn't sign you in with Google.",
+    "administrador": "Administrator",
+    "pessoaComum": "General User",
+    "pessoaComEstrabismo": "Person With Strabismus",
+    "profissionalDeSaude": "Health Care Professional",
+    "oftalmologista": "Ophthalmologist",
+    "voluntario": "Volunteer"
   },
   "BackButton": {
     "voltar": ""
