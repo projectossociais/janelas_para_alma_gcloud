@@ -1,6 +1,33 @@
 import { Instagram, Facebook, Linkedin, MapPin, Phone, Mail, ChevronRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { IDIOMA_EN, IDIOMA_PT, inglesAtivo } from "@/i18n/idiomas";
+import { caminhoNoIdioma } from "@/i18n/rotas";
+import { useIdioma } from "@/i18n/useIdioma";
 import logoIcon from "@/assets/logo-icon.png";
+
+/**
+ * Botão único de idioma: "EN" no site português, "PT" no inglês. Leva à mesma
+ * página no outro idioma (ver `src/i18n/rotas.ts`). Só existe com
+ * VITE_ENABLE_EN=true.
+ */
+const AlternarIdioma = () => {
+  const { t } = useTranslation();
+  const { pathname, search, hash } = useLocation();
+  const destino = useIdioma() === IDIOMA_PT ? IDIOMA_EN : IDIOMA_PT;
+
+  return (
+    <Link
+      to={caminhoNoIdioma(pathname + search + hash, destino)}
+      hrefLang={destino}
+      lang={destino === IDIOMA_EN ? "en" : "pt"}
+      aria-label={t("idioma.alternarRotulo")}
+      className="font-medium hover:text-primary transition-colors"
+    >
+      {t("idioma.alternar")}
+    </Link>
+  );
+};
 
 const Footer = () => {
   return (
@@ -142,6 +169,7 @@ const Footer = () => {
         <div className="container py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
           <p>© {new Date().getFullYear()} Janelas Para a Alma. Todos os direitos reservados.</p>
           <div className="flex items-center gap-5">
+            {inglesAtivo() && <AlternarIdioma />}
             <Link to="/politica-de-privacidade" className="hover:text-primary transition-colors">
               Política de Privacidade
             </Link>

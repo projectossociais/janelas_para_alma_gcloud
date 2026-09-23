@@ -2,6 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactElement } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProfileProvider } from "@/contexts/ProfileContext";
@@ -66,6 +67,61 @@ import GlobalBanner from "./components/GlobalBanner";
 import { SiteBannerProvider } from "./contexts/SiteBannerContext";
 import ScrollToTop from "./components/ScrollToTop";
 import NotFound from "./pages/NotFound";
+import SincronizarIdioma from "./i18n/SincronizarIdioma";
+import { inglesAtivo } from "./i18n/idiomas";
+import { ALIASES_PT, ROTAS, type ChaveRota } from "./i18n/rotas";
+
+/**
+ * Que componente renderiza cada página do mapa de rotas (`src/i18n/rotas.ts`).
+ * O `Record` obriga a que toda a chave do mapa tenha aqui uma página.
+ */
+const PAGINAS: Record<ChaveRota, ReactElement> = {
+  inicio: <Index />,
+  sobre: <Sobre />,
+  equipa: <Equipa />,
+  kamba: <Kamba />,
+  campanhaGamek: <CampanhaGamek />,
+  publicacoes: <Publicacoes />,
+  publicacaoDetalhe: <PublicacaoDetalhe />,
+  parceiros: <Parceiros />,
+  portalClinico: <Parceiros />,
+  portalClinicoOptioptika: <PortalClinicoOptioptika />,
+  tecnologia: <Tecnologia />,
+  circular: <Circular />,
+  suporte: <Suporte />,
+  exercicios: <Exercicios />,
+  exercicioConvergencia: <ConvergenciaExercise />,
+  exercicioCerebro: <CerebroExercise />,
+  exercicioTracking: <TrackingExercise />,
+  exercicioRelaxamento: <RelaxamentoExercise />,
+  exercicioAmbliopia: <AmbliopiaExercise />,
+  exercicioSacadasConvergencia: <SacadasConvergenciaExercise />,
+  exercicioFlexibilidadeAcomodativa: <FlexibilidadeAcomodativaExercise />,
+  exercicioSacadasDistratores: <SacadasDistratoresExercise />,
+  exercicioEstereopsia: <EstereopsiaExercise />,
+  exercicioFacilidadeVergencia: <FacilidadeVergenciaExercise />,
+  exercicioConscienciaPeriferica: <ConscienciaPerifericaExercise />,
+  exercicioProgramaIa: <ProgramaIaExercise />,
+  scanner: <Scanner />,
+  scannerResultados: <ScannerResultados />,
+  entrar: <Auth />,
+  atualizarPassword: <AtualizarPassword />,
+  confirmarEmail: <ConfirmarEmail />,
+  apoiar: <Apoiar />,
+  configuracoes: <Configuracoes />,
+  editarPerfil: <EditarPerfil />,
+  politicaPrivacidade: <PoliticaPrivacidade />,
+  termosUtilizacao: <TermosUtilizacao />,
+  faq: <Faq />,
+  impacto: <Impacto />,
+  junteSe: <JunteSe />,
+  registoPremium: <RegistoPremium />,
+  dashboard: <DashboardUser />,
+  dashboardPro: <DashboardPro />,
+  jogoMenu: <MenuJogo />,
+  jogoJogar: <JogoCuriosidades />,
+  jogoPerfil: <PerfilJogador />,
+};
 
 const queryClient = new QueryClient();
 
@@ -79,46 +135,23 @@ const App = () => (
           <FeedbackProvider>
             <BrowserRouter>
               <SiteBannerProvider>
+              <SincronizarIdioma />
               <ScrollToTop />
               <GlobalBanner />
               <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/sobre" element={<Sobre />} />
-                <Route path="/equipa" element={<Equipa />} />
-                <Route path="/kamba" element={<Kamba />} />
-                <Route path="/meu-kamba/campanha-gamek" element={<CampanhaGamek />} />
-                <Route path="/publicacoes" element={<Publicacoes />} />
-                <Route path="/publicacoes/:slug" element={<PublicacaoDetalhe />} />
-                <Route path="/parceiros" element={<Parceiros />} />
-                <Route path="/portal-clinico" element={<Parceiros />} />
-                <Route path="/portal-clinico/optioptika" element={<PortalClinicoOptioptika />} />
-                <Route path="/tecnologia" element={<Tecnologia />} />
-                <Route path="/circular" element={<Circular />} />
-                <Route path="/suporte" element={<Suporte />} />
-                <Route path="/exercicios" element={<Exercicios />} />
-                <Route path="/scanner" element={<Scanner />} />
-                <Route path="/scanner/resultados" element={<ScannerResultados />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/login" element={<Auth />} />
-                <Route path="/registo" element={<Auth />} />
-                <Route path="/atualizar-password" element={<AtualizarPassword />} />
-                <Route path="/update-password" element={<AtualizarPassword />} />
-                <Route path="/confirmar-email" element={<ConfirmarEmail />} />
-                <Route path="/apoiar" element={<Apoiar />} />
-                <Route path="/configuracoes" element={<Configuracoes />} />
-                <Route path="/editar-perfil" element={<EditarPerfil />} />
-                <Route path="/politica-de-privacidade" element={<PoliticaPrivacidade />} />
-                <Route path="/termos-de-utilizacao" element={<TermosUtilizacao />} />
-                <Route path="/faq" element={<Faq />} />
-                <Route path="/impacto" element={<Impacto />} />
-                <Route path="/junte-se" element={<JunteSe />} />
-                <Route path="/registo-premium" element={<RegistoPremium />} />
-                <Route path="/dashboard" element={<DashboardUser />} />
+                {ROTAS.map((r) => (
+                  <Route key={r.chave} path={r.pt} element={PAGINAS[r.chave]} />
+                ))}
+                {ALIASES_PT.map((a) => (
+                  <Route key={a.pt} path={a.pt} element={PAGINAS[a.chave]} />
+                ))}
+                {/* Versão inglesa: só existe com VITE_ENABLE_EN=true; sem ela, /en/* cai no 404. */}
+                {inglesAtivo() &&
+                  ROTAS.map((r) => (
+                    <Route key={`en:${r.chave}`} path={r.en} element={PAGINAS[r.chave]} />
+                  ))}
+                {/* Internas, só em português -- de propósito fora do mapa de rotas. */}
                 <Route path="/roadmap-tecnico" element={<RoadmapTecnico />} />
-                <Route path="/dashboard-pro" element={<DashboardPro />} />
-                <Route path="/jogo-curiosidades" element={<MenuJogo />} />
-                <Route path="/jogo-curiosidades/jogar" element={<JogoCuriosidades />} />
-                <Route path="/jogo-curiosidades/perfil" element={<PerfilJogador />} />
 
                 <Route path="/admin" element={<AdminLayout />}>
                   <Route index element={<AdminOverview />} />
@@ -132,18 +165,6 @@ const App = () => (
                   <Route path="voluntariado" element={<AdminVoluntariado />} />
                 </Route>
 
-                <Route path="/exercicios/convergencia" element={<ConvergenciaExercise />} />
-                <Route path="/exercicios/cerebro" element={<CerebroExercise />} />
-                <Route path="/exercicios/tracking" element={<TrackingExercise />} />
-                <Route path="/exercicios/relaxamento" element={<RelaxamentoExercise />} />
-                <Route path="/exercicios/ambliopia" element={<AmbliopiaExercise />} />
-                <Route path="/exercicios/sacadas-convergencia" element={<SacadasConvergenciaExercise />} />
-                <Route path="/exercicios/flexibilidade-acomodativa" element={<FlexibilidadeAcomodativaExercise />} />
-                <Route path="/exercicios/sacadas-distratores" element={<SacadasDistratoresExercise />} />
-                <Route path="/exercicios/estereopsia" element={<EstereopsiaExercise />} />
-                <Route path="/exercicios/facilidade-vergencia" element={<FacilidadeVergenciaExercise />} />
-                <Route path="/exercicios/consciencia-periferica" element={<ConscienciaPerifericaExercise />} />
-                <Route path="/exercicios/programa-ia" element={<ProgramaIaExercise />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
