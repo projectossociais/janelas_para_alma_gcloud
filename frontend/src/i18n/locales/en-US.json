@@ -1717,14 +1717,14 @@
     "kz": "Kz {{valor}}"
   },
   "optioptika": {
-    "opticaOptioptika": "",
-    "visaoDaBanda": "",
-    "urbanizacaoNovaVidaRua": "",
-    "segQui08h17h": "",
-    "parceiroClinicoOficialDo": "",
-    "parceiroOficial": "",
-    "consultasPresenciaisEOnline": "",
-    "equipaCertificada": ""
+    "opticaOptioptika": "Optioptika Optical",
+    "visaoDaBanda": "Visão da Banda",
+    "urbanizacaoNovaVidaRua": "Urbanização Nova Vida, Rua 54, Centro Empresarial Living-Luanda",
+    "segQui08h17h": "Mon.–Thu. · 8 a.m.–5 p.m. · Sat. · 8 a.m.–1 p.m.",
+    "parceiroClinicoOficialDo": "The official clinical partner of Janelas para a Alma, Optioptika brings together a multidisciplinary team dedicated to vision health, from screening to optical correction, with compassionate care and modern technology.",
+    "parceiroOficial": "Official Partner",
+    "consultasPresenciaisEOnline": "In-Person and Online Appointments",
+    "equipaCertificada": "Certified Team"
   },
   "pagamento": {
     "dalvaEtelvinaBenguelaFilipe": ""
