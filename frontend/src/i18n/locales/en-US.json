@@ -781,10 +781,10 @@
     "irParaOSlide": "Go to slide {{valor}}"
   },
   "LockedVideoOverlay": {
-    "conteudoPremium": "",
-    "facaUpgradeParaDesbloquear": "",
-    "desbloquear": "",
-    "conteudoBloqueado": ""
+    "conteudoPremium": "Premium Content",
+    "facaUpgradeParaDesbloquear": "Upgrade to unlock this video.",
+    "desbloquear": "Unlock",
+    "conteudoBloqueado": "{{title}}: locked content"
   },
   "MenuJogo": {
     "inclusivamente": "",
