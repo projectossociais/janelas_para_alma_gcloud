@@ -880,13 +880,13 @@
     "returnToHome": "Return to Home"
   },
   "NotificationBell": {
-    "notificacoes": "",
-    "marcarTudoComoLido": "",
-    "semNotificacoes": "",
-    "naoFoiPossivelCarregar": "",
-    "naoFoiPossivelMarcar": "",
-    "naoFoiPossivelMarcar2": "",
-    "notificacoesPorLer": ""
+    "notificacoes": "Notifications",
+    "marcarTudoComoLido": "Mark all as read",
+    "semNotificacoes": "No notifications.",
+    "naoFoiPossivelCarregar": "We couldn't load your notifications.",
+    "naoFoiPossivelMarcar": "We couldn't mark this as read.",
+    "naoFoiPossivelMarcar2": "We couldn't mark everything as read.",
+    "notificacoesPorLer": "Notifications ({{contagem}} unread)"
   },
   "NovidadesSection": {
     "fiquePorDentro": "",
