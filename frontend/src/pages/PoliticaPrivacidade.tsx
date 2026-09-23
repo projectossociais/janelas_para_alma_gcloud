@@ -19,6 +19,7 @@ import {
 import { Trans, useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { localizar } from "@/i18n/rotas";
+import NotaTraducaoLegal from "@/components/NotaTraducaoLegal";
 
 interface Secao {
   icon: typeof Building2;
@@ -222,6 +223,7 @@ const PoliticaPrivacidade = () => {
             <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">
               {t("PoliticaPrivacidade.oNossoCompromissoCom")}
             </p>
+            <NotaTraducaoLegal />
           </div>
 
           <div className="bg-card border border-border/60 rounded-2xl shadow-lg p-4 md:p-8 space-y-10">

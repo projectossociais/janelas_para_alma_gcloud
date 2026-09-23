@@ -1771,5 +1771,8 @@
     "actividadeIndisponivel": "This activity is no longer available.",
     "publicacaoNaoEncontrada": "Post not found.",
     "semPerguntas": "There are no questions available right now."
+  },
+  "legal": {
+    "notaTraducao": "This English translation is provided for convenience. The Portuguese version prevails."
   }
 }

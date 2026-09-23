@@ -1771,5 +1771,8 @@
     "actividadeIndisponivel": "Esta actividade já não está disponível.",
     "publicacaoNaoEncontrada": "Publicação não encontrada.",
     "semPerguntas": "Não há perguntas disponíveis de momento."
+  },
+  "legal": {
+    "notaTraducao": "Esta tradução inglesa é disponibilizada por conveniência. Prevalece a versão portuguesa."
   }
 }
