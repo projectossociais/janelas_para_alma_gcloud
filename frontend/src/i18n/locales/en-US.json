@@ -498,18 +498,18 @@
     "emissaoDeRecomendacoesClinicas": "• Issue clinical recommendations."
   },
   "DashboardUser": {
-    "ola": "",
-    "oSeuEspacoDe": "",
-    "analisesRealizadas": "",
-    "exerciciosDisponiveis": "",
-    "emBreve": "",
-    "proximaTeleconsulta": "",
-    "fazerNovaAnalise": "",
-    "useOScannerPara": "",
-    "abrirScanner": "",
-    "continuarExercicios": "",
-    "treineACoordenacaoOcular": "",
-    "verExercicios": ""
+    "ola": "Hello,",
+    "oSeuEspacoDe": "Your space for tracking your vision.",
+    "analisesRealizadas": "Analyses completed",
+    "exerciciosDisponiveis": "Exercises available",
+    "emBreve": "Coming soon",
+    "proximaTeleconsulta": "Next teleconsultation",
+    "fazerNovaAnalise": "Run a new analysis",
+    "useOScannerPara": "Use the scanner to check your eye alignment.",
+    "abrirScanner": "Open scanner",
+    "continuarExercicios": "Continue exercises",
+    "treineACoordenacaoOcular": "Train your eye coordination every day.",
+    "verExercicios": "View exercises"
   },
   "EditarPerfil": {
     "editarPerfil": "",
