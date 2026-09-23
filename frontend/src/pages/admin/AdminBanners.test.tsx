@@ -141,7 +141,7 @@ describe("AdminBanners — separador Banner da homepage", () => {
     await irParaSeparadorHomepageECriar(user);
 
     await waitFor(() =>
-      expect(toastSuccess).toHaveBeenCalledWith("Banner criado — agora adicione uma foto para poder ativá-lo.")
+      expect(toastSuccess).toHaveBeenCalledWith("Banner criado. Agora adicione uma foto para poder activá-lo.")
     );
     expect(toastError).not.toHaveBeenCalled();
     expect(criarHomepage).toHaveBeenCalledWith({
@@ -211,7 +211,7 @@ describe("AdminBanners — editar (não só ativar/desativar/eliminar)", () => {
     await user.type(dialogo.getByLabelText("Mensagem"), "Voltámos!");
     await user.click(dialogo.getByRole("button", { name: "Guardar alterações" }));
 
-    await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith("Banner atualizado."));
+    await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith("Banner actualizado."));
     expect(toastError).not.toHaveBeenCalled();
     expect(atualizar).toHaveBeenCalledWith("banner-1", {
       titulo: "Aviso",
@@ -250,7 +250,7 @@ describe("AdminBanners — editar (não só ativar/desativar/eliminar)", () => {
     await user.type(dialogo.getByLabelText("Título"), "Campanha de Ano Novo");
     await user.click(dialogo.getByRole("button", { name: "Guardar alterações" }));
 
-    await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith("Banner atualizado."));
+    await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith("Banner actualizado."));
     expect(toastError).not.toHaveBeenCalled();
     expect(atualizarHomepage).toHaveBeenCalledWith("bh-1", {
       titulo: "Campanha de Ano Novo",

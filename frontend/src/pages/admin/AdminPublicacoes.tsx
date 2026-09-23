@@ -61,7 +61,7 @@ const AdminPublicacoes = () => {
         local: form.local || null,
         data_evento: form.data_evento || null,
       });
-      toast.success("Publicação criada em rascunho — adicione fotos e publique quando estiver pronta.");
+      toast.success("Publicação criada em rascunho. Adicione fotos e publique quando estiver pronta.");
       setForm(FORM_VAZIO);
       await carregar();
       setEmEdicao(nova);
@@ -76,10 +76,10 @@ const AdminPublicacoes = () => {
     try {
       if (p.estado === "publicada") {
         await publicacoesApi.despublicar(p.id);
-        toast.success("Publicação despublicada — deixou de estar visível no site.");
+        toast.success("Publicação despublicada. Deixou de estar visível no site.");
       } else {
         await publicacoesApi.publicar(p.id);
-        toast.success("Publicação publicada — já está visível no site.");
+        toast.success("Publicação publicada. Já está visível no site.");
       }
       await carregar();
     } catch (err) {
@@ -103,7 +103,7 @@ const AdminPublicacoes = () => {
       <div>
         <h2 className="text-2xl font-bold">Publicações & Mural de Actividades</h2>
         <p className="text-sm text-muted-foreground">
-          O que aparece como "Ações Recentes" no site,
+          O que aparece como "Acções Recentes" no site,
           crie, adicione fotos e publique aqui. Nasce sempre em rascunho: só fica visível ao
           público depois de premir "Publicar".
         </p>
@@ -120,7 +120,7 @@ const AdminPublicacoes = () => {
               id="pub-titulo"
               value={form.titulo}
               onChange={(e) => setForm({ ...form, titulo: e.target.value })}
-              placeholder="Campanha de Conscientização sobre o Estrabismo"
+              placeholder="Campanha de Consciencialização sobre o Estrabismo"
             />
           </div>
           <div>
@@ -304,7 +304,7 @@ const EditorDialog = ({ publicacao, onClose, onChanged }: EditorDialogProps) => 
 
   const enviarCapa = async (ficheiro: File) => {
     if (!publicacao || !tipoAceite(ficheiro)) {
-      toast.error("Formato não suportado — use PNG, JPEG ou WebP.");
+      toast.error("Formato não suportado. Use PNG, JPEG ou WebP.");
       return;
     }
     setAEnviarCapa(true);
@@ -324,7 +324,7 @@ const EditorDialog = ({ publicacao, onClose, onChanged }: EditorDialogProps) => 
 
   const enviarFoto = async (ficheiro: File) => {
     if (!publicacao || !tipoAceite(ficheiro)) {
-      toast.error("Formato não suportado — use PNG, JPEG ou WebP.");
+      toast.error("Formato não suportado. Use PNG, JPEG ou WebP.");
       return;
     }
     setAEnviarFoto(true);
@@ -361,8 +361,8 @@ const EditorDialog = ({ publicacao, onClose, onChanged }: EditorDialogProps) => 
           <DialogTitle>Editar publicação</DialogTitle>
           <DialogDescription>
             {publicacao?.estado === "publicada"
-              ? "Já está visível no site — as alterações ficam visíveis assim que guardar."
-              : 'Ainda em rascunho — só fica visível no site depois de "Publicar".'}
+              ? "Já está visível no site. As alterações ficam visíveis assim que guardar."
+              : 'Ainda em rascunho. Só fica visível no site depois de "Publicar".'}
           </DialogDescription>
         </DialogHeader>
 

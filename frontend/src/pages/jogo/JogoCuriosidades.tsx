@@ -420,7 +420,7 @@ const JogoCuriosidades = () => {
                   Prepare-se para subir a escada
                 </h1>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Responda corretamente e avance patamar a patamar até {formatarKz(valorDoPatamar(TOTAL_PATAMARES))}.
+                  Responda correctamente e avance patamar a patamar até {formatarKz(valorDoPatamar(TOTAL_PATAMARES))}.
                 </p>
               </div>
               <EscadaPatamares patamarAtual={1} />
@@ -630,7 +630,7 @@ const JogoCuriosidades = () => {
             <div className="space-y-4">
               <div className="rounded-xl bg-green/10 border border-green/30 p-4">
                 <p className="text-xs font-medium uppercase tracking-wide text-green mb-1">
-                  Resposta correta
+                  Resposta correcta
                 </p>
                 <p className="text-sm font-semibold text-foreground">
                   {resultado.resposta_correta}) {textoDaOpcao(resultado.resposta_correta)}

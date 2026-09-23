@@ -142,7 +142,7 @@ describe("EditarPerfil — foto de perfil", () => {
     render(<EditarPerfil />, { wrapper: MemoryRouter });
     await user.upload(inputDeFicheiro(), ficheiro());
 
-    await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith("Foto de perfil atualizada!"));
+    await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith("Foto de perfil actualizada!"));
     expect(confirmarAvatar).toHaveBeenCalledWith("avatares/user-1/x.png");
     expect(setProfile).toHaveBeenCalledWith(
       expect.objectContaining({ avatar_url: "https://cdn.test/avatares/user-1/x.png" }),

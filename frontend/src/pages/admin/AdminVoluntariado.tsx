@@ -81,7 +81,7 @@ const AdminVoluntariado = () => {
     try {
       if (aprovar) await voluntariadoApi.aprovarCandidatura(id);
       else await voluntariadoApi.rejeitarCandidatura(id);
-      toast.success(aprovar ? "Candidatura aprovada — já é voluntário activo." : "Candidatura rejeitada.");
+      toast.success(aprovar ? "Candidatura aprovada. Já é voluntário activo." : "Candidatura rejeitada.");
       await carregarCandidaturas();
     } catch (err) {
       toast.error(mensagemDeErroApi(err, "Não foi possível decidir a candidatura."));
@@ -105,7 +105,7 @@ const AdminVoluntariado = () => {
         data_fim: form.data_fim ? new Date(form.data_fim).toISOString() : null,
         vagas: form.vagas ? Number(form.vagas) : null,
       });
-      toast.success("Actividade publicada — os voluntários activos foram notificados por email.");
+      toast.success("Actividade publicada. Os voluntários activos foram notificados por email.");
       setForm(FORM_VAZIO);
       await carregarAtividades();
     } catch (err) {
@@ -322,7 +322,7 @@ const AdminVoluntariado = () => {
       <Dialog open={!!inscritosDe} onOpenChange={(open) => !open && setInscritosDe(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Inscritos — {inscritosDe?.titulo}</DialogTitle>
+            <DialogTitle>Inscritos em {inscritosDe?.titulo}</DialogTitle>
             <DialogDescription>{inscritos.length} voluntário{inscritos.length === 1 ? "" : "s"} inscrito{inscritos.length === 1 ? "" : "s"}.</DialogDescription>
           </DialogHeader>
           <div className="space-y-2 max-h-96 overflow-y-auto">

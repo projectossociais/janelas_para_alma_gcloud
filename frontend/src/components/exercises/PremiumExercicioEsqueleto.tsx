@@ -38,9 +38,9 @@ const PremiumExercicioEsqueleto = ({
             <div className="flex h-[350px] flex-col items-center justify-center gap-4 p-6 text-center">
               <Icon className="h-10 w-10 text-teal" />
               <p className="max-w-sm text-sm text-muted-foreground">
-                Este exercício está em desenvolvimento. A mecânica completa chega em
-                breve -- por agora, este ecrã confirma que a rota e o desbloqueio
-                Premium já funcionam.
+                Este exercício ainda está a ser preparado e chega em breve. O seu
+                acesso Premium já está activo, por isso vai poder usá-lo assim que
+                estiver pronto.
               </p>
             </div>
           </BaseExercise>

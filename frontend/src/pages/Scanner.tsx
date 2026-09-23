@@ -339,7 +339,7 @@ const Scanner = () => {
             </h1>
             <p className="mt-4 text-base md:text-lg text-muted-foreground">
               Utilize a câmara para uma análise visual guiada, assistida por inteligência
-              artificial. Resultados em segundos — confidenciais e seguros.
+              artificial. Recebe os resultados em segundos, de forma confidencial e segura.
             </p>
             <div className="mt-4 inline-flex items-center gap-2 text-xs text-muted-foreground">
               <ShieldCheck className="w-4 h-4 text-green" />
@@ -500,11 +500,11 @@ const Scanner = () => {
                     alinhamento ocular.
                   </p>
                   <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-gold">
-                    Ativar câmara →
+                    Activar câmara →
                   </span>
                 </button>
                 <p className="mt-3 text-center text-xs text-muted-foreground">
-                  O diagnóstico é calculado a partir das 3 poses capturadas — não é possível a
+                  O diagnóstico é calculado a partir das 3 poses capturadas. Não é possível calculá-lo a
                   partir de uma única fotografia.
                 </p>
               </div>
@@ -587,7 +587,7 @@ const ScanningView = ({ previewUrl }: { previewUrl: string | null }) => {
           <ScanLine className="w-4 h-4 animate-pulse" /> Processamento IA em curso
         </div>
         <p className="text-xs text-muted-foreground mt-2">
-          A detetar alinhamento ocular, simetria pupilar e reflexo corneano…
+          A detectar alinhamento ocular, simetria pupilar e reflexo corneano…
         </p>
       </div>
 

@@ -15,14 +15,14 @@ const pontosRecolha: PontoRecolha[] = [
     responsavel: "Dalva Filipe",
     morada:
       "Ingombotas, Rua do assalto ao quartel da Moncada, perto do edifício da Planad",
-    horario: ["Seg – Sex: 8h – 12h", "Sáb – Dom: 10h – 16h"],
+    horario: ["Seg. a Sex.: 8h às 12h", "Sáb. e Dom.: 10h às 16h"],
   },
   {
     id: "luanda-sul",
     nome: "Luanda Sul",
     responsavel: "Kássia Nunda",
     morada: "Benfica / Zona Verde / Condomínio Villa Israel",
-    horario: ["Seg – Sex: 12h – 16h"],
+    horario: ["Seg. a Sex.: 12h às 16h"],
   },
 ];
 

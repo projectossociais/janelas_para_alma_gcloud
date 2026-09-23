@@ -208,7 +208,7 @@ const BaseExercise = ({
           </div>
           <div
             className="flex items-center gap-1.5 text-sm font-semibold text-foreground"
-            aria-label={`Pontuação atual: ${score}`}
+            aria-label={`Pontuação actual: ${score}`}
           >
             <Trophy className="h-4 w-4 text-gold" />
             <span className="tabular-nums">{score}</span>

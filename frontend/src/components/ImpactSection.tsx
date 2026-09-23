@@ -16,11 +16,11 @@ const impacts = [
   {
     icon: Users,
     title: "Impacto Social",
-    description: "Inclusão visual com óculos acessíveis e métodos de tratamento para maior autoestima e qualidade de vida.",
+    description: "Inclusão visual com óculos acessíveis e métodos de tratamento para maior auto-estima e qualidade de vida.",
     color: "bg-teal/10 text-teal",
     image: impactSocial,
     modalContent:
-      "O Janelas para a Alma promove a inclusão visual através da distribuição de óculos acessíveis e métodos de tratamento adaptados à realidade angolana. Ao devolver a capacidade de ver correctamente, restauramos a autoestima e qualidade de vida de crianças, jovens e adultos que vivem com estrabismo. O impacto estende-se às famílias e comunidades, quebrando o ciclo de exclusão social associado às condições visuais não tratadas.",
+      "O Janelas para a Alma promove a inclusão visual através da distribuição de óculos acessíveis e métodos de tratamento adaptados à realidade angolana. Ao devolver a capacidade de ver correctamente, restauramos a auto-estima e qualidade de vida de crianças, jovens e adultos que vivem com estrabismo. O impacto estende-se às famílias e comunidades, quebrando o ciclo de exclusão social associado às condições visuais não tratadas.",
   },
   {
     icon: Recycle,

@@ -59,7 +59,7 @@ const AdminOverview = () => {
       href: `/admin/utilizadores?dias=${periodDays[period]}`,
     },
     {
-      label: `Ativos ${periodLabel[period]}`,
+      label: `Activos ${periodLabel[period]}`,
       value: stats?.utilizadores_ativos_periodo ?? 0,
       icon: UserCheck,
       color: "text-green-600",
@@ -126,7 +126,7 @@ const AdminOverview = () => {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-2xl font-bold">Visão Geral</h2>
-          <p className="text-sm text-muted-foreground">Métricas do período selecionado</p>
+          <p className="text-sm text-muted-foreground">Métricas do período seleccionado</p>
         </div>
         <Tabs value={period} onValueChange={(v) => setPeriod(v as Period)}>
           <TabsList>
@@ -194,7 +194,7 @@ const AdminOverview = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Atividade no período</CardTitle>
+          <CardTitle>Actividade no período</CardTitle>
         </CardHeader>
         <CardContent className="h-72">
           <ResponsiveContainer width="100%" height="100%">

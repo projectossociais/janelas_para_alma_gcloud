@@ -66,7 +66,7 @@ const Suporte = () => {
                 Como Te Apoiamos
               </h2>
               <p className="text-muted-foreground mt-4">
-                Três pilares para uma jornada acompanhada e segura.
+                Três pilares para que ninguém faça este caminho sozinho.
               </p>
             </div>
 

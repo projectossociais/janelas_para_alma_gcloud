@@ -164,8 +164,8 @@ const ContactSection = () => {
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Quer seja através de voluntariado, doação de óculos, parceria
-              institucional ou apoio financeiro — cada contribuição faz a
-              diferença.
+              institucional ou apoio financeiro: cada contribuição
+              conta.
             </p>
           </div>
 

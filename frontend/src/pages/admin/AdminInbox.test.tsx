@@ -121,7 +121,7 @@ describe("AdminInbox — mensagens de contacto", () => {
     await user.click(await screen.findByRole("button", { name: /Aprovar pagamento/i }));
 
     await waitFor(() => expect(premiumAprovar).toHaveBeenCalledWith("ped-1"));
-    expect(toastSuccess).toHaveBeenCalledWith("Pagamento aprovado — Premium activo por 30 dias.");
+    expect(toastSuccess).toHaveBeenCalledWith("Pagamento aprovado. Premium activo por 30 dias.");
     await waitFor(() => expect(premiumListar).toHaveBeenCalledTimes(2));
   });
 

@@ -32,7 +32,7 @@ const Publicacoes = () => {
         <div className="container py-10">
           <header className="max-w-2xl mx-auto text-center space-y-4 mb-12">
             <span className="text-sm font-medium tracking-widest uppercase text-teal">
-              Ações Recentes
+              Acções Recentes
             </span>
             <h1 className="text-3xl md:text-4xl font-bold">No Terreno com a Comunidade</h1>
             <p className="text-muted-foreground">

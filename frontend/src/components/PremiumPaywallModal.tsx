@@ -16,7 +16,7 @@ interface PremiumPaywallModalProps {
 }
 
 const benefits = [
-  "Acesso ilimitado a exercícios interativos e vídeos alojados na plataforma.",
+  "Acesso ilimitado a exercícios interactivos e vídeos alojados na plataforma.",
   "Acompanhamento de métricas (KPIs) de evolução.",
   "Redirecionamento exclusivo e teleconsulta com clínicas parceiras.",
   "Vídeos explicativos com médicos oftalmologistas parceiros.",

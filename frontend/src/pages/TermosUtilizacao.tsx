@@ -31,10 +31,10 @@ const SECCOES: Secao[] = [
         <strong className="text-foreground">artigo 5.º</strong> da{" "}
         <strong className="text-foreground">Lei n.º 30/11, de 13 de Setembro</strong>. A sua actividade de
         rastreio digital e tecnologia assistiva em saúde visual enquadra-se no código{" "}
-        <strong className="text-foreground">CAE 86903 — "Outras actividades de saúde humana, n.e."</strong>{" "}
+        <strong className="text-foreground">CAE 86903: "Outras actividades de saúde humana, n.e."</strong>{" "}
         (categoria que inclui expressamente a optometria), e, quanto ao desenvolvimento da própria plataforma
         tecnológica, no código{" "}
-        <strong className="text-foreground">CAE 62010 — "Actividades de programação informática"</strong>, nos
+        <strong className="text-foreground">CAE 62010: "Actividades de programação informática"</strong>, nos
         termos da Classificação de Actividades Económicas (CAE-Rev.2) angolana em vigor. Este website é a
         plataforma digital oficial da iniciativa.
       </p>
@@ -48,8 +48,8 @@ const SECCOES: Secao[] = [
         Ao aceder e utilizar este website e a plataforma associada, o utilizador reconhece que leu, compreendeu
         e aceita ficar vinculado a estes Termos de Utilização. Nos termos do{" "}
         <strong className="text-foreground">artigo 234.º do Código Civil</strong>, dada a natureza deste tipo
-        de plataforma digital, o contrato considera-se concluído logo que a conduta do utilizador — designadamente
-        a criação de conta, o início de um rastreio ou a utilização continuada do site — demonstre a intenção
+        de plataforma digital, o contrato considera-se concluído logo que a conduta do utilizador, designadamente
+        a criação de conta, o início de um rastreio ou a utilização continuada do site, demonstre a intenção
         de aceitar estes Termos, sem necessidade de uma declaração formal de aceitação. Caso não concorde com
         algum destes termos, não deve utilizar a plataforma.
       </p>
@@ -79,8 +79,8 @@ const SECCOES: Secao[] = [
     title: "4. Propriedade Intelectual",
     body: (
       <p>
-        Todos os conteúdos disponibilizados no website — textos, imagens, logótipos, código, metodologia dos
-        exercícios de terapia visual e demais materiais — são propriedade do Janelas Para a Alma ou dos seus
+        Todos os conteúdos disponibilizados no website (textos, imagens, logótipos, código, metodologia dos
+        exercícios de terapia visual e demais materiais) são propriedade do Janelas Para a Alma ou dos seus
         licenciadores. Nos termos do princípio da{" "}
         <strong className="text-foreground">liberdade contratual</strong> (artigo 405.º, n.º 1, do Código
         Civil), é concedida ao utilizador uma licença limitada, pessoal, não exclusiva e não transferível de
@@ -175,7 +175,7 @@ const TermosUtilizacao = () => {
                   Consumidor)</strong>. Nos termos dos artigos 10.º a 12.º dessa lei, o Janelas Para a Alma, como
                   fornecedor de serviços, responde independentemente de culpa por danos causados por deficiências
                   do serviço prestado, mantendo-se sempre garantidos o direito à informação clara e verdadeira
-                  (artigo 9.º) e os direitos gerais do consumidor previstos no artigo 4.º — designadamente à
+                  (artigo 9.º) e os direitos gerais do consumidor previstos no artigo 4.º, designadamente à
                   qualidade e segurança dos serviços, à protecção contra publicidade enganosa, e ao direito de
                   apresentar reclamação junto do Janelas Para a Alma ou das entidades competentes de defesa do
                   consumidor.
@@ -238,7 +238,7 @@ const TermosUtilizacao = () => {
           </div>
 
           <p className="text-center text-xs text-muted-foreground mt-8">
-            Última atualização: Setembro de 2026. Para dúvidas legais, contacte{" "}
+            Última actualização: Setembro de 2026. Para dúvidas legais, contacte{" "}
             <a
               href="mailto:janelasparaalma18@gmail.com"
               className="text-primary hover:underline font-medium"

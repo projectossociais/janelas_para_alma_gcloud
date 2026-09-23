@@ -39,7 +39,7 @@ const FAQ_ITEMS: FaqItem[] = [
       <>
         Sim, a qualquer momento. Pode solicitar a eliminação da sua conta e dos dados associados através da
         área de Configurações ou contactando-nos directamente. Este é um dos seus direitos enquanto titular de
-        dados pessoais — ver secção 7 (
+        dados pessoais. Ver secção 7 (
         <Link to="/politica-de-privacidade" className="text-primary hover:underline font-medium">
           Direitos do Titular
         </Link>
@@ -52,7 +52,7 @@ const FAQ_ITEMS: FaqItem[] = [
     question: "O resultado da triagem substitui uma consulta médica?",
     answer: (
       <>
-        Não. O rastreio digital e os exercícios interactivos têm carácter preventivo e orientador — não
+        Não. O rastreio digital e os exercícios interactivos têm carácter preventivo e orientador: não
         constituem diagnóstico médico e não substituem uma avaliação oftalmológica presencial. Ver o Aviso
         Médico-Legal na secção 5 dos{" "}
         <Link to="/termos-de-utilizacao" className="text-primary hover:underline font-medium">
@@ -82,7 +82,7 @@ const FAQ_ITEMS: FaqItem[] = [
     answer: (
       <>
         Utilizamos apenas cookies técnicos essenciais e, quando aplicável, cookies estatísticos para melhorar a
-        experiência de utilização — nunca para fins publicitários de terceiros. Ver secção 11 (
+        experiência de utilização, nunca para fins publicitários de terceiros. Ver secção 11 (
         <Link to="/politica-de-privacidade" className="text-primary hover:underline font-medium">
           Cookies
         </Link>

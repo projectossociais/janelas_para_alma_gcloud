@@ -201,14 +201,14 @@ const PortalClinicoOptioptika = () => {
                     <Smartphone className="w-7 h-7" />
                   </div>
                   <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
-                    Baixe agora o aplicativo Optioptika
+                    Baixe agora a aplicação Optioptika
                   </h2>
                   <p className="text-muted-foreground leading-relaxed mb-2">
                     Tenha acesso à primeira Carteira de Desconto Digital em Angola e receba
                     5.000Kz no seu Cartão Virtual.
                   </p>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Marque a sua consulta e exames oculares diretamente pelo aplicativo,
+                    Marque a sua consulta e exames oculares directamente pelo aplicativo,
                     disponível na Google Play e App Store.
                   </p>
                 </div>
@@ -216,7 +216,7 @@ const PortalClinicoOptioptika = () => {
                   <div className="w-full rounded-2xl bg-white border-2 p-4" style={{ borderColor: OPTIOPTIKA_YELLOW }}>
                     <img
                       src={optioptikaAppQr}
-                      alt="Códigos QR para descarregar o aplicativo Optioptika na Google Play e App Store"
+                      alt="Códigos QR para descarregar a aplicação Optioptika na Google Play e App Store"
                       className="w-full h-auto object-contain"
                     />
                   </div>

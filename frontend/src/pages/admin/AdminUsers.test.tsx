@@ -85,7 +85,7 @@ describe("AdminUsers", () => {
     await user.click(await screen.findByRole("option", { name: "Pessoa com Estrabismo" }));
 
     await waitFor(() => expect(definirPapel).toHaveBeenCalledWith("user-1", "estrabico"));
-    expect(toastSuccess).toHaveBeenCalledWith("Perfil atualizado.");
+    expect(toastSuccess).toHaveBeenCalledWith("Perfil actualizado.");
   });
 
   it("nunca mostra sucesso se mudar o papel falhar", async () => {

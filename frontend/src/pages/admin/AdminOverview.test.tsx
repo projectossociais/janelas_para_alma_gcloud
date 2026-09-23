@@ -63,7 +63,7 @@ describe("AdminOverview", () => {
     expect(screen.getByText("34")).toBeInTheDocument();
     // Período por omissão é "month" -- o rótulo acompanha o filtro
     // seleccionado (ver AdminOverview.tsx, periodLabel).
-    expect(screen.getByText("Ativos este mês")).toBeInTheDocument();
+    expect(screen.getByText("Activos este mês")).toBeInTheDocument();
   });
 
   it("mostra a Central de Pendências com os totais certos e liga aos sítios certos", async () => {

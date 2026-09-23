@@ -74,7 +74,7 @@ async function abrirDialogoPassword(user: ReturnType<typeof userEvent.setup>) {
   const botao = await screen.findByText("Mudar Palavra-passe");
   await user.click(botao);
   return {
-    actual: await screen.findByLabelText("Palavra-passe atual"),
+    actual: await screen.findByLabelText("Palavra-passe actual"),
     nova: screen.getByLabelText("Nova palavra-passe"),
     confirmar: screen.getByLabelText("Confirmar nova palavra-passe"),
     guardar: screen.getByRole("button", { name: /^Guardar$/ }),
@@ -89,7 +89,7 @@ describe("Configuracoes — mudar palavra-passe", () => {
   });
 
   it("recusa quando a palavra-passe actual está errada, e o dialogo continua aberto", async () => {
-    mudarPassword.mockRejectedValue(new ApiErrorFalso(401, "password atual incorreta"));
+    mudarPassword.mockRejectedValue(new ApiErrorFalso(401, "password actual incorrecta"));
     const user = userEvent.setup();
     render(<Configuracoes />, { wrapper: MemoryRouter });
 
@@ -100,10 +100,10 @@ describe("Configuracoes — mudar palavra-passe", () => {
     await user.click(guardar);
 
     await waitFor(() => expect(mudarPassword).toHaveBeenCalledWith("palavra-errada", "novaSenha123"));
-    expect(toastError).toHaveBeenCalledWith("password atual incorreta");
+    expect(toastError).toHaveBeenCalledWith("password actual incorrecta");
     expect(toastSuccess).not.toHaveBeenCalled();
     // o dialogo continua aberto — o utilizador nunca viu "sucesso" para algo que falhou
-    expect(screen.getByLabelText("Palavra-passe atual")).toBeInTheDocument();
+    expect(screen.getByLabelText("Palavra-passe actual")).toBeInTheDocument();
   });
 
   it("mostra sucesso real só depois de a API confirmar a mudança", async () => {
@@ -119,7 +119,7 @@ describe("Configuracoes — mudar palavra-passe", () => {
 
     await waitFor(() => expect(mudarPassword).toHaveBeenCalledWith("senhaCerta1", "novaSenha123"));
     expect(toastError).not.toHaveBeenCalled();
-    expect(toastSuccess).toHaveBeenCalledWith("Palavra-passe atualizada com sucesso.");
+    expect(toastSuccess).toHaveBeenCalledWith("Palavra-passe actualizada com sucesso.");
   });
 
   it("nunca chama a API se as novas palavras-passe não coincidirem", async () => {
