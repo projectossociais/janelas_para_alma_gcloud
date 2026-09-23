@@ -1733,8 +1733,8 @@
     "erroNaAnalise": "Analysis error ({{status}}): {{errorText}}"
   },
   "useEyeTracking": {
-    "camaraNaoSuportadaNeste": "",
-    "naoFoiPossivelAceder": ""
+    "camaraNaoSuportadaNeste": "Camera not supported in this browser.",
+    "naoFoiPossivelAceder": "We couldn't access the camera."
   },
   "validarPassword": {
     "aPalavraPasseDeve": "",
