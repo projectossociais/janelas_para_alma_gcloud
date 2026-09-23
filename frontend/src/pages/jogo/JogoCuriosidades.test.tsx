@@ -204,8 +204,10 @@ describe("JogoCuriosidades", () => {
 
     await userEvent.click(screen.getByText("Errada A"));
 
-    // falhou logo no patamar 1 -- 0 patamares superados.
-    await waitFor(() => expect(registarRecompensa).toHaveBeenCalledWith(0));
+    // Sem argumento -- o servidor é que decide quanto vale, a partir do
+    // progresso que rastreou (ver JogoService), nunca de um patamar
+    // mandado pelo cliente.
+    await waitFor(() => expect(registarRecompensa).toHaveBeenCalledWith());
     expect(await screen.findByText("Prémio ganho")).toBeInTheDocument();
   });
 

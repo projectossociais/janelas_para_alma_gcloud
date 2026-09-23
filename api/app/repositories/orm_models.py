@@ -522,5 +522,8 @@ class PerfilJogador(Base):
     diamantes: Mapped[int] = mapped_column(nullable=False, server_default="0")
     partidas_jogadas: Mapped[int] = mapped_column(nullable=False, server_default="0")
     patamar_maximo_alcancado: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    # Progresso da partida em curso, controlado só pelo servidor (nunca pelo
+    # corpo do pedido) -- ver JogoService.responder / reclamar_recompensa.
+    patamar_em_curso: Mapped[int] = mapped_column(nullable=False, server_default="0")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

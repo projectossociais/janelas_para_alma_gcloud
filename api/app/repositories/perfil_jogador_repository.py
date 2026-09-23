@@ -2,11 +2,14 @@
 diamantes e estatísticas por utilizador.
 
 `calcular_recompensa` é a única fonte de verdade sobre quanto vale cada
-patamar -- o valor nunca vem do cliente. Se o cliente pudesse dizer ao
-servidor quantas moedas ganhou, bastava um pedido `POST` forjado para
-"imprimir dinheiro"; por isso `POST /jogo/recompensas` recebe só o patamar
-alcançado (ver `routers/jogo.py`) e a moeda/diamante ganhos são sempre
-recalculados aqui, nunca aceites tal e qual do corpo do pedido.
+patamar -- o valor nunca vem do cliente. E o próprio patamar também não: o
+`patamar_alcancado` que chega a `registar_recompensa` vem sempre de
+`patamar_em_curso`, rastreado aqui e só avançado por `JogoService.responder`
+quando uma resposta certa é confirmada no servidor (ver
+`services/jogo_service.py`) -- nunca aceite tal e qual do corpo de um pedido.
+Antes desta correcção (2026-09-23) `POST /jogo/recompensas` aceitava
+`patamar_alcancado` directo do cliente; um pedido forjado dava o prémio
+máximo sem responder a nada.
 """
 
 import uuid
@@ -42,10 +45,12 @@ class PerfilJogadorRegisto:
     diamantes: int
     partidas_jogadas: int
     patamar_maximo_alcancado: int
+    patamar_em_curso: int
 
 
 class PerfilJogadorRepository(Protocol):
     def obter_ou_criar(self, utilizador_id: str) -> PerfilJogadorRegisto: ...
+    def atualizar_patamar_em_curso(self, utilizador_id: str, patamar_em_curso: int) -> PerfilJogadorRegisto: ...
     def registar_recompensa(
         self, utilizador_id: str, moedas_ganhas: int, diamantes_ganhos: int, patamar_alcancado: int
     ) -> PerfilJogadorRegisto: ...
@@ -59,6 +64,7 @@ def _para_registo(row: PerfilJogador) -> PerfilJogadorRegisto:
         diamantes=row.diamantes,
         partidas_jogadas=row.partidas_jogadas,
         patamar_maximo_alcancado=row.patamar_maximo_alcancado,
+        patamar_em_curso=row.patamar_em_curso,
     )
 
 
@@ -80,10 +86,29 @@ class SQLAlchemyPerfilJogadorRepository:
                 diamantes=0,
                 partidas_jogadas=0,
                 patamar_maximo_alcancado=0,
+                patamar_em_curso=0,
             )
             self._sessao.add(row)
             self._sessao.commit()
             self._sessao.refresh(row)
+        return _para_registo(row)
+
+    def atualizar_patamar_em_curso(self, utilizador_id: str, patamar_em_curso: int) -> PerfilJogadorRegisto:
+        row = self._obter_row(utilizador_id)
+        if row is None:
+            row = PerfilJogador(
+                utilizador_id=uuid.UUID(utilizador_id),
+                moedas=0,
+                diamantes=0,
+                partidas_jogadas=0,
+                patamar_maximo_alcancado=0,
+                patamar_em_curso=0,
+            )
+            self._sessao.add(row)
+        row.patamar_em_curso = patamar_em_curso
+        row.updated_at = datetime.now(UTC)
+        self._sessao.commit()
+        self._sessao.refresh(row)
         return _para_registo(row)
 
     def registar_recompensa(
@@ -97,12 +122,16 @@ class SQLAlchemyPerfilJogadorRepository:
                 diamantes=0,
                 partidas_jogadas=0,
                 patamar_maximo_alcancado=0,
+                patamar_em_curso=0,
             )
             self._sessao.add(row)
         row.moedas += moedas_ganhas
         row.diamantes += diamantes_ganhos
         row.partidas_jogadas += 1
         row.patamar_maximo_alcancado = max(row.patamar_maximo_alcancado, patamar_alcancado)
+        # A partida termina ao reclamar a recompensa -- o progresso não pode
+        # continuar a "existir" para ser reclamado outra vez.
+        row.patamar_em_curso = 0
         row.updated_at = datetime.now(UTC)
         self._sessao.commit()
         self._sessao.refresh(row)
