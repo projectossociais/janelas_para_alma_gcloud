@@ -991,16 +991,16 @@
     "exemploEmail": "email@example.com"
   },
   "PerfilJogador": {
-    "inclusivamente": "",
-    "oMeuPerfil": "",
-    "moedas": "",
-    "diamantes": "",
-    "partidasJogadas": "",
-    "melhorPatamar": "",
-    "oSeuMelhorResultado": "",
-    "jogarAgora": "",
-    "naoFoiPossivelCarregar": "",
-    "voltarAoMenu": ""
+    "inclusivamente": "Inclusivamente",
+    "oMeuPerfil": "My Profile",
+    "moedas": "Coins",
+    "diamantes": "Diamonds",
+    "partidasJogadas": "Games played",
+    "melhorPatamar": "Best level",
+    "oSeuMelhorResultado": "Your best result is worth",
+    "jogarAgora": "Play now",
+    "naoFoiPossivelCarregar": "We couldn't load your game profile.",
+    "voltarAoMenu": "Back to menu"
   },
   "PillarsSection": {
     "osNossosPilares": "",
