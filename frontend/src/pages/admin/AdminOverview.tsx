@@ -77,10 +77,10 @@ const AdminOverview = () => {
       value: stats?.analises_scanner ?? 0,
       icon: ScanEye,
       color: "text-indigo-600",
-      // Sem link de propósito: o scanner ainda grava os resultados noutro
-      // serviço (janelas-scanner-api), nunca nesta base de dados -- ligar
-      // este card a uma lista aqui seria sempre mostrar "vazio", mesmo
-      // depois de análises reais acontecerem. Ver proposta de integração.
+      // O número já é real (conta `screenings`, ver admin_stats_repository.py)
+      // -- sem link só porque ainda não existe uma página de admin a listar
+      // rastreios individuais, ao contrário de sessões de exercício ou
+      // utilizadores. Fica para quando isso existir.
       href: null,
     },
     {
