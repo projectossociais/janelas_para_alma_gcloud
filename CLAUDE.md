@@ -62,7 +62,7 @@ locais). Ver histórico do repositório antigo se for preciso consultar o que fa
 Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
 
 - **Rastreio ocular** por webcam (MediaPipe FaceMesh) — deteta sinais, encaminha para clínica
-- **Exercícios de terapia visual** com rastreio ocular — 4 gratuitos, 8 premium (3 construídos)
+- **Exercícios de terapia visual** com rastreio ocular — 4 gratuitos, 8 premium (todos construídos e com rota própria — confirmado 2026-09-23 ao corrigir `DashboardUser.tsx`; a nota antiga "3 construídos" já não era verdade)
 - **Modelo freemium** — Premium a 15.000 Kz/mês (pagamento por transferência + comprovativo)
 - **Rede de clínicas parceiras**, doações, programa de voluntariado, painel administrativo
 
@@ -389,7 +389,6 @@ Não imitar estes padrões enquanto a migração módulo-a-módulo decorre (ver 
 | `ContactSection.tsx` ("Quero ser um Kamba"), `VolunteerSection.tsx` (`/kamba`) | **Bug activo, não só dívida de migração:** os dois formulários públicos de candidatura a voluntário chamam `sendToEdgeFunction("send-volunteer-email", ...)` — uma Edge Function do Supabase que só manda um email — e nunca `POST /voluntariado/candidatura`, o endpoint real já construído e testado que `AdminVoluntariado.tsx` usa para aprovar candidaturas. Resultado: ninguém que se candidata pelos formulários públicos aparece para um admin aprovar. Confirmado 2026-09-17, ainda por corrigir |
 | `frontend/src/lib/edgeFunction.ts` | Chama Edge Functions do Supabase directamente (usado só pelos dois formulários acima) — a substituir pela API própria junto com a correcção de cima |
 | `ClinicalPartners.tsx` | Formulário de agendamento não persiste nada — só mostra um toast |
-| `DashboardUser.tsx` | "Exercícios disponíveis" e "Próxima teleconsulta" continuam valores fixos — "Análises realizadas" já lê `screenings` reais |
 | `AdminOverview.tsx` (`admin_stats_repository.py`) | `analises_scanner` ainda conta a tabela `scanner_analyses`, órfã desde que ninguém escreve lá — devia passar a contar `screenings` |
 
 Itens antigos desta tabela já confirmados como resolvidos ou obsoletos (2026-09-17), removidos daqui: `ProfileContext.tsx` já usa `perfilApi` por completo (não é Supabase); `Produto.tsx` foi apagado do projecto num refactor antigo e já não existe.

@@ -7,11 +7,22 @@ import { Button } from "@/components/ui/button";
 import { Eye, Activity, Sparkles, Calendar, Play } from "lucide-react";
 import { screeningsApi } from "@/lib/apiClient";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/contexts/ProfileContext";
+
+// 4 gratuitos + 8 premium (ver Exercicios.tsx) -- todos com rota real em
+// App.tsx, nenhum placeholder. Os premium só contam para quem tem acesso.
+const TOTAL_EXERCICIOS_GRATUITOS = 4;
+const TOTAL_EXERCICIOS_PREMIUM = 8;
 
 const DashboardUser = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { profile } = useProfile();
   const [scanCount, setScanCount] = useState(0);
+
+  const temAcessoPremium = !!profile && (profile.premium_ativo || profile.papel === "admin");
+  const exerciciosDisponiveis =
+    TOTAL_EXERCICIOS_GRATUITOS + (temAcessoPremium ? TOTAL_EXERCICIOS_PREMIUM : 0);
 
   useEffect(() => {
     if (!user) return;
@@ -41,14 +52,17 @@ const DashboardUser = () => {
           <Card>
             <CardContent className="p-6">
               <Eye className="w-6 h-6 text-navy mb-2" />
-              <div className="text-2xl font-bold">4</div>
+              <div className="text-2xl font-bold">{exerciciosDisponiveis}</div>
               <div className="text-sm text-muted-foreground">Exercícios disponíveis</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6">
               <Calendar className="w-6 h-6 text-gold mb-2" />
-              <div className="text-2xl font-bold">—</div>
+              {/* A teleconsulta ainda não é uma funcionalidade real da
+                  plataforma -- um "—" ao lado de números verdadeiros
+                  parecia uma métrica vazia, não uma que ainda não existe. */}
+              <div className="text-2xl font-bold text-muted-foreground">Em breve</div>
               <div className="text-sm text-muted-foreground">Próxima teleconsulta</div>
             </CardContent>
           </Card>
