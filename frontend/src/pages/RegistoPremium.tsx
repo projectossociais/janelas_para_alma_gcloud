@@ -44,16 +44,16 @@ const step1Schema = z.object({
     .trim()
     .min(6, "Telefone inválido")
     .max(20, "Telefone inválido")
-    .regex(/^[+()\d\s-]+$/, "Use apenas dígitos e + ( ) - espaços"),
+    .regex(/^[+()\d\s-]+$/, "Use apenas dígitos, espaços e os símbolos + ( ) -"),
 });
 
 const step2Schema = z.object({
   para: z
     .string()
-    .refine((v) => ["mim", "filho", "familiar"].includes(v), "Selecione uma opção"),
+    .refine((v) => ["mim", "filho", "familiar"].includes(v), "Seleccione uma opção"),
   diagnostico: z
     .string()
-    .refine((v) => ["sim", "nao", "duvida"].includes(v), "Selecione uma opção"),
+    .refine((v) => ["sim", "nao", "duvida"].includes(v), "Seleccione uma opção"),
 });
 
 type Step = 1 | 2 | 3 | 4 | 5;
@@ -100,7 +100,7 @@ const PLANOS: PlanoOpcao[] = [
 ];
 
 const benefits = [
-  { icon: Eye, title: "Triagem visual assistida", desc: "Deteção precoce de sinais de estrabismo." },
+  { icon: Eye, title: "Triagem visual assistida", desc: "Detecção precoce de sinais de estrabismo." },
   { icon: Activity, title: "Acompanhamento contínuo", desc: "Métricas e evolução personalizadas." },
   { icon: Stethoscope, title: "Exercícios guiados", desc: "Programa clínico validado por oftalmologistas." },
 ];
@@ -154,7 +154,7 @@ const RegistoPremium = () => {
     if (!plano) {
       toast({
         title: "Escolha um plano",
-        description: "Selecione o plano mensal ou anual para continuar.",
+        description: "Seleccione o plano mensal ou anual para continuar.",
         variant: "destructive",
       });
       return;
@@ -389,7 +389,7 @@ const RegistoPremium = () => {
                   <Label htmlFor="para">A subscrição é para quem?</Label>
                   <Select value={para} onValueChange={setPara}>
                     <SelectTrigger id="para">
-                      <SelectValue placeholder="Selecione uma opção" />
+                      <SelectValue placeholder="Seleccione uma opção" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="mim">Para mim</SelectItem>
@@ -646,9 +646,9 @@ const RegistoPremium = () => {
                 </h1>
                 <p className="text-muted-foreground leading-relaxed mb-8">
                   Recebemos o seu pedido e o comprovativo de pagamento. Para garantir
-                  que recebe o acompanhamento correto, um dos nossos especialistas em
+                  que recebe o acompanhamento correcto, um dos nossos especialistas em
                   triagem vai confirmar o pagamento e entrar em contacto consigo via
-                  WhatsApp nas próximas 24 horas para ativar a sua subscrição e agendar
+                  WhatsApp nas próximas 24 horas para activar a sua subscrição e agendar
                   a sua primeira teleconsulta.
                 </p>
                 <Button

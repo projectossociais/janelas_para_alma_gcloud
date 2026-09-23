@@ -69,9 +69,9 @@ type DiagnosisInfo = {
 
 const DIAGNOSIS_DATA: Record<DiagnosisKey, DiagnosisInfo> = {
   Esotropia: {
-    short: "Desvio convergente — olho(s) voltado(s) para dentro",
+    short: "Desvio convergente: olho(s) voltado(s) para dentro",
     description:
-      "Esotropia é um tipo de estrabismo em que um ou ambos os olhos se desviam para dentro, em direção ao nariz. Pode surgir na infância ou na idade adulta e, quando não tratada, pode causar ambliopia (olho preguiçoso) e perda da visão binocular.",
+      "Esotropia é um tipo de estrabismo em que um ou ambos os olhos se desviam para dentro, em direcção ao nariz. Pode surgir na infância ou na idade adulta e, quando não tratada, pode causar ambliopia (olho preguiçoso) e perda da visão binocular.",
     symptoms: [
       "Olhos voltados para dentro",
       "Visão dupla (diplopia)",
@@ -79,14 +79,14 @@ const DIAGNOSIS_DATA: Record<DiagnosisKey, DiagnosisInfo> = {
       "Inclinação ou rotação da cabeça",
     ],
     treatments: [
-      "Óculos com correção hipermetrópica",
+      "Óculos com correcção hipermetrópica",
       "Terapia visual ortóptica",
       "Oclusão com tampão (ambliopia)",
-      "Toxina botulínica ou cirurgia em casos selecionados",
+      "Toxina botulínica ou cirurgia em casos seleccionados",
     ],
   },
   Exotropia: {
-    short: "Desvio divergente — olho(s) voltado(s) para fora",
+    short: "Desvio divergente: olho(s) voltado(s) para fora",
     description:
       "Exotropia caracteriza-se pelo desvio de um ou ambos os olhos para fora, afastando-se do nariz. Frequentemente é intermitente e mais evidente em situações de fadiga, sonolência ou fixação à distância.",
     symptoms: [
@@ -103,7 +103,7 @@ const DIAGNOSIS_DATA: Record<DiagnosisKey, DiagnosisInfo> = {
     ],
   },
   Hipertropia: {
-    short: "Desvio vertical — olho(s) voltado(s) para cima",
+    short: "Desvio vertical: olho(s) voltado(s) para cima",
     description:
       "Hipertropia é um desvio vertical no qual um dos olhos se posiciona mais alto do que o outro. Pode estar relacionada a alterações dos músculos oblíquos ou a causas neurológicas e provoca frequentemente visão dupla.",
     symptoms: [
@@ -115,31 +115,31 @@ const DIAGNOSIS_DATA: Record<DiagnosisKey, DiagnosisInfo> = {
     treatments: [
       "Óculos com prismas verticais",
       "Avaliação neuroftalmológica",
-      "Toxina botulínica em casos selecionados",
+      "Toxina botulínica em casos seleccionados",
       "Cirurgia dos músculos oblíquos",
     ],
   },
   Hipotropia: {
-    short: "Desvio vertical — olho(s) voltado(s) para baixo",
+    short: "Desvio vertical: olho(s) voltado(s) para baixo",
     description:
       "Hipotropia é o desvio vertical em que um dos olhos se posiciona mais baixo do que o outro. Pode resultar de paralisias musculares, traumatismos ou alterações orbitárias e exige avaliação especializada.",
     symptoms: [
       "Visão dupla vertical",
       "Postura anómala da cabeça",
       "Limitação dos movimentos oculares",
-      "Dificuldade em focar objetos elevados",
+      "Dificuldade em focar objectos elevados",
     ],
     treatments: [
-      "Prismas corretivos nos óculos",
+      "Prismas correctivos nos óculos",
       "Investigação de causas neurológicas",
       "Reabilitação ortóptica",
-      "Cirurgia muscular corretiva",
+      "Cirurgia muscular correctiva",
     ],
   },
   "Alinhamento Fisiológico Normal": {
     short: "Eixos visuais simétricos e alinhamento dentro dos parâmetros normais",
     description:
-      "A análise das três posições do olhar não detetou desvios manifestos nem assimetrias corneanas significativas. Os eixos visuais mantêm-se paralelos e com boa resposta de fixação.",
+      "A análise das três posições do olhar não detectou desvios manifestos nem assimetrias corneanas significativas. Os eixos visuais mantêm-se paralelos e com boa resposta de fixação.",
     symptoms: [
       "Boa coordenação binocular",
       "Ausência de diplopia (visão dupla)",
@@ -148,11 +148,11 @@ const DIAGNOSIS_DATA: Record<DiagnosisKey, DiagnosisInfo> = {
     treatments: [
       "Manter consultas oftalmológicas de rotina anuais",
       "Praticar pausas visuais regulares durante o trabalho com ecrãs",
-      "Utilizar proteção UV ao ar livre",
+      "Utilizar protecção UV ao ar livre",
     ],
   },
   "Necessária Avaliação Oftalmológica": {
-    short: "Assimetria de reflexos ou padrão de incomitância detetado",
+    short: "Assimetria de reflexos ou padrão de incomitância detectado",
     description:
       "A triagem automatizada identificou variações no alinhamento ocular entre as posições de fixação ou qualidade insuficiente para descartar desalinhamento. Recomenda-se exame clínico presencial.",
     symptoms: [
@@ -163,7 +163,7 @@ const DIAGNOSIS_DATA: Record<DiagnosisKey, DiagnosisInfo> = {
     treatments: [
       "Consulta de oftalmologia ou ortóptica presencial",
       "Exame de motilidade ocular extrínseca e cover test",
-      "Avaliação de acuidade visual e refração sob cicloplegia",
+      "Avaliação de acuidade visual e refracção sob cicloplegia",
     ],
   },
 };
@@ -180,7 +180,7 @@ const ALL_CLINICS = {
     name: "Clínica Sagrada Esperança",
     city: "Luanda · Ilha de Luanda",
     specialty: "Oftalmologia geral & estrabismo",
-    price: "25.000 – 40.000 AOA",
+    price: "25.000 a 40.000 AOA",
     phone: "+244923167950",
     phoneDisplay: "+244 923 167 950",
     website: "https://www.cse.co.ao",
@@ -189,7 +189,7 @@ const ALL_CLINICS = {
     name: "Centro Óptico Angolano",
     city: "Luanda · Call Center",
     specialty: "Avaliação visual & óculos",
-    price: "15.000 – 22.000 AOA",
+    price: "15.000 a 22.000 AOA",
     phone: "+244923400300",
     phoneDisplay: "+244 923 400 300",
     website: "https://centrooptico.co.ao",
@@ -198,7 +198,7 @@ const ALL_CLINICS = {
     name: "Clínica Multiperfil",
     city: "Luanda · Morro Bento",
     specialty: "Pediatria & cirurgia oftalmológica",
-    price: "30.000 – 45.000 AOA",
+    price: "30.000 a 45.000 AOA",
     phone: "+244923501168",
     phoneDisplay: "+244 923 501 168",
     website: "https://www.multiperfil.co.ao",
@@ -207,7 +207,7 @@ const ALL_CLINICS = {
     name: "Hospital Girassol",
     city: "Luanda · Maianga",
     specialty: "Neuroftalmologia & exames avançados",
-    price: "35.000 – 55.000 AOA",
+    price: "35.000 a 55.000 AOA",
     phone: "+244222641000",
     phoneDisplay: "+244 222 641 000",
     website: "https://www.hospitalgirassol.co.ao",
@@ -219,11 +219,11 @@ type ClinicRec = (typeof ALL_CLINICS)[keyof typeof ALL_CLINICS] & { subtitle: st
 const CLINIC_RECOMMENDATIONS: Record<DiagnosisKey, ClinicRec[]> = {
   Esotropia: [
     { ...ALL_CLINICS.sagrada, subtitle: "Centro de Excelência em Desvios Convergentes" },
-    { ...ALL_CLINICS.optico, subtitle: "Avaliação refrativa complementar" },
+    { ...ALL_CLINICS.optico, subtitle: "Avaliação refractiva complementar" },
   ],
   Exotropia: [
     { ...ALL_CLINICS.multiperfil, subtitle: "Especialistas em Cirurgia Divergente" },
-    { ...ALL_CLINICS.optico, subtitle: "Avaliação refrativa complementar" },
+    { ...ALL_CLINICS.optico, subtitle: "Avaliação refractiva complementar" },
   ],
   Hipertropia: [
     { ...ALL_CLINICS.girassol, subtitle: "Unidade Avançada de Neuroftalmologia Vertical" },
@@ -344,8 +344,8 @@ const Resultados = () => {
     doc.setFontSize(9.5);
     doc.setTextColor(...ink);
     const introP1 = doc.splitTextToSize(
-      "O Janelas para a Alma é uma startup angolana direccionada a pessoas com estrabismo – " +
-        "condição que afecta o alinhamento dos olhos, podendo causar visão dupla, ambliopia ou cegueira.",
+      "O Janelas para a Alma é uma startup angolana dedicada a pessoas com estrabismo, " +
+        "uma condição que afecta o alinhamento dos olhos, podendo causar visão dupla, ambliopia ou cegueira.",
       W - M * 2
     );
     doc.text(introP1, W / 2, y, { align: "center" });
@@ -479,14 +479,14 @@ const Resultados = () => {
     bullets(
       isNormal
         ? [
-            "Utilize óculos de sol com proteção UV sempre que estiver ao ar livre.",
-            "Faça pausas visuais regulares — regra 20-20-20 (a cada 20 min, olhe 20 seg para algo a 6 metros).",
+            "Utilize óculos de sol com protecção UV sempre que estiver ao ar livre.",
+            "Faça pausas visuais regulares com a regra 20-20-20 (a cada 20 min, olhe 20 seg para algo a 6 metros).",
             "Mantenha exames oftalmológicos de rotina, pelo menos uma vez por ano.",
             "Junte-se à comunidade Janelas Para a Alma para acompanhar novidades de saúde visual.",
           ]
         : [
             "Procure avaliação presencial com oftalmologista qualificado.",
-            "Realize exames de refração e teste de cobertura ocular.",
+            "Realize exames de refracção e teste de cobertura ocular.",
             "Mantenha pausas visuais regulares (regra 20-20-20).",
             "Inicie exercícios visuais terapêuticos sob orientação profissional.",
             "Junte-se à comunidade Janelas Para a Alma para apoio emocional.",
@@ -510,7 +510,7 @@ const Resultados = () => {
     const discTexto =
       "Os resultados desta triagem são informativos, baseados em biometria facial, e não substituem " +
       "uma avaliação oftalmológica presencial. A plataforma Janelas Para a Alma isenta-se de " +
-      "responsabilidade por diagnósticos ou ações médicas tomadas com base neste documento. Em caso " +
+      "responsabilidade por diagnósticos ou acções médicas tomadas com base neste documento. Em caso " +
       "de desconforto visual, consulte imediatamente um especialista.";
     const disc = doc.splitTextToSize(discTexto, W - M * 2 - 48);
     const discBoxH = 32 + disc.length * 15;
@@ -768,9 +768,9 @@ const ComunidadePanel = () => (
         <Users className="w-8 h-8 text-white" />
       </div>
       <div className="flex-1">
-        <h2 className="text-xl font-bold text-foreground">Não está sozinho/a nesta jornada</h2>
+        <h2 className="text-xl font-bold text-foreground">Não está sozinho/a neste caminho</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Junte-se à comunidade <strong>Janelas Para a Alma</strong> — partilhe experiências, encontre apoio emocional e ligue-se a outras pessoas que vivem o estrabismo todos os dias.
+          Junte-se à comunidade <strong>Janelas Para a Alma</strong>: partilhe experiências, encontre apoio emocional e ligue-se a outras pessoas que vivem o estrabismo todos os dias.
         </p>
       </div>
       <Link

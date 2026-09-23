@@ -9,10 +9,10 @@ const ActivitiesFeed = () => {
       <div className="container">
         <div className="max-w-2xl mx-auto text-center space-y-4 mb-12">
           <span className="text-sm font-medium tracking-widest uppercase text-teal">
-            Ação no Terreno
+            Acção no Terreno
           </span>
           <h2 className="text-3xl md:text-4xl font-bold">
-            Campanha de Conscientização na Gamek
+            Campanha de Consciencialização na Gamek
           </h2>
         </div>
 
@@ -37,7 +37,7 @@ const ActivitiesFeed = () => {
             />
 
             <p className="text-muted-foreground leading-relaxed max-w-xl">
-              Acompanhe de perto a nossa ação nas ruas da Gamek, onde os nossos jovens
+              Acompanhe de perto a nossa acção nas ruas da Gamek, onde os nossos jovens
               embaixadores partilharam informação, combateram o estigma e apresentaram
               a plataforma Janelas Para a Alma à comunidade. Clique abaixo para viver
               esta experiência!
@@ -48,7 +48,7 @@ const ActivitiesFeed = () => {
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-teal text-teal-foreground font-bold shadow-elevated transition-all hover:opacity-90 hover:translate-y-[-2px]"
             >
               <Images className="w-5 h-5" />
-              Ver Galeria da Ação
+              Ver Galeria da Acção
             </Link>
           </CardContent>
         </Card>

@@ -125,7 +125,7 @@ const FaixaDeAviso = () => {
         mensagem: formEdicao.mensagem,
         link: formEdicao.link || null,
       });
-      toast.success("Banner atualizado.");
+      toast.success("Banner actualizado.");
       setAEditar(null);
       await load();
     } catch (err) {
@@ -140,7 +140,7 @@ const FaixaDeAviso = () => {
       <Card>
         <CardHeader>
           <CardTitle>Nova faixa de aviso</CardTitle>
-          <CardDescription>Barra fina, no topo de todas as páginas do site — só texto.</CardDescription>
+          <CardDescription>Barra fina, no topo de todas as páginas do site, só com texto.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid md:grid-cols-2 gap-3">
@@ -172,7 +172,7 @@ const FaixaDeAviso = () => {
           </div>
           <div className="flex items-center gap-2">
             <Switch checked={form.ativo} onCheckedChange={(v) => setForm({ ...form, ativo: v })} />
-            <Label>Ativo</Label>
+            <Label>Activo</Label>
           </div>
           <Button onClick={create} disabled={aGravar}>
             <Plus className="w-4 h-4" /> {aGravar ? "A criar..." : "Criar banner"}
@@ -190,7 +190,7 @@ const FaixaDeAviso = () => {
               <div className="min-w-0 flex-1">
                 <div className="font-semibold flex items-center gap-2">
                   {b.titulo}
-                  <Badge variant={b.ativo ? "default" : "secondary"}>{b.ativo ? "Ativo" : "Inativo"}</Badge>
+                  <Badge variant={b.ativo ? "default" : "secondary"}>{b.ativo ? "Activo" : "Inactivo"}</Badge>
                 </div>
                 <div className="text-sm text-muted-foreground">{b.mensagem}</div>
               </div>
@@ -291,7 +291,7 @@ const BannerHomepage = () => {
         descricao: form.descricao || null,
         link: form.link || null,
       });
-      toast.success("Banner criado — agora adicione uma foto para poder ativá-lo.");
+      toast.success("Banner criado. Agora adicione uma foto para poder activá-lo.");
       setForm({ titulo: "", descricao: "", link: "" });
       await load();
     } catch (err) {
@@ -303,7 +303,7 @@ const BannerHomepage = () => {
 
   const toggle = async (b: BannerHomepageAdmin, ativo: boolean) => {
     if (ativo && !b.imagem_url) {
-      toast.error("Adicione uma foto antes de ativar este banner.");
+      toast.error("Adicione uma foto antes de activar este banner.");
       return;
     }
     try {
@@ -342,7 +342,7 @@ const BannerHomepage = () => {
         descricao: formEdicao.descricao || null,
         link: formEdicao.link || null,
       });
-      toast.success("Banner atualizado.");
+      toast.success("Banner actualizado.");
       setAEditar(null);
       await load();
     } catch (err) {
@@ -354,7 +354,7 @@ const BannerHomepage = () => {
 
   const enviarImagem = async (bannerId: string, ficheiro: File) => {
     if (!tipoAceite(ficheiro)) {
-      toast.error("Formato não suportado — use PNG, JPEG ou WebP.");
+      toast.error("Formato não suportado. Use PNG, JPEG ou WebP.");
       return;
     }
     setAEnviarImagem(bannerId);
@@ -362,7 +362,7 @@ const BannerHomepage = () => {
       const preparado = await bannerHomepageApi.prepararImagem(bannerId, ficheiro.type);
       await bannerHomepageApi.enviarParaStorage(preparado.url_de_upload, ficheiro);
       await bannerHomepageApi.confirmarImagem(bannerId, preparado.chave);
-      toast.success("Foto atualizada.");
+      toast.success("Foto actualizada.");
       await load();
     } catch (err) {
       toast.error(mensagemDeErroApi(err, "Não foi possível enviar a foto."));
@@ -377,8 +377,8 @@ const BannerHomepage = () => {
         <CardHeader>
           <CardTitle>Novo banner da homepage</CardTitle>
           <CardDescription>
-            Secção visual, só na página inicial — para campanhas e promoções. Nasce inativo; a foto
-            adiciona-se a seguir, e só pode ativar-se depois de ter uma.
+            Secção visual, só na página inicial, para campanhas e promoções. Nasce inactivo; a foto
+            adiciona-se a seguir, e só pode activar-se depois de ter uma.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -433,7 +433,7 @@ const BannerHomepage = () => {
                 <div className="min-w-0">
                   <div className="font-semibold flex items-center gap-2">
                     {b.titulo}
-                    <Badge variant={b.ativo ? "default" : "secondary"}>{b.ativo ? "Ativo" : "Inativo"}</Badge>
+                    <Badge variant={b.ativo ? "default" : "secondary"}>{b.ativo ? "Activo" : "Inactivo"}</Badge>
                   </div>
                   {b.descricao && <div className="text-sm text-muted-foreground truncate">{b.descricao}</div>}
                 </div>

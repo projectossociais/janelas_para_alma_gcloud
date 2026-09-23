@@ -89,7 +89,7 @@ const tiers: Tier[] = [
   {
     id: "tier1",
     name: "Aliado",
-    range: "10.000 – 250.000 Kz",
+    range: "10.000 a 250.000 Kz",
     short: "Um gesto significativo",
     impact: "Financia consultas de rastreio e um par de óculos graduados para 1 a 2 pessoas.",
     icon: Sparkles,
@@ -100,9 +100,9 @@ const tiers: Tier[] = [
   {
     id: "tier2",
     name: "Padrinho",
-    range: "250.000 – 500.000 Kz",
+    range: "250.000 a 500.000 Kz",
     short: "Impacto sustentado",
-    impact: "Cobre um ciclo completo de tratamento — consulta, óculos e terapia — para várias crianças.",
+    impact: "Cobre um ciclo completo de tratamento (consulta, óculos e terapia) para várias crianças.",
     icon: Heart,
     accent: "text-navy",
     ring: "ring-navy border-navy",
@@ -113,7 +113,7 @@ const tiers: Tier[] = [
     name: "Benfeitor",
     range: "Acima de 500.000 Kz",
     short: "Transformação em escala",
-    impact: "Viabiliza uma campanha comunitária inteira, incluindo cirurgias corretivas em grupo.",
+    impact: "Viabiliza uma campanha comunitária inteira, incluindo cirurgias correctivas em grupo.",
     icon: Crown,
     accent: "text-gold",
     ring: "ring-gold border-gold",
@@ -240,7 +240,7 @@ const Apoiar = () => {
       return;
     }
     if (!TIPOS_DE_COMPROVATIVO_ACEITES.includes(comprovativo.type as never)) {
-      toast.error("Formato não suportado — use PNG, JPEG, WebP ou PDF.");
+      toast.error("Formato não suportado. Use PNG, JPEG, WebP ou PDF.");
       return;
     }
 
@@ -540,7 +540,7 @@ const Apoiar = () => {
                   Enviar Comprovativo
                 </DialogTitle>
                 <DialogDescription>
-                  {activeTier?.name ?? "Donativo"} — {activeTier?.range ?? ""}. Anexe o
+                  {activeTier?.name ?? "Donativo"}: {activeTier?.range ?? ""}. Anexe o
                   comprovativo da transferência para confirmarmos o seu donativo.
                 </DialogDescription>
               </DialogHeader>
@@ -585,7 +585,7 @@ const Apoiar = () => {
                 <DialogDescription>
                   {mode === "materiais"
                     ? "Deixe o seu email e nós mostramos os pontos de recolha disponíveis."
-                    : `${activeTier?.name ?? "Donativo"} — ${activeTier?.range ?? ""}. Obrigado por apoiar a nossa missão.`}
+                    : `${activeTier?.name ?? "Donativo"}: ${activeTier?.range ?? ""}. Obrigado por apoiar a nossa missão.`}
                 </DialogDescription>
               </DialogHeader>
 

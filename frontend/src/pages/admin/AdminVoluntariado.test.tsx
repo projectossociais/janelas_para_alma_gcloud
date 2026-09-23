@@ -80,7 +80,7 @@ describe("AdminVoluntariado", () => {
     toastError.mockReset();
   });
 
-  it("mostra candidaturas pendentes com ações de aprovar/rejeitar", async () => {
+  it("mostra candidaturas pendentes com acções de aprovar/rejeitar", async () => {
     listarCandidaturas.mockResolvedValue([CANDIDATURA_PENDENTE]);
     renderPage();
 
@@ -99,7 +99,7 @@ describe("AdminVoluntariado", () => {
     await user.click(await screen.findByRole("button", { name: /Aprovar/i }));
 
     await waitFor(() => expect(aprovarCandidatura).toHaveBeenCalledWith("cand-1"));
-    expect(toastSuccess).toHaveBeenCalledWith("Candidatura aprovada — já é voluntário activo.");
+    expect(toastSuccess).toHaveBeenCalledWith("Candidatura aprovada. Já é voluntário activo.");
   });
 
   it("nunca mostra sucesso se rejeitar falhar", async () => {
@@ -130,7 +130,7 @@ describe("AdminVoluntariado", () => {
 
     await waitFor(() => expect(publicarAtividade).toHaveBeenCalled());
     expect(toastSuccess).toHaveBeenCalledWith(
-      "Actividade publicada — os voluntários activos foram notificados por email."
+      "Actividade publicada. Os voluntários activos foram notificados por email."
     );
   });
 

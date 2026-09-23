@@ -78,7 +78,7 @@ const AdminNotifications = () => {
       <div>
         <h2 className="text-2xl font-bold">Notificações</h2>
         <p className="text-sm text-muted-foreground">
-          Cria uma notificação real na conta de cada destinatário — aparece no sino do site,
+          Cria uma notificação real na conta de cada destinatário: aparece no sino do site,
           não só aqui.
         </p>
       </div>

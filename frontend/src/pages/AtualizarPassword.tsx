@@ -51,7 +51,7 @@ const AtualizarPassword = () => {
     setLoading(true);
     try {
       await authApi.redefinirPassword(token, password);
-      toast.success("Palavra-passe atualizada com sucesso!");
+      toast.success("Palavra-passe actualizada com sucesso!");
       // Sem sessão nenhuma para terminar aqui (o token de recuperação nunca
       // autentica, só troca a password) — segue directo para o login limpo.
       navigate("/auth", { replace: true });

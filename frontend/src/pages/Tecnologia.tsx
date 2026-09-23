@@ -16,12 +16,12 @@ const features = [
     icon: ShoppingBag,
     title: "Marketplace de Serviços e Produtos",
     description:
-      "Acesso direto a produtos (como armações recondicionadas) e serviços especializados, centralizando todas as necessidades do utilizador num único local.",
+      "Acesso directo a produtos (como armações recondicionadas) e serviços especializados, centralizando todas as necessidades do utilizador num único local.",
     color: "text-green bg-green/10",
   },
   {
     icon: MessageCircle,
-    title: "Canal de Comunicação Direta",
+    title: "Canal de Comunicação Directa",
     description:
       "Facilita a comunicação fluida entre pacientes e parceiros de saúde, garantindo um acompanhamento próximo e humano.",
     color: "text-sky bg-sky/10",
@@ -68,7 +68,7 @@ const Tecnologia = () => {
                 Funcionalidades Centrais
               </h2>
               <p className="text-muted-foreground mt-4">
-                Tudo o que precisa, num ecossistema digital pensado para si.
+                Tudo o que precisa, numa só plataforma pensada para si.
               </p>
             </div>
 
@@ -102,7 +102,7 @@ const Tecnologia = () => {
                 O Impacto da Tecnologia
               </span>
               <p className="text-2xl md:text-3xl font-medium text-primary-foreground leading-relaxed">
-                "O nosso foco é eliminar as <span className="text-teal">barreiras geográficas</span> em Angola através da tecnologia assistiva. Criamos um ecossistema digital onde a localização do utilizador deixa de ser um impedimento para receber cuidados visuais de qualidade."
+                "O nosso foco é eliminar as <span className="text-teal">barreiras geográficas</span> em Angola através da tecnologia assistiva. Criámos uma plataforma digital onde a localização do utilizador deixa de ser um impedimento para receber cuidados visuais de qualidade."
               </p>
             </div>
           </div>

@@ -25,7 +25,7 @@ const campaignVideos: CampaignVideo[] = [
     src: "https://yjzqnjatrdngzfixrxcg.supabase.co/storage/v1/object/public/kamba-media/Kambas.mp4#t=0.001",
     title: "Histórias Reais e Superação",
     summary:
-      "Testemunhos inspiradores de Noelma Silvestre, que convive com a condição desde cedo, e dos voluntários Elton Dias e Josefina Afonso sobre o impacto transformador da empatia, da informação e do apoio mútuo na autoestima.",
+      "Testemunhos inspiradores de Noelma Silvestre, que convive com a condição desde cedo, e dos voluntários Elton Dias e Josefina Afonso sobre o impacto transformador da empatia, da informação e do apoio mútuo na auto-estima.",
   },
   {
     src: "https://yjzqnjatrdngzfixrxcg.supabase.co/storage/v1/object/public/kamba-media/JPA%20Grupo.mov#t=0.001",
@@ -48,28 +48,28 @@ const CampanhaGamek = () => {
                 12 de Setembro
               </span>
               <h1 className="text-3xl md:text-4xl font-bold">
-                Campanha de Conscientização sobre o Estrabismo na Gamek
+                Campanha de Consciencialização sobre o Estrabismo na Gamek
               </h1>
             </header>
 
             <div className="flex flex-col items-center gap-6 bg-slate-50 border border-slate-200 rounded-2xl p-6 sm:p-8">
               <img
                 src="/assets/kamba/campanha-gamek-poster.jpg"
-                alt="Cartaz da Campanha de Conscientização sobre o Estrabismo na Gamek"
+                alt="Cartaz da Campanha de Consciencialização sobre o Estrabismo na Gamek"
                 className="w-full max-w-xl mx-auto rounded-xl object-contain"
               />
               <div className="text-muted-foreground leading-relaxed space-y-4">
                 <p>
-                  No dia 12 de Setembro, realizamos a campanha de conscientização sobre o estrabismo pelas ruas da Gamek, na cidade de Luanda.
+                  No dia 12 de Setembro, realizamos a campanha de consciencialização sobre o estrabismo pelas ruas da Gamek, na cidade de Luanda.
                 </p>
                 <p>
-                  A comunidade Meu Kamba Estrábico, pertencente ao Janelas para a Alma, efectivou, pelas 9h30, a campanha de conscientização e sensibilização cujo objectivo principal foi transmitir às pessoas informações importantes sobre a condição e apresentar a nossa proposta de valor, a plataforma Janelas para a Alma, onde foi possível abordar diversas pessoas portadoras da condição ou ainda próximos a pessoas com a condição.
+                  A comunidade Meu Kamba Estrábico, pertencente ao Janelas para a Alma, efectivou, pelas 9h30, a campanha de consciencialização e sensibilização cujo objectivo principal foi transmitir às pessoas informações importantes sobre a condição e apresentar a nossa proposta de valor, a plataforma Janelas para a Alma, onde foi possível abordar diversas pessoas portadoras da condição ou ainda próximos a pessoas com a condição.
                 </p>
                 <p>
                   Reafirmamos o nosso compromisso com a difusão da informação sobre o estrabismo e saúde visual.
                 </p>
                 <p>
-                  Janelas para a alma - Um olhar alinhado, uma vida transformada.
+                  Janelas para a Alma: um olhar alinhado, uma vida transformada.
                 </p>
               </div>
             </div>
@@ -77,7 +77,7 @@ const CampanhaGamek = () => {
             <div className="flex flex-col gap-6">
               <hr className="border-slate-200" />
               <h2 className="text-xl md:text-2xl font-bold text-center">
-                Cobertura em Vídeo da Ação no Terreno
+                Cobertura em Vídeo da Acção no Terreno
               </h2>
             </div>
 

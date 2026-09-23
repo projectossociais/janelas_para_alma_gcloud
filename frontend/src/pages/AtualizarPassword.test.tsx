@@ -58,7 +58,7 @@ async function preencherEsubmeter(user: ReturnType<typeof userEvent.setup>, senh
   await user.click(screen.getByRole("button", { name: /Guardar Nova Palavra-passe/ }));
 }
 
-describe("AtualizarPassword", () => {
+describe("Actualizarpassword", () => {
   beforeEach(() => {
     redefinirPassword.mockReset();
     toastError.mockReset();
@@ -96,7 +96,7 @@ describe("AtualizarPassword", () => {
 
     await waitFor(() => expect(redefinirPassword).toHaveBeenCalledWith("token-valido", "password-nova-123"));
     expect(toastError).not.toHaveBeenCalled();
-    expect(toastSuccess).toHaveBeenCalledWith("Palavra-passe atualizada com sucesso!");
+    expect(toastSuccess).toHaveBeenCalledWith("Palavra-passe actualizada com sucesso!");
   });
 
   it("recusa quando as palavras-passe não coincidem, sem chamar a API", async () => {

@@ -124,7 +124,7 @@ describe("Auth — login (AUTH-02)", () => {
   });
 
   it("mostra o erro genérico quando as credenciais estão erradas", async () => {
-    signIn.mockResolvedValue({ ok: false, error: "email ou password incorretos" });
+    signIn.mockResolvedValue({ ok: false, error: "email ou password incorrectos" });
     const user = userEvent.setup();
     render(<Auth />, { wrapper: MemoryRouter });
 
@@ -134,7 +134,7 @@ describe("Auth — login (AUTH-02)", () => {
     await user.click(within(formularioLogin).getByRole("button", { name: /Entrar/ }));
 
     await waitFor(() => expect(signIn).toHaveBeenCalled());
-    expect(toastError).toHaveBeenCalledWith("email ou password incorretos");
+    expect(toastError).toHaveBeenCalledWith("email ou password incorrectos");
   });
 });
 
@@ -163,13 +163,13 @@ describe("Auth — registo (AUTH-02)", () => {
     // procurar por accessible name -- abre-se cada um pelo botão que
     // envolve o texto do placeholder (o próprio span do Radix tem
     // pointer-events:none de propósito, para o clique "passar" ao botão).
-    await user.click(screen.getByText("Selecione a sua província").closest("button")!);
+    await user.click(screen.getByText("Seleccione a sua província").closest("button")!);
     await user.click(screen.getByRole("option", { name: "Luanda" }));
 
-    await user.click(screen.getByText("Selecione o seu género").closest("button")!);
+    await user.click(screen.getByText("Seleccione o seu género").closest("button")!);
     await user.click(screen.getByRole("option", { name: "Feminino" }));
 
-    await user.click(screen.getByText("Selecione o seu perfil").closest("button")!);
+    await user.click(screen.getByText("Seleccione o seu perfil").closest("button")!);
     await user.click(screen.getByRole("option", { name: "Comum" }));
 
     await user.click(screen.getByRole("button", { name: /Criar Conta/ }));

@@ -116,7 +116,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       return { ok: true };
     } catch (err) {
-      return { ok: false, error: mensagemDeFalha(err, "Email ou palavra-passe incorretos.") };
+      return { ok: false, error: mensagemDeFalha(err, "Email ou palavra-passe incorrectos.") };
     }
   };
 

@@ -45,10 +45,10 @@ const AdminUsers = () => {
     setAGuardar(userId);
     try {
       await adminApi.definirPapel(userId, novoPapel);
-      toast.success("Perfil atualizado.");
+      toast.success("Perfil actualizado.");
       await load();
     } catch (err) {
-      toast.error(mensagemDeErroApi(err, "Não foi possível atualizar o perfil."));
+      toast.error(mensagemDeErroApi(err, "Não foi possível actualizar o perfil."));
     } finally {
       setAGuardar(null);
     }
@@ -66,7 +66,7 @@ const AdminUsers = () => {
           <CardTitle>Utilizadores ({filtered.length})</CardTitle>
           {dias && (
             <p className="text-xs text-muted-foreground mt-1">
-              Registados nos últimos {dias} dias — <Link to="/admin/utilizadores" className="underline">ver todos</Link>
+              Registados nos últimos {dias} dias · <Link to="/admin/utilizadores" className="underline">ver todos</Link>
             </p>
           )}
         </div>
@@ -79,7 +79,7 @@ const AdminUsers = () => {
               <TableRow>
                 <TableHead>Nome</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Perfil atual</TableHead>
+                <TableHead>Perfil actual</TableHead>
                 <TableHead>Mudar para</TableHead>
                 <TableHead>Premium</TableHead>
                 <TableHead>Registado em</TableHead>
@@ -116,7 +116,7 @@ const AdminUsers = () => {
                     )}
                   </TableCell>
                   <TableCell>
-                    {u.premium_ativo ? <Badge>Ativo</Badge> : <span className="text-xs text-muted-foreground">—</span>}
+                    {u.premium_ativo ? <Badge>Activo</Badge> : <span className="text-xs text-muted-foreground">—</span>}
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
                     {new Date(u.criado_em).toLocaleDateString("pt-PT")}

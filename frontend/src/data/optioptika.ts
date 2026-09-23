@@ -8,6 +8,6 @@ export const optioptika = {
   email: "geral@optioptika.com",
   hours: "Seg–Qui · 08h–17h · Sáb · 08h–13h",
   description:
-    "Parceiro clínico oficial do Janelas para a Alma, a Optioptika reúne uma equipa multidisciplinar dedicada à saúde visual — do rastreio à correcção óptica — com atendimento humanizado e tecnologia moderna.",
+    "Parceiro clínico oficial do Janelas para a Alma, a Optioptika reúne uma equipa multidisciplinar dedicada à saúde visual, do rastreio à correcção óptica, com atendimento humanizado e tecnologia moderna.",
   badges: ["Parceiro Oficial", "Consultas Presenciais e Online", "Equipa Certificada"],
 };

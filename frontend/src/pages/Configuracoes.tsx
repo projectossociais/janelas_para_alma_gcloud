@@ -115,9 +115,9 @@ const Configuracoes = () => {
       setCurrentPw("");
       setNewPw("");
       setConfirmPw("");
-      toast.success("Palavra-passe atualizada com sucesso.");
+      toast.success("Palavra-passe actualizada com sucesso.");
     } catch (err) {
-      toast.error(mensagemDeErroApi(err, "Não foi possível atualizar a palavra-passe. Tente novamente."));
+      toast.error(mensagemDeErroApi(err, "Não foi possível actualizar a palavra-passe. Tente novamente."));
     } finally {
       setPasswordLoading(false);
     }
@@ -188,7 +188,7 @@ const Configuracoes = () => {
             <CardContent className="space-y-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <Label htmlFor="n-updates" className="font-medium">Atualizações de Projetos e Doações</Label>
+                  <Label htmlFor="n-updates" className="font-medium">Actualizações de Projectos e Doações</Label>
                   <p className="text-xs text-muted-foreground mt-1">Receba emails sobre o nosso impacto.</p>
                 </div>
                 <Switch
@@ -260,7 +260,7 @@ const Configuracoes = () => {
               <CardTitle className="flex items-center gap-2 text-destructive">
                 <ShieldAlert className="w-5 h-5" /> Zona de Perigo
               </CardTitle>
-              <CardDescription>Ações irreversíveis relacionadas com a sua conta.</CardDescription>
+              <CardDescription>Acções irreversíveis relacionadas com a sua conta.</CardDescription>
             </CardHeader>
             <CardContent className="flex items-center justify-between gap-4">
               <div>
@@ -284,12 +284,12 @@ const Configuracoes = () => {
           <DialogHeader>
             <DialogTitle>Mudar Palavra-passe</DialogTitle>
             <DialogDescription>
-              Introduza a sua palavra-passe atual e escolha uma nova.
+              Introduza a sua palavra-passe actual e escolha uma nova.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1">
-              <Label htmlFor="cur">Palavra-passe atual</Label>
+              <Label htmlFor="cur">Palavra-passe actual</Label>
               <Input id="cur" type="password" value={currentPw} onChange={(e) => setCurrentPw(e.target.value)} />
             </div>
             <div className="space-y-1">
@@ -319,7 +319,7 @@ const Configuracoes = () => {
             <AlertDialogTitle>Tem a certeza?</AlertDialogTitle>
             <AlertDialogDescription>
               A sua conta ficará agendada para eliminação definitiva dentro de{" "}
-              <strong>30 dias</strong> — o perfil, o histórico de exercícios, e a ligação
+              <strong>30 dias</strong>. Serão apagados o perfil, o histórico de exercícios e a ligação
               de pedidos de doação ou Premium à sua identidade. Se voltar a iniciar
               sessão antes dessa data, o pedido é cancelado automaticamente.
             </AlertDialogDescription>

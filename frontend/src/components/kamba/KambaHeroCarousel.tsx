@@ -72,7 +72,7 @@ const KambaHeroCarousel = ({ onOpenForm }: KambaHeroCarouselProps) => {
                 </h2>
                 <p className="text-lg text-navy-foreground/70 max-w-2xl mx-auto">
                   Junta-te a nós como voluntário e ajuda a transformar vidas. Cada
-                  "kamba" (amigo) faz a diferença na luta pela inclusão visual.
+                  "kamba" (amigo) conta na luta pela inclusão visual.
                 </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                   <button
@@ -142,10 +142,10 @@ const KambaHeroCarousel = ({ onOpenForm }: KambaHeroCarouselProps) => {
               <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-8 items-center py-4">
                 <div className="text-center md:text-left space-y-5">
                   <span className="text-sm font-medium tracking-widest uppercase text-teal">
-                    Ação no Terreno
+                    Acção no Terreno
                   </span>
                   <h2 className="text-3xl md:text-4xl font-bold leading-tight">
-                    Campanha de Conscientização na Gamek
+                    Campanha de Consciencialização na Gamek
                   </h2>
                   <p className="text-lg text-navy-foreground/70">
                     A comunidade Meu Kamba Estrábico esteve nas ruas da Gamek, em
@@ -158,7 +158,7 @@ const KambaHeroCarousel = ({ onOpenForm }: KambaHeroCarouselProps) => {
                       className="inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-teal text-teal-foreground font-bold transition-all hover:opacity-90 hover:translate-y-[-2px] hover:shadow-2xl shadow-elevated"
                     >
                       <Images className="w-5 h-5" />
-                      Ver Galeria da Ação
+                      Ver Galeria da Acção
                     </button>
                   </div>
                 </div>

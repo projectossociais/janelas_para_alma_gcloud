@@ -58,7 +58,7 @@ const AdminInbox = () => {
     setOcupado(id);
     try {
       await premiumApi.aprovar(id);
-      toast.success("Pagamento aprovado — Premium activo por 30 dias.");
+      toast.success("Pagamento aprovado. Premium activo por 30 dias.");
       await carregarPremium();
     } catch (err) {
       toast.error(mensagemDeErroApi(err, "Não foi possível aprovar o pagamento."));

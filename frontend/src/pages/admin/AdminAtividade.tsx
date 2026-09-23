@@ -31,19 +31,19 @@ const AdminAtividade = () => {
     adminApi
       .listarAtivos(dias)
       .then(setAtivos)
-      .catch((err) => toast.error(mensagemDeErroApi(err, "Não foi possível carregar os utilizadores ativos.")));
+      .catch((err) => toast.error(mensagemDeErroApi(err, "Não foi possível carregar os utilizadores activos.")));
   }, [dias]);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Atividade</CardTitle>
+        <CardTitle>Actividade</CardTitle>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue={tabInicial}>
           <TabsList>
             <TabsTrigger value="sessoes">Sessões de exercício ({sessoes.length})</TabsTrigger>
-            <TabsTrigger value="ativos">Ativos no período ({ativos.length})</TabsTrigger>
+            <TabsTrigger value="ativos">Activos no período ({ativos.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="sessoes">

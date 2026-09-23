@@ -5,7 +5,7 @@ import saudeMundialPhoto from "@/assets/novidade-saude-mundial.jpg";
 
 const novidades = [
   {
-    title: "Campanha de Conscientização na Gamek",
+    title: "Campanha de Consciencialização na Gamek",
     to: "/meu-kamba/campanha-gamek",
     external: false,
     image: teamGroupPhoto,

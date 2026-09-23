@@ -17,7 +17,7 @@ const LockedVideoOverlay = ({ title, onUnlock }: LockedVideoOverlayProps) => {
   return (
     <div
       className="relative aspect-video rounded-t-xl overflow-hidden bg-gradient-to-br from-navy via-navy to-teal/60 flex flex-col items-center justify-center text-primary-foreground p-6 text-center"
-      aria-label={`${title} — conteúdo bloqueado`}
+      aria-label={`${title}: conteúdo bloqueado`}
     >
       <div className="absolute inset-0 opacity-20 pointer-events-none [background-image:radial-gradient(circle_at_1px_1px,white_1px,transparent_0)] [background-size:16px_16px]" />
       <div className="relative w-14 h-14 rounded-full bg-primary-foreground/15 backdrop-blur flex items-center justify-center mb-3 border border-primary-foreground/25">

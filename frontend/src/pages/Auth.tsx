@@ -95,7 +95,7 @@ const Auth = () => {
           });
           return;
         }
-        toast.error(resultado.error || "Email ou palavra-passe incorretos.");
+        toast.error(resultado.error || "Email ou palavra-passe incorrectos.");
         return;
       }
       toast.success("Sessão iniciada.");
@@ -314,7 +314,7 @@ const Auth = () => {
                     <Label>Província</Label>
                     <Select value={province} onValueChange={setProvince}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione a sua província" />
+                        <SelectValue placeholder="Seleccione a sua província" />
                       </SelectTrigger>
                       <SelectContent>
                         {PROVINCES.map((p) => (
@@ -329,7 +329,7 @@ const Auth = () => {
                     <Label>Género</Label>
                     <Select value={gender} onValueChange={setGender}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione o seu género" />
+                        <SelectValue placeholder="Seleccione o seu género" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="masculino">Masculino</SelectItem>
@@ -342,7 +342,7 @@ const Auth = () => {
                     <Label>Perfil de Utente</Label>
                     <Select value={role} onValueChange={(v) => setRole(v as UserRole)}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione o seu perfil" />
+                        <SelectValue placeholder="Seleccione o seu perfil" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="comum">{ROLE_LABEL.comum}</SelectItem>

@@ -149,7 +149,7 @@ describe("JogoCuriosidades", () => {
     await waitFor(() => expect(obterPerguntaAleatoria).toHaveBeenCalledWith(2), { timeout: 2000 });
   });
 
-  it("a ajuda 50:50 esconde exatamente duas opções erradas e fica desativada", async () => {
+  it("a ajuda 50:50 esconde exactamente duas opções erradas e fica desactivada", async () => {
     obterPerguntaAleatoria.mockResolvedValue(PERGUNTA_1);
     validarResposta.mockResolvedValue({ correta: false, resposta_correta: "B", explicacao: null });
     render(<JogoCuriosidades />, { wrapper: MemoryRouter });
@@ -262,7 +262,7 @@ describe("JogoCuriosidades", () => {
       await waitFor(() => expect(opcaoCerta).not.toBeDisabled());
       const desativadas = [
         "Uma alteração na cor natural da íris",
-        "Uma alergia crónica à luz solar direta",
+        "Uma alergia crónica à luz solar directa",
         "Um tipo particular de miopia elevada",
       ]
         .map((texto) => screen.getByText(texto).closest("button"))

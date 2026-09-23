@@ -141,7 +141,7 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Data / Período</span>
-                <span>{receipt.date} — {receipt.period}</span>
+                <span>{receipt.date}, {receipt.period}</span>
               </div>
             </div>
             <DialogFooter>
@@ -158,7 +158,7 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-xl">
                 <CalendarPlus className="w-5 h-5 text-black" />
-                Agendar Consulta — {optioptika.name}
+                Agendar Consulta na {optioptika.name}
               </DialogTitle>
               <DialogDescription>
                 Escolha a modalidade e preencha os seus dados. A clínica confirmará o horário por email ou telefone.
@@ -252,9 +252,9 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
                       <SelectValue placeholder="Escolher período" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="manha">Manhã (08h30 – 12h00)</SelectItem>
-                      <SelectItem value="tarde">Tarde (14h00 – 18h00)</SelectItem>
-                      <SelectItem value="sabado">Sábado (09h00 – 13h00)</SelectItem>
+                      <SelectItem value="manha">Manhã (08h30 às 12h00)</SelectItem>
+                      <SelectItem value="tarde">Tarde (14h00 às 18h00)</SelectItem>
+                      <SelectItem value="sabado">Sábado (09h00 às 13h00)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

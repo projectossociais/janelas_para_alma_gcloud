@@ -51,7 +51,7 @@ const SECCOES: Secao[] = [
     body: (
       <>
         <p>
-          O tratamento de dados pessoais efetuado pelo Janelas Para a Alma rege-se pela{" "}
+          O tratamento de dados pessoais efectuado pelo Janelas Para a Alma rege-se pela{" "}
           <strong className="text-foreground">Lei n.º 22/11, de 17 de Junho</strong> (Lei de Protecção de Dados
           Pessoais da República de Angola), bem como pelo direito à reserva da intimidade da vida privada
           consagrado no <strong className="text-foreground">artigo 32.º da Constituição da República de
@@ -79,7 +79,7 @@ const SECCOES: Secao[] = [
           <li>Dados de identificação e contacto: nome, email, número de telefone, província de residência;</li>
           <li>Dados de conta: credenciais de acesso e preferências de utilização;</li>
           <li>
-            <strong className="text-foreground">Dados de saúde e visuais</strong> — nomeadamente os resultados
+            <strong className="text-foreground">Dados de saúde e visuais</strong>: nomeadamente os resultados
             do rastreio digital de estrabismo (imagens ou métricas faciais processadas pelo scanner, tipo de
             estrabismo indicado, histórico de sintomas partilhado voluntariamente) e o progresso registado nos
             exercícios de terapia visual;
@@ -95,8 +95,8 @@ const SECCOES: Secao[] = [
             <strong className="text-foreground">artigo 14.º</strong> da mesma lei, só recolhemos e processamos
             dados de saúde mediante{" "}
             <strong className="text-foreground">consentimento inequívoco, expresso e escrito</strong> do
-            titular (ou do seu representante legal) — dado de forma livre, específica e informada,
-            nomeadamente ao iniciar voluntariamente um rastreio ou ao submeter resultados de exercícios —
+            titular (ou do seu representante legal), dado de forma livre, específica e informada,
+            nomeadamente ao iniciar voluntariamente um rastreio ou ao submeter resultados de exercícios, e
             nunca por consentimento implícito ou pré-assinalado, salvo nas excepções estritas previstas na lei
             (designadamente medicina preventiva, diagnóstico ou emergência médica).
           </p>
@@ -131,7 +131,7 @@ const SECCOES: Secao[] = [
         Não vendemos nem cedemos os seus dados pessoais para fins comerciais de terceiros. Os seus dados só são
         partilhados com clínicas e profissionais de saúde visual parceiros quando demonstra interesse directo
         nesse encaminhamento, e com prestadores de serviços que apoiam o funcionamento técnico da plataforma
-        (por exemplo, alojamento e infraestrutura de envio de email), sempre limitados ao estritamente
+        (por exemplo, alojamento e infra-estrutura de envio de email), sempre limitados ao estritamente
         necessário e sujeitos a obrigações de confidencialidade equivalentes às aqui descritas.
       </p>
     ),
@@ -141,7 +141,7 @@ const SECCOES: Secao[] = [
     title: "6. Transferência Internacional de Dados",
     body: (
       <p>
-        A infraestrutura técnica que suporta o Janelas Para a Alma — base de dados e serviços de alojamento —
+        A infra-estrutura técnica que suporta o Janelas Para a Alma (base de dados e serviços de alojamento)
         pode estar localizada em servidores fora do território angolano, operados pela{" "}
         <strong className="text-foreground">Google Cloud Platform</strong>. Nos termos do{" "}
         <strong className="text-foreground">artigo 33.º</strong> da Lei n.º 22/11, quando o país de destino
@@ -162,13 +162,13 @@ const SECCOES: Secao[] = [
       <>
         <p>Nos termos da Lei n.º 22/11, tem, a qualquer momento, o direito de:</p>
         <ul className="list-disc pl-5 space-y-1.5">
-          <li><strong className="text-foreground">Informação</strong> (artigo 25.º) — ser informado sobre a existência e finalidade do tratamento dos seus dados;</li>
-          <li><strong className="text-foreground">Acesso</strong> (artigo 26.º) — obter confirmação e cópia dos dados pessoais que tratamos sobre si;</li>
-          <li><strong className="text-foreground">Oposição</strong> (artigo 27.º) — opor-se a um tratamento específico dos seus dados;</li>
-          <li><strong className="text-foreground">Rectificação, actualização e eliminação</strong> (artigo 28.º) — corrigir dados incompletos ou inexactos, ou solicitar o apagamento dos seus dados e da sua conta; o Janelas Para a Alma tem o dever legal de responder no prazo de 60 dias úteis;</li>
-          <li><strong className="text-foreground">Retirada do consentimento</strong> — a qualquer momento, sem afectar a licitude do tratamento já realizado até essa data;</li>
+          <li><strong className="text-foreground">Informação</strong> (artigo 25.º): ser informado sobre a existência e finalidade do tratamento dos seus dados;</li>
+          <li><strong className="text-foreground">Acesso</strong> (artigo 26.º): obter confirmação e cópia dos dados pessoais que tratamos sobre si;</li>
+          <li><strong className="text-foreground">Oposição</strong> (artigo 27.º): opor-se a um tratamento específico dos seus dados;</li>
+          <li><strong className="text-foreground">Rectificação, actualização e eliminação</strong> (artigo 28.º): corrigir dados incompletos ou inexactos, ou solicitar o apagamento dos seus dados e da sua conta; o Janelas Para a Alma tem o dever legal de responder no prazo de 60 dias úteis;</li>
+          <li><strong className="text-foreground">Retirada do consentimento</strong>: a qualquer momento, sem afectar a licitude do tratamento já realizado até essa data;</li>
           <li>
-            <strong className="text-foreground">Portabilidade</strong> — ainda que a Lei n.º 22/11 não preveja
+            <strong className="text-foreground">Portabilidade</strong>: ainda que a Lei n.º 22/11 não preveja
             expressamente este direito, disponibilizamo-lo como boa prática adicional: pode solicitar a
             entrega dos dados que nos forneceu num formato estruturado.
           </li>
@@ -204,8 +204,8 @@ const SECCOES: Secao[] = [
     body: (
       <p>
         Nos termos do <strong className="text-foreground">artigo 30.º</strong> da Lei n.º 22/11, implementamos
-        medidas técnicas e organizativas adequadas — incluindo controlo de acesso, encriptação em trânsito e
-        autenticação segura — para proteger os seus dados pessoais contra acesso não autorizado, perda,
+        medidas técnicas e organizativas adequadas, incluindo controlo de acesso, encriptação em trânsito e
+        autenticação segura, para proteger os seus dados pessoais contra acesso não autorizado, perda,
         alteração ou divulgação indevida. Para dados de saúde, aplicamos ainda as medidas especiais de
         segurança reforçada previstas no <strong className="text-foreground">artigo 31.º</strong>, incluindo a
         separação lógica dos dados de saúde dos restantes dados pessoais. Todos os colaboradores com acesso aos
@@ -221,8 +221,8 @@ const SECCOES: Secao[] = [
     body: (
       <p>
         Conservamos os seus dados pessoais apenas durante o período necessário às finalidades para as quais
-        foram recolhidos, ou enquanto a sua conta se mantiver activa. Findo esse período — ou mediante pedido de
-        eliminação — os dados são apagados ou anonimizados, salvo quando a lei exija a sua conservação por
+        foram recolhidos, ou enquanto a sua conta se mantiver activa. Findo esse período, ou mediante pedido de
+        eliminação, os dados são apagados ou anonimizados, salvo quando a lei exija a sua conservação por
         período superior (por exemplo, para efeitos de cumprimento de obrigações legais).
       </p>
     ),
@@ -266,7 +266,7 @@ const PoliticaPrivacidade = () => {
               Política de Privacidade
             </h1>
             <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">
-              O nosso compromisso com a proteção dos seus dados pessoais e de saúde, nos termos da legislação
+              O nosso compromisso com a protecção dos seus dados pessoais e de saúde, nos termos da legislação
               angolana de protecção de dados.
             </p>
           </div>
@@ -312,7 +312,7 @@ const PoliticaPrivacidade = () => {
           </div>
 
           <p className="text-center text-xs text-muted-foreground mt-8">
-            Última atualização: Setembro de 2026. Para dúvidas legais, contacte{" "}
+            Última actualização: Setembro de 2026. Para dúvidas legais, contacte{" "}
             <a
               href="mailto:janelasparaalma18@gmail.com"
               className="text-primary hover:underline font-medium"

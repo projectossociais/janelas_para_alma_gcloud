@@ -10,7 +10,7 @@ const steps = [
     number: "01",
     title: "Recolha de Armações Usadas",
     description:
-      "Implementação de canais de recolha em parceria com clínicas, óticas e comunidades. Cada par de óculos doado ganha uma nova vida.",
+      "Implementação de canais de recolha em parceria com clínicas, ópticas e comunidades. Cada par de óculos doado ganha uma nova vida.",
   },
   {
     icon: Wrench,
@@ -52,7 +52,7 @@ const Circular = () => {
                 Logística de Economia Circular
               </h1>
               <p className="text-lg md:text-xl text-primary-foreground/90 leading-relaxed">
-                Um compromisso com a saúde visual e o futuro do nosso planeta.
+                Cuidamos da saúde visual e do futuro do nosso planeta.
               </p>
             </div>
           </div>

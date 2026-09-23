@@ -101,7 +101,7 @@ const EditarPerfil = () => {
       setAvatarUrl(avatar_url);
       setProfile({ ...profile, avatar_url });
       updateUserProfile({ avatarUrl: avatar_url });
-      toast.success("Foto de perfil atualizada!");
+      toast.success("Foto de perfil actualizada!");
     } catch (err) {
       console.error("Falha ao enviar a foto de perfil:", err);
       toast.error(mensagemDeErroApi(err, "Não foi possível enviar a foto. Tente novamente."));
@@ -143,7 +143,7 @@ const EditarPerfil = () => {
         dataNascimento: data.data_nascimento ?? "",
         gender: data.genero ?? "",
       });
-      toast.success("O seu perfil foi atualizado com sucesso!");
+      toast.success("O seu perfil foi actualizado com sucesso!");
     } catch (err) {
       console.error("Falha ao guardar o perfil:", err);
       toast.error(mensagemDeErroApi(err, "Não foi possível guardar as alterações. Tente novamente."));
@@ -176,7 +176,7 @@ const EditarPerfil = () => {
           <div className="text-center mb-8">
             <h1 className="text-3xl md:text-4xl font-bold text-primary mb-2">Editar Perfil</h1>
             <p className="text-muted-foreground">
-              Atualize as suas informações pessoais, biografia e contactos.
+              Actualize as suas informações pessoais, biografia e contactos.
             </p>
           </div>
 
@@ -238,7 +238,7 @@ const EditarPerfil = () => {
                     id="bio"
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
-                    placeholder="Conte um pouco sobre si, a sua jornada ou como o projeto o tem ajudado..."
+                    placeholder="Conte um pouco sobre si, o seu percurso ou como o projecto o tem ajudado..."
                     rows={4}
                     className="resize-none"
                   />
@@ -280,7 +280,7 @@ const EditarPerfil = () => {
                     <Label>Género</Label>
                     <Select value={gender} onValueChange={setGender}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione" />
+                        <SelectValue placeholder="Seleccione" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="masculino">Masculino</SelectItem>
@@ -333,7 +333,7 @@ const EditarPerfil = () => {
                   </Label>
                   <Select value={province} onValueChange={setProvince}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione a sua província" />
+                      <SelectValue placeholder="Seleccione a sua província" />
                     </SelectTrigger>
                     <SelectContent className="max-h-72">
                       {PROVINCES.map((p) => (

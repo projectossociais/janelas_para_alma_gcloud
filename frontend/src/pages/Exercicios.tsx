@@ -163,8 +163,8 @@ const Exercicios = () => {
               Exercícios Visuais Práticos
             </h1>
             <p className="text-muted-foreground text-base md:text-lg">
-              Aprende técnicas simples e interativas para fortalecer a tua visão
-              no dia a dia.
+              Aprende técnicas simples e interactivas para fortalecer a tua visão
+              no dia-a-dia.
             </p>
           </div>
         </section>
@@ -200,7 +200,7 @@ const Exercicios = () => {
                         </p>
                         <Button onClick={() => navigate(ex.route)} className="self-start">
                           <Play className="w-4 h-4" />
-                          Iniciar Exercício Interativo
+                          Iniciar Exercício Interactivo
                           <ArrowRight className="w-4 h-4" />
                         </Button>
                       </div>
@@ -305,8 +305,8 @@ const Exercicios = () => {
                 </h3>
                 <p className="text-navy-foreground/70 text-sm mb-6 max-w-lg">
                   Acompanhe a nossa comunidade de Kambas nas redes sociais para
-                  desafios visuais diários, dicas de saúde e atualizações sobre
-                  o projeto.
+                  desafios visuais diários, dicas de saúde e actualizações sobre
+                  o projecto.
                 </p>
                 <a
                   href="https://www.instagram.com/janelas_para_alma/"

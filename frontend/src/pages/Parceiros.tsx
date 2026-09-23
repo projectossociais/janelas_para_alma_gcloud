@@ -12,7 +12,7 @@ const benefits = [
   {
     icon: Eye,
     title: "Acesso Facilitado",
-    text: "Acesso direto a rastreios e consultas de especialidade para tratar casos complexos identificados nas nossas campanhas.",
+    text: "Acesso directo a rastreios e consultas de especialidade para tratar casos complexos identificados nas nossas campanhas.",
   },
   {
     icon: Tag,
@@ -54,7 +54,7 @@ const Parceiros = () => {
             Rede de Parceiros<br className="hidden md:block" /> de Saúde
           </h1>
           <p className="text-lg md:text-2xl text-primary-foreground/85 max-w-3xl mx-auto leading-relaxed">
-            Conectando especialistas a quem mais precisa. Junte-se à plataforma que vai revolucionar o acesso aos cuidados visuais em Angola.
+            Conectando especialistas a quem mais precisa. Junte-se a nós e ajude a levar cuidados visuais a mais pessoas em Angola.
           </p>
         </div>
       </section>
@@ -109,7 +109,7 @@ const Parceiros = () => {
                   Faça parte desta visão.
                 </h2>
                 <p className="text-primary-foreground/85 text-lg mb-8 max-w-2xl mx-auto leading-relaxed">
-                  Representa uma clínica (como a Centroptico), uma ótica ou é profissional de saúde visual? Seja um dos nossos parceiros oftalmológicos pioneiros na transformação social.
+                  Representa uma clínica (como a Centroptico), uma óptica ou é profissional de saúde visual? Seja um dos nossos parceiros oftalmológicos pioneiros na transformação social.
                 </p>
                 <PartnerDialog />
               </div>

@@ -142,7 +142,7 @@ describe("AuthContext", () => {
 
   it("signIn com credenciais erradas devolve o erro e nunca autentica", async () => {
     eu.mockRejectedValue(erroApi(401, "sem sessão"));
-    entrar.mockRejectedValue(erroApi(401, "email ou password incorretos"));
+    entrar.mockRejectedValue(erroApi(401, "email ou password incorrectos"));
     const { result } = renderAuth();
     await waitFor(() => expect(result.current.loading).toBe(false));
 
@@ -151,7 +151,7 @@ describe("AuthContext", () => {
       resultado = await result.current.signIn("ana@example.com", "errada");
     });
 
-    expect(resultado).toEqual({ ok: false, error: "email ou password incorretos" });
+    expect(resultado).toEqual({ ok: false, error: "email ou password incorrectos" });
     expect(result.current.isLoggedIn).toBe(false);
   });
 

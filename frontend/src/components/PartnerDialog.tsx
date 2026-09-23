@@ -26,7 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 const partnershipTypes = [
   "Clínica Oftalmológica",
   "Médico Especialista",
-  "Ótica",
+  "Óptica",
   "Investidor",
   "Voluntário",
   "Outro",
@@ -163,7 +163,7 @@ const PartnerDialog = () => {
               onValueChange={(value) => updateField("Tipo de Parceria", value)}
             >
               <SelectTrigger id="partner-tipo" aria-label="Tipo de Parceria">
-                <SelectValue placeholder="Selecione uma opção" />
+                <SelectValue placeholder="Seleccione uma opção" />
               </SelectTrigger>
               <SelectContent>
                 {partnershipTypes.map((type) => (

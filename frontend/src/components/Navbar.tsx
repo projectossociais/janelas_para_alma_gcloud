@@ -118,8 +118,8 @@ const searchIndex: SearchItem[] = [
   {
     id: "parceiros",
     title: "Rede de Parceiros de Saúde",
-    description: "Clínicas, óticas e especialistas: junte-se à plataforma que vai democratizar o acesso à saúde visual em Angola.",
-    keywords: "parceiros, clínicas, óticas, especialistas, saúde visual, oftalmologia, centroptico, rede, plataforma",
+    description: "Clínicas, ópticas e especialistas: junte-se à plataforma que vai democratizar o acesso à saúde visual em Angola.",
+    keywords: "parceiros, clínicas, ópticas, especialistas, saúde visual, oftalmologia, centroptico, rede, plataforma",
     route: "/parceiros",
   },
   {
