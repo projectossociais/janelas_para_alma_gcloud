@@ -223,19 +223,19 @@
     "saberMais": "Learn more"
   },
   "BaseExercise": {
-    "sair": "",
-    "pausar": "",
-    "iniciar": "",
-    "conteudoPremium": "",
-    "facaUpgradeParaDesbloquear": "",
-    "esteExercicioEstaDisponivel": "",
-    "desbloquearAcessoPremium": "",
-    "camaraNaoSuportadaNeste": "",
-    "naoFoiPossivelAceder": "",
-    "sairDoExercicio": "",
-    "tempoRestante": "",
-    "pontuacaoActual": "",
-    "preVisualizacaoDaCamara": ""
+    "sair": "Exit",
+    "pausar": "Pause",
+    "iniciar": "Start",
+    "conteudoPremium": "Premium Content",
+    "facaUpgradeParaDesbloquear": "Upgrade to unlock",
+    "esteExercicioEstaDisponivel": "This exercise is available to accounts with Premium access. Upgrade to continue your vision rehabilitation without limits.",
+    "desbloquearAcessoPremium": "Unlock Premium Access",
+    "camaraNaoSuportadaNeste": "Camera not supported in this browser.",
+    "naoFoiPossivelAceder": "We couldn't access the camera.",
+    "sairDoExercicio": "Exit exercise",
+    "tempoRestante": "Time remaining: {{valor}}",
+    "pontuacaoActual": "Current score: {{score}}",
+    "preVisualizacaoDaCamara": "Camera preview"
   },
   "CampanhaGamek": {
     "n12DeSetembro": "",
