@@ -369,14 +369,14 @@
     "agendarEliminacao": "Schedule deletion"
   },
   "ConfirmarEmail": {
-    "irParaOLogin": "",
-    "esteLinkDeConfirmacao": "",
-    "esteLinkDeConfirmacao2": "",
-    "aConfirmarASua": "",
-    "contaConfirmada": "",
-    "naoFoiPossivelConfirmar": "",
-    "umMomento": "",
-    "jaPodeEntrarCom": ""
+    "irParaOLogin": "Go to sign-in",
+    "esteLinkDeConfirmacao": "This confirmation link is invalid.",
+    "esteLinkDeConfirmacao2": "This confirmation link is invalid or has expired.",
+    "aConfirmarASua": "Confirming your account...",
+    "contaConfirmada": "Account confirmed!",
+    "naoFoiPossivelConfirmar": "We couldn't confirm your account",
+    "umMomento": "One moment.",
+    "jaPodeEntrarCom": "You can now sign in with your email and password."
   },
   "ConscienciaPerifericaExercise": {
     "conscienciaPeriferica": "",
