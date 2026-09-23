@@ -22,6 +22,7 @@ import logoImg from "@/assets/logo.png";
 import { Trans, useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { localizar } from "@/i18n/rotas";
+import { formatarData, formatarDataHora } from "@/i18n/formatar";
 
 interface LogoBitmap {
   dataUrl: string;
@@ -59,6 +60,22 @@ type DiagnosisKey =
   | "Necessária Avaliação Oftalmológica";
 
 const DIAGNOSIS_FALLBACK: DiagnosisKey = "Necessária Avaliação Oftalmológica";
+
+/** O diagnóstico é um valor estável (português) que vem da API e serve de
+ *  chave; só o rótulo mostrado é traduzido. Um valor desconhecido aparece tal
+ *  como veio. */
+const CHAVE_ROTULO_DIAGNOSTICO: Record<DiagnosisKey, string> = {
+  Esotropia: "ScannerResultados.diagEsotropia",
+  Exotropia: "ScannerResultados.diagExotropia",
+  Hipertropia: "ScannerResultados.diagHipertropia",
+  Hipotropia: "ScannerResultados.diagHipotropia",
+  "Alinhamento Fisiológico Normal": "ScannerResultados.diagNormal",
+  "Necessária Avaliação Oftalmológica": "ScannerResultados.diagAvaliacao",
+};
+const rotuloDiagnostico = (valor: string): string => {
+  const chave = CHAVE_ROTULO_DIAGNOSTICO[valor as DiagnosisKey];
+  return chave ? i18n.t(chave) : valor;
+};
 const DIAGNOSTICO_NORMAL: DiagnosisKey = "Alinhamento Fisiológico Normal";
 
 type TabKey = "condicao" | "clinicas" | "exercicios" | "comunidade";
@@ -301,7 +318,10 @@ const ALL_CLINICS = {
 
 type ClinicRec = (typeof ALL_CLINICS)[keyof typeof ALL_CLINICS] & { subtitle: string };
 
-const CLINIC_RECOMMENDATIONS: Record<DiagnosisKey, ClinicRec[]> = {
+// Função (e não constante): os `...ALL_CLINICS.x` copiam os valores dos
+// getters no momento em que correm. Ao nível do módulo isso acontecia uma vez,
+// em português, e a página inglesa (e o PDF) ficavam com as clínicas em PT.
+const CLINIC_RECOMMENDATIONS = (): Record<DiagnosisKey, ClinicRec[]> => ({
   Esotropia: [
     { ...ALL_CLINICS.sagrada, get subtitle() {
       return i18n.t("ScannerResultados.centroDeExcelenciaEm");
@@ -344,7 +364,7 @@ const CLINIC_RECOMMENDATIONS: Record<DiagnosisKey, ClinicRec[]> = {
       return i18n.t("ScannerResultados.diagnosticoDiferencialEspecializado");
     } },
   ],
-};
+});
 
 const exercises = [
   { get title() {
@@ -410,7 +430,7 @@ const Resultados = () => {
     [result]
   );
   const recommendedClinics = useMemo<ClinicRec[]>(
-    () => (result ? CLINIC_RECOMMENDATIONS[result.diagnosis] ?? CLINIC_RECOMMENDATIONS[DIAGNOSIS_FALLBACK] : []),
+    () => (result ? CLINIC_RECOMMENDATIONS()[result.diagnosis] ?? CLINIC_RECOMMENDATIONS()[DIAGNOSIS_FALLBACK] : []),
     [result]
   );
 
@@ -428,7 +448,7 @@ const Resultados = () => {
   const handleDownload = async () => {
     if (!result || !info) return;
     const date = new Date(result.date);
-    const formatted = date.toLocaleString("pt-PT");
+    const formatted = formatarDataHora(date);
     const logo = await obterLogo().catch(() => null);
 
     const doc = new jsPDF({ unit: "pt", format: "a4" });
@@ -512,7 +532,7 @@ const Resultados = () => {
 
     doc.setFontSize(16);
     doc.setTextColor(...corDiagnostico);
-    doc.text(result.diagnosis, M + 18, y + 46);
+    doc.text(rotuloDiagnostico(result.diagnosis), M + 18, y + 46);
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
@@ -679,7 +699,7 @@ const Resultados = () => {
       doc.text(tr("ScannerResultados.pdfPagina", { i, pageCount }), W - M, H - footerH / 2 + 3, { align: "right" });
     }
 
-    doc.save(`relatorio-janelas-${result.diagnosis.toLowerCase()}-${date.toISOString().slice(0, 10)}.pdf`);
+    doc.save(`${tr("ScannerResultados.pdfNomeFicheiro")}-${rotuloDiagnostico(result.diagnosis).toLowerCase()}-${date.toISOString().slice(0, 10)}.pdf`);
   };
 
   if (!result || !info) {
@@ -701,7 +721,7 @@ const Resultados = () => {
               <CheckCircle2 className="w-4 h-4" />{" "}{tr("ScannerResultados.analiseConcluida")}
             </div>
             <h1 className="mt-3 text-3xl md:text-4xl font-bold leading-tight">
-              <Trans i18nKey="ScannerResultados.diagnostico" components={{ span: <span className="text-gold" /> }} values={{ diagnosis: result.diagnosis }} />
+              <Trans i18nKey="ScannerResultados.diagnostico" components={{ span: <span className="text-gold" /> }} values={{ diagnosis: rotuloDiagnostico(result.diagnosis) }} />
             </h1>
             <p className="mt-3 text-sm md:text-base text-white/80 max-w-2xl">
               {result.apiData?.recomendacao || info.short}{tr("ScannerResultados.recomendaSeConsultaOftalmologica")}
@@ -710,8 +730,8 @@ const Resultados = () => {
             <div className="mt-6 grid sm:grid-cols-3 gap-3">
               {[
                 { l: tr("ScannerResultados.confiancaIa"), v: `${result.confidence}%` },
-                { l: tr("ScannerResultados.tipo"), v: result.diagnosis },
-                { l: tr("ScannerResultados.data"), v: new Date(result.date).toLocaleDateString("pt-PT") },
+                { l: tr("ScannerResultados.tipo"), v: rotuloDiagnostico(result.diagnosis) },
+                { l: tr("ScannerResultados.data"), v: formatarData(result.date) },
               ].map((m) => (
                 <div key={m.l} className="rounded-2xl bg-white/10 backdrop-blur px-4 py-3">
                   <div className="text-xs text-white/70">{m.l}</div>
@@ -786,7 +806,7 @@ const CondicaoPanel = ({ diagnosis, info }: { diagnosis: DiagnosisKey; info: Dia
       <div className="flex items-center gap-2 text-teal text-xs font-bold uppercase tracking-widest">
         <Info className="w-4 h-4" />{" "}{tr("ScannerResultados.oSeuResultado")}
       </div>
-      <h2 className="mt-2 text-xl font-bold text-foreground"><Trans i18nKey="ScannerResultados.oQueE" values={{ diagnosis }} /></h2>
+      <h2 className="mt-2 text-xl font-bold text-foreground"><Trans i18nKey="ScannerResultados.oQueE" values={{ diagnosis: rotuloDiagnostico(diagnosis) }} /></h2>
       <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{info.description}</p>
       {diagnosis !== DIAGNOSTICO_NORMAL && (
         <div className="mt-5">
@@ -809,7 +829,7 @@ const CondicaoPanel = ({ diagnosis, info }: { diagnosis: DiagnosisKey; info: Dia
       </div>
       <h2 className="mt-2 text-xl font-bold text-foreground">{tr("ScannerResultados.planoTerapeuticoOrientador")}</h2>
       <p className="mt-3 text-sm text-muted-foreground">
-        <Trans i18nKey="ScannerResultados.asOpcoesAbaixoSao" values={{ diagnosis }} />
+        <Trans i18nKey="ScannerResultados.asOpcoesAbaixoSao" values={{ diagnosis: rotuloDiagnostico(diagnosis) }} />
       </p>
       <ul className="mt-4 space-y-2">
         {info.treatments.map((t) => (
@@ -831,7 +851,7 @@ const ClinicasPanel = ({ clinics, diagnosis }: { clinics: ClinicRec[]; diagnosis
     <div className="flex items-start gap-3 p-4 rounded-2xl bg-teal/5 border border-teal/20">
       <Eye className="w-5 h-5 text-teal shrink-0 mt-0.5" />
       <p className="text-sm text-foreground">
-        <Trans i18nKey="ScannerResultados.recomendacoesPersonalizadasComBase" components={{ strong: <strong /> }} values={{ diagnosis }} />
+        <Trans i18nKey="ScannerResultados.recomendacoesPersonalizadasComBase" components={{ strong: <strong /> }} values={{ diagnosis: rotuloDiagnostico(diagnosis) }} />
       </p>
     </div>
     <div className="grid md:grid-cols-2 gap-4">

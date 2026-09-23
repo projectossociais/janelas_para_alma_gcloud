@@ -1,6 +1,7 @@
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { localizar } from "@/i18n/rotas";
 
 interface BackButtonProps {
   fallbackPath?: string;
@@ -17,7 +18,7 @@ const BackButton = ({ fallbackPath = "/", label, className = "" }: BackButtonPro
     if (window.history.length > 2) {
       navigate(-1);
     } else {
-      navigate(fallbackPath);
+      navigate(localizar(fallbackPath));
     }
   };
 

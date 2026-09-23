@@ -41,13 +41,13 @@ const doctorImage = "/registo-premium-doctor.webp";
 
 const step1Schema = () => z.object({
   nome: z.string().trim().min(2, i18n.t("RegistoPremium.nomeMuitoCurto")).max(100),
-  email: z.string().trim().email("Email inválido").max(255),
+  email: z.string().trim().email(i18n.t("RegistoPremium.emailInvalido")).max(255),
   telefone: z
     .string()
     .trim()
-    .min(6, "Telefone inválido")
-    .max(20, "Telefone inválido")
-    .regex(/^[+()\d\s-]+$/, "Use apenas dígitos, espaços e os símbolos + ( ) -"),
+    .min(6, i18n.t("RegistoPremium.telefoneInvalido"))
+    .max(20, i18n.t("RegistoPremium.telefoneInvalido"))
+    .regex(/^[+()\d\s-]+$/, i18n.t("RegistoPremium.useApenasDigitos")),
 });
 
 const step2Schema = () => z.object({
@@ -384,7 +384,7 @@ const RegistoPremium = () => {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="voce@exemplo.com"
+                    placeholder={t("RegistoPremium.exemploEmail")}
                     maxLength={255}
                   />
                   {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}

@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { notificacoesApi, mensagemDeErroApi, type NotificacaoPublica } from "@/lib/apiClient";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { formatarDataHora } from "@/i18n/formatar";
 
 // ADMIN-04: substitui o antigo AdminNotifications.tsx, que "enviava" para
 // uma tabela do Supabase sem nenhum consumidor real -- este sino é esse
@@ -112,7 +113,7 @@ const NotificationBell = ({ claro }: NotificationBellProps) => {
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">{n.mensagem}</p>
               <p className="text-[11px] text-muted-foreground mt-1">
-                {new Date(n.created_at).toLocaleString("pt-PT")}
+                {formatarDataHora(n.created_at)}
               </p>
             </button>
           ))}

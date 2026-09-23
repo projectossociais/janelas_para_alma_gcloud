@@ -18,8 +18,8 @@ import i18n from "@/i18n";
 
 const volunteerSchema = () => z.object({
   name: z.string().trim().min(1, i18n.t("VolunteerSection.nomeEObrigatorio")).max(100, i18n.t("VolunteerSection.maximo100Caracteres")),
-  email: z.string().trim().email("Email inválido").max(255, "Máximo 255 caracteres"),
-  phone: z.string().trim().min(1, "Telefone é obrigatório").max(20, "Máximo 20 caracteres"),
+  email: z.string().trim().email(i18n.t("VolunteerSection.emailInvalido")).max(255, i18n.t("VolunteerSection.maximo255Caracteres")),
+  phone: z.string().trim().min(1, i18n.t("VolunteerSection.telefoneEObrigatorio")).max(20, i18n.t("VolunteerSection.maximo20Caracteres")),
   motivation: z.string().trim().min(1, i18n.t("VolunteerSection.motivacaoEObrigatoria")).max(1000, i18n.t("VolunteerSection.maximo1000Caracteres")),
 });
 
@@ -104,7 +104,7 @@ const VolunteerSection = () => {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">{t("VolunteerSection.email")}</label>
-                <Input name="email" type="email" placeholder="email@exemplo.com" maxLength={255} />
+                <Input name="email" type="email" placeholder={t("VolunteerSection.exemploEmail")} maxLength={255} />
                 {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
               </div>
             </div>

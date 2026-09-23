@@ -21,6 +21,7 @@ import { authApi, mensagemDeErroApi } from "@/lib/apiClient";
 import { erroDePasswordFraca } from "@/lib/validarPassword";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 import { useTranslation } from "react-i18next";
+import { localizar } from "@/i18n/rotas";
 
 const Auth = () => {
   const { t } = useTranslation();
@@ -58,7 +59,7 @@ const Auth = () => {
   // coisas do lado da API: liga a uma conta existente ou cria uma nova).
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const irParaProximo = () => navigate(nextPath);
+  const irParaProximo = () => navigate(localizar(nextPath));
 
   const handleGoogleCredential = async (idToken: string) => {
     setGoogleLoading(true);

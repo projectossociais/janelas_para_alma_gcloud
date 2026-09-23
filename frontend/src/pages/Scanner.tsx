@@ -11,6 +11,7 @@ import { submeterRastreioMultiGaze, type ScreeningResponse } from "@/services/ap
 import { screeningsApi, mensagemDeErroApi } from "@/lib/apiClient";
 import { Trans, useTranslation } from "react-i18next";
 import i18n from "@/i18n";
+import { localizar } from "@/i18n/rotas";
 
 
 type TrackingStage = 0 | 1 | 2;
@@ -199,7 +200,7 @@ const Scanner = () => {
           apiData: apiResult || null, // Guarda todos os dados clínicos reais da API
         })
       );
-      navigate(analysisId ? `/scanner/resultados?id=${analysisId}` : "/scanner/resultados");
+      navigate(localizar(analysisId ? `/scanner/resultados?id=${analysisId}` : "/scanner/resultados"));
     }, 2500);
   }, [navigate]);
 

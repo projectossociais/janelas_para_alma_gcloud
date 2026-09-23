@@ -263,7 +263,7 @@ const Exercicios = () => {
                         <p className="text-sm text-muted-foreground mb-4 flex-1">
                           {ex.description}
                         </p>
-                        <Button onClick={() => navigate(ex.route)} className="self-start">
+                        <Button onClick={() => navigate(localizar(ex.route))} className="self-start">
                           <Play className="w-4 h-4" />
                           {t("Exercicios.iniciarExercicioInteractivo")}
                           <ArrowRight className="w-4 h-4" />
@@ -312,9 +312,9 @@ const Exercicios = () => {
                         key={ex.id}
                         role="button"
                         tabIndex={0}
-                        onClick={() => navigate(ex.route)}
+                        onClick={() => navigate(localizar(ex.route))}
                         onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") navigate(ex.route);
+                          if (e.key === "Enter" || e.key === " ") navigate(localizar(ex.route));
                         }}
                         className="cursor-pointer rounded-xl border border-border bg-card shadow-card overflow-hidden flex flex-col transition-all hover:-translate-y-0.5 hover:shadow-elevated"
                       >

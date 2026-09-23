@@ -43,7 +43,7 @@ import {
 } from "@/lib/apiClient";
 import { DEFAULT_BANK_DATA, ofuscarValor } from "@/lib/pagamento";
 import { Trans, useTranslation } from "react-i18next";
-import i18n from "@/i18n";
+import i18n, { tPt } from "@/i18n";
 
 type Mode = "materiais" | "financeiro";
 
@@ -89,6 +89,9 @@ const materialItems: MaterialItem[] = [
 
 interface Tier {
   id: "tier1" | "tier2" | "tier3";
+  /** Chaves i18n do nome e do intervalo: os detalhes enviados à API usam sempre o texto português. */
+  chaveNome: string;
+  chaveIntervalo: string;
   name: string;
   range: string;
   short: string;
@@ -102,6 +105,8 @@ interface Tier {
 const tiers: Tier[] = [
   {
     id: "tier1",
+    chaveNome: "Apoiar.aliado",
+    chaveIntervalo: "Apoiar.n10000A250",
     get name() {
       return i18n.t("Apoiar.aliado");
     },
@@ -121,6 +126,8 @@ const tiers: Tier[] = [
   },
   {
     id: "tier2",
+    chaveNome: "Apoiar.padrinho",
+    chaveIntervalo: "Apoiar.n250000A500",
     get name() {
       return i18n.t("Apoiar.padrinho");
     },
@@ -140,6 +147,8 @@ const tiers: Tier[] = [
   },
   {
     id: "tier3",
+    chaveNome: "Apoiar.benfeitor",
+    chaveIntervalo: "Apoiar.acimaDe500000",
     get name() {
       return i18n.t("Apoiar.benfeitor");
     },
@@ -286,8 +295,8 @@ const Apoiar = () => {
     setSubmitting(true);
     try {
       const detalhesDonativo = activeTier
-        ? `${activeTier.name} (${activeTier.range})`
-        : tr("Apoiar.donativoFinanceiro");
+        ? `${tPt(activeTier.chaveNome)} (${tPt(activeTier.chaveIntervalo)})`
+        : tPt("Apoiar.donativoFinanceiro");
 
       // Três passos (CROSS-02, mesmo padrão do avatar): a API assina o
       // URL, o browser envia os bytes directamente ao R2, e só depois a

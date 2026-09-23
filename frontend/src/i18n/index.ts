@@ -28,4 +28,11 @@ void i18n.use(initReactI18next).init({
   returnEmptyString: false,
 });
 
+/**
+ * `t` fixo em português, para valores que seguem para a API (tipos de
+ * parceria, detalhes de donativo...). Esses valores ficam estáveis e em pt-AO
+ * seja qual for o idioma da página; só o rótulo mostrado é traduzido.
+ */
+export const tPt = i18n.getFixedT(IDIOMA_PT);
+
 export default i18n;
