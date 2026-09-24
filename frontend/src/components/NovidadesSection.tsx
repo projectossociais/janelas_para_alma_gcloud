@@ -114,7 +114,7 @@ const NovidadesSection = () => {
                     {item.title}
                   </h3>
                   {item.resumo && (
-                    <p className="text-sm text-muted-foreground leading-relaxed">{item.resumo}</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">{item.resumo}</p>
                   )}
                   <span className="inline-flex items-center gap-1 text-sm text-teal font-medium mt-auto pt-2">
                     {t("NovidadesSection.saibaMais")}
