@@ -836,7 +836,6 @@
     "opcao": "Opção {{opcao}}",
     "continuarAJogar": "Continuar a jogar",
     "premioGanho": "Prémio ganho",
-    "inicieSessaoParaGuardar": "Inicie sessão para guardar estes prémios na sua conta.",
     "naoFoiPossivelTerminar": "Não foi possível terminar a pergunta.",
     "naoFoiPossivelValidar": "Não foi possível validar a resposta. Tente outra vez.",
     "naoFoiPossivelUsar": "Não foi possível usar a ajuda 50:50.",
@@ -848,7 +847,11 @@
     "tempoEsgotado": "Tempo esgotado!",
     "essaNaoEraA": "Essa não era a resposta certa",
     "segundosRestantes": "{{tempoRestante}} segundos restantes",
-    "aRevelar": "A revelar a resposta certa"
+    "aRevelar": "A revelar a resposta certa",
+    "modoConvidado": "Está a jogar como convidado, com perguntas de treino e sem prémios.",
+    "modoTreinoIngles": "Modo de treino: as perguntas em inglês não dão moedas nem diamantes. Os prémios estão na versão portuguesa do jogo.",
+    "entrarParaGanhar": "Entre para ganhar moedas e diamantes.",
+    "semPremioConvidado": "Como convidado, esta partida não dá moedas nem diamantes."
   },
   "KambaHeroCarousel": {
     "programaMeuKambaEstrabico": "Programa Meu Kamba Estrábico",
@@ -1968,5 +1971,14 @@
     "diamantesInsuficientesBotao": "Diamantes insuficientes",
     "diamantesInsuficientes": "Não tem diamantes suficientes para a Vida Extra.",
     "naoFoiPossivelUsar": "Não foi possível usar a Vida Extra. Nenhum diamante foi gasto."
+  },
+  "RecompensaSequencia": {
+    "titulo": "Level Up!",
+    "acertosSeguidos": "{{sequencia}} respostas certas seguidas!",
+    "aSuaRecompensa": "A sua recompensa",
+    "diamantesGanhos": "{{diamantes}} diamantes ganhos",
+    "proximoMarco": "A cada 3 respostas certas seguidas ganha mais diamantes. Se errar, a sequência recomeça.",
+    "continuar": "Continuar",
+    "sequenciaAtual": "Sequência de {{sequencia}} respostas certas"
   }
 }

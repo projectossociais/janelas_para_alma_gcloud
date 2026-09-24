@@ -4,13 +4,13 @@ import { IDIOMA_EN } from "@/i18n/idiomas";
 import { PERGUNTAS_OFFLINE_EN } from "./perguntasOffline.en-US";
 
 /**
- * Reserva do Modo de Contingência: pelo menos 5 perguntas distintas por
- * patamar (1 a 15), embutidas no bundle para o modo "Um Jogador" continuar a
- * funcionar quando `GET /jogo/pergunta-aleatoria` falha (sem internet,
- * backend em baixo). Ao contrário da reserva real (54 perguntas na base de
- * dados), esta fica sempre visível no código-fonte do cliente -- é o preço
- * inevitável de um "offline first" sem servidor por perto; nunca é tratada
- * como segura.
+ * Reserva local: pelo menos 5 perguntas distintas por patamar (1 a 15),
+ * embutidas no bundle. Serve quem joga sem conta (modo convidado, desde
+ * 2026-09-24 -- sem sessão já não há perguntas do servidor), o site inglês, e
+ * o Modo de Contingência quando a API falha (sem internet, backend em baixo).
+ * Ao contrário da reserva real (na base de dados), esta fica sempre visível no
+ * código-fonte do cliente -- por isso nunca dá prémios nem é tratada como
+ * segura.
  *
  * As respostas certas estão distribuídas de propósito por A/B/C/D em
  * quantidades quase iguais (ver `obterPerguntaOfflineNaoVista` e o teste

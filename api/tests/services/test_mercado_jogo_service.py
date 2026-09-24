@@ -3,12 +3,13 @@ comprar sem diamantes, comprar outra vez a um vendedor ainda bloqueado, ou
 inventar o preço/precisão de um vendedor."""
 
 import random
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 
 import pytest
 
 from app.repositories.mercado_jogo_repository import ResultadoDebito
-from app.services.jogo_service import PerguntaNaoEncontradaError
+from app.services.jogo_service import PerguntaForaDaPartidaError, PerguntaNaoEncontradaError
 from app.services.mercado_jogo_service import (
     DURACAO_BLOQUEIO,
     VENDEDORES,
@@ -17,7 +18,11 @@ from app.services.mercado_jogo_service import (
     VendedorBloqueadoError,
     VendedorInexistenteError,
 )
-from tests.services.test_jogo_service import RepositorioPerfisFalso, RepositorioPerguntasFalso
+from tests.services.test_jogo_service import (
+    RepositorioPartidasFalso,
+    RepositorioPerfisFalso,
+    RepositorioPerguntasFalso,
+)
 
 
 class RepositorioMercadoFalso:
@@ -70,12 +75,23 @@ def ambiente():
     perguntas.adicionar("p1", "C", nivel_dificuldade=1)
     mercado = RepositorioMercadoFalso(perfis)
     relogio = Relogio()
-    return perfis, perguntas, mercado, relogio
+    partidas = RepositorioPartidasFalso(perfis)
+    # Os dois jogadores dos testes estão a meio de uma partida, na pergunta "p1".
+    for utilizador_id in ("u1", "u2"):
+        _na_pergunta(partidas, utilizador_id, "p1")
+    return perfis, perguntas, mercado, relogio, partidas
+
+
+def _na_pergunta(partidas: RepositorioPartidasFalso, utilizador_id: str, pergunta_id: str) -> None:
+    partida = partidas.obter_ativa(utilizador_id) or partidas.criar(utilizador_id)
+    partidas.partidas[partida.id] = replace(partida, pergunta_atual_id=pergunta_id)
 
 
 def _servico(ambiente, aleatorio: random.Random | None = None) -> MercadoJogoService:
-    _perfis, perguntas, mercado, relogio = ambiente
-    return MercadoJogoService(mercado, perguntas, relogio=relogio, aleatorio=aleatorio or random.Random(1))
+    _perfis, perguntas, mercado, relogio, partidas = ambiente
+    return MercadoJogoService(
+        mercado, perguntas, partidas, relogio=relogio, aleatorio=aleatorio or random.Random(1)
+    )
 
 
 def test_catalogo_mais_caro_e_sempre_mais_preciso() -> None:
@@ -93,7 +109,7 @@ def test_bloqueio_dura_4_horas() -> None:
 
 
 def test_comprar_debita_o_custo_do_catalogo_e_bloqueia_4h(ambiente) -> None:
-    perfis, _, mercado, relogio = ambiente
+    perfis, _, mercado, relogio, _ = ambiente
     perfis.creditar_diamantes("u1", 100)
     vendedor = VENDEDORES[1]
 
@@ -106,7 +122,7 @@ def test_comprar_debita_o_custo_do_catalogo_e_bloqueia_4h(ambiente) -> None:
 
 
 def test_vendedor_bloqueado_recusa_sem_debitar(ambiente) -> None:
-    perfis, _, _, relogio = ambiente
+    perfis, _, _, relogio, _ = ambiente
     perfis.creditar_diamantes("u1", 100)
     servico = _servico(ambiente)
     servico.comprar("u1", "tio-ze", "p1")
@@ -138,7 +154,7 @@ def test_bloqueio_e_por_jogador(ambiente) -> None:
 
 
 def test_depois_das_4h_o_vendedor_volta_a_vender(ambiente) -> None:
-    perfis, _, _, relogio = ambiente
+    perfis, _, _, relogio, _ = ambiente
     perfis.creditar_diamantes("u1", 100)
     servico = _servico(ambiente)
     servico.comprar("u1", "tio-ze", "p1")
@@ -149,7 +165,7 @@ def test_depois_das_4h_o_vendedor_volta_a_vender(ambiente) -> None:
 
 
 def test_sem_diamantes_suficientes_recusa_e_nao_bloqueia(ambiente) -> None:
-    perfis, _, mercado, _ = ambiente
+    perfis, _, mercado, _, _ = ambiente
     kota = VENDEDORES[-1]
     perfis.creditar_diamantes("u1", kota.custo_diamantes - 1)
 
@@ -166,12 +182,37 @@ def test_vendedor_inexistente(ambiente) -> None:
 
 
 def test_pergunta_inexistente_nao_cobra(ambiente) -> None:
-    perfis, _, mercado, _ = ambiente
+    perfis, _, mercado, _, partidas = ambiente
+    _na_pergunta(partidas, "u1", "nao-existe")
     perfis.creditar_diamantes("u1", 100)
     with pytest.raises(PerguntaNaoEncontradaError):
         _servico(ambiente).comprar("u1", "tio-ze", "nao-existe")
     assert perfis.obter_ou_criar("u1").diamantes == 100
     assert mercado.bloqueios == {}
+
+
+def test_pergunta_que_nao_e_a_da_partida_e_recusada_sem_cobrar(ambiente) -> None:
+    # Sem isto o Mercado servia para "sondar" perguntas que o jogador ainda
+    # não recebeu, ou de uma partida que já nem está em curso.
+    perfis, perguntas, mercado, _, _partidas = ambiente
+    perguntas.adicionar("p2", "B", nivel_dificuldade=1)
+    perfis.creditar_diamantes("u1", 100)
+    with pytest.raises(PerguntaForaDaPartidaError):
+        _servico(ambiente).comprar("u1", "tio-ze", "p2")
+    with pytest.raises(PerguntaForaDaPartidaError):
+        _servico(ambiente).comprar("u3", "tio-ze", "p1")  # sem partida
+    assert perfis.obter_ou_criar("u1").diamantes == 100
+    assert mercado.bloqueios == {}
+
+
+def test_a_aguardar_decisao_nao_se_compra_no_mercado(ambiente) -> None:
+    perfis, _, _, _, partidas = ambiente
+    perfis.creditar_diamantes("u1", 100)
+    partida = partidas.obter_ativa("u1")
+    partidas.partidas[partida.id] = replace(partida, estado="a_aguardar_decisao")
+    with pytest.raises(PerguntaForaDaPartidaError):
+        _servico(ambiente).comprar("u1", "tio-ze", "p1")
+
 
 
 def test_dentro_da_precisao_sugere_a_resposta_certa(ambiente) -> None:
@@ -206,7 +247,7 @@ def test_taxa_de_acerto_acompanha_a_precisao(ambiente) -> None:
 
 
 def test_listar_mostra_bloqueio_so_enquanto_dura(ambiente) -> None:
-    perfis, _, _, relogio = ambiente
+    perfis, _, _, relogio, _ = ambiente
     perfis.creditar_diamantes("u1", 100)
     servico = _servico(ambiente)
     servico.comprar("u1", "dona-maria", "p1")

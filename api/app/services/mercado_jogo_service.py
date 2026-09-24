@@ -24,8 +24,9 @@ from datetime import UTC, datetime, timedelta
 
 from app.repositories.jogo_repository import PerguntaJogoRepository
 from app.repositories.mercado_jogo_repository import MercadoJogoRepository
+from app.repositories.partida_jogo_repository import PartidaJogoRepository
 from app.repositories.perfil_jogador_repository import PerfilJogadorRegisto
-from app.services.jogo_service import PerguntaNaoEncontradaError
+from app.services.jogo_service import PerguntaForaDaPartidaError, PerguntaNaoEncontradaError
 
 OPCOES = ("A", "B", "C", "D")
 
@@ -93,11 +94,13 @@ class MercadoJogoService:
         self,
         mercado: MercadoJogoRepository,
         perguntas: PerguntaJogoRepository,
+        partidas: PartidaJogoRepository,
         relogio: Callable[[], datetime] = _agora_utc,
         aleatorio: random.Random | None = None,
     ) -> None:
         self._mercado = mercado
         self._perguntas = perguntas
+        self._partidas = partidas
         self._relogio = relogio
         self._aleatorio = aleatorio or random.SystemRandom()
 
@@ -127,6 +130,10 @@ class MercadoJogoService:
         vendedor = next((v for v in VENDEDORES if v.id == vendedor_id), None)
         if vendedor is None:
             raise VendedorInexistenteError(vendedor_id)
+        # Só a pergunta que a partida em curso entregou -- nunca uma qualquer.
+        partida = self._partidas.obter_ativa(utilizador_id)
+        if partida is None or partida.estado != "em_curso" or partida.pergunta_atual_id != pergunta_id:
+            raise PerguntaForaDaPartidaError()
         pergunta = self._perguntas.obter_por_id(pergunta_id)
         if pergunta is None:
             raise PerguntaNaoEncontradaError(pergunta_id)

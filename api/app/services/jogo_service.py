@@ -1,26 +1,25 @@
 """Regras de negócio do jogo "Inclusivamente" (quiz "Você Sabia Que...").
 
 A pergunta de sempre (CLAUDE.md secção 3): "o utilizador podia mentir sobre
-isto?" -- sim, sobre quase tudo numa partida: o patamar alcançado, as ajudas
-já usadas, as vidas extra, o prémio. Por isso tudo isso vive numa partida
-guardada no servidor (`partidas_jogo`, ver `PartidaJogoRepository`):
+isto?" -- sim, sobre quase tudo numa partida: que pergunta respondeu, o
+patamar alcançado, as ajudas já usadas, as vidas extra, as sequências, o
+prémio. Por isso tudo isso vive numa partida guardada no servidor
+(`partidas_jogo`, ver `PartidaJogoRepository`), e o jogo exige sessão:
 
-- O patamar só avança quando `responder` confirma, no servidor, que a
-  resposta está certa **e** que a pergunta é do nível esperado para o
-  próximo patamar. Antes de 2026-09-23 `POST /jogo/recompensas` aceitava o
-  patamar do corpo do pedido; um pedido forjado dava o prémio máximo.
+- **A pergunta é entregue pela partida** (`nova_pergunta`) e só essa se pode
+  validar, ajudar ou comprar no Mercado. Até 2026-09-24 `/jogo/validar`
+  aceitava qualquer id de pergunta, sem sessão, e revelava a resposta --
+  servia de oráculo para responder depois com sessão e ganhar prémios.
+  Quem joga sem conta usa agora só a reserva local do frontend, sem prémio.
+- O nível da pergunta sai do patamar da partida, nunca do cliente.
 - Ao errar (ou esgotar o tempo), a partida fica `a_aguardar_decisao` e a
   resposta certa **não** é revelada: o jogador pode pagar uma vida extra e
-  voltar a tentar a mesma pergunta (sem a opção falhada) -- revelar a
-  resposta antes disso tornava a segunda tentativa uma formalidade. A
-  resposta só é revelada ao terminar a partida.
-- A recompensa paga-se uma única vez, ao terminar (vitória, derrota,
-  desistência ou início de outra partida), pelos patamares superados --
-  mesma regra que o ecrã final sempre mostrou. Até 2026-09-24 o servidor
-  zerava o progresso ao errar e pagava 0 numa derrota, ao contrário do que
-  o ecrã dizia.
-
-Sem sessão não há partida: valida-se, revela-se a resposta e mais nada.
+  voltar a tentar a mesma pergunta (sem a opção falhada). A resposta só é
+  revelada ao terminar a partida.
+- Cada 3 acertos seguidos dão diamantes (`recompensa_sequencia`), creditados
+  na mesma transacção que regista o acerto.
+- O prémio da partida paga-se uma única vez, ao terminar (vitória, derrota,
+  desistência ou início de outra partida), pelos patamares superados.
 """
 
 import random
@@ -51,6 +50,19 @@ TOTAL_PATAMARES = 15
 CUSTO_VIDA_EXTRA = 20
 MAXIMO_VIDAS_EXTRA_POR_PARTIDA = 2
 
+# Sequências de acertos: a cada `ACERTOS_POR_MARCO` seguidos, o marco n
+# (1, 2, 3...) dá n x `DIAMANTES_POR_MARCO` -- 3 -> 10, 6 -> 20, 9 -> 30...
+ACERTOS_POR_MARCO = 3
+DIAMANTES_POR_MARCO = 10
+
+
+def recompensa_sequencia(sequencia_acertos: int) -> int:
+    """Diamantes ganhos ao chegar a `sequencia_acertos` acertos seguidos --
+    só nos marcos (múltiplos de 3); 0 em todos os outros."""
+    if sequencia_acertos <= 0 or sequencia_acertos % ACERTOS_POR_MARCO != 0:
+        return 0
+    return (sequencia_acertos // ACERTOS_POR_MARCO) * DIAMANTES_POR_MARCO
+
 
 class PerguntaNaoEncontradaError(Exception):
     def __init__(self, pergunta_id: str) -> None:
@@ -58,9 +70,21 @@ class PerguntaNaoEncontradaError(Exception):
         self.pergunta_id = pergunta_id
 
 
+class SemPerguntasError(Exception):
+    """Não há perguntas na reserva para o nível do próximo patamar."""
+
+
+class PerguntaForaDaPartidaError(Exception):
+    """A pergunta não é a que a partida em curso entregou (ou não há partida)."""
+
+
 class PartidaADecidirError(Exception):
     """A partida está à espera da decisão sobre a vida extra -- não se
     responde a mais nada, nem se usam ajudas, até decidir."""
+
+
+class PartidaCompletaError(Exception):
+    """Os 15 patamares já foram superados -- não há próxima pergunta."""
 
 
 class AjudaJaUsadaError(Exception):
@@ -80,9 +104,24 @@ class DiamantesInsuficientesError(Exception):
 
 
 @dataclass(frozen=True)
+class PerguntaDaPartida:
+    pergunta: PerguntaJogoRegisto
+    # O patamar que esta pergunta vale (1-15).
+    patamar: int
+
+
+@dataclass(frozen=True)
 class OfertaVidaExtra:
     custo: int
     restantes: int
+
+
+@dataclass(frozen=True)
+class RecompensaSequencia:
+    sequencia: int
+    diamantes: int
+    # O perfil já com os diamantes creditados -- a barra actualiza logo.
+    perfil: PerfilJogadorRegisto
 
 
 @dataclass(frozen=True)
@@ -93,6 +132,8 @@ class ResultadoResposta:
     resposta_correta: str | None
     explicacao: str | None
     vida_extra: OfertaVidaExtra | None = None
+    sequencia_acertos: int = 0
+    recompensa_sequencia: RecompensaSequencia | None = None
 
 
 @dataclass(frozen=True)
@@ -156,8 +197,8 @@ class JogoService:
             return PartidaTerminada(perfil, partida.patamar_superado, 0, 0, None, None)
 
         resposta_correta = explicacao = None
-        if partida.estado == "a_aguardar_decisao" and partida.pergunta_falhada_id:
-            pergunta = self._perguntas.obter_por_id(partida.pergunta_falhada_id)
+        if partida.estado == "a_aguardar_decisao" and partida.pergunta_atual_id:
+            pergunta = self._perguntas.obter_por_id(partida.pergunta_atual_id)
             if pergunta is not None:
                 resposta_correta, explicacao = pergunta.resposta_correta, pergunta.explicacao
         return PartidaTerminada(
@@ -169,54 +210,93 @@ class JogoService:
             explicacao=explicacao,
         )
 
-    def _partida_para_responder(self, utilizador_id: str) -> PartidaRegisto:
-        """A partida aberta; cria uma se não houver (ex.: o pedido de início
-        falhou na rede) para o jogador não perder o progresso por isso."""
+    def _partida_em_curso(self, utilizador_id: str) -> PartidaRegisto:
+        """A partida aberta (cria uma se não houver -- ex.: o pedido de
+        início falhou na rede), desde que não esteja à espera de decisão."""
         partida = self._partidas.obter_ativa(utilizador_id) or self._partidas.criar(utilizador_id)
         if partida.estado == "a_aguardar_decisao":
             raise PartidaADecidirError()
         return partida
 
+    def _pergunta_da_partida(self, utilizador_id: str, pergunta_id: str) -> tuple[PartidaRegisto, PerguntaJogoRegisto]:
+        """A partida em curso e a pergunta pedida -- só se for a que a partida
+        entregou. Qualquer outro id é recusado, exista ou não."""
+        partida = self._partidas.obter_ativa(utilizador_id)
+        if partida is None or partida.pergunta_atual_id != pergunta_id:
+            raise PerguntaForaDaPartidaError()
+        if partida.estado == "a_aguardar_decisao":
+            raise PartidaADecidirError()
+        pergunta = self._perguntas.obter_por_id(pergunta_id)
+        if pergunta is None:
+            raise PerguntaNaoEncontradaError(pergunta_id)
+        return partida, pergunta
+
+    # --- Perguntas -----------------------------------------------------------
+
+    def nova_pergunta(self, utilizador_id: str) -> PerguntaDaPartida:
+        """Sorteia a pergunta do próximo patamar e prende-a à partida. Pedir
+        outra antes de responder à actual é "trocar pergunta" -- uma vez por
+        partida, gasta de forma atómica."""
+        partida = self._partida_em_curso(utilizador_id)
+        patamar = partida.patamar_superado + 1
+        if patamar > TOTAL_PATAMARES:
+            raise PartidaCompletaError()
+        troca = partida.pergunta_atual_id is not None
+        if troca and partida.trocar_pergunta_usada:
+            raise AjudaJaUsadaError("trocar_pergunta")
+
+        pergunta = self._perguntas.obter_aleatoria(
+            nivel_dificuldade_do_patamar(patamar), excluir_id=partida.pergunta_atual_id
+        )
+        if pergunta is None:
+            raise SemPerguntasError()
+        if self._partidas.definir_pergunta(partida.id, pergunta.id, troca) is None:
+            # Outro pedido mexeu na partida entretanto (trocou ou errou).
+            raise AjudaJaUsadaError("trocar_pergunta") if troca else PartidaADecidirError()
+        return PerguntaDaPartida(pergunta=pergunta, patamar=patamar)
+
     # --- Responder -----------------------------------------------------------
 
-    def responder(
-        self, utilizador_id: str | None, pergunta_id: str, resposta_usuario: str
-    ) -> ResultadoResposta:
-        pergunta = self._obter(pergunta_id)
-        correta = resposta_usuario == pergunta.resposta_correta
-
-        if utilizador_id is None:
-            return ResultadoResposta(correta, pergunta.resposta_correta, pergunta.explicacao)
-
-        partida = self._partida_para_responder(utilizador_id)
-        if not correta:
+    def responder(self, utilizador_id: str, pergunta_id: str, resposta_usuario: str) -> ResultadoResposta:
+        partida, pergunta = self._pergunta_da_partida(utilizador_id, pergunta_id)
+        if resposta_usuario != pergunta.resposta_correta:
             return self._falhar(partida, pergunta, resposta_usuario)
 
-        proximo_patamar = partida.patamar_superado + 1
-        if proximo_patamar <= TOTAL_PATAMARES and pergunta.nivel_dificuldade == nivel_dificuldade_do_patamar(
-            proximo_patamar
-        ):
-            self._partidas.registar_acerto(partida.id, proximo_patamar)
-        # Acertou mas a pergunta não era do nível esperado (ex.: um pedido
-        # forjado a reutilizar uma pergunta fácil): mostra-se a resposta, mas
-        # não conta para o patamar.
-        return ResultadoResposta(True, pergunta.resposta_correta, pergunta.explicacao)
+        self._perfis.obter_ou_criar(utilizador_id)
+        sequencia = partida.sequencia_acertos + 1
+        bonus = recompensa_sequencia(sequencia)
+        acerto = self._partidas.registar_acerto(
+            partida.id,
+            utilizador_id,
+            pergunta.id,
+            min(partida.patamar_superado + 1, TOTAL_PATAMARES),
+            sequencia,
+            bonus,
+        )
+        if acerto is None:
+            # Já respondida por outro pedido -- não conta (nem paga) duas vezes.
+            raise PerguntaForaDaPartidaError()
+        return ResultadoResposta(
+            correta=True,
+            resposta_correta=pergunta.resposta_correta,
+            explicacao=pergunta.explicacao,
+            sequencia_acertos=sequencia,
+            recompensa_sequencia=RecompensaSequencia(sequencia, bonus, acerto.perfil) if bonus else None,
+        )
 
-    def esgotar_tempo(self, utilizador_id: str | None, pergunta_id: str) -> ResultadoResposta:
+    def esgotar_tempo(self, utilizador_id: str, pergunta_id: str) -> ResultadoResposta:
         """O tempo acabou sem resposta -- conta sempre como errada. Antes de
         2026-09-24 o cliente enviava "A" a `responder`; quando "A" era a
         certa, o servidor avançava o progresso sem resposta nenhuma."""
-        pergunta = self._obter(pergunta_id)
-        if utilizador_id is None:
-            return ResultadoResposta(False, pergunta.resposta_correta, pergunta.explicacao)
-        return self._falhar(self._partida_para_responder(utilizador_id), pergunta, None)
+        partida, pergunta = self._pergunta_da_partida(utilizador_id, pergunta_id)
+        return self._falhar(partida, pergunta, None)
 
     def _falhar(
         self, partida: PartidaRegisto, pergunta: PerguntaJogoRegisto, opcao: str | None
     ) -> ResultadoResposta:
         atualizada = self._partidas.registar_falha(partida.id, pergunta.id, opcao)
         if atualizada is None:
-            raise PartidaADecidirError()
+            raise PerguntaForaDaPartidaError()
         restantes = max(0, MAXIMO_VIDAS_EXTRA_POR_PARTIDA - atualizada.vidas_extra_usadas)
         return ResultadoResposta(
             correta=False,
@@ -232,7 +312,7 @@ class JogoService:
         if (
             partida is None
             or partida.estado != "a_aguardar_decisao"
-            or partida.pergunta_falhada_id is None
+            or partida.pergunta_atual_id is None
             or partida.vidas_extra_usadas >= MAXIMO_VIDAS_EXTRA_POR_PARTIDA
         ):
             raise VidaExtraIndisponivelError()
@@ -246,38 +326,31 @@ class JogoService:
             raise VidaExtraIndisponivelError()
         return VidaExtraUsada(
             perfil=resultado.perfil,
-            pergunta_id=partida.pergunta_falhada_id,
+            pergunta_id=partida.pergunta_atual_id,
             opcao_falhada=partida.opcao_falhada,
             vidas_restantes=MAXIMO_VIDAS_EXTRA_POR_PARTIDA - resultado.partida.vidas_extra_usadas,
         )
 
     # --- Ajudas grátis ------------------------------------------------------
     #
-    # Antes disto (2026-09-24) o 50:50 e a Opinião do Público chamavam
-    # `responder` com "A" para descobrir a resposta certa -- e quando "A"
-    # estava errada o servidor punha o progresso a 0, apagando a recompensa
-    # da partida. Agora têm endpoints próprios que nunca mexem no progresso.
+    # Nunca mexem no progresso (até 2026-09-24 chamavam `responder` com "A" e
+    # zeravam-no sempre que "A" estava errada). Só para a pergunta actual da
+    # partida, e cada uma só uma vez por partida (marcada de forma atómica).
     #
     # Deterministas por pergunta (semente = id da pergunta): repetir o pedido
     # devolve sempre o mesmo resultado, por isso não dá para somar várias
     # sondagens até a resposta certa sobressair.
 
-    #
-    # Com sessão e partida aberta, cada ajuda só se usa uma vez por partida
-    # (marcada de forma atómica em `partidas_jogo`).
-
-    def cinquenta_cinquenta(self, utilizador_id: str | None, pergunta_id: str) -> list[str]:
+    def cinquenta_cinquenta(self, utilizador_id: str, pergunta_id: str) -> list[str]:
         """Duas opções erradas a esconder, por ordem alfabética."""
-        pergunta = self._obter(pergunta_id)
-        self._gastar_ajuda(utilizador_id, "cinquenta_cinquenta")
+        pergunta = self._gastar_ajuda(utilizador_id, pergunta_id, "cinquenta_cinquenta")
         erradas = [o for o in OPCOES if o != pergunta.resposta_correta]
         return sorted(random.Random(f"5050:{pergunta_id}").sample(erradas, 2))
 
-    def opiniao_publico(self, utilizador_id: str | None, pergunta_id: str) -> dict[str, int]:
+    def opiniao_publico(self, utilizador_id: str, pergunta_id: str) -> dict[str, int]:
         """Sondagem simulada: a certa entre 55% e 75%, o resto repartido
         pelas outras três (nunca 0%), soma sempre 100."""
-        pergunta = self._obter(pergunta_id)
-        self._gastar_ajuda(utilizador_id, "opiniao_publico")
+        pergunta = self._gastar_ajuda(utilizador_id, pergunta_id, "opiniao_publico")
         gerador = random.Random(f"publico:{pergunta_id}")
         correta = pergunta.resposta_correta
         percentagem_correta = gerador.randint(55, 75)
@@ -292,20 +365,8 @@ class JogoService:
         resultado.update(zip(restantes, valores, strict=True))
         return {o: resultado[o] for o in OPCOES}
 
-    def _gastar_ajuda(self, utilizador_id: str | None, ajuda: AjudaPartida) -> None:
-        if utilizador_id is None:
-            return
-        partida = self._partidas.obter_ativa(utilizador_id)
-        if partida is None:
-            # Sem partida aberta não há progresso nem prémio a proteger.
-            return
-        if partida.estado == "a_aguardar_decisao":
-            raise PartidaADecidirError()
+    def _gastar_ajuda(self, utilizador_id: str, pergunta_id: str, ajuda: AjudaPartida) -> PerguntaJogoRegisto:
+        partida, pergunta = self._pergunta_da_partida(utilizador_id, pergunta_id)
         if not self._partidas.marcar_ajuda(partida.id, ajuda):
             raise AjudaJaUsadaError(ajuda)
-
-    def _obter(self, pergunta_id: str) -> PerguntaJogoRegisto:
-        pergunta = self._perguntas.obter_por_id(pergunta_id)
-        if pergunta is None:
-            raise PerguntaNaoEncontradaError(pergunta_id)
         return pergunta

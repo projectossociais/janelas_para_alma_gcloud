@@ -22,7 +22,7 @@ from app.repositories.orm_models import PartidaJogo, PerfilJogador
 from app.repositories.perfil_jogador_repository import PerfilJogadorRegisto, para_registo
 
 EstadoPartida = Literal["em_curso", "a_aguardar_decisao", "terminada"]
-AjudaPartida = Literal["cinquenta_cinquenta", "opiniao_publico"]
+AjudaPartida = Literal["cinquenta_cinquenta", "opiniao_publico", "trocar_pergunta"]
 
 
 @dataclass(frozen=True)
@@ -34,10 +34,19 @@ class PartidaRegisto:
     vidas_extra_usadas: int
     cinquenta_cinquenta_usada: bool
     opiniao_publico_usada: bool
-    pergunta_falhada_id: str | None
+    trocar_pergunta_usada: bool
+    pergunta_atual_id: str | None
     opcao_falhada: str | None
+    sequencia_acertos: int
+    diamantes_sequencia: int
     moedas_ganhas: int | None
     diamantes_ganhos: int | None
+
+
+@dataclass(frozen=True)
+class AcertoRegisto:
+    partida: PartidaRegisto
+    perfil: PerfilJogadorRegisto
 
 
 @dataclass(frozen=True)
@@ -56,7 +65,16 @@ class PartidaTerminadaRegisto:
 class PartidaJogoRepository(Protocol):
     def obter_ativa(self, utilizador_id: str) -> PartidaRegisto | None: ...
     def criar(self, utilizador_id: str) -> PartidaRegisto: ...
-    def registar_acerto(self, partida_id: str, patamar_superado: int) -> PartidaRegisto | None: ...
+    def definir_pergunta(self, partida_id: str, pergunta_id: str, troca: bool) -> PartidaRegisto | None: ...
+    def registar_acerto(
+        self,
+        partida_id: str,
+        utilizador_id: str,
+        pergunta_id: str,
+        patamar_superado: int,
+        sequencia_acertos: int,
+        diamantes_bonus: int,
+    ) -> AcertoRegisto | None: ...
     def registar_falha(
         self, partida_id: str, pergunta_id: str, opcao_falhada: str | None
     ) -> PartidaRegisto | None: ...
@@ -78,8 +96,11 @@ def _para_registo(row: PartidaJogo) -> PartidaRegisto:
         vidas_extra_usadas=row.vidas_extra_usadas,
         cinquenta_cinquenta_usada=row.cinquenta_cinquenta_usada,
         opiniao_publico_usada=row.opiniao_publico_usada,
-        pergunta_falhada_id=str(row.pergunta_falhada_id) if row.pergunta_falhada_id else None,
+        trocar_pergunta_usada=row.trocar_pergunta_usada,
+        pergunta_atual_id=str(row.pergunta_atual_id) if row.pergunta_atual_id else None,
         opcao_falhada=row.opcao_falhada,
+        sequencia_acertos=row.sequencia_acertos,
+        diamantes_sequencia=row.diamantes_sequencia,
         moedas_ganhas=row.moedas_ganhas,
         diamantes_ganhos=row.diamantes_ganhos,
     )
@@ -128,24 +149,80 @@ class SQLAlchemyPartidaJogoRepository:
         self._sessao.commit()
         return registo
 
-    def registar_acerto(self, partida_id: str, patamar_superado: int) -> PartidaRegisto | None:
-        return self._atualizar(
-            partida_id,
-            [PartidaJogo.estado == "em_curso"],
-            {"patamar_superado": patamar_superado, "pergunta_falhada_id": None, "opcao_falhada": None},
-        )
+    def definir_pergunta(self, partida_id: str, pergunta_id: str, troca: bool) -> PartidaRegisto | None:
+        condicoes = [PartidaJogo.estado == "em_curso"]
+        valores: dict = {"pergunta_atual_id": uuid.UUID(pergunta_id), "opcao_falhada": None}
+        if troca:
+            # Trocar a pergunta sem a responder gasta a ajuda "trocar pergunta",
+            # na mesma instrução -- dois pedidos simultâneos não trocam duas vezes.
+            condicoes.append(PartidaJogo.trocar_pergunta_usada.is_(False))
+            valores["trocar_pergunta_usada"] = True
+        return self._atualizar(partida_id, condicoes, valores)
+
+    def registar_acerto(
+        self,
+        partida_id: str,
+        utilizador_id: str,
+        pergunta_id: str,
+        patamar_superado: int,
+        sequencia_acertos: int,
+        diamantes_bonus: int,
+    ) -> AcertoRegisto | None:
+        """Avança a partida e credita o bónus de sequência na mesma
+        transacção -- e só se a pergunta ainda for a actual: responder duas
+        vezes à mesma pergunta (ex.: dois pedidos simultâneos) conta uma vez."""
+        agora = datetime.now(UTC)
+        try:
+            partida = self._sessao.scalars(
+                update(PartidaJogo)
+                .where(
+                    PartidaJogo.id == uuid.UUID(partida_id),
+                    PartidaJogo.estado == "em_curso",
+                    PartidaJogo.pergunta_atual_id == uuid.UUID(pergunta_id),
+                )
+                .values(
+                    patamar_superado=patamar_superado,
+                    sequencia_acertos=sequencia_acertos,
+                    diamantes_sequencia=PartidaJogo.diamantes_sequencia + diamantes_bonus,
+                    pergunta_atual_id=None,
+                    opcao_falhada=None,
+                    updated_at=agora,
+                )
+                .returning(PartidaJogo)
+            ).first()
+            if partida is None:
+                self._sessao.rollback()
+                return None
+            registo_partida = _para_registo(partida)
+
+            perfil = self._sessao.scalars(
+                update(PerfilJogador)
+                .where(PerfilJogador.utilizador_id == uuid.UUID(utilizador_id))
+                .values(
+                    diamantes=PerfilJogador.diamantes + diamantes_bonus,
+                    melhor_sequencia=func.greatest(PerfilJogador.melhor_sequencia, sequencia_acertos),
+                    updated_at=agora,
+                )
+                .returning(PerfilJogador)
+            ).first()
+            if perfil is None:
+                self._sessao.rollback()
+                raise RuntimeError(f"perfil de jogo inexistente para {utilizador_id}")
+            registo_perfil = para_registo(perfil)
+            self._sessao.commit()
+        except Exception:
+            self._sessao.rollback()
+            raise
+        return AcertoRegisto(partida=registo_partida, perfil=registo_perfil)
 
     def registar_falha(
         self, partida_id: str, pergunta_id: str, opcao_falhada: str | None
     ) -> PartidaRegisto | None:
+        """Só a pergunta actual pode falhar; a sequência de acertos volta a 0."""
         return self._atualizar(
             partida_id,
-            [PartidaJogo.estado == "em_curso"],
-            {
-                "estado": "a_aguardar_decisao",
-                "pergunta_falhada_id": uuid.UUID(pergunta_id),
-                "opcao_falhada": opcao_falhada,
-            },
+            [PartidaJogo.estado == "em_curso", PartidaJogo.pergunta_atual_id == uuid.UUID(pergunta_id)],
+            {"estado": "a_aguardar_decisao", "opcao_falhada": opcao_falhada, "sequencia_acertos": 0},
         )
 
     def marcar_ajuda(self, partida_id: str, ajuda: AjudaPartida) -> bool:

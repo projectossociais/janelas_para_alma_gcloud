@@ -42,6 +42,7 @@ class PerfilJogadorRegisto:
     diamantes: int
     partidas_jogadas: int
     patamar_maximo_alcancado: int
+    melhor_sequencia: int = 0
 
 
 class PerfilJogadorRepository(Protocol):
@@ -57,6 +58,7 @@ def para_registo(row: PerfilJogador) -> PerfilJogadorRegisto:
         diamantes=row.diamantes,
         partidas_jogadas=row.partidas_jogadas,
         patamar_maximo_alcancado=row.patamar_maximo_alcancado,
+        melhor_sequencia=row.melhor_sequencia,
     )
 
 

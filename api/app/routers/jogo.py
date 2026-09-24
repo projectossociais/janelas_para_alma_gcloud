@@ -1,34 +1,28 @@
 """Jogo "Inclusivamente" (quiz "Você Sabia Que...", estilo Quem Quer Ser
 Milionário).
 
-A resposta correcta nunca sai da API antes da validação: `GET
-/jogo/pergunta-aleatoria` devolve `PerguntaPublica` (sem `resposta_correta`
-nem `explicacao`). Com sessão, nem a validação a revela se o jogador errou --
-a partida fica à espera da decisão sobre a vida extra, e a resposta só se
-revela em `POST /jogo/partidas/atual/terminar`.
+Tudo exige sessão (desde 2026-09-24): quem joga sem conta usa só a reserva
+local do frontend, sem prémio. As perguntas saem da partida
+(`POST /jogo/partidas/atual/pergunta`, sem `resposta_correta` nem
+`explicacao`) e só essa pergunta se pode validar, ajudar ou comprar no
+Mercado -- antes, `/jogo/validar` aceitava qualquer id sem sessão e servia
+de oráculo para a resposta certa. Ao errar, nem a validação revela a
+resposta: a partida fica à espera da decisão sobre a vida extra, e a
+resposta só se revela em `POST /jogo/partidas/atual/terminar`.
 
 Mesma fronteira de confiança na economia virtual: nenhum endpoint recebe um
-patamar, preço ou quantidade do cliente. O progresso, as vidas extra, as
-ajudas usadas e o prémio vivem numa partida controlada pelo servidor
-(`JogoService` + `partidas_jogo`). Sem sessão joga-se na mesma, sem partida,
-progresso nem prémio.
+patamar, preço ou quantidade do cliente. O progresso, a sequência de acertos,
+as vidas extra, as ajudas usadas e o prémio vivem numa partida controlada
+pelo servidor (`JogoService` + `partidas_jogo`).
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.config import obter_settings
-from app.core.dependencies import (
-    obter_utilizador_admin,
-    obter_utilizador_atual,
-    obter_utilizador_atual_opcional,
-)
+from app.core.dependencies import obter_utilizador_admin, obter_utilizador_atual
 from app.db import obter_sessao
-from app.repositories.jogo_repository import (
-    PerguntaJogoRegisto,
-    SQLAlchemyPerguntaJogoRepository,
-    nivel_dificuldade_do_patamar,
-)
+from app.repositories.jogo_repository import PerguntaJogoRegisto, SQLAlchemyPerguntaJogoRepository
 from app.repositories.mercado_jogo_repository import SQLAlchemyMercadoJogoRepository
 from app.repositories.partida_jogo_repository import SQLAlchemyPartidaJogoRepository
 from app.repositories.perfil_jogador_repository import (
@@ -51,7 +45,7 @@ from app.schemas.jogo import (
     PerfilJogadorPublico,
     PerguntaAdmin,
     PerguntaCriar,
-    PerguntaPublica,
+    PerguntaDaPartidaPublica,
     ValidarRespostaRequest,
     ValidarRespostaResponse,
     VendedorMercadoPublico,
@@ -61,9 +55,12 @@ from app.services.jogo_service import (
     AjudaJaUsadaError,
     JogoService,
     PartidaADecidirError,
+    PartidaCompletaError,
     PartidaTerminada,
+    PerguntaForaDaPartidaError,
     PerguntaNaoEncontradaError,
     ResultadoResposta,
+    SemPerguntasError,
     VidaExtraIndisponivelError,
     VidaExtraUsada,
 )
@@ -112,10 +109,33 @@ def obter_jogo_service(
     return JogoService(perguntas, perfis, partidas)
 
 
-def _erro_a_decidir() -> HTTPException:
-    return HTTPException(
-        status_code=status.HTTP_409_CONFLICT, detail="a partida está à espera da decisão sobre a vida extra"
-    )
+def _erro_de_jogo(err: Exception) -> HTTPException:
+    """Traduz os erros de domínio do jogo para HTTP (um só sítio)."""
+    if isinstance(err, PerguntaNaoEncontradaError):
+        return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="pergunta não encontrada")
+    if isinstance(err, SemPerguntasError):
+        return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="sem perguntas disponíveis")
+    if isinstance(err, PerguntaForaDaPartidaError):
+        return HTTPException(status_code=status.HTTP_409_CONFLICT, detail="esta pergunta não é a da partida em curso")
+    if isinstance(err, PartidaADecidirError):
+        return HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="a partida está à espera da decisão sobre a vida extra"
+        )
+    if isinstance(err, PartidaCompletaError):
+        return HTTPException(status_code=status.HTTP_409_CONFLICT, detail="a partida já superou todos os patamares")
+    if isinstance(err, AjudaJaUsadaError):
+        return HTTPException(status_code=status.HTTP_409_CONFLICT, detail="esta ajuda já foi usada nesta partida")
+    raise err
+
+
+_ERROS_DE_JOGO = (
+    PerguntaNaoEncontradaError,
+    SemPerguntasError,
+    PerguntaForaDaPartidaError,
+    PartidaADecidirError,
+    PartidaCompletaError,
+    AjudaJaUsadaError,
+)
 
 
 def obter_loja_jogo_service(
@@ -133,87 +153,88 @@ def obter_mercado_jogo_repository(
 def obter_mercado_jogo_service(
     mercado: SQLAlchemyMercadoJogoRepository = Depends(obter_mercado_jogo_repository),
     perguntas: SQLAlchemyPerguntaJogoRepository = Depends(obter_pergunta_jogo_repository),
+    partidas: SQLAlchemyPartidaJogoRepository = Depends(obter_partida_jogo_repository),
 ) -> MercadoJogoService:
-    return MercadoJogoService(mercado, perguntas)
+    return MercadoJogoService(mercado, perguntas, partidas)
 
 
-@router.get("/jogo/pergunta-aleatoria", response_model=PerguntaPublica)
-def obter_pergunta_aleatoria(
-    patamar: int = Query(ge=1, le=15),
-    repo: SQLAlchemyPerguntaJogoRepository = Depends(obter_pergunta_jogo_repository),
-) -> PerguntaJogoRegisto:
-    nivel_dificuldade = nivel_dificuldade_do_patamar(patamar)
-    pergunta = repo.obter_aleatoria(nivel_dificuldade)
-    if pergunta is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="sem perguntas disponíveis")
-    return pergunta
+# --- Perguntas e respostas (exigem sessão e a pergunta da partida) ---------
+
+
+@router.post("/jogo/partidas/atual/pergunta", response_model=PerguntaDaPartidaPublica)
+def nova_pergunta(
+    utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
+    servico: JogoService = Depends(obter_jogo_service),
+) -> PerguntaDaPartidaPublica:
+    """Sorteia e prende à partida a pergunta do próximo patamar. Pedir outra
+    antes de responder gasta a ajuda "trocar pergunta"."""
+    try:
+        resultado = servico.nova_pergunta(utilizador.id)
+    except _ERROS_DE_JOGO as err:
+        raise _erro_de_jogo(err)
+    p = resultado.pergunta
+    return PerguntaDaPartidaPublica(
+        id=p.id,
+        texto_pergunta=p.texto_pergunta,
+        opcao_a=p.opcao_a,
+        opcao_b=p.opcao_b,
+        opcao_c=p.opcao_c,
+        opcao_d=p.opcao_d,
+        patamar=resultado.patamar,
+    )
 
 
 @router.post("/jogo/validar", response_model=ValidarRespostaResponse)
 def validar_resposta(
     dados: ValidarRespostaRequest,
-    utilizador: UtilizadorRegisto | None = Depends(obter_utilizador_atual_opcional),
+    utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
     servico: JogoService = Depends(obter_jogo_service),
 ) -> ResultadoResposta:
     try:
-        return servico.responder(
-            utilizador.id if utilizador else None, dados.pergunta_id, dados.resposta_usuario
-        )
-    except PerguntaNaoEncontradaError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="pergunta não encontrada")
-    except PartidaADecidirError:
-        raise _erro_a_decidir()
+        return servico.responder(utilizador.id, dados.pergunta_id, dados.resposta_usuario)
+    except _ERROS_DE_JOGO as err:
+        raise _erro_de_jogo(err)
 
 
 @router.post("/jogo/tempo-esgotado", response_model=ValidarRespostaResponse)
 def tempo_esgotado(
     dados: AjudaPerguntaRequest,
-    utilizador: UtilizadorRegisto | None = Depends(obter_utilizador_atual_opcional),
+    utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
     servico: JogoService = Depends(obter_jogo_service),
 ) -> ResultadoResposta:
     try:
-        return servico.esgotar_tempo(utilizador.id if utilizador else None, dados.pergunta_id)
-    except PerguntaNaoEncontradaError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="pergunta não encontrada")
-    except PartidaADecidirError:
-        raise _erro_a_decidir()
+        return servico.esgotar_tempo(utilizador.id, dados.pergunta_id)
+    except _ERROS_DE_JOGO as err:
+        raise _erro_de_jogo(err)
 
 
 # --- Ajudas grátis (nunca mexem no progresso; uma vez por partida) ----------
 
 
-def _erro_ajuda(err: Exception) -> HTTPException:
-    if isinstance(err, PerguntaNaoEncontradaError):
-        return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="pergunta não encontrada")
-    if isinstance(err, AjudaJaUsadaError):
-        return HTTPException(status_code=status.HTTP_409_CONFLICT, detail="esta ajuda já foi usada nesta partida")
-    return _erro_a_decidir()
-
-
 @router.post("/jogo/ajudas/cinquenta-cinquenta", response_model=CinquentaCinquentaResponse)
 def ajuda_cinquenta_cinquenta(
     dados: AjudaPerguntaRequest,
-    utilizador: UtilizadorRegisto | None = Depends(obter_utilizador_atual_opcional),
+    utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
     servico: JogoService = Depends(obter_jogo_service),
 ) -> CinquentaCinquentaResponse:
     try:
-        eliminadas = servico.cinquenta_cinquenta(utilizador.id if utilizador else None, dados.pergunta_id)
-    except (PerguntaNaoEncontradaError, AjudaJaUsadaError, PartidaADecidirError) as err:
-        raise _erro_ajuda(err)
-    return CinquentaCinquentaResponse(opcoes_eliminadas=eliminadas)
+        return CinquentaCinquentaResponse(
+            opcoes_eliminadas=servico.cinquenta_cinquenta(utilizador.id, dados.pergunta_id)
+        )
+    except _ERROS_DE_JOGO as err:
+        raise _erro_de_jogo(err)
 
 
 @router.post("/jogo/ajudas/opiniao-publico", response_model=OpiniaoPublicoResponse)
 def ajuda_opiniao_publico(
     dados: AjudaPerguntaRequest,
-    utilizador: UtilizadorRegisto | None = Depends(obter_utilizador_atual_opcional),
+    utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
     servico: JogoService = Depends(obter_jogo_service),
 ) -> OpiniaoPublicoResponse:
     try:
-        percentagens = servico.opiniao_publico(utilizador.id if utilizador else None, dados.pergunta_id)
-    except (PerguntaNaoEncontradaError, AjudaJaUsadaError, PartidaADecidirError) as err:
-        raise _erro_ajuda(err)
-    return OpiniaoPublicoResponse(percentagens=percentagens)
+        return OpiniaoPublicoResponse(percentagens=servico.opiniao_publico(utilizador.id, dados.pergunta_id))
+    except _ERROS_DE_JOGO as err:
+        raise _erro_de_jogo(err)
 
 
 # --- Partida (exige sessão) --------------------------------------------------
@@ -280,8 +301,8 @@ def comprar_ajuda_mercado(
         return servico.comprar(utilizador.id, dados.vendedor_id, dados.pergunta_id, dados.opcoes_excluidas)
     except VendedorInexistenteError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="vendedor inexistente")
-    except PerguntaNaoEncontradaError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="pergunta não encontrada")
+    except (PerguntaNaoEncontradaError, PerguntaForaDaPartidaError) as err:
+        raise _erro_de_jogo(err)
     except VendedorBloqueadoError:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="este vendedor ainda está bloqueado")
     except DiamantesInsuficientesError:

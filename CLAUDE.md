@@ -81,10 +81,16 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   credita diamantes com `JOGO_PAGAMENTOS_SIMULADOS=true` (ligado só no `docker-compose.yml`
   de desenvolvimento; **nunca** em produção, seriam diamantes grátis). O catálogo e os
   preços em Kz vivem só em `services/loja_jogo_service.py` (aprovados pelo dono do projecto
-  em 2026-09-24: 500 / 1.250 / 3.000 Kz). **Ajudas:** 50:50, Opinião do Público e tempo
-  esgotado têm endpoints próprios (`/jogo/ajudas/*`, `/jogo/tempo-esgotado`) que nunca
-  avançam o progresso — nunca usar `/jogo/validar` com uma letra qualquer para descobrir a
-  resposta (bug real corrigido em 2026-09-24: zerava ou inflacionava `patamar_em_curso`).
+  em 2026-09-24: 500 / 1.250 / 3.000 Kz). **Tudo o que é do servidor exige sessão**
+  (desde 2026-09-24): sem sessão, `/jogo/validar` revelava a resposta de qualquer pergunta
+  e servia de oráculo. Convidados (e o site inglês) jogam só com a reserva local do
+  frontend (`perguntasOffline*.ts`), **sem prémio**. Com sessão, a pergunta é entregue
+  pela partida (`POST /jogo/partidas/atual/pergunta`, fica em `partidas_jogo.pergunta_atual_id`)
+  e **só essa** se pode validar, ajudar ou comprar no Mercado; pedir outra antes de responder
+  gasta o "trocar pergunta". **Ajudas:** 50:50, Opinião do Público e tempo esgotado têm
+  endpoints próprios (`/jogo/ajudas/*`, `/jogo/tempo-esgotado`) que nunca avançam o progresso
+  — nunca usar `/jogo/validar` com uma letra qualquer para descobrir a resposta (bug real
+  corrigido em 2026-09-24).
   **Mercado** (ajuda paga): vendedores ambulantes com custo em diamantes e precisão
   crescente, bloqueados 4h por jogador após cada venda — catálogo em
   `services/mercado_jogo_service.py`, bloqueio na tabela `bloqueios_vendedores_jogo`;
@@ -96,8 +102,13 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   `a_aguardar_decisao` e o jogador pode pagar uma **Vida Extra** (20 diamantes, máx. 2 por
   partida, constantes em `jogo_service.py`) para voltar a tentar a mesma pergunta sem a
   opção falhada. A resposta revela-se e o prémio paga-se (uma única vez, pelos patamares
-  superados) em `POST /jogo/partidas/atual/terminar`. Transições condicionais e atómicas em
-  `PartidaJogoRepository`; no máximo uma partida aberta por utilizador (índice único parcial)
+  superados) em `POST /jogo/partidas/atual/terminar`. **Sequências:** cada 3 acertos
+  seguidos dão diamantes (3 → 10, 6 → 20, 9 → 30... — `recompensa_sequencia` em
+  `jogo_service.py`), creditados na mesma transacção que regista o acerto; errar volta a
+  sequência a 0; recorde em `perfis_jogador.melhor_sequencia`. Transições condicionais e
+  atómicas em `PartidaJogoRepository` (um acerto só conta se a pergunta ainda for a actual —
+  a mesma resposta nunca conta duas vezes); no máximo uma partida aberta por utilizador
+  (índice único parcial)
 
 Público-alvo inclui **crianças**. Todo o tratamento de dados deve assumir isso.
 

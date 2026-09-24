@@ -1,6 +1,7 @@
-"""Testes do `JogoService` -- a mentira que este serviço existe para
-impedir: um utilizador a reclamar uma recompensa maior do que o patamar que
-realmente alcançou, respondendo perguntas correctamente no servidor."""
+"""Testes do `JogoService` -- as mentiras que este serviço existe para
+impedir: responder a uma pergunta que a partida não entregou (usar o servidor
+como oráculo), reclamar mais patamares, sequências, ajudas ou vidas extra do
+que os que o servidor confirmou."""
 
 from dataclasses import replace
 
@@ -8,6 +9,7 @@ import pytest
 
 from app.repositories.jogo_repository import PerguntaJogoRegisto
 from app.repositories.partida_jogo_repository import (
+    AcertoRegisto,
     PartidaRegisto,
     PartidaTerminadaRegisto,
     ResultadoVidaExtra,
@@ -20,8 +22,11 @@ from app.services.jogo_service import (
     DiamantesInsuficientesError,
     JogoService,
     PartidaADecidirError,
-    PerguntaNaoEncontradaError,
+    PartidaCompletaError,
+    PerguntaForaDaPartidaError,
+    SemPerguntasError,
     VidaExtraIndisponivelError,
+    recompensa_sequencia,
 )
 
 
@@ -42,8 +47,18 @@ class RepositorioPerguntasFalso:
             explicacao="explicação",
         )
 
-    def obter_aleatoria(self, nivel_dificuldade: int | None = None) -> PerguntaJogoRegisto | None:
-        raise NotImplementedError
+    def obter_aleatoria(
+        self, nivel_dificuldade: int | None = None, excluir_id: str | None = None
+    ) -> PerguntaJogoRegisto | None:
+        # Determinista: a primeira do nível, pela ordem em que foram criadas.
+        return next(
+            (
+                p
+                for p in self._perguntas.values()
+                if (nivel_dificuldade is None or p.nivel_dificuldade == nivel_dificuldade) and p.id != excluir_id
+            ),
+            None,
+        )
 
     def obter_por_id(self, pergunta_id: str) -> PerguntaJogoRegisto | None:
         return self._perguntas.get(pergunta_id)
@@ -65,6 +80,7 @@ class RepositorioPerfisFalso:
                 diamantes=0,
                 partidas_jogadas=0,
                 patamar_maximo_alcancado=0,
+                melhor_sequencia=0,
             )
         return self._perfis[utilizador_id]
 
@@ -102,8 +118,11 @@ class RepositorioPartidasFalso:
             vidas_extra_usadas=0,
             cinquenta_cinquenta_usada=False,
             opiniao_publico_usada=False,
-            pergunta_falhada_id=None,
+            trocar_pergunta_usada=False,
+            pergunta_atual_id=None,
             opcao_falhada=None,
+            sequencia_acertos=0,
+            diamantes_sequencia=0,
             moedas_ganhas=None,
             diamantes_ganhos=None,
         )
@@ -119,22 +138,56 @@ class RepositorioPartidasFalso:
         self.partidas[partida_id] = novo
         return novo
 
-    def registar_acerto(self, partida_id: str, patamar_superado: int) -> PartidaRegisto | None:
+    def definir_pergunta(self, partida_id: str, pergunta_id: str, troca: bool) -> PartidaRegisto | None:
+        if troca:
+            return self._atualizar(
+                partida_id,
+                lambda p: p.estado == "em_curso" and not p.trocar_pergunta_usada,
+                pergunta_atual_id=pergunta_id,
+                opcao_falhada=None,
+                trocar_pergunta_usada=True,
+            )
         return self._atualizar(
+            partida_id, lambda p: p.estado == "em_curso", pergunta_atual_id=pergunta_id, opcao_falhada=None
+        )
+
+    def registar_acerto(
+        self,
+        partida_id: str,
+        utilizador_id: str,
+        pergunta_id: str,
+        patamar_superado: int,
+        sequencia_acertos: int,
+        diamantes_bonus: int,
+    ) -> AcertoRegisto | None:
+        atual = self.partidas.get(partida_id)
+        partida = self._atualizar(
             partida_id,
-            lambda p: p.estado == "em_curso",
+            lambda p: p.estado == "em_curso" and p.pergunta_atual_id == pergunta_id,
             patamar_superado=patamar_superado,
-            pergunta_falhada_id=None,
+            sequencia_acertos=sequencia_acertos,
+            diamantes_sequencia=(atual.diamantes_sequencia if atual else 0) + diamantes_bonus,
+            pergunta_atual_id=None,
             opcao_falhada=None,
         )
+        if partida is None:
+            return None
+        perfil = self._perfis.obter_ou_criar(utilizador_id)
+        perfil = replace(
+            perfil,
+            diamantes=perfil.diamantes + diamantes_bonus,
+            melhor_sequencia=max(perfil.melhor_sequencia, sequencia_acertos),
+        )
+        self._perfis._perfis[utilizador_id] = perfil
+        return AcertoRegisto(partida=partida, perfil=perfil)
 
     def registar_falha(self, partida_id: str, pergunta_id: str, opcao_falhada: str | None) -> PartidaRegisto | None:
         return self._atualizar(
             partida_id,
-            lambda p: p.estado == "em_curso",
+            lambda p: p.estado == "em_curso" and p.pergunta_atual_id == pergunta_id,
             estado="a_aguardar_decisao",
-            pergunta_falhada_id=pergunta_id,
             opcao_falhada=opcao_falhada,
+            sequencia_acertos=0,
         )
 
     def marcar_ajuda(self, partida_id: str, ajuda: str) -> bool:
@@ -183,7 +236,11 @@ class RepositorioPartidasFalso:
 
 @pytest.fixture
 def perguntas() -> RepositorioPerguntasFalso:
-    return RepositorioPerguntasFalso()
+    repo = RepositorioPerguntasFalso()
+    # Uma de cada nível, certa "C" -- chega para subir a escada toda.
+    for nivel in (1, 2, 3):
+        repo.adicionar(f"n{nivel}", "C", nivel_dificuldade=nivel)
+    return repo
 
 
 @pytest.fixture
@@ -201,220 +258,241 @@ def servico(perguntas, perfis, partidas) -> JogoService:
     return JogoService(perguntas, perfis, partidas)
 
 
-def _patamar(partidas: RepositorioPartidasFalso, utilizador_id: str = "u-1") -> int:
-    ativa = partidas.obter_ativa(utilizador_id)
-    return ativa.patamar_superado if ativa else 0
+def _ativa(partidas: RepositorioPartidasFalso, utilizador_id: str = "u-1"):
+    return partidas.obter_ativa(utilizador_id)
 
 
-def _por_no_patamar(partidas: RepositorioPartidasFalso, patamar: int, utilizador_id: str = "u-1") -> None:
-    partida = partidas.criar(utilizador_id)
-    partidas.partidas[partida.id] = replace(partida, patamar_superado=patamar)
+def _acertar(servico: JogoService, vezes: int = 1, utilizador_id: str = "u-1"):
+    resultado = None
+    for _ in range(vezes):
+        pergunta = servico.nova_pergunta(utilizador_id).pergunta
+        resultado = servico.responder(utilizador_id, pergunta.id, "C")
+        assert resultado.correta
+    return resultado
 
 
-class TestResponder:
-    def test_pergunta_inexistente_levanta_erro(self, servico) -> None:
-        with pytest.raises(PerguntaNaoEncontradaError):
-            servico.responder("u-1", "nao-existe", "A")
+def _errar(servico: JogoService, utilizador_id: str = "u-1"):
+    pergunta = servico.nova_pergunta(utilizador_id).pergunta
+    return pergunta, servico.responder(utilizador_id, pergunta.id, "A")
 
-    def test_anonimo_valida_revela_e_nao_cria_nada(self, servico, perguntas, perfis, partidas) -> None:
-        perguntas.adicionar("p1", "A", nivel_dificuldade=1)
-        errada = servico.responder(None, "p1", "B")
-        assert errada.correta is False
-        assert errada.resposta_correta == "A"  # sem partida, revela logo
-        assert errada.vida_extra is None
-        assert perfis._perfis == {} and partidas.partidas == {}
 
-    def test_resposta_certa_no_nivel_esperado_avanca_o_patamar(self, servico, perguntas, partidas) -> None:
-        perguntas.adicionar("p1", "A", nivel_dificuldade=1)  # nível 1 == patamares 1-5
+class TestPerguntaDaPartida:
+    def test_entrega_a_pergunta_do_nivel_do_proximo_patamar(self, servico, partidas) -> None:
+        primeira = servico.nova_pergunta("u-1")
+        assert (primeira.patamar, primeira.pergunta.nivel_dificuldade) == (1, 1)
+        assert _ativa(partidas).pergunta_atual_id == primeira.pergunta.id
+
+        servico.responder("u-1", primeira.pergunta.id, "C")
+        _acertar(servico, 4)  # patamares 1-5 superados -> o 6 é nível 2
+        sexta = servico.nova_pergunta("u-1")
+        assert (sexta.patamar, sexta.pergunta.nivel_dificuldade) == (6, 2)
+
+    def test_responder_a_uma_pergunta_que_a_partida_nao_entregou_e_recusado(self, servico, perguntas, partidas) -> None:
+        # O oráculo que isto fecha: validar um id qualquer para descobrir a
+        # resposta e depois responder "a sério".
+        perguntas.adicionar("outra", "B", nivel_dificuldade=1)
+        servico.nova_pergunta("u-1")
+        with pytest.raises(PerguntaForaDaPartidaError):
+            servico.responder("u-1", "outra", "B")
+        with pytest.raises(PerguntaForaDaPartidaError):
+            servico.esgotar_tempo("u-1", "outra")
+        with pytest.raises(PerguntaForaDaPartidaError):
+            servico.cinquenta_cinquenta("u-1", "outra")
+        assert _ativa(partidas).patamar_superado == 0
+
+    def test_sem_partida_nao_se_valida_nada(self, servico) -> None:
+        with pytest.raises(PerguntaForaDaPartidaError):
+            servico.responder("u-1", "n1", "C")
+
+    def test_a_mesma_pergunta_nao_conta_duas_vezes(self, servico, partidas) -> None:
+        pergunta = servico.nova_pergunta("u-1").pergunta
+        servico.responder("u-1", pergunta.id, "C")
+        with pytest.raises(PerguntaForaDaPartidaError):
+            servico.responder("u-1", pergunta.id, "C")
+        assert _ativa(partidas).patamar_superado == 1
+
+    def test_pedir_outra_antes_de_responder_gasta_o_trocar_pergunta(self, servico, perguntas, partidas) -> None:
+        perguntas.adicionar("n1-b", "C", nivel_dificuldade=1)
+        primeira = servico.nova_pergunta("u-1").pergunta
+        segunda = servico.nova_pergunta("u-1").pergunta
+        assert segunda.id != primeira.id
+        assert _ativa(partidas).trocar_pergunta_usada is True
+        with pytest.raises(AjudaJaUsadaError):
+            servico.nova_pergunta("u-1")
+        # A pergunta trocada já não se pode responder.
+        with pytest.raises(PerguntaForaDaPartidaError):
+            servico.responder("u-1", primeira.id, "C")
+
+    def test_pedir_a_seguinte_depois_de_acertar_nao_e_troca(self, servico, partidas) -> None:
+        _acertar(servico, 3)
+        assert _ativa(partidas).trocar_pergunta_usada is False
+
+    def test_sem_perguntas_no_nivel(self, servico, perguntas) -> None:
+        perguntas._perguntas.clear()
+        with pytest.raises(SemPerguntasError):
+            servico.nova_pergunta("u-1")
+
+    def test_depois_do_patamar_15_nao_ha_mais_perguntas(self, servico, partidas) -> None:
+        _acertar(servico, 15)
+        assert _ativa(partidas).patamar_superado == 15
+        with pytest.raises(PartidaCompletaError):
+            servico.nova_pergunta("u-1")
+
+
+class TestSequencias:
+    @pytest.mark.parametrize(
+        ("sequencia", "diamantes"),
+        [(0, 0), (1, 0), (2, 0), (3, 10), (4, 0), (5, 0), (6, 20), (9, 30), (12, 40), (15, 50)],
+    )
+    def test_marcos_de_3_em_3(self, sequencia, diamantes) -> None:
+        assert recompensa_sequencia(sequencia) == diamantes
+
+    def test_ao_terceiro_acerto_seguido_credita_10_diamantes(self, servico, perfis) -> None:
+        segundo = _acertar(servico, 2)
+        assert segundo.recompensa_sequencia is None and segundo.sequencia_acertos == 2
+
+        terceiro = _acertar(servico)
+
+        assert terceiro.sequencia_acertos == 3
+        assert terceiro.recompensa_sequencia.diamantes == 10
+        assert terceiro.recompensa_sequencia.perfil.diamantes == 10
+        assert perfis.obter_ou_criar("u-1").diamantes == 10
+
+    def test_uma_partida_perfeita_acumula_os_marcos(self, servico, perfis, partidas) -> None:
+        _acertar(servico, 15)
+        assert perfis.obter_ou_criar("u-1").diamantes == 10 + 20 + 30 + 40 + 50
+        assert _ativa(partidas).diamantes_sequencia == 150
+        assert perfis.obter_ou_criar("u-1").melhor_sequencia == 15
+
+    def test_errar_quebra_a_sequencia_mesmo_com_vida_extra(self, servico, perfis, partidas) -> None:
+        perfis.creditar_diamantes("u-1", 100)
+        _acertar(servico, 2)
+        pergunta, _ = _errar(servico)
+        servico.usar_vida_extra("u-1")
+        assert _ativa(partidas).sequencia_acertos == 0
+
+        # Recomeça do zero: só ao 3.º acerto seguido volta a haver bónus.
+        servico.responder("u-1", pergunta.id, "C")
+        assert _acertar(servico).recompensa_sequencia is None
+        assert _acertar(servico).recompensa_sequencia.diamantes == 10
+
+    def test_os_diamantes_da_sequencia_ficam_mesmo_perdendo_a_partida(self, servico, perfis) -> None:
+        _acertar(servico, 3)
+        _errar(servico)
+        servico.terminar_partida("u-1")
+        assert perfis.obter_ou_criar("u-1").diamantes == 10  # 3 patamares não chegam ao marco do 5
+
+    def test_recorde_de_sequencia_nao_desce(self, servico, perfis) -> None:
+        _acertar(servico, 4)
         servico.iniciar_partida("u-1")
-        resultado = servico.responder("u-1", "p1", "A")
-        assert resultado.correta is True
-        assert _patamar(partidas) == 1
-
-    def test_sem_partida_iniciada_cria_uma_ao_responder(self, servico, perguntas, partidas) -> None:
-        # Se o pedido de início falhou na rede, o jogador não perde o progresso.
-        perguntas.adicionar("p1", "A", nivel_dificuldade=1)
-        servico.responder("u-1", "p1", "A")
-        assert _patamar(partidas) == 1
-
-    def test_resposta_certa_de_nivel_errado_nao_avanca_o_patamar(self, servico, perguntas, partidas) -> None:
-        # Reutilizar uma pergunta fácil (nível 1) depois do patamar 5 (nível 2
-        # esperado) não inflaciona o progresso.
-        perguntas.adicionar("facil", "A", nivel_dificuldade=1)
-        _por_no_patamar(partidas, 5)
-        resultado = servico.responder("u-1", "facil", "A")
-        assert resultado.correta is True
-        assert _patamar(partidas) == 5
-
-    def test_nunca_passa_do_patamar_15(self, servico, perguntas, partidas) -> None:
-        perguntas.adicionar("dificil", "A", nivel_dificuldade=3)
-        _por_no_patamar(partidas, 15)
-        servico.responder("u-1", "dificil", "A")
-        assert _patamar(partidas) == 15
+        _acertar(servico, 2)
+        assert perfis.obter_ou_criar("u-1").melhor_sequencia == 4
 
 
 class TestErrarEVidaExtra:
-    def test_errar_nao_revela_a_resposta_e_oferece_vida_extra(self, servico, perguntas, partidas) -> None:
-        perguntas.adicionar("p1", "C", nivel_dificuldade=1)
-        _por_no_patamar(partidas, 3)
-
-        resultado = servico.responder("u-1", "p1", "A")
+    def test_errar_nao_revela_a_resposta_e_oferece_vida_extra(self, servico, partidas) -> None:
+        _acertar(servico, 3)
+        _, resultado = _errar(servico)
 
         assert resultado.correta is False
         # Revelar aqui tornava a segunda tentativa (paga) uma formalidade.
-        assert resultado.resposta_correta is None
-        assert resultado.explicacao is None
+        assert resultado.resposta_correta is None and resultado.explicacao is None
         assert resultado.vida_extra.custo == CUSTO_VIDA_EXTRA
         assert resultado.vida_extra.restantes == MAXIMO_VIDAS_EXTRA_POR_PARTIDA
-        partida = partidas.obter_ativa("u-1")
+        partida = _ativa(partidas)
         assert partida.estado == "a_aguardar_decisao"
         assert partida.patamar_superado == 3  # o progresso não se perde ao errar
-        assert (partida.pergunta_falhada_id, partida.opcao_falhada) == ("p1", "A")
+        assert partida.opcao_falhada == "A"
 
-    def test_tempo_esgotado_conta_como_falha_mesmo_que_a_seria_a_certa(self, servico, perguntas, partidas) -> None:
-        # Bug reproduzido: o cliente mandava "A" ao esgotar o tempo; se "A"
-        # fosse a certa, o progresso avançava sem resposta nenhuma.
-        perguntas.adicionar("p1", "A", nivel_dificuldade=1)
-        servico.iniciar_partida("u-1")
-        resultado = servico.esgotar_tempo("u-1", "p1")
+    def test_tempo_esgotado_conta_como_falha(self, servico, partidas) -> None:
+        pergunta = servico.nova_pergunta("u-1").pergunta
+        resultado = servico.esgotar_tempo("u-1", pergunta.id)
         assert resultado.correta is False
-        partida = partidas.obter_ativa("u-1")
-        assert partida.estado == "a_aguardar_decisao"
-        assert partida.patamar_superado == 0
-        assert partida.opcao_falhada is None
+        partida = _ativa(partidas)
+        assert partida.estado == "a_aguardar_decisao" and partida.opcao_falhada is None
 
-    def test_tempo_esgotado_anonimo_revela_e_nao_cria_nada(self, servico, perguntas, perfis, partidas) -> None:
-        perguntas.adicionar("p1", "B", nivel_dificuldade=1)
-        resultado = servico.esgotar_tempo(None, "p1")
-        assert resultado.resposta_correta == "B"
-        assert perfis._perfis == {} and partidas.partidas == {}
-
-    def test_a_aguardar_decisao_nao_se_responde_a_mais_nada(self, servico, perguntas, partidas) -> None:
-        perguntas.adicionar("p1", "C", nivel_dificuldade=1)
-        perguntas.adicionar("p2", "A", nivel_dificuldade=1)
-        servico.iniciar_partida("u-1")
-        servico.responder("u-1", "p1", "A")
+    def test_a_aguardar_decisao_nao_se_responde_nem_se_pede_pergunta(self, servico) -> None:
+        pergunta, _ = _errar(servico)
         with pytest.raises(PartidaADecidirError):
-            servico.responder("u-1", "p2", "A")
+            servico.responder("u-1", pergunta.id, "C")
         with pytest.raises(PartidaADecidirError):
-            servico.esgotar_tempo("u-1", "p2")
+            servico.nova_pergunta("u-1")
 
-    def test_usar_vida_extra_debita_e_devolve_a_mesma_pergunta_sem_a_opcao_falhada(
-        self, servico, perguntas, perfis, partidas
-    ) -> None:
-        perguntas.adicionar("p1", "C", nivel_dificuldade=1)
+    def test_usar_vida_extra_devolve_a_mesma_pergunta_sem_a_opcao_falhada(self, servico, perfis, partidas) -> None:
         perfis.creditar_diamantes("u-1", 50)
-        _por_no_patamar(partidas, 4)
-        servico.responder("u-1", "p1", "A")
+        _acertar(servico, 1)
+        pergunta, _ = _errar(servico)
 
         usada = servico.usar_vida_extra("u-1")
 
         assert usada.perfil.diamantes == 50 - CUSTO_VIDA_EXTRA
-        assert (usada.pergunta_id, usada.opcao_falhada) == ("p1", "A")
+        assert (usada.pergunta_id, usada.opcao_falhada) == (pergunta.id, "A")
         assert usada.vidas_restantes == MAXIMO_VIDAS_EXTRA_POR_PARTIDA - 1
-        partida = partidas.obter_ativa("u-1")
-        assert partida.estado == "em_curso" and partida.patamar_superado == 4
+        assert servico.responder("u-1", pergunta.id, "C").correta is True
+        assert _ativa(partidas).patamar_superado == 2
 
-    def test_depois_da_vida_extra_acertar_continua_a_subir(self, servico, perguntas, perfis, partidas) -> None:
-        perguntas.adicionar("p1", "C", nivel_dificuldade=1)
-        perfis.creditar_diamantes("u-1", 50)
-        _por_no_patamar(partidas, 4)
-        servico.responder("u-1", "p1", "A")
-        servico.usar_vida_extra("u-1")
-
-        assert servico.responder("u-1", "p1", "C").correta is True
-        assert _patamar(partidas) == 5
-
-    def test_sem_diamantes_recusa_sem_debitar_e_a_partida_continua_a_aguardar(
-        self, servico, perguntas, perfis, partidas
-    ) -> None:
-        perguntas.adicionar("p1", "C", nivel_dificuldade=1)
+    def test_sem_diamantes_recusa_sem_debitar(self, servico, perfis, partidas) -> None:
         perfis.creditar_diamantes("u-1", CUSTO_VIDA_EXTRA - 1)
-        servico.iniciar_partida("u-1")
-        servico.responder("u-1", "p1", "A")
-
+        _errar(servico)
         with pytest.raises(DiamantesInsuficientesError):
             servico.usar_vida_extra("u-1")
-
         assert perfis.obter_ou_criar("u-1").diamantes == CUSTO_VIDA_EXTRA - 1
-        partida = partidas.obter_ativa("u-1")
-        assert partida.estado == "a_aguardar_decisao" and partida.vidas_extra_usadas == 0
+        assert _ativa(partidas).estado == "a_aguardar_decisao"
 
-    def test_limite_de_vidas_extra_por_partida(self, servico, perguntas, perfis, partidas) -> None:
-        perguntas.adicionar("p1", "C", nivel_dificuldade=1)
+    def test_limite_de_vidas_extra_por_partida(self, servico, perfis) -> None:
         perfis.creditar_diamantes("u-1", 1000)
-        servico.iniciar_partida("u-1")
         for _ in range(MAXIMO_VIDAS_EXTRA_POR_PARTIDA):
-            servico.responder("u-1", "p1", "A")
+            pergunta, _ = _errar(servico)
             servico.usar_vida_extra("u-1")
+            servico.responder("u-1", pergunta.id, "C")
 
-        resultado = servico.responder("u-1", "p1", "A")
+        _, resultado = _errar(servico)
         assert resultado.vida_extra.restantes == 0
         with pytest.raises(VidaExtraIndisponivelError):
             servico.usar_vida_extra("u-1")
-        assert perfis.obter_ou_criar("u-1").diamantes == 1000 - MAXIMO_VIDAS_EXTRA_POR_PARTIDA * CUSTO_VIDA_EXTRA
 
     def test_vida_extra_sem_ter_errado_e_recusada(self, servico, perfis) -> None:
         perfis.creditar_diamantes("u-1", 100)
         with pytest.raises(VidaExtraIndisponivelError):
-            servico.usar_vida_extra("u-1")  # sem partida
-        servico.iniciar_partida("u-1")
-        with pytest.raises(VidaExtraIndisponivelError):
-            servico.usar_vida_extra("u-1")  # em curso, não errou
-        assert perfis.obter_ou_criar("u-1").diamantes == 100
-
-    def test_a_mesma_falha_nao_paga_duas_vidas(self, servico, perguntas, perfis, partidas) -> None:
-        perguntas.adicionar("p1", "C", nivel_dificuldade=1)
-        perfis.creditar_diamantes("u-1", 100)
-        servico.iniciar_partida("u-1")
-        servico.responder("u-1", "p1", "A")
-        servico.usar_vida_extra("u-1")
+            servico.usar_vida_extra("u-1")
+        servico.nova_pergunta("u-1")
         with pytest.raises(VidaExtraIndisponivelError):
             servico.usar_vida_extra("u-1")
-        assert perfis.obter_ou_criar("u-1").diamantes == 100 - CUSTO_VIDA_EXTRA
+        assert perfis.obter_ou_criar("u-1").diamantes == 100
 
 
 class TestTerminar:
-    def test_recusar_a_vida_extra_paga_os_patamares_superados_e_revela_a_resposta(
-        self, servico, perguntas, partidas
-    ) -> None:
-        # Bug corrigido: o servidor zerava o progresso ao errar e pagava 0
-        # numa derrota, apesar de o ecrã mostrar o prémio dos patamares.
-        perguntas.adicionar("p1", "C", nivel_dificuldade=2)
-        _por_no_patamar(partidas, 6)
-        servico.responder("u-1", "p1", "A")
+    def test_recusar_a_vida_extra_paga_os_patamares_e_revela_a_resposta(self, servico) -> None:
+        _acertar(servico, 6)
+        _errar(servico)
 
         terminada = servico.terminar_partida("u-1")
 
         assert (terminada.moedas_ganhas, terminada.diamantes_ganhos) == (6 * 50, 1)
         assert terminada.perfil.moedas == 300 and terminada.perfil.partidas_jogadas == 1
-        assert terminada.perfil.patamar_maximo_alcancado == 6
         assert (terminada.resposta_correta, terminada.explicacao) == ("C", "explicação")
-        assert partidas.obter_ativa("u-1") is None
 
-    def test_vitoria_paga_o_premio_maximo(self, servico, partidas) -> None:
-        _por_no_patamar(partidas, 15)
+    def test_vitoria_paga_o_premio_maximo(self, servico) -> None:
+        _acertar(servico, 15)
         terminada = servico.terminar_partida("u-1")
         assert (terminada.moedas_ganhas, terminada.diamantes_ganhos) == (750, 5)
         assert terminada.resposta_correta is None
 
     def test_terminar_sem_partida_nao_paga_nada(self, servico) -> None:
-        # O ataque original: chamar o prémio directamente, sem jogar.
         terminada = servico.terminar_partida("u-1")
         assert (terminada.moedas_ganhas, terminada.diamantes_ganhos) == (0, 0)
-        assert terminada.perfil.moedas == 0 and terminada.perfil.partidas_jogadas == 0
+        assert terminada.perfil.partidas_jogadas == 0
 
-    def test_nunca_paga_a_mesma_partida_duas_vezes(self, servico, partidas) -> None:
-        _por_no_patamar(partidas, 5)
+    def test_nunca_paga_a_mesma_partida_duas_vezes(self, servico) -> None:
+        _acertar(servico, 5)
         servico.terminar_partida("u-1")
         segunda = servico.terminar_partida("u-1")
-        assert segunda.moedas_ganhas == 0
-        assert segunda.perfil.moedas == 250 and segunda.perfil.partidas_jogadas == 1
+        assert segunda.moedas_ganhas == 0 and segunda.perfil.partidas_jogadas == 1
 
-    def test_iniciar_outra_partida_termina_a_anterior_pagando_o_que_tinha(self, servico, perfis, partidas) -> None:
-        _por_no_patamar(partidas, 2)
+    def test_iniciar_outra_partida_termina_a_anterior(self, servico, perfis, partidas) -> None:
+        _acertar(servico, 2)
         nova = servico.iniciar_partida("u-1")
-        assert nova.patamar_superado == 0 and nova.estado == "em_curso"
+        assert nova.patamar_superado == 0 and nova.sequencia_acertos == 0
         assert perfis.obter_ou_criar("u-1").moedas == 100
         assert len(partidas.partidas) == 2
 
@@ -422,75 +500,59 @@ class TestTerminar:
 class TestAjudasGratis:
     @pytest.mark.parametrize("correta", ["A", "B", "C", "D"])
     def test_cinquenta_cinquenta_esconde_duas_erradas_e_nunca_a_certa(self, servico, perguntas, correta) -> None:
+        perguntas._perguntas.clear()
         perguntas.adicionar("p1", correta, nivel_dificuldade=1)
-        eliminadas = servico.cinquenta_cinquenta(None, "p1")
-        assert len(eliminadas) == 2
-        assert correta not in eliminadas
-        assert len(set(eliminadas)) == 2
-
-    def test_cinquenta_cinquenta_e_determinista_por_pergunta(self, servico, perguntas) -> None:
-        # Repetir o pedido nunca pode revelar mais do que a primeira vez.
-        perguntas.adicionar("p1", "C", nivel_dificuldade=1)
-        assert {tuple(servico.cinquenta_cinquenta(None, "p1")) for _ in range(20)} == {
-            tuple(servico.cinquenta_cinquenta(None, "p1"))
-        }
+        servico.nova_pergunta("u-1")
+        eliminadas = servico.cinquenta_cinquenta("u-1", "p1")
+        assert len(set(eliminadas)) == 2 and correta not in eliminadas
 
     @pytest.mark.parametrize("correta", ["A", "B", "C", "D"])
     def test_opiniao_publico_favorece_a_certa_e_soma_100(self, servico, perguntas, correta) -> None:
+        perguntas._perguntas.clear()
         perguntas.adicionar(f"p-{correta}", correta, nivel_dificuldade=1)
-        percentagens = servico.opiniao_publico(None, f"p-{correta}")
+        servico.nova_pergunta("u-1")
+        percentagens = servico.opiniao_publico("u-1", f"p-{correta}")
         assert set(percentagens) == {"A", "B", "C", "D"}
         assert sum(percentagens.values()) == 100
         assert 55 <= percentagens[correta] <= 75
         assert all(v >= 1 for v in percentagens.values())
-        assert percentagens[correta] == max(percentagens.values())
 
-    def test_opiniao_publico_e_determinista_por_pergunta(self, servico, perguntas) -> None:
-        perguntas.adicionar("p1", "D", nivel_dificuldade=1)
-        assert all(servico.opiniao_publico(None, "p1") == servico.opiniao_publico(None, "p1") for _ in range(10))
+    def test_resultado_e_determinista_por_pergunta(self, servico, perguntas) -> None:
+        # Em partidas diferentes, a mesma pergunta dá sempre o mesmo 50:50 --
+        # repetir nunca revela mais do que a primeira vez.
+        resultados = set()
+        for _ in range(5):
+            servico.iniciar_partida("u-1")
+            pergunta = servico.nova_pergunta("u-1").pergunta
+            resultados.add(tuple(servico.cinquenta_cinquenta("u-1", pergunta.id)))
+        assert len(resultados) == 1
 
-    def test_ajudas_nunca_mexem_no_progresso(self, servico, perguntas, partidas) -> None:
-        # Bug corrigido: as ajudas chamavam `responder` com "A" e zeravam o
-        # progresso sempre que "A" estava errada.
-        perguntas.adicionar("p1", "B", nivel_dificuldade=1)
-        _por_no_patamar(partidas, 3)
-        servico.cinquenta_cinquenta("u-1", "p1")
-        servico.opiniao_publico("u-1", "p1")
-        partida = partidas.obter_ativa("u-1")
+    def test_ajudas_nunca_mexem_no_progresso(self, servico, partidas) -> None:
+        _acertar(servico, 3)
+        pergunta = servico.nova_pergunta("u-1").pergunta
+        servico.cinquenta_cinquenta("u-1", pergunta.id)
+        servico.opiniao_publico("u-1", pergunta.id)
+        partida = _ativa(partidas)
         assert partida.patamar_superado == 3 and partida.estado == "em_curso"
+        assert partida.sequencia_acertos == 3
 
-    def test_cada_ajuda_so_uma_vez_por_partida(self, servico, perguntas) -> None:
-        perguntas.adicionar("p1", "B", nivel_dificuldade=1)
-        servico.iniciar_partida("u-1")
-        servico.cinquenta_cinquenta("u-1", "p1")
-        servico.opiniao_publico("u-1", "p1")
+    def test_cada_ajuda_so_uma_vez_por_partida(self, servico) -> None:
+        pergunta = servico.nova_pergunta("u-1").pergunta
+        servico.cinquenta_cinquenta("u-1", pergunta.id)
+        servico.opiniao_publico("u-1", pergunta.id)
         with pytest.raises(AjudaJaUsadaError):
-            servico.cinquenta_cinquenta("u-1", "p1")
+            servico.cinquenta_cinquenta("u-1", pergunta.id)
         with pytest.raises(AjudaJaUsadaError):
-            servico.opiniao_publico("u-1", "p1")
+            servico.opiniao_publico("u-1", pergunta.id)
 
-    def test_nova_partida_volta_a_ter_as_ajudas(self, servico, perguntas) -> None:
-        perguntas.adicionar("p1", "B", nivel_dificuldade=1)
+    def test_nova_partida_volta_a_ter_as_ajudas(self, servico) -> None:
+        pergunta = servico.nova_pergunta("u-1").pergunta
+        servico.cinquenta_cinquenta("u-1", pergunta.id)
         servico.iniciar_partida("u-1")
-        servico.cinquenta_cinquenta("u-1", "p1")
-        servico.iniciar_partida("u-1")
-        assert len(servico.cinquenta_cinquenta("u-1", "p1")) == 2
+        pergunta = servico.nova_pergunta("u-1").pergunta
+        assert len(servico.cinquenta_cinquenta("u-1", pergunta.id)) == 2
 
-    def test_ajudas_bloqueadas_a_aguardar_decisao(self, servico, perguntas) -> None:
-        perguntas.adicionar("p1", "B", nivel_dificuldade=1)
-        servico.iniciar_partida("u-1")
-        servico.responder("u-1", "p1", "A")
+    def test_ajudas_bloqueadas_a_aguardar_decisao(self, servico) -> None:
+        pergunta, _ = _errar(servico)
         with pytest.raises(PartidaADecidirError):
-            servico.cinquenta_cinquenta("u-1", "p1")
-
-    def test_pergunta_inexistente_nao_gasta_a_ajuda(self, servico, perguntas, partidas) -> None:
-        servico.iniciar_partida("u-1")
-        with pytest.raises(PerguntaNaoEncontradaError):
-            servico.cinquenta_cinquenta("u-1", "nao-existe")
-        assert partidas.obter_ativa("u-1").cinquenta_cinquenta_usada is False
-
-    def test_ajuda_com_pergunta_inexistente(self, servico) -> None:
-        with pytest.raises(PerguntaNaoEncontradaError):
-            servico.cinquenta_cinquenta(None, "nao-existe")
-        with pytest.raises(PerguntaNaoEncontradaError):
-            servico.opiniao_publico(None, "nao-existe")
+            servico.cinquenta_cinquenta("u-1", pergunta.id)

@@ -54,6 +54,19 @@ class OfertaVidaExtraPublica(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class PerguntaDaPartidaPublica(PerguntaPublica):
+    """A pergunta que a partida entregou -- só esta se pode validar."""
+
+    patamar: int
+
+
+class RecompensaSequenciaPublica(BaseModel):
+    # Acertos seguidos que deram o marco (3, 6, 9...) e os diamantes ganhos.
+    sequencia: int
+    diamantes: int
+    perfil: "PerfilJogadorPublico"
+
+
 class ValidarRespostaResponse(BaseModel):
     correta: bool
     # `None` quando a partida fica à espera da decisão sobre a vida extra:
@@ -61,8 +74,9 @@ class ValidarRespostaResponse(BaseModel):
     resposta_correta: RespostaOpcao | None
     explicacao: str | None
     vida_extra: OfertaVidaExtraPublica | None = None
-
-    model_config = {"from_attributes": True}
+    sequencia_acertos: int = 0
+    # Preenchida só quando este acerto atinge um marco de sequência.
+    recompensa_sequencia: RecompensaSequenciaPublica | None = None
 
 
 class PerfilJogadorPublico(BaseModel):
@@ -70,6 +84,7 @@ class PerfilJogadorPublico(BaseModel):
     diamantes: int
     partidas_jogadas: int
     patamar_maximo_alcancado: int
+    melhor_sequencia: int = 0
 
     model_config = {"from_attributes": True}
 
@@ -150,6 +165,8 @@ class PartidaPublica(BaseModel):
     vidas_extra_usadas: int
     cinquenta_cinquenta_usada: bool
     opiniao_publico_usada: bool
+    trocar_pergunta_usada: bool
+    sequencia_acertos: int
 
     model_config = {"from_attributes": True}
 
@@ -169,3 +186,8 @@ class PartidaTerminadaResponse(BaseModel):
     diamantes_ganhos: int
     resposta_correta: RespostaOpcao | None
     explicacao: str | None
+
+
+# `RecompensaSequenciaPublica` refere-se a `PerfilJogadorPublico`, definido mais abaixo.
+RecompensaSequenciaPublica.model_rebuild()
+ValidarRespostaResponse.model_rebuild()

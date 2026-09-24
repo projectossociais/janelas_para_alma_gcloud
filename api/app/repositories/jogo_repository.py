@@ -43,7 +43,9 @@ class PerguntaJogoRegisto:
 
 
 class PerguntaJogoRepository(Protocol):
-    def obter_aleatoria(self, nivel_dificuldade: int | None = None) -> PerguntaJogoRegisto | None: ...
+    def obter_aleatoria(
+        self, nivel_dificuldade: int | None = None, excluir_id: str | None = None
+    ) -> PerguntaJogoRegisto | None: ...
     def obter_por_id(self, pergunta_id: str) -> PerguntaJogoRegisto | None: ...
     def criar(
         self,
@@ -76,10 +78,15 @@ class SQLAlchemyPerguntaJogoRepository:
     def __init__(self, sessao: Session) -> None:
         self._sessao = sessao
 
-    def obter_aleatoria(self, nivel_dificuldade: int | None = None) -> PerguntaJogoRegisto | None:
+    def obter_aleatoria(
+        self, nivel_dificuldade: int | None = None, excluir_id: str | None = None
+    ) -> PerguntaJogoRegisto | None:
         query = select(PerguntaJogo)
         if nivel_dificuldade is not None:
             query = query.where(PerguntaJogo.nivel_dificuldade == nivel_dificuldade)
+        if excluir_id is not None:
+            # "Trocar pergunta" nunca devolve a mesma.
+            query = query.where(PerguntaJogo.id != uuid.UUID(excluir_id))
         # ORDER BY random() -- banco de perguntas de quiz, não um hot path;
         # não vale complicar com TABLESAMPLE por isto.
         row = self._sessao.scalars(query.order_by(func.random()).limit(1)).first()

@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
 import {
   Check,
   ChevronDown,
   Coins,
+  Flame,
   Gem,
   Loader2,
   RefreshCw,
@@ -34,6 +36,7 @@ import { useCarteiraJogo } from "@/contexts/CarteiraJogoContext";
 import CarteiraJogo from "@/components/jogo/CarteiraJogo";
 import MercadoModal from "@/components/jogo/MercadoModal";
 import VidaExtraModal from "@/components/jogo/VidaExtraModal";
+import RecompensaSequenciaModal, { type RecompensaSequenciaMostrada } from "@/components/jogo/RecompensaSequenciaModal";
 import {
   jogoApi,
   mensagemDeErroApi,
@@ -92,12 +95,17 @@ const gerarOpiniaoPublico = (correta: RespostaOpcaoJogo): Record<RespostaOpcaoJo
 
 const JogoCuriosidades = () => {
   const { t: tr } = useTranslation();
-  const { profile } = useProfile();
+  const { profile, loading: aCarregarPerfil } = useProfile();
   const { definirPerfil } = useCarteiraJogo();
   // As perguntas da API (base de dados) só existem em português: no site
   // inglês o jogo usa sempre a reserva local, traduzida em
   // perguntasOffline.en-US.ts. Não é "modo offline" -- o aviso não aparece.
   const emIngles = useIdioma() === IDIOMA_EN;
+  // Perguntas, partida e prémios do servidor só com sessão (desde 2026-09-24:
+  // sem sessão, `/jogo/validar` servia de oráculo para a resposta certa).
+  // Convidados -- e o site inglês -- jogam com a reserva local, sem prémio.
+  const usaServidor = !!profile?.id && !emIngles;
+  const modoRecompensa = usaServidor ? "servidor" : profile ? "treino" : "convidado";
 
   const [mostrarSplash, setMostrarSplash] = useState(true);
 
@@ -140,12 +148,10 @@ const JogoCuriosidades = () => {
       console.error("Falha ao iniciar a partida no servidor:", err);
     });
   }, []);
-  const partidaIniciadaPara = useRef<string | null>(null);
-  useEffect(() => {
-    if (!profile?.id || partidaIniciadaPara.current === profile.id) return;
-    partidaIniciadaPara.current = profile.id;
-    iniciarPartidaNoServidor();
-  }, [profile?.id, iniciarPartidaNoServidor]);
+
+  // Acertos seguidos nesta partida (vem da API) e o marco a celebrar.
+  const [sequenciaAcertos, setSequenciaAcertos] = useState(0);
+  const [recompensaSequencia, setRecompensaSequencia] = useState<RecompensaSequenciaMostrada | null>(null);
 
   // Ids das perguntas offline já mostradas nesta sessão -- evita repetição
   // enquanto a reserva do patamar não se esgota. Guardado também numa ref
@@ -205,7 +211,7 @@ const JogoCuriosidades = () => {
     setSugestaoMercado(null);
     setMostrarMercado(false);
     setTempoRestante(TEMPO_POR_PERGUNTA);
-    if (emIngles) {
+    if (!usaServidor) {
       setPergunta(escolherPerguntaOfflineParaPatamar(novoPatamar));
       setEmModoOffline(true);
       setPatamar(novoPatamar);
@@ -213,24 +219,33 @@ const JogoCuriosidades = () => {
       return;
     }
     try {
-      const nova = await jogoApi.obterPerguntaAleatoria(novoPatamar);
+      await inicioPartida.current;
+      // O servidor decide o patamar (o da partida) -- o do cliente é só o
+      // que se esperava; se divergirem, manda o servidor.
+      const nova = await jogoApi.obterPerguntaDaPartida();
       setPergunta(nova);
+      setPatamar(nova.patamar);
       setEmModoOffline(false);
     } catch (err) {
       console.error("Falha ao contactar a API do jogo, a usar o modo offline:", err);
       setPergunta(escolherPerguntaOfflineParaPatamar(novoPatamar));
+      setPatamar(novoPatamar);
       setEmModoOffline(true);
     } finally {
-      setPatamar(novoPatamar);
       setACarregarPergunta(false);
     }
-  }, [escolherPerguntaOfflineParaPatamar, emIngles]);
+  }, [escolherPerguntaOfflineParaPatamar, usaServidor]);
 
-  // Arranque do jogo -- corre em paralelo com o ecrã de apresentação, para a
-  // pergunta já estar pronta quando o "splash" da escada terminar.
+  // Arranque do jogo -- espera só por saber se há sessão (define o modo) e
+  // corre em paralelo com o ecrã de apresentação, para a pergunta já estar
+  // pronta quando o "splash" da escada terminar. Uma única vez.
+  const arrancou = useRef(false);
   useEffect(() => {
+    if (aCarregarPerfil || arrancou.current) return;
+    arrancou.current = true;
+    if (usaServidor) iniciarPartidaNoServidor();
     void carregarPergunta(1);
-  }, [carregarPergunta]);
+  }, [aCarregarPerfil, usaServidor, carregarPergunta, iniciarPartidaNoServidor]);
 
   // Ecrã de apresentação com a escada completa -- unico este 2,5s ou até o
   // jogador clicar em "Começar".
@@ -243,7 +258,8 @@ const JogoCuriosidades = () => {
   // Temporizador -- pára assim que a pergunta é respondida, o jogo termina
   // ou o ecrã de apresentação ainda está visível.
   useEffect(() => {
-    if (!pergunta || resultado || jogoTerminado || mostrarSplash) return;
+    // Também em pausa enquanto se celebra um marco de sequência.
+    if (!pergunta || resultado || jogoTerminado || mostrarSplash || recompensaSequencia) return;
     if (tempoRestante <= 0) {
       void aoTempoEsgotar();
       return;
@@ -251,7 +267,7 @@ const JogoCuriosidades = () => {
     const id = setTimeout(() => setTempoRestante((t) => t - 1), 1000);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pergunta, resultado, jogoTerminado, mostrarSplash, tempoRestante]);
+  }, [pergunta, resultado, jogoTerminado, mostrarSplash, tempoRestante, recompensaSequencia]);
 
   // Avança automaticamente ao acertar; ao errar ou esgotar o tempo, abre já
   // o modal com a explicação -- não há motivo para atrasar essa revelação.
@@ -279,17 +295,18 @@ const JogoCuriosidades = () => {
   }, [resultado]);
 
   // Termina a partida assim que o jogo acaba (vitória, ou derrota depois de
-  // recusar a vida extra) -- uma única vez por partida. Sem sessão, o prémio
-  // é só mostrado (calculado localmente). Com sessão, é o servidor que paga,
+  // recusar a vida extra) -- uma única vez por partida. Sem sessão não há
+  // prémio nenhum (a reserva local é só treino). Com sessão, é o servidor que paga,
   // pelos patamares que ele próprio confirmou, e que revela a resposta certa
   // que ficou por mostrar; o valor local só enche o ecrã até ele responder.
   // Nunca bloqueia o ecrã final: uma falha de rede fica no `console.error`.
   useEffect(() => {
     if (recompensaEnviada || (!jogoTerminado && !mostrarModalErrado)) return;
-    const patamarAlcancado = jogoTerminado ? TOTAL_PATAMARES : Math.max(patamar - 1, 0);
     setRecompensaEnviada(true);
+    // Sem servidor (convidado ou site inglês) não há partida nem prémio.
+    if (!usaServidor) return;
+    const patamarAlcancado = jogoTerminado ? TOTAL_PATAMARES : Math.max(patamar - 1, 0);
     setRecompensaLocal(calcularRecompensaCliente(patamarAlcancado));
-    if (!profile?.id) return;
     jogoApi
       .terminarPartida()
       .then((terminada) => {
@@ -347,6 +364,7 @@ const JogoCuriosidades = () => {
     try {
       await inicioPartida.current;
       const resp = await jogoApi.tempoEsgotado(pergunta.id);
+      setSequenciaAcertos(0);
       setResultado({
         correta: false,
         resposta_correta: resp.resposta_correta,
@@ -372,6 +390,16 @@ const JogoCuriosidades = () => {
     try {
       await inicioPartida.current;
       const resp = await jogoApi.validarResposta(pergunta.id, opcao);
+      setSequenciaAcertos(resp.sequencia_acertos ?? 0);
+      if (resp.recompensa_sequencia) {
+        // Os diamantes já estão na conta (creditados na validação) -- a barra
+        // actualiza já, e o marco celebra-se por cima da pergunta seguinte.
+        definirPerfil(resp.recompensa_sequencia.perfil);
+        setRecompensaSequencia({
+          sequencia: resp.recompensa_sequencia.sequencia,
+          diamantes: resp.recompensa_sequencia.diamantes,
+        });
+      }
       setResultado({
         correta: resp.correta,
         resposta_correta: resp.resposta_correta,
@@ -452,7 +480,9 @@ const JogoCuriosidades = () => {
     setRecompensaEnviada(false);
     setRecompensaLocal(null);
     setOfertaVidaExtra(null);
-    if (profile?.id) iniciarPartidaNoServidor();
+    setSequenciaAcertos(0);
+    setRecompensaSequencia(null);
+    if (usaServidor) iniciarPartidaNoServidor();
     // Limpa já a pergunta e o patamar anteriores -- não basta confiar só no
     // que `carregarPergunta` faz lá dentro: isto garante que o ecrã nunca
     // mostra a pergunta da partida anterior, mesmo por um instante, e que o
@@ -535,6 +565,21 @@ const JogoCuriosidades = () => {
                 </p>
               </header>
 
+              {!usaServidor && (
+                <div className="max-w-2xl mx-auto mb-6 rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-foreground text-center">
+                  {profile ? (
+                    tr("JogoCuriosidades.modoTreinoIngles")
+                  ) : (
+                    <>
+                      {tr("JogoCuriosidades.modoConvidado")}{" "}
+                      <Link to={localizar("/auth")} className="font-semibold text-teal hover:underline">
+                        {tr("JogoCuriosidades.entrarParaGanhar")}
+                      </Link>
+                    </>
+                  )}
+                </div>
+              )}
+
               {/* Patamar atual em mobile -- gaveta com a escada completa. */}
               <div className="md:hidden max-w-2xl mx-auto mb-6">
                 <Sheet>
@@ -580,7 +625,7 @@ const JogoCuriosidades = () => {
                         {tr("JogoCuriosidades.completouOs15Patamares")}
                       </p>
                       <p className="text-3xl font-bold text-gold">{formatarKz(valorDoPatamar(TOTAL_PATAMARES))}</p>
-                      <RecompensaGanha recompensa={recompensaLocal} autenticado={!!profile?.id} />
+                      <RecompensaGanha recompensa={recompensaLocal} modo={modoRecompensa} />
                       <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
                         <Button onClick={partilhar} variant="outline" className="border-teal text-teal hover:bg-teal/10">
                           <Share2 className="w-4 h-4" />
@@ -602,10 +647,19 @@ const JogoCuriosidades = () => {
                             <Trans i18nKey="JogoCuriosidades.patamarDe2" values={{ patamar, TOTAL_PATAMARES }} />
                           </p>
                           <p className="text-2xl font-bold text-gold">{formatarKz(valorDoPatamar(patamar))}</p>
-                          {emModoOffline && !emIngles && (
+                          {emModoOffline && usaServidor && (
                             <span className="inline-flex items-center gap-1 mt-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground bg-muted rounded-full px-2 py-0.5">
                               <WifiOff className="w-3 h-3" />
                               {tr("JogoCuriosidades.modoOffline")}
+                            </span>
+                          )}
+                          {usaServidor && sequenciaAcertos > 0 && (
+                            <span
+                              className="inline-flex items-center gap-1 mt-1 ml-1 text-[11px] font-bold uppercase tracking-wide text-orange-600 bg-orange-500/10 rounded-full px-2 py-0.5"
+                              aria-label={tr("RecompensaSequencia.sequenciaAtual", { sequencia: sequenciaAcertos })}
+                            >
+                              <Flame className="w-3 h-3" />
+                              {sequenciaAcertos}
                             </span>
                           )}
                         </div>
@@ -690,17 +744,19 @@ const JogoCuriosidades = () => {
                           <Shuffle className="w-4 h-4" />
                           {tr("JogoCuriosidades.trocarPergunta")}
                         </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => setMostrarMercado(true)}
-                          disabled={!!resultado || aValidar || emModoOffline}
-                          className="border-gold/60 text-gold hover:bg-gold/10"
-                        >
-                          <Store className="w-4 h-4" />
-                          {tr("Mercado.titulo")}
-                        </Button>
+                        {usaServidor && (
+                          <Button
+                            variant="outline"
+                            onClick={() => setMostrarMercado(true)}
+                            disabled={!!resultado || aValidar || emModoOffline}
+                            className="border-gold/60 text-gold hover:bg-gold/10"
+                          >
+                            <Store className="w-4 h-4" />
+                            {tr("Mercado.titulo")}
+                          </Button>
+                        )}
                       </div>
-                      {emModoOffline && (
+                      {usaServidor && emModoOffline && (
                         <p className="text-center text-xs text-muted-foreground -mt-2">
                           {tr("Mercado.indisponivelOffline")}
                         </p>
@@ -756,7 +812,7 @@ const JogoCuriosidades = () => {
               <p className="text-sm text-foreground">
                 <Trans i18nKey="JogoCuriosidades.chegouAoPatamarDe" values={{ patamar, TOTAL_PATAMARES }} />
               </p>
-              <RecompensaGanha recompensa={recompensaLocal} autenticado={!!profile?.id} />
+              <RecompensaGanha recompensa={recompensaLocal} modo={modoRecompensa} />
             </div>
           )}
 
@@ -768,6 +824,8 @@ const JogoCuriosidades = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <RecompensaSequenciaModal recompensa={recompensaSequencia} onContinuar={() => setRecompensaSequencia(null)} />
 
       <VidaExtraModal
         oferta={ofertaVidaExtra}
@@ -832,11 +890,29 @@ const JogoCuriosidades = () => {
 
 interface RecompensaGanhaProps {
   recompensa: RecompensaLocal | null;
-  autenticado: boolean;
+  // "servidor": prémio pago pela API. "convidado"/"treino": reserva local,
+  // sem prémio nenhum -- só se explica porquê.
+  modo: "servidor" | "convidado" | "treino";
 }
 
-const RecompensaGanha = ({ recompensa, autenticado }: RecompensaGanhaProps) => {
+const RecompensaGanha = ({ recompensa, modo }: RecompensaGanhaProps) => {
   const { t } = useTranslation();
+  if (modo !== "servidor") {
+    return (
+      <div className="rounded-xl bg-muted/60 border border-border/50 p-4 text-sm text-muted-foreground">
+        {modo === "convidado" ? (
+          <>
+            {t("JogoCuriosidades.semPremioConvidado")}{" "}
+            <Link to={localizar("/auth")} className="font-semibold text-teal hover:underline">
+              {t("JogoCuriosidades.entrarParaGanhar")}
+            </Link>
+          </>
+        ) : (
+          t("JogoCuriosidades.modoTreinoIngles")
+        )}
+      </div>
+    );
+  }
   if (!recompensa) return null;
   return (
     <div className="rounded-xl bg-muted/60 border border-border/50 p-4 space-y-2">
@@ -849,11 +925,6 @@ const RecompensaGanha = ({ recompensa, autenticado }: RecompensaGanhaProps) => {
           <Gem className="w-4 h-4" />+{recompensa.diamantes}
         </span>
       </div>
-      {!autenticado && (
-        <p className="text-xs text-muted-foreground">
-          {t("JogoCuriosidades.inicieSessaoParaGuardar")}
-        </p>
-      )}
     </div>
   );
 };

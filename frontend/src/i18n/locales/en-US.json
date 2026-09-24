@@ -836,7 +836,6 @@
     "opcao": "Option {{opcao}}",
     "continuarAJogar": "Keep playing",
     "premioGanho": "Prize won",
-    "inicieSessaoParaGuardar": "Sign in to save these prizes to your account.",
     "naoFoiPossivelTerminar": "We couldn't finish the question.",
     "naoFoiPossivelValidar": "We couldn't check your answer. Please try again.",
     "naoFoiPossivelUsar": "We couldn't use the 50:50 lifeline.",
@@ -848,7 +847,11 @@
     "tempoEsgotado": "Time's up!",
     "essaNaoEraA": "That wasn't the right answer",
     "segundosRestantes": "{{tempoRestante}} seconds remaining",
-    "aRevelar": "Revealing the right answer"
+    "aRevelar": "Revealing the right answer",
+    "modoConvidado": "You're playing as a guest, with practice questions and no rewards.",
+    "modoTreinoIngles": "Practice mode: the English questions don't give coins or diamonds. Rewards are available in the Portuguese version of the game.",
+    "entrarParaGanhar": "Sign in to earn coins and diamonds.",
+    "semPremioConvidado": "As a guest, this game doesn't give coins or diamonds."
   },
   "KambaHeroCarousel": {
     "programaMeuKambaEstrabico": "Meu Kamba Estrábico Program",
@@ -1968,5 +1971,14 @@
     "diamantesInsuficientesBotao": "Not enough diamonds",
     "diamantesInsuficientes": "You don't have enough diamonds for an Extra Life.",
     "naoFoiPossivelUsar": "We couldn't use the Extra Life. No diamonds were spent."
+  },
+  "RecompensaSequencia": {
+    "titulo": "Level Up!",
+    "acertosSeguidos": "{{sequencia}} right answers in a row!",
+    "aSuaRecompensa": "Your reward",
+    "diamantesGanhos": "{{diamantes}} diamonds earned",
+    "proximoMarco": "Every 3 right answers in a row earns you more diamonds. A wrong answer resets the streak.",
+    "continuar": "Continue",
+    "sequenciaAtual": "Streak of {{sequencia}} right answers"
   }
 }

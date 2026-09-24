@@ -1070,6 +1070,14 @@ export interface OfertaVidaExtra {
   restantes: number;
 }
 
+export interface RecompensaSequencia {
+  // Acertos seguidos que deram o marco (3, 6, 9...) e os diamantes ganhos.
+  sequencia: number;
+  diamantes: number;
+  // O perfil já com os diamantes creditados pela API.
+  perfil: PerfilJogadorPublico;
+}
+
 export interface ValidarRespostaJogoResponse {
   correta: boolean;
   // `null` quando, com sessão, o jogador errou: a partida fica à espera da
@@ -1077,6 +1085,9 @@ export interface ValidarRespostaJogoResponse {
   resposta_correta: RespostaOpcaoJogo | null;
   explicacao: string | null;
   vida_extra?: OfertaVidaExtra | null;
+  sequencia_acertos?: number;
+  // Só quando este acerto atinge um marco de sequência (3, 6, 9...).
+  recompensa_sequencia?: RecompensaSequencia | null;
 }
 
 export interface VidaExtraJogo {
@@ -1102,6 +1113,8 @@ export interface PerfilJogadorPublico {
   diamantes: number;
   partidas_jogadas: number;
   patamar_maximo_alcancado: number;
+  // Recorde de acertos seguidos numa partida.
+  melhor_sequencia?: number;
 }
 
 export interface PacoteDiamantes {
@@ -1144,10 +1157,14 @@ export interface AjudaMercado {
 export const jogoApi = {
   // `patamar` (1-15) é só do jogo -- o backend mapeia-o para um dos 3 níveis
   // de dificuldade da reserva de perguntas (ver nivel_dificuldade_do_patamar).
-  obterPerguntaAleatoria: (patamar: number) =>
-    pedido<PerguntaJogoPublica>(`/jogo/pergunta-aleatoria?patamar=${patamar}`),
+  // Exige sessão. O servidor sorteia a pergunta do próximo patamar da
+  // partida e prende-a à partida -- só essa se pode validar, ajudar ou comprar
+  // no Mercado. Pedir outra antes de responder gasta o "trocar pergunta".
+  // Sem sessão não há perguntas do servidor: o jogo usa a reserva local.
+  obterPerguntaDaPartida: () =>
+    pedido<PerguntaJogoPublica & { patamar: number }>("/jogo/partidas/atual/pergunta", { method: "POST" }),
 
-  // A resposta certa nunca chega em `obterPerguntaAleatoria` -- só esta
+  // A resposta certa nunca chega em `obterPerguntaDaPartida` -- só esta
   // chamada, depois de o jogador já ter escolhido, é que a revela.
   validarResposta: (perguntaId: string, respostaUsuario: RespostaOpcaoJogo) =>
     pedido<ValidarRespostaJogoResponse>("/jogo/validar", {

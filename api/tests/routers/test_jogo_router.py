@@ -29,8 +29,10 @@ class RepositorioPerguntaJogoFalso:
         self._perguntas: list[PerguntaJogoRegisto] = []
         self._proximo = 1
 
-    def obter_aleatoria(self, nivel_dificuldade: int | None = None) -> PerguntaJogoRegisto | None:
-        candidatas = self._perguntas
+    def obter_aleatoria(
+        self, nivel_dificuldade: int | None = None, excluir_id: str | None = None
+    ) -> PerguntaJogoRegisto | None:
+        candidatas = [p for p in self._perguntas if p.id != excluir_id]
         if nivel_dificuldade is not None:
             candidatas = [p for p in candidatas if p.nivel_dificuldade == nivel_dificuldade]
         return candidatas[0] if candidatas else None
@@ -102,90 +104,6 @@ def ambiente(repo_perfil, repo_partidas):
     with TestClient(app) as c:
         yield c, repo_jogo, token_admin, token_comum, repo_perfil
     app.dependency_overrides.clear()
-
-
-# --- Leitura pública ---------------------------------------------------------
-
-
-def test_sem_patamar_devolve_422(ambiente) -> None:
-    c, *_ = ambiente
-    assert c.get("/jogo/pergunta-aleatoria").status_code == 422
-
-
-def test_patamar_fora_do_intervalo_devolve_422(ambiente) -> None:
-    c, *_ = ambiente
-    assert c.get("/jogo/pergunta-aleatoria", params={"patamar": 0}).status_code == 422
-    assert c.get("/jogo/pergunta-aleatoria", params={"patamar": 16}).status_code == 422
-
-
-def test_sem_perguntas_devolve_404(ambiente) -> None:
-    c, *_ = ambiente
-    resposta = c.get("/jogo/pergunta-aleatoria", params={"patamar": 1})
-    assert resposta.status_code == 404
-
-
-def test_pergunta_aleatoria_nunca_expoe_resposta_correta_nem_explicacao(ambiente) -> None:
-    # A regra central desta feature: quem lê a rede antes de responder não
-    # pode encontrar a resposta certa em lado nenhum do payload.
-    c, repo, *_ = ambiente
-    repo.criar("2+2?", "1", "2", "3", "4", "D", 1, "porque sim")
-
-    resposta = c.get("/jogo/pergunta-aleatoria", params={"patamar": 1})
-    assert resposta.status_code == 200
-    corpo = resposta.json()
-    assert corpo["texto_pergunta"] == "2+2?"
-    assert set(corpo.keys()) == {"id", "texto_pergunta", "opcao_a", "opcao_b", "opcao_c", "opcao_d"}
-    assert "resposta_correta" not in corpo
-    assert "explicacao" not in corpo
-
-
-@pytest.mark.parametrize(
-    ("patamar", "nivel_esperado"),
-    [(1, 1), (5, 1), (6, 2), (10, 2), (11, 3), (15, 3)],
-)
-def test_pergunta_aleatoria_mapeia_patamar_para_nivel_dificuldade(ambiente, patamar, nivel_esperado) -> None:
-    c, repo, *_ = ambiente
-    for nivel in (1, 2, 3):
-        repo.criar(f"pergunta nível {nivel}", "a", "b", "c", "d", "A", nivel, None)
-
-    resposta = c.get("/jogo/pergunta-aleatoria", params={"patamar": patamar})
-    assert resposta.status_code == 200
-    assert resposta.json()["texto_pergunta"] == f"pergunta nível {nivel_esperado}"
-
-
-# --- Validação ---------------------------------------------------------------
-
-
-def test_validar_com_pergunta_inexistente_devolve_404(ambiente) -> None:
-    c, *_ = ambiente
-    resposta = c.post("/jogo/validar", json={"pergunta_id": "pergunta-999", "resposta_usuario": "A"})
-    assert resposta.status_code == 404
-
-
-def test_validar_resposta_correta(ambiente) -> None:
-    c, repo, *_ = ambiente
-    pergunta = repo.criar("2+2?", "1", "2", "3", "4", "D", 1, "porque sim")
-
-    resposta = c.post("/jogo/validar", json={"pergunta_id": pergunta.id, "resposta_usuario": "D"})
-    assert resposta.status_code == 200
-    corpo = resposta.json()
-    assert corpo["correta"] is True
-    assert corpo["resposta_correta"] == "D"
-    assert corpo["explicacao"] == "porque sim"
-
-
-def test_validar_resposta_errada_revela_a_certa(ambiente) -> None:
-    # O frontend usa `resposta_correta` desta resposta para piscar a
-    # vermelho a opção escolhida e a verde a certa -- só pode chegar aqui,
-    # nunca antes de o utilizador responder.
-    c, repo, *_ = ambiente
-    pergunta = repo.criar("2+2?", "1", "2", "3", "4", "D", 1, "porque sim")
-
-    resposta = c.post("/jogo/validar", json={"pergunta_id": pergunta.id, "resposta_usuario": "A"})
-    assert resposta.status_code == 200
-    corpo = resposta.json()
-    assert corpo["correta"] is False
-    assert corpo["resposta_correta"] == "D"
 
 
 # --- Gestão exige admin ------------------------------------------------------
@@ -262,112 +180,8 @@ def test_obter_perfil_cria_um_perfil_zerado_na_primeira_vez(ambiente) -> None:
         "diamantes": 0,
         "partidas_jogadas": 0,
         "patamar_maximo_alcancado": 0,
+        "melhor_sequencia": 0,
     }
-
-
-def test_registar_recompensa_sem_sessao_devolve_401(ambiente) -> None:
-    c, *_ = ambiente
-    assert c.post("/jogo/recompensas").status_code == 401
-
-
-def _responder_certo(c, repo, texto: str, nivel: int) -> None:
-    pergunta = repo.criar(texto, "a", "b", "c", "d", "A", nivel, None)
-    resposta = c.post("/jogo/validar", json={"pergunta_id": pergunta.id, "resposta_usuario": "A"})
-    assert resposta.status_code == 200
-    assert resposta.json()["correta"] is True
-
-
-def test_registar_recompensa_sem_ter_respondido_nada_nao_paga_nada(ambiente) -> None:
-    # O buraco original: chamar /jogo/recompensas directamente (o endpoint
-    # já não aceita sequer um `patamar_alcancado` no corpo) sem nunca ter
-    # respondido a uma pergunta. Antes desta correcção, um pedido forjado a
-    # mandar {"patamar_alcancado": 15} dava o prémio máximo.
-    c, _, _, token_comum, _ = ambiente
-    c.cookies.set("access_token", token_comum)
-
-    resposta = c.post("/jogo/recompensas")
-    assert resposta.status_code == 200
-    corpo = resposta.json()
-    assert corpo["moedas"] == 0
-    assert corpo["diamantes"] == 0
-
-
-def test_registar_recompensa_calcula_moedas_e_diamantes_a_partir_do_progresso_real(ambiente) -> None:
-    c, repo, _, token_comum, _ = ambiente
-    c.cookies.set("access_token", token_comum)
-
-    for i in range(5):
-        _responder_certo(c, repo, f"pergunta {i}", nivel=1)
-
-    resposta = c.post("/jogo/recompensas")
-    assert resposta.status_code == 200
-    corpo = resposta.json()
-    assert corpo["moedas"] == 250  # 5 patamares x 50 moedas
-    assert corpo["diamantes"] == 1  # marco do patamar 5
-    assert corpo["partidas_jogadas"] == 1
-    assert corpo["patamar_maximo_alcancado"] == 5
-
-
-def test_registar_recompensa_acumula_entre_partidas(ambiente) -> None:
-    c, repo, _, token_comum, _ = ambiente
-    c.cookies.set("access_token", token_comum)
-
-    for i in range(3):
-        _responder_certo(c, repo, f"pergunta a {i}", nivel=1)
-    c.post("/jogo/recompensas")
-
-    for i in range(2):
-        _responder_certo(c, repo, f"pergunta b {i}", nivel=1)
-    resposta = c.post("/jogo/recompensas")
-
-    corpo = resposta.json()
-    assert corpo["moedas"] == 250  # (3 + 2) x 50
-    assert corpo["partidas_jogadas"] == 2
-    # o máximo alcançado não desce quando uma partida seguinte vai pior.
-    assert corpo["patamar_maximo_alcancado"] == 3
-
-
-def test_um_pedido_forjado_com_patamar_no_corpo_e_ignorado(ambiente) -> None:
-    # A correcção central: mesmo mandando um `patamar_alcancado` forjado no
-    # corpo (campo que o schema já nem declara), o servidor ignora-o por
-    # completo -- paga sempre com base no que rastreou.
-    c, _, _, token_comum, _ = ambiente
-    c.cookies.set("access_token", token_comum)
-
-    resposta = c.post("/jogo/recompensas", json={"patamar_alcancado": 15})
-    assert resposta.status_code == 200
-    corpo = resposta.json()
-    assert corpo["moedas"] == 0
-    assert corpo["diamantes"] == 0
-
-
-def test_responder_de_nivel_errado_nao_conta_para_a_recompensa(ambiente) -> None:
-    # Reutilizar perguntas fáceis (nível 1) depois de já se ter esgotado
-    # esse nível não infla o patamar em curso nem a recompensa.
-    c, repo, _, token_comum, _ = ambiente
-    c.cookies.set("access_token", token_comum)
-
-    for i in range(5):
-        _responder_certo(c, repo, f"facil {i}", nivel=1)
-    # Nível 1 esgotado (patamar 5 superado) -- mais uma pergunta fácil.
-    _responder_certo(c, repo, "facil extra", nivel=1)
-
-    resposta = c.post("/jogo/recompensas")
-    assert resposta.json()["moedas"] == 250  # continua só 5 patamares, não 6
-
-
-def test_validar_sem_sessao_funciona_mas_nao_faz_ninguem_ganhar_nada(ambiente) -> None:
-    # Jogar sem conta continua a mostrar as respostas certas -- só não
-    # acumula progresso nenhum (não há perfil para guardar; e sem sessão
-    # nunca chega a /jogo/recompensas, que exige sessão).
-    c, repo, _, _, repo_perfil = ambiente
-    pergunta = repo.criar("2+2?", "1", "2", "3", "4", "A", 1, None)
-
-    resposta = c.post("/jogo/validar", json={"pergunta_id": pergunta.id, "resposta_usuario": "A"})
-
-    assert resposta.status_code == 200
-    assert resposta.json()["correta"] is True
-    assert repo_perfil._perfis == {}
 
 
 # --- Loja de diamantes -------------------------------------------------------
@@ -445,94 +259,363 @@ def test_comprar_sem_pagamentos_simulados_devolve_503_sem_creditar(loja_sem_paga
     assert repo_perfil.obter_ou_criar("id-comum").diamantes == 0
 
 
-# --- Tempo esgotado e ajudas grátis -----------------------------------------
 
-
-def test_tempo_esgotado_nunca_conta_como_certa_nem_avanca_progresso(ambiente, repo_partidas) -> None:
-    c, repo, _admin, token, _ = ambiente
-    pergunta = repo.criar("2+2?", "4", "1", "2", "3", "A", 1, "porque sim")
+def _entrar(ambiente) -> None:
+    c, _repo, _admin, token, _ = ambiente
     c.cookies.set("access_token", token)
-    c.post("/jogo/partidas")
 
-    resposta = c.post("/jogo/tempo-esgotado", json={"pergunta_id": pergunta.id})
+
+def _pergunta(c) -> dict:
+    resposta = c.post("/jogo/partidas/atual/pergunta")
+    assert resposta.status_code == 200, resposta.text
+    return resposta.json()
+
+
+def _responder(c, resposta_usuario: str = "C") -> dict:
+    pergunta = _pergunta(c)
+    resposta = c.post("/jogo/validar", json={"pergunta_id": pergunta["id"], "resposta_usuario": resposta_usuario})
+    assert resposta.status_code == 200, resposta.text
+    return {"pergunta": pergunta, "corpo": resposta.json()}
+
+
+@pytest.fixture
+def banco(ambiente):
+    """Uma pergunta por nível, certa "C" -- chega para subir a escada toda."""
+    _c, repo, *_ = ambiente
+    for nivel in (1, 2, 3):
+        repo.criar(f"nível {nivel}?", "a", "b", "c", "d", "C", nivel, f"explicação {nivel}")
+    return repo
+
+
+# --- Tudo exige sessão -------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("metodo", "rota"),
+    [
+        ("post", "/jogo/partidas"),
+        ("post", "/jogo/partidas/atual/pergunta"),
+        ("post", "/jogo/validar"),
+        ("post", "/jogo/tempo-esgotado"),
+        ("post", "/jogo/ajudas/cinquenta-cinquenta"),
+        ("post", "/jogo/ajudas/opiniao-publico"),
+        ("post", "/jogo/partidas/atual/vida-extra"),
+        ("post", "/jogo/partidas/atual/terminar"),
+        ("post", "/jogo/recompensas"),
+    ],
+)
+def test_rotas_do_jogo_exigem_sessao(ambiente, banco, metodo, rota) -> None:
+    # O oráculo que isto fecha: sem sessão, /jogo/validar revelava a resposta
+    # certa de qualquer pergunta.
+    c, *_ = ambiente
+    corpo = {"pergunta_id": "pergunta-1", "resposta_usuario": "A"}
+    assert getattr(c, metodo)(rota, json=corpo).status_code == 401
+
+
+def test_a_rota_publica_de_perguntas_ja_nao_existe(ambiente, banco) -> None:
+    c, *_ = ambiente
+    assert c.get("/jogo/pergunta-aleatoria", params={"patamar": 1}).status_code in (404, 405)
+
+
+# --- Perguntas da partida ------------------------------------------------------
+
+
+def test_pergunta_da_partida_nunca_expoe_a_resposta(ambiente, banco) -> None:
+    c, *_ = ambiente
+    _entrar(ambiente)
+    corpo = _pergunta(c)
+    assert set(corpo) == {"id", "texto_pergunta", "opcao_a", "opcao_b", "opcao_c", "opcao_d", "patamar"}
+    assert corpo["patamar"] == 1 and corpo["texto_pergunta"] == "nível 1?"
+
+
+def test_o_nivel_sai_do_patamar_da_partida(ambiente, banco) -> None:
+    c, *_ = ambiente
+    _entrar(ambiente)
+    for _ in range(5):
+        _responder(c)
+    corpo = _pergunta(c)
+    assert (corpo["patamar"], corpo["texto_pergunta"]) == (6, "nível 2?")
+
+
+def test_sem_perguntas_devolve_404(ambiente) -> None:
+    c, *_ = ambiente
+    _entrar(ambiente)
+    assert c.post("/jogo/partidas/atual/pergunta").status_code == 404
+
+
+def test_validar_uma_pergunta_que_a_partida_nao_entregou_devolve_409(ambiente, banco, repo_partidas) -> None:
+    c, repo, *_ = ambiente
+    _entrar(ambiente)
+    _pergunta(c)
+    outra = repo.criar("outra?", "a", "b", "c", "d", "A", 1, "segredo")
+
+    resposta = c.post("/jogo/validar", json={"pergunta_id": outra.id, "resposta_usuario": "A"})
+
+    assert resposta.status_code == 409
+    assert "segredo" not in resposta.text and "resposta_correta" not in resposta.text
+    assert repo_partidas.obter_ativa("id-comum").patamar_superado == 0
+
+
+def test_validar_sem_ter_pedido_pergunta_devolve_409(ambiente, banco) -> None:
+    c, *_ = ambiente
+    _entrar(ambiente)
+    resposta = c.post("/jogo/validar", json={"pergunta_id": "pergunta-1", "resposta_usuario": "C"})
+    assert resposta.status_code == 409
+
+
+def test_responder_duas_vezes_a_mesma_pergunta_conta_uma(ambiente, banco, repo_partidas) -> None:
+    c, *_ = ambiente
+    _entrar(ambiente)
+    primeira = _responder(c)
+    repetida = c.post(
+        "/jogo/validar", json={"pergunta_id": primeira["pergunta"]["id"], "resposta_usuario": "C"}
+    )
+    assert repetida.status_code == 409
+    assert repo_partidas.obter_ativa("id-comum").patamar_superado == 1
+
+
+def test_trocar_pergunta_so_uma_vez_por_partida(ambiente, banco) -> None:
+    c, repo, *_ = ambiente
+    repo.criar("outra fácil?", "a", "b", "c", "d", "C", 1, None)
+    _entrar(ambiente)
+    primeira = _pergunta(c)
+    segunda = _pergunta(c)
+    assert segunda["id"] != primeira["id"]
+    assert c.post("/jogo/partidas/atual/pergunta").status_code == 409
+
+
+def test_validar_resposta_correta_revela_e_explica(ambiente, banco) -> None:
+    c, *_ = ambiente
+    _entrar(ambiente)
+    corpo = _responder(c)["corpo"]
+    assert corpo["correta"] is True
+    assert corpo["resposta_correta"] == "C"
+    assert corpo["explicacao"] == "explicação 1"
+    assert corpo["sequencia_acertos"] == 1
+    assert corpo["recompensa_sequencia"] is None
+
+
+# --- Sequências de acertos ----------------------------------------------------
+
+
+def test_terceiro_acerto_seguido_credita_10_diamantes_na_hora(ambiente, banco, repo_perfil) -> None:
+    c, *_ = ambiente
+    _entrar(ambiente)
+    _responder(c)
+    _responder(c)
+
+    corpo = _responder(c)["corpo"]
+
+    assert corpo["sequencia_acertos"] == 3
+    recompensa = corpo["recompensa_sequencia"]
+    assert (recompensa["sequencia"], recompensa["diamantes"]) == (3, 10)
+    assert recompensa["perfil"]["diamantes"] == 10
+    assert recompensa["perfil"]["melhor_sequencia"] == 3
+    assert repo_perfil.obter_ou_criar("id-comum").diamantes == 10
+
+
+def test_marcos_seguintes_valem_mais(ambiente, banco, repo_perfil) -> None:
+    c, *_ = ambiente
+    _entrar(ambiente)
+    recompensas = [_responder(c)["corpo"]["recompensa_sequencia"] for _ in range(9)]
+    ganhos = [(r["sequencia"], r["diamantes"]) for r in recompensas if r]
+    assert ganhos == [(3, 10), (6, 20), (9, 30)]
+    assert repo_perfil.obter_ou_criar("id-comum").diamantes == 60
+
+
+def test_errar_quebra_a_sequencia(ambiente, banco, repo_perfil, repo_partidas) -> None:
+    c, *_ = ambiente
+    _entrar(ambiente)
+    repo_perfil.creditar_diamantes("id-comum", 20)
+    _responder(c)
+    _responder(c)
+    falha = _responder(c, "A")
+    c.post("/jogo/partidas/atual/vida-extra")
+    c.post("/jogo/validar", json={"pergunta_id": falha["pergunta"]["id"], "resposta_usuario": "C"})
+    assert repo_partidas.obter_ativa("id-comum").sequencia_acertos == 1
+    assert repo_perfil.obter_ou_criar("id-comum").diamantes == 0  # só pagou a vida extra
+
+
+# --- Tempo esgotado e ajudas grátis -------------------------------------------
+
+
+def test_tempo_esgotado_nunca_conta_como_certa_nem_avanca_progresso(ambiente, banco, repo_partidas) -> None:
+    c, *_ = ambiente
+    _entrar(ambiente)
+    pergunta = _pergunta(c)
+
+    resposta = c.post("/jogo/tempo-esgotado", json={"pergunta_id": pergunta["id"]})
 
     assert resposta.status_code == 200
     corpo = resposta.json()
-    assert corpo["correta"] is False
-    assert corpo["resposta_correta"] is None  # só se revela ao terminar
+    assert corpo["correta"] is False and corpo["resposta_correta"] is None
     assert corpo["vida_extra"]["restantes"] == 2
     partida = repo_partidas.obter_ativa("id-comum")
     assert partida.patamar_superado == 0 and partida.estado == "a_aguardar_decisao"
 
 
-def test_tempo_esgotado_sem_sessao_funciona_e_pergunta_inexistente_404(ambiente) -> None:
-    c, repo, *_ = ambiente
-    pergunta = repo.criar("2+2?", "4", "1", "2", "3", "A", 1, None)
-    assert c.post("/jogo/tempo-esgotado", json={"pergunta_id": pergunta.id}).status_code == 200
-    assert c.post("/jogo/tempo-esgotado", json={"pergunta_id": "nao-existe"}).status_code == 404
+def test_cinquenta_cinquenta_nao_toca_no_progresso_e_so_se_usa_uma_vez(ambiente, banco, repo_partidas) -> None:
+    c, *_ = ambiente
+    _entrar(ambiente)
+    _responder(c)
+    pergunta = _pergunta(c)
 
-
-def test_cinquenta_cinquenta_nao_toca_no_progresso_e_so_se_usa_uma_vez(ambiente, repo_partidas) -> None:
-    c, repo, _admin, token, _ = ambiente
-    pergunta = repo.criar("2+2?", "1", "4", "2", "3", "B", 1, None)
-    c.cookies.set("access_token", token)
-    c.post("/jogo/partidas")
-    _responder_certo(c, repo, "aquecimento", nivel=1)
-
-    resposta = c.post("/jogo/ajudas/cinquenta-cinquenta", json={"pergunta_id": pergunta.id})
+    resposta = c.post("/jogo/ajudas/cinquenta-cinquenta", json={"pergunta_id": pergunta["id"]})
 
     assert resposta.status_code == 200
     eliminadas = resposta.json()["opcoes_eliminadas"]
-    assert len(eliminadas) == 2 and "B" not in eliminadas
+    assert len(eliminadas) == 2 and "C" not in eliminadas
     assert repo_partidas.obter_ativa("id-comum").patamar_superado == 1
-    segunda = c.post("/jogo/ajudas/cinquenta-cinquenta", json={"pergunta_id": pergunta.id})
+    segunda = c.post("/jogo/ajudas/cinquenta-cinquenta", json={"pergunta_id": pergunta["id"]})
     assert segunda.status_code == 409
 
 
-def test_opiniao_publico_devolve_percentagens_e_nao_revela_mais_nada(ambiente) -> None:
-    c, repo, *_ = ambiente
-    pergunta = repo.criar("2+2?", "1", "2", "4", "3", "C", 1, "segredo")
-
-    resposta = c.post("/jogo/ajudas/opiniao-publico", json={"pergunta_id": pergunta.id})
-
+def test_opiniao_publico_devolve_percentagens_e_nao_revela_mais_nada(ambiente, banco) -> None:
+    c, *_ = ambiente
+    _entrar(ambiente)
+    pergunta = _pergunta(c)
+    resposta = c.post("/jogo/ajudas/opiniao-publico", json={"pergunta_id": pergunta["id"]})
     assert resposta.status_code == 200
     corpo = resposta.json()
     assert set(corpo) == {"percentagens"}
     assert sum(corpo["percentagens"].values()) == 100
 
 
-def test_ajudas_com_pergunta_inexistente_devolvem_404(ambiente) -> None:
-    c, *_ = ambiente
+def test_ajudas_so_para_a_pergunta_da_partida(ambiente, banco) -> None:
+    c, repo, *_ = ambiente
+    _entrar(ambiente)
+    _pergunta(c)
+    outra = repo.criar("outra?", "a", "b", "c", "d", "A", 1, None)
     for rota in ("/jogo/ajudas/cinquenta-cinquenta", "/jogo/ajudas/opiniao-publico"):
-        assert c.post(rota, json={"pergunta_id": "nao-existe"}).status_code == 404
+        assert c.post(rota, json={"pergunta_id": outra.id}).status_code == 409
 
 
-# --- Mercado -----------------------------------------------------------------
+# --- Partida, vida extra e prémio ----------------------------------------------
+
+
+def test_iniciar_partida_devolve_o_estado_inicial(ambiente) -> None:
+    c, *_ = ambiente
+    _entrar(ambiente)
+    resposta = c.post("/jogo/partidas")
+    assert resposta.status_code == 201
+    assert resposta.json() == {
+        "estado": "em_curso",
+        "patamar_superado": 0,
+        "vidas_extra_usadas": 0,
+        "cinquenta_cinquenta_usada": False,
+        "opiniao_publico_usada": False,
+        "trocar_pergunta_usada": False,
+        "sequencia_acertos": 0,
+    }
+
+
+def test_errar_esconde_a_resposta_e_oferece_vida_extra(ambiente, banco) -> None:
+    c, *_ = ambiente
+    _entrar(ambiente)
+    corpo = _responder(c, "A")["corpo"]
+    assert corpo["correta"] is False
+    assert corpo["resposta_correta"] is None and corpo["explicacao"] is None
+    assert corpo["vida_extra"] == {"custo": 20, "restantes": 2}
+
+
+def test_a_aguardar_decisao_nao_se_pede_nova_pergunta(ambiente, banco) -> None:
+    c, *_ = ambiente
+    _entrar(ambiente)
+    _responder(c, "A")
+    assert c.post("/jogo/partidas/atual/pergunta").status_code == 409
+
+
+def test_vida_extra_debita_e_continua_na_mesma_pergunta(ambiente, banco, repo_perfil) -> None:
+    c, *_ = ambiente
+    _entrar(ambiente)
+    repo_perfil.creditar_diamantes("id-comum", 50)
+    _responder(c)
+    falha = _responder(c, "A")
+
+    resposta = c.post("/jogo/partidas/atual/vida-extra")
+
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["perfil"]["diamantes"] == 30
+    assert (corpo["pergunta_id"], corpo["opcao_falhada"], corpo["vidas_restantes"]) == (
+        falha["pergunta"]["id"],
+        "A",
+        1,
+    )
+    certa = c.post("/jogo/validar", json={"pergunta_id": falha["pergunta"]["id"], "resposta_usuario": "C"})
+    assert certa.json()["correta"] is True
+    assert c.post("/jogo/partidas/atual/terminar").json()["patamar_superado"] == 2
+
+
+def test_vida_extra_sem_diamantes_devolve_402_sem_debitar(ambiente, banco, repo_perfil, repo_partidas) -> None:
+    c, *_ = ambiente
+    _entrar(ambiente)
+    repo_perfil.creditar_diamantes("id-comum", 19)
+    _responder(c, "A")
+    assert c.post("/jogo/partidas/atual/vida-extra").status_code == 402
+    assert repo_perfil.obter_ou_criar("id-comum").diamantes == 19
+    assert repo_partidas.obter_ativa("id-comum").estado == "a_aguardar_decisao"
+
+
+def test_vida_extra_sem_ter_errado_devolve_409(ambiente, repo_perfil) -> None:
+    c, *_ = ambiente
+    _entrar(ambiente)
+    repo_perfil.creditar_diamantes("id-comum", 100)
+    c.post("/jogo/partidas")
+    assert c.post("/jogo/partidas/atual/vida-extra").status_code == 409
+    assert repo_perfil.obter_ou_criar("id-comum").diamantes == 100
+
+
+def test_encerrar_revela_a_resposta_e_paga_os_patamares_superados(ambiente, banco) -> None:
+    c, *_ = ambiente
+    _entrar(ambiente)
+    for _ in range(3):
+        _responder(c)
+    _responder(c, "A")
+
+    corpo = c.post("/jogo/partidas/atual/terminar").json()
+
+    assert (corpo["resposta_correta"], corpo["explicacao"]) == ("C", "explicação 1")
+    assert (corpo["patamar_superado"], corpo["moedas_ganhas"], corpo["diamantes_ganhos"]) == (3, 150, 0)
+    # 150 moedas do prémio; 10 diamantes da sequência de 3 (não do prémio).
+    assert corpo["perfil"]["moedas"] == 150 and corpo["perfil"]["diamantes"] == 10
+    assert c.post("/jogo/partidas/atual/terminar").json()["moedas_ganhas"] == 0
+
+
+def test_recompensas_legado_termina_a_partida(ambiente, banco) -> None:
+    c, *_ = ambiente
+    _entrar(ambiente)
+    for _ in range(5):
+        _responder(c)
+    corpo = c.post("/jogo/recompensas", json={"patamar_alcancado": 15}).json()
+    # O patamar forjado no corpo é ignorado -- paga o que o servidor confirmou.
+    assert (corpo["moedas"], corpo["partidas_jogadas"], corpo["patamar_maximo_alcancado"]) == (250, 1, 5)
+
+
+# --- Mercado -------------------------------------------------------------------
 
 
 @pytest.fixture
-def mercado(ambiente):
+def mercado(ambiente, banco, repo_partidas):
     c, repo, _admin, token, repo_perfil = ambiente
     repo_mercado = RepositorioMercadoFalso(repo_perfil)
     app.dependency_overrides[jogo_router.obter_mercado_jogo_service] = lambda: MercadoJogoService(
-        repo_mercado, repo
+        repo_mercado, repo, repo_partidas
     )
-    pergunta = repo.criar("2+2?", "1", "2", "3", "4", "D", 1, None)
+    c.cookies.set("access_token", token)
+    pergunta = _pergunta(c)
     return c, token, repo_perfil, repo_mercado, pergunta
 
 
-def test_mercado_exige_sessao(mercado) -> None:
-    c, *_ = mercado
+def test_mercado_exige_sessao(ambiente) -> None:
+    c, *_ = ambiente
     assert c.get("/jogo/mercado").status_code == 401
     assert c.post("/jogo/mercado/comprar", json={"vendedor_id": "tio-ze", "pergunta_id": "x"}).status_code == 401
 
 
 def test_listar_mercado_devolve_catalogo_do_servidor(mercado) -> None:
-    c, token, *_ = mercado
-    c.cookies.set("access_token", token)
-
+    c, *_ = mercado
     corpo = c.get("/jogo/mercado").json()
-
     assert "agora" in corpo
     assert [(v["id"], v["custo_diamantes"], v["precisao"]) for v in corpo["vendedores"]] == [
         (v.id, v.custo_diamantes, v.precisao) for v in VENDEDORES
@@ -541,11 +624,10 @@ def test_listar_mercado_devolve_catalogo_do_servidor(mercado) -> None:
 
 
 def test_comprar_debita_bloqueia_e_devolve_sugestao(mercado) -> None:
-    c, token, repo_perfil, _, pergunta = mercado
-    c.cookies.set("access_token", token)
+    c, _token, repo_perfil, _, pergunta = mercado
     repo_perfil.creditar_diamantes("id-comum", 50)
 
-    resposta = c.post("/jogo/mercado/comprar", json={"vendedor_id": "mana-fefa", "pergunta_id": pergunta.id})
+    resposta = c.post("/jogo/mercado/comprar", json={"vendedor_id": "mana-fefa", "pergunta_id": pergunta["id"]})
 
     assert resposta.status_code == 200
     corpo = resposta.json()
@@ -556,191 +638,44 @@ def test_comprar_debita_bloqueia_e_devolve_sugestao(mercado) -> None:
 
 
 def test_comprar_ignora_custo_enviado_pelo_cliente(mercado) -> None:
-    c, token, repo_perfil, _, pergunta = mercado
-    c.cookies.set("access_token", token)
+    c, _token, repo_perfil, _, pergunta = mercado
     repo_perfil.creditar_diamantes("id-comum", 50)
-
     resposta = c.post(
         "/jogo/mercado/comprar",
-        json={"vendedor_id": "kota-beto", "pergunta_id": pergunta.id, "custo_diamantes": 0, "precisao": 1},
+        json={"vendedor_id": "kota-beto", "pergunta_id": pergunta["id"], "custo_diamantes": 0, "precisao": 1},
     )
-
     assert resposta.status_code == 200
     assert resposta.json()["perfil"]["diamantes"] == 50 - 45
 
 
 def test_comprar_duas_vezes_ao_mesmo_vendedor_devolve_409_sem_debitar(mercado) -> None:
-    c, token, repo_perfil, _, pergunta = mercado
-    c.cookies.set("access_token", token)
+    c, _token, repo_perfil, _, pergunta = mercado
     repo_perfil.creditar_diamantes("id-comum", 50)
-    c.post("/jogo/mercado/comprar", json={"vendedor_id": "tio-ze", "pergunta_id": pergunta.id})
-
-    resposta = c.post("/jogo/mercado/comprar", json={"vendedor_id": "tio-ze", "pergunta_id": pergunta.id})
-
+    c.post("/jogo/mercado/comprar", json={"vendedor_id": "tio-ze", "pergunta_id": pergunta["id"]})
+    resposta = c.post("/jogo/mercado/comprar", json={"vendedor_id": "tio-ze", "pergunta_id": pergunta["id"]})
     assert resposta.status_code == 409
     assert repo_perfil.obter_ou_criar("id-comum").diamantes == 45
 
 
 def test_comprar_sem_diamantes_devolve_402(mercado) -> None:
-    c, token, _, repo_mercado, pergunta = mercado
-    c.cookies.set("access_token", token)
-
-    resposta = c.post("/jogo/mercado/comprar", json={"vendedor_id": "tio-ze", "pergunta_id": pergunta.id})
-
+    c, _token, _, repo_mercado, pergunta = mercado
+    resposta = c.post("/jogo/mercado/comprar", json={"vendedor_id": "tio-ze", "pergunta_id": pergunta["id"]})
     assert resposta.status_code == 402
     assert repo_mercado.bloqueios == {}
 
 
-def test_comprar_vendedor_ou_pergunta_inexistente_devolve_404(mercado) -> None:
-    c, token, repo_perfil, _, pergunta = mercado
-    c.cookies.set("access_token", token)
+def test_comprar_vendedor_inexistente_404_e_pergunta_fora_da_partida_409(mercado) -> None:
+    c, _token, repo_perfil, _, pergunta = mercado
     repo_perfil.creditar_diamantes("id-comum", 50)
-    assert c.post("/jogo/mercado/comprar", json={"vendedor_id": "x", "pergunta_id": pergunta.id}).status_code == 404
-    assert c.post("/jogo/mercado/comprar", json={"vendedor_id": "tio-ze", "pergunta_id": "x"}).status_code == 404
+    assert c.post("/jogo/mercado/comprar", json={"vendedor_id": "x", "pergunta_id": pergunta["id"]}).status_code == 404
+    assert c.post("/jogo/mercado/comprar", json={"vendedor_id": "tio-ze", "pergunta_id": "x"}).status_code == 409
     assert repo_perfil.obter_ou_criar("id-comum").diamantes == 50
 
 
 def test_comprar_com_opcoes_excluidas_invalidas_devolve_422(mercado) -> None:
-    c, token, _, _, pergunta = mercado
-    c.cookies.set("access_token", token)
+    c, _token, _, _, pergunta = mercado
     resposta = c.post(
         "/jogo/mercado/comprar",
-        json={"vendedor_id": "tio-ze", "pergunta_id": pergunta.id, "opcoes_excluidas": ["Z"]},
+        json={"vendedor_id": "tio-ze", "pergunta_id": pergunta["id"], "opcoes_excluidas": ["Z"]},
     )
     assert resposta.status_code == 422
-
-
-# --- Partida e vida extra ----------------------------------------------------
-
-
-def _errar(c, repo, texto: str = "errada?", nivel: int = 1) -> dict:
-    pergunta = repo.criar(texto, "a", "b", "c", "d", "C", nivel, "explicação")
-    resposta = c.post("/jogo/validar", json={"pergunta_id": pergunta.id, "resposta_usuario": "A"})
-    assert resposta.status_code == 200
-    return {"pergunta": pergunta, "corpo": resposta.json()}
-
-
-def test_partidas_exigem_sessao(ambiente) -> None:
-    c, *_ = ambiente
-    assert c.post("/jogo/partidas").status_code == 401
-    assert c.post("/jogo/partidas/atual/vida-extra").status_code == 401
-    assert c.post("/jogo/partidas/atual/terminar").status_code == 401
-
-
-def test_iniciar_partida_devolve_o_estado_inicial(ambiente) -> None:
-    c, _repo, _admin, token, _ = ambiente
-    c.cookies.set("access_token", token)
-    resposta = c.post("/jogo/partidas")
-    assert resposta.status_code == 201
-    assert resposta.json() == {
-        "estado": "em_curso",
-        "patamar_superado": 0,
-        "vidas_extra_usadas": 0,
-        "cinquenta_cinquenta_usada": False,
-        "opiniao_publico_usada": False,
-    }
-
-
-def test_errar_com_sessao_esconde_a_resposta_e_oferece_vida_extra(ambiente) -> None:
-    c, repo, _admin, token, _ = ambiente
-    c.cookies.set("access_token", token)
-    c.post("/jogo/partidas")
-
-    corpo = _errar(c, repo)["corpo"]
-
-    assert corpo == {
-        "correta": False,
-        "resposta_correta": None,
-        "explicacao": None,
-        "vida_extra": {"custo": 20, "restantes": 2},
-    }
-
-
-def test_a_aguardar_decisao_validar_outra_pergunta_devolve_409(ambiente) -> None:
-    c, repo, _admin, token, _ = ambiente
-    c.cookies.set("access_token", token)
-    c.post("/jogo/partidas")
-    _errar(c, repo)
-    outra = repo.criar("outra?", "a", "b", "c", "d", "A", 1, None)
-    resposta = c.post("/jogo/validar", json={"pergunta_id": outra.id, "resposta_usuario": "A"})
-    assert resposta.status_code == 409
-
-
-def test_vida_extra_debita_e_devolve_a_pergunta_e_a_opcao_a_esconder(ambiente, repo_perfil) -> None:
-    c, repo, _admin, token, _ = ambiente
-    c.cookies.set("access_token", token)
-    repo_perfil.creditar_diamantes("id-comum", 50)
-    c.post("/jogo/partidas")
-    _responder_certo(c, repo, "certa 1", nivel=1)
-    falha = _errar(c, repo)
-
-    resposta = c.post("/jogo/partidas/atual/vida-extra")
-
-    assert resposta.status_code == 200
-    corpo = resposta.json()
-    assert corpo["perfil"]["diamantes"] == 30
-    assert corpo["pergunta_id"] == falha["pergunta"].id
-    assert corpo["opcao_falhada"] == "A"
-    assert corpo["vidas_restantes"] == 1
-    # Continua no mesmo patamar: acertar agora sobe para o 2.
-    certa = c.post("/jogo/validar", json={"pergunta_id": falha["pergunta"].id, "resposta_usuario": "C"})
-    assert certa.json()["correta"] is True
-    terminada = c.post("/jogo/partidas/atual/terminar").json()
-    assert terminada["patamar_superado"] == 2
-
-
-def test_vida_extra_sem_diamantes_devolve_402_sem_debitar(ambiente, repo_perfil, repo_partidas) -> None:
-    c, repo, _admin, token, _ = ambiente
-    c.cookies.set("access_token", token)
-    repo_perfil.creditar_diamantes("id-comum", 19)
-    c.post("/jogo/partidas")
-    _errar(c, repo)
-
-    resposta = c.post("/jogo/partidas/atual/vida-extra")
-
-    assert resposta.status_code == 402
-    assert repo_perfil.obter_ou_criar("id-comum").diamantes == 19
-    assert repo_partidas.obter_ativa("id-comum").estado == "a_aguardar_decisao"
-
-
-def test_vida_extra_sem_ter_errado_devolve_409(ambiente, repo_perfil) -> None:
-    c, _repo, _admin, token, _ = ambiente
-    c.cookies.set("access_token", token)
-    repo_perfil.creditar_diamantes("id-comum", 100)
-    c.post("/jogo/partidas")
-    assert c.post("/jogo/partidas/atual/vida-extra").status_code == 409
-    assert repo_perfil.obter_ou_criar("id-comum").diamantes == 100
-
-
-def test_vida_extra_esgota_depois_do_limite(ambiente, repo_perfil) -> None:
-    c, repo, _admin, token, _ = ambiente
-    c.cookies.set("access_token", token)
-    repo_perfil.creditar_diamantes("id-comum", 100)
-    c.post("/jogo/partidas")
-    for i in range(2):
-        _errar(c, repo, f"errada {i}")
-        assert c.post("/jogo/partidas/atual/vida-extra").status_code == 200
-
-    assert _errar(c, repo, "errada 3")["corpo"]["vida_extra"]["restantes"] == 0
-    assert c.post("/jogo/partidas/atual/vida-extra").status_code == 409
-    assert repo_perfil.obter_ou_criar("id-comum").diamantes == 60
-
-
-def test_encerrar_revela_a_resposta_e_paga_os_patamares_superados(ambiente) -> None:
-    c, repo, _admin, token, _ = ambiente
-    c.cookies.set("access_token", token)
-    c.post("/jogo/partidas")
-    for i in range(3):
-        _responder_certo(c, repo, f"certa {i}", nivel=1)
-    _errar(c, repo)
-
-    resposta = c.post("/jogo/partidas/atual/terminar")
-
-    assert resposta.status_code == 200
-    corpo = resposta.json()
-    assert corpo["resposta_correta"] == "C"
-    assert corpo["explicacao"] == "explicação"
-    assert (corpo["patamar_superado"], corpo["moedas_ganhas"], corpo["diamantes_ganhos"]) == (3, 150, 0)
-    assert corpo["perfil"]["moedas"] == 150 and corpo["perfil"]["partidas_jogadas"] == 1
-    # Segunda vez: já não há partida aberta, não paga outra vez.
-    assert c.post("/jogo/partidas/atual/terminar").json()["moedas_ganhas"] == 0

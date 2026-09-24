@@ -538,6 +538,8 @@ class PerfilJogador(Base):
     diamantes: Mapped[int] = mapped_column(nullable=False, server_default="0")
     partidas_jogadas: Mapped[int] = mapped_column(nullable=False, server_default="0")
     patamar_maximo_alcancado: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    # Maior número de acertos seguidos numa só partida (recorde de sempre).
+    melhor_sequencia: Mapped[int] = mapped_column(nullable=False, server_default="0")
     # O progresso da partida em curso vive em `PartidaJogo` desde 2026-09-24
     # (antes era a coluna `patamar_em_curso`, aqui).
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -548,8 +550,9 @@ class PartidaJogo(Base):
     """Uma partida do jogo "Inclusivamente", do primeiro patamar até terminar
     (vitória, derrota, desistência ou nova partida). Todo o estado que o
     jogador podia querer inventar vive aqui, controlado só pelo servidor
-    (`JogoService`): patamares superados, vidas extra usadas, ajudas grátis
-    usadas e a pergunta falhada à espera de decisão.
+    (`JogoService`): a pergunta que o servidor entregou e à qual se está a
+    responder, patamares superados, sequência de acertos, vidas extra e
+    ajudas usadas.
 
     Estados: `em_curso` -> (erra ou esgota o tempo) -> `a_aguardar_decisao`
     -> (vida extra) -> `em_curso`, ou -> (encerra) -> `terminada`. No máximo
@@ -579,11 +582,19 @@ class PartidaJogo(Base):
     vidas_extra_usadas: Mapped[int] = mapped_column(nullable=False, server_default="0")
     cinquenta_cinquenta_usada: Mapped[bool] = mapped_column(nullable=False, server_default=text("false"))
     opiniao_publico_usada: Mapped[bool] = mapped_column(nullable=False, server_default=text("false"))
-    # Preenchidas enquanto `a_aguardar_decisao`: a pergunta falhada e a opção
-    # escolhida (`None` se o tempo esgotou). Mantêm-se depois de uma vida
-    # extra, para o jogador voltar a tentar a mesma pergunta sem essa opção.
-    pergunta_falhada_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    trocar_pergunta_usada: Mapped[bool] = mapped_column(nullable=False, server_default=text("false"))
+    # A pergunta que o servidor entregou a esta partida e ainda não foi
+    # acertada. Só esta se pode validar (e só para esta se usam ajudas) --
+    # sem isto, qualquer id de pergunta servia de oráculo para a resposta.
+    # Mantém-se depois de uma falha, para a segunda tentativa (vida extra).
+    pergunta_atual_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    # A opção falhada na pergunta actual (`None` se o tempo esgotou), para a
+    # esconder na segunda tentativa.
     opcao_falhada: Mapped[str | None] = mapped_column(Text)
+    # Acertos seguidos nesta partida; volta a 0 ao errar. Cada múltiplo de 3
+    # dá diamantes (ver `recompensa_sequencia` em jogo_service.py).
+    sequencia_acertos: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    diamantes_sequencia: Mapped[int] = mapped_column(nullable=False, server_default="0")
     moedas_ganhas: Mapped[int | None] = mapped_column()
     diamantes_ganhos: Mapped[int | None] = mapped_column()
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
