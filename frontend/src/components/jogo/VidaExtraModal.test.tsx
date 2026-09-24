@@ -118,9 +118,49 @@ describe("VidaExtraModal", () => {
     expect(usarVidaExtra).not.toHaveBeenCalled();
   });
 
-  it("fechar o modal conta como encerrar", async () => {
+  it("sem onSair, fechar o modal conta como encerrar", async () => {
     const { onEncerrar } = abrir();
     await userEvent.keyboard("{Escape}");
     expect(onEncerrar).toHaveBeenCalled();
+  });
+
+  describe("com onSair (o jogo)", () => {
+    const abrirComSaida = () => {
+      const onEncerrar = vi.fn();
+      const onSair = vi.fn();
+      render(
+        <VidaExtraModal
+          oferta={{ custo: 20, restantes: 2 }}
+          tempoEsgotado={false}
+          onVidaUsada={vi.fn()}
+          onEncerrar={onEncerrar}
+          onSair={onSair}
+        />,
+        { wrapper: Envoltorio }
+      );
+      return { onEncerrar, onSair };
+    };
+
+    it("o × sai do jogo (onSair), não mostra o resultado (onEncerrar)", async () => {
+      const { onEncerrar, onSair } = abrirComSaida();
+      await userEvent.click(await screen.findByRole("button", { name: "Close" }));
+      expect(onSair).toHaveBeenCalledTimes(1);
+      expect(onEncerrar).not.toHaveBeenCalled();
+    });
+
+    it("Esc também sai do jogo", async () => {
+      const { onEncerrar, onSair } = abrirComSaida();
+      await screen.findByRole("heading", { name: "Vida Extra" });
+      await userEvent.keyboard("{Escape}");
+      expect(onSair).toHaveBeenCalledTimes(1);
+      expect(onEncerrar).not.toHaveBeenCalled();
+    });
+
+    it("o botão 'Encerrar partida' continua a mostrar o resultado, não sai", async () => {
+      const { onEncerrar, onSair } = abrirComSaida();
+      await userEvent.click(await screen.findByRole("button", { name: "Encerrar partida" }));
+      expect(onEncerrar).toHaveBeenCalledTimes(1);
+      expect(onSair).not.toHaveBeenCalled();
+    });
   });
 });

@@ -26,6 +26,11 @@ vi.mock("@/lib/apiClient", () => ({
     return typeof status === "number" && typeof message === "string" ? message : fallback;
   },
 }));
+const navigateMock = vi.fn();
+vi.mock("react-router-dom", async (importarOriginal) => {
+  const original = await importarOriginal<typeof import("react-router-dom")>();
+  return { ...original, useNavigate: () => navigateMock };
+});
 vi.mock("@/components/Navbar", () => ({ default: () => null }));
 vi.mock("@/components/Footer", () => ({ default: () => null }));
 vi.mock("@/components/BackButton", () => ({ default: () => null }));
@@ -51,6 +56,7 @@ vi.mock("@/components/jogo/VidaExtraModal", () => ({
     oferta: { custo: number; restantes: number } | null;
     onVidaUsada: (v: unknown) => void;
     onEncerrar: () => void;
+    onSair?: () => void;
   }) =>
     props.oferta ? (
       <div data-testid="modal-vida-extra">
@@ -70,6 +76,9 @@ vi.mock("@/components/jogo/VidaExtraModal", () => ({
         </button>
         <button type="button" onClick={props.onEncerrar}>
           simular encerrar
+        </button>
+        <button type="button" onClick={props.onSair}>
+          simular fechar
         </button>
       </div>
     ) : null,
@@ -158,6 +167,7 @@ describe("JogoCuriosidades", () => {
     opiniaoPublico.mockReset();
     tempoEsgotado.mockReset();
     mercadoProps.mockReset();
+    navigateMock.mockReset();
     iniciarPartida.mockReset().mockResolvedValue({ estado: "em_curso" });
     terminarPartida.mockReset().mockResolvedValue(TERMINADA);
     definirPerfil.mockReset();
@@ -480,6 +490,107 @@ describe("JogoCuriosidades", () => {
 
       expect(await screen.findByText("Porque sim.")).toBeInTheDocument();
       expect(screen.queryByTestId("modal-vida-extra")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("sair para o menu no fim da partida (× / Voltar ao menu)", () => {
+    const SEM_VIDAS = {
+      correta: false,
+      resposta_correta: null,
+      explicacao: null,
+      vida_extra: { custo: 20, restantes: 0 },
+    };
+
+    const perderComSessao = async () => {
+      mockProfile = { id: "utilizador-1" };
+      obterPerguntaDaPartida.mockResolvedValue(PERGUNTA_1);
+      validarResposta.mockResolvedValue(SEM_VIDAS);
+      terminarPartida.mockResolvedValue({ ...TERMINADA, resposta_correta: "B", explicacao: "Porque sim." });
+      render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+      await comecarJogo();
+      await screen.findByText(PERGUNTA_1.texto_pergunta);
+      await userEvent.click(screen.getByText("Errada A"));
+      await screen.findByText("Porque sim.");
+      await waitFor(() => expect(terminarPartida).toHaveBeenCalledTimes(1));
+    };
+
+    const semRecomeco = () => {
+      // Só a partida e a pergunta do arranque -- nada de uma partida nova.
+      expect(iniciarPartida).toHaveBeenCalledTimes(1);
+      expect(obterPerguntaDaPartida).toHaveBeenCalledTimes(1);
+    };
+
+    it("o × do modal de resposta errada volta ao menu do jogo e não recomeça a partida", async () => {
+      await perderComSessao();
+
+      await userEvent.click(screen.getByRole("button", { name: "Close" }));
+
+      expect(navigateMock).toHaveBeenCalledWith("/jogo-curiosidades");
+      semRecomeco();
+      // A partida já tinha sido terminada (e paga) -- não se termina outra vez.
+      expect(terminarPartida).toHaveBeenCalledTimes(1);
+    });
+
+    it("o botão 'Voltar ao menu' faz o mesmo que o ×", async () => {
+      await perderComSessao();
+
+      await userEvent.click(screen.getByRole("button", { name: "Voltar ao menu" }));
+
+      expect(navigateMock).toHaveBeenCalledWith("/jogo-curiosidades");
+      semRecomeco();
+    });
+
+    it("Esc também sai para o menu em vez de recomeçar", async () => {
+      await perderComSessao();
+
+      await userEvent.keyboard("{Escape}");
+
+      expect(navigateMock).toHaveBeenCalledWith("/jogo-curiosidades");
+      semRecomeco();
+    });
+
+    it("'Tentar novamente' continua a ser a única via para recomeçar, sem sair", async () => {
+      await perderComSessao();
+
+      await userEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
+
+      await waitFor(() => expect(iniciarPartida).toHaveBeenCalledTimes(2));
+      await waitFor(() => expect(obterPerguntaDaPartida).toHaveBeenCalledTimes(2));
+      expect(navigateMock).not.toHaveBeenCalled();
+    });
+
+    it("o × da Vida Extra sai para o menu e termina a partida no servidor (paga o que já superou)", async () => {
+      mockProfile = { id: "utilizador-1" };
+      obterPerguntaDaPartida.mockResolvedValue(PERGUNTA_1);
+      validarResposta.mockResolvedValue({ ...SEM_VIDAS, vida_extra: { custo: 20, restantes: 2 } });
+      terminarPartida.mockResolvedValue({ ...TERMINADA, perfil: { ...TERMINADA.perfil, moedas: 100 } });
+      render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+      await comecarJogo();
+      await screen.findByText(PERGUNTA_1.texto_pergunta);
+      await userEvent.click(screen.getByText("Errada A"));
+
+      await userEvent.click(await screen.findByRole("button", { name: "simular fechar" }));
+
+      expect(navigateMock).toHaveBeenCalledWith("/jogo-curiosidades");
+      await waitFor(() => expect(terminarPartida).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(definirPerfil).toHaveBeenCalledWith(expect.objectContaining({ moedas: 100 })));
+      expect(screen.queryByText("Essa não era a resposta certa")).not.toBeInTheDocument();
+      semRecomeco();
+    });
+
+    it("sem sessão, o × sai para o menu sem falar com o servidor", async () => {
+      mockProfile = null;
+      render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+      await comecarJogo();
+      await screen.findByText("O que é o estrabismo, em termos simples?");
+      await userEvent.click(screen.getByText("Uma alteração na cor natural da íris")); // errada
+      await screen.findByText("Essa não era a resposta certa");
+
+      await userEvent.click(screen.getByRole("button", { name: "Close" }));
+
+      expect(navigateMock).toHaveBeenCalledWith("/jogo-curiosidades");
+      expect(terminarPartida).not.toHaveBeenCalled();
+      expect(iniciarPartida).not.toHaveBeenCalled();
     });
   });
 
