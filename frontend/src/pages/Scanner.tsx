@@ -72,6 +72,9 @@ const persistirScreening = async (apiResult: ScreeningResponse): Promise<string 
     estado: apiResult.estado,
     rosto_detetado: apiResult.posicoes?.some((p) => p.rosto_detetado) ?? false,
     requer_avaliacao_humana: apiResult.requer_avaliacao_humana ?? false,
+    // Mesmo critério do ecrã de resultado (ver mais abaixo, finishScan) --
+    // único sinal real que o janelas-scanner-api de facto calcula hoje.
+    diagnostico: apiResult.incomitante || apiResult.requer_avaliacao_humana ? "requer_avaliacao" : "normal",
     assimetria_horizontal: apiResult.variacao_desalinhamento ?? null,
     qualidade_captura: posCentro?.qualidade_captura?.pontuacao ?? null,
     qualidade_fiavel: posCentro?.qualidade_captura?.fiavel ?? null,

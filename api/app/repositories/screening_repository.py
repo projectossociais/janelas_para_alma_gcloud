@@ -33,6 +33,7 @@ class ScreeningRegisto:
     estado: str
     rosto_detetado: bool
     requer_avaliacao_humana: bool
+    diagnostico: str
     encaminhado: bool
     assimetria_horizontal: float | None
     assimetria_vertical: float | None
@@ -51,6 +52,7 @@ class ScreeningsRepository(Protocol):
         estado: str,
         rosto_detetado: bool,
         requer_avaliacao_humana: bool,
+        diagnostico: str,
         assimetria_horizontal: float | None,
         assimetria_vertical: float | None,
         qualidade_captura: float | None,
@@ -70,6 +72,7 @@ def _para_registo(row: Screening) -> ScreeningRegisto:
         estado=row.estado,
         rosto_detetado=row.rosto_detetado,
         requer_avaliacao_humana=row.requer_avaliacao_humana,
+        diagnostico=row.diagnostico,
         encaminhado=row.encaminhado,
         assimetria_horizontal=(
             float(row.assimetria_horizontal) if row.assimetria_horizontal is not None else None
@@ -96,6 +99,7 @@ class SQLAlchemyScreeningsRepository:
         estado: str,
         rosto_detetado: bool,
         requer_avaliacao_humana: bool,
+        diagnostico: str,
         assimetria_horizontal: float | None,
         assimetria_vertical: float | None,
         qualidade_captura: float | None,
@@ -109,6 +113,7 @@ class SQLAlchemyScreeningsRepository:
             estado=estado,
             rosto_detetado=rosto_detetado,
             requer_avaliacao_humana=requer_avaliacao_humana,
+            diagnostico=diagnostico,
             assimetria_horizontal=assimetria_horizontal,
             assimetria_vertical=assimetria_vertical,
             qualidade_captura=qualidade_captura,
