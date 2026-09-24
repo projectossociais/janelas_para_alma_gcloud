@@ -38,10 +38,13 @@ describe("sitemap.xml", () => {
     }
   });
 
-  it("o jogo (só PT) aparece só em português e sem alternativas", () => {
+  it("o jogo aparece nos dois idiomas; jogar e perfil ficam fora do sitemap", () => {
     const mapa = entradas(gerarSitemap(rotas, true));
-    expect(mapa.get("https://www.janelasparaalma.com/jogo-curiosidades")).toEqual([]);
-    expect([...mapa.keys()].some((l) => l.includes("trivia-game"))).toBe(false);
+    expect(mapa.get("https://www.janelasparaalma.com/jogo-curiosidades")).toContain(
+      "en-US https://www.janelasparaalma.com/en/trivia-game",
+    );
+    expect(mapa.has("https://www.janelasparaalma.com/en/trivia-game")).toBe(true);
+    expect([...mapa.keys()].some((l) => l.includes("/jogar") || l.includes("/play") || l.includes("/perfil"))).toBe(false);
   });
 
   it("sem a versão inglesa: nenhum URL /en nem alternativas", () => {

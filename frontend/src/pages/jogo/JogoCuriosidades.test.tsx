@@ -39,6 +39,7 @@ vi.mock("sonner", () => ({
 }));
 
 import JogoCuriosidades from "./JogoCuriosidades";
+import i18n from "@/i18n";
 
 const PERGUNTA_1 = {
   id: "pergunta-1",
@@ -291,5 +292,44 @@ describe("JogoCuriosidades", () => {
       expect(botaoTrocar).toBeDisabled(); // ajuda de uso único por partida, mesmo offline
     });
 
+  });
+
+  describe("no site inglês (/en/trivia-game/play)", () => {
+    beforeEach(() => {
+      vi.stubEnv("VITE_ENABLE_EN", "true");
+      void i18n.changeLanguage("en-US");
+    });
+    afterEach(() => {
+      vi.unstubAllEnvs();
+      void i18n.changeLanguage("pt-AO");
+    });
+
+    const abrirEmIngles = () =>
+      render(
+        <MemoryRouter initialEntries={["/en/trivia-game/play"]}>
+          <JogoCuriosidades />
+        </MemoryRouter>,
+      );
+
+    it("usa a reserva traduzida -- nunca as perguntas da API, que só existem em português", async () => {
+      obterPerguntaAleatoria.mockResolvedValue(PERGUNTA_1);
+      abrirEmIngles();
+      await userEvent.click(await screen.findByRole("button", { name: "Start" }));
+
+      expect(await screen.findByText("What is strabismus, in simple terms?")).toBeInTheDocument();
+      expect(obterPerguntaAleatoria).not.toHaveBeenCalled();
+      expect(screen.queryByText(PERGUNTA_1.texto_pergunta)).not.toBeInTheDocument();
+      // não é uma falha de rede: o aviso de modo offline não aparece
+      expect(screen.queryByText("Offline mode")).not.toBeInTheDocument();
+    });
+
+    it("valida a resposta localmente e mostra a explicação em inglês ao errar", async () => {
+      abrirEmIngles();
+      await userEvent.click(await screen.findByRole("button", { name: "Start" }));
+      await userEvent.click(await screen.findByText("A change in the natural color of the iris"));
+
+      expect(await screen.findByText("Strabismus is a misalignment of the visual axes of the two eyes.")).toBeInTheDocument();
+      expect(validarResposta).not.toHaveBeenCalled();
+    });
   });
 });

@@ -40,6 +40,8 @@ import { OPCOES, PATAMARES, TOTAL_PATAMARES, calcularRecompensaCliente, formatar
 import { obterPerguntaOfflineNaoVista, obterPerguntaOfflinePorId, obterPerguntasDoPatamar } from "./perguntasOffline";
 import { Trans, useTranslation } from "react-i18next";
 import { localizar } from "@/i18n/rotas";
+import { useIdioma } from "@/i18n/useIdioma";
+import { IDIOMA_EN } from "@/i18n/idiomas";
 
 const TEMPO_SPLASH_MS = 2500;
 
@@ -79,6 +81,10 @@ const gerarOpiniaoPublico = (correta: RespostaOpcaoJogo): Record<RespostaOpcaoJo
 const JogoCuriosidades = () => {
   const { t: tr } = useTranslation();
   const { profile } = useProfile();
+  // As perguntas da API (base de dados) só existem em português: no site
+  // inglês o jogo usa sempre a reserva local, traduzida em
+  // perguntasOffline.en-US.ts. Não é "modo offline" -- o aviso não aparece.
+  const emIngles = useIdioma() === IDIOMA_EN;
 
   const [mostrarSplash, setMostrarSplash] = useState(true);
 
@@ -161,6 +167,13 @@ const JogoCuriosidades = () => {
     setMostrarModalErrado(false);
     setOpcoesEliminadas([]);
     setTempoRestante(TEMPO_POR_PERGUNTA);
+    if (emIngles) {
+      setPergunta(escolherPerguntaOfflineParaPatamar(novoPatamar));
+      setEmModoOffline(true);
+      setPatamar(novoPatamar);
+      setACarregarPergunta(false);
+      return;
+    }
     try {
       const nova = await jogoApi.obterPerguntaAleatoria(novoPatamar);
       setPergunta(nova);
@@ -173,7 +186,7 @@ const JogoCuriosidades = () => {
       setPatamar(novoPatamar);
       setACarregarPergunta(false);
     }
-  }, [escolherPerguntaOfflineParaPatamar]);
+  }, [escolherPerguntaOfflineParaPatamar, emIngles]);
 
   // Arranque do jogo -- corre em paralelo com o ecrã de apresentação, para a
   // pergunta já estar pronta quando o "splash" da escada terminar.
@@ -516,7 +529,7 @@ const JogoCuriosidades = () => {
                             <Trans i18nKey="JogoCuriosidades.patamarDe2" values={{ patamar, TOTAL_PATAMARES }} />
                           </p>
                           <p className="text-2xl font-bold text-gold">{formatarKz(valorDoPatamar(patamar))}</p>
-                          {emModoOffline && (
+                          {emModoOffline && !emIngles && (
                             <span className="inline-flex items-center gap-1 mt-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground bg-muted rounded-full px-2 py-0.5">
                               <WifiOff className="w-3 h-3" />
                               {tr("JogoCuriosidades.modoOffline")}

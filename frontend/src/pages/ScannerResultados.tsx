@@ -23,6 +23,7 @@ import { Trans, useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { localizar } from "@/i18n/rotas";
 import { formatarData, formatarDataHora } from "@/i18n/formatar";
+import { textoDoScannerNoIdioma } from "@/services/api/screeningApi";
 
 interface LogoBitmap {
   dataUrl: string;
@@ -397,6 +398,10 @@ const exercises = [
   } },
 ];
 
+/** A frase seguinte (`recomendaSeConsultaOftalmologica`) já começa com ". ":
+ * sem isto, um texto que acabe em ponto dava "pedido.." (bug real). */
+const semPontoFinal = (texto: string) => texto.replace(/[.\s]+$/, "");
+
 const Resultados = () => {
   const { t: tr } = useTranslation();
   const navigate = useNavigate();
@@ -724,7 +729,7 @@ const Resultados = () => {
               <Trans i18nKey="ScannerResultados.diagnostico" components={{ span: <span className="text-gold" /> }} values={{ diagnosis: rotuloDiagnostico(result.diagnosis) }} />
             </h1>
             <p className="mt-3 text-sm md:text-base text-white/80 max-w-2xl">
-              {result.apiData?.recomendacao || info.short}{tr("ScannerResultados.recomendaSeConsultaOftalmologica")}
+              {semPontoFinal(textoDoScannerNoIdioma(result.apiData?.recomendacao) ?? info.short)}{tr("ScannerResultados.recomendaSeConsultaOftalmologica")}
             </p>
 
             <div className="mt-6 grid sm:grid-cols-3 gap-3">

@@ -83,7 +83,13 @@
     "dashboardDescricao": "Your space for tracking your vision.",
     "dashboardProTitulo": "Clinical Area",
     "dashboardProDescricao": "A restricted area for health care professionals in the Janelas para a Alma network.",
-    "naoEncontradaTitulo": "Page Not Found"
+    "naoEncontradaTitulo": "Page Not Found",
+    "jogoMenuTitulo": "Inclusivamente: The Eye Health Game",
+    "jogoMenuDescricao": "Climb 15 levels of questions about vision, strabismus and eye health, at your own pace.",
+    "jogoJogarTitulo": "Play: Inclusivamente",
+    "jogoJogarDescricao": "Answer questions about eye health and climb the ladder to level 15.",
+    "jogoPerfilTitulo": "Player Profile: Inclusivamente",
+    "jogoPerfilDescricao": "Your coins, diamonds, games played and best level in the Inclusivamente game."
   },
   "AboutSection": {
     "conhecaNos": "Get to Know Us",
@@ -1809,7 +1815,8 @@
     "dalvaEtelvinaBenguelaFilipe": "Dalva Etelvina Benguela Filipe"
   },
   "screeningApi": {
-    "erroNaAnalise": "Analysis error ({{status}}): {{errorText}}"
+    "erroNaAnalise": "Analysis error ({{status}}): {{errorText}}",
+    "posicoesNaoComparaveis": "We couldn't compare your gaze positions. To try again, look toward the requested side when the left and right photos are taken."
   },
   "useEyeTracking": {
     "camaraNaoSuportadaNeste": "Camera not supported in this browser.",
