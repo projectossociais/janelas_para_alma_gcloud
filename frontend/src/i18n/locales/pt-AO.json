@@ -989,7 +989,17 @@
     "saibaMais": "Saiba mais...",
     "campanhaDeConsciencializacaoNa": "Campanha de Consciencialização na Gamek",
     "noticiasSobreASaude": "Notícias sobre a Saúde Visual no Mundo",
-    "lancamentoDoNossoJogo": "Lançamento do nosso jogo: Inclusivamente"
+    "lancamentoDoNossoJogo": "Lançamento do nosso jogo: Inclusivamente",
+    "tagInstitucional": "Institucional / Marco",
+    "oficializacaoDaFirma": "Oficialização da Nossa Firma Comercial: Olhar Alinhado",
+    "oficializacaoDaFirmaResumo": "O projeto dá mais um passo decisivo rumo à estruturação formal e conformidade legal com a constituição da Olhar Alinhado - Comércio & Prestação de Serviços, Lda."
+  },
+  "FirmaOlharAlinhadoModal": {
+    "titulo": "Um Novo Capítulo: Formalização da \"Olhar Alinhado\"",
+    "subtitulo": "Compromisso com a transparência, conformidade legal e expansão da saúde visual digital em Angola.",
+    "paragrafo1": "É com grande entusiasmo que partilhamos com a nossa comunidade mais um marco essencial: a constituição formal da nossa sociedade sob a denominação comercial Olhar Alinhado - Comércio & Prestação de Serviços, Lda.",
+    "paragrafo2": "Este passo institucional consolida a base legal para operarmos com total conformidade na prestação de serviços digitais voltados à saúde ocular — incluindo o desenvolvimento de programas terapêuticos visuais, acompanhamento clínico e integração de teleconsultas médicas especializadas.",
+    "paragrafo3": "Agradecemos a todos que acompanham a nossa trajetória enquanto construímos uma solução sólida e acessível para a comunidade."
   },
   "OptioptikaBookingDialog": {
     "aEnviarOSeuPedido": "A enviar o seu pedido...",

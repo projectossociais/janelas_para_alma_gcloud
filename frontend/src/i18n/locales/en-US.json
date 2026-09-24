@@ -989,7 +989,17 @@
     "saibaMais": "Learn more...",
     "campanhaDeConsciencializacaoNa": "Awareness Campaign in Gamek",
     "noticiasSobreASaude": "News on Vision Health Around the World",
-    "lancamentoDoNossoJogo": "Launching our game: Inclusivamente"
+    "lancamentoDoNossoJogo": "Launching our game: Inclusivamente",
+    "tagInstitucional": "Institutional / Milestone",
+    "oficializacaoDaFirma": "Our Company Is Now Official: Olhar Alinhado",
+    "oficializacaoDaFirmaResumo": "The project takes another decisive step toward a formal structure and legal compliance with the incorporation of Olhar Alinhado - Comércio & Prestação de Serviços, Lda."
+  },
+  "FirmaOlharAlinhadoModal": {
+    "titulo": "A New Chapter: Incorporating \"Olhar Alinhado\"",
+    "subtitulo": "A commitment to transparency, legal compliance and the growth of digital vision care in Angola.",
+    "paragrafo1": "We are delighted to share another key milestone with our community: the formal incorporation of our company under the trade name Olhar Alinhado - Comércio & Prestação de Serviços, Lda.",
+    "paragrafo2": "This step gives us the legal foundation to operate in full compliance as we provide digital eye care services, including the development of vision therapy programs, clinical follow-up and the integration of specialist medical teleconsultations.",
+    "paragrafo3": "Thank you to everyone who has followed our journey as we build a solid, accessible solution for the community."
   },
   "OptioptikaBookingDialog": {
     "aEnviarOSeuPedido": "Sending your request...",
