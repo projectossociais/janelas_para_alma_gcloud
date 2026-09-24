@@ -962,8 +962,16 @@ acrescentado antes disto agrava o problema.
 ## SPRINT 6 — Produto
 
 - Histórico de exames com evolução ao longo do tempo (**L**)
-- Painel pessoal com dados reais — hoje "4 exercícios" e "próxima teleconsulta" são valores fixos (**L**)
-- Exercícios premium restantes, sobre `BaseExercise` (**L**)
+- ~~Painel pessoal com dados reais~~ — feito 2026-09-23 (`DashboardUser.tsx`, PR #72)
+- **Nota de direcção sobre exercícios (2026-09-24, decisão do dono do projecto):**
+  o catálogo Premium ficou deliberadamente reduzido a 4 (`ambliopia`,
+  `sacadas-convergencia`, `flexibilidade-acomodativa`, `estereopsia`) em vez dos 8
+  antigos — não é dívida por corrigir, é a escolha de qualidade sobre quantidade.
+  Os outros 4 (`sacadas-distratores`, `facilidade-vergencia`,
+  `consciencia-periferica`, `programa-ia`) saíram do catálogo activo de propósito;
+  as páginas/rotas continuam a existir. **Antes de os reintroduzir**, a prioridade é
+  melhorar significativamente os 4 que ficaram — não expandir a lista outra vez até
+  isso estar feito
 - Loja de óculos com carrinho e pagamento (**W+L**)
 - Conteúdo editável pelo administrador (**W+L**)
 
