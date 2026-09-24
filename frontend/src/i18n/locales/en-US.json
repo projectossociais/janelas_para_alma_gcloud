@@ -1388,7 +1388,7 @@
     "alternaRapidamenteOFoco": "Quickly shift focus between near and far targets, training dynamic convergence."
   },
   "Scanner": {
-    "scannerDeEstrabismoIa": "Strabismus Scanner · AI",
+    "scannerDeEstrabismoIa": "Eye Screening",
     "areaDeDiagnosticoInteligente": "Smart Screening Area",
     "utilizeACamaraPara": "Use your camera for a guided visual analysis, assisted by artificial intelligence. Get your results in seconds, confidentially and securely.",
     "estaEUmaSimulacao": "This is a demonstration. It does not replace a clinical diagnosis.",
@@ -1398,7 +1398,7 @@
     "capturarFrente13": "Capture Front (1/3)",
     "capturarDireita23": "Capture Right (2/3)",
     "capturarEsquerda33": "Capture Left (3/3)",
-    "aEnviarImagensPara": "Uploading images… Please don't close this page",
+    "aEnviarImagensPara": "Processing images securely... Please don't close this page",
     "aAnalisar": "Analyzing…",
     "cancelar": "Cancel",
     "ambienteMuitoEscuroPor": "It's too dark here. Please move to a brighter place so the analysis is accurate.",

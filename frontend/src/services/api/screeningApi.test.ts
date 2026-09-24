@@ -43,6 +43,26 @@ describe("screeningApi -- textos do microserviço do scanner", () => {
     expect(mensagemDeErroApi(erro, "fallback")).toBe(POSICOES_EN);
   });
 
+  it("envia as 3 imagens num POST multipart real ao microserviço e devolve a resposta dele, sem mock", async () => {
+    const respostaReal = { estado: "concluido", variacao_desalinhamento: 2.3, requer_avaliacao_humana: true };
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify(respostaReal), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const resultado = await submeterRastreioMultiGaze(imagens());
+
+    expect(resultado).toEqual(respostaReal);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toMatch(/\/screening\/multi-gaze$/);
+    expect(url).not.toMatch(/supabase/i);
+    expect(init.method).toBe("POST");
+    const corpo = init.body as FormData;
+    expect(corpo).toBeInstanceOf(FormData);
+    for (const campo of ["centro", "esquerda", "direita"]) {
+      expect(corpo.get(campo)).toBeInstanceOf(Blob);
+    }
+  });
+
   it("em inglês, um erro desconhecido do microserviço cai na mensagem do código HTTP", async () => {
     vi.stubGlobal(
       "fetch",

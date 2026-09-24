@@ -117,5 +117,26 @@ describe("Scanner — persistência do rastreio guiado", () => {
     expect(JSON.stringify(payload)).not.toContain("base64,AAAA");
     expect(payload.estado).toBe("concluido");
     expect(payload.qualidade_captura).toBe(0.9);
+
+    // As 3 poses (frente, direita, esquerda) chegam ao microserviço como
+    // Blobs reais, e o resultado guardado para o ecrã é o que ele devolveu.
+    const imagens = submeterRastreioMultiGaze.mock.calls[0][0] as Record<string, unknown>;
+    for (const pose of ["centro", "direita", "esquerda"]) {
+      expect(imagens[pose]).toBeInstanceOf(Blob);
+    }
+    await waitFor(() => expect(sessionStorage.getItem("scanResult")).not.toBeNull(), { timeout: 4000 });
+    const guardado = JSON.parse(sessionStorage.getItem("scanResult")!) as { apiData: Record<string, unknown> };
+    expect(guardado.apiData.variacao_desalinhamento).toBe(1.4);
+  });
+
+  it("mostra a etiqueta 'Triagem Ocular' e nenhuma menção ao Supabase", () => {
+    render(
+      <MemoryRouter>
+        <Scanner />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText("Triagem Ocular")).toBeInTheDocument();
+    expect(screen.queryByText(/Scanner de Estrabismo/i)).not.toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/supabase/i);
   });
 });
