@@ -869,15 +869,83 @@ Há crédito de trial disponível, o que ajuda — mas com uma armadilha conheci
 
 ---
 
-## SPRINT 4 — Rede clínica e agendamentos
+## SPRINT 4 — Matchmaker clínico e teleconsulta (revisto 2026-09-24)
 
-O pitch deck afirma às clínicas que o agendamento com a Optiótica *"não é uma promessa de
-roadmap"*. O formulário existe mas **não persiste nada**. Este sprint fecha essa distância.
+**Porque isto deixou de ser "só um formulário":** o pitch deck já afirma às clínicas que o
+agendamento com a Optioptika *"não é uma promessa de roadmap"* — hoje é mentira: o
+`OptioptikaBookingDialog.tsx` fabrica um "recibo" com um número de pedido inventado no
+browser (`OPT-${Date.now()...}`) e nunca sai dali. Nem a Optioptika nem ninguém do lado
+da equipa fica a saber que alguém pediu uma consulta. O separador "Clínicas" dos
+resultados do scanner (`ScannerResultados.tsx`) tem o mesmo problema pelo lado oposto: o
+botão "Agendar" só abre o site externo da clínica, sem nenhum registo do lado de cá.
 
-- **L:** tabela `agendamentos` (migração aditiva, padrão de `sessoes_exercicio`)
-- **W:** endpoints de criação e decisão
-- **L:** ligar `ClinicalPartners.tsx` à API; página `AdminAgendamentos.tsx`
-- **W:** notificação à equipa e à clínica
+**A ideia original do projecto para isto já está semeada no código, só nunca foi
+construída:** `DashboardPro.tsx` já existe com "Pacientes atribuídos", "Teleconsultas
+agendadas" e uma secção "Em breve" a prometer "agenda integrada de teleconsultas" e
+"emissão de recomendações clínicas" — mas está inacessível (sem link em lado nenhum do
+site) e todos os números são `—`. Os papéis `profissional` (auto-registável, sem
+verificação) e `oftalmologista` (só promovível por admin) já existem no sistema de
+utilizadores. Não há nenhuma dependência de videochamada instalada — a teleconsulta em
+si nunca chegou a começar.
+
+**Reformulação:** não é um formulário de contacto, é o segundo pilar do produto — um
+mercado de três lados (paciente, clínica/médico, plataforma), cada um com algo a ganhar e
+algo a dar. Faseado para que cada fase seja entregável e útil sozinha:
+
+### Fase 0 — Pedido de consulta real (a fundação de tudo o resto)
+- **L:** tabela `agendamentos_clinicos` (migração aditiva, padrão de `sessoes_exercicio`),
+  desenhada desde já com `clinica_id`, `profissional_id` (nulável — nem toda a fase 0
+  precisa de um profissional atribuído), `modalidade` (`presencial`/`online`), `estado`,
+  e `screening_id` opcional (liga o pedido ao rastreio que o motivou, quando existir) —
+  **nunca hardcoded a uma clínica só**, para as fases seguintes não obrigarem a reescrever
+  o esquema
+- **W:** endpoints de criação (paciente) e decisão (admin, por agora — sem portal da
+  clínica ainda)
+- **L:** liga `ClinicalPartners.tsx`/`OptioptikaBookingDialog.tsx` e o separador
+  "Clínicas" de `ScannerResultados.tsx` à API; página `AdminAgendamentos.tsx`
+- **W:** email real de confirmação ao paciente e de aviso à equipa/clínica, mesmo padrão
+  já usado em candidaturas de voluntariado (`CandidaturaVoluntariadoService`)
+- **Pronto quando:** um pedido de consulta feito no site aparece de facto para um admin
+  decidir, e a Optioptika (ou quem for) recebe um email real — nunca mais um recibo
+  fabricado no browser
+
+### Fase 1 — Matchmaking real
+- Perfil de clínica/profissional: especialidades, cidade, modalidade, preço
+- Correspondência por regras (não ML — seria over-engineering nesta fase): tipo de
+  diagnóstico do scanner + localização + modalidade + prioridade para quem tem Premium
+- Disponibilidade do profissional: horário semanal recorrente simples, não um calendário
+  completo — o paciente passa a escolher um horário real, não "de manhã, mais ou menos"
+
+### Fase 2 — A teleconsulta em si
+- **Não construir infra de videochamada própria.** Usar um fornecedor alojado (Daily.co
+  ou 100ms, SDK simples, custo por minuto) — montar sinalização WebRTC de raiz não se
+  justifica para o volume inicial
+- Ciclo de vida da sessão: agendada → em curso → concluída → relatório
+- O médico emite uma recomendação clínica no fim — fecha o que `DashboardPro.tsx` já
+  promete
+
+### Fase 3 — Notificações a sério
+- Email já é o padrão do projecto; para Angola, **WhatsApp Business API** é a alternativa
+  com mais impacto real em lembretes de consulta (penetração muito mais alta que email,
+  reduz faltas de forma muito mais eficaz) — avaliar como próximo canal, não só
+  "bom teria"
+
+### Fase 4 — Fechar o modelo de negócio
+- Ligar à subscrição Premium já existente: prioridade de marcação ou créditos de
+  teleconsulta incluídos para quem paga; utilizador gratuito paga por consulta
+- Clínicas pagam por visibilidade/selo verificado na "Rede de Parceiros" — só é possível
+  negociar isto depois de a Fase 0 dar números reais de leads gerados para mostrar
+  a clínicas novas
+
+### Riscos a não ignorar
+- **Verificação de profissionais:** hoje qualquer conta pode registar-se como
+  `profissional` sem nenhuma credenciação. Antes de ligar pacientes a "médicos" a sério,
+  precisa de existir um passo de verificação (documentos, ordem profissional) — risco
+  legal e de confiança real sem isto
+- **Dados de saúde de crianças:** o mesmo cuidado já aplicado ao scanner (CLAUDE.md §4)
+  estende-se a relatórios clínicos e notas do médico
+- **Sequenciar a sério.** A tentação de construir o matchmaker completo de uma vez é o
+  maior risco de nunca se enviar nada — cada fase acima tem de ser entregável sozinha
 
 ---
 

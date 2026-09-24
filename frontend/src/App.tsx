@@ -61,6 +61,7 @@ import AdminNotifications from "./pages/admin/AdminNotifications";
 import AdminPublicacoes from "./pages/admin/AdminPublicacoes";
 import AdminAdmins from "./pages/admin/AdminAdmins";
 import AdminVoluntariado from "./pages/admin/AdminVoluntariado";
+import AdminAgendamentos from "./pages/admin/AdminAgendamentos";
 import GlobalBanner from "./components/GlobalBanner";
 import { SiteBannerProvider } from "./contexts/SiteBannerContext";
 import ScrollToTop from "./components/ScrollToTop";
@@ -159,6 +160,7 @@ const App = () => (
                   <Route path="publicacoes" element={<AdminPublicacoes />} />
                   <Route path="administradores" element={<AdminAdmins />} />
                   <Route path="voluntariado" element={<AdminVoluntariado />} />
+                  <Route path="agendamentos" element={<AdminAgendamentos />} />
                 </Route>
 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
