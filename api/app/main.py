@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import obter_settings
 from app.routers import (
     admin,
+    agendamentos,
     auth,
     banner_homepage,
     banners,
@@ -58,6 +59,7 @@ app.include_router(publicacoes.router)
 app.include_router(notificacoes.router)
 app.include_router(screenings.router)
 app.include_router(jogo.router)
+app.include_router(agendamentos.router)
 
 
 @app.get("/saude")

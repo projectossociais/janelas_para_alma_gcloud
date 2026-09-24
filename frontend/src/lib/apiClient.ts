@@ -903,6 +903,67 @@ export const voluntariadoApi = {
     pedido<InscricaoAtividadeAdmin[]>(`/voluntariado/atividades/${atividadeId}/inscritos`),
 };
 
+// --- Agendamentos clínicos (Sprint 4, Fase 0 do matchmaker -- ver docs/BACKLOG.md) ------
+
+export interface ClinicaParceiraPublica {
+  id: string;
+  nome: string;
+}
+
+export interface AgendamentoClinicoInput {
+  clinica_id: string;
+  nome: string;
+  email: string;
+  telefone: string;
+  modalidade: "presencial" | "online";
+  data_preferida?: string | null;
+  periodo_preferido?: string | null;
+  motivo?: string | null;
+  screening_id?: string | null;
+}
+
+export interface AgendamentoClinicoPublico {
+  id: string;
+  clinica_id: string;
+  nome: string;
+  email: string;
+  telefone: string;
+  modalidade: string;
+  data_preferida: string | null;
+  periodo_preferido: string | null;
+  motivo: string | null;
+  estado: string;
+  created_at: string;
+}
+
+export interface AgendamentoClinicoAdmin extends AgendamentoClinicoPublico {
+  utilizador_id: string | null;
+  screening_id: string | null;
+  decidido_por: string | null;
+  decidido_em: string | null;
+}
+
+export const agendamentosApi = {
+  // Público -- não exige sessão (pedir uma consulta é pontual, não uma
+  // relação contínua como o voluntariado). Ver CLAUDE.md/docs/BACKLOG.md.
+  listarClinicas: () => pedido<ClinicaParceiraPublica[]>("/clinicas"),
+
+  pedir: (dados: AgendamentoClinicoInput) =>
+    pedido<AgendamentoClinicoPublico>("/agendamentos", {
+      method: "POST",
+      body: JSON.stringify(dados),
+    }),
+
+  // Administração ---------------------------------------------------------
+  listarAgendamentos: () => pedido<AgendamentoClinicoAdmin[]>("/admin/agendamentos"),
+
+  confirmar: (id: string) =>
+    pedido<AgendamentoClinicoAdmin>(`/admin/agendamentos/${id}/confirmar`, { method: "POST" }),
+
+  recusar: (id: string) =>
+    pedido<AgendamentoClinicoAdmin>(`/admin/agendamentos/${id}/recusar`, { method: "POST" }),
+};
+
 // --- Publicações (ADMIN-03) --------------------------------------------------
 // Substitui o padrão antigo de escrever uma página React nova por cada
 // campanha/actividade (ver ActivitiesFeed.tsx) por um CMS real gerido no

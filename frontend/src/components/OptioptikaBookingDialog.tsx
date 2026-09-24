@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { CalendarPlus, Video, MapPinned } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { optioptika, OPTIOPTIKA_YELLOW } from "@/data/optioptika";
+import { agendamentosApi, mensagemDeErroApi } from "@/lib/apiClient";
 import { Trans, useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { formatarDataHora } from "@/i18n/formatar";
@@ -74,29 +75,65 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
   const [mode, setMode] = useState<Mode>("presencial");
   const [receipt, setReceipt] = useState<BookingReceipt | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [enviando, setEnviando] = useState(false);
+  // A clínica é sempre a Optioptika por agora (Fase 0 do matchmaker -- ver
+  // docs/BACKLOG.md, Sprint 4) -- o id real vem da API própria em vez de
+  // ficar fixo no código, para não ter de mudar isto quando houver mais
+  // parceiros.
+  const [clinicaId, setClinicaId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    agendamentosApi
+      .listarClinicas()
+      .then((clinicas) => setClinicaId(clinicas[0]?.id ?? null))
+      .catch(() => setClinicaId(null));
+  }, [open]);
 
   const update = (k: keyof typeof form, v: string) =>
     setForm((prev) => ({ ...prev, [k]: v }));
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const result = appointmentSchema().safeParse(form);
     if (!result.success) {
       toast.error(result.error.issues[0]?.message ?? t("OptioptikaBookingDialog.verifiqueOsCamposDo"));
       return;
     }
-    // Optimistic UI: create + show booking receipt instantly.
-    const booking: BookingReceipt = {
-      id: `OPT-${Date.now().toString(36).toUpperCase()}`,
-      createdAt: formatarDataHora(new Date()),
-      mode,
-      ...result.data,
-    };
-    setReceipt(booking);
-    toast.success(
-      t("OptioptikaBookingDialog.pedidoEnviadoAEntraremos", { name: optioptika.name, valor: mode === "online" ? t("OptioptikaBookingDialog.modalidadeOnline") : t("OptioptikaBookingDialog.modalidadePresencial") }),
-    );
-    setForm(emptyForm);
+    if (!clinicaId) {
+      toast.error(t("OptioptikaBookingDialog.verifiqueOsCamposDo"));
+      return;
+    }
+
+    setEnviando(true);
+    try {
+      const agendamento = await agendamentosApi.pedir({
+        clinica_id: clinicaId,
+        nome: result.data.name,
+        email: result.data.email,
+        telefone: result.data.phone,
+        modalidade: mode,
+        data_preferida: result.data.date,
+        periodo_preferido: result.data.period,
+        motivo: result.data.notes || null,
+      });
+      // Só mostra o "recibo" depois da API confirmar a gravação -- nunca
+      // antes (CLAUDE.md, "nunca mostrar sucesso antes de verificar erro").
+      setReceipt({
+        id: agendamento.id,
+        createdAt: formatarDataHora(new Date(agendamento.created_at)),
+        mode,
+        ...result.data,
+      });
+      toast.success(
+        t("OptioptikaBookingDialog.pedidoEnviadoAEntraremos", { name: optioptika.name, valor: mode === "online" ? t("OptioptikaBookingDialog.modalidadeOnline") : t("OptioptikaBookingDialog.modalidadePresencial") }),
+      );
+      setForm(emptyForm);
+    } catch (err) {
+      toast.error(mensagemDeErroApi(err, t("OptioptikaBookingDialog.verifiqueOsCamposDo")));
+    } finally {
+      setEnviando(false);
+    }
   };
 
   const handleOpenChange = (v: boolean) => {
@@ -124,7 +161,7 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
             <div className="rounded-lg border border-border bg-muted/40 p-4 space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t("OptioptikaBookingDialog.nDoPedido")}</span>
-                <span className="font-mono font-semibold">{receipt.id}</span>
+                <span className="font-mono font-semibold">{receipt.id.slice(0, 8).toUpperCase()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t("OptioptikaBookingDialog.emitido")}</span>
@@ -277,9 +314,12 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
               <DialogFooter>
                 <Button
                   type="submit"
+                  disabled={enviando}
                   className={`w-full font-semibold ${mode === "online" ? "bg-[#FFD500] text-black hover:opacity-90" : "bg-black text-white hover:bg-black/80"}`}
                 >
-                  {t("OptioptikaBookingDialog.solicitarConsulta")}{" "}{mode === "online" ? t("OptioptikaBookingDialog.online") : t("OptioptikaBookingDialog.presencial")}
+                  {enviando
+                    ? t("OptioptikaBookingDialog.aEnviarOSeuPedido")
+                    : `${t("OptioptikaBookingDialog.solicitarConsulta")} ${mode === "online" ? t("OptioptikaBookingDialog.online") : t("OptioptikaBookingDialog.presencial")}`}
                 </Button>
               </DialogFooter>
             </form>
