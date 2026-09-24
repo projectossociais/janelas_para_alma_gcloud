@@ -7,26 +7,21 @@ import { Button } from "@/components/ui/button";
 import { Eye, Activity, Sparkles, Calendar, Play } from "lucide-react";
 import { screeningsApi } from "@/lib/apiClient";
 import { useAuth } from "@/contexts/AuthContext";
-import { useProfile } from "@/contexts/ProfileContext";
+import { useAcessoExercicios } from "@/contexts/AcessoExerciciosContext";
 import { useTranslation } from "react-i18next";
 import { localizar } from "@/i18n/rotas";
-
-// 4 gratuitos + 8 premium (ver Exercicios.tsx) -- todos com rota real em
-// App.tsx, nenhum placeholder. Os premium só contam para quem tem acesso.
-const TOTAL_EXERCICIOS_GRATUITOS = 4;
-const TOTAL_EXERCICIOS_PREMIUM = 8;
 
 const DashboardUser = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { profile } = useProfile();
+  // 8 exercícios, todos pagos: 4 com o teste de 7 dias activo, os 8 com
+  // Premium (ou admin), 0 sem nenhum dos dois -- o número vem da API.
+  const { acesso } = useAcessoExercicios();
   const [scanCount, setScanCount] = useState(0);
   const primeiroNome = user?.name?.split(" ")[0];
 
-  const temAcessoPremium = !!profile && (profile.premium_ativo || profile.papel === "admin");
-  const exerciciosDisponiveis =
-    TOTAL_EXERCICIOS_GRATUITOS + (temAcessoPremium ? TOTAL_EXERCICIOS_PREMIUM : 0);
+  const exerciciosDisponiveis = acesso.exercicios_desbloqueados.length;
 
   useEffect(() => {
     if (!user) return;

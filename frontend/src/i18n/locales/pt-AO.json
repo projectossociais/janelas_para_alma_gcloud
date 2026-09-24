@@ -313,15 +313,22 @@
     "pausar": "Pausar",
     "iniciar": "Iniciar",
     "conteudoPremium": "Conteúdo Premium",
-    "facaUpgradeParaDesbloquear": "Faça upgrade para desbloquear",
-    "esteExercicioEstaDisponivel": "Este exercício está disponível para contas com acesso premium. Faça upgrade para continuar a sua reabilitação visual sem limites.",
-    "desbloquearAcessoPremium": "Desbloquear Acesso Premium",
     "camaraNaoSuportadaNeste": "Câmara não suportada neste navegador.",
     "naoFoiPossivelAceder": "Não foi possível aceder à câmara.",
     "sairDoExercicio": "Sair do exercício",
     "tempoRestante": "Tempo restante: {{valor}}",
     "pontuacaoActual": "Pontuação actual: {{score}}",
-    "preVisualizacaoDaCamara": "Pré-visualização da câmara"
+    "preVisualizacaoDaCamara": "Pré-visualização da câmara",
+    "incluidoNoTeste": "Incluído no teste de 7 dias",
+    "tituloCriarConta": "Crie uma conta para começar",
+    "textoCriarConta": "Com uma conta, pode experimentar este exercício gratuitamente durante 7 dias.",
+    "botaoCriarConta": "Criar conta e começar teste de 7 dias",
+    "tituloIniciarTrial": "Comece o seu teste gratuito",
+    "textoIniciarTrial": "Este exercício está incluído no teste de 7 dias. O teste só pode ser iniciado uma vez por conta.",
+    "botaoIniciarTrial": "Começar teste gratuito de 7 dias",
+    "tituloPremium": "Disponível no plano Premium",
+    "textoPremium": "Active o plano Premium para ter acesso a todos os exercícios, sem limite.",
+    "botaoPremium": "Ver planos Premium"
   },
   "CampanhaGamek": {
     "n12DeSetembro": "12 de Setembro",
@@ -463,10 +470,6 @@
     "naoFoiPossivelConfirmar": "Não foi possível confirmar",
     "umMomento": "Um momento.",
     "jaPodeEntrarCom": "Já pode entrar com o seu email e palavra-passe."
-  },
-  "ConscienciaPerifericaExercise": {
-    "conscienciaPeriferica": "Consciência Periférica",
-    "detecteEstimulosNaPeriferia": "Detecte estímulos na periferia do campo visual sem desviar o olhar do centro."
   },
   "ContactSection": {
     "junteSeANos": "Junte-se a Nós",
@@ -643,12 +646,6 @@
   "Exercicios": {
     "exerciciosVisuaisPraticos": "Exercícios Visuais Práticos",
     "aprendeTecnicasSimplesE": "Aprende técnicas simples e interactivas para fortalecer a tua visão no dia-a-dia.",
-    "planoGratuito": "Plano Gratuito",
-    "incluido": "Incluído",
-    "iniciarExercicioInteractivo": "Iniciar Exercício Interactivo",
-    "planoPremium": "Plano Premium",
-    "exerciciosAvancados": "Exercícios Avançados",
-    "desbloquearTudo": "Desbloquear tudo",
     "maisDicasNoInstagram": "Mais Dicas no Instagram",
     "acompanheANossaComunidade": "Acompanhe a nossa comunidade de Kambas nas redes sociais para desafios visuais diários, dicas de saúde e actualizações sobre o projecto.",
     "verNoInstagram": "Ver no Instagram",
@@ -666,16 +663,32 @@
     "alternaRapidamenteOFoco": "Alterna rapidamente o foco entre alvos próximos e distantes, treinando a convergência dinâmica.",
     "flexibilidadeAcomodativa": "Flexibilidade Acomodativa",
     "mudaDeFocoEntre": "Muda de foco entre perto e longe a um ritmo crescente para treinar a rapidez de acomodação do olho.",
-    "sacadasComDistratores": "Sacadas com Distratores",
-    "encontreOAlvoCerto": "Encontre o alvo certo entre distractores em movimento, apurando o controlo dos movimentos sacádicos.",
     "estereopsiaVisao3d": "Estereopsia (Visão 3D)",
     "padroesEstereoscopicosAvaliamE": "Padrões estereoscópicos avaliam e treinam a percepção de profundidade binocular.",
-    "facilidadeDeVergencia": "Facilidade de Vergência",
-    "alternaEntreConvergenciaE": "Alterna entre convergência e divergência em ciclos cronometrados para ganhar resistência binocular.",
-    "conscienciaPeriferica": "Consciência Periférica",
-    "detecteEstimulosNaPeriferia": "Detecte estímulos na periferia do campo visual sem desviar o olhar do centro.",
-    "programaAdaptativoComIa": "Programa Adaptativo com IA",
-    "umAlgoritmoAjustaA": "Um algoritmo ajusta a dificuldade de cada sessão em tempo real, de acordo com o seu progresso."
+    "grupoTrial": "Incluídos no teste de 7 dias",
+    "grupoTrialDescricao": "Os quatro exercícios base, para começar a treinar a visão todos os dias.",
+    "grupoPremium": "Premium",
+    "grupoPremiumDescricao": "Exercícios estruturados e adaptados para treino da visão binocular e reabilitação visual no estrabismo e ambliopia.",
+    "verPlanosPremium": "Ver planos Premium",
+    "iniciarExercicio": "Iniciar exercício",
+    "estadoBloqueado": "Bloqueado",
+    "estadoDesbloqueado": "Disponível",
+    "cartaoCriarConta": "Criar conta",
+    "cartaoIniciarTrial": "Começar teste",
+    "cartaoPremium": "Desbloquear",
+    "estadoTrialDisponivel": "Trial disponível",
+    "estadoTrialAtivo": "Trial activo",
+    "estadoTrialTerminado": "Trial terminado",
+    "estadoPremium": "Premium",
+    "bannerSemSessaoTitulo": "Experimente durante 7 dias, sem pagar",
+    "bannerSemSessaoTexto": "Crie a sua conta e tenha acesso aos 4 exercícios base durante 7 dias completos.",
+    "bannerSemSessaoBotao": "Criar conta e começar teste de 7 dias",
+    "bannerTrialDisponivelTexto": "Tem direito a um teste gratuito de 7 dias aos 4 exercícios base. Só pode ser usado uma vez por conta.",
+    "bannerTrialDisponivelBotao": "Começar teste gratuito de 7 dias",
+    "bannerTrialAtivoUmDia": "Falta 1 dia do seu teste gratuito.",
+    "bannerTrialAtivoDias": "Faltam {{dias}} dias do seu teste gratuito.",
+    "bannerTrialTerminadoTexto": "O seu teste gratuito de 7 dias terminou. Para continuar a treinar, active o plano Premium.",
+    "bannerPremiumTexto": "Tem acesso aos 8 exercícios, sem limite."
   },
   "ExercisesSection": {
     "exerciciosVisuais": "Exercícios Visuais",
@@ -691,10 +704,6 @@
     "alterneOFocoEntre": "Alterne o foco entre perto e longe para trabalhar a flexibilidade visual.",
     "relaxamento": "Relaxamento",
     "sincronizeRespiracaoEPiscar": "Sincronize respiração e piscar para aliviar a tensão dos ecrãs."
-  },
-  "FacilidadeVergenciaExercise": {
-    "facilidadeDeVergencia": "Facilidade de Vergência",
-    "alternaEntreConvergenciaE": "Alterna entre convergência e divergência em ciclos cronometrados para ganhar resistência binocular."
   },
   "Faq": {
     "simOsDadosDe": "Sim. Os dados de saúde (como os resultados do rastreio de estrabismo) são tratados como categoria especial de dados, só são recolhidos mediante o seu consentimento explícito e são protegidos com medidas técnicas de segurança adequadas. Consulte as secções 3 e 9 da nossa <ligacao>Política de Privacidade</ligacao> para mais detalhes.",
@@ -866,12 +875,6 @@
     "implementarAccoesDeInclusao": "Implementar acções de inclusão social, visual e ecológica",
     "equipaMeuKambaEstrabico": "Equipa Meu Kamba Estrábico reunida num auditório",
     "irParaOSlide": "Ir para o slide {{valor}}"
-  },
-  "LockedVideoOverlay": {
-    "conteudoPremium": "Conteúdo Premium",
-    "facaUpgradeParaDesbloquear": "Faça upgrade para desbloquear este vídeo.",
-    "desbloquear": "Desbloquear",
-    "conteudoBloqueado": "{{title}}: conteúdo bloqueado"
   },
   "MenuJogo": {
     "inclusivamente": "Inclusivamente",
@@ -1231,7 +1234,10 @@
     "acessoIlimitadoAExercicios": "Acesso ilimitado a exercícios interactivos e vídeos alojados na plataforma.",
     "acompanhamentoDeMetricasKpis": "Acompanhamento de métricas (KPIs) de evolução.",
     "redirecionamentoExclusivoETeleconsulta": "Redirecionamento exclusivo e teleconsulta com clínicas parceiras.",
-    "videosExplicativosComMedicos": "Vídeos explicativos com médicos oftalmologistas parceiros."
+    "videosExplicativosComMedicos": "Vídeos explicativos com médicos oftalmologistas parceiros.",
+    "precos": "Preços do plano Premium",
+    "porMes": "por mês",
+    "porAnoPoupe2Meses": "por ano · poupe 2 meses"
   },
   "ProgramModal": {
     "programaMeuKambaEstrabico": "Programa Meu Kamba Estrábico",
@@ -1255,10 +1261,6 @@
     "implementacao": "Implementação",
     "monitoramento": "Monitoramento",
     "avaliacaoEExpansao": "Avaliação e Expansão"
-  },
-  "ProgramaIaExercise": {
-    "programaAdaptativoComIa": "Programa Adaptativo com IA",
-    "umAlgoritmoAjustaA": "Um algoritmo ajusta a dificuldade de cada sessão em tempo real, de acordo com o seu progresso."
   },
   "PublicacaoDetalhe": {
     "publicacaoNaoEncontrada": "Publicação não encontrada",
@@ -1318,7 +1320,7 @@
     "planoMensal": "Plano Mensal",
     "n15000Kz": "15.000 Kz",
     "cobrancaTodosOsMeses": "Cobrança todos os meses",
-    "acessoIlimitadoA8": "Acesso ilimitado a 8 exercícios avançados",
+    "acessoIlimitadoA8": "Acesso ilimitado aos 8 exercícios",
     "acompanhamentoDeMetricasDe": "Acompanhamento de métricas de evolução",
     "suportePrioritario": "Suporte prioritário",
     "planoAnual": "Plano Anual",
@@ -1384,10 +1386,6 @@
   "SacadasConvergenciaExercise": {
     "convergenciaComSaltosSacadas": "Convergência com Saltos (Sacadas)",
     "alternaRapidamenteOFoco": "Alterna rapidamente o foco entre alvos próximos e distantes, treinando a convergência dinâmica."
-  },
-  "SacadasDistratoresExercise": {
-    "sacadasComDistratores": "Sacadas com Distratores",
-    "encontreOAlvoCerto": "Encontre o alvo certo entre distractores em movimento, apurando o controlo dos movimentos sacádicos."
   },
   "Scanner": {
     "scannerDeEstrabismoIa": "Scanner de Estrabismo · IA",
@@ -1861,5 +1859,9 @@
   },
   "legal": {
     "notaTraducao": "Esta tradução inglesa é disponibilizada por conveniência. Prevalece a versão portuguesa."
+  },
+  "AcessoExercicios": {
+    "testeIniciado": "Teste gratuito iniciado. Bom treino!",
+    "naoFoiPossivelIniciar": "Não foi possível iniciar o teste gratuito."
   }
 }

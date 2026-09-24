@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { localizar } from "@/i18n/rotas";
 
 interface PremiumExercicioEsqueletoProps {
+  exercicioId: string;
   title: string;
   description: string;
   icon: LucideIcon;
@@ -15,11 +16,12 @@ interface PremiumExercicioEsqueletoProps {
 
 /**
  * Esqueleto funcional para os exercícios Premium ainda por desenvolver:
- * navegável e desbloqueável (via BaseExercise isPremium), mas sem mecânica
+ * navegável e desbloqueável (via BaseExercise, grupo "premium"), mas sem mecânica
  * própria. Ver AmbliopiaExercise.tsx para o primeiro exercício completo --
  * os restantes seguem o mesmo padrão quando forem desenvolvidos.
  */
 const PremiumExercicioEsqueleto = ({
+  exercicioId,
   title,
   description,
   icon: Icon,
@@ -37,7 +39,7 @@ const PremiumExercicioEsqueleto = ({
             </Link>
           </Button>
 
-          <BaseExercise title={title} description={description} isPremium={true}>
+          <BaseExercise title={title} description={description} exercicioId={exercicioId} grupo="premium">
             <div className="flex h-[350px] flex-col items-center justify-center gap-4 p-6 text-center">
               <Icon className="h-10 w-10 text-teal" />
               <p className="max-w-sm text-sm text-muted-foreground">

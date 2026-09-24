@@ -364,7 +364,8 @@ const RelaxamentoExercise = () => {
           <BaseExercise
             title={t("RelaxamentoExercise.relaxamentoERespiracao")}
             description={t("RelaxamentoExercise.sincronizeARespiracaoCom2")}
-            isPremium={false}
+            exercicioId={EXERCICIO_ID}
+            grupo="trial"
             durationSeconds={duracaoSegundos}
           >
             <RelaxamentoGame

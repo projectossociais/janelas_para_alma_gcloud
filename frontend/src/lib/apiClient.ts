@@ -500,6 +500,38 @@ export const sessoesExercicioApi = {
     }),
 };
 
+export type EstadoAcessoExercicios =
+  | "sem_sessao"
+  | "premium"
+  | "trial_disponivel"
+  | "trial_ativo"
+  | "trial_terminado";
+
+export interface AcessoExerciciosPublico {
+  estado: EstadoAcessoExercicios;
+  exercicios_desbloqueados: string[];
+  exercicios_trial: string[];
+  exercicios_premium: string[];
+  trial_iniciado_em: string | null;
+  trial_termina_em: string | null;
+  trial_dias_restantes: number | null;
+}
+
+export const exerciciosApi = {
+  /** Estado de acesso já calculado pela API (Premium, teste de 7 dias).
+   *  Funciona sem sessão (`estado: "sem_sessao"`). O frontend nunca decide
+   *  acesso por conta própria -- a API recusa sessões/vídeos sem direito. */
+  acesso: () => pedido<AcessoExerciciosPublico>("/exercicios/acesso"),
+
+  /** Inicia o teste de 7 dias -- uma única vez por conta (409 depois). */
+  iniciarTrial: () =>
+    pedido<AcessoExerciciosPublico>("/exercicios/trial", { method: "POST" }),
+
+  /** URL assinado e temporário do vídeo do exercício (403 sem acesso). */
+  video: (exercicioId: string) =>
+    pedido<{ url: string }>(`/exercicios/${encodeURIComponent(exercicioId)}/video`),
+};
+
 export interface ScreeningInput {
   estado: string;
   rosto_detetado: boolean;

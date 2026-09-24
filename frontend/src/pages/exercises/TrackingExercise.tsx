@@ -596,7 +596,8 @@ const TrackingExercise = () => {
           <BaseExercise
             title={t("TrackingExercise.acompanhamentoEmOito")}
             description={t("TrackingExercise.sigaOAlvoCom")}
-            isPremium={false}
+            exercicioId={EXERCICIO_ID}
+            grupo="trial"
             durationSeconds={duracaoSegundos}
           >
             <TrackingGame duracaoSegundos={duracaoSegundos} onEscolherDuracao={setDuracaoSegundos} />

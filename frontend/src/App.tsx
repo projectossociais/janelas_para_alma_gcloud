@@ -8,6 +8,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProfileProvider } from "@/contexts/ProfileContext";
 import { FeedbackProvider } from "@/contexts/FeedbackContext";
+import { AcessoExerciciosProvider } from "@/contexts/AcessoExerciciosContext";
 import Index from "./pages/Index";
 import Sobre from "./pages/Sobre";
 import Equipa from "./pages/Equipa";
@@ -47,11 +48,7 @@ import RelaxamentoExercise from "./pages/exercises/RelaxamentoExercise";
 import AmbliopiaExercise from "./pages/exercises/AmbliopiaExercise";
 import SacadasConvergenciaExercise from "./pages/exercises/SacadasConvergenciaExercise";
 import FlexibilidadeAcomodativaExercise from "./pages/exercises/FlexibilidadeAcomodativaExercise";
-import SacadasDistratoresExercise from "./pages/exercises/SacadasDistratoresExercise";
 import EstereopsiaExercise from "./pages/exercises/EstereopsiaExercise";
-import FacilidadeVergenciaExercise from "./pages/exercises/FacilidadeVergenciaExercise";
-import ConscienciaPerifericaExercise from "./pages/exercises/ConscienciaPerifericaExercise";
-import ProgramaIaExercise from "./pages/exercises/ProgramaIaExercise";
 import DashboardUser from "./pages/DashboardUser";
 import DashboardPro from "./pages/DashboardPro";
 import AdminLayout from "./pages/admin/AdminLayout";
@@ -98,11 +95,7 @@ const PAGINAS: Record<ChaveRota, ReactElement> = {
   exercicioAmbliopia: <AmbliopiaExercise />,
   exercicioSacadasConvergencia: <SacadasConvergenciaExercise />,
   exercicioFlexibilidadeAcomodativa: <FlexibilidadeAcomodativaExercise />,
-  exercicioSacadasDistratores: <SacadasDistratoresExercise />,
   exercicioEstereopsia: <EstereopsiaExercise />,
-  exercicioFacilidadeVergencia: <FacilidadeVergenciaExercise />,
-  exercicioConscienciaPeriferica: <ConscienciaPerifericaExercise />,
-  exercicioProgramaIa: <ProgramaIaExercise />,
   scanner: <Scanner />,
   scannerResultados: <ScannerResultados />,
   entrar: <Auth />,
@@ -134,6 +127,7 @@ const App = () => (
       <Sonner />
       <AuthProvider>
         <ProfileProvider>
+          <AcessoExerciciosProvider>
           <FeedbackProvider>
             <BrowserRouter>
               <SiteBannerProvider>
@@ -174,6 +168,7 @@ const App = () => (
               </SiteBannerProvider>
             </BrowserRouter>
           </FeedbackProvider>
+          </AcessoExerciciosProvider>
         </ProfileProvider>
       </AuthProvider>
     </TooltipProvider>

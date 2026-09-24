@@ -313,15 +313,22 @@
     "pausar": "Pause",
     "iniciar": "Start",
     "conteudoPremium": "Premium Content",
-    "facaUpgradeParaDesbloquear": "Upgrade to unlock",
-    "esteExercicioEstaDisponivel": "This exercise is available to accounts with Premium access. Upgrade to continue your vision rehabilitation without limits.",
-    "desbloquearAcessoPremium": "Unlock Premium Access",
     "camaraNaoSuportadaNeste": "Camera not supported in this browser.",
     "naoFoiPossivelAceder": "We couldn't access the camera.",
     "sairDoExercicio": "Exit exercise",
     "tempoRestante": "Time remaining: {{valor}}",
     "pontuacaoActual": "Current score: {{score}}",
-    "preVisualizacaoDaCamara": "Camera preview"
+    "preVisualizacaoDaCamara": "Camera preview",
+    "incluidoNoTeste": "Included in the 7-day trial",
+    "tituloCriarConta": "Create an account to get started",
+    "textoCriarConta": "With an account, you can try this exercise free for 7 days.",
+    "botaoCriarConta": "Create account and start 7-day trial",
+    "tituloIniciarTrial": "Start your free trial",
+    "textoIniciarTrial": "This exercise is included in the 7-day trial. The trial can only be started once per account.",
+    "botaoIniciarTrial": "Start free 7-day trial",
+    "tituloPremium": "Available on the Premium plan",
+    "textoPremium": "Activate the Premium plan for unlimited access to every exercise.",
+    "botaoPremium": "See Premium plans"
   },
   "CampanhaGamek": {
     "n12DeSetembro": "September 12",
@@ -463,10 +470,6 @@
     "naoFoiPossivelConfirmar": "We couldn't confirm your account",
     "umMomento": "One moment.",
     "jaPodeEntrarCom": "You can now sign in with your email and password."
-  },
-  "ConscienciaPerifericaExercise": {
-    "conscienciaPeriferica": "Peripheral Awareness",
-    "detecteEstimulosNaPeriferia": "Detect stimuli at the edges of your visual field without shifting your gaze from the center."
   },
   "ContactSection": {
     "junteSeANos": "Join Us",
@@ -643,12 +646,6 @@
   "Exercicios": {
     "exerciciosVisuaisPraticos": "Practical Vision Exercises",
     "aprendeTecnicasSimplesE": "Learn simple, interactive techniques to strengthen your vision in everyday life.",
-    "planoGratuito": "Free Plan",
-    "incluido": "Included",
-    "iniciarExercicioInteractivo": "Start Interactive Exercise",
-    "planoPremium": "Premium Plan",
-    "exerciciosAvancados": "Advanced Exercises",
-    "desbloquearTudo": "Unlock everything",
     "maisDicasNoInstagram": "More Tips on Instagram",
     "acompanheANossaComunidade": "Follow our community of Kambas on social media for daily vision challenges, health tips and project updates.",
     "verNoInstagram": "View on Instagram",
@@ -666,16 +663,32 @@
     "alternaRapidamenteOFoco": "Quickly shift focus between near and far targets, training dynamic convergence.",
     "flexibilidadeAcomodativa": "Accommodative Flexibility",
     "mudaDeFocoEntre": "Shift focus between near and far at an increasing pace to train how quickly the eye accommodates.",
-    "sacadasComDistratores": "Saccades With Distractors",
-    "encontreOAlvoCerto": "Find the right target among moving distractors, sharpening control of saccadic eye movements.",
     "estereopsiaVisao3d": "Stereopsis (3D Vision)",
     "padroesEstereoscopicosAvaliamE": "Stereoscopic patterns assess and train binocular depth perception.",
-    "facilidadeDeVergencia": "Vergence Facility",
-    "alternaEntreConvergenciaE": "Alternate between convergence and divergence in timed cycles to build binocular endurance.",
-    "conscienciaPeriferica": "Peripheral Awareness",
-    "detecteEstimulosNaPeriferia": "Detect stimuli at the edges of your visual field without shifting your gaze from the center.",
-    "programaAdaptativoComIa": "AI-Powered Adaptive Program",
-    "umAlgoritmoAjustaA": "An algorithm adjusts the difficulty of each session in real time, based on your progress."
+    "grupoTrial": "Included in the 7-day trial",
+    "grupoTrialDescricao": "The four core exercises, to start training your vision every day.",
+    "grupoPremium": "Premium",
+    "grupoPremiumDescricao": "Structured, tailored exercises for binocular vision training and visual rehabilitation in strabismus and amblyopia.",
+    "verPlanosPremium": "See Premium plans",
+    "iniciarExercicio": "Start exercise",
+    "estadoBloqueado": "Locked",
+    "estadoDesbloqueado": "Available",
+    "cartaoCriarConta": "Create account",
+    "cartaoIniciarTrial": "Start trial",
+    "cartaoPremium": "Unlock",
+    "estadoTrialDisponivel": "Trial available",
+    "estadoTrialAtivo": "Trial active",
+    "estadoTrialTerminado": "Trial ended",
+    "estadoPremium": "Premium",
+    "bannerSemSessaoTitulo": "Try it free for 7 days",
+    "bannerSemSessaoTexto": "Create your account and get access to the 4 core exercises for 7 full days.",
+    "bannerSemSessaoBotao": "Create account and start 7-day trial",
+    "bannerTrialDisponivelTexto": "You're eligible for a free 7-day trial of the 4 core exercises. It can only be used once per account.",
+    "bannerTrialDisponivelBotao": "Start free 7-day trial",
+    "bannerTrialAtivoUmDia": "1 day left in your free trial.",
+    "bannerTrialAtivoDias": "{{dias}} days left in your free trial.",
+    "bannerTrialTerminadoTexto": "Your free 7-day trial has ended. To keep training, activate the Premium plan.",
+    "bannerPremiumTexto": "You have unlimited access to all 8 exercises."
   },
   "ExercisesSection": {
     "exerciciosVisuais": "Vision Exercises",
@@ -691,10 +704,6 @@
     "alterneOFocoEntre": "Shift your focus between near and far to work on visual flexibility.",
     "relaxamento": "Relaxation",
     "sincronizeRespiracaoEPiscar": "Sync your breathing and blinking to relieve screen strain."
-  },
-  "FacilidadeVergenciaExercise": {
-    "facilidadeDeVergencia": "Vergence Facility",
-    "alternaEntreConvergenciaE": "Alternate between convergence and divergence in timed cycles to build binocular endurance."
   },
   "Faq": {
     "simOsDadosDe": "Yes. Health data (such as your strabismus screening results) is treated as a special category of data, is collected only with your explicit consent and is protected by appropriate technical security measures. See sections 3 and 9 of our <ligacao>Privacy Policy</ligacao> for more details.",
@@ -866,12 +875,6 @@
     "implementarAccoesDeInclusao": "Carry out social, visual and environmental inclusion initiatives",
     "equipaMeuKambaEstrabico": "The Meu Kamba Estrábico team together in an auditorium",
     "irParaOSlide": "Go to slide {{valor}}"
-  },
-  "LockedVideoOverlay": {
-    "conteudoPremium": "Premium Content",
-    "facaUpgradeParaDesbloquear": "Upgrade to unlock this video.",
-    "desbloquear": "Unlock",
-    "conteudoBloqueado": "{{title}}: locked content"
   },
   "MenuJogo": {
     "inclusivamente": "Inclusivamente",
@@ -1231,7 +1234,10 @@
     "acessoIlimitadoAExercicios": "Unlimited access to interactive exercises and videos hosted on the platform.",
     "acompanhamentoDeMetricasKpis": "Tracking of progress metrics (KPIs).",
     "redirecionamentoExclusivoETeleconsulta": "Exclusive referrals and teleconsultations with partner clinics.",
-    "videosExplicativosComMedicos": "Explainer videos with partner ophthalmologists."
+    "videosExplicativosComMedicos": "Explainer videos with partner ophthalmologists.",
+    "precos": "Premium plan pricing",
+    "porMes": "per month",
+    "porAnoPoupe2Meses": "per year · save 2 months"
   },
   "ProgramModal": {
     "programaMeuKambaEstrabico": "Meu Kamba Estrábico Program",
@@ -1255,10 +1261,6 @@
     "implementacao": "Implementation",
     "monitoramento": "Monitoring",
     "avaliacaoEExpansao": "Evaluation and Expansion"
-  },
-  "ProgramaIaExercise": {
-    "programaAdaptativoComIa": "AI-Powered Adaptive Program",
-    "umAlgoritmoAjustaA": "An algorithm adjusts the difficulty of each session in real time, based on your progress."
   },
   "PublicacaoDetalhe": {
     "publicacaoNaoEncontrada": "Post not found",
@@ -1318,7 +1320,7 @@
     "planoMensal": "Monthly Plan",
     "n15000Kz": "15.000 Kz",
     "cobrancaTodosOsMeses": "Billed monthly",
-    "acessoIlimitadoA8": "Unlimited access to 8 advanced exercises",
+    "acessoIlimitadoA8": "Unlimited access to all 8 exercises",
     "acompanhamentoDeMetricasDe": "Progress metrics tracking",
     "suportePrioritario": "Priority support",
     "planoAnual": "Annual Plan",
@@ -1384,10 +1386,6 @@
   "SacadasConvergenciaExercise": {
     "convergenciaComSaltosSacadas": "Convergence Jumps (Saccades)",
     "alternaRapidamenteOFoco": "Quickly shift focus between near and far targets, training dynamic convergence."
-  },
-  "SacadasDistratoresExercise": {
-    "sacadasComDistratores": "Saccades With Distractors",
-    "encontreOAlvoCerto": "Find the right target among moving distractors, sharpening control of saccadic eye movements."
   },
   "Scanner": {
     "scannerDeEstrabismoIa": "Strabismus Scanner · AI",
@@ -1861,5 +1859,9 @@
   },
   "legal": {
     "notaTraducao": "This English translation is provided for convenience. The Portuguese version prevails."
+  },
+  "AcessoExercicios": {
+    "testeIniciado": "Free trial started. Happy training!",
+    "naoFoiPossivelIniciar": "Couldn't start the free trial."
   }
 }

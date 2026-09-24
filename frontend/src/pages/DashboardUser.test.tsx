@@ -20,9 +20,9 @@ vi.mock("@/contexts/AuthContext", () => ({
   useAuth: () => ({ user: mockUser }),
 }));
 
-let mockProfile: { premium_ativo: boolean; papel: string } | null = null;
-vi.mock("@/contexts/ProfileContext", () => ({
-  useProfile: () => ({ profile: mockProfile }),
+let mockDesbloqueados: string[] = [];
+vi.mock("@/contexts/AcessoExerciciosContext", () => ({
+  useAcessoExercicios: () => ({ acesso: { exercicios_desbloqueados: mockDesbloqueados } }),
 }));
 
 import DashboardUser from "./DashboardUser";
@@ -31,7 +31,7 @@ describe("DashboardUser — Análises realizadas", () => {
   beforeEach(() => {
     listarMinhas.mockReset();
     mockUser = { id: "u-1", name: "Ana" };
-    mockProfile = null;
+    mockDesbloqueados = [];
   });
 
   it("mostra a contagem real de rastreios devolvida pela API própria", async () => {
@@ -55,8 +55,8 @@ describe("DashboardUser — Análises realizadas", () => {
       </MemoryRouter>,
     );
 
-    expect(await screen.findByText("Análises realizadas")).toBeInTheDocument();
-    expect(screen.getByText("0")).toBeInTheDocument();
+    const rotulo = await screen.findByText("Análises realizadas");
+    expect(rotulo.previousSibling).toHaveTextContent("0");
   });
 
   it("sem utilizador autenticado, nunca chama a API", () => {
@@ -76,10 +76,21 @@ describe("DashboardUser — Exercícios disponíveis", () => {
     listarMinhas.mockReset();
     listarMinhas.mockResolvedValue([]);
     mockUser = { id: "u-1", name: "Ana" };
-    mockProfile = null;
+    mockDesbloqueados = [];
   });
 
-  it("sem Premium, conta só os 4 exercícios gratuitos", () => {
+  it("sem teste nem Premium, mostra 0 -- os 8 exercícios são pagos", () => {
+    render(
+      <MemoryRouter>
+        <DashboardUser />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Exercícios disponíveis").previousSibling).toHaveTextContent("0");
+  });
+
+  it("com o teste de 7 dias activo, conta os 4 exercícios do teste", () => {
+    mockDesbloqueados = ["figure8", "convergence", "cerebro", "relax"];
     render(
       <MemoryRouter>
         <DashboardUser />
@@ -89,26 +100,24 @@ describe("DashboardUser — Exercícios disponíveis", () => {
     expect(screen.getByText("4")).toBeInTheDocument();
   });
 
-  it("com Premium ativo, soma os 8 exercícios premium aos 4 gratuitos", () => {
-    mockProfile = { premium_ativo: true, papel: "comum" };
+  it("com Premium (ou admin), conta os 8", () => {
+    mockDesbloqueados = [
+      "figure8",
+      "convergence",
+      "cerebro",
+      "relax",
+      "ambliopia",
+      "sacadas-convergencia",
+      "flexibilidade-acomodativa",
+      "estereopsia",
+    ];
     render(
       <MemoryRouter>
         <DashboardUser />
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("12")).toBeInTheDocument();
-  });
-
-  it("um admin também vê os exercícios premium, mesmo sem premium_ativo", () => {
-    mockProfile = { premium_ativo: false, papel: "admin" };
-    render(
-      <MemoryRouter>
-        <DashboardUser />
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByText("12")).toBeInTheDocument();
+    expect(screen.getByText("8")).toBeInTheDocument();
   });
 });
 

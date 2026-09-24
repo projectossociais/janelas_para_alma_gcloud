@@ -1,4 +1,4 @@
-import { Check, Sparkles } from "lucide-react";
+import { Check, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   Dialog,
@@ -37,8 +37,8 @@ const PremiumPaywallModal = ({ open, onOpenChange }: PremiumPaywallModalProps) =
 
       <DialogContent className="sm:max-w-lg">
         <DialogHeader className="text-center items-center">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-teal to-navy flex items-center justify-center mb-3 shadow-elevated">
-            <Sparkles className="w-7 h-7 text-primary-foreground" />
+          <div className="w-12 h-12 rounded-full bg-navy/10 text-navy flex items-center justify-center mb-3">
+            <Lock className="w-6 h-6" />
           </div>
           <DialogTitle className="text-2xl md:text-3xl font-bold text-center">
             {t("PremiumPaywallModal.desbloqueieOSeuPotencial")}
@@ -59,13 +59,27 @@ const PremiumPaywallModal = ({ open, onOpenChange }: PremiumPaywallModalProps) =
           ))}
         </ul>
 
+        {/* Preço visível antes de sair do modal -- os mesmos valores do passo
+            "Escolha do Plano" em RegistoPremium.tsx (mesmas chaves). */}
+        <div className="grid grid-cols-2 gap-3" aria-label={t("PremiumPaywallModal.precos")}>
+          <div className="rounded-lg border border-border p-3 text-center">
+            <p className="text-xs font-medium text-muted-foreground">{t("RegistoPremium.planoMensal")}</p>
+            <p className="mt-1 text-lg font-bold text-navy">{t("RegistoPremium.n15000Kz")}</p>
+            <p className="text-xs text-muted-foreground">{t("PremiumPaywallModal.porMes")}</p>
+          </div>
+          <div className="rounded-lg border border-border p-3 text-center">
+            <p className="text-xs font-medium text-muted-foreground">{t("RegistoPremium.planoAnual")}</p>
+            <p className="mt-1 text-lg font-bold text-navy">{t("RegistoPremium.n150000Kz")}</p>
+            <p className="text-xs text-muted-foreground">{t("PremiumPaywallModal.porAnoPoupe2Meses")}</p>
+          </div>
+        </div>
+
         <DialogFooter>
           <Button
             size="lg"
             onClick={goToRegistration}
-            className="w-full bg-gradient-to-r from-teal to-navy text-primary-foreground hover:opacity-90"
+            className="w-full bg-navy text-navy-foreground hover:bg-navy/90"
           >
-            <Sparkles className="w-4 h-4" />
             {t("PremiumPaywallModal.registarParaAcessoPremium")}
           </Button>
         </DialogFooter>
