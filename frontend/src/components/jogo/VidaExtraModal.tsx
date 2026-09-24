@@ -14,6 +14,9 @@ interface VidaExtraModalProps {
   onVidaUsada: (vida: VidaExtraJogo) => void;
   /** Recusou (ou fechou o modal): a partida termina normalmente. */
   onEncerrar: () => void;
+  /** "×", Esc ou clique fora: sair do jogo para o menu. Sem isto, fechar
+   *  equivale a "Encerrar partida" (mostra o resultado). */
+  onSair?: () => void;
 }
 
 /**
@@ -22,7 +25,7 @@ interface VidaExtraModalProps {
  * sem a opção falhada. Custo, limite por partida e débito são decididos e
  * gravados pela API (`JogoService.usar_vida_extra`); aqui só se mostra.
  */
-const VidaExtraModal = ({ oferta, tempoEsgotado, onVidaUsada, onEncerrar }: VidaExtraModalProps) => {
+const VidaExtraModal = ({ oferta, tempoEsgotado, onVidaUsada, onEncerrar, onSair }: VidaExtraModalProps) => {
   const { t } = useTranslation();
   const { perfil, definirPerfil, recarregar } = useCarteiraJogo();
   const [aUsar, setAUsar] = useState(false);
@@ -53,7 +56,7 @@ const VidaExtraModal = ({ oferta, tempoEsgotado, onVidaUsada, onEncerrar }: Vida
   };
 
   return (
-    <Dialog open={oferta !== null} onOpenChange={(aberto) => !aberto && !aUsar && onEncerrar()}>
+    <Dialog open={oferta !== null} onOpenChange={(aberto) => !aberto && !aUsar && (onSair ?? onEncerrar)()}>
       <DialogContent className="sm:max-w-md text-center">
         <DialogHeader className="sm:text-center">
           <DialogTitle className="text-2xl text-center">{t("VidaExtra.titulo")}</DialogTitle>

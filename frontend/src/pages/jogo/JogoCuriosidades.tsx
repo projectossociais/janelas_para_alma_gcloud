@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Check,
   ChevronDown,
   Coins,
   Flame,
   Gem,
+  Home,
   Loader2,
   RefreshCw,
   Share2,
@@ -95,6 +96,7 @@ const gerarOpiniaoPublico = (correta: RespostaOpcaoJogo): Record<RespostaOpcaoJo
 
 const JogoCuriosidades = () => {
   const { t: tr } = useTranslation();
+  const navigate = useNavigate();
   const { profile, loading: aCarregarPerfil } = useProfile();
   const { definirPerfil } = useCarteiraJogo();
   // As perguntas da API (base de dados) só existem em português: no site
@@ -367,6 +369,25 @@ const JogoCuriosidades = () => {
   const aoRecusarVidaExtra = () => {
     setOfertaVidaExtra(null);
     setMostrarModalErrado(true);
+  };
+
+  // Sair para o menu do jogo -- o "×" (ou Esc / clique fora) do modal de
+  // resposta errada e do de vida extra, e o botão "Voltar ao menu". Nunca
+  // recomeça a partida: só "Tentar novamente" faz isso. Se a partida ainda
+  // não foi terminada no servidor (ex.: saiu logo na oferta de vida extra),
+  // termina-a aqui -- paga os patamares já superados e não fica uma partida
+  // presa a aguardar decisão. Não bloqueia a saída: uma falha fica na consola.
+  const sairParaMenu = () => {
+    if (usaServidor && !recompensaEnviada) {
+      setRecompensaEnviada(true);
+      jogoApi
+        .terminarPartida()
+        .then((terminada) => definirPerfil(terminada.perfil))
+        .catch((err: unknown) => console.error("Falha ao terminar a partida ao sair:", err));
+    }
+    setOfertaVidaExtra(null);
+    setMostrarModalErrado(false);
+    navigate(localizar("/jogo-curiosidades"));
   };
 
   // Compara localmente contra a reserva de contingência -- só chamado
@@ -818,7 +839,8 @@ const JogoCuriosidades = () => {
       <Dialog
         open={mostrarModalErrado}
         onOpenChange={(open) => {
-          if (!open) reiniciarJogo();
+          // "×", Esc ou clique fora: sair para o menu, nunca recomeçar.
+          if (!open) sairParaMenu();
         }}
       >
         <DialogContent className="sm:max-w-lg">
@@ -856,10 +878,14 @@ const JogoCuriosidades = () => {
             </div>
           )}
 
-          <DialogFooter>
+          <DialogFooter className="flex-col gap-2 sm:flex-col sm:space-x-0">
             <Button onClick={reiniciarJogo} className="w-full bg-teal text-teal-foreground hover:bg-teal/90">
               <RefreshCw className="w-4 h-4" />
               {tr("JogoCuriosidades.tentarNovamente")}
+            </Button>
+            <Button variant="outline" onClick={sairParaMenu} className="w-full">
+              <Home className="w-4 h-4" />
+              {tr("JogoCuriosidades.voltarAoMenu")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -872,6 +898,7 @@ const JogoCuriosidades = () => {
         tempoEsgotado={!!resultado?.tempoEsgotado}
         onVidaUsada={aoUsarVidaExtra}
         onEncerrar={aoRecusarVidaExtra}
+        onSair={sairParaMenu}
       />
 
       {pergunta && !emModoOffline && (
