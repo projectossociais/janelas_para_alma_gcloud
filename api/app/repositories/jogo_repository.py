@@ -13,7 +13,8 @@ from typing import Protocol
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.repositories.orm_models import PerguntaJogo, RespostaOpcao
+from app.repositories.orm_models import CATEGORIA_PERGUNTA_POR_OMISSAO, PerguntaJogo, RespostaOpcao
+from app.repositories.reserva_perguntas_jogo import semear_perguntas
 
 
 def nivel_dificuldade_do_patamar(patamar: int) -> int:
@@ -40,10 +41,13 @@ class PerguntaJogoRegisto:
     resposta_correta: str
     nivel_dificuldade: int
     explicacao: str | None
+    categoria: str = CATEGORIA_PERGUNTA_POR_OMISSAO
 
 
 class PerguntaJogoRepository(Protocol):
-    def obter_aleatoria(self, nivel_dificuldade: int | None = None) -> PerguntaJogoRegisto | None: ...
+    def obter_aleatoria(
+        self, nivel_dificuldade: int | None = None, excluir_id: str | None = None
+    ) -> PerguntaJogoRegisto | None: ...
     def obter_por_id(self, pergunta_id: str) -> PerguntaJogoRegisto | None: ...
     def criar(
         self,
@@ -55,7 +59,9 @@ class PerguntaJogoRepository(Protocol):
         resposta_correta: str,
         nivel_dificuldade: int,
         explicacao: str | None,
+        categoria: str = CATEGORIA_PERGUNTA_POR_OMISSAO,
     ) -> PerguntaJogoRegisto: ...
+    def semear_reserva(self) -> int: ...
 
 
 def _para_registo(row: PerguntaJogo) -> PerguntaJogoRegisto:
@@ -69,6 +75,7 @@ def _para_registo(row: PerguntaJogo) -> PerguntaJogoRegisto:
         resposta_correta=row.resposta_correta.value,
         nivel_dificuldade=row.nivel_dificuldade,
         explicacao=row.explicacao,
+        categoria=row.categoria,
     )
 
 
@@ -76,10 +83,15 @@ class SQLAlchemyPerguntaJogoRepository:
     def __init__(self, sessao: Session) -> None:
         self._sessao = sessao
 
-    def obter_aleatoria(self, nivel_dificuldade: int | None = None) -> PerguntaJogoRegisto | None:
+    def obter_aleatoria(
+        self, nivel_dificuldade: int | None = None, excluir_id: str | None = None
+    ) -> PerguntaJogoRegisto | None:
         query = select(PerguntaJogo)
         if nivel_dificuldade is not None:
             query = query.where(PerguntaJogo.nivel_dificuldade == nivel_dificuldade)
+        if excluir_id is not None:
+            # "Trocar pergunta" nunca devolve a mesma.
+            query = query.where(PerguntaJogo.id != uuid.UUID(excluir_id))
         # ORDER BY random() -- banco de perguntas de quiz, não um hot path;
         # não vale complicar com TABLESAMPLE por isto.
         row = self._sessao.scalars(query.order_by(func.random()).limit(1)).first()
@@ -88,6 +100,17 @@ class SQLAlchemyPerguntaJogoRepository:
     def obter_por_id(self, pergunta_id: str) -> PerguntaJogoRegisto | None:
         row = self._sessao.get(PerguntaJogo, uuid.UUID(pergunta_id))
         return _para_registo(row) if row is not None else None
+
+    def semear_reserva(self) -> int:
+        """Semeia a reserva de perguntas (idempotente, ver
+        `reserva_perguntas_jogo.py`) e devolve quantas inseriu."""
+        try:
+            resultado = semear_perguntas(self._sessao.connection())
+            self._sessao.commit()
+        except Exception:
+            self._sessao.rollback()
+            raise
+        return resultado.inseridas
 
     def criar(
         self,
@@ -99,6 +122,7 @@ class SQLAlchemyPerguntaJogoRepository:
         resposta_correta: str,
         nivel_dificuldade: int,
         explicacao: str | None,
+        categoria: str = CATEGORIA_PERGUNTA_POR_OMISSAO,
     ) -> PerguntaJogoRegisto:
         row = PerguntaJogo(
             texto_pergunta=texto_pergunta,
@@ -109,6 +133,7 @@ class SQLAlchemyPerguntaJogoRepository:
             resposta_correta=RespostaOpcao(resposta_correta),
             nivel_dificuldade=nivel_dificuldade,
             explicacao=explicacao,
+            categoria=categoria,
         )
         self._sessao.add(row)
         self._sessao.commit()

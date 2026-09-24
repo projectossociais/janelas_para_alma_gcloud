@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
 import {
   Check,
   ChevronDown,
   Coins,
+  Flame,
   Gem,
   Loader2,
   RefreshCw,
   Share2,
   Shuffle,
+  Store,
   Trophy,
   Users,
   WifiOff,
@@ -29,12 +32,20 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useCarteiraJogo } from "@/contexts/CarteiraJogoContext";
+import CarteiraJogo from "@/components/jogo/CarteiraJogo";
+import MercadoModal from "@/components/jogo/MercadoModal";
+import VidaExtraModal from "@/components/jogo/VidaExtraModal";
+import RecompensaSequenciaModal, { type RecompensaSequenciaMostrada } from "@/components/jogo/RecompensaSequenciaModal";
 import {
   jogoApi,
   mensagemDeErroApi,
+  type AjudaMercado,
+  type OfertaVidaExtra,
   type PerguntaJogoPublica,
   type RespostaOpcaoJogo,
   type ValidarRespostaJogoResponse,
+  type VidaExtraJogo,
 } from "@/lib/apiClient";
 import { OPCOES, PATAMARES, TOTAL_PATAMARES, calcularRecompensaCliente, formatarKz, valorDoPatamar } from "./jogoConfig";
 import { obterPerguntaOfflineNaoVista, obterPerguntaOfflinePorId, obterPerguntasDoPatamar } from "./perguntasOffline";
@@ -49,9 +60,12 @@ const TEMPO_POR_PERGUNTA = 45;
 
 interface ResultadoResposta {
   correta: boolean;
-  resposta_correta: RespostaOpcaoJogo;
+  // `null` enquanto a partida (com sessão) está à espera da decisão sobre a
+  // vida extra -- a API só revela a resposta ao terminar a partida.
+  resposta_correta: RespostaOpcaoJogo | null;
   explicacao: string | null;
   tempoEsgotado: boolean;
+  vidaExtra?: OfertaVidaExtra | null;
 }
 
 interface RecompensaLocal {
@@ -59,7 +73,8 @@ interface RecompensaLocal {
   diamantes: number;
 }
 
-// Simula uma sondagem: a opção certa fica sempre entre 55% e 75%, o resto
+// Só para o modo offline (perguntas locais) -- com servidor, a sondagem vem
+// de `jogoApi.opiniaoPublico`. Simula uma sondagem: a opção certa fica sempre entre 55% e 75%, o resto
 // reparte-se pelas outras três de forma plausível (nunca 0%, soma sempre 100).
 const gerarOpiniaoPublico = (correta: RespostaOpcaoJogo): Record<RespostaOpcaoJogo, number> => {
   const percentagemCorreta = 55 + Math.floor(Math.random() * 21);
@@ -80,11 +95,17 @@ const gerarOpiniaoPublico = (correta: RespostaOpcaoJogo): Record<RespostaOpcaoJo
 
 const JogoCuriosidades = () => {
   const { t: tr } = useTranslation();
-  const { profile } = useProfile();
+  const { profile, loading: aCarregarPerfil } = useProfile();
+  const { definirPerfil } = useCarteiraJogo();
   // As perguntas da API (base de dados) só existem em português: no site
   // inglês o jogo usa sempre a reserva local, traduzida em
   // perguntasOffline.en-US.ts. Não é "modo offline" -- o aviso não aparece.
   const emIngles = useIdioma() === IDIOMA_EN;
+  // Perguntas, partida e prémios do servidor só com sessão (desde 2026-09-24:
+  // sem sessão, `/jogo/validar` servia de oráculo para a resposta certa).
+  // Convidados -- e o site inglês -- jogam com a reserva local, sem prémio.
+  const usaServidor = !!profile?.id && !emIngles;
+  const modoRecompensa = usaServidor ? "servidor" : profile ? "treino" : "convidado";
 
   const [mostrarSplash, setMostrarSplash] = useState(true);
 
@@ -92,6 +113,14 @@ const JogoCuriosidades = () => {
   const [pergunta, setPergunta] = useState<PerguntaJogoPublica | null>(null);
   const [aCarregarPergunta, setACarregarPergunta] = useState(true);
   const [emModoOffline, setEmModoOffline] = useState(false);
+  // Com sessão, alguma pergunta desta partida veio da reserva local (o
+  // servidor falhou)? Essas respostas o servidor nunca viu, por isso não
+  // entram no prémio -- que ele paga só pelos patamares que confirmou.
+  const [partidaComPerguntasOffline, setPartidaComPerguntasOffline] = useState(false);
+  // Com sessão, o servidor respondeu com erro ao pedir a pergunta (ex.: 404
+  // sem perguntas, 5xx) -- mostra-se o erro com "Tentar novamente" em vez de
+  // cair calado na reserva local, onde os acertos não contam para o prémio.
+  const [erroPerguntaServidor, setErroPerguntaServidor] = useState(false);
 
   const [opcaoSelecionada, setOpcaoSelecionada] = useState<RespostaOpcaoJogo | null>(null);
   const [aValidar, setAValidar] = useState(false);
@@ -104,12 +133,33 @@ const JogoCuriosidades = () => {
   const [ajudaPublicoUsada, setAjudaPublicoUsada] = useState(false);
   const [opiniaoPublico, setOpiniaoPublico] = useState<Record<RespostaOpcaoJogo, number> | null>(null);
   const [mostrarModalPublico, setMostrarModalPublico] = useState(false);
+  const [mostrarMercado, setMostrarMercado] = useState(false);
+  // Sugestão comprada no Mercado para a pergunta em curso (só se mostra;
+  // quem responde continua a ser o jogador).
+  const [sugestaoMercado, setSugestaoMercado] = useState<AjudaMercado | null>(null);
 
   const [tempoRestante, setTempoRestante] = useState(TEMPO_POR_PERGUNTA);
   const [jogoTerminado, setJogoTerminado] = useState(false);
 
   const [recompensaEnviada, setRecompensaEnviada] = useState(false);
   const [recompensaLocal, setRecompensaLocal] = useState<RecompensaLocal | null>(null);
+  // Oferta de vida extra em cima da mesa (modal aberto) -- vem da API ao errar.
+  const [ofertaVidaExtra, setOfertaVidaExtra] = useState<OfertaVidaExtra | null>(null);
+
+  // Partida no servidor (só com sessão). As respostas esperam por este pedido:
+  // se `iniciarPartida` chegasse depois da primeira resposta, terminaria a
+  // partida que essa resposta acabou de criar.
+  const inicioPartida = useRef<Promise<unknown>>(Promise.resolve());
+  const iniciarPartidaNoServidor = useCallback(() => {
+    inicioPartida.current = jogoApi.iniciarPartida().catch((err: unknown) => {
+      // Sem bloquear o jogo -- o servidor cria a partida na primeira resposta.
+      console.error("Falha ao iniciar a partida no servidor:", err);
+    });
+  }, []);
+
+  // Acertos seguidos nesta partida (vem da API) e o marco a celebrar.
+  const [sequenciaAcertos, setSequenciaAcertos] = useState(0);
+  const [recompensaSequencia, setRecompensaSequencia] = useState<RecompensaSequenciaMostrada | null>(null);
 
   // Ids das perguntas offline já mostradas nesta sessão -- evita repetição
   // enquanto a reserva do patamar não se esgota. Guardado também numa ref
@@ -166,8 +216,11 @@ const JogoCuriosidades = () => {
     setResultado(null);
     setMostrarModalErrado(false);
     setOpcoesEliminadas([]);
+    setSugestaoMercado(null);
+    setMostrarMercado(false);
     setTempoRestante(TEMPO_POR_PERGUNTA);
-    if (emIngles) {
+    setErroPerguntaServidor(false);
+    if (!usaServidor) {
       setPergunta(escolherPerguntaOfflineParaPatamar(novoPatamar));
       setEmModoOffline(true);
       setPatamar(novoPatamar);
@@ -175,24 +228,43 @@ const JogoCuriosidades = () => {
       return;
     }
     try {
-      const nova = await jogoApi.obterPerguntaAleatoria(novoPatamar);
+      await inicioPartida.current;
+      // O servidor decide o patamar (o da partida) -- o do cliente é só o
+      // que se esperava; se divergirem, manda o servidor.
+      const nova = await jogoApi.obterPerguntaDaPartida();
       setPergunta(nova);
+      setPatamar(nova.patamar);
       setEmModoOffline(false);
     } catch (err) {
+      // Duck-typing no `status` (CLAUDE.md secção 6): só uma falha de rede
+      // (sem resposta, status 0/ausente) justifica o modo offline.
+      const status = (err as { status?: unknown } | null)?.status;
+      if (typeof status === "number" && status > 0) {
+        console.error("A API do jogo respondeu com erro ao pedir a pergunta:", err);
+        setPatamar(novoPatamar);
+        setErroPerguntaServidor(true);
+        return;
+      }
       console.error("Falha ao contactar a API do jogo, a usar o modo offline:", err);
       setPergunta(escolherPerguntaOfflineParaPatamar(novoPatamar));
-      setEmModoOffline(true);
-    } finally {
       setPatamar(novoPatamar);
+      setEmModoOffline(true);
+      setPartidaComPerguntasOffline(true);
+    } finally {
       setACarregarPergunta(false);
     }
-  }, [escolherPerguntaOfflineParaPatamar, emIngles]);
+  }, [escolherPerguntaOfflineParaPatamar, usaServidor]);
 
-  // Arranque do jogo -- corre em paralelo com o ecrã de apresentação, para a
-  // pergunta já estar pronta quando o "splash" da escada terminar.
+  // Arranque do jogo -- espera só por saber se há sessão (define o modo) e
+  // corre em paralelo com o ecrã de apresentação, para a pergunta já estar
+  // pronta quando o "splash" da escada terminar. Uma única vez.
+  const arrancou = useRef(false);
   useEffect(() => {
+    if (aCarregarPerfil || arrancou.current) return;
+    arrancou.current = true;
+    if (usaServidor) iniciarPartidaNoServidor();
     void carregarPergunta(1);
-  }, [carregarPergunta]);
+  }, [aCarregarPerfil, usaServidor, carregarPergunta, iniciarPartidaNoServidor]);
 
   // Ecrã de apresentação com a escada completa -- unico este 2,5s ou até o
   // jogador clicar em "Começar".
@@ -205,7 +277,8 @@ const JogoCuriosidades = () => {
   // Temporizador -- pára assim que a pergunta é respondida, o jogo termina
   // ou o ecrã de apresentação ainda está visível.
   useEffect(() => {
-    if (!pergunta || resultado || jogoTerminado || mostrarSplash) return;
+    // Também em pausa enquanto se celebra um marco de sequência.
+    if (!pergunta || resultado || jogoTerminado || mostrarSplash || recompensaSequencia) return;
     if (tempoRestante <= 0) {
       void aoTempoEsgotar();
       return;
@@ -213,12 +286,14 @@ const JogoCuriosidades = () => {
     const id = setTimeout(() => setTempoRestante((t) => t - 1), 1000);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pergunta, resultado, jogoTerminado, mostrarSplash, tempoRestante]);
+  }, [pergunta, resultado, jogoTerminado, mostrarSplash, tempoRestante, recompensaSequencia]);
 
   // Avança automaticamente ao acertar; ao errar ou esgotar o tempo, abre já
   // o modal com a explicação -- não há motivo para atrasar essa revelação.
   useEffect(() => {
     if (!resultado) return;
+    // O tempo pode esgotar com o Mercado aberto -- fecha-o antes do resultado.
+    setMostrarMercado(false);
     if (resultado.correta) {
       const id = setTimeout(() => {
         if (patamar >= TOTAL_PATAMARES) {
@@ -229,33 +304,66 @@ const JogoCuriosidades = () => {
       }, 1200);
       return () => clearTimeout(id);
     }
-    setMostrarModalErrado(true);
+    // Já revelado (terminou) -- nada a decidir.
+    if (resultado.resposta_correta !== null || !resultado.vidaExtra || resultado.vidaExtra.restantes <= 0) {
+      setMostrarModalErrado(true);
+      return;
+    }
+    setOfertaVidaExtra(resultado.vidaExtra);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resultado]);
 
-  // Sincroniza a recompensa da partida com a conta assim que o jogo termina
-  // (vitória ou derrota) -- uma única vez por partida. Sem sessão, guarda-se
-  // só localmente para mostrar no ecrã; mesmo padrão de
-  // `sessoesExercicioApi.registar` (CerebroExercise.tsx): nunca bloqueia o
-  // ecrã final, uma falha de rede só fica no `console.error`.
-  //
-  // `registarRecompensa` já não recebe o patamar -- o servidor paga com
-  // base no progresso que ele próprio rastreou a partir das respostas
-  // certas confirmadas em `validarResposta` (JogoService). O valor local
-  // (`calcularRecompensaCliente`) é só para o ecrã não ficar vazio antes da
-  // resposta do servidor chegar; se os dois divergirem (ex.: perguntas
-  // reutilizadas de nível errado), quem manda é sempre o servidor.
+  // Termina a partida assim que o jogo acaba (vitória, ou derrota depois de
+  // recusar a vida extra) -- uma única vez por partida. Sem sessão não há
+  // prémio nenhum (a reserva local é só treino). Com sessão, é o servidor que paga,
+  // pelos patamares que ele próprio confirmou, e que revela a resposta certa
+  // que ficou por mostrar; o valor local só enche o ecrã até ele responder.
+  // Nunca bloqueia o ecrã final: uma falha de rede fica no `console.error`.
   useEffect(() => {
     if (recompensaEnviada || (!jogoTerminado && !mostrarModalErrado)) return;
-    const patamarAlcancado = jogoTerminado ? TOTAL_PATAMARES : Math.max(patamar - 1, 0);
     setRecompensaEnviada(true);
-    setRecompensaLocal(calcularRecompensaCliente(patamarAlcancado));
-    if (!profile?.id) return;
-    jogoApi.registarRecompensa().catch((err: unknown) => {
-      console.error("Falha ao sincronizar a recompensa do jogo:", err);
-    });
+    // Sem servidor (convidado ou site inglês) não há partida nem prémio.
+    if (!usaServidor) return;
+    // A estimativa local só enche o ecrã quando o servidor viu a partida
+    // toda -- com perguntas offline, mostraria um valor que ele não paga.
+    if (!partidaComPerguntasOffline) {
+      const patamarAlcancado = jogoTerminado ? TOTAL_PATAMARES : Math.max(patamar - 1, 0);
+      setRecompensaLocal(calcularRecompensaCliente(patamarAlcancado));
+    }
+    jogoApi
+      .terminarPartida()
+      .then((terminada) => {
+        definirPerfil(terminada.perfil);
+        setRecompensaLocal({ moedas: terminada.moedas_ganhas, diamantes: terminada.diamantes_ganhos });
+        if (terminada.resposta_correta) {
+          const revelada = terminada.resposta_correta;
+          setResultado((atual) =>
+            atual && atual.resposta_correta === null
+              ? { ...atual, resposta_correta: revelada, explicacao: terminada.explicacao }
+              : atual
+          );
+        }
+      })
+      .catch((err: unknown) => {
+        console.error("Falha ao terminar a partida no servidor:", err);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jogoTerminado, mostrarModalErrado, recompensaEnviada]);
+
+  const aoUsarVidaExtra = (vida: VidaExtraJogo) => {
+    // Mesmo patamar, mesma pergunta, sem a opção falhada e com o tempo todo.
+    const falhada = vida.opcao_falhada;
+    if (falhada) setOpcoesEliminadas((atuais) => (atuais.includes(falhada) ? atuais : [...atuais, falhada]));
+    setOfertaVidaExtra(null);
+    setOpcaoSelecionada(null);
+    setResultado(null);
+    setTempoRestante(TEMPO_POR_PERGUNTA);
+  };
+
+  const aoRecusarVidaExtra = () => {
+    setOfertaVidaExtra(null);
+    setMostrarModalErrado(true);
+  };
 
   // Compara localmente contra a reserva de contingência -- só chamado
   // quando `emModoOffline` já garantiu que `pergunta.id` é um dos ids
@@ -277,12 +385,15 @@ const JogoCuriosidades = () => {
     }
     setAValidar(true);
     try {
-      const resp = await jogoApi.validarResposta(pergunta.id, "A");
+      await inicioPartida.current;
+      const resp = await jogoApi.tempoEsgotado(pergunta.id);
+      setSequenciaAcertos(0);
       setResultado({
         correta: false,
         resposta_correta: resp.resposta_correta,
         explicacao: resp.explicacao,
         tempoEsgotado: true,
+        vidaExtra: resp.vida_extra,
       });
     } catch (err) {
       toast.error(mensagemDeErroApi(err, tr("JogoCuriosidades.naoFoiPossivelTerminar")));
@@ -300,12 +411,25 @@ const JogoCuriosidades = () => {
     }
     setAValidar(true);
     try {
+      await inicioPartida.current;
       const resp = await jogoApi.validarResposta(pergunta.id, opcao);
+      setSequenciaAcertos(resp.sequencia_acertos ?? 0);
+      if (resp.recompensa_sequencia) {
+        // Os diamantes já estão na conta (creditados na validação) -- a barra
+        // actualiza já, e o marco celebra-se por cima da pergunta seguinte.
+        definirPerfil(resp.recompensa_sequencia.perfil);
+        setRecompensaSequencia({
+          sequencia: resp.recompensa_sequencia.sequencia,
+          diamantes: resp.recompensa_sequencia.diamantes,
+          limiteDiarioAtingido: resp.recompensa_sequencia.limite_diario_atingido,
+        });
+      }
       setResultado({
         correta: resp.correta,
         resposta_correta: resp.resposta_correta,
         explicacao: resp.explicacao,
         tempoEsgotado: false,
+        vidaExtra: resp.vida_extra,
       });
     } catch (err) {
       toast.error(mensagemDeErroApi(err, tr("JogoCuriosidades.naoFoiPossivelValidar")));
@@ -325,13 +449,9 @@ const JogoCuriosidades = () => {
       return;
     }
     try {
-      // Chamada silenciosa: só serve para saber quais são as 2 opções erradas
-      // a esconder -- a letra enviada aqui é arbitrária e nunca é mostrada
-      // como "a tua resposta".
-      const resp = await jogoApi.validarResposta(pergunta.id, "A");
-      const erradas = OPCOES.filter((o) => o !== resp.resposta_correta);
-      const paraEsconder = erradas.sort(() => Math.random() - 0.5).slice(0, 2);
-      setOpcoesEliminadas(paraEsconder);
+      await inicioPartida.current;
+      const resp = await jogoApi.cinquentaCinquenta(pergunta.id);
+      setOpcoesEliminadas(resp.opcoes_eliminadas);
     } catch (err) {
       toast.error(mensagemDeErroApi(err, tr("JogoCuriosidades.naoFoiPossivelUsar")));
       setAjudaCincoUsada(false);
@@ -348,10 +468,9 @@ const JogoCuriosidades = () => {
       return;
     }
     try {
-      // Mesma técnica do 50:50 -- só usa a resposta para gerar a sondagem
-      // simulada, nunca a revela directamente.
-      const resp = await jogoApi.validarResposta(pergunta.id, "A");
-      setOpiniaoPublico(gerarOpiniaoPublico(resp.resposta_correta));
+      await inicioPartida.current;
+      const resp = await jogoApi.opiniaoPublico(pergunta.id);
+      setOpiniaoPublico(resp.percentagens);
       setMostrarModalPublico(true);
     } catch (err) {
       toast.error(mensagemDeErroApi(err, tr("JogoCuriosidades.naoFoiPossivelConsultar")));
@@ -370,6 +489,7 @@ const JogoCuriosidades = () => {
       setOpcaoSelecionada(null);
       setResultado(null);
       setOpcoesEliminadas([]);
+      setSugestaoMercado(null);
       setTempoRestante(TEMPO_POR_PERGUNTA);
       return;
     }
@@ -382,7 +502,12 @@ const JogoCuriosidades = () => {
     setAjudaPublicoUsada(false);
     setJogoTerminado(false);
     setRecompensaEnviada(false);
+    setPartidaComPerguntasOffline(false);
     setRecompensaLocal(null);
+    setOfertaVidaExtra(null);
+    setSequenciaAcertos(0);
+    setRecompensaSequencia(null);
+    if (usaServidor) iniciarPartidaNoServidor();
     // Limpa já a pergunta e o patamar anteriores -- não basta confiar só no
     // que `carregarPergunta` faz lá dentro: isto garante que o ecrã nunca
     // mostra a pergunta da partida anterior, mesmo por um instante, e que o
@@ -450,6 +575,9 @@ const JogoCuriosidades = () => {
             </div>
           ) : (
             <>
+              <div className="max-w-5xl mx-auto flex justify-center sm:justify-end mb-4">
+                <CarteiraJogo />
+              </div>
               <header className="max-w-2xl mx-auto text-center space-y-3 mb-8">
                 <span className="text-sm font-medium tracking-widest uppercase text-teal">
                   {tr("JogoCuriosidades.inclusivamente")}
@@ -461,6 +589,21 @@ const JogoCuriosidades = () => {
                   {tr("JogoCuriosidades.subaOs15Patamares")}
                 </p>
               </header>
+
+              {!usaServidor && (
+                <div className="max-w-2xl mx-auto mb-6 rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-foreground text-center">
+                  {profile ? (
+                    tr("JogoCuriosidades.modoTreinoIngles")
+                  ) : (
+                    <>
+                      {tr("JogoCuriosidades.modoConvidado")}{" "}
+                      <Link to={localizar("/auth")} className="font-semibold text-teal hover:underline">
+                        {tr("JogoCuriosidades.entrarParaGanhar")}
+                      </Link>
+                    </>
+                  )}
+                </div>
+              )}
 
               {/* Patamar atual em mobile -- gaveta com a escada completa. */}
               <div className="md:hidden max-w-2xl mx-auto mb-6">
@@ -507,7 +650,7 @@ const JogoCuriosidades = () => {
                         {tr("JogoCuriosidades.completouOs15Patamares")}
                       </p>
                       <p className="text-3xl font-bold text-gold">{formatarKz(valorDoPatamar(TOTAL_PATAMARES))}</p>
-                      <RecompensaGanha recompensa={recompensaLocal} autenticado={!!profile?.id} />
+                      <RecompensaGanha recompensa={recompensaLocal} modo={modoRecompensa} comPerguntasOffline={partidaComPerguntasOffline} />
                       <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
                         <Button onClick={partilhar} variant="outline" className="border-teal text-teal hover:bg-teal/10">
                           <Share2 className="w-4 h-4" />
@@ -521,6 +664,16 @@ const JogoCuriosidades = () => {
                     </div>
                   )}
 
+                  {!aCarregarPergunta && !jogoTerminado && !pergunta && erroPerguntaServidor && (
+                    <div className="rounded-2xl bg-card border border-border/60 shadow-card p-8 text-center space-y-4">
+                      <p className="text-muted-foreground">{tr("JogoCuriosidades.naoFoiPossivelCarregarPergunta")}</p>
+                      <Button variant="outline" onClick={() => void carregarPergunta(patamar)}>
+                        <RefreshCw className="w-4 h-4" />
+                        {tr("JogoCuriosidades.tentarNovamente")}
+                      </Button>
+                    </div>
+                  )}
+
                   {!aCarregarPergunta && !jogoTerminado && pergunta && (
                     <div className="rounded-2xl bg-card border border-border/60 shadow-card p-6 sm:p-8 space-y-6">
                       <div className="flex items-center justify-between gap-4">
@@ -529,10 +682,19 @@ const JogoCuriosidades = () => {
                             <Trans i18nKey="JogoCuriosidades.patamarDe2" values={{ patamar, TOTAL_PATAMARES }} />
                           </p>
                           <p className="text-2xl font-bold text-gold">{formatarKz(valorDoPatamar(patamar))}</p>
-                          {emModoOffline && !emIngles && (
+                          {emModoOffline && usaServidor && (
                             <span className="inline-flex items-center gap-1 mt-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground bg-muted rounded-full px-2 py-0.5">
                               <WifiOff className="w-3 h-3" />
                               {tr("JogoCuriosidades.modoOffline")}
+                            </span>
+                          )}
+                          {usaServidor && sequenciaAcertos > 0 && (
+                            <span
+                              className="inline-flex items-center gap-1 mt-1 ml-1 text-[11px] font-bold uppercase tracking-wide text-orange-600 bg-orange-500/10 rounded-full px-2 py-0.5"
+                              aria-label={tr("RecompensaSequencia.sequenciaAtual", { sequencia: sequenciaAcertos })}
+                            >
+                              <Flame className="w-3 h-3" />
+                              {sequenciaAcertos}
                             </span>
                           )}
                         </div>
@@ -578,7 +740,13 @@ const JogoCuriosidades = () => {
                               >
                                 {mostrarComoCerta ? <Check className="w-4 h-4" /> : mostrarComoErrada ? <X className="w-4 h-4" /> : opcao}
                               </span>
-                              <span className="text-sm sm:text-base text-foreground">{textoDaOpcao(opcao)}</span>
+                              <span className="text-sm sm:text-base text-foreground flex-1">{textoDaOpcao(opcao)}</span>
+                              {sugestaoMercado?.resposta_sugerida === opcao && !resultado && (
+                                <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-gold/15 text-gold text-[11px] font-bold px-2 py-0.5">
+                                  <Store className="w-3 h-3" />
+                                  {tr(`Mercado.vendedores.${sugestaoMercado.vendedor_id}.nome`)}
+                                </span>
+                              )}
                             </button>
                           );
                         })}
@@ -611,7 +779,23 @@ const JogoCuriosidades = () => {
                           <Shuffle className="w-4 h-4" />
                           {tr("JogoCuriosidades.trocarPergunta")}
                         </Button>
+                        {usaServidor && (
+                          <Button
+                            variant="outline"
+                            onClick={() => setMostrarMercado(true)}
+                            disabled={!!resultado || aValidar || emModoOffline}
+                            className="border-gold/60 text-gold hover:bg-gold/10"
+                          >
+                            <Store className="w-4 h-4" />
+                            {tr("Mercado.titulo")}
+                          </Button>
+                        )}
                       </div>
+                      {usaServidor && emModoOffline && (
+                        <p className="text-center text-xs text-muted-foreground -mt-2">
+                          {tr("Mercado.indisponivelOffline")}
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -648,9 +832,14 @@ const JogoCuriosidades = () => {
                 <p className="text-xs font-medium uppercase tracking-wide text-green mb-1">
                   {tr("JogoCuriosidades.respostaCorrecta")}
                 </p>
-                <p className="text-sm font-semibold text-foreground">
-                  {resultado.resposta_correta}) {textoDaOpcao(resultado.resposta_correta)}
-                </p>
+                {resultado.resposta_correta ? (
+                  <p className="text-sm font-semibold text-foreground">
+                    {resultado.resposta_correta}) {textoDaOpcao(resultado.resposta_correta)}
+                  </p>
+                ) : (
+                  // Com sessão, a resposta chega com `terminarPartida`.
+                  <Loader2 className="w-4 h-4 animate-spin text-green" aria-label={tr("JogoCuriosidades.aRevelar")} />
+                )}
               </div>
               {resultado.explicacao && (
                 <p className="text-sm text-muted-foreground leading-relaxed">{resultado.explicacao}</p>
@@ -658,7 +847,7 @@ const JogoCuriosidades = () => {
               <p className="text-sm text-foreground">
                 <Trans i18nKey="JogoCuriosidades.chegouAoPatamarDe" values={{ patamar, TOTAL_PATAMARES }} />
               </p>
-              <RecompensaGanha recompensa={recompensaLocal} autenticado={!!profile?.id} />
+              <RecompensaGanha recompensa={recompensaLocal} modo={modoRecompensa} comPerguntasOffline={partidaComPerguntasOffline} />
             </div>
           )}
 
@@ -670,6 +859,25 @@ const JogoCuriosidades = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <RecompensaSequenciaModal recompensa={recompensaSequencia} onContinuar={() => setRecompensaSequencia(null)} />
+
+      <VidaExtraModal
+        oferta={ofertaVidaExtra}
+        tempoEsgotado={!!resultado?.tempoEsgotado}
+        onVidaUsada={aoUsarVidaExtra}
+        onEncerrar={aoRecusarVidaExtra}
+      />
+
+      {pergunta && !emModoOffline && (
+        <MercadoModal
+          open={mostrarMercado}
+          onOpenChange={setMostrarMercado}
+          perguntaId={pergunta.id}
+          opcoesExcluidas={opcoesEliminadas}
+          onAjudaComprada={setSugestaoMercado}
+        />
+      )}
 
       <Dialog open={mostrarModalPublico} onOpenChange={setMostrarModalPublico}>
         <DialogContent className="sm:max-w-md">
@@ -717,11 +925,30 @@ const JogoCuriosidades = () => {
 
 interface RecompensaGanhaProps {
   recompensa: RecompensaLocal | null;
-  autenticado: boolean;
+  // "servidor": prémio pago pela API. "convidado"/"treino": reserva local,
+  // sem prémio nenhum -- só se explica porquê.
+  modo: "servidor" | "convidado" | "treino";
+  comPerguntasOffline?: boolean;
 }
 
-const RecompensaGanha = ({ recompensa, autenticado }: RecompensaGanhaProps) => {
+const RecompensaGanha = ({ recompensa, modo, comPerguntasOffline = false }: RecompensaGanhaProps) => {
   const { t } = useTranslation();
+  if (modo !== "servidor") {
+    return (
+      <div className="rounded-xl bg-muted/60 border border-border/50 p-4 text-sm text-muted-foreground">
+        {modo === "convidado" ? (
+          <>
+            {t("JogoCuriosidades.semPremioConvidado")}{" "}
+            <Link to={localizar("/auth")} className="font-semibold text-teal hover:underline">
+              {t("JogoCuriosidades.entrarParaGanhar")}
+            </Link>
+          </>
+        ) : (
+          t("JogoCuriosidades.modoTreinoIngles")
+        )}
+      </div>
+    );
+  }
   if (!recompensa) return null;
   return (
     <div className="rounded-xl bg-muted/60 border border-border/50 p-4 space-y-2">
@@ -734,10 +961,8 @@ const RecompensaGanha = ({ recompensa, autenticado }: RecompensaGanhaProps) => {
           <Gem className="w-4 h-4" />+{recompensa.diamantes}
         </span>
       </div>
-      {!autenticado && (
-        <p className="text-xs text-muted-foreground">
-          {t("JogoCuriosidades.inicieSessaoParaGuardar")}
-        </p>
+      {comPerguntasOffline && (
+        <p className="text-xs text-muted-foreground text-center">{t("JogoCuriosidades.respostasOfflineNaoContam")}</p>
       )}
     </div>
   );

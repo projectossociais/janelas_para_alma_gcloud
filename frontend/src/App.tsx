@@ -9,6 +9,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProfileProvider } from "@/contexts/ProfileContext";
 import { FeedbackProvider } from "@/contexts/FeedbackContext";
 import { AcessoExerciciosProvider } from "@/contexts/AcessoExerciciosContext";
+import { CarteiraJogoProvider } from "@/contexts/CarteiraJogoContext";
 import Index from "./pages/Index";
 import Sobre from "./pages/Sobre";
 import Equipa from "./pages/Equipa";
@@ -40,6 +41,7 @@ import RoadmapTecnico from "./pages/RoadmapTecnico";
 import MenuJogo from "./pages/jogo/MenuJogo";
 import JogoCuriosidades from "./pages/jogo/JogoCuriosidades";
 import PerfilJogador from "./pages/jogo/PerfilJogador";
+import LojaDiamantes from "./pages/jogo/LojaDiamantes";
 
 import ConvergenciaExercise from "./pages/exercises/ConvergenciaExercise";
 import CerebroExercise from "./pages/exercises/CerebroExercise";
@@ -117,6 +119,7 @@ const PAGINAS: Record<ChaveRota, ReactElement> = {
   jogoMenu: <MenuJogo />,
   jogoJogar: <JogoCuriosidades />,
   jogoPerfil: <PerfilJogador />,
+  jogoLoja: <LojaDiamantes />,
 };
 
 const queryClient = new QueryClient();
@@ -130,6 +133,7 @@ const App = () => (
       <AuthProvider>
         <ProfileProvider>
           <AcessoExerciciosProvider>
+          <CarteiraJogoProvider>
           <FeedbackProvider>
             <BrowserRouter>
               <SiteBannerProvider>
@@ -172,6 +176,7 @@ const App = () => (
               </SiteBannerProvider>
             </BrowserRouter>
           </FeedbackProvider>
+          </CarteiraJogoProvider>
           </AcessoExerciciosProvider>
         </ProfileProvider>
       </AuthProvider>

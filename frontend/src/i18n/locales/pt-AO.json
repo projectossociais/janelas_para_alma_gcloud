@@ -89,7 +89,9 @@
     "jogoJogarTitulo": "Jogar: Inclusivamente",
     "jogoJogarDescricao": "Responda às perguntas sobre saúde ocular e suba a escada até ao 15.º patamar.",
     "jogoPerfilTitulo": "Perfil do Jogador: Inclusivamente",
-    "jogoPerfilDescricao": "As suas moedas, diamantes, partidas jogadas e melhor patamar no jogo Inclusivamente."
+    "jogoPerfilDescricao": "As suas moedas, diamantes, partidas jogadas e melhor patamar no jogo Inclusivamente.",
+    "jogoLojaTitulo": "Loja de Diamantes: Inclusivamente",
+    "jogoLojaDescricao": "Compre pacotes de diamantes para usar no jogo Inclusivamente."
   },
   "AboutSection": {
     "conhecaNos": "Conheça-nos",
@@ -828,6 +830,7 @@
     "jogarNovamente": "Jogar novamente",
     "patamarDe2": "Patamar {{patamar}} de {{TOTAL_PATAMARES}}",
     "modoOffline": "Modo offline",
+    "naoFoiPossivelCarregarPergunta": "Não foi possível carregar a pergunta. Tente novamente: só as respostas confirmadas pelo servidor contam para o prémio.",
     "opiniaoDoPublico": "Opinião do público",
     "trocarPergunta": "Trocar pergunta",
     "vejaARespostaCerta": "Veja a resposta certa e a explicação antes de tentar novamente.",
@@ -838,7 +841,7 @@
     "opcao": "Opção {{opcao}}",
     "continuarAJogar": "Continuar a jogar",
     "premioGanho": "Prémio ganho",
-    "inicieSessaoParaGuardar": "Inicie sessão para guardar estes prémios na sua conta.",
+    "respostasOfflineNaoContam": "Algumas perguntas desta partida foram jogadas sem ligação ao servidor (modo offline) e essas respostas não contam para o prémio.",
     "naoFoiPossivelTerminar": "Não foi possível terminar a pergunta.",
     "naoFoiPossivelValidar": "Não foi possível validar a resposta. Tente outra vez.",
     "naoFoiPossivelUsar": "Não foi possível usar a ajuda 50:50.",
@@ -849,7 +852,12 @@
     "voltarAoMenu": "Voltar ao menu",
     "tempoEsgotado": "Tempo esgotado!",
     "essaNaoEraA": "Essa não era a resposta certa",
-    "segundosRestantes": "{{tempoRestante}} segundos restantes"
+    "segundosRestantes": "{{tempoRestante}} segundos restantes",
+    "aRevelar": "A revelar a resposta certa",
+    "modoConvidado": "Está a jogar como convidado, com perguntas de treino e sem prémios.",
+    "modoTreinoIngles": "Modo de treino: as perguntas em inglês não dão moedas nem diamantes. Os prémios estão na versão portuguesa do jogo.",
+    "entrarParaGanhar": "Entre para ganhar moedas e diamantes.",
+    "semPremioConvidado": "Como convidado, esta partida não dá moedas nem diamantes."
   },
   "KambaHeroCarousel": {
     "programaMeuKambaEstrabico": "Programa Meu Kamba Estrábico",
@@ -987,7 +995,17 @@
     "saibaMais": "Saiba mais...",
     "campanhaDeConsciencializacaoNa": "Campanha de Consciencialização na Gamek",
     "noticiasSobreASaude": "Notícias sobre a Saúde Visual no Mundo",
-    "lancamentoDoNossoJogo": "Lançamento do nosso jogo: Inclusivamente"
+    "lancamentoDoNossoJogo": "Lançamento do nosso jogo: Inclusivamente",
+    "tagInstitucional": "Institucional / Marco",
+    "oficializacaoDaFirma": "Oficialização da Nossa Firma Comercial: Olhar Alinhado",
+    "oficializacaoDaFirmaResumo": "O projeto dá mais um passo decisivo rumo à estruturação formal e conformidade legal com a constituição da Olhar Alinhado - Comércio & Prestação de Serviços, Lda."
+  },
+  "FirmaOlharAlinhadoModal": {
+    "titulo": "Um Novo Capítulo: Formalização da \"Olhar Alinhado\"",
+    "subtitulo": "Compromisso com a transparência, conformidade legal e expansão da saúde visual digital em Angola.",
+    "paragrafo1": "É com grande entusiasmo que partilhamos com a nossa comunidade mais um marco essencial: a constituição formal da nossa sociedade sob a denominação comercial Olhar Alinhado - Comércio & Prestação de Serviços, Lda.",
+    "paragrafo2": "Este passo institucional consolida a base legal para operarmos com total conformidade na prestação de serviços digitais voltados à saúde ocular — incluindo o desenvolvimento de programas terapêuticos visuais, acompanhamento clínico e integração de teleconsultas médicas especializadas.",
+    "paragrafo3": "Agradecemos a todos que acompanham a nossa trajetória enquanto construímos uma solução sólida e acessível para a comunidade."
   },
   "OptioptikaBookingDialog": {
     "aEnviarOSeuPedido": "A enviar o seu pedido...",
@@ -1085,15 +1103,38 @@
   },
   "PerfilJogador": {
     "inclusivamente": "Inclusivamente",
-    "oMeuPerfil": "O Meu Perfil",
-    "moedas": "Moedas",
-    "diamantes": "Diamantes",
     "partidasJogadas": "Partidas jogadas",
-    "melhorPatamar": "Melhor patamar",
-    "oSeuMelhorResultado": "O seu melhor resultado equivale a",
     "jogarAgora": "Jogar agora",
     "naoFoiPossivelCarregar": "Não foi possível carregar o seu perfil de jogo.",
-    "voltarAoMenu": "Voltar ao menu"
+    "voltarAoMenu": "Voltar ao menu",
+    "nivelNumero": "Nível {{numero}}",
+    "niveis": {
+      "iniciante": "Iniciante",
+      "aprendiz": "Aprendiz",
+      "conhecedor": "Conhecedor",
+      "especialista": "Especialista",
+      "mestre_visao": "Mestre da Visão"
+    },
+    "progressoNivel": "Progresso até ao próximo nível",
+    "faltamPatamares": "Faltam {{faltam}} patamares para o próximo nível ({{total}} superados)",
+    "nivelMaximo": "Nível máximo! {{total}} patamares superados",
+    "moedasGanhas": "Moedas ganhas",
+    "melhorSequencia": "Melhor sequência",
+    "melhorResultado": "Melhor resultado ({{patamar}}/{{total}})",
+    "estatisticasPorCategoria": "Estatísticas por categoria",
+    "semRespostasAinda": "Ainda não respondeu a perguntas com conta iniciada. Jogue uma partida para ver os seus pontos fortes!",
+    "semRespostas": "Sem respostas",
+    "acertosCategoria": "{{nome}}: {{acertos}} certas em {{respostas}} ({{percentagem}}%)",
+    "aCarregar": "A carregar o perfil",
+    "tentarNovamente": "Tentar novamente",
+    "categorias": {
+      "anatomia_ocular": "Anatomia Ocular",
+      "doencas_estrabismo": "Doenças e Estrabismo",
+      "prevencao_cuidados": "Prevenção e Cuidados",
+      "estilo_vida_visao": "Estilo de Vida e Visão",
+      "ciencia_ocular": "Ciência Ocular",
+      "curiosidades_visuais": "Curiosidades Visuais"
+    }
   },
   "PillarsSection": {
     "osNossosPilares": "Os Nossos Pilares",
@@ -1869,5 +1910,118 @@
   "AcessoExercicios": {
     "testeIniciado": "Teste gratuito iniciado. Bom treino!",
     "naoFoiPossivelIniciar": "Não foi possível iniciar o teste gratuito."
+  },
+  "CarteiraJogo": {
+    "moedas": "Moedas",
+    "moedasSaldo": "Moedas: {{valor}}",
+    "diamantesSaldo": "Diamantes: {{valor}} -- abrir a loja",
+    "comoGanharMoedas": "As moedas ganham-se a jogar: cada patamar superado numa partida vale 50 moedas.",
+    "inicieSessaoParaGuardar": "Inicie sessão para guardar as suas moedas"
+  },
+  "LojaDiamantes": {
+    "inclusivamente": "Inclusivamente",
+    "titulo": "Loja de Diamantes",
+    "descricao": "Use diamantes para pedir ajuda no Mercado ou ganhar uma vida extra quando errar.",
+    "voltarAoMenu": "Voltar ao menu",
+    "naoFoiPossivelCarregar": "Não foi possível carregar a loja.",
+    "tentarNovamente": "Tentar novamente",
+    "avisoPagamentoSimulado": "Pagamento simulado: nesta versão nenhum valor é cobrado e os diamantes são creditados de imediato.",
+    "avisoEmBreve": "A compra de diamantes estará disponível em breve. Até lá, ganhe diamantes a jogar.",
+    "popular": "Mais popular",
+    "melhorValor": "Melhor valor",
+    "pacotes": {
+      "pequeno": "Pacote pequeno",
+      "medio": "Pacote médio",
+      "grande": "Pacote grande"
+    },
+    "bonus": "Inclui +{{quantidade}} de bónus",
+    "comprarPacote": "Comprar {{quantidade}} diamantes por {{preco}}",
+    "entrarParaComprar": "Entrar para comprar",
+    "confirmarCompra": "Confirmar compra",
+    "confirmarCompraDescricao": "Vai receber {{quantidade}} diamantes por {{preco}}.",
+    "cancelar": "Cancelar",
+    "pagarSimulado": "Pagar (simulado)",
+    "pagar": "Pagar",
+    "pagamentosEmBreve": "Pagamentos reais disponíveis em breve.",
+    "compraConcluida": "Compra concluída! +{{quantidade}} diamantes.",
+    "naoFoiPossivelComprar": "Não foi possível concluir a compra. Nenhum valor foi cobrado."
+  },
+  "Mercado": {
+    "titulo": "Mercado",
+    "descricao": "Compre a opinião de um vendedor ambulante. Quanto mais caro, mais certeza. Depois de vender, cada vendedor descansa 4 horas.",
+    "inicieSessao": "Inicie sessão para comprar ajuda no Mercado com os seus diamantes.",
+    "entrar": "Entrar",
+    "oSeuSaldo": "O seu saldo",
+    "certeza": "Certeza",
+    "nivel": {
+      "baixa": "Baixa",
+      "media": "Média",
+      "alta": "Alta",
+      "muitoAlta": "Muito alta"
+    },
+    "comprar": "Comprar resposta",
+    "comprarA": "Comprar resposta a {{nome}} por {{custo}} diamantes",
+    "saldoInsuficiente": "Diamantes insuficientes",
+    "disponivelDaquiA": "Volta a vender daqui a {{tempo}}",
+    "diamantesInsuficientes": "Não tem diamantes suficientes para este vendedor.",
+    "vendedorBloqueado": "Este vendedor ainda está a descansar. Tente outro.",
+    "naoFoiPossivelComprar": "Não foi possível comprar a ajuda. Nenhum diamante foi gasto.",
+    "naoFoiPossivelCarregar": "Não foi possível abrir o Mercado.",
+    "tentarNovamente": "Tentar novamente",
+    "avisoSugestao": "É só uma opinião: os vendedores mais baratos enganam-se mais vezes. A decisão final é sua.",
+    "voltarAPergunta": "Voltar à pergunta",
+    "precisaDeMaisDiamantes": "Sem diamantes? Ganhe mais a jogar ou visite a Loja no menu do jogo.",
+    "indisponivelOffline": "O Mercado precisa de ligação ao servidor.",
+    "vendedores": {
+      "tio-ze": {
+        "nome": "Tio Zé",
+        "descricao": "Zungueiro de fruta, sabe um bocadinho de tudo",
+        "bordao": "Epá, não garanto nada, mas o mambo parece-me simples...",
+        "resposta": "Epá... acho que é a {{opcao}}. Mas não me culpes, ouviste?"
+      },
+      "mana-fefa": {
+        "nome": "Mana Fefa",
+        "descricao": "Vende saldo na paragem e ouve todas as conversas",
+        "bordao": "Ya, já ouvi bué de gente a falar disso na paragem!",
+        "resposta": "Ya, mano, eu ia na {{opcao}}."
+      },
+      "dona-maria": {
+        "nome": "Dona Maria",
+        "descricao": "Quitandeira há 30 anos, bué de experiência",
+        "bordao": "Filho, isso aí a tua kota sabe bem.",
+        "resposta": "Filho, é a {{opcao}}. Confia na tua kota."
+      },
+      "kota-beto": {
+        "nome": "Kota Beto",
+        "descricao": "Professor reformado, o mais-velho do mercado",
+        "bordao": "Mais-velho não fala à toa.",
+        "resposta": "Sem dúvida nenhuma: é a {{opcao}}. Está fixe!"
+      }
+    }
+  },
+  "VidaExtra": {
+    "titulo": "Vida Extra",
+    "errou": "Oh não! Essa não era a resposta certa.",
+    "tempoEsgotou": "Oh não! O tempo esgotou.",
+    "explicacao": "Use uma Vida Extra para manter o seu patamar e tentar outra vez a mesma pergunta, sem a opção que falhou e com o tempo todo.",
+    "restantes": "Vidas extra restantes nesta partida: {{restantes}}",
+    "custo": "Custo",
+    "oSeuSaldo": "O seu saldo",
+    "usar": "Usar Vida Extra ({{custo}} diamantes)",
+    "encerrar": "Encerrar partida",
+    "saldoInsuficienteAviso": "Não tem diamantes suficientes. Ganhe mais a jogar ou visite a Loja no menu do jogo.",
+    "diamantesInsuficientesBotao": "Diamantes insuficientes",
+    "diamantesInsuficientes": "Não tem diamantes suficientes para a Vida Extra.",
+    "naoFoiPossivelUsar": "Não foi possível usar a Vida Extra. Nenhum diamante foi gasto."
+  },
+  "RecompensaSequencia": {
+    "titulo": "Level Up!",
+    "acertosSeguidos": "{{sequencia}} respostas certas seguidas!",
+    "aSuaRecompensa": "A sua recompensa",
+    "diamantesGanhos": "{{diamantes}} diamantes ganhos",
+    "proximoMarco": "A cada 3 respostas certas seguidas ganha mais diamantes. Se errar, a sequência recomeça.",
+    "continuar": "Continuar",
+    "sequenciaAtual": "Sequência de {{sequencia}} respostas certas",
+    "limiteDiarioAtingido": "Atingiu o limite de 60 diamantes por dia em sequências. Continue a jogar: amanhã volta a ganhar diamantes."
   }
 }

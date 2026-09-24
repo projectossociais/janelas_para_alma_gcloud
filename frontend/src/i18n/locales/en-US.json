@@ -89,7 +89,9 @@
     "jogoJogarTitulo": "Play: Inclusivamente",
     "jogoJogarDescricao": "Answer questions about eye health and climb the ladder to level 15.",
     "jogoPerfilTitulo": "Player Profile: Inclusivamente",
-    "jogoPerfilDescricao": "Your coins, diamonds, games played and best level in the Inclusivamente game."
+    "jogoPerfilDescricao": "Your coins, diamonds, games played and best level in the Inclusivamente game.",
+    "jogoLojaTitulo": "Diamond Shop: Inclusivamente",
+    "jogoLojaDescricao": "Buy diamond packs to use in the Inclusivamente game."
   },
   "AboutSection": {
     "conhecaNos": "Get to Know Us",
@@ -828,6 +830,7 @@
     "jogarNovamente": "Play again",
     "patamarDe2": "Level {{patamar}} of {{TOTAL_PATAMARES}}",
     "modoOffline": "Offline mode",
+    "naoFoiPossivelCarregarPergunta": "We couldn't load the question. Please try again: only answers confirmed by the server count towards the prize.",
     "opiniaoDoPublico": "Ask the audience",
     "trocarPergunta": "Switch question",
     "vejaARespostaCerta": "See the right answer and the explanation before you try again.",
@@ -838,7 +841,7 @@
     "opcao": "Option {{opcao}}",
     "continuarAJogar": "Keep playing",
     "premioGanho": "Prize won",
-    "inicieSessaoParaGuardar": "Sign in to save these prizes to your account.",
+    "respostasOfflineNaoContam": "Some questions in this game were played without a connection to the server (offline mode), and those answers don't count towards the prize.",
     "naoFoiPossivelTerminar": "We couldn't finish the question.",
     "naoFoiPossivelValidar": "We couldn't check your answer. Please try again.",
     "naoFoiPossivelUsar": "We couldn't use the 50:50 lifeline.",
@@ -849,7 +852,12 @@
     "voltarAoMenu": "Back to menu",
     "tempoEsgotado": "Time's up!",
     "essaNaoEraA": "That wasn't the right answer",
-    "segundosRestantes": "{{tempoRestante}} seconds remaining"
+    "segundosRestantes": "{{tempoRestante}} seconds remaining",
+    "aRevelar": "Revealing the right answer",
+    "modoConvidado": "You're playing as a guest, with practice questions and no rewards.",
+    "modoTreinoIngles": "Practice mode: the English questions don't give coins or diamonds. Rewards are available in the Portuguese version of the game.",
+    "entrarParaGanhar": "Sign in to earn coins and diamonds.",
+    "semPremioConvidado": "As a guest, this game doesn't give coins or diamonds."
   },
   "KambaHeroCarousel": {
     "programaMeuKambaEstrabico": "Meu Kamba Estrábico Program",
@@ -987,7 +995,17 @@
     "saibaMais": "Learn more...",
     "campanhaDeConsciencializacaoNa": "Awareness Campaign in Gamek",
     "noticiasSobreASaude": "News on Vision Health Around the World",
-    "lancamentoDoNossoJogo": "Launching our game: Inclusivamente"
+    "lancamentoDoNossoJogo": "Launching our game: Inclusivamente",
+    "tagInstitucional": "Institutional / Milestone",
+    "oficializacaoDaFirma": "Our Company Is Now Official: Olhar Alinhado",
+    "oficializacaoDaFirmaResumo": "The project takes another decisive step toward a formal structure and legal compliance with the incorporation of Olhar Alinhado - Comércio & Prestação de Serviços, Lda."
+  },
+  "FirmaOlharAlinhadoModal": {
+    "titulo": "A New Chapter: Incorporating \"Olhar Alinhado\"",
+    "subtitulo": "A commitment to transparency, legal compliance and the growth of digital vision care in Angola.",
+    "paragrafo1": "We are delighted to share another key milestone with our community: the formal incorporation of our company under the trade name Olhar Alinhado - Comércio & Prestação de Serviços, Lda.",
+    "paragrafo2": "This step gives us the legal foundation to operate in full compliance as we provide digital eye care services, including the development of vision therapy programs, clinical follow-up and the integration of specialist medical teleconsultations.",
+    "paragrafo3": "Thank you to everyone who has followed our journey as we build a solid, accessible solution for the community."
   },
   "OptioptikaBookingDialog": {
     "aEnviarOSeuPedido": "Sending your request...",
@@ -1085,15 +1103,38 @@
   },
   "PerfilJogador": {
     "inclusivamente": "Inclusivamente",
-    "oMeuPerfil": "My Profile",
-    "moedas": "Coins",
-    "diamantes": "Diamonds",
     "partidasJogadas": "Games played",
-    "melhorPatamar": "Best level",
-    "oSeuMelhorResultado": "Your best result is worth",
     "jogarAgora": "Play now",
     "naoFoiPossivelCarregar": "We couldn't load your game profile.",
-    "voltarAoMenu": "Back to menu"
+    "voltarAoMenu": "Back to menu",
+    "nivelNumero": "Rank {{numero}}",
+    "niveis": {
+      "iniciante": "Beginner",
+      "aprendiz": "Apprentice",
+      "conhecedor": "Connoisseur",
+      "especialista": "Expert",
+      "mestre_visao": "Vision Master"
+    },
+    "progressoNivel": "Progress to the next rank",
+    "faltamPatamares": "{{faltam}} more levels to reach the next rank ({{total}} cleared)",
+    "nivelMaximo": "Top rank! {{total}} levels cleared",
+    "moedasGanhas": "Coins earned",
+    "melhorSequencia": "Best streak",
+    "melhorResultado": "Best result ({{patamar}}/{{total}})",
+    "estatisticasPorCategoria": "Category stats",
+    "semRespostasAinda": "You haven't answered any questions while signed in yet. Play a game to see your strengths!",
+    "semRespostas": "No answers yet",
+    "acertosCategoria": "{{nome}}: {{acertos}} right out of {{respostas}} ({{percentagem}}%)",
+    "aCarregar": "Loading profile",
+    "tentarNovamente": "Try again",
+    "categorias": {
+      "anatomia_ocular": "Eye Anatomy",
+      "doencas_estrabismo": "Diseases and Strabismus",
+      "prevencao_cuidados": "Prevention and Care",
+      "estilo_vida_visao": "Lifestyle and Vision",
+      "ciencia_ocular": "Eye Science",
+      "curiosidades_visuais": "Visual Trivia"
+    }
   },
   "PillarsSection": {
     "osNossosPilares": "Our Pillars",
@@ -1869,5 +1910,118 @@
   "AcessoExercicios": {
     "testeIniciado": "Free trial started. Happy training!",
     "naoFoiPossivelIniciar": "Couldn't start the free trial."
+  },
+  "CarteiraJogo": {
+    "moedas": "Coins",
+    "moedasSaldo": "Coins: {{valor}}",
+    "diamantesSaldo": "Diamonds: {{valor}} -- open the shop",
+    "comoGanharMoedas": "You earn coins by playing: each level you clear in a game is worth 50 coins.",
+    "inicieSessaoParaGuardar": "Sign in to keep your coins"
+  },
+  "LojaDiamantes": {
+    "inclusivamente": "Inclusivamente",
+    "titulo": "Diamond Shop",
+    "descricao": "Use diamonds to get help at the Market or buy an extra life when you get a question wrong.",
+    "voltarAoMenu": "Back to menu",
+    "naoFoiPossivelCarregar": "We couldn't load the shop.",
+    "tentarNovamente": "Try again",
+    "avisoPagamentoSimulado": "Simulated payment: in this version you are not charged and the diamonds are added right away.",
+    "avisoEmBreve": "Buying diamonds will be available soon. Until then, earn diamonds by playing.",
+    "popular": "Most popular",
+    "melhorValor": "Best value",
+    "pacotes": {
+      "pequeno": "Small pack",
+      "medio": "Medium pack",
+      "grande": "Large pack"
+    },
+    "bonus": "Includes +{{quantidade}} bonus",
+    "comprarPacote": "Buy {{quantidade}} diamonds for {{preco}}",
+    "entrarParaComprar": "Sign in to buy",
+    "confirmarCompra": "Confirm purchase",
+    "confirmarCompraDescricao": "You'll get {{quantidade}} diamonds for {{preco}}.",
+    "cancelar": "Cancel",
+    "pagarSimulado": "Pay (simulated)",
+    "pagar": "Pay",
+    "pagamentosEmBreve": "Real payments available soon.",
+    "compraConcluida": "Purchase complete! +{{quantidade}} diamonds.",
+    "naoFoiPossivelComprar": "We couldn't complete the purchase. You were not charged."
+  },
+  "Mercado": {
+    "titulo": "Market",
+    "descricao": "Buy an opinion from a street vendor. The pricier the vendor, the more certain the answer. After selling, each vendor rests for 4 hours.",
+    "inicieSessao": "Sign in to buy help at the Market with your diamonds.",
+    "entrar": "Sign in",
+    "oSeuSaldo": "Your balance",
+    "certeza": "Certainty",
+    "nivel": {
+      "baixa": "Low",
+      "media": "Medium",
+      "alta": "High",
+      "muitoAlta": "Very high"
+    },
+    "comprar": "Buy answer",
+    "comprarA": "Buy an answer from {{nome}} for {{custo}} diamonds",
+    "saldoInsuficiente": "Not enough diamonds",
+    "disponivelDaquiA": "Selling again in {{tempo}}",
+    "diamantesInsuficientes": "You don't have enough diamonds for this vendor.",
+    "vendedorBloqueado": "This vendor is still resting. Try another one.",
+    "naoFoiPossivelComprar": "We couldn't buy the help. No diamonds were spent.",
+    "naoFoiPossivelCarregar": "We couldn't open the Market.",
+    "tentarNovamente": "Try again",
+    "avisoSugestao": "It's just an opinion: cheaper vendors get it wrong more often. The final call is yours.",
+    "voltarAPergunta": "Back to the question",
+    "precisaDeMaisDiamantes": "Out of diamonds? Earn more by playing or visit the Shop from the game menu.",
+    "indisponivelOffline": "The Market needs a connection to the server.",
+    "vendedores": {
+      "tio-ze": {
+        "nome": "Tio Zé",
+        "descricao": "Fruit street seller, knows a little bit of everything",
+        "bordao": "Hey, no promises, but this one looks easy...",
+        "resposta": "Hmm... I think it's {{opcao}}. Just don't blame me, okay?"
+      },
+      "mana-fefa": {
+        "nome": "Mana Fefa",
+        "descricao": "Sells phone credit at the bus stop and hears every conversation",
+        "bordao": "Yeah, I've heard loads of people talk about this at the bus stop!",
+        "resposta": "Yeah, bro, I'd go with {{opcao}}."
+      },
+      "dona-maria": {
+        "nome": "Dona Maria",
+        "descricao": "Market vendor for 30 years, loads of experience",
+        "bordao": "Child, your auntie knows this one well.",
+        "resposta": "Child, it's {{opcao}}. Trust your auntie."
+      },
+      "kota-beto": {
+        "nome": "Kota Beto",
+        "descricao": "Retired teacher, the elder of the market",
+        "bordao": "An elder never speaks lightly.",
+        "resposta": "No doubt at all: it's {{opcao}}. All good!"
+      }
+    }
+  },
+  "VidaExtra": {
+    "titulo": "Extra Life",
+    "errou": "Oh no! That wasn't the right answer.",
+    "tempoEsgotou": "Oh no! Time's up.",
+    "explicacao": "Use an Extra Life to keep your level and try the same question again, without the option you picked and with the full time.",
+    "restantes": "Extra lives left in this game: {{restantes}}",
+    "custo": "Cost",
+    "oSeuSaldo": "Your balance",
+    "usar": "Use Extra Life ({{custo}} diamonds)",
+    "encerrar": "End game",
+    "saldoInsuficienteAviso": "You don't have enough diamonds. Earn more by playing or visit the Shop from the game menu.",
+    "diamantesInsuficientesBotao": "Not enough diamonds",
+    "diamantesInsuficientes": "You don't have enough diamonds for an Extra Life.",
+    "naoFoiPossivelUsar": "We couldn't use the Extra Life. No diamonds were spent."
+  },
+  "RecompensaSequencia": {
+    "titulo": "Level Up!",
+    "acertosSeguidos": "{{sequencia}} right answers in a row!",
+    "aSuaRecompensa": "Your reward",
+    "diamantesGanhos": "{{diamantes}} diamonds earned",
+    "proximoMarco": "Every 3 right answers in a row earns you more diamonds. A wrong answer resets the streak.",
+    "continuar": "Continue",
+    "sequenciaAtual": "Streak of {{sequencia}} right answers",
+    "limiteDiarioAtingido": "You've reached the daily limit of 60 streak diamonds. Keep playing: you'll earn diamonds again tomorrow."
   }
 }
