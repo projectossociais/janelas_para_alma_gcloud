@@ -49,16 +49,8 @@
     "exercicioSacadasConvergenciaDescricao": "Exercício visual Premium: alterne rapidamente o foco entre alvos próximos e distantes, treinando a convergência dinâmica.",
     "exercicioFlexibilidadeAcomodativaTitulo": "Flexibilidade Acomodativa",
     "exercicioFlexibilidadeAcomodativaDescricao": "Exercício visual Premium: mude de foco entre perto e longe a um ritmo crescente para treinar a rapidez de acomodação do olho.",
-    "exercicioSacadasDistratoresTitulo": "Sacadas com Distratores",
-    "exercicioSacadasDistratoresDescricao": "Exercício visual Premium: encontre o alvo certo entre distractores em movimento, apurando o controlo dos movimentos sacádicos.",
     "exercicioEstereopsiaTitulo": "Estereopsia (Visão 3D)",
     "exercicioEstereopsiaDescricao": "Exercício visual Premium: padrões estereoscópicos avaliam e treinam a percepção de profundidade binocular.",
-    "exercicioFacilidadeVergenciaTitulo": "Facilidade de Vergência",
-    "exercicioFacilidadeVergenciaDescricao": "Exercício visual Premium: alterne entre convergência e divergência em ciclos cronometrados para ganhar resistência binocular.",
-    "exercicioConscienciaPerifericaTitulo": "Consciência Periférica",
-    "exercicioConscienciaPerifericaDescricao": "Exercício visual Premium: detecte estímulos na periferia do campo visual sem desviar o olhar do centro.",
-    "exercicioProgramaIaTitulo": "Programa Adaptativo com IA",
-    "exercicioProgramaIaDescricao": "Exercício visual Premium: um algoritmo ajusta a dificuldade de cada sessão em tempo real, de acordo com o seu progresso.",
     "scannerTitulo": "Rastreio de Estrabismo",
     "scannerDescricao": "Utilize a câmara para uma análise visual guiada, assistida por inteligência artificial, e receba os resultados em segundos, de forma confidencial e segura.",
     "scannerResultadosTitulo": "Resultados do Rastreio",
@@ -1268,7 +1260,8 @@
     "verTodasAsPublicacoes": "Ver todas as publicações",
     "galeriaDeFotos": "Galeria de Fotos",
     "naoFoiPossivelCarregar": "Não foi possível carregar esta publicação.",
-    "voltarAsPublicacoes": "Voltar às publicações"
+    "voltarAsPublicacoes": "Voltar às publicações",
+    "disponivelSoEmPortugues": "Esta publicação só está disponível em português."
   },
   "Publicacoes": {
     "accoesRecentes": "Acções Recentes",
@@ -1276,7 +1269,8 @@
     "actividadesCampanhasENoticias": "Actividades, campanhas e notícias do Janelas Para a Alma.",
     "aindaNaoHaPublicacoes": "Ainda não há publicações. Volte em breve para acompanhar as nossas actividades.",
     "naoFoiPossivelCarregar": "Não foi possível carregar as publicações.",
-    "voltar": "Voltar"
+    "voltar": "Voltar",
+    "emPortugues": "Em português"
   },
   "RegistoPremium": {
     "voltar": "Voltar",

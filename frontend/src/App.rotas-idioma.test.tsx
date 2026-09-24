@@ -131,7 +131,11 @@ describe("com VITE_ENABLE_EN=true", () => {
   it("cada página escreve o seu título e a sua descrição em inglês", async () => {
     const meta = document.createElement("meta");
     meta.setAttribute("name", "description");
-    document.head.appendChild(meta);
+    const ogUrl = document.createElement("meta");
+    ogUrl.setAttribute("property", "og:url");
+    const ogLocale = document.createElement("meta");
+    ogLocale.setAttribute("property", "og:locale");
+    document.head.append(meta, ogUrl, ogLocale);
     abrir("/en/donate");
     await screen.findByRole("heading", { name: "Make a Difference" });
     await waitFor(() => expect(document.title).toBe("Support the Cause | Janelas para a Alma"));
@@ -139,7 +143,11 @@ describe("com VITE_ENABLE_EN=true", () => {
       "content",
       "Make a difference: donate essential supplies for our patients or support Janelas para a Alma financially.",
     );
+    expect(ogUrl).toHaveAttribute("content", "https://www.janelasparaalma.com/en/donate");
+    expect(ogLocale).toHaveAttribute("content", "en_US");
     meta.remove();
+    ogUrl.remove();
+    ogLocale.remove();
   });
 
   it("o jogo não existe em inglês: /en/trivia-game dá 404 com noindex, e os links para o jogo desaparecem", async () => {

@@ -49,16 +49,8 @@
     "exercicioSacadasConvergenciaDescricao": "Premium vision exercise: quickly shift focus between near and far targets, training dynamic convergence.",
     "exercicioFlexibilidadeAcomodativaTitulo": "Accommodative Flexibility",
     "exercicioFlexibilidadeAcomodativaDescricao": "Premium vision exercise: shift focus between near and far at an increasing pace to train how quickly the eye accommodates.",
-    "exercicioSacadasDistratoresTitulo": "Saccades With Distractors",
-    "exercicioSacadasDistratoresDescricao": "Premium vision exercise: find the right target among moving distractors, sharpening control of saccadic eye movements.",
     "exercicioEstereopsiaTitulo": "Stereopsis (3D Vision)",
     "exercicioEstereopsiaDescricao": "Premium vision exercise: stereoscopic patterns assess and train binocular depth perception.",
-    "exercicioFacilidadeVergenciaTitulo": "Vergence Facility",
-    "exercicioFacilidadeVergenciaDescricao": "Premium vision exercise: alternate between convergence and divergence in timed cycles to build binocular endurance.",
-    "exercicioConscienciaPerifericaTitulo": "Peripheral Awareness",
-    "exercicioConscienciaPerifericaDescricao": "Premium vision exercise: detect stimuli at the edges of your visual field without shifting your gaze from the center.",
-    "exercicioProgramaIaTitulo": "AI-Powered Adaptive Program",
-    "exercicioProgramaIaDescricao": "Premium vision exercise: an algorithm adjusts the difficulty of each session in real time, based on your progress.",
     "scannerTitulo": "Strabismus Screening",
     "scannerDescricao": "Use your camera for a guided visual analysis assisted by artificial intelligence, and get your results in seconds, confidentially and securely.",
     "scannerResultadosTitulo": "Screening Results",
@@ -1268,7 +1260,8 @@
     "verTodasAsPublicacoes": "View all posts",
     "galeriaDeFotos": "Photo Gallery",
     "naoFoiPossivelCarregar": "We couldn't load this post.",
-    "voltarAsPublicacoes": "Back to posts"
+    "voltarAsPublicacoes": "Back to posts",
+    "disponivelSoEmPortugues": "This post is available in Portuguese only."
   },
   "Publicacoes": {
     "accoesRecentes": "Recent Activities",
@@ -1276,7 +1269,8 @@
     "actividadesCampanhasENoticias": "Activities, campaigns and news from Janelas para a Alma.",
     "aindaNaoHaPublicacoes": "No posts yet. Check back soon to follow our activities.",
     "naoFoiPossivelCarregar": "We couldn't load the posts.",
-    "voltar": "Back"
+    "voltar": "Back",
+    "emPortugues": "In Portuguese"
   },
   "RegistoPremium": {
     "voltar": "Back",

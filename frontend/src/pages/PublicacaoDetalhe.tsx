@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { CalendarDays, Loader2, MapPin } from "lucide-react";
+import { CalendarDays, Languages, Loader2, MapPin } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { localizar } from "@/i18n/rotas";
 import { formatarData } from "@/i18n/formatar";
+import { useIdioma } from "@/i18n/useIdioma";
+import { IDIOMA_EN, IDIOMA_PT } from "@/i18n/idiomas";
 
 const INTERVALO_CARROSSEL_MS = 10_000;
 
@@ -20,6 +22,11 @@ const PublicacaoDetalhe = () => {
   const [publicacao, setPublicacao] = useState<PublicacaoPublica | null>(null);
   const [naoEncontrada, setNaoEncontrada] = useState(false);
   const [aCarregar, setACarregar] = useState(true);
+  // O conteúdo das publicações vem da API e só existe em português. No site
+  // inglês avisa-se disso e marca-se com `lang`, para leitores de ecrã o
+  // pronunciarem correctamente. Em português não muda nada.
+  const conteudoNoutroIdioma = useIdioma() === IDIOMA_EN;
+  const langConteudo = conteudoNoutroIdioma ? IDIOMA_PT : undefined;
   // `stopOnInteraction: false` -- depois de a pessoa arrastar/clicar numa
   // seta, o carrossel volta a andar sozinho passado o mesmo intervalo, em
   // vez de ficar parado para sempre (comportamento por omissão do plugin).
@@ -83,14 +90,20 @@ const PublicacaoDetalhe = () => {
                     </span>
                   )}
                   {publicacao.local && (
-                    <span className="inline-flex items-center gap-1.5">
+                    <span lang={langConteudo} className="inline-flex items-center gap-1.5">
                       <MapPin className="w-4 h-4" />
                       {publicacao.local}
                     </span>
                   )}
                 </div>
-                <h1 className="text-3xl md:text-4xl font-bold">{publicacao.titulo}</h1>
-                <p className="text-muted-foreground text-lg">{publicacao.resumo}</p>
+                <h1 lang={langConteudo} className="text-3xl md:text-4xl font-bold">{publicacao.titulo}</h1>
+                <p lang={langConteudo} className="text-muted-foreground text-lg">{publicacao.resumo}</p>
+                {conteudoNoutroIdioma && (
+                  <p role="note" className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-sm text-muted-foreground">
+                    <Languages className="w-4 h-4" aria-hidden="true" />
+                    {t("PublicacaoDetalhe.disponivelSoEmPortugues")}
+                  </p>
+                )}
               </header>
 
               {publicacao.capa_url && (
@@ -106,7 +119,7 @@ const PublicacaoDetalhe = () => {
                 </div>
               )}
 
-              <div className="text-muted-foreground leading-relaxed whitespace-pre-wrap max-w-2xl mx-auto">
+              <div lang={langConteudo} className="text-muted-foreground leading-relaxed whitespace-pre-wrap max-w-2xl mx-auto">
                 {publicacao.corpo}
               </div>
 

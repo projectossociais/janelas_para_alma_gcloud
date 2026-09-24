@@ -2,13 +2,15 @@ import { Fragment, useEffect, type ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import i18n from "./index";
-import { idiomaDaRota, inglesAtivo } from "./idiomas";
+import { IDIOMA_EN, idiomaDaRota, inglesAtivo } from "./idiomas";
 import { metadadosSeo, tituloEDescricao } from "./rotas";
 
 // Metadados que já existem no index.html (para crawlers sem JavaScript):
 // actualizam-se esses, em vez de o Helmet acrescentar duplicados.
 const META_DESCRICAO = ['meta[name="description"]', 'meta[property="og:description"]', 'meta[name="twitter:description"]'];
 const META_TITULO = ['meta[property="og:title"]', 'meta[name="twitter:title"]'];
+// Open Graph só aceita locales com "_" e da lista do Facebook (sem pt_AO).
+const OG_LOCALE = { pt: "pt_PT", en: "en_US" };
 
 /**
  * Põe o i18next e o documento no idioma da rota actual.
@@ -33,6 +35,14 @@ const IdiomaDaRota = ({ children }: { children: ReactNode }) => {
     META_DESCRICAO.forEach((s) => document.querySelector(s)?.setAttribute("content", descricao));
     META_TITULO.forEach((s) => document.querySelector(s)?.setAttribute("content", titulo));
   }, [titulo, descricao]);
+
+  useEffect(() => {
+    const [actual, alternativo] = idioma === IDIOMA_EN ? [OG_LOCALE.en, OG_LOCALE.pt] : [OG_LOCALE.pt, OG_LOCALE.en];
+    document.querySelector('meta[property="og:locale"]')?.setAttribute("content", actual);
+    document.querySelector('meta[property="og:locale:alternate"]')?.setAttribute("content", alternativo);
+    // Sem canonical (404, admin) fica o og:url do index.html (página inicial).
+    if (canonical) document.querySelector('meta[property="og:url"]')?.setAttribute("content", canonical);
+  }, [idioma, canonical]);
 
   return (
     <>

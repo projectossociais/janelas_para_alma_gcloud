@@ -18,8 +18,8 @@ Ler também: `CLAUDE.md` (regras do projecto), `docs/glossario-pt-en.md` (termin
 | PRs de i18n | Todos com merge: #74 (infra), #75 (ortografia 1945), #76 (extracção PT), #77 (tradução en-US), #78 (base de lançamento). **Não há PR de i18n pendente.** |
 | `VITE_ENABLE_EN` | **Desligada** em produção (não definida). Com ela desligada, `/en/*` dá 404, o botão EN não aparece e não há `hreflang`. |
 | Deploy de pré-visualização com inglês | Vercel → Settings → Environment Variables → `VITE_ENABLE_EN=true` **só em Preview** (opcionalmente só numa branch) → Redeploy. Ou, em `frontend/`: `vercel deploy --build-env VITE_ENABLE_EN=true` (sem `--prod`). **Não ligar em produção sem decisão do dono do projecto.** |
-| Traduções | `pt-AO.json` e `en-US.json`: 88 secções, 1.687 chaves, **0 valores vazios**. |
-| Revisão humana | 306 chaves marcadas: 184 `health`, 82 `legal`, 40 `duvida` (ainda por rever). |
+| Traduções | `pt-AO.json` e `en-US.json`: 84 secções, 1.691 chaves, **0 valores vazios**. |
+| Revisão humana | 296 chaves marcadas: 176 `health`, 82 `legal`, 38 `duvida` (ainda por rever). |
 
 ---
 
@@ -52,17 +52,17 @@ Tudo em `frontend/src/i18n/`, salvo indicação.
 O que falta mesmo está abaixo, por ordem de prioridade sugerida.
 
 ### 3.1 Antes de ligar a flag em produção
-1. **Revisão humana das 306 chaves marcadas** (`docs/revisao-en-US.md`): 184 `health` (validar com um clínico), 82 `legal` (rascunho, não é tradução jurídica validada) e 40 `duvida`. Pontos críticos:
+1. **Revisão humana das 296 chaves marcadas** (`docs/revisao-en-US.md`): 176 `health` (validar com um clínico), 82 `legal` (rascunho, não é tradução jurídica validada) e 38 `duvida`. Pontos críticos:
    - afirmações a confirmar: "programa clínico validado por oftalmologistas", o testemunho do Kamba, "8 exercícios avançados", as afirmações da Optioptika;
    - atribuição do estudo de 2023 ao NCBI;
    - idades diferentes (6, 7–8 e 10 anos) no artigo sobre estrabismo;
    - "Diagnóstico assistido por IA" na barra de navegação contradiz os Termos.
 2. **Soft 404:** o `vercel.json` tem `{"source": "/(.*)", "destination": "/index.html"}`, por isso **qualquer URL devolve 200** (confirmado em produção). O `noindex` da página 404 atenua o problema, mas não o resolve. Solução: gerar os `rewrites` a partir do mapa de rotas (com padrões para `:slug`) em vez do *catch-all*.
-3. **Open Graph com domínios errados** no `index.html`: `og:url` = `https://janelasparaalma.org/`, e `og:image` / `twitter:image` apontam para `your-site-creator-25.lovable.app`. Não há `og:locale` para inglês.
-4. **Decisão do domínio canónico:** usa-se `https://www.janelasparaalma.com` porque o domínio sem `www` responde 308. Se o dono preferir o domínio sem `www` como canónico, invertem-se o redireccionamento no Vercel e a constante `SITE` (`rotas.ts` e `gerar-sitemap.mjs`).
+3. ~~Open Graph com domínios errados~~ **resolvido:** `og:url`, `og:image` e `twitter:image` usam `https://www.janelasparaalma.com` (guardado por `src/i18n/index-html.test.ts`); `og:url`, `og:locale` e `og:locale:alternate` são actualizados por página. Falta só uma `og-image.png` em inglês (a actual tem "Inclusão Visual em Angola" escrito na imagem).
+4. **Decisão do domínio canónico:** usa-se `https://www.janelasparaalma.com` porque o domínio sem `www` responde 308. Se o dono preferir o domínio sem `www` como canónico, invertem-se o redireccionamento no Vercel e a constante `SITE` (`rotas.ts` e `gerar-sitemap.mjs`), além das metatags `og:*` / `twitter:image` do `index.html` (o teste `index-html.test.ts` avisa se ficarem diferentes).
 
 ### 3.2 Adiado por decisão (fora do âmbito até nova ordem)
-- **Conteúdo do backend**, que aparece em português no site inglês: publicações (título, texto, local, legendas), barra de aviso e banner da página inicial, notificações, actividades de voluntariado e perguntas do jogo online.
+- **Conteúdo do backend**, que aparece em português no site inglês: publicações (título, texto, local, legendas; no site inglês já levam o aviso "In Portuguese" / "This post is available in Portuguese only." e `lang="pt-AO"`), barra de aviso e banner da página inicial, notificações, actividades de voluntariado e perguntas do jogo online.
 - **Perguntas offline do jogo** (`pages/jogo/perguntasOffline.ts`, cerca de 1.351 textos). Proposta: ficheiro de dados por idioma, não chaves no JSON. Só depois disto faz sentido tirar `apenasPt` ao jogo.
 - **Emails transaccionais** (confirmação, recuperação): enviados pelo backend, só em português.
 - **Cargos da equipa em inglês** (ex.: "Chief Financial Officer", "navigator" no Banco BAI): confirmar com cada pessoa.

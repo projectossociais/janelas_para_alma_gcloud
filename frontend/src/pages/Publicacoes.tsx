@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { CalendarDays, MapPin, Loader2, Newspaper } from "lucide-react";
+import { CalendarDays, MapPin, Loader2, Newspaper, Languages } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
@@ -10,11 +10,18 @@ import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { localizar } from "@/i18n/rotas";
 import { formatarData } from "@/i18n/formatar";
+import { useIdioma } from "@/i18n/useIdioma";
+import { IDIOMA_EN, IDIOMA_PT } from "@/i18n/idiomas";
 
 const Publicacoes = () => {
   const { t } = useTranslation();
   const [publicacoes, setPublicacoes] = useState<PublicacaoPublica[]>([]);
   const [aCarregar, setACarregar] = useState(true);
+  // O conteúdo das publicações vem da API e só existe em português. No site
+  // inglês avisa-se disso e marca-se com `lang`, para leitores de ecrã o
+  // pronunciarem correctamente. Em português não muda nada.
+  const conteudoNoutroIdioma = useIdioma() === IDIOMA_EN;
+  const langConteudo = conteudoNoutroIdioma ? IDIOMA_PT : undefined;
 
   useEffect(() => {
     (async () => {
@@ -75,14 +82,20 @@ const Publicacoes = () => {
                         </span>
                       )}
                       {p.local && (
-                        <span className="inline-flex items-center gap-1">
+                        <span lang={langConteudo} className="inline-flex items-center gap-1">
                           <MapPin className="w-3.5 h-3.5" />
                           {p.local}
                         </span>
                       )}
+                      {conteudoNoutroIdioma && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5">
+                          <Languages className="w-3.5 h-3.5" aria-hidden="true" />
+                          {t("Publicacoes.emPortugues")}
+                        </span>
+                      )}
                     </div>
-                    <h2 className="text-lg font-bold leading-snug">{p.titulo}</h2>
-                    <p className="text-sm text-muted-foreground line-clamp-3">{p.resumo}</p>
+                    <h2 lang={langConteudo} className="text-lg font-bold leading-snug">{p.titulo}</h2>
+                    <p lang={langConteudo} className="text-sm text-muted-foreground line-clamp-3">{p.resumo}</p>
                   </CardContent>
                 </Card>
               </Link>
