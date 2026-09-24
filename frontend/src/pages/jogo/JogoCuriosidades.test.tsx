@@ -56,7 +56,6 @@ vi.mock("@/components/jogo/VidaExtraModal", () => ({
     oferta: { custo: number; restantes: number } | null;
     onVidaUsada: (v: unknown) => void;
     onEncerrar: () => void;
-    onSair?: () => void;
   }) =>
     props.oferta ? (
       <div data-testid="modal-vida-extra">
@@ -76,9 +75,6 @@ vi.mock("@/components/jogo/VidaExtraModal", () => ({
         </button>
         <button type="button" onClick={props.onEncerrar}>
           simular encerrar
-        </button>
-        <button type="button" onClick={props.onSair}>
-          simular fechar
         </button>
       </div>
     ) : null,
@@ -559,22 +555,37 @@ describe("JogoCuriosidades", () => {
       expect(navigateMock).not.toHaveBeenCalled();
     });
 
-    it("o × da Vida Extra sai para o menu e termina a partida no servidor (paga o que já superou)", async () => {
+    it("'Encerrar partida' na Vida Extra leva sempre ao ecrã educativo, e só daí se sai para o menu", async () => {
       mockProfile = { id: "utilizador-1" };
       obterPerguntaDaPartida.mockResolvedValue(PERGUNTA_1);
       validarResposta.mockResolvedValue({ ...SEM_VIDAS, vida_extra: { custo: 20, restantes: 2 } });
-      terminarPartida.mockResolvedValue({ ...TERMINADA, perfil: { ...TERMINADA.perfil, moedas: 100 } });
+      terminarPartida.mockResolvedValue({
+        ...TERMINADA,
+        perfil: { ...TERMINADA.perfil, moedas: 100 },
+        patamar_superado: 2,
+        moedas_ganhas: 100,
+        resposta_correta: "B",
+        explicacao: "A explicação clínica da certa.",
+      });
       render(<JogoCuriosidades />, { wrapper: MemoryRouter });
       await comecarJogo();
       await screen.findByText(PERGUNTA_1.texto_pergunta);
       await userEvent.click(screen.getByText("Errada A"));
 
-      await userEvent.click(await screen.findByRole("button", { name: "simular fechar" }));
+      await userEvent.click(await screen.findByRole("button", { name: "simular encerrar" }));
 
-      expect(navigateMock).toHaveBeenCalledWith("/jogo-curiosidades");
+      // Resposta certa, explicação e ganhos -- antes de qualquer saída.
+      expect(await screen.findByText("Essa não era a resposta certa")).toBeInTheDocument();
+      expect(await screen.findByText("A explicação clínica da certa.")).toBeInTheDocument();
+      expect(screen.getByText(/B\) Certa B/)).toBeInTheDocument();
+      expect(screen.getByText("+100")).toBeInTheDocument();
+      expect(navigateMock).not.toHaveBeenCalled();
       await waitFor(() => expect(terminarPartida).toHaveBeenCalledTimes(1));
-      await waitFor(() => expect(definirPerfil).toHaveBeenCalledWith(expect.objectContaining({ moedas: 100 })));
-      expect(screen.queryByText("Essa não era a resposta certa")).not.toBeInTheDocument();
+
+      // Só daqui se sai para o menu.
+      await userEvent.click(screen.getByRole("button", { name: "Voltar ao menu" }));
+      expect(navigateMock).toHaveBeenCalledWith("/jogo-curiosidades");
+      expect(terminarPartida).toHaveBeenCalledTimes(1);
       semRecomeco();
     });
 

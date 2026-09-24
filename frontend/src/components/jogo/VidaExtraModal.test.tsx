@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 
@@ -118,49 +118,44 @@ describe("VidaExtraModal", () => {
     expect(usarVidaExtra).not.toHaveBeenCalled();
   });
 
-  it("sem onSair, fechar o modal conta como encerrar", async () => {
-    const { onEncerrar } = abrir();
-    await userEvent.keyboard("{Escape}");
-    expect(onEncerrar).toHaveBeenCalled();
+  it("não tem botão × -- só 'Usar Vida Extra' e 'Encerrar partida'", async () => {
+    abrir();
+    await screen.findByRole("heading", { name: "Vida Extra" });
+    expect(screen.queryByRole("button", { name: "Close" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button").map((b) => b.textContent?.trim())).toEqual([
+      "Usar Vida Extra (20 diamantes)",
+      "Encerrar partida",
+    ]);
   });
 
-  describe("com onSair (o jogo)", () => {
-    const abrirComSaida = () => {
-      const onEncerrar = vi.fn();
-      const onSair = vi.fn();
-      render(
-        <VidaExtraModal
-          oferta={{ custo: 20, restantes: 2 }}
-          tempoEsgotado={false}
-          onVidaUsada={vi.fn()}
-          onEncerrar={onEncerrar}
-          onSair={onSair}
-        />,
-        { wrapper: Envoltorio }
-      );
-      return { onEncerrar, onSair };
-    };
+  it("Esc não fecha o modal nem encerra a partida", async () => {
+    const { onEncerrar, onVidaUsada } = abrir();
+    await screen.findByRole("heading", { name: "Vida Extra" });
 
-    it("o × sai do jogo (onSair), não mostra o resultado (onEncerrar)", async () => {
-      const { onEncerrar, onSair } = abrirComSaida();
-      await userEvent.click(await screen.findByRole("button", { name: "Close" }));
-      expect(onSair).toHaveBeenCalledTimes(1);
-      expect(onEncerrar).not.toHaveBeenCalled();
-    });
+    await userEvent.keyboard("{Escape}");
 
-    it("Esc também sai do jogo", async () => {
-      const { onEncerrar, onSair } = abrirComSaida();
-      await screen.findByRole("heading", { name: "Vida Extra" });
-      await userEvent.keyboard("{Escape}");
-      expect(onSair).toHaveBeenCalledTimes(1);
-      expect(onEncerrar).not.toHaveBeenCalled();
-    });
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(onEncerrar).not.toHaveBeenCalled();
+    expect(onVidaUsada).not.toHaveBeenCalled();
+  });
 
-    it("o botão 'Encerrar partida' continua a mostrar o resultado, não sai", async () => {
-      const { onEncerrar, onSair } = abrirComSaida();
-      await userEvent.click(await screen.findByRole("button", { name: "Encerrar partida" }));
-      expect(onEncerrar).toHaveBeenCalledTimes(1);
-      expect(onSair).not.toHaveBeenCalled();
-    });
+  it("clicar fora (no fundo) não fecha o modal nem encerra a partida", async () => {
+    const { onEncerrar } = abrir();
+    await screen.findByRole("heading", { name: "Vida Extra" });
+
+    // O Radix fecha em "pointerdown" fora do conteúdo (o body fica com
+    // pointer-events: none enquanto o modal está aberto -- daí o fireEvent).
+    fireEvent.pointerDown(document.body);
+    fireEvent.pointerUp(document.body);
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(onEncerrar).not.toHaveBeenCalled();
+  });
+
+  it("'Encerrar partida' é a saída -- chama onEncerrar uma vez", async () => {
+    const { onEncerrar, onVidaUsada } = abrir();
+    await userEvent.click(await screen.findByRole("button", { name: "Encerrar partida" }));
+    expect(onEncerrar).toHaveBeenCalledTimes(1);
+    expect(onVidaUsada).not.toHaveBeenCalled();
   });
 });

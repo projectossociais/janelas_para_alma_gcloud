@@ -372,11 +372,12 @@ const JogoCuriosidades = () => {
   };
 
   // Sair para o menu do jogo -- o "×" (ou Esc / clique fora) do modal de
-  // resposta errada e do de vida extra, e o botão "Voltar ao menu". Nunca
-  // recomeça a partida: só "Tentar novamente" faz isso. Se a partida ainda
-  // não foi terminada no servidor (ex.: saiu logo na oferta de vida extra),
-  // termina-a aqui -- paga os patamares já superados e não fica uma partida
-  // presa a aguardar decisão. Não bloqueia a saída: uma falha fica na consola.
+  // resposta errada e o botão "Voltar ao menu". Nunca recomeça a partida:
+  // só "Tentar novamente" faz isso. O modal de Vida Extra não tem saída
+  // directa (só "Encerrar partida", que passa por aqui depois do ecrã
+  // educativo). Se a partida ainda não foi terminada no servidor, termina-a
+  // -- rede de segurança; normalmente o efeito do fim de partida já o fez.
+  // Não bloqueia a saída: uma falha fica na consola.
   const sairParaMenu = () => {
     if (usaServidor && !recompensaEnviada) {
       setRecompensaEnviada(true);
@@ -898,7 +899,6 @@ const JogoCuriosidades = () => {
         tempoEsgotado={!!resultado?.tempoEsgotado}
         onVidaUsada={aoUsarVidaExtra}
         onEncerrar={aoRecusarVidaExtra}
-        onSair={sairParaMenu}
       />
 
       {pergunta && !emModoOffline && (
