@@ -206,11 +206,10 @@ class OpiniaoPublicoResponse(BaseModel):
 class VendedorMercadoPublico(BaseModel):
     id: str
     custo_diamantes: int
-    # Certeza para a pergunta em curso (depende da categoria dela).
+    # Certeza para a pergunta em curso (categoria, patamar e a própria
+    # pergunta -- `certeza_consultorio.py`). Sem explicação do porquê: o
+    # jogador infere a especialidade pela profissão e pela percentagem.
     precisao: float
-    # Certeza numa categoria neutra -- para o cliente mostrar a variação.
-    precisao_base: float
-    afinidade: Literal["especialista", "neutro", "fraco"]
     # `None` = disponível agora; senão, até quando está bloqueado (UTC).
     disponivel_em: datetime | None
 

@@ -9,7 +9,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 from app.repositories.mercado_jogo_repository import ResultadoDebito
-from app.repositories.orm_models import CATEGORIAS_PERGUNTA_JOGO
+from app.services.certeza_consultorio import CERTEZA_MINIMA, PERFIS, calcular_certeza
 from app.services.jogo_service import PerguntaForaDaPartidaError, PerguntaNaoEncontradaError
 from app.services.mercado_jogo_service import (
     DURACAO_BLOQUEIO,
@@ -219,7 +219,7 @@ def test_a_aguardar_decisao_nao_se_compra_no_mercado(ambiente) -> None:
 def test_dentro_da_precisao_sugere_a_resposta_certa(ambiente) -> None:
     perfis, *_ = ambiente
     perfis.creditar_diamantes("u1", 100)
-    # 0.49 < 0.75 (estudante em curiosidades, a categoria de "p1") -> acerta
+    # "p1": curiosidades, patamar 1 -> estudante 0,70 ± 0,04; 0,49 acerta.
     ajuda = _servico(ambiente, AleatorioFixo(0.49)).comprar("u1", "estudante-medicina", "p1")
     assert ajuda.resposta_sugerida == "C"
 
@@ -244,8 +244,8 @@ def test_taxa_de_acerto_acompanha_a_precisao(ambiente) -> None:
             relogio.agora += timedelta(hours=5)  # passa o bloqueio
             perfis.creditar_diamantes("u1", vendedor.custo_diamantes)
             certas += servico.comprar("u1", vendedor.id, "p1").resposta_sugerida == "C"
-        # "p1" é curiosidades_visuais -- a certeza é a dessa categoria.
-        assert abs(certas / 2000 - vendedor.precisao_para("curiosidades_visuais")) < 0.04
+        # "p1" é curiosidades_visuais, no patamar 1 (nada superado ainda).
+        assert abs(certas / 2000 - vendedor.precisao_para("curiosidades_visuais", 1, "p1")) < 0.04
 
 
 def test_listar_mostra_bloqueio_so_enquanto_dura(ambiente) -> None:
@@ -262,83 +262,72 @@ def test_listar_mostra_bloqueio_so_enquanto_dura(ambiente) -> None:
     assert all(e.disponivel_em is None for e in servico.listar("u1").vendedores)
 
 
-# --- Certeza por categoria (afinidades) --------------------------------------
-
-_POR_ID = {v.id: v for v in VENDEDORES}
-
-
-@pytest.mark.parametrize(
-    ("vendedor_id", "categoria", "afinidade", "precisao"),
-    [
-        # Estudante de Medicina (João): forte em anatomia e curiosidades,
-        # ainda sem casos clínicos.
-        ("estudante-medicina", "anatomia_ocular", "especialista", 0.75),
-        ("estudante-medicina", "curiosidades_visuais", "especialista", 0.75),
-        ("estudante-medicina", "doencas_estrabismo", "fraco", 0.35),
-        ("estudante-medicina", "ciencia_ocular", "neutro", 0.50),
-        # Enfermeira Oftálmica (Marta): prevenção, cuidados e estilo de vida.
-        ("enfermeira-oftalmica", "prevencao_cuidados", "especialista", 0.85),
-        ("enfermeira-oftalmica", "estilo_vida_visao", "especialista", 0.85),
-        ("enfermeira-oftalmica", "ciencia_ocular", "fraco", 0.50),
-        ("enfermeira-oftalmica", "anatomia_ocular", "neutro", 0.70),
-        # Optometrista (Dr. Paulo): ciência ocular.
-        ("optometrista", "ciencia_ocular", "especialista", 0.95),
-        ("optometrista", "doencas_estrabismo", "fraco", 0.75),
-        ("optometrista", "prevencao_cuidados", "neutro", 0.85),
-        # Oftalmologista Especialista (Dra. Helena): doenças e estrabismo.
-        ("oftalmologista", "doencas_estrabismo", "especialista", 0.98),
-        ("oftalmologista", "estilo_vida_visao", "fraco", 0.80),
-        ("oftalmologista", "ciencia_ocular", "neutro", 0.90),
-        # Sem pergunta em curso: a certeza base.
-        ("oftalmologista", None, "neutro", 0.90),
-    ],
-)
-def test_certeza_depende_da_categoria(vendedor_id, categoria, afinidade, precisao) -> None:
-    vendedor = _POR_ID[vendedor_id]
-    assert vendedor.afinidade(categoria) == afinidade
-    assert vendedor.precisao_para(categoria) == precisao
+# --- Certeza contextual (categoria + patamar + pergunta) ---------------------
+# As regras de personalidade testam-se em test_certeza_consultorio.py; aqui,
+# que o Consultório usa o contexto certo da partida.
 
 
-def test_afinidades_so_usam_categorias_oficiais_e_nunca_pior_que_adivinhar() -> None:
-    for v in VENDEDORES:
-        assert (v.especialidades | v.pontos_fracos) <= set(CATEGORIAS_PERGUNTA_JOGO)
-        assert not (v.especialidades & v.pontos_fracos)
-        if v.especialidades:
-            assert v.precisao_especialidade > v.precisao
-        if v.pontos_fracos:
-            assert 0.25 < v.precisao_fraca < v.precisao
+def _no_patamar(partidas: RepositorioPartidasFalso, utilizador_id: str, pergunta_id: str, patamar: int) -> None:
+    _na_pergunta(partidas, utilizador_id, pergunta_id)
+    partida = partidas.obter_ativa(utilizador_id)
+    partidas.partidas[partida.id] = replace(partida, patamar_superado=patamar - 1)
 
 
-def test_listar_devolve_a_certeza_para_a_categoria_da_pergunta_em_curso(ambiente) -> None:
+def test_listar_usa_a_categoria_o_patamar_da_partida_e_a_pergunta(ambiente) -> None:
     _, perguntas, _, _, partidas = ambiente
-    perguntas.adicionar("p-doenca", "C", nivel_dificuldade=1, categoria="doencas_estrabismo")
-    _na_pergunta(partidas, "u1", "p-doenca")
+    perguntas.adicionar("p-doenca", "C", nivel_dificuldade=3, categoria="doencas_estrabismo")
+    _no_patamar(partidas, "u1", "p-doenca", 13)
 
     mercado = _servico(ambiente).listar("u1")
 
     assert mercado.categoria == "doencas_estrabismo"
-    por_id = {e.vendedor.id: e for e in mercado.vendedores}
-    assert (por_id["oftalmologista"].afinidade, por_id["oftalmologista"].precisao) == ("especialista", 0.98)
-    assert (por_id["estudante-medicina"].afinidade, por_id["estudante-medicina"].precisao) == ("fraco", 0.35)
-    assert (por_id["enfermeira-oftalmica"].afinidade, por_id["enfermeira-oftalmica"].precisao) == ("neutro", 0.70)
+    por_id = {e.vendedor.id: e.precisao for e in mercado.vendedores}
+    assert por_id == {
+        v.id: calcular_certeza(v.id, "doencas_estrabismo", 13, "p-doenca") for v in VENDEDORES
+    }
+    # Fim de jogo em Doenças: a oftalmologista no topo, o estudante no chão.
+    assert por_id["oftalmologista"] >= 0.94
+    assert por_id["estudante-medicina"] == CERTEZA_MINIMA
+
+
+def test_a_mesma_pergunta_noutro_patamar_muda_a_certeza(ambiente) -> None:
+    _, perguntas, _, _, partidas = ambiente
+    perguntas.adicionar("p-anatomia", "C", nivel_dificuldade=1, categoria="anatomia_ocular")
+    _no_patamar(partidas, "u1", "p-anatomia", 2)
+    _no_patamar(partidas, "u2", "p-anatomia", 14)
+
+    cedo = {e.vendedor.id: e.precisao for e in _servico(ambiente).listar("u1").vendedores}
+    tarde = {e.vendedor.id: e.precisao for e in _servico(ambiente).listar("u2").vendedores}
+
+    assert cedo["estudante-medicina"] > tarde["estudante-medicina"] + 0.2
+    assert tarde["oftalmologista"] > cedo["oftalmologista"]
+
+
+def test_listar_e_determinista(ambiente) -> None:
+    _, perguntas, _, _, partidas = ambiente
+    perguntas.adicionar("p-x", "C", nivel_dificuldade=2, categoria="ciencia_ocular")
+    _no_patamar(partidas, "u1", "p-x", 7)
+    servico = _servico(ambiente)
+    primeira = [e.precisao for e in servico.listar("u1").vendedores]
+    assert all([e.precisao for e in servico.listar("u1").vendedores] == primeira for _ in range(5))
 
 
 def test_listar_sem_partida_mostra_a_certeza_base(ambiente) -> None:
     mercado = _servico(ambiente).listar("sem-partida")
     assert mercado.categoria is None
-    assert [e.precisao for e in mercado.vendedores] == [v.precisao for v in VENDEDORES]
+    assert [e.precisao for e in mercado.vendedores] == [PERFIS[v.id].base for v in VENDEDORES]
 
 
-def test_comprar_usa_a_certeza_da_categoria(ambiente) -> None:
-    # 0.60: acima da certeza fraca do estudante (0.35, doenças), abaixo da
-    # especialidade (0.75, anatomia) -- acerta numa, erra na outra.
+def test_comprar_usa_a_mesma_certeza_contextual_que_listar(ambiente) -> None:
+    # Estudante em Anatomia no patamar 2 (~0,82) vs em Doenças no patamar 13
+    # (0,30): com o sorteio fixo em 0,60, acerta na primeira e erra na segunda.
     perfis, perguntas, _, _, partidas = ambiente
     perfis.creditar_diamantes("u1", 100)
     perfis.creditar_diamantes("u2", 100)
     perguntas.adicionar("p-anatomia", "C", nivel_dificuldade=1, categoria="anatomia_ocular")
-    perguntas.adicionar("p-doenca", "C", nivel_dificuldade=1, categoria="doencas_estrabismo")
-    _na_pergunta(partidas, "u1", "p-anatomia")
-    _na_pergunta(partidas, "u2", "p-doenca")
+    perguntas.adicionar("p-doenca", "C", nivel_dificuldade=3, categoria="doencas_estrabismo")
+    _no_patamar(partidas, "u1", "p-anatomia", 2)
+    _no_patamar(partidas, "u2", "p-doenca", 13)
 
     servico = _servico(ambiente, AleatorioFixo(0.60))
 

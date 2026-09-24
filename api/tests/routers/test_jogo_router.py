@@ -873,19 +873,13 @@ def test_listar_mercado_devolve_catalogo_do_servidor(mercado) -> None:
     assert "agora" in corpo
     # A pergunta do `banco` não tem categoria explícita (curiosidades_visuais).
     assert corpo["categoria"] == "curiosidades_visuais"
-    assert [
-        (v["id"], v["custo_diamantes"], v["precisao"], v["precisao_base"], v["afinidade"])
-        for v in corpo["vendedores"]
-    ] == [
-        (
-            v.id,
-            v.custo_diamantes,
-            v.precisao_para("curiosidades_visuais"),
-            v.precisao,
-            v.afinidade("curiosidades_visuais"),
-        )
-        for v in VENDEDORES
+    # Certeza contextual: categoria, patamar 1 (nada superado) e a pergunta.
+    _, _, _, _, pergunta = mercado
+    assert [(v["id"], v["custo_diamantes"], v["precisao"]) for v in corpo["vendedores"]] == [
+        (v.id, v.custo_diamantes, v.precisao_para("curiosidades_visuais", 1, pergunta["id"])) for v in VENDEDORES
     ]
+    # Sem explicação da mecânica: nem afinidade nem certeza base na resposta.
+    assert all(set(v) == {"id", "custo_diamantes", "precisao", "disponivel_em"} for v in corpo["vendedores"])
     assert all(v["disponivel_em"] is None for v in corpo["vendedores"])
 
 

@@ -1330,18 +1330,12 @@ export interface PedidoLojaAdmin extends PedidoLoja {
   decidido_por: string | null;
 }
 
-export type AfinidadeVendedor = "especialista" | "neutro" | "fraco";
-
 export interface VendedorMercado {
   id: string;
   custo_diamantes: number;
   // Probabilidade (0-1) de a sugestão estar certa -- para a pergunta em
-  // curso, pela categoria dela.
+  // curso (categoria, patamar da partida e a própria pergunta).
   precisao: number;
-  // Certeza numa categoria neutra, e a afinidade com a da pergunta.
-  // Opcionais: uma API anterior a 2026-09-24 não os envia (deploys separados).
-  precisao_base?: number;
-  afinidade?: AfinidadeVendedor;
   // `null` = disponível; senão, até quando está bloqueado (ISO, UTC).
   disponivel_em: string | null;
 }
