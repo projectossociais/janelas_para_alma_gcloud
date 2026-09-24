@@ -14,7 +14,7 @@ import {
   type GrupoExercicio,
   type TipoDesbloqueio,
 } from "@/components/exercises/useAcaoDesbloqueio";
-import { Clock, Crown, Lock, LogOut, Pause, Play, Trophy, UserPlus } from "lucide-react";
+import { Clock, Lock, LogOut, Pause, Play, Trophy, UserPlus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { localizar } from "@/i18n/rotas";
 
@@ -321,7 +321,7 @@ const BaseExercise = ({
               >
                 {tipoDesbloqueio === "criar_conta" && <UserPlus className="h-4 w-4" />}
                 {tipoDesbloqueio === "iniciar_trial" && <Play className="h-4 w-4" />}
-                {tipoDesbloqueio === "premium" && <Crown className="h-4 w-4" />}
+                {tipoDesbloqueio === "premium" && <Lock className="h-4 w-4" />}
                 {t(TEXTOS_BLOQUEIO[tipoDesbloqueio].botao)}
               </Button>
             </div>

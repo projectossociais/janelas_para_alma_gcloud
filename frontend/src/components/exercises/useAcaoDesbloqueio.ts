@@ -30,7 +30,9 @@ export const useAcaoDesbloqueio = () => {
 
   const executar = async (tipo: TipoDesbloqueio) => {
     if (tipo === "criar_conta") {
-      navigate(`${localizar("/entrar")}?modo=registo&next=${encodeURIComponent(localizar("/exercicios"))}`);
+      // A rota de login é `/login` (ver `entrar` em i18n/rotas.ts) -- `/entrar`
+      // não existe e dava 404.
+      navigate(`${localizar("/login")}?modo=registo&next=${encodeURIComponent(localizar("/exercicios"))}`);
       return;
     }
     if (tipo === "premium") {

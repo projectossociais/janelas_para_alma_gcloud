@@ -4,7 +4,6 @@ import {
   ArrowRight,
   Play,
   Lock,
-  Crown,
   Clock,
   CheckCircle2,
   UserPlus,
@@ -160,7 +159,7 @@ const exerciciosPremium: Exercicio[] = [
 const BOTAO_CARTAO: Record<TipoDesbloqueio, { chave: string; icon: LucideIcon }> = {
   criar_conta: { chave: "Exercicios.cartaoCriarConta", icon: UserPlus },
   iniciar_trial: { chave: "Exercicios.cartaoIniciarTrial", icon: Play },
-  premium: { chave: "Exercicios.cartaoPremium", icon: Crown },
+  premium: { chave: "Exercicios.cartaoPremium", icon: Lock },
 };
 
 /** Banner de estado no topo da página: um por cada estado de acesso. */
@@ -174,7 +173,7 @@ const BannerEstado = ({ aoVerPremium }: { aoVerPremium: () => void }) => {
   if (acesso.estado === "premium") {
     return (
       <div className="flex items-center gap-3 rounded-xl border border-teal/30 bg-teal/5 px-5 py-4">
-        <Crown className="h-5 w-5 shrink-0 text-teal" />
+        <CheckCircle2 className="h-5 w-5 shrink-0 text-teal" />
         <p className="text-sm text-foreground">
           <span className="font-semibold">{t("Exercicios.estadoPremium")}</span>
           {" · "}
@@ -225,7 +224,7 @@ const BannerEstado = ({ aoVerPremium }: { aoVerPremium: () => void }) => {
       titulo: t("Exercicios.estadoTrialTerminado"),
       texto: t("Exercicios.bannerTrialTerminadoTexto"),
       botao: t("Exercicios.verPlanosPremium"),
-      icon: Crown,
+      icon: Lock,
       acao: aoVerPremium,
     },
   }[acesso.estado];
@@ -257,6 +256,9 @@ const CartaoExercicio = ({ ex, grupo }: { ex: Exercicio; grupo: GrupoExercicio }
   const Icon = ex.icon;
   const tipo = loading ? null : tipoPara(ex.id, grupo);
   const desbloqueado = !loading && tipo === null;
+  // Visitante sem sessão: sem botão por cartão -- o único CTA é o do banner
+  // ("Criar conta e começar teste de 7 dias"), para o ecrã não repetir 8 vezes.
+  const semBotao = tipo === "criar_conta";
   const botao = tipo ? BOTAO_CARTAO[tipo] : null;
   const BotaoIcon = botao?.icon;
 
@@ -299,13 +301,13 @@ const CartaoExercicio = ({ ex, grupo }: { ex: Exercicio; grupo: GrupoExercicio }
 
       <div className="flex flex-1 flex-col p-5">
         <h3 className="mb-2 text-base font-semibold text-foreground">{ex.title}</h3>
-        <p className="mb-5 flex-1 text-sm text-muted-foreground">{ex.description}</p>
+        <p className={cn("flex-1 text-sm text-muted-foreground", !semBotao && "mb-5")}>{ex.description}</p>
         {desbloqueado ? (
           <Button onClick={() => navigate(ex.route)} className="w-full bg-teal text-teal-foreground hover:bg-teal/90">
             <Play className="h-4 w-4" />
             {t("Exercicios.iniciarExercicio")}
           </Button>
-        ) : (
+        ) : semBotao ? null : (
           <Button
             variant="outline"
             disabled={loading || aIniciarTrial || !tipo}
@@ -373,8 +375,7 @@ const Exercicios = () => {
             <div className="max-w-5xl mx-auto">
               <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
                 <div className="max-w-2xl">
-                  <h2 className="flex items-center gap-2 text-xl md:text-2xl font-bold text-foreground">
-                    <Crown className="h-5 w-5 text-navy" />
+                  <h2 className="text-xl md:text-2xl font-bold text-foreground">
                     {t("Exercicios.grupoPremium")}
                   </h2>
                   <p className="mt-1 text-sm text-muted-foreground">{t("Exercicios.grupoPremiumDescricao")}</p>
@@ -386,7 +387,7 @@ const Exercicios = () => {
                     className="border-navy/25 text-navy hover:bg-navy/5"
                     onClick={() => setPaywallAberto(true)}
                   >
-                    <Crown className="h-4 w-4" />
+                    <Lock className="h-4 w-4" />
                     {t("Exercicios.verPlanosPremium")}
                   </Button>
                 )}

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, within, fireEvent, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import Exercicios from "./Exercicios";
 import { AcessoExerciciosProvider } from "@/contexts/AcessoExerciciosContext";
 
@@ -82,6 +82,33 @@ describe("Exercicios — 8 exercícios em dois grupos", () => {
     ]) {
       expect(screen.queryByText(eliminado)).not.toBeInTheDocument();
     }
+  });
+
+  it("visitante: sem botões nos cartões, e o CTA do banner abre o registo em /login (não 404)", async () => {
+    mockLoggedIn = false;
+    const OndeEstou = () => {
+      const l = useLocation();
+      return <p data-testid="onde">{l.pathname + l.search}</p>;
+    };
+    render(
+      <MemoryRouter initialEntries={["/exercicios"]}>
+        <AcessoExerciciosProvider>
+          <Routes>
+            <Route path="/exercicios" element={<Exercicios />} />
+            <Route path="*" element={<OndeEstou />} />
+          </Routes>
+        </AcessoExerciciosProvider>
+      </MemoryRouter>,
+    );
+
+    const cta = await screen.findByRole("button", { name: /Criar conta e começar teste de 7 dias/i });
+    expect(within(grupo("Incluídos no teste de 7 dias")).queryAllByRole("button")).toHaveLength(0);
+    expect(within(grupo("Premium")).queryAllByRole("button", { name: /Criar conta/i })).toHaveLength(0);
+
+    fireEvent.click(cta);
+    expect(await screen.findByTestId("onde")).toHaveTextContent(
+      "/login?modo=registo&next=%2Fexercicios",
+    );
   });
 
   it("visitante sem sessão: tudo bloqueado e CTA para criar conta, sem chamar a API", async () => {

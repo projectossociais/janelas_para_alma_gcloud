@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import {
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
-  Crown,
   Stethoscope,
   Activity,
   Eye,
@@ -149,6 +148,16 @@ const benefits = [
 const RegistoPremium = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // "Voltar" regressa à página de onde o utilizador veio (quase sempre
+  // /exercicios, pelo CTA Premium). Sem histórico dentro do site -- URL
+  // aberto directamente, `location.key === "default"` -- vai para
+  // /exercicios em vez de sair do site.
+  const voltar = () => {
+    if (location.key !== "default") navigate(-1);
+    else navigate(localizar("/exercicios"));
+  };
   const [step, setStep] = useState<Step>(1);
 
   const [nome, setNome] = useState("");
@@ -264,18 +273,19 @@ const RegistoPremium = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-navy via-navy/85 to-teal/40" />
         <div className="relative z-10 flex flex-col justify-between p-12 xl:p-16 w-full">
           <div>
-            <Link
-              to={localizar("/")}
+            <button
+              type="button"
+              onClick={voltar}
               className="inline-flex items-center gap-2 text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />{" "}{t("RegistoPremium.voltar")}
-            </Link>
+            </button>
           </div>
 
           <div className="max-w-md space-y-8">
             <div>
               <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-gold">
-                <Crown className="w-3.5 h-3.5" />{" "}{t("RegistoPremium.acessoPremium")}
+                {t("RegistoPremium.acessoPremium")}
               </span>
               <h2 className="mt-3 text-3xl xl:text-4xl font-bold leading-tight">
                 {t("RegistoPremium.umOlharAlinhadoUma")}
@@ -314,9 +324,9 @@ const RegistoPremium = () => {
       <section className="flex flex-col bg-background">
         <div className="lg:hidden border-b border-border">
           <div className="container py-4">
-            <Link to={localizar("/")} className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+            <button type="button" onClick={voltar} className="inline-flex items-center gap-2 text-sm text-muted-foreground">
               <ArrowLeft className="w-4 h-4" />{" "}{t("RegistoPremium.voltar")}
-            </Link>
+            </button>
           </div>
         </div>
 

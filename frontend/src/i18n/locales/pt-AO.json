@@ -1147,7 +1147,10 @@
     "acessoIlimitadoAExercicios": "Acesso ilimitado a exercícios interactivos e vídeos alojados na plataforma.",
     "acompanhamentoDeMetricasKpis": "Acompanhamento de métricas (KPIs) de evolução.",
     "redirecionamentoExclusivoETeleconsulta": "Redirecionamento exclusivo e teleconsulta com clínicas parceiras.",
-    "videosExplicativosComMedicos": "Vídeos explicativos com médicos oftalmologistas parceiros."
+    "videosExplicativosComMedicos": "Vídeos explicativos com médicos oftalmologistas parceiros.",
+    "precos": "Preços do plano Premium",
+    "porMes": "por mês",
+    "porAnoPoupe2Meses": "por ano · poupe 2 meses"
   },
   "ProgramModal": {
     "programaMeuKambaEstrabico": "Programa Meu Kamba Estrábico",
