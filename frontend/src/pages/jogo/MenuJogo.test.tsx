@@ -46,7 +46,7 @@ describe("MenuJogo (Lobby)", () => {
     render(<MenuJogo />, { wrapper: Envoltorio });
 
     expect(await screen.findByText("Ana Jogadora")).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByRole("button", { name: /^Moedas/ })).toHaveTextContent("320"));
+    await waitFor(() => expect(screen.getByRole("link", { name: /^Moedas/ })).toHaveTextContent("320"));
     expect(screen.getByRole("link", { name: /^Diamantes/ })).toHaveTextContent("4");
   });
 
@@ -58,11 +58,14 @@ describe("MenuJogo (Lobby)", () => {
     expect(await screen.findByRole("link", { name: /^Diamantes/ })).toHaveAttribute("href", "/jogo-curiosidades/loja");
   });
 
-  it("clicar nas moedas explica como se ganham", async () => {
+  it("as moedas levam à Loja de Moedas e os diamantes à Loja de Diamantes", async () => {
     render(<MenuJogo />, { wrapper: Envoltorio });
 
-    await userEvent.click(await screen.findByRole("button", { name: /^Moedas/ }));
-    expect(await screen.findByText(/ganham-se a jogar/i)).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: /^Moedas: .* abrir a Loja de Moedas/ })).toHaveAttribute(
+      "href",
+      "/jogo-curiosidades/loja-moedas"
+    );
+    expect(screen.getByRole("link", { name: /^Diamantes/ })).toHaveAttribute("href", "/jogo-curiosidades/loja");
   });
 
   it("os três modos de jogo estão presentes, com os dois multijogador marcados 'Em breve'", async () => {

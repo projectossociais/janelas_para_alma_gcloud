@@ -63,6 +63,7 @@ export const ROTAS = [
   { chave: "jogoJogar", pt: "/jogo-curiosidades/jogar", en: "/en/trivia-game/play", foraDoSitemap: true },
   { chave: "jogoPerfil", pt: "/jogo-curiosidades/perfil", en: "/en/trivia-game/profile", foraDoSitemap: true },
   { chave: "jogoLoja", pt: "/jogo-curiosidades/loja", en: "/en/trivia-game/shop", foraDoSitemap: true },
+  { chave: "jogoLojaMoedas", pt: "/jogo-curiosidades/loja-moedas", en: "/en/trivia-game/coin-shop", foraDoSitemap: true },
 ] as const;
 
 export type ChaveRota = (typeof ROTAS)[number]["chave"];

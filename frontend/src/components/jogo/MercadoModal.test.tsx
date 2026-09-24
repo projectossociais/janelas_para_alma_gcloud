@@ -41,10 +41,10 @@ const Envoltorio = ({ children }: { children: ReactNode }) => (
 
 const AGORA_SERVIDOR = "2026-09-24T12:00:00Z";
 const VENDEDORES = [
-  { id: "tio-ze", custo_diamantes: 5, precisao: 0.5, disponivel_em: null },
-  { id: "mana-fefa", custo_diamantes: 12, precisao: 0.7, disponivel_em: null },
-  { id: "dona-maria", custo_diamantes: 25, precisao: 0.85, disponivel_em: null },
-  { id: "kota-beto", custo_diamantes: 45, precisao: 0.95, disponivel_em: null },
+  { id: "estudante-medicina", custo_diamantes: 5, precisao: 0.5, disponivel_em: null },
+  { id: "enfermeira-oftalmica", custo_diamantes: 12, precisao: 0.7, disponivel_em: null },
+  { id: "optometrista", custo_diamantes: 25, precisao: 0.85, disponivel_em: null },
+  { id: "oftalmologista", custo_diamantes: 45, precisao: 0.9, disponivel_em: null },
 ];
 const PERFIL = { moedas: 0, diamantes: 30, partidas_jogadas: 0, patamar_maximo_alcancado: 0 };
 
@@ -80,51 +80,105 @@ describe("MercadoModal", () => {
   it("lista os vendedores com nome, custo e nível de certeza vindos da API", async () => {
     abrir();
 
-    const kota = await screen.findByTestId("vendedor-kota-beto");
-    expect(within(kota).getByText("Kota Beto")).toBeInTheDocument();
-    expect(within(kota).getByText("45")).toBeInTheDocument();
-    expect(within(kota).getByText(/Muito alta · 95%/)).toBeInTheDocument();
-    expect(within(screen.getByTestId("vendedor-tio-ze")).getByText(/Baixa · 50%/)).toBeInTheDocument();
+    const helena = await screen.findByTestId("vendedor-oftalmologista");
+    expect(within(helena).getByText("Dra. Helena")).toBeInTheDocument();
+    expect(within(helena).getByText("45")).toBeInTheDocument();
+    expect(within(helena).getByText(/Muito alta · 90%/)).toBeInTheDocument();
+    expect(within(screen.getByTestId("vendedor-estudante-medicina")).getByText(/Baixa · 50%/)).toBeInTheDocument();
   });
 
-  it("mostra o tema da pergunta, 'Especialista em' / 'Pouco à vontade' e a variação face à certeza base", async () => {
+  it("Consultório: nome, profissão e frase de cada profissional de saúde ocular", async () => {
+    abrir();
+
+    expect(await screen.findByRole("heading", { name: "Consultório" })).toBeInTheDocument();
+    const estudante = screen.getByTestId("vendedor-estudante-medicina");
+    expect(within(estudante).getByText("Estudante João")).toBeInTheDocument();
+    expect(within(estudante).getByText("Estudante de Medicina")).toBeInTheDocument();
+    expect(within(estudante).getByText(/Ainda estou a aprender, mas lembro-me de ler sobre isso\./)).toBeInTheDocument();
+    const marta = screen.getByTestId("vendedor-enfermeira-oftalmica");
+    expect(within(marta).getByText("Enfermeira Marta")).toBeInTheDocument();
+    expect(within(marta).getByText("Enfermeira Oftálmica")).toBeInTheDocument();
+    expect(within(marta).getByText(/No consultório vemos muitos casos práticos assim\./)).toBeInTheDocument();
+    const paulo = screen.getByTestId("vendedor-optometrista");
+    expect(within(paulo).getByText("Dr. Paulo")).toBeInTheDocument();
+    expect(within(paulo).getByText("Optometrista")).toBeInTheDocument();
+    expect(within(paulo).getByText(/Deixe-me analisar a sua acuidade visual\./)).toBeInTheDocument();
+    const helena = screen.getByTestId("vendedor-oftalmologista");
+    expect(within(helena).getByText("Dra. Helena")).toBeInTheDocument();
+    expect(within(helena).getByText("Oftalmologista Especialista")).toBeInTheDocument();
+    expect(
+      within(helena).getByText(/Com os meus anos de experiência clínica, o diagnóstico é claro\./)
+    ).toBeInTheDocument();
+  });
+
+  it("explica o bónus e a penalização de cada profissional nesta pergunta, e a variação face à base", async () => {
     obterMercado.mockResolvedValue({
       agora: AGORA_SERVIDOR,
-      categoria: "ciencia_ocular",
+      categoria: "doencas_estrabismo",
       vendedores: [
-        { id: "tio-ze", custo_diamantes: 5, precisao: 0.35, precisao_base: 0.5, afinidade: "fraco", disponivel_em: null },
-        { id: "mana-fefa", custo_diamantes: 12, precisao: 0.5, precisao_base: 0.7, afinidade: "fraco", disponivel_em: null },
-        { id: "dona-maria", custo_diamantes: 25, precisao: 0.75, precisao_base: 0.85, afinidade: "fraco", disponivel_em: null },
-        { id: "kota-beto", custo_diamantes: 45, precisao: 0.98, precisao_base: 0.9, afinidade: "especialista", disponivel_em: null },
+        { id: "estudante-medicina", custo_diamantes: 5, precisao: 0.35, precisao_base: 0.5, afinidade: "fraco", disponivel_em: null },
+        { id: "enfermeira-oftalmica", custo_diamantes: 12, precisao: 0.7, precisao_base: 0.7, afinidade: "neutro", disponivel_em: null },
+        { id: "optometrista", custo_diamantes: 25, precisao: 0.75, precisao_base: 0.85, afinidade: "fraco", disponivel_em: null },
+        { id: "oftalmologista", custo_diamantes: 45, precisao: 0.98, precisao_base: 0.9, afinidade: "especialista", disponivel_em: null },
       ],
     });
     abrir();
 
-    expect(await screen.findByText("Tema desta pergunta: Ciência Ocular")).toBeInTheDocument();
-    const kota = screen.getByTestId("vendedor-kota-beto");
-    expect(within(kota).getByText("Especialista em Ciência Ocular")).toBeInTheDocument();
-    expect(within(kota).getByText(/98%/)).toBeInTheDocument();
-    expect(within(kota).getByLabelText("certeza base 90%")).toHaveTextContent("(+8)");
-    const tio = screen.getByTestId("vendedor-tio-ze");
-    expect(within(tio).getByText("Pouco à vontade com Ciência Ocular")).toBeInTheDocument();
-    expect(within(tio).getByLabelText("certeza base 50%")).toHaveTextContent("(-15)");
+    expect(await screen.findByText("Tema desta pergunta: Doenças e Estrabismo")).toBeInTheDocument();
+    const helena = screen.getByTestId("vendedor-oftalmologista");
+    expect(within(helena).getByText("Especialista em Doenças e Estrabismo")).toBeInTheDocument();
+    expect(within(helena).getByLabelText("certeza base 90%")).toHaveTextContent("(+8)");
+    expect(screen.getByTestId("motivo-oftalmologista")).toHaveTextContent(
+      "Porquê: Doenças e Estrabismo é a sua especialidade clínica há muitos anos."
+    );
+    const estudante = screen.getByTestId("vendedor-estudante-medicina");
+    expect(within(estudante).getByText("Fora da especialidade: Doenças e Estrabismo")).toBeInTheDocument();
+    expect(within(estudante).getByLabelText("certeza base 50%")).toHaveTextContent("(-15)");
+    expect(screen.getByTestId("motivo-estudante-medicina")).toHaveTextContent(
+      "Porquê: ainda não viu casos clínicos de Doenças e Estrabismo, só conhece os livros."
+    );
+    expect(screen.getByTestId("motivo-optometrista")).toHaveTextContent(/trabalho do oftalmologista/);
+    // Neutro: sem selo nem variação, mas diz porquê vale a certeza base.
+    const marta = screen.getByTestId("vendedor-enfermeira-oftalmica");
+    expect(within(marta).queryByText(/Especialista em|Fora da especialidade/)).not.toBeInTheDocument();
+    expect(within(marta).queryByLabelText(/certeza base/)).not.toBeInTheDocument();
+    expect(screen.getByTestId("motivo-enfermeira-oftalmica")).toHaveTextContent(
+      "Porquê: Doenças e Estrabismo não é a especialidade nem o ponto fraco deste profissional: vale a certeza base."
+    );
   });
 
-  it("sem afinidade (categoria neutra ou API antiga) não mostra selo nem variação", async () => {
+  it("a Enfermeira Marta tem bónus em Prevenção e Cuidados e diz porquê", async () => {
+    obterMercado.mockResolvedValue({
+      agora: AGORA_SERVIDOR,
+      categoria: "prevencao_cuidados",
+      vendedores: [
+        { id: "enfermeira-oftalmica", custo_diamantes: 12, precisao: 0.85, precisao_base: 0.7, afinidade: "especialista", disponivel_em: null },
+      ],
+    });
     abrir();
-    const kota = await screen.findByTestId("vendedor-kota-beto");
-    expect(within(kota).queryByText(/Especialista em/)).not.toBeInTheDocument();
-    expect(within(kota).queryByLabelText(/certeza base/)).not.toBeInTheDocument();
+
+    expect(await screen.findByText("Especialista em Prevenção e Cuidados")).toBeInTheDocument();
+    expect(screen.getByTestId("motivo-enfermeira-oftalmica")).toHaveTextContent(
+      "Porquê: todos os dias aconselha doentes sobre Prevenção e Cuidados."
+    );
+  });
+
+  it("sem afinidade nem categoria (API antiga) não mostra selo, variação nem porquê", async () => {
+    abrir();
+    const helena = await screen.findByTestId("vendedor-oftalmologista");
+    expect(within(helena).queryByText(/Especialista em/)).not.toBeInTheDocument();
+    expect(within(helena).queryByLabelText(/certeza base/)).not.toBeInTheDocument();
+    expect(screen.queryByTestId("motivo-oftalmologista")).not.toBeInTheDocument();
   });
 
   it("vendedor mais caro do que o saldo fica com o botão desactivado", async () => {
     abrir();
     await waitFor(() => expect(screen.getByTestId("saldo")).toHaveTextContent("30"));
 
-    const kota = screen.getByTestId("vendedor-kota-beto");
-    expect(within(kota).getByRole("button")).toBeDisabled();
-    expect(within(kota).getByRole("button")).toHaveTextContent("Diamantes insuficientes");
-    expect(within(screen.getByTestId("vendedor-tio-ze")).getByRole("button")).toBeEnabled();
+    const helena = screen.getByTestId("vendedor-oftalmologista");
+    expect(within(helena).getByRole("button")).toBeDisabled();
+    expect(within(helena).getByRole("button")).toHaveTextContent("Diamantes insuficientes");
+    expect(within(screen.getByTestId("vendedor-estudante-medicina")).getByRole("button")).toBeEnabled();
   });
 
   it("vendedor bloqueado mostra o cronómetro, medido pelo relógio do servidor, e conta para baixo", async () => {
@@ -135,34 +189,34 @@ describe("MercadoModal", () => {
     obterMercado.mockResolvedValue({
       agora: AGORA_SERVIDOR,
       vendedores: VENDEDORES.map((v) =>
-        v.id === "dona-maria" ? { ...v, disponivel_em: "2026-09-24T15:30:00Z" } : v
+        v.id === "optometrista" ? { ...v, disponivel_em: "2026-09-24T15:30:00Z" } : v
       ),
     });
     abrir();
 
-    const dona = await screen.findByTestId("vendedor-dona-maria");
-    expect(within(dona).getByRole("timer")).toHaveTextContent("03:30:00");
-    expect(within(dona).queryByRole("button")).not.toBeInTheDocument();
+    const paulo = await screen.findByTestId("vendedor-optometrista");
+    expect(within(paulo).getByRole("timer")).toHaveTextContent("03:30:00");
+    expect(within(paulo).queryByRole("button")).not.toBeInTheDocument();
 
     await act(async () => {
       vi.advanceTimersByTime(2000);
     });
-    expect(within(dona).getByRole("timer")).toHaveTextContent("03:29:58");
+    expect(within(paulo).getByRole("timer")).toHaveTextContent("03:29:58");
   });
 
   it("comprar: envia só vendedor, pergunta e opções escondidas; mostra a fala e actualiza o saldo", async () => {
     comprarAjudaMercado.mockResolvedValue({
-      vendedor_id: "mana-fefa",
+      vendedor_id: "enfermeira-oftalmica",
       resposta_sugerida: "C",
       disponivel_em: "2026-09-24T16:00:00Z",
       perfil: { ...PERFIL, diamantes: 18 },
     });
     const { onAjudaComprada } = abrir();
 
-    await userEvent.click(await screen.findByRole("button", { name: /Comprar resposta a Mana Fefa por 12/ }));
+    await userEvent.click(await screen.findByRole("button", { name: /Pedir a opinião de Enfermeira Marta por 12/ }));
 
-    await waitFor(() => expect(comprarAjudaMercado).toHaveBeenCalledWith("mana-fefa", "pergunta-1", ["A", "D"]));
-    expect(await screen.findByText(/eu ia na C/)).toBeInTheDocument();
+    await waitFor(() => expect(comprarAjudaMercado).toHaveBeenCalledWith("enfermeira-oftalmica", "pergunta-1", ["A", "D"]));
+    expect(await screen.findByText(/Pela minha experiência no consultório, é a C\./)).toBeInTheDocument();
     expect(onAjudaComprada).toHaveBeenCalledWith(expect.objectContaining({ resposta_sugerida: "C" }));
     expect(screen.getByTestId("saldo")).toHaveTextContent("18");
   });
@@ -171,9 +225,9 @@ describe("MercadoModal", () => {
     comprarAjudaMercado.mockRejectedValue(Object.assign(new Error("diamantes insuficientes"), { status: 402 }));
     const { onAjudaComprada } = abrir();
 
-    await userEvent.click(await screen.findByRole("button", { name: /Tio Zé/ }));
+    await userEvent.click(await screen.findByRole("button", { name: /Estudante João/ }));
 
-    await waitFor(() => expect(toastError).toHaveBeenCalledWith("Não tem diamantes suficientes para este vendedor."));
+    await waitFor(() => expect(toastError).toHaveBeenCalledWith("Não tem diamantes suficientes para esta consulta."));
     expect(onAjudaComprada).not.toHaveBeenCalled();
     expect(screen.queryByText(/acho que é a/)).not.toBeInTheDocument();
   });
@@ -182,9 +236,9 @@ describe("MercadoModal", () => {
     comprarAjudaMercado.mockRejectedValue(Object.assign(new Error("bloqueado"), { status: 409 }));
     abrir();
 
-    await userEvent.click(await screen.findByRole("button", { name: /Tio Zé/ }));
+    await userEvent.click(await screen.findByRole("button", { name: /Estudante João/ }));
 
-    await waitFor(() => expect(toastError).toHaveBeenCalledWith("Este vendedor ainda está a descansar. Tente outro."));
+    await waitFor(() => expect(toastError).toHaveBeenCalledWith("Este profissional está ocupado com outro paciente. Tente outro."));
     await waitFor(() => expect(obterMercado).toHaveBeenCalledTimes(2));
   });
 
@@ -205,6 +259,6 @@ describe("MercadoModal", () => {
     abrir();
 
     await userEvent.click(await screen.findByRole("button", { name: "Tentar novamente" }));
-    expect(await screen.findByTestId("vendedor-tio-ze")).toBeInTheDocument();
+    expect(await screen.findByTestId("vendedor-estudante-medicina")).toBeInTheDocument();
   });
 });

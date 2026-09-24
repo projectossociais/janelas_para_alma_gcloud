@@ -91,7 +91,9 @@
     "jogoPerfilTitulo": "Player Profile: Inclusivamente",
     "jogoPerfilDescricao": "Your coins, diamonds, games played and best level in the Inclusivamente game.",
     "jogoLojaTitulo": "Diamond Shop: Inclusivamente",
-    "jogoLojaDescricao": "Buy diamond packs to use in the Inclusivamente game."
+    "jogoLojaDescricao": "Buy diamond packs to use in the Inclusivamente game.",
+    "jogoLojaMoedasTitulo": "Coin Shop: Inclusivamente",
+    "jogoLojaMoedasDescricao": "Buy coin packs to trade for diamonds in the Inclusivamente game."
   },
   "AboutSection": {
     "conhecaNos": "Get to Know Us",
@@ -1913,15 +1915,13 @@
   },
   "CarteiraJogo": {
     "moedas": "Coins",
-    "moedasSaldo": "Coins: {{valor}}",
-    "diamantesSaldo": "Diamonds: {{valor}} -- open the shop",
-    "comoGanharMoedas": "You earn coins by playing: each level you clear in a game is worth 50 coins.",
-    "inicieSessaoParaGuardar": "Sign in to keep your coins"
+    "moedasSaldo": "Coins: {{valor}} -- open the Coin Shop",
+    "diamantesSaldo": "Diamonds: {{valor}} -- open the shop"
   },
   "LojaDiamantes": {
     "inclusivamente": "Inclusivamente",
     "titulo": "Diamond Shop",
-    "descricao": "Use diamonds to get help at the Market or buy an extra life when you get a question wrong.",
+    "descricao": "Use diamonds to get help at the Eye Clinic or buy an extra life when you get a question wrong.",
     "voltarAoMenu": "Back to menu",
     "naoFoiPossivelCarregar": "We couldn't load the shop.",
     "tentarNovamente": "Try again",
@@ -1954,25 +1954,64 @@
     "trocarMoedas": "Trade coins",
     "moedasInsuficientes": "You don't have enough coins for this pack.",
     "pagarPorTransferencia": "Pay by bank transfer",
+    "enviarComprovativo": "Send proof of payment",
+    "anexeOComprovativo": "Please attach the proof of transfer.",
+    "tipoDeComprovativoInvalido": "The proof must be an image (PNG, JPG, WEBP) or a PDF.",
+    "pedidoEnviado": "Request sent! Your {{quantidade}} diamonds will arrive as soon as we confirm the payment."
+  },
+  "LojaJogo": {
     "n1Transfira": "1. Transfer the amount to",
     "n2AnexeOComprovativo": "2. Attach the proof of payment",
     "beneficiario": "Beneficiary",
     "creditadoAposConfirmacao": "The diamonds are added to your account as soon as we confirm the payment.",
-    "enviarComprovativo": "Send proof of payment",
-    "anexeOComprovativo": "Please attach the proof of transfer.",
-    "tipoDeComprovativoInvalido": "The proof must be an image (PNG, JPG, WEBP) or a PDF.",
-    "pedidoEnviado": "Request sent! Your {{quantidade}} diamonds will arrive as soon as we confirm the payment.",
     "osMeusPedidos": "My requests",
     "estados": {
       "pendente": "Awaiting confirmation",
       "aprovado": "Credited",
       "rejeitado": "Rejected"
+    },
+    "quantidade": {
+      "diamantes": "{{quantidade}} diamonds",
+      "moedas": "{{quantidade}} coins"
     }
   },
+  "LojaMoedas": {
+    "inclusivamente": "Inclusivamente",
+    "titulo": "Coin Shop",
+    "descricao": "Coins can be traded for diamonds in the Diamond Shop. You also earn them by playing: every level cleared is worth 50 coins.",
+    "voltarAoMenu": "Back to menu",
+    "naoFoiPossivelCarregar": "We couldn't load the shop.",
+    "tentarNovamente": "Try again",
+    "avisoTransferencia": "Pay in Kwanzas by bank transfer: the coins arrive once we confirm the payment. You can also earn coins by playing.",
+    "avisoPagamentoSimulado": "Simulated payment: in this version nothing is charged and the coins are credited immediately.",
+    "maisPopular": "Most popular",
+    "melhorValor": "Best value",
+    "pacotes": {
+      "pilha": "Pile of Coins",
+      "saco": "Bag of Coins",
+      "bau": "Chest of Coins"
+    },
+    "bonus": "Includes +{{quantidade}} bonus",
+    "comprarPacote": "Buy {{quantidade}} coins for {{preco}}",
+    "entrarParaComprar": "Sign in to buy",
+    "confirmarCompra": "Confirm purchase",
+    "confirmarCompraDescricao": "You'll receive {{quantidade}} coins for {{preco}}.",
+    "pagarPorTransferencia": "Pay by bank transfer",
+    "cancelar": "Cancel",
+    "pagarSimulado": "Pay (simulated)",
+    "enviarComprovativo": "Send proof of payment",
+    "compraConcluida": "Purchase complete! +{{quantidade}} coins.",
+    "pedidoEnviado": "Request sent! Your {{quantidade}} coins will arrive as soon as we confirm the payment.",
+    "anexeOComprovativo": "Please attach the proof of transfer.",
+    "tipoDeComprovativoInvalido": "The proof must be an image (PNG, JPG, WEBP) or a PDF.",
+    "pagamentosEmBreve": "Real payments available soon.",
+    "naoFoiPossivelComprar": "We couldn't complete the purchase. You were not charged.",
+    "irParaDiamantes": "Trade coins for diamonds"
+  },
   "Mercado": {
-    "titulo": "Market",
-    "descricao": "Buy an opinion from a street vendor. The pricier the vendor, the more certain the answer. After selling, each vendor rests for 4 hours.",
-    "inicieSessao": "Sign in to buy help at the Market with your diamonds.",
+    "titulo": "Eye Clinic",
+    "descricao": "Ask an eye-care professional for their opinion. The more experienced, the more certain, and each one knows some topics better than others. After a consultation, each professional is busy for 4 hours.",
+    "inicieSessao": "Sign in to consult the Eye Clinic professionals with your diamonds.",
     "entrar": "Sign in",
     "oSeuSaldo": "Your balance",
     "certeza": "Certainty",
@@ -1982,49 +2021,59 @@
       "alta": "High",
       "muitoAlta": "Very high"
     },
-    "comprar": "Buy answer",
-    "comprarA": "Buy an answer from {{nome}} for {{custo}} diamonds",
+    "comprar": "Ask for an opinion",
+    "comprarA": "Ask {{nome}} for an opinion for {{custo}} diamonds",
     "saldoInsuficiente": "Not enough diamonds",
-    "disponivelDaquiA": "Selling again in {{tempo}}",
-    "diamantesInsuficientes": "You don't have enough diamonds for this vendor.",
-    "vendedorBloqueado": "This vendor is still resting. Try another one.",
-    "naoFoiPossivelComprar": "We couldn't buy the help. No diamonds were spent.",
-    "naoFoiPossivelCarregar": "We couldn't open the Market.",
+    "disponivelDaquiA": "Available again in {{tempo}}",
+    "diamantesInsuficientes": "You don't have enough diamonds for this consultation.",
+    "vendedorBloqueado": "This professional is busy with another patient. Try someone else.",
+    "naoFoiPossivelComprar": "We couldn't get the opinion. No diamonds were spent.",
+    "naoFoiPossivelCarregar": "We couldn't open the Eye Clinic.",
     "tentarNovamente": "Try again",
-    "avisoSugestao": "It's just an opinion: cheaper vendors get it wrong more often. The final call is yours.",
+    "avisoSugestao": "It's just an opinion: less experienced professionals get it wrong more often. The final decision is yours.",
     "voltarAPergunta": "Back to the question",
     "precisaDeMaisDiamantes": "Out of diamonds? Earn more by playing or visit the Shop from the game menu.",
     "especialistaEm": "Expert in {{categoria}}",
-    "poucoAVontadeCom": "Not at ease with {{categoria}}",
+    "poucoAVontadeCom": "Outside their field: {{categoria}}",
     "variacaoBase": "base certainty {{base}}%",
     "temaDaPergunta": "This question's topic: {{categoria}}",
-    "indisponivelOffline": "The Market needs a connection to the server.",
+    "indisponivelOffline": "The Eye Clinic needs a connection to the server.",
     "vendedores": {
-      "tio-ze": {
-        "nome": "Tio Zé",
-        "descricao": "Fruit street seller, knows a little bit of everything",
-        "bordao": "Hey, no promises, but this one looks easy...",
-        "resposta": "Hmm... I think it's {{opcao}}. Just don't blame me, okay?"
+      "estudante-medicina": {
+        "nome": "Student João",
+        "profissao": "Medical Student",
+        "bordao": "I'm still learning, but I remember reading about this.",
+        "resposta": "From what I've studied, I think it's {{opcao}}. But double-check, okay?",
+        "motivoForte": "he has just studied {{categoria}} in class and read everything on the topic.",
+        "motivoFraco": "he hasn't seen clinical cases of {{categoria}} yet, only the textbooks."
       },
-      "mana-fefa": {
-        "nome": "Mana Fefa",
-        "descricao": "Sells phone credit at the bus stop and hears every conversation",
-        "bordao": "Yeah, I've heard loads of people talk about this at the bus stop!",
-        "resposta": "Yeah, bro, I'd go with {{opcao}}."
+      "enfermeira-oftalmica": {
+        "nome": "Nurse Marta",
+        "profissao": "Ophthalmic Nurse",
+        "bordao": "At the clinic we see lots of practical cases like this.",
+        "resposta": "From my experience at the clinic, it's {{opcao}}.",
+        "motivoForte": "she advises patients about {{categoria}} every day.",
+        "motivoFraco": "{{categoria}} is more theory than practice: she's less at ease."
       },
-      "dona-maria": {
-        "nome": "Dona Maria",
-        "descricao": "Market vendor for 30 years, loads of experience",
-        "bordao": "Child, your auntie knows this one well.",
-        "resposta": "Child, it's {{opcao}}. Trust your auntie."
+      "optometrista": {
+        "nome": "Dr. Paulo",
+        "profissao": "Optometrist",
+        "bordao": "Let me assess your visual acuity.",
+        "resposta": "I've looked carefully: the answer is {{opcao}}.",
+        "motivoForte": "{{categoria}} (optics, refraction and acuity) is the core of his work.",
+        "motivoFraco": "diagnosing and treating {{categoria}} is the ophthalmologist's job; he refers these cases."
       },
-      "kota-beto": {
-        "nome": "Kota Beto",
-        "descricao": "Retired teacher, the elder of the market",
-        "bordao": "An elder never speaks lightly.",
-        "resposta": "No doubt at all: it's {{opcao}}. All good!"
+      "oftalmologista": {
+        "nome": "Dr. Helena",
+        "profissao": "Consultant Ophthalmologist",
+        "bordao": "With my years of clinical experience, the diagnosis is clear.",
+        "resposta": "The diagnosis is clear: it's {{opcao}}.",
+        "motivoForte": "{{categoria}} has been her clinical specialty for many years.",
+        "motivoFraco": "everyday habits ({{categoria}}) are the topic she follows least closely."
       }
-    }
+    },
+    "porque": "Why: {{motivo}}",
+    "motivoNeutro": "{{categoria}} is neither this professional's specialty nor weak spot: base certainty applies."
   },
   "VidaExtra": {
     "titulo": "Extra Life",

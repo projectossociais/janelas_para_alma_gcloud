@@ -92,7 +92,7 @@ describe("tradução en-US (Fase 3)", () => {
     /"Estrabismo para Totós"\. Sociedade Portuguesa de Oftalmologia/g,
     /"Breves Considerações sobre o Estrabismo", Repositório Aberto da Universidade do Porto/g,
     /PT: versão do site em português/g, // o link para a versão portuguesa é, de propósito, em português
-    /Tio Zé|Mana Fefa|Dona Maria|Kota Beto/g, // vendedores do Mercado do jogo (nomes próprios)
+    /João/g, // Estudante João, do Consultório do jogo (nome próprio)
   ];
   const PALAVRAS_PT = /[ãõçáàâéêíóôú]|\b(de|da|das|dos|para|que|não|com|uma|também|está|são|pelo|pela|nosso|nossa|ou|mais|muito|sem|onde|quando|seu|sua)\b/i;
 

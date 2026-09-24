@@ -132,16 +132,39 @@ class ComprarPacoteRequest(BaseModel):
     metodo_pagamento: Literal["moedas", "kwanzas"] = "kwanzas"
 
 
-class PedirDiamantesKwanzasRequest(BaseModel):
+class PacoteMoedasPublico(BaseModel):
+    id: str
+    moedas: int
+    bonus: int
+    total_moedas: int
+    preco_kz: int
+
+    model_config = {"from_attributes": True}
+
+
+class LojaMoedasPublica(BaseModel):
+    pacotes: list[PacoteMoedasPublico]
+    # Como na Loja de Diamantes: `True` só em desenvolvimento.
+    pagamento_simulado: bool
+
+
+class ComprarPacoteMoedasRequest(BaseModel):
+    pacote_id: str = Field(min_length=1, max_length=40)
+
+
+class PedirKwanzasRequest(BaseModel):
     pacote_id: str = Field(min_length=1, max_length=40)
     # Chave devolvida por `POST /uploads/comprovativo`, depois do PUT ao R2.
     comprovativo_chave: str = Field(min_length=1, max_length=300)
+    # Que loja: o pacote procura-se só no catálogo deste tipo.
+    tipo_item: Literal["diamantes", "moedas"] = "diamantes"
 
 
-class PedidoDiamantesPublico(BaseModel):
+class PedidoLojaPublico(BaseModel):
     id: str
+    tipo_item: Literal["diamantes", "moedas"]
     pacote_id: str
-    diamantes: int
+    quantidade: int
     preco_kz: int
     estado: Literal["pendente", "aprovado", "rejeitado"]
     created_at: datetime
@@ -150,7 +173,7 @@ class PedidoDiamantesPublico(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class PedidoDiamantesAdmin(PedidoDiamantesPublico):
+class PedidoLojaAdmin(PedidoLojaPublico):
     utilizador_id: str | None
     comprovativo_url: str
     decidido_por: str | None

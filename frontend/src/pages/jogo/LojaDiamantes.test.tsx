@@ -7,8 +7,8 @@ import type { ReactNode } from "react";
 const obterPerfil = vi.fn();
 const obterLojaDiamantes = vi.fn();
 const comprarPacoteDiamantes = vi.fn();
-const pedirDiamantesKwanzas = vi.fn();
-const listarMeusPedidosDiamantes = vi.fn();
+const pedirComKwanzas = vi.fn();
+const listarMeusPedidosLoja = vi.fn();
 const prepararComprovativo = vi.fn();
 const enviarParaStorage = vi.fn();
 vi.mock("@/lib/apiClient", () => ({
@@ -16,8 +16,8 @@ vi.mock("@/lib/apiClient", () => ({
     obterPerfil: (...a: unknown[]) => obterPerfil(...a),
     obterLojaDiamantes: (...a: unknown[]) => obterLojaDiamantes(...a),
     comprarPacoteDiamantes: (...a: unknown[]) => comprarPacoteDiamantes(...a),
-    pedirDiamantesKwanzas: (...a: unknown[]) => pedirDiamantesKwanzas(...a),
-    listarMeusPedidosDiamantes: (...a: unknown[]) => listarMeusPedidosDiamantes(...a),
+    pedirComKwanzas: (...a: unknown[]) => pedirComKwanzas(...a),
+    listarMeusPedidosLoja: (...a: unknown[]) => listarMeusPedidosLoja(...a),
   },
   comprovativosApi: {
     preparar: (...a: unknown[]) => prepararComprovativo(...a),
@@ -75,8 +75,8 @@ describe("LojaDiamantes", () => {
     toastInfo.mockReset();
     mockProfile = { id: "u1", nome_completo: "Ana", email: "ana@example.com", avatar_url: null };
     obterPerfil.mockResolvedValue(PERFIL);
-    pedirDiamantesKwanzas.mockReset();
-    listarMeusPedidosDiamantes.mockReset().mockResolvedValue([]);
+    pedirComKwanzas.mockReset();
+    listarMeusPedidosLoja.mockReset().mockResolvedValue([]);
     prepararComprovativo.mockReset().mockResolvedValue({ url_de_upload: "https://r2/put", chave: "comprovativos/x.png", url_publico: "https://r2/x.png" });
     enviarParaStorage.mockReset().mockResolvedValue(undefined);
   });
@@ -172,8 +172,8 @@ describe("LojaDiamantes", () => {
 
   it("Kwanzas em produção: dados bancários + comprovativo; envia o pedido e não credita nada no ecrã", async () => {
     obterLojaDiamantes.mockResolvedValue({ pacotes: PACOTES, pagamento_simulado: false });
-    pedirDiamantesKwanzas.mockResolvedValue({
-      id: "p1", pacote_id: "medio", diamantes: 165, preco_kz: 1250, estado: "pendente",
+    pedirComKwanzas.mockResolvedValue({
+      id: "p1", tipo_item: "diamantes", pacote_id: "medio", quantidade: 165, preco_kz: 1250, estado: "pendente",
       created_at: "2026-09-24T12:00:00Z", decidido_em: null,
     });
     render(<LojaDiamantes />, { wrapper: Envoltorio });
@@ -189,7 +189,7 @@ describe("LojaDiamantes", () => {
     await userEvent.upload(dialogo.querySelector('input[type="file"]') as HTMLInputElement, ficheiro);
     await userEvent.click(enviar);
 
-    await waitFor(() => expect(pedirDiamantesKwanzas).toHaveBeenCalledWith("medio", "comprovativos/x.png"));
+    await waitFor(() => expect(pedirComKwanzas).toHaveBeenCalledWith("medio", "comprovativos/x.png", "diamantes"));
     expect(prepararComprovativo).toHaveBeenCalledWith("image/png");
     expect(enviarParaStorage).toHaveBeenCalledWith("https://r2/put", ficheiro);
     expect(comprarPacoteDiamantes).not.toHaveBeenCalled();
@@ -212,22 +212,25 @@ describe("LojaDiamantes", () => {
     await userEvent.click(within(dialogo).getByRole("button", { name: "Enviar comprovativo" }));
 
     await waitFor(() => expect(toastError).toHaveBeenCalled());
-    expect(pedirDiamantesKwanzas).not.toHaveBeenCalled();
+    expect(pedirComKwanzas).not.toHaveBeenCalled();
     expect(toastSuccess).not.toHaveBeenCalled();
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
   it("mostra os meus pedidos com o estado", async () => {
     obterLojaDiamantes.mockResolvedValue({ pacotes: PACOTES, pagamento_simulado: false });
-    listarMeusPedidosDiamantes.mockResolvedValue([
-      { id: "p1", pacote_id: "medio", diamantes: 165, preco_kz: 1250, estado: "pendente", created_at: "2026-09-24T12:00:00Z", decidido_em: null },
-      { id: "p2", pacote_id: "pequeno", diamantes: 50, preco_kz: 500, estado: "aprovado", created_at: "2026-09-23T12:00:00Z", decidido_em: "2026-09-23T13:00:00Z" },
+    listarMeusPedidosLoja.mockResolvedValue([
+      { id: "p1", tipo_item: "diamantes", pacote_id: "medio", quantidade: 165, preco_kz: 1250, estado: "pendente", created_at: "2026-09-24T12:00:00Z", decidido_em: null },
+      { id: "p2", tipo_item: "moedas", pacote_id: "saco", quantidade: 3300, preco_kz: 1000, estado: "aprovado", created_at: "2026-09-23T12:00:00Z", decidido_em: "2026-09-23T13:00:00Z" },
     ]);
     render(<LojaDiamantes />, { wrapper: Envoltorio });
 
     expect(await screen.findByRole("heading", { name: "Os meus pedidos" })).toBeInTheDocument();
-    expect(screen.getByText("A confirmar")).toBeInTheDocument();
-    expect(screen.getByText("Creditado")).toBeInTheDocument();
+    expect(screen.getByTestId("pedido-p1")).toHaveTextContent("165 diamantes");
+    expect(screen.getByTestId("pedido-p1")).toHaveTextContent("A confirmar");
+    // A lista é partilhada: também mostra as compras de moedas.
+    expect(screen.getByTestId("pedido-p2")).toHaveTextContent("3.300 moedas");
+    expect(screen.getByTestId("pedido-p2")).toHaveTextContent("Creditado");
   });
 
   it("um 501 inesperado mostra 'em breve', nunca erro nem sucesso", async () => {

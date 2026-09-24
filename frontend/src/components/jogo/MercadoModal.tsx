@@ -19,12 +19,12 @@ import { localizar } from "@/i18n/rotas";
 import { cn } from "@/lib/utils";
 import { formatarTempoRestante, msRestantes, nivelDeCerteza } from "@/pages/jogo/mercadoConfig";
 
-// Só apresentação -- cor e iniciais do "avatar" de cada vendedor.
+// Só apresentação -- cor e iniciais do "avatar" de cada profissional.
 const COR_VENDEDOR: Record<string, string> = {
-  "tio-ze": "bg-orange-500/15 text-orange-600",
-  "mana-fefa": "bg-pink-500/15 text-pink-600",
-  "dona-maria": "bg-teal/15 text-teal",
-  "kota-beto": "bg-gold/20 text-gold",
+  "estudante-medicina": "bg-orange-500/15 text-orange-600",
+  "enfermeira-oftalmica": "bg-pink-500/15 text-pink-600",
+  optometrista: "bg-teal/15 text-teal",
+  oftalmologista: "bg-gold/20 text-gold",
 };
 
 const COR_CERTEZA = {
@@ -44,10 +44,11 @@ interface MercadoModalProps {
 }
 
 /**
- * Mercado -- ajuda paga por diamantes, aberta durante a partida. Cada
- * vendedor ambulante vende uma sugestão de resposta; quanto mais caro, mais
- * fiável. Depois de vender fica bloqueado 4h para este jogador (cronómetro
- * no cartão). Tudo o que importa -- custo, precisão, bloqueio, saldo -- é
+ * Consultório (no código ainda "Mercado") -- ajuda paga por diamantes, aberta
+ * durante a partida. Cada profissional de saúde ocular dá uma opinião sobre
+ * a resposta; quanto mais experiente, mais fiável, e a certeza muda com o
+ * tema da pergunta (especialidade / ponto fraco). Depois de uma consulta,
+ * o profissional fica ocupado 4h para este jogador (cronómetro no cartão). Tudo o que importa -- custo, precisão, bloqueio, saldo -- é
  * decidido e guardado pela API; aqui só se mostra.
  */
 const MercadoModal = ({ open, onOpenChange, perguntaId, opcoesExcluidas, onAjudaComprada }: MercadoModalProps) => {
@@ -212,6 +213,17 @@ const MercadoModal = ({ open, onOpenChange, perguntaId, opcoesExcluidas, onAjuda
                     ? t(`PerfilJogador.categorias.${mercado.categoria}`, { defaultValue: mercado.categoria })
                     : "";
                   const nome = t(`Mercado.vendedores.${vendedor.id}.nome`, { defaultValue: vendedor.id });
+                  // Porquê desta certeza nesta pergunta -- a especialidade, o
+                  // ponto fraco ou a certeza base, sempre dito por extenso.
+                  const motivo = !nomeCategoria
+                    ? ""
+                    : vendedor.afinidade === "especialista"
+                      ? t(`Mercado.vendedores.${vendedor.id}.motivoForte`, { categoria: nomeCategoria })
+                      : vendedor.afinidade === "fraco"
+                        ? t(`Mercado.vendedores.${vendedor.id}.motivoFraco`, { categoria: nomeCategoria })
+                        : vendedor.afinidade === "neutro"
+                          ? t("Mercado.motivoNeutro", { categoria: nomeCategoria })
+                          : "";
                   return (
                     <li
                       key={vendedor.id}
@@ -241,7 +253,7 @@ const MercadoModal = ({ open, onOpenChange, perguntaId, opcoesExcluidas, onAjuda
                               {nome}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {t(`Mercado.vendedores.${vendedor.id}.descricao`, { defaultValue: "" })}
+                              {t(`Mercado.vendedores.${vendedor.id}.profissao`, { defaultValue: "" })}
                             </p>
                           </div>
                           <span className="inline-flex items-center gap-1 font-bold text-teal shrink-0">
@@ -289,6 +301,11 @@ const MercadoModal = ({ open, onOpenChange, perguntaId, opcoesExcluidas, onAjuda
                               style={{ width: `${vendedor.precisao * 100}%` }}
                             />
                           </div>
+                          {motivo && (
+                            <p className="text-xs text-muted-foreground" data-testid={`motivo-${vendedor.id}`}>
+                              {t("Mercado.porque", { motivo })}
+                            </p>
+                          )}
                         </div>
 
                         {bloqueado ? (

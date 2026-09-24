@@ -1,7 +1,7 @@
-"""Mercado do jogo "Inclusivamente" -- ajuda paga por diamantes.
+"""Consultório do jogo "Inclusivamente" (antes "Mercado") -- ajuda paga por
+diamantes.
 
-Cada vendedor ambulante vende uma sugestão de resposta para a pergunta em
-curso. Quanto mais caro o vendedor, maior a probabilidade de a sugestão
+Cada profissional de saúde ocular dá uma opinião sobre a pergunta em curso. Quanto mais caro o vendedor, maior a probabilidade de a sugestão
 estar certa (`precisao`) -- e essa certeza muda com a categoria da pergunta
 (`VendedorAmbulante.precisao_para`): cada vendedor é especialista nuns temas
 e está pouco à vontade noutros. Depois de vender, fica bloqueado para esse jogador
@@ -14,9 +14,9 @@ preço, a precisão e o bloqueio saem sempre do catálogo abaixo, e o débito e
 o bloqueio são gravados juntos e de forma atómica
 (`MercadoJogoRepository.debitar_e_bloquear`).
 
-Os nomes e as falas dos vendedores (Tio Zé, Mana Fefa...) vivem nas
-traduções do frontend, chaveados pelo `id` -- o servidor só conhece o id,
-o custo e a precisão.
+Os nomes, profissões e falas (Estudante João, Enfermeira Marta...) vivem
+nas traduções do frontend, chaveados pelo `id` -- o servidor só conhece o
+id, o custo e a precisão.
 """
 
 import random
@@ -70,53 +70,60 @@ class VendedorAmbulante:
         }[self.afinidade(categoria)]
 
 
-# Do mais barato ao mais caro. Equilíbrio com o que o jogador ganha: uma
-# partida boa dá dezenas de diamantes (marcos + sequências de acertos), o
-# pacote pequeno da loja dá 50 -- o vendedor mais fiável custa quase isso.
+# O "Consultório" (2026-09-24; antes "Mercado", com vendedores ambulantes):
+# quatro profissionais de saúde ocular, do mais barato ao mais caro.
+# Equilíbrio com o que o jogador ganha: uma partida boa dá dezenas de
+# diamantes (marcos + sequências de acertos), o pacote pequeno da loja dá 50
+# -- a especialista mais fiável custa quase isso. Os ids, nomes, profissões
+# e falas vivem nas traduções do frontend (`Mercado.vendedores.<id>`); o
+# código interno continua a chamar-lhes "vendedores" e "Mercado" (endpoints
+# e tabela `bloqueios_vendedores_jogo` inalterados).
 #
-# Afinidades por categoria (2026-09-24): o Kota Beto é professor -- quase
-# infalível em ciência e anatomia, menos no dia a dia; o Tio Zé e a Mana
-# Fefa sabem da vida prática (prevenção, estilo de vida) mas pouco de
-# ciência pura; a Dona Maria conhece de perto as doenças e as curiosidades.
-_CIENCIA = frozenset({"ciencia_ocular", "anatomia_ocular"})
-_DIA_A_DIA = frozenset({"estilo_vida_visao", "prevencao_cuidados"})
-
+# Afinidades por categoria -- o que cada profissão sabe de perto:
+# - Estudante de Medicina: acabou de estudar anatomia e lê tudo o que é
+#   curiosidade; ainda não viu casos clínicos (doenças e estrabismo).
+# - Enfermeira Oftálmica: prática do consultório -- prevenção, cuidados e
+#   hábitos do dia a dia; menos à vontade com ciência pura.
+# - Optometrista: ciência da visão (óptica, refracção, acuidade); diagnosticar
+#   e tratar doenças é trabalho do oftalmologista.
+# - Oftalmologista Especialista: doenças e estrabismo são a sua clínica; os
+#   hábitos do dia a dia são o tema em que está menos atenta.
 VENDEDORES: tuple[VendedorAmbulante, ...] = (
     VendedorAmbulante(
-        id="tio-ze",
+        id="estudante-medicina",
         custo_diamantes=5,
         precisao=0.50,
-        especialidades=_DIA_A_DIA,
+        especialidades=frozenset({"anatomia_ocular", "curiosidades_visuais"}),
         precisao_especialidade=0.75,
-        pontos_fracos=_CIENCIA,
+        pontos_fracos=frozenset({"doencas_estrabismo"}),
         precisao_fraca=0.35,
     ),
     VendedorAmbulante(
-        id="mana-fefa",
+        id="enfermeira-oftalmica",
         custo_diamantes=12,
         precisao=0.70,
-        especialidades=_DIA_A_DIA,
+        especialidades=frozenset({"prevencao_cuidados", "estilo_vida_visao"}),
         precisao_especialidade=0.85,
-        pontos_fracos=_CIENCIA,
+        pontos_fracos=frozenset({"ciencia_ocular"}),
         precisao_fraca=0.50,
     ),
     VendedorAmbulante(
-        id="dona-maria",
+        id="optometrista",
         custo_diamantes=25,
         precisao=0.85,
-        especialidades=frozenset({"doencas_estrabismo", "curiosidades_visuais"}),
-        precisao_especialidade=0.92,
-        pontos_fracos=frozenset({"ciencia_ocular"}),
+        especialidades=frozenset({"ciencia_ocular"}),
+        precisao_especialidade=0.95,
+        pontos_fracos=frozenset({"doencas_estrabismo"}),
         precisao_fraca=0.75,
     ),
     VendedorAmbulante(
-        id="kota-beto",
+        id="oftalmologista",
         custo_diamantes=45,
         precisao=0.90,
-        especialidades=_CIENCIA,
+        especialidades=frozenset({"doencas_estrabismo"}),
         precisao_especialidade=0.98,
-        pontos_fracos=_DIA_A_DIA,
-        precisao_fraca=0.75,
+        pontos_fracos=frozenset({"estilo_vida_visao"}),
+        precisao_fraca=0.80,
     ),
 )
 

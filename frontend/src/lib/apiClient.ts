@@ -1295,17 +1295,36 @@ export interface LojaDiamantes {
 
 export type MetodoPagamentoDiamantes = "moedas" | "kwanzas";
 
-export interface PedidoDiamantes {
+export interface PacoteMoedas {
   id: string;
+  moedas: number;
+  bonus: number;
+  total_moedas: number;
+  preco_kz: number;
+}
+
+export interface LojaMoedas {
+  pacotes: PacoteMoedas[];
+  // Como na Loja de Diamantes: `true` só em desenvolvimento.
+  pagamento_simulado: boolean;
+}
+
+export type TipoItemLoja = "diamantes" | "moedas";
+
+/** Compra paga em Kwanzas (transferência + comprovativo), de diamantes ou
+ *  de moedas -- creditada quando um admin confirmar o pagamento. */
+export interface PedidoLoja {
+  id: string;
+  tipo_item: TipoItemLoja;
   pacote_id: string;
-  diamantes: number;
+  quantidade: number;
   preco_kz: number;
   estado: "pendente" | "aprovado" | "rejeitado";
   created_at: string;
   decidido_em: string | null;
 }
 
-export interface PedidoDiamantesAdmin extends PedidoDiamantes {
+export interface PedidoLojaAdmin extends PedidoLoja {
   utilizador_id: string | null;
   comprovativo_url: string;
   decidido_por: string | null;
@@ -1427,21 +1446,30 @@ export const jogoApi = {
       body: JSON.stringify({ pacote_id: pacoteId, metodo_pagamento: metodo }),
     }),
 
-  /** Kwanzas por transferência: `comprovativoChave` vem de
-   *  `comprovativosApi.preparar` + upload já feito. Não credita nada -- os
-   *  diamantes chegam quando um admin confirmar o pagamento. */
-  pedirDiamantesKwanzas: (pacoteId: string, comprovativoChave: string) =>
-    pedido<PedidoDiamantes>("/jogo/loja/pedidos", {
+  obterLojaMoedas: () => pedido<LojaMoedas>("/jogo/loja/moedas/pacotes"),
+
+  /** Crédito imediato de moedas -- só em desenvolvimento (simulado). */
+  comprarPacoteMoedas: (pacoteId: string) =>
+    pedido<PerfilJogadorPublico>("/jogo/loja/moedas/compras", {
       method: "POST",
-      body: JSON.stringify({ pacote_id: pacoteId, comprovativo_chave: comprovativoChave }),
+      body: JSON.stringify({ pacote_id: pacoteId }),
     }),
 
-  listarMeusPedidosDiamantes: () => pedido<PedidoDiamantes[]>("/jogo/loja/pedidos"),
+  /** Kwanzas por transferência, para diamantes ou moedas: `comprovativoChave`
+   *  vem de `comprovativosApi.preparar` + upload já feito. Não credita nada
+   *  -- o saldo só muda quando um admin confirmar o pagamento. */
+  pedirComKwanzas: (pacoteId: string, comprovativoChave: string, tipoItem: TipoItemLoja = "diamantes") =>
+    pedido<PedidoLoja>("/jogo/loja/pedidos", {
+      method: "POST",
+      body: JSON.stringify({ pacote_id: pacoteId, comprovativo_chave: comprovativoChave, tipo_item: tipoItem }),
+    }),
+
+  listarMeusPedidosLoja: () => pedido<PedidoLoja[]>("/jogo/loja/pedidos"),
 
   /** Só admin. */
-  listarPedidosDiamantes: () => pedido<PedidoDiamantesAdmin[]>("/admin/jogo/pedidos-diamantes"),
-  aprovarPedidoDiamantes: (id: string) =>
-    pedido<PedidoDiamantesAdmin>(`/admin/jogo/pedidos-diamantes/${id}/aprovar`, { method: "POST" }),
-  rejeitarPedidoDiamantes: (id: string) =>
-    pedido<PedidoDiamantesAdmin>(`/admin/jogo/pedidos-diamantes/${id}/rejeitar`, { method: "POST" }),
+  listarPedidosLoja: () => pedido<PedidoLojaAdmin[]>("/admin/jogo/pedidos-loja"),
+  aprovarPedidoLoja: (id: string) =>
+    pedido<PedidoLojaAdmin>(`/admin/jogo/pedidos-loja/${id}/aprovar`, { method: "POST" }),
+  rejeitarPedidoLoja: (id: string) =>
+    pedido<PedidoLojaAdmin>(`/admin/jogo/pedidos-loja/${id}/rejeitar`, { method: "POST" }),
 };

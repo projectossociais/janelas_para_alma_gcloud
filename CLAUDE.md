@@ -82,14 +82,21 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   moedas e crédito dos diamantes numa só instrução atómica, só com saldo; 402 sem ele) ou
   por **Kwanzas**, com o mesmo fluxo do Premium (não há gateway nem webhook no projecto):
   transferência + comprovativo no R2 → `POST /jogo/loja/pedidos` grava um pedido pendente
-  em `pedidos_diamantes` (quantidade e preço copiados do catálogo) → um admin confirma o
-  pagamento em `/admin/mensagens?tab=diamantes` (`POST /admin/jogo/pedidos-diamantes/{id}/aprovar`)
-  e só aí os diamantes são creditados, na mesma transacção, uma única vez (409 à segunda).
+  em `pedidos_loja_jogo` (`tipo_item` diamantes | moedas; quantidade e preço copiados do
+  catálogo) → um admin confirma o pagamento em `/admin/mensagens?tab=loja`
+  (`POST /admin/jogo/pedidos-loja/{id}/aprovar`) e só aí a quantidade é creditada no saldo
+  do tipo, na mesma transacção, uma única vez (409 à segunda). A **Loja de Moedas**
+  (`/jogo-curiosidades/loja-moedas`, aberta pelas moedas da barra da carteira) vende Pilha /
+  Saco / Baú (`PACOTES_MOEDAS`) só por este fluxo (`tipo_item: "moedas"`); moedas compradas
+  não contam para `moedas_ganhas_total`. Os preços em Kz das moedas ficam sempre acima de
+  0,25 Kz por moeda, para nunca sair mais barato comprar diamantes "às voltas" (teste em
+  `test_loja_jogo_service.py`).
   `JOGO_PAGAMENTOS_SIMULADOS=true` (só `docker-compose.yml` de desenvolvimento; **nunca** em
   produção) faz os Kwanzas creditarem logo, sem comprovativo; sem a flag, esse crédito
   imediato em Kwanzas recusa com 501. O catálogo e os preços vivem só em
   `services/loja_jogo_service.py` (Kz aprovados pelo dono do projecto em 2026-09-24: 500 /
-  1.250 / 3.000; moedas pedidas por ele no mesmo dia: 2.000 / 5.500 / 14.000). **Tudo o que é do servidor exige sessão**
+  1.250 / 3.000; moedas pedidas por ele no mesmo dia: 2.000 / 5.500 / 14.000; pacotes de
+  moedas propostos a 350 / 1.000 / 2.500 Kz, a confirmar). **Tudo o que é do servidor exige sessão**
   (desde 2026-09-24): sem sessão, `/jogo/validar` revelava a resposta de qualquer pergunta
   e servia de oráculo. Convidados (e o site inglês) jogam só com a reserva local do
   frontend (`perguntasOffline*.ts`), **sem prémio**. Com sessão, a pergunta é entregue
@@ -102,11 +109,14 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   endpoints próprios (`/jogo/ajudas/*`, `/jogo/tempo-esgotado`) que nunca avançam o progresso
   — nunca usar `/jogo/validar` com uma letra qualquer para descobrir a resposta (bug real
   corrigido em 2026-09-24).
-  **Mercado** (ajuda paga): vendedores ambulantes com custo em diamantes e precisão
-  base crescente, que muda com a **categoria da pergunta** (`VendedorAmbulante.precisao_para`:
-  Kota Beto especialista em ciência/anatomia, Tio Zé e Mana Fefa em prevenção/estilo de
-  vida, Dona Maria em doenças/curiosidades; determinista — reabrir não "sorteia" melhor),
-  bloqueados 4h por jogador após cada venda — catálogo em
+  **Consultório** (ajuda paga; no código, endpoints e tabelas ainda "Mercado"/"vendedores"):
+  quatro profissionais de saúde ocular com custo em diamantes e precisão base crescente,
+  que muda com a **categoria da pergunta** (`VendedorAmbulante.precisao_para`): Estudante
+  de Medicina (forte em anatomia/curiosidades), Enfermeira Oftálmica (prevenção/estilo de
+  vida), Optometrista (ciência ocular), Oftalmologista Especialista (doenças e estrabismo);
+  cada um com um ponto fraco; determinista — reabrir não "sorteia" melhor. O frontend
+  explica o porquê de cada bónus/penalização (`Mercado.vendedores.<id>.motivoForte|Fraco`).
+  Bloqueados 4h por jogador após cada consulta — catálogo em
   `services/mercado_jogo_service.py`, bloqueio na tabela `bloqueios_vendedores_jogo`;
   débito e bloqueio gravados atomicamente (`MercadoJogoRepository.debitar_e_bloquear`).
   **Partidas** (tabela `partidas_jogo`, desde 2026-09-24; substitui a antiga coluna

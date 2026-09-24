@@ -1,4 +1,4 @@
-"""Loja de diamantes do jogo "Inclusivamente".
+"""Lojas do jogo "Inclusivamente": Loja de Diamantes e Loja de Moedas.
 
 A pergunta de sempre (CLAUDE.md secção 3): "o utilizador podia mentir sobre
 isto?" -- sim, sobre quantos diamantes um pacote dá, quanto custa e se já
@@ -25,9 +25,16 @@ Duas formas de pagar cada pacote (2026-09-24):
   é recusado (`PagamentosIndisponiveisError`, 501) -- em produção os
   Kwanzas passam sempre pelo pedido com comprovativo.
 
-Preços em Kz aprovados pelo dono do projecto em 2026-09-24; preços em
-moedas pedidos pelo dono do projecto no mesmo dia (50 diamantes ~ 2.000
-moedas). Qualquer alteração exige de novo confirmação humana (CLAUDE.md
+**Loja de Moedas** (2026-09-24): pacotes de moedas (`PACOTES_MOEDAS`) só em
+Kwanzas, pelo mesmo pedido com comprovativo (`tipo_item="moedas"`); em modo
+simulado, `comprar_moedas` credita logo. Os preços em Kz das moedas nunca
+podem tornar mais barato comprar diamantes "às voltas" (Kz -> moedas ->
+diamantes) do que directamente -- ver `test_loja_jogo_service.py`.
+
+Preços em Kz dos diamantes aprovados pelo dono do projecto em 2026-09-24;
+preços em moedas pedidos pelo dono do projecto no mesmo dia (50 diamantes ~
+2.000 moedas); preços dos pacotes de moedas propostos no mesmo dia, a
+confirmar. Qualquer alteração exige de novo confirmação humana (CLAUDE.md
 secção 10).
 """
 
@@ -35,10 +42,11 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Literal
 
-from app.repositories.pedido_diamantes_repository import (
+from app.repositories.pedido_loja_repository import (
     PedidoAprovado,
-    PedidoDiamantesRegisto,
-    PedidoDiamantesRepository,
+    PedidoLojaRegisto,
+    PedidoLojaRepository,
+    TipoItemLoja,
 )
 from app.repositories.perfil_jogador_repository import PerfilJogadorRegisto, PerfilJogadorRepository
 from app.services.comprovativo_upload_service import url_publico_do_comprovativo
@@ -68,6 +76,30 @@ PACOTES_DIAMANTES: tuple[PacoteDiamantes, ...] = (
 )
 
 
+@dataclass(frozen=True)
+class PacoteMoedas:
+    id: str
+    moedas: int
+    bonus: int
+    preco_kz: int
+
+    @property
+    def total_moedas(self) -> int:
+        return self.moedas + self.bonus
+
+
+# Pilha, Saco e Baú: 0,35 / 0,30 / 0,28 Kz por moeda (os maiores saem um
+# pouco mais baratos). Nunca a 0,25 Kz por moeda ou menos: 50 diamantes
+# custam 500 Kz ou 2.000 moedas (0,25 Kz/moeda), e trocar moedas compradas
+# por diamantes nunca pode sair mais barato do que comprar os diamantes em
+# Kwanzas -- ver `test_loja_jogo_service.py`.
+PACOTES_MOEDAS: tuple[PacoteMoedas, ...] = (
+    PacoteMoedas(id="pilha", moedas=1_000, bonus=0, preco_kz=350),
+    PacoteMoedas(id="saco", moedas=3_000, bonus=300, preco_kz=1_000),
+    PacoteMoedas(id="bau", moedas=8_000, bonus=1_000, preco_kz=2_500),
+)
+
+
 class PacoteInexistenteError(Exception):
     def __init__(self, pacote_id: str) -> None:
         super().__init__(f"pacote de diamantes inexistente: {pacote_id}")
@@ -85,15 +117,15 @@ class MoedasInsuficientesError(Exception):
         self.custo = custo
 
 
-class PedidoDiamantesNaoEncontradoError(Exception):
+class PedidoLojaNaoEncontradoError(Exception):
     pass
 
 
-class PedidoDiamantesJaDecididoError(Exception):
+class PedidoLojaJaDecididoError(Exception):
     """Já aprovado ou rejeitado -- nunca se credita duas vezes."""
 
 
-class PedidoDiamantesSemContaError(Exception):
+class PedidoLojaSemContaError(Exception):
     """A conta do pedido foi apagada -- não há a quem creditar."""
 
 
@@ -101,7 +133,7 @@ class LojaJogoService:
     def __init__(
         self,
         perfis: PerfilJogadorRepository,
-        pedidos: PedidoDiamantesRepository,
+        pedidos: PedidoLojaRepository,
         pagamentos_simulados: bool,
         relogio=lambda: datetime.now(UTC),
     ) -> None:
@@ -117,11 +149,28 @@ class LojaJogoService:
     def listar_pacotes(self) -> tuple[PacoteDiamantes, ...]:
         return PACOTES_DIAMANTES
 
+    def listar_pacotes_moedas(self) -> tuple[PacoteMoedas, ...]:
+        return PACOTES_MOEDAS
+
     def _pacote(self, pacote_id: str) -> PacoteDiamantes:
         pacote = next((p for p in PACOTES_DIAMANTES if p.id == pacote_id), None)
         if pacote is None:
             raise PacoteInexistenteError(pacote_id)
         return pacote
+
+    def _pacote_moedas(self, pacote_id: str) -> PacoteMoedas:
+        pacote = next((p for p in PACOTES_MOEDAS if p.id == pacote_id), None)
+        if pacote is None:
+            raise PacoteInexistenteError(pacote_id)
+        return pacote
+
+    def comprar_moedas(self, utilizador_id: str, pacote_id: str) -> PerfilJogadorRegisto:
+        """Crédito imediato de moedas -- só com pagamentos simulados
+        (desenvolvimento). Em produção, `pedir_com_kwanzas(tipo_item="moedas")`."""
+        pacote = self._pacote_moedas(pacote_id)
+        if not self._pagamentos_simulados:
+            raise PagamentosIndisponiveisError()
+        return self._perfis.creditar_moedas(utilizador_id, pacote.total_moedas)
 
     def comprar(self, utilizador_id: str, pacote_id: str, metodo: MetodoPagamento = "kwanzas") -> PerfilJogadorRegisto:
         """Compra com crédito imediato: por moedas (sempre) ou por Kwanzas
@@ -141,51 +190,65 @@ class LojaJogoService:
 
     # --- Kwanzas: pedido com comprovativo, confirmado por um admin ----------
 
-    def pedir_com_kwanzas(self, utilizador_id: str, pacote_id: str, comprovativo_chave: str) -> PedidoDiamantesRegisto:
+    def pedir_com_kwanzas(
+        self,
+        utilizador_id: str,
+        pacote_id: str,
+        comprovativo_chave: str,
+        tipo_item: TipoItemLoja = "diamantes",
+    ) -> PedidoLojaRegisto:
         """O comprovativo já foi enviado directamente ao R2 -- aqui só se
         confirma que a chave é mesmo um comprovativo (nunca um caminho
-        arbitrário do bucket), como no Premium. Não credita nada."""
-        pacote = self._pacote(pacote_id)
+        arbitrário do bucket), como no Premium. Não credita nada. O pacote
+        procura-se só no catálogo do `tipo_item` pedido."""
+        if tipo_item == "moedas":
+            pacote_moedas = self._pacote_moedas(pacote_id)
+            quantidade, preco_kz = pacote_moedas.total_moedas, pacote_moedas.preco_kz
+        else:
+            pacote = self._pacote(pacote_id)
+            quantidade, preco_kz = pacote.total_diamantes, pacote.preco_kz
         comprovativo_url = url_publico_do_comprovativo(comprovativo_chave)
         return self._pedidos.criar(
             utilizador_id=utilizador_id,
-            pacote_id=pacote.id,
-            diamantes=pacote.total_diamantes,
-            preco_kz=pacote.preco_kz,
+            tipo_item=tipo_item,
+            pacote_id=pacote_id,
+            quantidade=quantidade,
+            preco_kz=preco_kz,
             comprovativo_url=comprovativo_url,
         )
 
-    def listar_pedidos_do_utilizador(self, utilizador_id: str) -> list[PedidoDiamantesRegisto]:
+    def listar_pedidos_do_utilizador(self, utilizador_id: str) -> list[PedidoLojaRegisto]:
         return self._pedidos.listar_do_utilizador(utilizador_id)
 
-    def listar_pedidos(self) -> list[PedidoDiamantesRegisto]:
+    def listar_pedidos(self) -> list[PedidoLojaRegisto]:
         return self._pedidos.listar()
 
-    def _pedido_pendente(self, pedido_id: str) -> PedidoDiamantesRegisto:
+    def _pedido_pendente(self, pedido_id: str) -> PedidoLojaRegisto:
         pedido = self._pedidos.obter(pedido_id)
         if pedido is None:
-            raise PedidoDiamantesNaoEncontradoError(pedido_id)
+            raise PedidoLojaNaoEncontradoError(pedido_id)
         if pedido.estado != "pendente":
-            raise PedidoDiamantesJaDecididoError(pedido_id)
+            raise PedidoLojaJaDecididoError(pedido_id)
         return pedido
 
     def aprovar_pedido(self, pedido_id: str, admin_id: str) -> PedidoAprovado:
-        """Pagamento confirmado: marca o pedido aprovado e credita os
-        diamantes gravados nele, atomicamente e uma única vez. `admin_id`
+        """Pagamento confirmado: marca o pedido aprovado e credita a
+        quantidade gravada nele (diamantes ou moedas), atomicamente e uma
+        única vez. `admin_id`
         vem sempre do JWT (router), nunca do corpo do pedido."""
         pedido = self._pedido_pendente(pedido_id)
         if pedido.utilizador_id is None:
-            raise PedidoDiamantesSemContaError(pedido_id)
+            raise PedidoLojaSemContaError(pedido_id)
         self._perfis.obter_ou_criar(pedido.utilizador_id)
         aprovado = self._pedidos.aprovar_e_creditar(pedido_id, admin_id, self._relogio())
         if aprovado is None:
             # Outro admin decidiu entretanto -- não se credita outra vez.
-            raise PedidoDiamantesJaDecididoError(pedido_id)
+            raise PedidoLojaJaDecididoError(pedido_id)
         return aprovado
 
-    def rejeitar_pedido(self, pedido_id: str, admin_id: str) -> PedidoDiamantesRegisto:
+    def rejeitar_pedido(self, pedido_id: str, admin_id: str) -> PedidoLojaRegisto:
         self._pedido_pendente(pedido_id)
         rejeitado = self._pedidos.rejeitar(pedido_id, admin_id, self._relogio())
         if rejeitado is None:
-            raise PedidoDiamantesJaDecididoError(pedido_id)
+            raise PedidoLojaJaDecididoError(pedido_id)
         return rejeitado
