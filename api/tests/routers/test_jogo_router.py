@@ -409,6 +409,7 @@ def test_terceiro_acerto_seguido_credita_10_diamantes_na_hora(ambiente, banco, r
     assert corpo["sequencia_acertos"] == 3
     recompensa = corpo["recompensa_sequencia"]
     assert (recompensa["sequencia"], recompensa["diamantes"]) == (3, 10)
+    assert (recompensa["diamantes_do_marco"], recompensa["limite_diario_atingido"]) == (10, False)
     assert recompensa["perfil"]["diamantes"] == 10
     assert recompensa["perfil"]["melhor_sequencia"] == 3
     assert repo_perfil.obter_ou_criar("id-comum").diamantes == 10

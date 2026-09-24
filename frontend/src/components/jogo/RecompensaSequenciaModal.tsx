@@ -5,7 +5,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 
 export interface RecompensaSequenciaMostrada {
   sequencia: number;
+  /** Os diamantes que entraram mesmo na conta. */
   diamantes: number;
+  /** O limite diário cortou (parte d)o crédito -- avisa-se, mas celebra-se na mesma. */
+  limiteDiarioAtingido?: boolean;
 }
 
 interface RecompensaSequenciaModalProps {
@@ -60,7 +63,13 @@ const RecompensaSequenciaModal = ({ recompensa, onContinuar }: RecompensaSequenc
           </p>
         </div>
 
-        <p className="text-xs text-muted-foreground">{t("RecompensaSequencia.proximoMarco")}</p>
+        {recompensa?.limiteDiarioAtingido ? (
+          <p className="text-xs font-medium text-orange-700 bg-orange-500/10 rounded-lg px-3 py-2" role="status">
+            {t("RecompensaSequencia.limiteDiarioAtingido")}
+          </p>
+        ) : (
+          <p className="text-xs text-muted-foreground">{t("RecompensaSequencia.proximoMarco")}</p>
+        )}
 
         <Button
           size="lg"

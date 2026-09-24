@@ -1071,9 +1071,13 @@ export interface OfertaVidaExtra {
 }
 
 export interface RecompensaSequencia {
-  // Acertos seguidos que deram o marco (3, 6, 9...) e os diamantes ganhos.
+  // Acertos seguidos que deram o marco (3, 6, 9...) e os diamantes que
+  // entraram mesmo na conta -- menos do que `diamantes_do_marco` (ou 0) se o
+  // limite diário de diamantes de sequências (60, dia UTC) já foi atingido.
   sequencia: number;
   diamantes: number;
+  diamantes_do_marco: number;
+  limite_diario_atingido: boolean;
   // O perfil já com os diamantes creditados pela API.
   perfil: PerfilJogadorPublico;
 }

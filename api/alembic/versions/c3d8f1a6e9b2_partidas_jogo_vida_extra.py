@@ -8,7 +8,9 @@ Nova tabela `partidas_jogo`: uma linha por partida, com todo o estado que o
 jogador podia querer inventar (a pergunta que o servidor lhe entregou,
 patamares superados, sequência de acertos, vidas extra e ajudas usadas).
 Índice único parcial: no máximo uma partida não terminada por utilizador.
-Nova coluna `perfis_jogador.melhor_sequencia` (recorde de acertos seguidos).
+Novas colunas em `perfis_jogador`: `melhor_sequencia` (recorde de acertos
+seguidos) e `diamantes_sequencia_hoje`/`diamantes_sequencia_dia` (limite
+diário, em UTC, de diamantes ganhos em sequências).
 
 Substitui `perfis_jogador.patamar_em_curso`, que é removida: guardava só o
 progresso transitório da partida em curso. Quem estiver a meio de uma
@@ -68,9 +70,16 @@ def upgrade() -> None:
         "perfis_jogador",
         sa.Column("melhor_sequencia", sa.Integer(), server_default="0", nullable=False),
     )
+    op.add_column(
+        "perfis_jogador",
+        sa.Column("diamantes_sequencia_hoje", sa.Integer(), server_default="0", nullable=False),
+    )
+    op.add_column("perfis_jogador", sa.Column("diamantes_sequencia_dia", sa.Date(), nullable=True))
 
 
 def downgrade() -> None:
+    op.drop_column("perfis_jogador", "diamantes_sequencia_dia")
+    op.drop_column("perfis_jogador", "diamantes_sequencia_hoje")
     op.drop_column("perfis_jogador", "melhor_sequencia")
     op.add_column(
         "perfis_jogador",

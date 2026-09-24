@@ -540,6 +540,11 @@ class PerfilJogador(Base):
     patamar_maximo_alcancado: Mapped[int] = mapped_column(nullable=False, server_default="0")
     # Maior número de acertos seguidos numa só partida (recorde de sempre).
     melhor_sequencia: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    # Limite diário de diamantes ganhos em sequências de acertos (dia UTC):
+    # quanto já se ganhou em `diamantes_sequencia_dia`. Num dia novo, o
+    # contador recomeça -- ver `JogoService.responder`.
+    diamantes_sequencia_hoje: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    diamantes_sequencia_dia: Mapped[date | None] = mapped_column(Date)
     # O progresso da partida em curso vive em `PartidaJogo` desde 2026-09-24
     # (antes era a coluna `patamar_em_curso`, aqui).
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

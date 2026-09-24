@@ -527,7 +527,13 @@ describe("JogoCuriosidades", () => {
         resposta_correta: "B",
         explicacao: null,
         sequencia_acertos: 3,
-        recompensa_sequencia: { sequencia: 3, diamantes: 10, perfil: perfilComBonus },
+        recompensa_sequencia: {
+          sequencia: 3,
+          diamantes: 10,
+          diamantes_do_marco: 10,
+          limite_diario_atingido: false,
+          perfil: perfilComBonus,
+        },
       });
       render(<JogoCuriosidades />, { wrapper: MemoryRouter });
       await comecarJogo();
@@ -552,6 +558,8 @@ describe("JogoCuriosidades", () => {
           recompensa_sequencia: {
             sequencia: 3,
             diamantes: 10,
+            diamantes_do_marco: 10,
+            limite_diario_atingido: false,
             perfil: { moedas: 0, diamantes: 10, partidas_jogadas: 0, patamar_maximo_alcancado: 0 },
           },
         });

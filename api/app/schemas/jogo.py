@@ -61,9 +61,13 @@ class PerguntaDaPartidaPublica(PerguntaPublica):
 
 
 class RecompensaSequenciaPublica(BaseModel):
-    # Acertos seguidos que deram o marco (3, 6, 9...) e os diamantes ganhos.
+    # Acertos seguidos que deram o marco (3, 6, 9...) e os diamantes que
+    # entraram mesmo na conta -- menos do que `diamantes_do_marco` (ou 0) se
+    # o limite diário de diamantes de sequências foi atingido.
     sequencia: int
     diamantes: int
+    diamantes_do_marco: int
+    limite_diario_atingido: bool
     perfil: "PerfilJogadorPublico"
 
 

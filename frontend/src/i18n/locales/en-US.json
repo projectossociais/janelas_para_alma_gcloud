@@ -1979,6 +1979,7 @@
     "diamantesGanhos": "{{diamantes}} diamonds earned",
     "proximoMarco": "Every 3 right answers in a row earns you more diamonds. A wrong answer resets the streak.",
     "continuar": "Continue",
-    "sequenciaAtual": "Streak of {{sequencia}} right answers"
+    "sequenciaAtual": "Streak of {{sequencia}} right answers",
+    "limiteDiarioAtingido": "You've reached the daily limit of 60 streak diamonds. Keep playing: you'll earn diamonds again tomorrow."
   }
 }

@@ -17,13 +17,18 @@ prémio. Por isso tudo isso vive numa partida guardada no servidor
   voltar a tentar a mesma pergunta (sem a opção falhada). A resposta só é
   revelada ao terminar a partida.
 - Cada 3 acertos seguidos dão diamantes (`recompensa_sequencia`), creditados
-  na mesma transacção que regista o acerto.
+  na mesma transacção que regista o acerto, até
+  `LIMITE_DIARIO_DIAMANTES_SEQUENCIA` por dia (UTC) -- sem limite, recomeçar
+  partidas e acertar 3 perguntas fáceis era uma fonte infinita de diamantes.
+  Atingido o limite, o marco continua a ser celebrado, mas não credita.
 - O prémio da partida paga-se uma única vez, ao terminar (vitória, derrota,
   desistência ou início de outra partida), pelos patamares superados.
 """
 
 import random
+from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import UTC, datetime
 
 from app.repositories.jogo_repository import (
     PerguntaJogoRegisto,
@@ -54,6 +59,9 @@ MAXIMO_VIDAS_EXTRA_POR_PARTIDA = 2
 # (1, 2, 3...) dá n x `DIAMANTES_POR_MARCO` -- 3 -> 10, 6 -> 20, 9 -> 30...
 ACERTOS_POR_MARCO = 3
 DIAMANTES_POR_MARCO = 10
+# Teto de diamantes ganhos em sequências por jogador e por dia UTC (decisão
+# do dono do projecto, 2026-09-24).
+LIMITE_DIARIO_DIAMANTES_SEQUENCIA = 60
 
 
 def recompensa_sequencia(sequencia_acertos: int) -> int:
@@ -119,7 +127,11 @@ class OfertaVidaExtra:
 @dataclass(frozen=True)
 class RecompensaSequencia:
     sequencia: int
+    # Os diamantes que entraram mesmo na conta (0 se o limite diário já
+    # estava atingido) e os que o marco valia.
     diamantes: int
+    diamantes_do_marco: int
+    limite_diario_atingido: bool
     # O perfil já com os diamantes creditados -- a barra actualiza logo.
     perfil: PerfilJogadorRegisto
 
@@ -163,10 +175,12 @@ class JogoService:
         perguntas: PerguntaJogoRepository,
         perfis: PerfilJogadorRepository,
         partidas: PartidaJogoRepository,
+        relogio: Callable[[], datetime] = lambda: datetime.now(UTC),
     ) -> None:
         self._perguntas = perguntas
         self._perfis = perfis
         self._partidas = partidas
+        self._relogio = relogio
 
     # --- Ciclo de vida da partida --------------------------------------------
 
@@ -272,16 +286,27 @@ class JogoService:
             min(partida.patamar_superado + 1, TOTAL_PATAMARES),
             sequencia,
             bonus,
+            self._relogio().astimezone(UTC).date(),
+            LIMITE_DIARIO_DIAMANTES_SEQUENCIA,
         )
         if acerto is None:
             # Já respondida por outro pedido -- não conta (nem paga) duas vezes.
             raise PerguntaForaDaPartidaError()
+        recompensa = None
+        if bonus:
+            recompensa = RecompensaSequencia(
+                sequencia=sequencia,
+                diamantes=acerto.diamantes_creditados,
+                diamantes_do_marco=bonus,
+                limite_diario_atingido=acerto.diamantes_creditados < bonus,
+                perfil=acerto.perfil,
+            )
         return ResultadoResposta(
             correta=True,
             resposta_correta=pergunta.resposta_correta,
             explicacao=pergunta.explicacao,
             sequencia_acertos=sequencia,
-            recompensa_sequencia=RecompensaSequencia(sequencia, bonus, acerto.perfil) if bonus else None,
+            recompensa_sequencia=recompensa,
         )
 
     def esgotar_tempo(self, utilizador_id: str, pergunta_id: str) -> ResultadoResposta:

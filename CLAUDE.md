@@ -104,7 +104,10 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   opção falhada. A resposta revela-se e o prémio paga-se (uma única vez, pelos patamares
   superados) em `POST /jogo/partidas/atual/terminar`. **Sequências:** cada 3 acertos
   seguidos dão diamantes (3 → 10, 6 → 20, 9 → 30... — `recompensa_sequencia` em
-  `jogo_service.py`), creditados na mesma transacção que regista o acerto; errar volta a
+  `jogo_service.py`), creditados na mesma transacção que regista o acerto, até **60 por
+  dia UTC** (`LIMITE_DIARIO_DIAMANTES_SEQUENCIA`, decisão do dono do projecto 2026-09-24;
+  contador em `perfis_jogador.diamantes_sequencia_hoje`/`_dia`, linha bloqueada com
+  `FOR UPDATE`) — no limite o marco celebra-se na mesma, mas não credita; errar volta a
   sequência a 0; recorde em `perfis_jogador.melhor_sequencia`. Transições condicionais e
   atómicas em `PartidaJogoRepository` (um acerto só conta se a pergunta ainda for a actual —
   a mesma resposta nunca conta duas vezes); no máximo uma partida aberta por utilizador

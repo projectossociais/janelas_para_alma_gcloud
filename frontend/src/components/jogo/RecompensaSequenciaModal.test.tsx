@@ -34,3 +34,24 @@ describe("RecompensaSequenciaModal (Level Up)", () => {
     expect(screen.queryByRole("heading", { name: "Level Up!" })).not.toBeInTheDocument();
   });
 });
+
+describe("RecompensaSequenciaModal no limite diário", () => {
+  it("celebra na mesma, mostra +0 e explica que os diamantes voltam amanhã", async () => {
+    render(
+      <RecompensaSequenciaModal
+        recompensa={{ sequencia: 12, diamantes: 0, limiteDiarioAtingido: true }}
+        onContinuar={() => {}}
+      />
+    );
+
+    expect(await screen.findByRole("heading", { name: "Level Up!" })).toBeInTheDocument();
+    expect(screen.getByLabelText("0 diamantes ganhos")).toHaveTextContent("+0");
+    expect(screen.getByRole("status")).toHaveTextContent(/limite de 60 diamantes por dia/);
+  });
+
+  it("fora do limite não mostra o aviso", async () => {
+    render(<RecompensaSequenciaModal recompensa={{ sequencia: 3, diamantes: 10 }} onContinuar={() => {}} />);
+    await screen.findByRole("heading", { name: "Level Up!" });
+    expect(screen.queryByText(/limite de 60 diamantes/)).not.toBeInTheDocument();
+  });
+});

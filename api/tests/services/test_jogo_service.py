@@ -4,6 +4,7 @@ como oráculo), reclamar mais patamares, sequências, ajudas ou vidas extra do
 que os que o servidor confirmou."""
 
 from dataclasses import replace
+from datetime import UTC, date, datetime, timedelta
 
 import pytest
 
@@ -17,6 +18,7 @@ from app.repositories.partida_jogo_repository import (
 from app.repositories.perfil_jogador_repository import PerfilJogadorRegisto
 from app.services.jogo_service import (
     CUSTO_VIDA_EXTRA,
+    LIMITE_DIARIO_DIAMANTES_SEQUENCIA,
     MAXIMO_VIDAS_EXTRA_POR_PARTIDA,
     AjudaJaUsadaError,
     DiamantesInsuficientesError,
@@ -99,6 +101,8 @@ class RepositorioPartidasFalso:
         self._perfis = perfis
         self.partidas: dict[str, PartidaRegisto] = {}
         self._proximo = 1
+        # utilizador -> (dia UTC, diamantes de sequências ganhos nesse dia)
+        self.ganho_sequencias_por_dia: dict[str, tuple[date, int]] = {}
 
     def obter_ativa(self, utilizador_id: str) -> PartidaRegisto | None:
         return next(
@@ -159,27 +163,33 @@ class RepositorioPartidasFalso:
         patamar_superado: int,
         sequencia_acertos: int,
         diamantes_bonus: int,
+        hoje: date,
+        limite_diario: int,
     ) -> AcertoRegisto | None:
         atual = self.partidas.get(partida_id)
+        if atual is None or atual.estado != "em_curso" or atual.pergunta_atual_id != pergunta_id:
+            return None
+        dia, ganho = self.ganho_sequencias_por_dia.get(utilizador_id, (None, 0))
+        ganho_hoje = ganho if dia == hoje else 0
+        creditados = max(0, min(diamantes_bonus, limite_diario - ganho_hoje))
+        self.ganho_sequencias_por_dia[utilizador_id] = (hoje, ganho_hoje + creditados)
         partida = self._atualizar(
             partida_id,
-            lambda p: p.estado == "em_curso" and p.pergunta_atual_id == pergunta_id,
+            lambda p: True,
             patamar_superado=patamar_superado,
             sequencia_acertos=sequencia_acertos,
-            diamantes_sequencia=(atual.diamantes_sequencia if atual else 0) + diamantes_bonus,
+            diamantes_sequencia=atual.diamantes_sequencia + creditados,
             pergunta_atual_id=None,
             opcao_falhada=None,
         )
-        if partida is None:
-            return None
         perfil = self._perfis.obter_ou_criar(utilizador_id)
         perfil = replace(
             perfil,
-            diamantes=perfil.diamantes + diamantes_bonus,
+            diamantes=perfil.diamantes + creditados,
             melhor_sequencia=max(perfil.melhor_sequencia, sequencia_acertos),
         )
         self._perfis._perfis[utilizador_id] = perfil
-        return AcertoRegisto(partida=partida, perfil=perfil)
+        return AcertoRegisto(partida=partida, perfil=perfil, diamantes_creditados=creditados)
 
     def registar_falha(self, partida_id: str, pergunta_id: str, opcao_falhada: str | None) -> PartidaRegisto | None:
         return self._atualizar(
@@ -253,9 +263,22 @@ def partidas(perfis) -> RepositorioPartidasFalso:
     return RepositorioPartidasFalso(perfis)
 
 
+class Relogio:
+    def __init__(self) -> None:
+        self.agora = datetime(2026, 9, 24, 10, 0, tzinfo=UTC)
+
+    def __call__(self) -> datetime:
+        return self.agora
+
+
 @pytest.fixture
-def servico(perguntas, perfis, partidas) -> JogoService:
-    return JogoService(perguntas, perfis, partidas)
+def relogio() -> Relogio:
+    return Relogio()
+
+
+@pytest.fixture
+def servico(perguntas, perfis, partidas, relogio) -> JogoService:
+    return JogoService(perguntas, perfis, partidas, relogio=relogio)
 
 
 def _ativa(partidas: RepositorioPartidasFalso, utilizador_id: str = "u-1"):
@@ -358,10 +381,20 @@ class TestSequencias:
         assert terceiro.recompensa_sequencia.perfil.diamantes == 10
         assert perfis.obter_ou_criar("u-1").diamantes == 10
 
-    def test_uma_partida_perfeita_acumula_os_marcos(self, servico, perfis, partidas) -> None:
-        _acertar(servico, 15)
-        assert perfis.obter_ou_criar("u-1").diamantes == 10 + 20 + 30 + 40 + 50
-        assert _ativa(partidas).diamantes_sequencia == 150
+    def test_uma_partida_perfeita_para_no_limite_diario(self, servico, perfis, partidas) -> None:
+        # 10 + 20 + 30 = 60 esgota o limite; os marcos de 12 e 15 celebram-se
+        # mas não creditam.
+        resultados = [_acertar(servico) for _ in range(15)]
+        marcos = [r.recompensa_sequencia for r in resultados if r.recompensa_sequencia]
+        assert [(m.sequencia, m.diamantes, m.diamantes_do_marco, m.limite_diario_atingido) for m in marcos] == [
+            (3, 10, 10, False),
+            (6, 20, 20, False),
+            (9, 30, 30, False),
+            (12, 0, 40, True),
+            (15, 0, 50, True),
+        ]
+        assert perfis.obter_ou_criar("u-1").diamantes == LIMITE_DIARIO_DIAMANTES_SEQUENCIA == 60
+        assert _ativa(partidas).diamantes_sequencia == 60
         assert perfis.obter_ou_criar("u-1").melhor_sequencia == 15
 
     def test_errar_quebra_a_sequencia_mesmo_com_vida_extra(self, servico, perfis, partidas) -> None:
@@ -556,3 +589,62 @@ class TestAjudasGratis:
         pergunta, _ = _errar(servico)
         with pytest.raises(PartidaADecidirError):
             servico.cinquenta_cinquenta("u-1", pergunta.id)
+
+
+class TestLimiteDiarioDeSequencias:
+    def _partida_de_3(self, servico):
+        servico.iniciar_partida("u-1")
+        return _acertar(servico, 3).recompensa_sequencia
+
+    def test_recomecar_partidas_para_nos_60_por_dia(self, servico, perfis) -> None:
+        # O abuso que o limite trava: recomeçar e acertar 3 fáceis, sem fim.
+        ganhos = [self._partida_de_3(servico).diamantes for _ in range(8)]
+        assert ganhos == [10, 10, 10, 10, 10, 10, 0, 0]
+        assert perfis.obter_ou_criar("u-1").diamantes == 60
+
+    def test_credito_parcial_quando_o_marco_passa_o_limite(self, servico, perfis) -> None:
+        for _ in range(4):
+            self._partida_de_3(servico)  # 40 ganhos hoje
+        servico.iniciar_partida("u-1")
+        _acertar(servico, 5)  # marco dos 3: +10 -> 50 hoje
+        sexto = _acertar(servico).recompensa_sequencia  # marco de 20, só cabem 10
+        assert (sexto.diamantes, sexto.diamantes_do_marco, sexto.limite_diario_atingido) == (10, 20, True)
+        assert perfis.obter_ou_criar("u-1").diamantes == 60
+
+    def test_no_limite_o_marco_continua_a_ser_celebrado(self, servico) -> None:
+        for _ in range(6):
+            self._partida_de_3(servico)
+        marco = self._partida_de_3(servico)
+        assert marco is not None
+        assert (marco.sequencia, marco.diamantes, marco.limite_diario_atingido) == (3, 0, True)
+
+    def test_no_dia_seguinte_utc_o_limite_recomeca(self, servico, perfis, relogio) -> None:
+        for _ in range(6):
+            self._partida_de_3(servico)
+        assert self._partida_de_3(servico).diamantes == 0
+
+        relogio.agora = datetime(2026, 9, 25, 0, 0, 1, tzinfo=UTC)  # 00:00:01 UTC
+        assert self._partida_de_3(servico).diamantes == 10
+        assert perfis.obter_ou_criar("u-1").diamantes == 70
+
+    def test_o_dia_conta_em_utc_mesmo_com_relogio_noutro_fuso(self, servico, relogio) -> None:
+        for _ in range(6):
+            self._partida_de_3(servico)
+        # 00:30 em Luanda (UTC+1) ainda é 23:30 do dia anterior em UTC.
+        luanda = timezone_luanda()
+        relogio.agora = datetime(2026, 9, 25, 0, 30, tzinfo=luanda)
+        assert self._partida_de_3(servico).diamantes == 0
+        relogio.agora = datetime(2026, 9, 24, 23, 0, tzinfo=UTC) + timedelta(hours=1, minutes=1)
+        assert self._partida_de_3(servico).diamantes == 10
+
+    def test_o_limite_e_por_jogador(self, servico, perfis) -> None:
+        for _ in range(6):
+            self._partida_de_3(servico)
+        servico.iniciar_partida("u-2")
+        assert _acertar(servico, 3, utilizador_id="u-2").recompensa_sequencia.diamantes == 10
+
+
+def timezone_luanda():
+    from datetime import timezone
+
+    return timezone(timedelta(hours=1))

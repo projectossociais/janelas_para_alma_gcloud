@@ -11,7 +11,7 @@ partida nem usam a mesma vida extra duas vezes.
 
 import uuid
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Literal, Protocol
 
 from sqlalchemy import func, select, update
@@ -47,6 +47,9 @@ class PartidaRegisto:
 class AcertoRegisto:
     partida: PartidaRegisto
     perfil: PerfilJogadorRegisto
+    # O que entrou mesmo na conta -- pode ser menos do que o bónus pedido se
+    # o limite diário de diamantes de sequências já estiver (quase) gasto.
+    diamantes_creditados: int = 0
 
 
 @dataclass(frozen=True)
@@ -74,6 +77,8 @@ class PartidaJogoRepository(Protocol):
         patamar_superado: int,
         sequencia_acertos: int,
         diamantes_bonus: int,
+        hoje: date,
+        limite_diario: int,
     ) -> AcertoRegisto | None: ...
     def registar_falha(
         self, partida_id: str, pergunta_id: str, opcao_falhada: str | None
@@ -167,11 +172,19 @@ class SQLAlchemyPartidaJogoRepository:
         patamar_superado: int,
         sequencia_acertos: int,
         diamantes_bonus: int,
+        hoje: date,
+        limite_diario: int,
     ) -> AcertoRegisto | None:
         """Avança a partida e credita o bónus de sequência na mesma
         transacção -- e só se a pergunta ainda for a actual: responder duas
-        vezes à mesma pergunta (ex.: dois pedidos simultâneos) conta uma vez."""
+        vezes à mesma pergunta (ex.: dois pedidos simultâneos) conta uma vez.
+
+        O bónus respeita o limite diário (`limite_diario`, dia `hoje` em UTC):
+        credita-se só o que ainda cabe. A linha do perfil fica bloqueada
+        (`FOR UPDATE`) entre ler o que já se ganhou hoje e somar, para dois
+        acertos simultâneos (ex.: dois separadores) não passarem o limite."""
         agora = datetime.now(UTC)
+        uid = uuid.UUID(utilizador_id)
         try:
             partida = self._sessao.scalars(
                 update(PartidaJogo)
@@ -183,37 +196,44 @@ class SQLAlchemyPartidaJogoRepository:
                 .values(
                     patamar_superado=patamar_superado,
                     sequencia_acertos=sequencia_acertos,
-                    diamantes_sequencia=PartidaJogo.diamantes_sequencia + diamantes_bonus,
                     pergunta_atual_id=None,
                     opcao_falhada=None,
                     updated_at=agora,
                 )
-                .returning(PartidaJogo)
+                .returning(PartidaJogo.id)
             ).first()
             if partida is None:
                 self._sessao.rollback()
                 return None
-            registo_partida = _para_registo(partida)
 
             perfil = self._sessao.scalars(
-                update(PerfilJogador)
-                .where(PerfilJogador.utilizador_id == uuid.UUID(utilizador_id))
-                .values(
-                    diamantes=PerfilJogador.diamantes + diamantes_bonus,
-                    melhor_sequencia=func.greatest(PerfilJogador.melhor_sequencia, sequencia_acertos),
-                    updated_at=agora,
-                )
-                .returning(PerfilJogador)
+                select(PerfilJogador).where(PerfilJogador.utilizador_id == uid).with_for_update()
             ).first()
             if perfil is None:
                 self._sessao.rollback()
                 raise RuntimeError(f"perfil de jogo inexistente para {utilizador_id}")
+            ganho_hoje = perfil.diamantes_sequencia_hoje if perfil.diamantes_sequencia_dia == hoje else 0
+            creditados = max(0, min(diamantes_bonus, limite_diario - ganho_hoje))
+            perfil.diamantes += creditados
+            perfil.diamantes_sequencia_hoje = ganho_hoje + creditados
+            perfil.diamantes_sequencia_dia = hoje
+            perfil.melhor_sequencia = max(perfil.melhor_sequencia, sequencia_acertos)
+            perfil.updated_at = agora
+
+            linha_partida = self._sessao.scalars(
+                update(PartidaJogo)
+                .where(PartidaJogo.id == uuid.UUID(partida_id))
+                .values(diamantes_sequencia=PartidaJogo.diamantes_sequencia + creditados)
+                .returning(PartidaJogo)
+            ).one()
+            registo_partida = _para_registo(linha_partida)
+            self._sessao.flush()
             registo_perfil = para_registo(perfil)
             self._sessao.commit()
         except Exception:
             self._sessao.rollback()
             raise
-        return AcertoRegisto(partida=registo_partida, perfil=registo_perfil)
+        return AcertoRegisto(partida=registo_partida, perfil=registo_perfil, diamantes_creditados=creditados)
 
     def registar_falha(
         self, partida_id: str, pergunta_id: str, opcao_falhada: str | None

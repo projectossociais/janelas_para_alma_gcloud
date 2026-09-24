@@ -398,6 +398,7 @@ const JogoCuriosidades = () => {
         setRecompensaSequencia({
           sequencia: resp.recompensa_sequencia.sequencia,
           diamantes: resp.recompensa_sequencia.diamantes,
+          limiteDiarioAtingido: resp.recompensa_sequencia.limite_diario_atingido,
         });
       }
       setResultado({
