@@ -1,5 +1,6 @@
 import i18n from "@/i18n";
 import { IDIOMA_EN } from "@/i18n/idiomas";
+import { TEXTOS_CONHECIDOS_SCANNER } from "@/services/api/screeningApi";
 /**
  * Cliente fino para a API própria (FastAPI). Nunca guarda tokens — a sessão
  * viaja em cookies `httpOnly` que o browser gere sozinho; por isso todo o
@@ -73,6 +74,8 @@ const DETALHES_CONHECIDOS: readonly [RegExp, string][] = [
   [/^(esta actividade já não está disponível|actividade não encontrada)$/i, "erroApi.actividadeIndisponivel"],
   [/^publicação não encontrada$/i, "erroApi.publicacaoNaoEncontrada"],
   [/^sem perguntas disponíveis$/i, "erroApi.semPerguntas"],
+  // janelas-scanner-api (microserviço à parte, ver services/api/screeningApi.ts)
+  ...TEXTOS_CONHECIDOS_SCANNER,
 ];
 
 function mensagemDeErroEmIngles(err: unknown, status: unknown, message: unknown, fallback: string): string {
@@ -80,8 +83,11 @@ function mensagemDeErroEmIngles(err: unknown, status: unknown, message: unknown,
     // fetch() só rejeita com TypeError quando o pedido nem chegou ao servidor.
     return err instanceof TypeError ? i18n.t("erroApi.rede") : fallback;
   }
-  if (typeof message === "string") {
-    const conhecido = DETALHES_CONHECIDOS.find(([padrao]) => padrao.test(message.trim()));
+  // O erro do scanner traz o `detail` do microserviço à parte da mensagem.
+  const detail = (err as { detail?: unknown } | null)?.detail;
+  const texto = typeof detail === "string" ? detail : message;
+  if (typeof texto === "string") {
+    const conhecido = DETALHES_CONHECIDOS.find(([padrao]) => padrao.test(texto.trim()));
     if (conhecido) return i18n.t(conhecido[1]);
   }
   if (status >= 500) return i18n.t("erroApi.servidor");

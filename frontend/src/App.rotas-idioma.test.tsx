@@ -150,15 +150,17 @@ describe("com VITE_ENABLE_EN=true", () => {
     ogLocale.remove();
   });
 
-  it("o jogo não existe em inglês: /en/trivia-game dá 404 com noindex, e os links para o jogo desaparecem", async () => {
-    abrir("/en/trivia-game");
-    expect(await screen.findByRole("heading", { name: "404" })).toBeInTheDocument();
-    await waitFor(() => expect(document.head.querySelector('meta[name="robots"][content="noindex"]')).not.toBeNull());
+  it("o jogo existe em inglês: /en/trivia-game abre o menu, e os pontos de entrada aparecem no site inglês", async () => {
+    const menu = abrir("/en/trivia-game");
+    expect(await screen.findByText("The Eye Health Game")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "404" })).not.toBeInTheDocument();
+    await waitFor(() => expect(document.title).toBe("Inclusivamente: The Eye Health Game | Janelas para a Alma"));
+    menu.unmount();
     abrir("/en");
     await waitFor(() => expect(document.documentElement.lang).toBe("en-US"));
-    expect(screen.queryByRole("button", { name: "Game: Inclusivamente" })).not.toBeInTheDocument();
-    expect(screen.queryByText("Launching our game: Inclusivamente")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Try our game/ })).not.toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Game: Inclusivamente" })).toBeInTheDocument();
+    expect(screen.getByText("Launching our game: Inclusivamente")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Try our game/ })).toBeInTheDocument();
   });
 
   it("as páginas legais em inglês avisam que prevalece a versão portuguesa", async () => {

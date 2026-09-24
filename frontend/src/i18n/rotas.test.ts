@@ -109,33 +109,25 @@ describe("localizar (links internos escritos em português)", () => {
   });
 });
 
-describe("páginas só em português (o jogo)", () => {
+describe("o jogo (Inclusivamente) é bilingue desde 2026-09-24", () => {
   afterEach(() => void i18n.changeLanguage("pt-AO"));
 
-  it("não têm versão inglesa: o botão EN leva à página inicial inglesa", () => {
-    expect(caminhoEmIngles("/jogo-curiosidades")).toBe("/en");
-    expect(caminhoEmIngles("/jogo-curiosidades/jogar")).toBe("/en");
-    expect(ROTAS_BILINGUES.some((r) => r.pt.startsWith("/jogo-curiosidades"))).toBe(false);
+  it("tem versão inglesa: o botão EN leva à mesma página do jogo", () => {
+    expect(caminhoEmIngles("/jogo-curiosidades")).toBe("/en/trivia-game");
+    expect(caminhoEmIngles("/jogo-curiosidades/jogar")).toBe("/en/trivia-game/play");
+    expect(caminhoEmIngles("/jogo-curiosidades/perfil")).toBe("/en/trivia-game/profile");
+    expect(caminhoEmPortugues("/en/trivia-game/play")).toBe("/jogo-curiosidades/jogar");
   });
 
-  it("um URL /en/trivia-game não corresponde a nenhuma página", () => {
-    expect(caminhoEmPortugues("/en/trivia-game")).toBe("/");
+  it("nenhuma página do mapa fica só em português", () => {
+    expect(ROTAS_BILINGUES.length).toBe(ROTAS.length);
   });
 
-  it("localizar() mantém o caminho PT delas, para o link poder ser reconhecido e escondido", () => {
+  it("no site inglês os links para o jogo levam a /en/trivia-game e não se escondem", () => {
     void i18n.changeLanguage("en-US");
-    expect(localizar("/jogo-curiosidades")).toBe("/jogo-curiosidades");
-    expect(disponivelNoIdiomaActual(localizar("/jogo-curiosidades"))).toBe(false);
-  });
-
-  it("os links para elas escondem-se só no site inglês", () => {
-    void i18n.changeLanguage("pt-AO");
-    expect(disponivelNoIdiomaActual("/jogo-curiosidades")).toBe(true);
-    void i18n.changeLanguage("en-US");
-    expect(disponivelNoIdiomaActual("/jogo-curiosidades")).toBe(false);
-    expect(disponivelNoIdiomaActual("/jogo-curiosidades/perfil")).toBe(false);
-    expect(disponivelNoIdiomaActual("/faq")).toBe(true);
-    expect(disponivelNoIdiomaActual("https://www.exemplo.com/noticia")).toBe(true);
+    expect(localizar("/jogo-curiosidades")).toBe("/en/trivia-game");
+    expect(disponivelNoIdiomaActual(localizar("/jogo-curiosidades"))).toBe(true);
+    expect(disponivelNoIdiomaActual("/jogo-curiosidades/perfil")).toBe(true);
   });
 });
 
@@ -163,8 +155,9 @@ describe("metadadosSeo (canonical + hreflang)", () => {
     for (const href of [canonical, ...alternativas.map((a) => a.href)]) expect(href).toMatch(/^https:\/\/www\.janelasparaalma\.com\//);
   });
 
-  it("páginas só em português não levam hreflang para inglês", () => {
-    expect(metadadosSeo("/jogo-curiosidades", true)).toEqual({ canonical: SITE + "/jogo-curiosidades", alternativas: [] });
+  it("o jogo leva hreflang recíproco como as outras páginas", () => {
+    expect(metadadosSeo("/en/trivia-game", true).canonical).toBe(SITE + "/en/trivia-game");
+    expect(metadadosSeo("/jogo-curiosidades", true).alternativas).toEqual(metadadosSeo("/en/trivia-game", true).alternativas);
   });
 
   it("com a versão inglesa desligada, não há hreflang (as páginas /en dariam 404)", () => {
@@ -179,7 +172,6 @@ describe("metadadosSeo (canonical + hreflang)", () => {
   it("páginas fora do mapa (admin, 404) não têm canonical nem hreflang", () => {
     expect(metadadosSeo("/admin/utilizadores", true)).toEqual({ canonical: null, alternativas: [] });
     expect(metadadosSeo("/nao-existe", true)).toEqual({ canonical: null, alternativas: [] });
-    expect(metadadosSeo("/en/trivia-game", true)).toEqual({ canonical: null, alternativas: [] });
   });
 });
 
@@ -192,7 +184,8 @@ describe("título e descrição por página", () => {
     expect(chaveDaRota("/auth")).toBe("entrar");
     expect(chaveDaRota("/en/publications/campanha-gamek")).toBe("publicacaoDetalhe");
     expect(chaveDaRota("/admin")).toBeNull();
-    expect(chaveDaRota("/en/trivia-game")).toBeNull();
+    expect(chaveDaRota("/en/trivia-game/play")).toBe("jogoJogar");
+    expect(chaveDaRota("/en/nao-existe")).toBeNull();
   });
 
   it("todas as páginas com versão inglesa (menos a inicial) têm título e descrição nos dois idiomas", () => {

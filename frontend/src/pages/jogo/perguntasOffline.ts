@@ -1,4 +1,7 @@
 import type { RespostaOpcaoJogo } from "@/lib/apiClient";
+import i18n from "@/i18n";
+import { IDIOMA_EN } from "@/i18n/idiomas";
+import { PERGUNTAS_OFFLINE_EN } from "./perguntasOffline.en-US";
 
 /**
  * Reserva do Modo de Contingência: pelo menos 5 perguntas distintas por
@@ -27,6 +30,12 @@ export interface PerguntaOffline {
   resposta_correta: RespostaOpcaoJogo;
   explicacao: string;
 }
+
+/** Os textos de uma pergunta -- o que muda de idioma para idioma. */
+export type TextosPergunta = Pick<
+  PerguntaOffline,
+  "texto_pergunta" | "opcao_a" | "opcao_b" | "opcao_c" | "opcao_d" | "explicacao"
+>;
 
 export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = {
   1: [
@@ -960,7 +969,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_c: "A bactéria Escherichia coli, comum no intestino",
       opcao_d: "A bactéria Streptococcus pneumoniae, respiratória",
       resposta_correta: "A",
-      explicacao: "É um bacilo gram-negativo, esporulado e anaeróbio.",
+      explicacao: "É um bacilo gram-positivo, esporulado e anaeróbio.",
     },
     {
       id: "offline-7-3",
@@ -1862,7 +1871,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_c: "Que a pupila se dilata de forma automática na escuridão",
       opcao_d: "Que a córnea é capaz de regenerar-se sozinha após lesão",
       resposta_correta: "B",
-      explicacao: "A Lei de Sherrington aplica-se à monocularidade: a inervação simultânea de agonista e antagonista permite o movimento do olho.",
+      explicacao: "A Lei de Sherrington aplica-se a um só olho: quando o agonista recebe mais inervação, o antagonista recebe menos e relaxa, o que permite o movimento do olho.",
     },
     {
       id: "offline-13-2",
@@ -2139,12 +2148,12 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
     {
       id: "offline-14-14",
       texto_pergunta: "Um ângulo kappa muito negativo pode simular, à primeira vista, qual desvio, ao dar a impressão de reflexo temporal?",
-      opcao_a: "Uma esotropia, com o olho desviado para dentro",
-      opcao_b: "Uma exotropia, com o olho desviado para fora",
+      opcao_a: "Uma exotropia, com o olho desviado para fora",
+      opcao_b: "Uma esotropia, com o olho desviado para dentro",
       opcao_c: "Uma hipertropia, com um olho mais alto que o outro",
       opcao_d: "Um nistagmo, com um movimento rítmico e involuntário",
       resposta_correta: "B",
-      explicacao: "Um ângulo kappa muito negativo pode dar a falsa impressão de um olho desviado para fora.",
+      explicacao: "Um reflexo corneano deslocado para o lado temporal é o que se vê num olho desviado para dentro, por isso um ângulo kappa muito negativo pode dar a falsa impressão de uma esotropia (pseudoesotropia).",
     },
     {
       id: "offline-14-15",
@@ -2220,7 +2229,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
     },
     {
       id: "offline-15-7",
-      texto_pergunta: "A que oftalmologista do século XIX se atribui a invenção do oftalmoscópio, permitindo pela primeira vez observar directamente o fundo do olho vivo?",
+      texto_pergunta: "A que cientista do século XIX se atribui a invenção do oftalmoscópio, permitindo pela primeira vez observar directamente o fundo do olho vivo?",
       opcao_a: "Louis Pasteur, conhecido pelo seu trabalho em microbiologia",
       opcao_b: "Hermann von Helmholtz, inventor do oftalmoscópio em 1851",
       opcao_c: "Alexander Fleming, conhecido pela descoberta da penicilina",
@@ -2311,13 +2320,24 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
   ],
 };
 
+/**
+ * A pergunta no idioma da página: em inglês os textos vêm de
+ * `perguntasOffline.en-US.ts`; `id` e `resposta_correta` ficam sempre os
+ * daqui. Chamado a cada pedido (nunca ao nível do módulo), para seguir o
+ * idioma actual.
+ */
+export const noIdiomaActual = (pergunta: PerguntaOffline): PerguntaOffline => {
+  const traducao = i18n.language === IDIOMA_EN ? PERGUNTAS_OFFLINE_EN[pergunta.id] : undefined;
+  return traducao ? { ...pergunta, ...traducao } : pergunta;
+};
+
 export const obterPerguntasDoPatamar = (patamar: number): PerguntaOffline[] =>
   PERGUNTAS_OFFLINE_POR_PATAMAR[patamar] ?? [];
 
 export const obterPerguntaOfflinePorId = (id: string): PerguntaOffline | undefined => {
   for (const perguntas of Object.values(PERGUNTAS_OFFLINE_POR_PATAMAR)) {
     const encontrada = perguntas.find((p) => p.id === id);
-    if (encontrada) return encontrada;
+    if (encontrada) return noIdiomaActual(encontrada);
   }
   return undefined;
 };
@@ -2339,5 +2359,5 @@ export const obterPerguntaOfflineNaoVista = (
   }
   const naoVistas = todas.filter((p) => !idsVistos.includes(p.id));
   const candidatas = naoVistas.length > 0 ? naoVistas : todas;
-  return candidatas[Math.floor(Math.random() * candidatas.length)];
+  return noIdiomaActual(candidatas[Math.floor(Math.random() * candidatas.length)]);
 };

@@ -15,6 +15,8 @@ import { IDIOMA_EN, IDIOMA_PT, eRotaInglesa, type Idioma } from "./idiomas";
  * - `apenasPt`: a página existe no mapa mas ainda não tem versão inglesa (não
  *   há rota /en/..., o botão de idioma leva à página inicial inglesa e os
  *   links para ela escondem-se no site inglês). O `en` fica reservado.
+ *   Hoje nenhuma página o usa: o jogo foi a última, até ser traduzido
+ *   (2026-09-24).
  * - `foraDoSitemap`: páginas de conta, fluxos e resultados -- existem nos dois
  *   idiomas mas não se pedem ao Google.
  */
@@ -57,9 +59,9 @@ export const ROTAS = [
   { chave: "registoPremium", pt: "/registo-premium", en: "/en/premium-sign-up", foraDoSitemap: true },
   { chave: "dashboard", pt: "/dashboard", en: "/en/dashboard", foraDoSitemap: true },
   { chave: "dashboardPro", pt: "/dashboard-pro", en: "/en/dashboard-pro", foraDoSitemap: true },
-  { chave: "jogoMenu", pt: "/jogo-curiosidades", en: "/en/trivia-game", apenasPt: true },
-  { chave: "jogoJogar", pt: "/jogo-curiosidades/jogar", en: "/en/trivia-game/play", apenasPt: true, foraDoSitemap: true },
-  { chave: "jogoPerfil", pt: "/jogo-curiosidades/perfil", en: "/en/trivia-game/profile", apenasPt: true, foraDoSitemap: true },
+  { chave: "jogoMenu", pt: "/jogo-curiosidades", en: "/en/trivia-game" },
+  { chave: "jogoJogar", pt: "/jogo-curiosidades/jogar", en: "/en/trivia-game/play", foraDoSitemap: true },
+  { chave: "jogoPerfil", pt: "/jogo-curiosidades/perfil", en: "/en/trivia-game/profile", foraDoSitemap: true },
 ] as const;
 
 export type ChaveRota = (typeof ROTAS)[number]["chave"];

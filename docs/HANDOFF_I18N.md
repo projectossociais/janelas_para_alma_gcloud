@@ -31,7 +31,7 @@ Tudo em `frontend/src/i18n/`, salvo indicação.
 |---|---|---|
 | i18next + react-i18next | `index.ts` | Traduções no bundle; `returnEmptyString: false` (chave vazia cai para PT); `tPt` = `t` fixo em português para valores enviados à API. |
 | Idioma pela rota | `idiomas.ts` | `/en` e `/en/*` = `en-US`, o resto = `pt-AO`. Sem detecção pelo browser nem redireccionamento automático. `inglesAtivo()` lê a flag. |
-| Mapa de rotas PT↔EN | `rotas.ts` | Fonte única. `App.tsx` gera as rotas daqui. Campos: `apenasPt` (sem versão inglesa: o jogo) e `foraDoSitemap` (conta, fluxos, resultados). Funções: `caminhoNoIdioma`, `localizar` (links internos, idempotente), `disponivelNoIdiomaActual` (esconder links para páginas só PT), `metadadosSeo` (canonical + hreflang). `SITE = "https://www.janelasparaalma.com"` (o domínio sem `www` responde 308 para este). |
+| Mapa de rotas PT↔EN | `rotas.ts` | Fonte única. `App.tsx` gera as rotas daqui. Campos: `apenasPt` (sem versão inglesa; hoje nenhuma página o usa) e `foraDoSitemap` (conta, fluxos, resultados). Funções: `caminhoNoIdioma`, `localizar` (links internos, idempotente), `disponivelNoIdiomaActual` (esconder links para páginas só PT), `metadadosSeo` (canonical + hreflang). `SITE = "https://www.janelasparaalma.com"` (o domínio sem `www` responde 308 para este). |
 | Troca de idioma | `IdiomaDaRota.tsx` | Muda o idioma **durante** o render e remonta a árvore (`key={idioma}`). Escreve no `<head>`, via **react-helmet-async**: `<html lang>`, título, canonical e hreflang (pt-AO, en-US, x-default). Actualiza a `description` que já existe no `index.html`. |
 | Botão EN/PT | `components/Footer.tsx` | Leva à mesma página no outro idioma (mantém `:slug`, query e âncora). Numa página só PT, leva a `/en`. |
 | Datas | `formatar.ts` | `formatarData` / `formatarDataHora`: PT = `pt-PT` (como sempre); EN = "September 23, 2026". |
@@ -40,7 +40,8 @@ Tudo em `frontend/src/i18n/`, salvo indicação.
 | Título e descrição por página | `rotas.ts` (`chaveDaRota`, `tituloEDescricao`) + `IdiomaDaRota.tsx` | Cada página do mapa tem `seo.<chave>Titulo` / `seo.<chave>Descricao` nos dois idiomas; o título sai como `seo.modeloTitulo` ("Página \| Janelas para a Alma"). A página inicial e as páginas fora do mapa usam `meta.*`. A descrição, `og:title/description` e `twitter:title/description` do `index.html` são actualizados (não duplicados). Uma página nova no mapa **tem** de ter as duas chaves: há um teste para isso. |
 | Página 404 | `pages/NotFound.tsx` | `noindex` e título próprio (Helmet). |
 | Nota legal | `components/NotaTraducaoLegal.tsx` | "The Portuguese version prevails." no topo da Privacy Policy e dos Terms of Use, só em inglês. |
-| Rotas só PT | `rotas.ts` (`apenasPt`) | Jogo (`/jogo-curiosidades*`): sem `/en/trivia-game*` (dão **404 de propósito**). No site inglês escondem-se o botão da barra, o item do menu, o botão em Curiosidades e a novidade do lançamento. |
+| Jogo em inglês | `rotas.ts`, `pages/jogo/perguntasOffline.en-US.ts` | Desde 2026-09-24 o jogo é bilingue: `/en/trivia-game`, `/en/trivia-game/play` e `/en/trivia-game/profile`. No site inglês usa **sempre** a reserva local de 225 perguntas traduzida (`perguntasOffline.en-US.ts`, só textos por `id`; `id` e `resposta_correta` vivem só em `perguntasOffline.ts`), porque as perguntas da API/base de dados só existem em português. Sem o aviso "Offline mode" (não é falha de rede). Consequência: no site inglês as respostas não passam por `validarResposta`, por isso o servidor não credita moedas/diamantes dessas partidas (igual ao modo offline português). |
+| Textos livres do scanner | `services/api/screeningApi.ts` (`TEXTOS_CONHECIDOS_SCANNER`, `textoDoScannerNoIdioma`) | O janelas-scanner-api (repositório à parte) devolve `recomendacao` e `detail` de erro em português. Os conhecidos têm tradução; no site inglês um texto desconhecido nunca aparece (resultados: cai na descrição traduzida da categoria; erros: mensagem do código HTTP). Texto novo do microserviço → acrescentar o padrão e a chave `screeningApi.*`. |
 | Revisão | `revisao.json`, `revisao-notas.json`, `frontend/scripts/gerar-revisao-en.mjs` → `docs/revisao-en-US.md` | Marcação `health` / `legal` / `duvida` por chave, com notas para quem revê. |
 
 ---
@@ -62,8 +63,8 @@ O que falta mesmo está abaixo, por ordem de prioridade sugerida.
 4. **Decisão do domínio canónico:** usa-se `https://www.janelasparaalma.com` porque o domínio sem `www` responde 308. Se o dono preferir o domínio sem `www` como canónico, invertem-se o redireccionamento no Vercel e a constante `SITE` (`rotas.ts` e `gerar-sitemap.mjs`), além das metatags `og:*` / `twitter:image` do `index.html` (o teste `index-html.test.ts` avisa se ficarem diferentes).
 
 ### 3.2 Adiado por decisão (fora do âmbito até nova ordem)
-- **Conteúdo do backend**, que aparece em português no site inglês: publicações (título, texto, local, legendas; no site inglês já levam o aviso "In Portuguese" / "This post is available in Portuguese only." e `lang="pt-AO"`), barra de aviso e banner da página inicial, notificações, actividades de voluntariado e perguntas do jogo online.
-- **Perguntas offline do jogo** (`pages/jogo/perguntasOffline.ts`, cerca de 1.351 textos). Proposta: ficheiro de dados por idioma, não chaves no JSON. Só depois disto faz sentido tirar `apenasPt` ao jogo.
+- **Conteúdo do backend**, que aparece em português no site inglês: publicações (título, texto, local, legendas; no site inglês já levam o aviso "In Portuguese" / "This post is available in Portuguese only." e `lang="pt-AO"`), barra de aviso e banner da página inicial, notificações, actividades de voluntariado e perguntas do jogo vindas da API (o site inglês não as usa; ver "Jogo em inglês").
+- **Perguntas do jogo na base de dados** (`api/scripts/seed_maciço_perguntas.py`): só em português. Traduzi-las exige uma coluna de idioma (mudança de esquema, revisão humana). As 4 correcções factuais feitas em 2026-09-24 ao banco offline (`offline-7-2`, `offline-13-1`, `offline-14-14`, `offline-15-7`) devem ser verificadas também nas perguntas equivalentes da base de dados.
 - **Emails transaccionais** (confirmação, recuperação): enviados pelo backend, só em português.
 - **Cargos da equipa em inglês** (ex.: "Chief Financial Officer", "navigator" no Banco BAI): confirmar com cada pessoa.
 - **Cabeçalho dos exercícios em telemóvel:** título e descrição cortados com `truncate` (`components/exercises/BaseExercise.tsx:191-192`), nos dois idiomas. Corrigir muda o HTML português.
@@ -125,7 +126,7 @@ Qualquer mudança ao português tem de actualizar o `pt-AO.json` **e** manter a 
 - **Datas e números:** "September 23, 2026"; "8:30 a.m. to noon"; vírgula nos milhares e ponto decimal (1,234.50); **Kz / AOA não se convertem nem se reformatam**.
 - **Valores para a API** (tipos de parceria, detalhes do donativo, diagnósticos) ficam estáveis e em português; só o rótulo se traduz.
 - **Erros da API em inglês:** nunca mostrar o `detail` português.
-- **Jogo:** exclusão confirmada da versão inglesa. `/en/trivia-game*` dá **404 de propósito**, e os pontos de entrada estão escondidos no site inglês. Para o activar em inglês: traduzir as perguntas (ver 3.2), tirar `apenasPt` das três rotas em `rotas.ts` e ajustar `rotas.test.ts`, `sitemap.test.ts` e `App.rotas-idioma.test.tsx`.
+- **Jogo:** disponível em inglês desde 2026-09-24 (decisão do dono do projecto, revertendo a exclusão anterior). Uma pergunta nova no banco offline tem de ter tradução em `perguntasOffline.en-US.ts` (o teste `perguntasOffline.en-US.test.ts` falha se faltar); as opções mantêm a ordem e o nivelamento de comprimento do original.
 
 ---
 

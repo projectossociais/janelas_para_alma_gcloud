@@ -83,7 +83,13 @@
     "dashboardDescricao": "O seu espaço de acompanhamento visual.",
     "dashboardProTitulo": "Área Clínica",
     "dashboardProDescricao": "Área reservada aos profissionais de saúde da rede Janelas para a Alma.",
-    "naoEncontradaTitulo": "Página não encontrada"
+    "naoEncontradaTitulo": "Página não encontrada",
+    "jogoMenuTitulo": "Inclusivamente: O Jogo da Saúde Ocular",
+    "jogoMenuDescricao": "Suba os 15 patamares de perguntas sobre visão, estrabismo e saúde ocular, ao seu ritmo.",
+    "jogoJogarTitulo": "Jogar: Inclusivamente",
+    "jogoJogarDescricao": "Responda às perguntas sobre saúde ocular e suba a escada até ao 15.º patamar.",
+    "jogoPerfilTitulo": "Perfil do Jogador: Inclusivamente",
+    "jogoPerfilDescricao": "As suas moedas, diamantes, partidas jogadas e melhor patamar no jogo Inclusivamente."
   },
   "AboutSection": {
     "conhecaNos": "Conheça-nos",
@@ -1809,7 +1815,8 @@
     "dalvaEtelvinaBenguelaFilipe": "Dalva Etelvina Benguela Filipe"
   },
   "screeningApi": {
-    "erroNaAnalise": "Erro na análise ({{status}}): {{errorText}}"
+    "erroNaAnalise": "Erro na análise ({{status}}): {{errorText}}",
+    "posicoesNaoComparaveis": "Não foi possível comparar as posições do olhar. Para repetir: na foto esquerda e direita, olhe para o lado pedido."
   },
   "useEyeTracking": {
     "camaraNaoSuportadaNeste": "Câmara não suportada neste navegador.",
