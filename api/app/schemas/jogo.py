@@ -4,6 +4,15 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 RespostaOpcao = Literal["A", "B", "C", "D"]
+# Espelha `CATEGORIAS_PERGUNTA_JOGO` (orm_models.py) -- lista fechada.
+CategoriaPergunta = Literal[
+    "anatomia_ocular",
+    "doencas_estrabismo",
+    "prevencao_cuidados",
+    "estilo_vida_visao",
+    "ciencia_ocular",
+    "curiosidades_visuais",
+]
 
 
 class PerguntaPublica(BaseModel):
@@ -28,6 +37,7 @@ class PerguntaAdmin(PerguntaPublica):
     resposta_correta: RespostaOpcao
     nivel_dificuldade: int
     explicacao: str | None
+    categoria: CategoriaPergunta
 
 
 class PerguntaCriar(BaseModel):
@@ -39,6 +49,7 @@ class PerguntaCriar(BaseModel):
     resposta_correta: RespostaOpcao
     nivel_dificuldade: int = Field(ge=1, le=3)
     explicacao: str | None = Field(default=None)
+    categoria: CategoriaPergunta = "curiosidades_visuais"
 
 
 class ValidarRespostaRequest(BaseModel):
@@ -89,6 +100,8 @@ class PerfilJogadorPublico(BaseModel):
     partidas_jogadas: int
     patamar_maximo_alcancado: int
     melhor_sequencia: int = 0
+    patamares_superados_total: int = 0
+    moedas_ganhas_total: int = 0
 
     model_config = {"from_attributes": True}
 
@@ -190,6 +203,32 @@ class PartidaTerminadaResponse(BaseModel):
     diamantes_ganhos: int
     resposta_correta: RespostaOpcao | None
     explicacao: str | None
+
+
+# --- Perfil: nível e estatísticas por categoria -----------------------------
+
+
+class NivelJogadorPublico(BaseModel):
+    numero: int
+    id: Literal["iniciante", "aprendiz", "conhecedor", "especialista", "mestre_visao"]
+    patamares_total: int
+    minimo: int
+    # `None` no último nível.
+    proximo_minimo: int | None
+    progresso: float
+
+
+class EstatisticaCategoriaPublica(BaseModel):
+    categoria: CategoriaPergunta
+    respostas: int
+    acertos: int
+    taxa_acerto: float
+
+
+class EstatisticasJogadorPublicas(BaseModel):
+    perfil: PerfilJogadorPublico
+    nivel: NivelJogadorPublico
+    categorias: list[EstatisticaCategoriaPublica]
 
 
 # `RecompensaSequenciaPublica` refere-se a `PerfilJogadorPublico`, definido mais abaixo.

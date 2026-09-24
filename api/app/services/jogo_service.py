@@ -288,6 +288,7 @@ class JogoService:
             bonus,
             self._relogio().astimezone(UTC).date(),
             LIMITE_DIARIO_DIAMANTES_SEQUENCIA,
+            pergunta.categoria,
         )
         if acerto is None:
             # Já respondida por outro pedido -- não conta (nem paga) duas vezes.
@@ -319,7 +320,9 @@ class JogoService:
     def _falhar(
         self, partida: PartidaRegisto, pergunta: PerguntaJogoRegisto, opcao: str | None
     ) -> ResultadoResposta:
-        atualizada = self._partidas.registar_falha(partida.id, pergunta.id, opcao)
+        atualizada = self._partidas.registar_falha(
+            partida.id, partida.utilizador_id, pergunta.id, opcao, pergunta.categoria
+        )
         if atualizada is None:
             raise PerguntaForaDaPartidaError()
         restantes = max(0, MAXIMO_VIDAS_EXTRA_POR_PARTIDA - atualizada.vidas_extra_usadas)

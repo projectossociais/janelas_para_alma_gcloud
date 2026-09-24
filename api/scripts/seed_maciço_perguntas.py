@@ -30,7 +30,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import SessionLocal
-from app.repositories.orm_models import PerguntaJogo, RespostaOpcao
+from app.repositories.orm_models import (
+    CATEGORIA_PERGUNTA_POR_OMISSAO,
+    CATEGORIAS_PERGUNTA_JOGO,
+    PerguntaJogo,
+    RespostaOpcao,
+)
 
 
 @dataclass(frozen=True)
@@ -43,6 +48,8 @@ class PerguntaSeed:
     resposta_correta: str
     nivel_dificuldade: int
     explicacao: str
+    # Uma das 6 categorias oficiais (`CATEGORIAS_PERGUNTA_JOGO`).
+    categoria: str = CATEGORIA_PERGUNTA_POR_OMISSAO
 
 
 PERGUNTAS: list[PerguntaSeed] = [
@@ -59,6 +66,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         1,
         "Classicamente definido como uma rutura no equilíbrio das forças musculares que "
         "sustentam a visão binocular, traduzida numa desarmonia do alinhamento dos eixos visuais.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Como se chama o desvio ocular que só aparece quando se rompe a fusão binocular "
@@ -71,6 +79,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         1,
         "A foria é um desvio latente, só visível quando a binocularidade é rompida (teste do "
         "'uncover'); a tropia é um desvio manifesto, presente mesmo com os dois olhos a par.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Até aos 3 anos de idade, qual é um dos principais motivos de consulta em oftalmologia "
@@ -83,6 +92,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         1,
         "As pregas de epicanto podem dar a falsa impressão de um olho desviado; o teste de "
         "Hirschberg confirma que o alinhamento ocular está, na realidade, normal.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "As dores de cabeça (cefaleias) numa criança são, segundo a evidência disponível:",
@@ -94,6 +104,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         1,
         "Os estudos que tentam ligar cefaleias a erros refractivos são inconclusivos; cefaleias "
         "matinais, progressivas e com náuseas justificam observação por suspeita de outra causa.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Ver filmes em 3D faz mal à visão de uma criança?",
@@ -105,6 +116,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         1,
         "Os óculos 3D usam lentes polarizadas que enviam imagens diferentes a cada olho; isso "
         "pode cansar quem tem baixa amplitude de fusão, mas não causa dano ocular.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Por que é que a hipermetropia é considerada 'fisiológica' numa criança pequena?",
@@ -117,6 +129,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         1,
         "A refração média nas crianças anda à volta de +2,00D; com o crescimento do olho "
         "(aumento do comprimento axial), a refração tende para a emetropia.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "O que é a emetropização?",
@@ -129,6 +142,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         1,
         "Ocorre por mudanças estruturais do olho ao longo do crescimento: o comprimento axial "
         "aumenta e as curvaturas da córnea e do cristalino diminuem.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "Um pai conta que o filho 'se debruça sobre os cadernos' para ler. Isso deve-se, "
@@ -141,6 +155,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         1,
         "É uma competência (a acomodação) que todos exercitámos nessa fase; não deixa de ser "
         "boa ideia corrigir a postura, mas não é sinal de doença ocular.",
+        categoria="estilo_vida_visao",
     ),
     PerguntaSeed(
         "Que estrutura do olho é responsável pela acomodação (focar objectos próximos)?",
@@ -152,6 +167,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         1,
         "A contração do músculo ciliar, do tipo esfíncter, relaxa as fibras da zónula e permite "
         "ao cristalino aumentar a sua curvatura.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "Quando os dois pais são míopes, qual é a percentagem aproximada de filhos que também "
@@ -164,6 +180,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         1,
         "A história familiar de miopia é um dos itens recolhidos na consulta, precisamente por "
         "este peso hereditário relatado.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Até que idade aproximada costuma ser possível recuperar a acuidade visual perdida por "
@@ -176,6 +193,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         1,
         "O tratamento da ambliopia deve começar o mais cedo possível; passada essa janela, a "
         "resposta ao tratamento piora significativamente.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "Qual é o tratamento da ambliopia considerado mais eficaz, apesar de ser mal tolerado "
@@ -188,6 +206,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         1,
         "Ao forçar o uso do olho amblíope, o penso oclusivo é o método com melhor eficácia "
         "demonstrada, embora a adesão nem sempre seja fácil.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "O que distingue, de forma simples, a miopia da hipermetropia quanto à visão de perto?",
@@ -200,6 +219,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         1,
         "Por isso a hipermetropia bilateral acentuada é uma causa mais frequente de ambliopia "
         "refractiva do que a miopia.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Qual destas NÃO consta entre as causas clássicas de ambliopia?",
@@ -211,6 +231,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         1,
         "As categorias clássicas são estrábica, refractiva, de privação e idiopática; passar "
         "horas em frente a um ecrã não é, por si só, causa de ambliopia.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Por que motivo se pergunta, na história clínica de uma criança com desvio ocular, se "
@@ -224,6 +245,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         1,
         "Antecedentes peri-parto e sinais neurológicos associados podem ajudar a guiar o "
         "diagnóstico de fundo por trás de um estrabismo.",
+        categoria="curiosidades_visuais",
     ),
     PerguntaSeed(
         "Numa criança com visão binocular normal, por volta de que idade se espera já haver um "
@@ -236,6 +258,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         1,
         "É também a partir daqui que se desenvolve a fusão e a estereopsia, num período crítico "
         "que se estende até aos dois anos de idade.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "O que avalia, na prática, o 'teste do olhar preferencial' com cartões de Teller, usado "
@@ -248,6 +271,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         1,
         "É mais útil para comparar os dois olhos entre si do que para obter um valor absoluto "
         "de acuidade visual equivalente ao Snellen.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "Para além da história clínica e do exame dos movimentos oculares, qual exame nunca "
@@ -261,6 +285,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         1,
         "Há relatos de ambliopias 'tratadas' sem nunca se ter visualizado o fundo ocular, "
         "atrasando o diagnóstico de uma doença ocular verdadeira.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Qual destas estruturas do olho é responsável por dar cor à íris e regular, através da "
@@ -272,6 +297,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         1,
         "A íris contém os músculos esfíncter e dilatador que ajustam o diâmetro pupilar consoante a luz ambiente.",
+        categoria="anatomia_ocular",
     ),
     PerguntaSeed(
         "O que é, em termos simples, a esclera?",
@@ -282,6 +308,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         1,
         "A esclera dá forma e proteção mecânica ao olho, sendo contínua com a córnea na parte anterior.",
+        categoria="anatomia_ocular",
     ),
     PerguntaSeed(
         "Qual é a função do nervo óptico?",
@@ -292,6 +319,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         1,
         "É este feixe de fibras nervosas que transporta o sinal visual da retina até ao córtex occipital.",
+        categoria="anatomia_ocular",
     ),
     PerguntaSeed(
         "Por que motivo se costuma recomendar que crianças façam pausas regulares ao usar "
@@ -303,6 +331,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         1,
         "O uso contínuo e próximo de ecrãs está associado a fadiga ocular, ainda que a evidência sobre o seu papel causal na miopia seja debatida.",
+        categoria="estilo_vida_visao",
     ),
     PerguntaSeed(
         "Que hábito simples ajuda a repor a lubrificação natural da superfície do olho durante "
@@ -314,6 +343,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         1,
         "A concentração numa tarefa visual reduz naturalmente a frequência do piscar espontâneo, sendo útil compensar de forma consciente.",
+        categoria="estilo_vida_visao",
     ),
     PerguntaSeed(
         "A chamada regra '20-20-20', popularmente usada para prevenir fadiga ocular associada a "
@@ -325,6 +355,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         1,
         "É uma regra prática, sem base numa evidência muito rigorosa, mas útil como lembrete para descansar o foco de perto.",
+        categoria="estilo_vida_visao",
     ),
     PerguntaSeed(
         "O que distingue, de forma simples, a miopia da hipermetropia?",
@@ -335,6 +366,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         1,
         "São os dois erros refrativos mais comuns, resultantes de uma desproporção entre o comprimento do olho e o seu poder refrativo.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "O que é o astigmatismo, em termos simples?",
@@ -345,6 +377,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         1,
         "Por a córnea não ter a mesma curvatura em todas as direções, a luz não converge num único ponto focal.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Que tipo de lentes são geralmente usadas para corrigir a miopia?",
@@ -355,6 +388,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         1,
         "As lentes côncavas (negativas) afastam o ponto de foco, compensando o alongamento típico do olho míope.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Que tipo de lentes são geralmente usadas para corrigir a hipermetropia?",
@@ -365,6 +399,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         1,
         "As lentes convexas (positivas) adiantam o ponto de foco, compensando o esforço de acomodação da hipermetropia.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "O que é, na prática, a ambliopia, popularmente chamada de 'olho preguiçoso'?",
@@ -375,6 +410,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         1,
         "Sem um estímulo visual nítido na infância, a via visual desse olho pode nunca se desenvolver plenamente.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Qual é o tratamento clássico mais eficaz da ambliopia, apesar de exigir boa adesão da "
@@ -386,6 +422,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         1,
         "Ao obrigar o cérebro a usar o olho amblíope, o penso oclusivo continua a ser a base do tratamento na maioria dos casos.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Além da oclusão, que fármaco é por vezes usado para borrar temporariamente a visão do "
@@ -397,6 +434,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         1,
         "A atropina desfoca a visão de perto do olho bom, incentivando o cérebro a preferir o olho amblíope.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "O que é, em termos gerais, o pseudoestrabismo?",
@@ -407,6 +445,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         1,
         "É frequentemente causado por pregas largas de epicanto, que escondem parte da esclera nasal e dão uma falsa impressão de desvio.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Por que é importante um exame oftalmológico em idade pré-escolar, mesmo sem queixas "
@@ -418,6 +457,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         1,
         "Crianças pequenas raramente se queixam de má visão, sobretudo quando o problema afeta apenas um dos olhos.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "O que avalia, de forma simples, um teste de acuidade visual com uma tabela de letras "
@@ -429,6 +469,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         1,
         "É o teste mais clássico e difundido para quantificar a qualidade da visão central de cada olho.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "Segundo a literatura de divulgação sobre saúde visual usada como base deste jogo, que "
@@ -440,6 +481,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         1,
         "É por isso que qualquer problema visual não corrigido pode ter um impacto tão significativo na aprendizagem e no dia a dia.",
+        categoria="curiosidades_visuais",
     ),
     PerguntaSeed(
         "O que é a retina, em termos simples?",
@@ -450,6 +492,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         1,
         "É na retina, sobretudo na zona da mácula, que se forma a imagem que depois é enviada ao cérebro.",
+        categoria="anatomia_ocular",
     ),
     PerguntaSeed(
         "Por que motivo a pupila fica mais pequena quando há muita luz ambiente?",
@@ -460,6 +503,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         1,
         "Este reflexo pupilar à luz (miose) é uma resposta automática, mediada pelo sistema nervoso autónomo.",
+        categoria="anatomia_ocular",
     ),
     PerguntaSeed(
         "O que é, basicamente, a acomodação visual?",
@@ -470,6 +514,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         1,
         "A acomodação depende sobretudo da mudança de curvatura do cristalino, controlada pelo músculo ciliar.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "Um pai refere que o filho aproxima muito o rosto do caderno para ler. Isto deve-se, na "
@@ -481,6 +526,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         1,
         "Ainda assim, vale a pena confirmar com um exame de rotina que não há nenhum erro refrativo por trás do hábito.",
+        categoria="estilo_vida_visao",
     ),
     PerguntaSeed(
         "Até que idade aproximada é geralmente mais eficaz tratar a ambliopia?",
@@ -491,6 +537,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         1,
         "Existe um período crítico de desenvolvimento visual, findo o qual a capacidade de recuperação da visão diminui muito.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "O que é, em termos simples, a hipermetropia?",
@@ -501,6 +548,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         1,
         "Sem esforço de acomodação, a imagem forma-se atrás da retina, tornando a visão de perto mais difícil.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Qual destas NÃO é uma boa prática recomendada para a saúde ocular no dia a dia?",
@@ -511,6 +559,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         1,
         "Esfregar os olhos com força pode irritar a superfície ocular e, em casos raros, lesar a córnea.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "O que faz, basicamente, a glândula lacrimal?",
@@ -521,6 +570,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         1,
         "As lágrimas produzidas pela glândula lacrimal lubrificam, nutrem e protegem a córnea e a conjuntiva.",
+        categoria="anatomia_ocular",
     ),
     PerguntaSeed(
         "Uma criança com estrabismo raramente se queixa de visão dupla, ao contrário do que "
@@ -532,6 +582,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         1,
         "Esta supressão é uma adaptação do cérebro ainda em desenvolvimento para evitar a confusão de duas imagens diferentes.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Qual destas causas de ambliopia resulta do próprio estrabismo, e não de um erro "
@@ -543,6 +594,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         1,
         "Na ambliopia estrábica, é a supressão contínua da imagem do olho desviado que impede o seu desenvolvimento visual normal.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Qual é uma causa clássica de ambliopia de privação numa criança pequena?",
@@ -553,6 +605,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         1,
         "Ao bloquear a entrada de uma imagem nítida durante o período crítico, a catarata congénita pode causar ambliopia grave.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "O que é, em termos simples, um exame de refração?",
@@ -563,6 +616,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         1,
         "É a partir deste exame que se prescreve a graduação correta de óculos ou lentes de contacto.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Qual destas estruturas NÃO faz parte da anatomia do olho?",
@@ -573,6 +627,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         1,
         "O tímpano pertence ao ouvido, sem qualquer relação com a anatomia ocular.",
+        categoria="anatomia_ocular",
     ),
     PerguntaSeed(
         "O que é, na prática, o 'campo visual'?",
@@ -583,6 +638,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         1,
         "Inclui tanto a visão central como toda a visão periférica captada numa única fixação do olhar.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "Por que motivo os óculos de sol de má qualidade, sem proteção UV adequada, podem ser "
@@ -594,6 +650,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         1,
         "A escuridão da lente dilata a pupila; sem filtro UV adequado, isso pode aumentar a exposição nociva à radiação ultravioleta.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "O que é, em termos simples, a presbiopia?",
@@ -604,6 +661,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         1,
         "Com a idade, o cristalino perde elasticidade e a acomodação para perto torna-se progressivamente mais difícil.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Qual é, em geral, o erro refrativo fisiológico mais comum numa criança muito pequena?",
@@ -614,6 +672,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         1,
         "A maioria das crianças nasce com uma hipermetropia ligeira que tende a diminuir com o crescimento (emetropização).",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "O que é a anisometropia, em termos simples?",
@@ -624,6 +683,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         1,
         "Quando os dois olhos têm graus muito diferentes, o cérebro tende a favorecer o de melhor imagem, podendo causar ambliopia.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "O que é a esclerótica, também chamada esclera?",
@@ -634,6 +694,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         1,
         "A esclera dá forma e proteção mecânica ao olho, sendo visível como a 'parte branca' do olho.",
+        categoria="anatomia_ocular",
     ),
     PerguntaSeed(
         "O que é, na prática, a conjuntiva?",
@@ -644,6 +705,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         1,
         "A conjuntivite, muito comum, é precisamente a inflamação desta membrana.",
+        categoria="anatomia_ocular",
     ),
     PerguntaSeed(
         "Qual é, na prática, o objetivo de um teste de rastreio visual feito na escola?",
@@ -654,6 +716,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         1,
         "É um primeiro filtro simples e rápido, não um diagnóstico definitivo.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Segundo os princípios gerais de saúde visual pediátrica, a partir de que altura se "
@@ -665,6 +728,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         1,
         "A deteção precoce de problemas visuais é essencial, dado o período crítico de desenvolvimento da visão nos primeiros anos.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "O que é, de forma simples, um erro refrativo?",
@@ -675,6 +739,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         1,
         "Miopia, hipermetropia e astigmatismo são as três formas mais comuns de erro refrativo.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Como se costuma chamar, popularmente, ao uso combinado de óculos para perto e para "
@@ -686,6 +751,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         1,
         "São muito usados a partir da idade em que a presbiopia se soma a um erro refrativo já existente.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Qual é a principal diferença prática entre óculos e lentes de contacto?",
@@ -696,6 +762,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         1,
         "Por ficarem em contacto direto com o olho, as lentes de contacto exigem mais cuidados de higiene do que os óculos.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Uma criança que estreita muito os olhos para ver ao longe pode estar a compensar, "
@@ -707,6 +774,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         1,
         "Estreitar os olhos ('semicerrar as pálpebras') reduz ligeiramente a dispersão da luz, ajudando temporariamente a focar melhor um objeto distante quando há miopia.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Qual destas situações justifica encaminhamento urgente a um oftalmologista numa "
@@ -718,6 +786,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         1,
         "Uma assimetria no reflexo vermelho pode indicar doenças oculares graves, como catarata congénita ou retinoblastoma.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "O que é, em termos simples, a diplopia?",
@@ -728,6 +797,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         1,
         "A diplopia surge quando as imagens dos dois olhos não caem em pontos retinianos correspondentes.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Um estrabismo que aparece só de vez em quando, por exemplo quando a criança está "
@@ -739,6 +809,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         1,
         "O estrabismo intermitente alterna entre períodos de bom alinhamento e períodos de desvio manifesto.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "O que é, em termos simples, a esotropia?",
@@ -749,6 +820,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         1,
         "Na esotropia, um ou ambos os olhos desviam-se para dentro, em direção ao nariz.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "O que é, em termos simples, a exotropia?",
@@ -759,6 +831,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         1,
         "Na exotropia, o olho desvia-se para fora, afastando-se do nariz.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Um desvio vertical, em que um olho fica mais alto do que o outro, chama-se:",
@@ -769,6 +842,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         1,
         "Os desvios verticais (hipertropias/hipotropias) são menos frequentes do que os horizontais.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "O que é, na prática, o 'teste de cover' (tapar e destapar um olho)?",
@@ -779,6 +853,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         1,
         "Ao tapar um olho e observar o outro, deteta-se um eventual desvio (tropia ou foria).",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Qual profissional está mais indicado para diagnosticar e tratar o estrabismo?",
@@ -789,6 +864,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         1,
         "O oftalmologista é o médico especializado em diagnosticar e tratar doenças e desvios oculares.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "O que faz, tipicamente, um ortoptista, em articulação com o oftalmologista?",
@@ -799,6 +875,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         1,
         "O ortoptista é um técnico especializado na avaliação da motilidade ocular e da visão binocular, trabalhando junto do oftalmologista.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "O que é, de forma simples, o daltonismo?",
@@ -809,6 +886,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         1,
         "É uma alteração, geralmente hereditária, na perceção de certas cores, que não afeta a nitidez da visão.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Que tipo de células da retina são responsáveis pela visão das cores e pela visão "
@@ -820,6 +898,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         1,
         "Os cones são responsáveis pela visão das cores e pela visão detalhada em boas condições de luz.",
+        categoria="anatomia_ocular",
     ),
     PerguntaSeed(
         "Os bastonetes da retina são sobretudo importantes para:",
@@ -830,6 +909,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         1,
         "Os bastonetes são muito sensíveis à luz mas não distinguem cores, sendo essenciais à visão noturna.",
+        categoria="anatomia_ocular",
     ),
     PerguntaSeed(
         "Qual é a forma mais comum de daltonismo?",
@@ -840,6 +920,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         1,
         "A deficiência na perceção do vermelho-verde é, de longe, a forma mais frequente de daltonismo.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Um bebé que ainda não fala pode ter a sua visão avaliada sobretudo através de que "
@@ -851,6 +932,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         1,
         "Em bebés, a avaliação é sobretudo qualitativa, com base no comportamento visual observado durante a consulta.",
+        categoria="prevencao_cuidados",
     ),
     # === Nível 2 (patamares 6-10, 7.500 Kz a 50.000 Kz) ======================
     # Clínica intermédia: Hirschberg, cover test, ambliopia mais detalhada,
@@ -865,6 +947,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         2,
         "O reflexo não é, na verdade, corneano, mas sim uma imagem virtual localizada atrás da "
         "pupila; a sua posição permite inferir o desvio ocular.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "No teste de Hirschberg, um reflexo luminoso localizado no bordo do limbo (cerca de "
@@ -877,6 +960,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         2,
         "A tabela clássica de conversão do teste de Hirschberg associa o limbo a cerca de 45º, "
         "equivalente a aproximadamente 100 dioptrias prismáticas.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "O teste de Krimsky é especialmente útil em que situação?",
@@ -888,6 +972,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         2,
         "Coloca-se um prisma em frente ao olho fixador (não ao desviado), quantificando o "
         "desvio com base no reflexo de Hirschberg.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Qual é a principal diferença entre o teste de 'cover' e o teste de 'uncover'?",
@@ -899,6 +984,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         2,
         "No cover, observa-se o olho destapado à procura de movimento; no uncover, observa-se o "
         "olho que estava tapado ao retirar a oclusão.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "No cover test alternado, o que é essencial garantir durante a manobra?",
@@ -911,6 +997,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         2,
         "É preciso rapidez na troca de olho, mas permanência suficiente em cada um para romper "
         "de facto a fusão binocular.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Para que serve, especificamente, o 'cover test prismático'?",
@@ -922,6 +1009,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         2,
         "É a técnica mais precisa de quantificação do desvio entre as variantes do cover test.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Qual é o mecanismo de ação da toxina botulínica tipo A quando injetada num músculo "
@@ -934,6 +1022,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         2,
         "Ao impedir a fusão das vesículas de acetilcolina com a membrana neuronal, a toxina "
         "impede a contração muscular, causando uma paralisia transitória.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Depois de uma injeção de toxina botulínica num músculo ocular, até quanto tempo se "
@@ -946,6 +1035,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         2,
         "Os mecanismos exactos de recuperação da função muscular não são totalmente "
         "conhecidos, apesar deste efeito ser transitório.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Que bactéria produz a toxina botulínica usada terapeuticamente em oftalmologia?",
@@ -956,6 +1046,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         2,
         "É um bacilo gram-negativo, esporulado e anaeróbio.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Dos sete serotipos conhecidos de toxina botulínica (A a G), qual é o usado com fins "
@@ -967,6 +1058,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         2,
         "Apenas a toxina botulínica tipo A (TBA) tem aplicação terapêutica oftalmológica.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Qual é a equivalência de dose aproximada entre as duas marcas comerciais de toxina "
@@ -978,6 +1070,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         2,
         "Esta equivalência é importante para não haver erro de dosagem ao trocar de marca.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Qual erro refractivo é mais frequentemente associado a ambliopia bilateral quando "
@@ -990,6 +1083,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         2,
         "A hipermetropia acentuada impede uma imagem nítida tanto de longe como de perto, ao "
         "contrário da miopia, que permite normalmente algum grau de visão de perto.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Que instrumento é tipicamente usado, junto com uma fonte de luz, na realização dos "
@@ -1001,6 +1095,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         2,
         "É com a barra de prismas que se quantifica o desvio observado pelo reflexo luminoso.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Até que idade se recomenda, de forma sistemática, realizar a refração sob cicloplegia "
@@ -1013,6 +1108,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         2,
         "Antes desta idade é muito difícil confirmar com testes subjectivos que a criança vê "
         "bem; depois, a maioria já colabora de forma fiável.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Qual fármaco cicloplégico tem o pico de ação mais rápido (30 minutos a 1 hora) e "
@@ -1025,6 +1121,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         2,
         "Por ser mais rápido e ter efeito mais curto, o ciclopentolato é preferido na prática "
         "diária face à atropina.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Por que motivo a atropina deve ser usada com particular cautela em crianças com "
@@ -1037,6 +1134,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         2,
         "É uma das populações de risco assinaladas junto com prematuros de baixo peso e "
         "insuficientes cardíacos.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Um ângulo kappa 'positivo' (reflexo desviado no sentido nasal) pode ser confundido, à "
@@ -1049,6 +1147,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         2,
         "O cover test distingue os dois quadros: no ângulo kappa a fixação mantém-se ao tapar "
         "o olho adelfo; na exotropia verdadeira, o olho desviado retoma o alinhamento.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "No pseudoestrabismo por pregas de epicanto, o que é característico observar-se no "
@@ -1062,6 +1161,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         2,
         "É precisamente essa manutenção do reflexo centrado que permite tranquilizar os pais "
         "de que não há, de facto, estrabismo.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "O que é a esotropia acomodativa refrativa, um dos quadros mais comuns de estrabismo "
@@ -1074,6 +1174,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         2,
         "Ao corrigir a hipermetropia com óculos, o esforço de acomodação (e a convergência associada) diminui, podendo reduzir ou eliminar o desvio.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Qual é a relação neurológica entre acomodação e convergência que explica o estrabismo "
@@ -1085,6 +1186,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         2,
         "Uma relação AC/A anormalmente elevada é, em muitos casos, o mecanismo por trás do estrabismo acomodativo não puramente refrativo.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "O que distingue a esotropia acomodativa 'pura' da esotropia acomodativa com componente "
@@ -1096,6 +1198,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         2,
         "Distinguir estas formas é importante porque só a componente não acomodativa poderá necessitar de tratamento cirúrgico.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "O que é, na prática, a 'ambliopia por anisometropia'?",
@@ -1106,6 +1209,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         2,
         "O cérebro tende a favorecer o olho com a imagem mais nítida, negligenciando o olho com maior erro refrativo não corrigido.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Que grau aproximado de diferença de astigmatismo entre os dois olhos já é, por si só, "
@@ -1117,6 +1221,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         2,
         "Diferenças de astigmatismo relativamente pequenas entre os dois olhos já podem ser suficientes para gerar ambliopia se não corrigidas a tempo.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "O que avalia especificamente o 'teste de Bruckner', usando o oftalmoscópio direto a "
@@ -1128,6 +1233,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         2,
         "Uma assimetria no brilho ou na cor do reflexo entre os dois olhos é um sinal de alerta que orienta investigação adicional.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "No teste de Bruckner, um reflexo mais brilhante no olho desviado, comparado com o olho "
@@ -1139,6 +1245,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         2,
         "A assimetria de brilho no reflexo relaciona-se com a diferença de fixação entre os dois olhos.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Que instrumento simples, além da barra de prismas, é habitualmente usado no cover test "
@@ -1150,6 +1257,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         2,
         "Um alvo acomodativo (que exige atenção e foco, e não apenas uma luz) obtém um resultado de cover test mais fiável.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Por que se prefere, sempre que possível, um alvo acomodativo (e não apenas uma luz) "
@@ -1161,6 +1269,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         2,
         "Um desvio acomodativo pode não se manifestar totalmente perante uma simples luz, que exige pouco esforço de foco.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Uma 'foria' descompensada, isto é, que deixa de ser controlável pela fusão binocular, "
@@ -1172,6 +1281,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         2,
         "Quando o mecanismo de fusão já não consegue compensar o desvio latente, este pode tornar-se manifesto (tropia).",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "O que é, na prática clínica, a 'amplitude de fusão'?",
@@ -1183,6 +1293,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         2,
         "Uma amplitude de fusão reduzida torna mais provável que uma foria se descompense em tropia.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "Qual é o principal objetivo dos exercícios ortópticos (terapia visual) em casos "
@@ -1194,6 +1305,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         2,
         "A terapia ortóptica é uma das abordagens de primeira linha para a insuficiência de convergência sintomática.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "O que é, na prática, um 'prisma de Fresnel', por vezes aplicado temporariamente sobre "
@@ -1205,6 +1317,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         2,
         "Por ser removível e ajustável, é útil para testar o efeito de uma correção prismática antes de a incorporar de forma permanente.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Em que situação clínica um prisma incorporado permanentemente nos óculos pode ser "
@@ -1216,6 +1329,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         2,
         "Prismas são particularmente úteis em pequenos desvios verticais ou em desvios de longa data já bem compensados sensorialmente.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "O que é a síndrome de Duane, um exemplo clássico de estrabismo restritivo/inervacional "
@@ -1227,6 +1341,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         2,
         "Resulta de uma inervação anómala dos músculos extraoculares, e não de uma verdadeira paralisia do nervo abducente.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "O que caracteriza a síndrome de Brown, outro exemplo clássico de estrabismo restritivo?",
@@ -1237,6 +1352,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         2,
         "Ao contrário de uma paralisia nervosa, a síndrome de Brown resulta de uma restrição mecânica do próprio tendão.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Qual é a principal diferença entre um estrabismo 'restritivo' e um 'paralítico'?",
@@ -1247,6 +1363,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         2,
         "Esta distinção é essencial para decidir a abordagem cirúrgica mais adequada a cada caso.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Um teste de 'ducção forçada', feito sob anestesia tópica ou geral, ajuda a distinguir "
@@ -1258,6 +1375,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         2,
         "Ao tentar mover passivamente o olho com uma pinça, a presença de resistência sugere uma causa restritiva, e não puramente paralítica.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Que exame de imagem é por vezes solicitado perante um estrabismo paralítico de início "
@@ -1269,6 +1387,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         2,
         "Um estrabismo paralítico súbito num adulto pode, nalguns casos, ser o primeiro sinal de uma lesão neurológica que exige investigação urgente.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Uma paralisia isolada do nervo abducente (VI par) causa tipicamente que desvio ocular?",
@@ -1279,6 +1398,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         2,
         "Sem a ação do reto lateral, o olho não consegue abduzir normalmente, ficando relativamente desviado para dentro.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Uma paralisia isolada do nervo troclear (IV par) afeta principalmente que músculo?",
@@ -1289,6 +1409,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         2,
         "É a paralisia de nervo craniano mais comum na motilidade ocular, frequentemente de causa congénita ou traumática.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Um doente com paralisia do oblíquo superior costuma adotar espontaneamente que posição "
@@ -1300,6 +1421,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         2,
         "Esta inclinação compensatória (tilt de Bielschowsky) reduz a diplopia vertical/torcional associada à paralisia.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "O 'teste de inclinação da cabeça de Bielschowsky' é usado sobretudo para localizar que "
@@ -1311,6 +1433,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         2,
         "Ao inclinar a cabeça para cada lado, observa-se em qual delas a hipertropia se agrava, ajudando a identificar o músculo parético.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Uma paralisia completa do nervo oculomotor (III par) tipicamente NÃO afeta qual destes "
@@ -1322,6 +1445,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         2,
         "O reto lateral (inervado pelo VI par) e o oblíquo superior (inervado pelo IV par) são poupados numa paralisia isolada do III par.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Além da limitação de vários movimentos oculares, uma paralisia completa do III par "
@@ -1333,6 +1457,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         2,
         "A ptose resulta da paralisia do levantador da pálpebra; a midríase, da paralisia das fibras parassimpáticas que acompanham o III par.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Numa criança com estrabismo, a chamada 'posição compensatória da cabeça' (torcicolo "
@@ -1344,6 +1469,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         2,
         "É importante distinguir um torcicolo de causa ocular de um torcicolo de causa muscular ou ortopédica.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Qual é o principal risco de não corrigir cirurgicamente uma síndrome de Duane com "
@@ -1355,6 +1481,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         2,
         "Um torcicolo mantido durante o crescimento pode, nalguns casos, contribuir para assimetrias faciais ou posturais.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Um estrabismo que surge subitamente numa criança mais velha ou num adulto, sem história "
@@ -1366,6 +1493,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         2,
         "Ao contrário do estrabismo concomitante típico da infância, um início súbito de causa incomitante exige uma investigação mais cuidadosa.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Que doença sistémica crónica é um fator de risco reconhecido para paralisias agudas de "
@@ -1377,6 +1505,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         2,
         "A diabetes é uma causa reconhecida de mononeuropatias cranianas isoladas, incluindo dos nervos III, IV e VI.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Uma paralisia do III par causada por diabetes tem, tipicamente, uma característica "
@@ -1388,6 +1517,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         2,
         "Esta distinção ('poupança pupilar') é clinicamente relevante para distinguir uma causa microvascular de uma causa compressiva mais urgente.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Qual é, na prática clínica, o significado de uma paralisia do III par que afeta também "
@@ -1399,6 +1529,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         2,
         "O envolvimento pupilar é um sinal de alarme clássico que orienta para investigação de imagem urgente.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "O que é o 'nistagmo', em termos simples?",
@@ -1409,6 +1540,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         2,
         "O nistagmo pode ser congénito ou adquirido, e nem sempre está associado a estrabismo, ainda que possa coexistir com ele.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Um nistagmo congénito costuma, em muitos casos, apresentar que característica "
@@ -1420,6 +1552,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         2,
         "Muitas crianças com nistagmo congénito adotam uma posição de cabeça específica para colocar os olhos na 'zona de bloqueio' de menor oscilação.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Em que contexto pode a toxina botulínica ser usada no tratamento do nistagmo, para "
@@ -1431,6 +1564,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         2,
         "É um uso mais restrito e específico, reservado a casos selecionados, e não uma primeira linha de tratamento do nistagmo.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Qual é a principal diferença entre um 'nistagmo sensorial' e um 'nistagmo motor "
@@ -1442,6 +1576,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         2,
         "Esta distinção orienta a investigação: o nistagmo sensorial exige procurar ativamente uma doença ocular subjacente que explique a má visão.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Que exame é fundamental realizar perante uma criança pequena com nistagmo de início "
@@ -1453,6 +1588,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         2,
         "O nistagmo de início na infância pode, nalguns casos, ser o primeiro sinal de uma doença ocular ou neurológica que precisa de ser identificada.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "O que avalia, de forma simples, a 'estereopsia', testada por exemplo com o teste de "
@@ -1464,6 +1600,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         2,
         "A estereopsia é a forma mais fina de perceção de profundidade, exigindo boa visão e fusão binocular.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "Por volta de que idade se espera já estar presente uma estereopsia mensurável numa "
@@ -1475,6 +1612,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         2,
         "É também nesta janela etária que se espera o alinhamento ocular normal e o início da fusão binocular.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "Que teste simples de estereopsia, usado em consultório, usa óculos polarizados para "
@@ -1486,6 +1624,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         2,
         "O teste de Titmus é um dos testes de estereopsia mais usados em consultório oftalmológico.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "O que é, na prática, a 'correspondência retiniana anómala', uma adaptação sensorial do "
@@ -1497,6 +1636,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         2,
         "É uma adaptação sensorial distinta da simples supressão, mais frequente em estrabismos concomitantes de longa duração.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "O 'escotoma de supressão' corresponde a que fenómeno sensorial no estrabismo?",
@@ -1507,6 +1647,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         2,
         "É esta supressão ativa que evita a diplopia na maioria das crianças com estrabismo, mas que pode conduzir a ambliopia se mantida.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Um adulto que desenvolve subitamente um desvio ocular queixa-se tipicamente de "
@@ -1518,6 +1659,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         2,
         "A capacidade de supressão cortical diminui com a maturação do sistema visual, tornando a diplopia mais provável e persistente no adulto.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "O que é a 'visão binocular única normal', o objetivo funcional último do tratamento do "
@@ -1529,6 +1671,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         2,
         "É este o objetivo funcional ideal, para além do simples alinhamento estético dos olhos.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Numa criança operada a estrabismo, por que motivo o resultado sensorial (fusão, "
@@ -1540,6 +1683,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         2,
         "O objetivo ideal do tratamento vai além do cosmético, procurando também restaurar, sempre que possível, a função binocular.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Um doente com boa fusão sensorial antes de desenvolver um estrabismo paralítico tem, em "
@@ -1551,6 +1695,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         2,
         "Ter tido fusão binocular normal antes do desvio é um fator prognóstico favorável para a recuperação funcional após o tratamento.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "O que avalia, na prática, um 'sinoptóforo', instrumento clássico usado em ortóptica?",
@@ -1561,6 +1706,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         2,
         "O sinoptóforo permite medir com precisão o ângulo objetivo e subjetivo do desvio, além de avaliar a função binocular.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Num sinoptóforo, a diferença entre o 'ângulo objetivo' e o 'ângulo subjetivo' medidos no "
@@ -1572,6 +1718,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         2,
         "Quando os dois ângulos não coincidem, isso sugere uma readaptação sensorial da correspondência retiniana.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Qual é a principal vantagem de operar precocemente uma esotropia infantil (congénita), "
@@ -1583,6 +1730,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         2,
         "Quanto mais cedo se corrige o alinhamento, maior a janela de oportunidade para algum grau de desenvolvimento binocular.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Que fator torna, em geral, mais difícil recuperar boa fusão binocular numa esotropia "
@@ -1594,6 +1742,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         2,
         "Passado o período crítico, mesmo um bom alinhamento cirúrgico tardio dificilmente restaura a fusão binocular fina.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Que outra alteração ocular é frequentemente associada à esotropia infantil congénita, "
@@ -1605,6 +1754,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         2,
         "É comum encontrar, associadas à esotropia infantil, disfunções dos músculos oblíquos ou um nistagmo latente.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "O que é, na prática, a 'disfunção do oblíquo inferior', um achado comum acompanhando "
@@ -1616,6 +1766,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         2,
         "É uma das disfunções musculares mais frequentemente associadas e corrigidas na mesma cirurgia do desvio horizontal.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "O 'padrão em V' do estrabismo refere-se a que achado no exame da motilidade ocular?",
@@ -1626,6 +1777,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         2,
         "Os padrões em A e em V refletem disfunções relativas dos músculos oblíquos, relevantes na decisão cirúrgica.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "O 'padrão em A' do estrabismo, em contraste com o padrão em V, caracteriza-se por:",
@@ -1636,6 +1788,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         2,
         "Tal como o padrão em V, o padrão em A orienta a cirurgia para os músculos oblíquos, além dos retos horizontais.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Qual é o objetivo de medir o desvio em várias posições do olhar (para cima, para baixo, "
@@ -1647,6 +1800,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         2,
         "Um desvio que muda muito consoante a direção do olhar sugere um componente paralítico, restritivo ou um padrão A/V a considerar na cirurgia.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Qual é a função clínica de medir o desvio tanto de perto como de longe, numa consulta "
@@ -1658,6 +1812,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         2,
         "Um desvio maior de perto do que de longe, por exemplo, sugere um componente de excesso de convergência, com implicações no tratamento.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "O que é, na prática, o 'excesso de convergência', uma variante de esotropia "
@@ -1669,6 +1824,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         2,
         "Nestes casos, óculos bifocais ou multifocais podem ser usados especificamente para reduzir o desvio de perto.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Qual é, na prática, o 'défice de divergência', outra variante clínica de estrabismo "
@@ -1680,6 +1836,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         2,
         "É o padrão inverso do excesso de convergência, com maior desvio ao olhar para longe do que ao olhar para perto.",
+        categoria="doencas_estrabismo",
     ),
     # === Nível 3 (patamares 11-15, 100.000 Kz a 1.000.000 Kz) ================
     # Avançado: leis da motilidade, ângulos subjetivo/objetivo, física ótica
@@ -1695,6 +1852,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         3,
         "Determina que a inervação simultânea de agonista e antagonista, no mesmo olho, "
         "permite o movimento do globo ocular.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "A Lei de Hering, ou da inervação equivalente, determina que:",
@@ -1707,6 +1865,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         3,
         "É uma das leis mais importantes do estrabismo por explicar a semiologia dos "
         "estrabismos inconcomitantes inervacionais paréticos.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "Na parésia de um músculo extraocular, qual desvio é maior: o desvio primário (com o "
@@ -1719,6 +1878,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         3,
         "É consequência direta da Lei de Hering: para o músculo parético trazer o olho ao seu "
         "campo de ação, o seu conjugado recebe inervação extra, produzindo o desvio secundário.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Segundo a Lei de Hering, numa parésia do reto externo do olho direito, qual músculo "
@@ -1731,6 +1891,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         3,
         "O reto externo do olho direito e o reto interno do olho esquerdo formam um par de "
         "músculos conjugados; a hiperação do conjugado explica-se pela Lei de Hering.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "O que distingue o 'ângulo objetivo' do 'ângulo subjetivo' do estrabismo, na "
@@ -1744,6 +1905,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         3,
         "Ao desvio 'real' ou objetivo (E) junta-se ainda o de aparência (A) e o subjetivo (S), "
         "três conceitos distintos de avaliação do estrabismo.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "Opticamente, o ângulo kappa (K) representa a diferença entre:",
@@ -1755,6 +1917,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         3,
         "O eixo visual e o eixo pupilar raramente coincidem; o ângulo entre eles, o kappa, "
         "tem tipicamente entre 3º e 7º, podendo por vezes ser maior.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "Segundo a fórmula clássica que relaciona o desvio real (objetivo) com o desvio "
@@ -1767,6 +1930,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         3,
         "Esta relação explica, por exemplo, como um ângulo kappa de sinal contrário pode "
         "mascarar um estrabismo real, anulando a aparência de desvio.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Como se chama o fenómeno em que, por causa do ângulo kappa, existe um desvio "
@@ -1780,6 +1944,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         3,
         "É o inverso do caso em que o ângulo kappa mascara um desvio real: aqui, cria a "
         "ilusão de um desvio que não existe.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "Segundo o relato histórico da cirurgia de estrabismo, quem é geralmente creditado por "
@@ -1794,6 +1959,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "J. Guérin terá 'pressentido' a ideia primeiro, mas foi Stromeyer quem a formulou "
         "positivamente em 1838; Florent Cunier foi o primeiro a praticá-la ao vivo, em 1839, e "
         "Dieffenbach popularizou-a depois.",
+        categoria="curiosidades_visuais",
     ),
     PerguntaSeed(
         "Qual cirurgião substituiu a miotomia (secção total do músculo) pela tenotomia, ao "
@@ -1807,6 +1973,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         3,
         "A tenotomia, ao contrário da miotomia, conserva o músculo por inteiro e apenas "
         "desloca o seu ponto de inserção.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "A antiga doutrina de Buffon atribuía a causa do estrabismo a quê -- teoria depois "
@@ -1819,6 +1986,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         3,
         "Os sucessos, por vezes brilhantes, da estrabotomia deram ao sistema muscular o valor "
         "patogénico que a teoria de Buffon não reconhecia.",
+        categoria="curiosidades_visuais",
     ),
     PerguntaSeed(
         "O oftalmologista Giraud-Teulon definiu classicamente o estrabismo como:",
@@ -1831,6 +1999,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         3,
         "Esta definição do século XIX é ainda hoje reconhecida como uma descrição "
         "essencialmente correta do fenómeno.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "O Prémio Nobel de Fisiologia ou Medicina de 1981, atribuído a David Hubel e Torsten "
@@ -1844,6 +2013,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         3,
         "O trabalho, feito em gatinhos, confirmou que a ambliopia é, na sua essência, um "
         "fenómeno cortical, e não apenas ocular.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Em óptica geométrica, o que significa dizer que a imagem e o objeto são 'conjugados' "
@@ -1857,6 +2027,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         3,
         "Este é o conceito-base usado depois para explicar a técnica de esquiascopia "
         "(retinoscopia) e a distância de trabalho do examinador.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Por definição óptica, um olho diz-se emétrope quando:",
@@ -1869,6 +2040,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         3,
         "É a partir desta definição que se deriva o conceito de distância de trabalho na "
         "esquiascopia.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "Numa técnica de esquiascopia (retinoscopia), ao usar uma lente de trabalho de "
@@ -1882,6 +2054,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         3,
         "A distância da imagem conjugada é o inverso da vergência da lente, em metros: "
         "1 ÷ 1,50 ≈ 0,66 m.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "O retinoscópio de franja veio substituir que técnica mais antiga, usada para produzir "
@@ -1894,6 +2067,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         3,
         "O retinoscópio de franja tornou a técnica mais fácil ao produzir diretamente um "
         "feixe de luz retangular, ajustável em espessura e orientação.",
+        categoria="curiosidades_visuais",
     ),
     PerguntaSeed(
         "Numa paralisia do músculo grande oblíquo (oblíquo superior) em que a função de "
@@ -1907,6 +2081,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         3,
         "Segundo as regras de Hering e Sherrington aplicadas a este quadro, a hiperação do "
         "reto inferior contralateral surge quando é a depressão a função mais comprometida.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Quantos músculos extraoculares controlam os movimentos de cada olho, no total?",
@@ -1917,6 +2092,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         3,
         "Cada olho tem quatro músculos retos e dois oblíquos, num total de seis músculos extraoculares.",
+        categoria="anatomia_ocular",
     ),
     PerguntaSeed(
         "Qual é a principal ação do músculo reto lateral (externo)?",
@@ -1927,6 +2103,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         3,
         "O reto lateral, inervado pelo VI par (abducente), é o principal abdutor do olho.",
+        categoria="anatomia_ocular",
     ),
     PerguntaSeed(
         "Qual é a principal ação do músculo reto medial (interno)?",
@@ -1937,6 +2114,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         3,
         "O reto medial, inervado pelo III par (oculomotor), é o principal adutor do olho.",
+        categoria="anatomia_ocular",
     ),
     PerguntaSeed(
         "O músculo oblíquo superior (grande oblíquo) é inervado por qual nervo craniano?",
@@ -1947,6 +2125,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         3,
         "O nervo troclear é o único que inerva exclusivamente o oblíquo superior, atravessando a tróclea antes de chegar ao músculo.",
+        categoria="anatomia_ocular",
     ),
     PerguntaSeed(
         "O músculo reto lateral é inervado por qual nervo craniano?",
@@ -1957,6 +2136,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         3,
         "Uma paralisia isolada deste nervo causa tipicamente uma esotropia por perda da abdução do olho afetado.",
+        categoria="anatomia_ocular",
     ),
     PerguntaSeed(
         "Os restantes músculos extraoculares (retos superior, inferior, medial e o oblíquo "
@@ -1968,6 +2148,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         3,
         "O nervo oculomotor é o mais 'ocupado' dos três nervos motores oculares, controlando quatro dos seis músculos extraoculares.",
+        categoria="anatomia_ocular",
     ),
     PerguntaSeed(
         "Qual é a principal ação do músculo reto superior, na posição primária do olhar?",
@@ -1978,6 +2159,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         3,
         "Por causa do ângulo entre o eixo do músculo e o eixo visual, o reto superior tem ações secundárias além da elevação principal.",
+        categoria="anatomia_ocular",
     ),
     PerguntaSeed(
         "Qual é a principal ação do músculo oblíquo inferior (pequeno oblíquo)?",
@@ -1988,6 +2170,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         3,
         "O oblíquo inferior é um dos elevadores do olho, atuando sobretudo quando o olho está em adução.",
+        categoria="anatomia_ocular",
     ),
     PerguntaSeed(
         "O que é a 'versão', em motilidade ocular?",
@@ -1998,6 +2181,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         3,
         "Olhar para a direita, por exemplo, é uma versão: os dois olhos movem-se juntos na mesma direção.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "O que é a 'vergência', em motilidade ocular, ao contrário da versão?",
@@ -2008,6 +2192,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         3,
         "Ao focar um objeto próximo, os dois olhos convergem, movendo-se em direções opostas um em relação ao outro.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "O que são, tecnicamente, os 'músculos conjugados' (yoke muscles)?",
@@ -2018,6 +2203,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         3,
         "Por exemplo, o reto lateral de um olho e o reto medial do outro são conjugados na versão lateral (dextroversão ou levoversão).",
+        categoria="anatomia_ocular",
     ),
     PerguntaSeed(
         "Numa parésia do reto lateral do olho direito, qual é tipicamente o músculo conjugado "
@@ -2029,6 +2215,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         3,
         "O reto lateral direito e o reto medial esquerdo formam um par conjugado na versão para a direita (dextroversão).",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Segundo a Lei de Hering, numa parésia de um músculo, o desvio secundário (olho parético "
@@ -2040,6 +2227,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         3,
         "Para o olho parético conseguir fixar, é necessária inervação extra, que se reflete também no conjugado do olho são, aumentando o desvio secundário.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "O 'campo de ação' de um músculo extraocular corresponde a que conceito?",
@@ -2050,6 +2238,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         3,
         "Por exemplo, o campo de ação do reto lateral é a abdução máxima, direção em que uma eventual paralisia é mais evidente.",
+        categoria="anatomia_ocular",
     ),
     PerguntaSeed(
         "Ao examinar as nove posições diagnósticas do olhar, o objetivo principal é:",
@@ -2060,6 +2249,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         3,
         "Cada uma das nove posições isola predominantemente um ou dois músculos, facilitando a localização de uma disfunção.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "O 'ângulo de aparência' (A), na formulação clássica da motilidade ocular, distingue-se "
@@ -2071,6 +2261,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         3,
         "É este ângulo de aparência, e não apenas o desvio real, que um observador externo tende a notar num primeiro olhar.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "Um ângulo kappa é classificado como 'negativo' quando o reflexo corneano, no teste de "
@@ -2082,6 +2273,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         3,
         "Ao contrário do ângulo kappa positivo (o mais comum, com reflexo ligeiramente nasal), o negativo desloca o reflexo para o lado temporal.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "Por que motivo a medição cuidadosa do ângulo kappa é especialmente relevante antes de "
@@ -2093,6 +2285,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         3,
         "Ignorar um ângulo kappa significativo pode distorcer a avaliação do desvio real, com impacto direto no planeamento cirúrgico.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "Como se chama o fenómeno em que, por causa do ângulo kappa, existe um desvio aparente "
@@ -2104,6 +2297,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         3,
         "É o inverso do caso em que o ângulo kappa mascara um desvio real: aqui, cria a ilusão de um desvio que não existe.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "Um ângulo kappa positivo muito pronunciado pode ser confundido, à primeira vista, com "
@@ -2115,6 +2309,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         3,
         "O cover test permite distinguir os dois quadros: no ângulo kappa a fixação mantém-se ao tapar o olho adelfo.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "Um ângulo kappa negativo muito pronunciado pode ser confundido, à primeira vista, com "
@@ -2126,6 +2321,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         3,
         "Neste caso, o reflexo luminoso corneano fica desviado temporalmente, sugerindo à primeira vista uma esotropia inexistente.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "Na esquiascopia (retinoscopia), o chamado 'ponto neutro' corresponde a que momento da "
@@ -2137,6 +2333,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         3,
         "É neste ponto neutro que a lente de prova colocada à frente do olho iguala exatamente o erro refrativo, permitindo calcular o grau.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Antes de atingir o ponto neutro na esquiascopia de um olho míope, o reflexo retiniano "
@@ -2148,6 +2345,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         3,
         "Este 'movimento inverso' é a assinatura clássica de uma miopia ainda não neutralizada pela lente de prova.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Numa técnica de esquiascopia (retinoscopia), ao usar uma lente de trabalho de +1,50D, a "
@@ -2159,6 +2357,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         3,
         "A distância da imagem conjugada é o inverso da vergência da lente, em metros: 1 ÷ 1,50 ≈ 0,66 m.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "O que é, na prática, a 'refração ciclopégica', tantas vezes recomendada em crianças "
@@ -2170,6 +2369,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         3,
         "Ao paralisar a acomodação, evita-se que o esforço de foco da criança mascare parte do erro refrativo real, sobretudo da hipermetropia.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "A que se atribui, no relato histórico da cirurgia de estrabismo, a ideia de que J. "
@@ -2181,6 +2381,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         3,
         "Segundo o relato histórico, coube a Stromeyer formular positivamente a ideia em 1838, embora Guérin a tivesse pressentido antes.",
+        categoria="curiosidades_visuais",
     ),
     PerguntaSeed(
         "Quem foi o primeiro a praticar ao vivo, em 1839, a operação de miotomia ocular "
@@ -2192,6 +2393,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         3,
         "Florent Cunier terá sido o primeiro a executar a operação na prática, antes de Dieffenbach a popularizar.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Que cirurgião é geralmente creditado por ter popularizado a operação de estrabismo, "
@@ -2203,6 +2405,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         3,
         "Dieffenbach deu grande visibilidade e disseminação à técnica cirúrgica de correção do estrabismo no século XIX.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Qual cirurgião substituiu a miotomia (secção total do músculo) pela tenotomia, ao "
@@ -2214,6 +2417,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         3,
         "A tenotomia, ao contrário da miotomia, conserva o músculo por inteiro e apenas desloca o seu ponto de inserção.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Qual é a principal diferença entre a 'miotomia' e a 'tenotomia' no tratamento cirúrgico "
@@ -2225,6 +2429,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         3,
         "A introdução da tenotomia por Bonnet melhorou significativamente os resultados e a reputação da cirurgia de estrabismo.",
+        categoria="curiosidades_visuais",
     ),
     PerguntaSeed(
         "A antiga doutrina de Buffon atribuía a causa do estrabismo a quê, teoria depois "
@@ -2236,6 +2441,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         3,
         "Os sucessos, por vezes notáveis, da estrabotomia deram ao sistema muscular o valor patogénico que a teoria de Buffon não reconhecia.",
+        categoria="curiosidades_visuais",
     ),
     PerguntaSeed(
         "O termo histórico 'amblyopia ex anopsia', usado antes da compreensão cortical moderna "
@@ -2247,6 +2453,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         3,
         "Antes do trabalho de Hubel e Wiesel, já se suspeitava clinicamente que a 'falta de uso' do olho tinha um papel causal, mesmo sem se conhecer o mecanismo cortical.",
+        categoria="curiosidades_visuais",
     ),
     PerguntaSeed(
         "Em que espécie animal foram sobretudo conduzidas as experiências clássicas de Hubel e "
@@ -2258,6 +2465,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         3,
         "Os estudos em gatinhos e macacos jovens permitiram observar diretamente as alterações corticais causadas pela privação visual precoce.",
+        categoria="curiosidades_visuais",
     ),
     PerguntaSeed(
         "Que técnica experimental usaram sobretudo Hubel e Wiesel para estudar o desenvolvimento "
@@ -2269,6 +2477,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         3,
         "A técnica de microelétrodos, à época pioneira, permitiu-lhes mapear diretamente a resposta de neurónios corticais individuais.",
+        categoria="curiosidades_visuais",
     ),
     PerguntaSeed(
         "O conceito de 'período crítico' do desenvolvimento visual, popularizado pelo trabalho de "
@@ -2280,6 +2489,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         3,
         "É este conceito que fundamenta a urgência de tratar precocemente a ambliopia e outras causas de privação visual na infância.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Quem é geralmente considerado o 'pai da cirurgia de catarata moderna', por ter "
@@ -2291,6 +2501,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         3,
         "Daviel é creditado pela primeira extração extracapsular de catarata bem documentada, em 1747.",
+        categoria="curiosidades_visuais",
     ),
     PerguntaSeed(
         "A que oftalmologista do século XIX se atribui a invenção do oftalmoscópio, permitindo "
@@ -2302,6 +2513,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         3,
         "A invenção de Helmholtz, em 1851, revolucionou a oftalmologia ao tornar visível o interior do olho vivo.",
+        categoria="curiosidades_visuais",
     ),
     PerguntaSeed(
         "Franciscus Donders, no século XIX, deu um contributo fundamental para a compreensão "
@@ -2313,6 +2525,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         3,
         "A sua obra clássica sistematizou, pela primeira vez de forma rigorosa, a compreensão moderna dos erros de refração.",
+        categoria="curiosidades_visuais",
     ),
     PerguntaSeed(
         "Albrecht von Graefe é lembrado, entre outras contribuições do século XIX, por avanços "
@@ -2324,6 +2537,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         3,
         "Von Graefe é uma figura central da oftalmologia do século XIX, com contribuições marcantes na cirurgia do glaucoma.",
+        categoria="curiosidades_visuais",
     ),
     PerguntaSeed(
         "Quem descreveu, no início do século XIX, as bases da teoria tricromática da visão das "
@@ -2335,6 +2549,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         3,
         "A teoria de Young-Helmholtz propõe três tipos de recetores de cor na retina, hoje confirmados como os três tipos de cones.",
+        categoria="curiosidades_visuais",
     ),
     PerguntaSeed(
         "A que se refere, na teoria da visão das cores, o 'processo de oposição' (opponent "
@@ -2346,6 +2561,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         3,
         "As duas teorias, tricromática e de processos opostos, acabaram por se revelar complementares, e não mutuamente exclusivas.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "Ewald Hering, autor da lei da inervação equivalente usada em estrabismo, era, por "
@@ -2357,6 +2573,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         3,
         "Hering dedicou grande parte da sua obra à fisiologia sensorial e à perceção visual, incluindo a teoria das cores opostas.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "A quem se atribui a formulação, no século XIX, da lei da inervação recíproca dos "
@@ -2368,6 +2585,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         3,
         "A Lei de Sherrington continua a ser citada como base da compreensão da motilidade ocular, mais de um século depois.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "Charles Sherrington recebeu, em 1932, o Prémio Nobel de Fisiologia ou Medicina, "
@@ -2379,6 +2597,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         3,
         "O seu trabalho sobre reflexos e a integração neuronal é a base sobre a qual assenta a lei da inervação recíproca aplicada aos músculos oculares.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "A que grupo de investigadores se atribui, já no século XX, uma melhor compreensão do "
@@ -2390,6 +2609,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         3,
         "Antes do trabalho de Hubel e Wiesel, a ambliopia era vista sobretudo como um problema ocular, e não cortical.",
+        categoria="curiosidades_visuais",
     ),
     PerguntaSeed(
         "A primeira descrição científica rigorosa e sistemática do estrabismo, segundo a "
@@ -2402,6 +2622,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         3,
         "Foi sobretudo no século XIX que a cirurgia e a compreensão científica do estrabismo se consolidaram, com nomes como Stromeyer, Bonnet e Giraud-Teulon.",
+        categoria="curiosidades_visuais",
     ),
     PerguntaSeed(
         "Antes do desenvolvimento da cirurgia muscular no século XIX, que abordagens "
@@ -2414,6 +2635,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         3,
         "A história da medicina regista várias tentativas empíricas, nem sempre eficazes, antes da era da cirurgia muscular moderna.",
+        categoria="curiosidades_visuais",
     ),
     PerguntaSeed(
         "Comparando com o século XIX, o que mudou mais radicalmente no tratamento do estrabismo "
@@ -2425,6 +2647,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "D",
         3,
         "O arsenal terapêutico e o conhecimento científico expandiram-se enormemente desde as primeiras cirurgias do século XIX.",
+        categoria="curiosidades_visuais",
     ),
     PerguntaSeed(
         "O que é, tecnicamente, a 'dioptria prismática' (DP ou Δ), unidade usada para quantificar "
@@ -2436,6 +2659,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         3,
         "Uma dioptria prismática corresponde a um desvio de 1 cm do raio de luz a uma distância de 1 metro do prisma.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Qual é, aproximadamente, a relação de conversão entre graus de ângulo e dioptrias "
@@ -2447,6 +2671,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         3,
         "Esta aproximação (1º ≈ 2 DP) é frequentemente usada para converter rapidamente entre as duas unidades em consulta.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "O 'ponto remoto' de um olho míope, em óptica geométrica, corresponde a quê?",
@@ -2457,6 +2682,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         3,
         "É precisamente por o ponto remoto ser finito que o míope não consegue focar nitidamente objetos mais distantes do que essa distância.",
+        categoria="doencas_estrabismo",
     ),
     PerguntaSeed(
         "Numa lente com vergência de +4,00 dioptrias, a que distância aproximada, em metros, se "
@@ -2468,6 +2694,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "C",
         3,
         "A distância focal, em metros, é o inverso da vergência em dioptrias: 1 ÷ 4 = 0,25 m.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "Ao combinar duas lentes finas justapostas, como se calcula (em boa aproximação) a "
@@ -2479,6 +2706,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         3,
         "Esta soma algébrica simples é a base do cálculo usado, por exemplo, ao adicionar lentes de prova durante um exame de refração.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "O 'princípio de reversibilidade' em óptica geométrica, aplicado à retinoscopia, afirma "
@@ -2490,6 +2718,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "B",
         3,
         "É este princípio que permite, na retinoscopia, interpretar o percurso da luz refletida pela retina do doente de volta ao examinador.",
+        categoria="ciencia_ocular",
     ),
     PerguntaSeed(
         "Uma lente 'afáquica' é usada em que contexto clínico específico?",
@@ -2500,6 +2729,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         3,
         "Antes da generalização das lentes intraoculares, a afacia (ausência de cristalino) exigia óculos ou lentes de contacto com grau muito elevado.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "O que é, tecnicamente, a 'aniseiconia', um conceito óptico relevante em anisometropias "
@@ -2511,6 +2741,7 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         3,
         "É por isso que, em anisometropias elevadas, as lentes de contacto são muitas vezes preferíveis aos óculos, por gerarem menos aniseiconia.",
+        categoria="prevencao_cuidados",
     ),
     PerguntaSeed(
         "Por que motivo as lentes de contacto tendem a gerar menos aniseiconia do que óculos "
@@ -2522,18 +2753,25 @@ PERGUNTAS: list[PerguntaSeed] = [
         "A",
         3,
         "A proximidade da lente de contacto ao olho reduz o efeito de ampliação associado à distância vértice, atenuando a aniseiconia.",
+        categoria="prevencao_cuidados",
     ),
 ]
 
 
 def semear(sessao: Session) -> tuple[int, int]:
     """Insere as perguntas de `PERGUNTAS` que ainda não existem (procuradas
-    pelo texto exacto da pergunta). Devolve (inseridas, já_existentes)."""
-    existentes = set(sessao.scalars(select(PerguntaJogo.texto_pergunta)).all())
+    pelo texto exacto da pergunta) e acerta a categoria das que já existem --
+    assim, correr o seed outra vez classifica as perguntas semeadas antes de
+    haver categorias (2026-09-24). Devolve (inseridas, já_existentes)."""
+    existentes = {p.texto_pergunta: p for p in sessao.scalars(select(PerguntaJogo)).all()}
     inseridas = 0
     ja_existentes = 0
     for pergunta in PERGUNTAS:
-        if pergunta.texto_pergunta in existentes:
+        if pergunta.categoria not in CATEGORIAS_PERGUNTA_JOGO:
+            raise ValueError(f"categoria inválida: {pergunta.categoria!r} ({pergunta.texto_pergunta[:40]})")
+        existente = existentes.get(pergunta.texto_pergunta)
+        if existente is not None:
+            existente.categoria = pergunta.categoria
             ja_existentes += 1
             continue
         sessao.add(
@@ -2546,6 +2784,7 @@ def semear(sessao: Session) -> tuple[int, int]:
                 resposta_correta=RespostaOpcao(pergunta.resposta_correta),
                 nivel_dificuldade=pergunta.nivel_dificuldade,
                 explicacao=pergunta.explicacao,
+                categoria=pergunta.categoria,
             )
         )
         inseridas += 1

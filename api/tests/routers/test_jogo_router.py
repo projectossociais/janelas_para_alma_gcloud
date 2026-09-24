@@ -10,6 +10,7 @@ from app.repositories.jogo_repository import PerguntaJogoRegisto
 from app.repositories.utilizadores_repository import UtilizadorRegisto
 from app.routers import jogo as jogo_router
 from app.services.auth_service import AuthService
+from app.services.estatisticas_jogador_service import EstatisticasJogadorService
 from app.services.loja_jogo_service import PACOTES_DIAMANTES, LojaJogoService
 from app.services.mercado_jogo_service import VENDEDORES, MercadoJogoService
 from tests.services.test_auth_service import RepositorioFalso as RepositorioAuthFalso
@@ -50,6 +51,7 @@ class RepositorioPerguntaJogoFalso:
         resposta_correta: str,
         nivel_dificuldade: int,
         explicacao: str | None,
+        categoria: str = "curiosidades_visuais",
     ) -> PerguntaJogoRegisto:
         registo = PerguntaJogoRegisto(
             id=f"pergunta-{self._proximo}",
@@ -61,6 +63,7 @@ class RepositorioPerguntaJogoFalso:
             resposta_correta=resposta_correta,
             nivel_dificuldade=nivel_dificuldade,
             explicacao=explicacao,
+            categoria=categoria,
         )
         self._proximo += 1
         self._perguntas.append(registo)
@@ -181,6 +184,8 @@ def test_obter_perfil_cria_um_perfil_zerado_na_primeira_vez(ambiente) -> None:
         "partidas_jogadas": 0,
         "patamar_maximo_alcancado": 0,
         "melhor_sequencia": 0,
+        "patamares_superados_total": 0,
+        "moedas_ganhas_total": 0,
     }
 
 
@@ -680,3 +685,80 @@ def test_comprar_com_opcoes_excluidas_invalidas_devolve_422(mercado) -> None:
         json={"vendedor_id": "tio-ze", "pergunta_id": pergunta["id"], "opcoes_excluidas": ["Z"]},
     )
     assert resposta.status_code == 422
+
+
+# --- Perfil: nível e estatísticas por categoria ---------------------------------
+
+
+@pytest.fixture
+def estatisticas(ambiente, repo_perfil, repo_partidas):
+    # O fake das partidas conta as respostas por categoria e também as lê.
+    app.dependency_overrides[jogo_router.obter_estatisticas_jogador_service] = lambda: EstatisticasJogadorService(
+        repo_perfil, repo_partidas
+    )
+    return ambiente
+
+
+def test_estatisticas_exigem_sessao(estatisticas) -> None:
+    c, *_ = estatisticas
+    assert c.get("/jogo/perfil/estatisticas").status_code == 401
+
+
+def test_estatisticas_de_um_jogador_novo(estatisticas) -> None:
+    c, *_ = estatisticas
+    _entrar(estatisticas)
+    corpo = c.get("/jogo/perfil/estatisticas").json()
+    assert corpo["nivel"] == {
+        "numero": 1,
+        "id": "iniciante",
+        "patamares_total": 0,
+        "minimo": 0,
+        "proximo_minimo": 16,
+        "progresso": 0.0,
+    }
+    assert [x["categoria"] for x in corpo["categorias"]] == [
+        "anatomia_ocular",
+        "doencas_estrabismo",
+        "prevencao_cuidados",
+        "estilo_vida_visao",
+        "ciencia_ocular",
+        "curiosidades_visuais",
+    ]
+    assert all(x["respostas"] == 0 and x["taxa_acerto"] == 0 for x in corpo["categorias"])
+
+
+def test_estatisticas_depois_de_jogar(estatisticas) -> None:
+    c, repo, *_ = estatisticas
+    repo.criar("anatomia?", "a", "b", "c", "d", "C", 1, None, "anatomia_ocular")
+    _entrar(estatisticas)
+    for _ in range(3):
+        _responder(c)
+    _responder(c, "A")
+    c.post("/jogo/partidas/atual/terminar")
+
+    corpo = c.get("/jogo/perfil/estatisticas").json()
+
+    anatomia = next(x for x in corpo["categorias"] if x["categoria"] == "anatomia_ocular")
+    assert (anatomia["respostas"], anatomia["acertos"], anatomia["taxa_acerto"]) == (4, 3, 0.75)
+    assert corpo["perfil"]["patamares_superados_total"] == 3
+    assert corpo["perfil"]["moedas_ganhas_total"] == 150
+    assert corpo["perfil"]["melhor_sequencia"] == 3
+    assert corpo["nivel"]["progresso"] == round(3 / 16, 4)
+
+
+def test_admin_cria_pergunta_com_categoria_e_recusa_categoria_inventada(ambiente) -> None:
+    c, _repo, token_admin, *_ = ambiente
+    c.cookies.set("access_token", token_admin)
+    base = {
+        "texto_pergunta": "2+2?",
+        "opcao_a": "1",
+        "opcao_b": "2",
+        "opcao_c": "3",
+        "opcao_d": "4",
+        "resposta_correta": "D",
+        "nivel_dificuldade": 1,
+    }
+    criada = c.post("/admin/jogo/perguntas", json={**base, "categoria": "ciencia_ocular"})
+    assert criada.status_code == 201 and criada.json()["categoria"] == "ciencia_ocular"
+    assert c.post("/admin/jogo/perguntas", json=base).json()["categoria"] == "curiosidades_visuais"
+    assert c.post("/admin/jogo/perguntas", json={**base, "categoria": "astrologia"}).status_code == 422

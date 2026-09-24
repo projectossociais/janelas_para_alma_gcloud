@@ -15,10 +15,11 @@ from datetime import UTC, date, datetime
 from typing import Literal, Protocol
 
 from sqlalchemy import func, select, update
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.repositories.orm_models import PartidaJogo, PerfilJogador
+from app.repositories.orm_models import EstatisticaCategoriaJogador, PartidaJogo, PerfilJogador
 from app.repositories.perfil_jogador_repository import PerfilJogadorRegisto, para_registo
 
 EstadoPartida = Literal["em_curso", "a_aguardar_decisao", "terminada"]
@@ -79,9 +80,10 @@ class PartidaJogoRepository(Protocol):
         diamantes_bonus: int,
         hoje: date,
         limite_diario: int,
+        categoria: str,
     ) -> AcertoRegisto | None: ...
     def registar_falha(
-        self, partida_id: str, pergunta_id: str, opcao_falhada: str | None
+        self, partida_id: str, utilizador_id: str, pergunta_id: str, opcao_falhada: str | None, categoria: str
     ) -> PartidaRegisto | None: ...
     def marcar_ajuda(self, partida_id: str, ajuda: AjudaPartida) -> bool: ...
     def usar_vida_extra(
@@ -174,6 +176,7 @@ class SQLAlchemyPartidaJogoRepository:
         diamantes_bonus: int,
         hoje: date,
         limite_diario: int,
+        categoria: str,
     ) -> AcertoRegisto | None:
         """Avança a partida e credita o bónus de sequência na mesma
         transacção -- e só se a pergunta ainda for a actual: responder duas
@@ -227,6 +230,7 @@ class SQLAlchemyPartidaJogoRepository:
                 .returning(PartidaJogo)
             ).one()
             registo_partida = _para_registo(linha_partida)
+            self._contar_resposta(uid, categoria, certa=True)
             self._sessao.flush()
             registo_perfil = para_registo(perfil)
             self._sessao.commit()
@@ -236,13 +240,54 @@ class SQLAlchemyPartidaJogoRepository:
         return AcertoRegisto(partida=registo_partida, perfil=registo_perfil, diamantes_creditados=creditados)
 
     def registar_falha(
-        self, partida_id: str, pergunta_id: str, opcao_falhada: str | None
+        self, partida_id: str, utilizador_id: str, pergunta_id: str, opcao_falhada: str | None, categoria: str
     ) -> PartidaRegisto | None:
-        """Só a pergunta actual pode falhar; a sequência de acertos volta a 0."""
-        return self._atualizar(
-            partida_id,
-            [PartidaJogo.estado == "em_curso", PartidaJogo.pergunta_atual_id == uuid.UUID(pergunta_id)],
-            {"estado": "a_aguardar_decisao", "opcao_falhada": opcao_falhada, "sequencia_acertos": 0},
+        """Só a pergunta actual pode falhar; a sequência de acertos volta a 0
+        e a resposta errada conta nas estatísticas da categoria -- tudo na
+        mesma transacção."""
+        try:
+            linha = self._sessao.scalars(
+                update(PartidaJogo)
+                .where(
+                    PartidaJogo.id == uuid.UUID(partida_id),
+                    PartidaJogo.estado == "em_curso",
+                    PartidaJogo.pergunta_atual_id == uuid.UUID(pergunta_id),
+                )
+                .values(
+                    estado="a_aguardar_decisao",
+                    opcao_falhada=opcao_falhada,
+                    sequencia_acertos=0,
+                    updated_at=datetime.now(UTC),
+                )
+                .returning(PartidaJogo)
+            ).first()
+            if linha is None:
+                self._sessao.rollback()
+                return None
+            registo = _para_registo(linha)
+            self._contar_resposta(uuid.UUID(utilizador_id), categoria, certa=False)
+            self._sessao.commit()
+        except Exception:
+            self._sessao.rollback()
+            raise
+        return registo
+
+    def _contar_resposta(self, utilizador_id: uuid.UUID, categoria: str, certa: bool) -> None:
+        """+1 resposta (e +1 acerto se certa) na categoria -- upsert atómico,
+        dentro da transacção de quem chama (não faz commit)."""
+        tabela = EstatisticaCategoriaJogador.__table__
+        acerto = 1 if certa else 0
+        self._sessao.execute(
+            insert(tabela)
+            .values(utilizador_id=utilizador_id, categoria=categoria, respostas=1, acertos=acerto)
+            .on_conflict_do_update(
+                constraint="uq_estatisticas_categoria_jogador",
+                set_={
+                    "respostas": tabela.c.respostas + 1,
+                    "acertos": tabela.c.acertos + acerto,
+                    "updated_at": datetime.now(UTC),
+                },
+            )
         )
 
     def marcar_ajuda(self, partida_id: str, ajuda: AjudaPartida) -> bool:
@@ -322,6 +367,9 @@ class SQLAlchemyPartidaJogoRepository:
                 .where(PerfilJogador.utilizador_id == uuid.UUID(utilizador_id))
                 .values(
                     moedas=PerfilJogador.moedas + moedas,
+                    moedas_ganhas_total=PerfilJogador.moedas_ganhas_total + moedas,
+                    patamares_superados_total=PerfilJogador.patamares_superados_total
+                    + registo_partida.patamar_superado,
                     diamantes=PerfilJogador.diamantes + diamantes,
                     partidas_jogadas=PerfilJogador.partidas_jogadas + 1,
                     patamar_maximo_alcancado=func.greatest(

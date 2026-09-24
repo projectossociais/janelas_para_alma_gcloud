@@ -115,7 +115,16 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   certo/errado/clique/Level Up, em `frontend/public/audio/jogo/`, provisórios, gerados por
   `frontend/scripts/gerar-sons-jogo.mjs`); preferências "Música"/"Efeitos sonoros" no
   `localStorage` do dispositivo (modal de Definições, ⚙️ na barra da carteira). Política de
-  autoplay: nada toca antes do primeiro toque/tecla do jogador
+  autoplay: nada toca antes do primeiro toque/tecla do jogador. **Categorias e Perfil:** 6 categorias
+  oficiais (lista fechada, `CATEGORIAS_PERGUNTA_JOGO` em `orm_models.py` + CHECK na base de
+  dados; `curiosidades_visuais` é a de omissão) em `perguntas_jogo.categoria`, no seed
+  (`scripts/seed_maciço_perguntas.py` — correr outra vez classifica as perguntas já semeadas)
+  e na reserva local (`perguntasOffline.ts`; o inglês herda pelo `id`). Respostas e acertos
+  por categoria em `estatisticas_categoria_jogador` (upsert atómico na transacção da
+  resposta). Nível do jogador pelos patamares superados no total
+  (`perfis_jogador.patamares_superados_total`): 0-15 Iniciante, 16-45 Aprendiz, 46-90
+  Conhecedor, 91-150 Especialista, 151+ Mestre da Visão (`estatisticas_jogador_service.py`,
+  exposto em `GET /jogo/perfil/estatisticas`)
 
 Público-alvo inclui **crianças**. Todo o tratamento de dados deve assumir isso.
 

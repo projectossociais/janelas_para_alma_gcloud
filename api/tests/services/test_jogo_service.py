@@ -8,6 +8,7 @@ from datetime import UTC, date, datetime, timedelta
 
 import pytest
 
+from app.repositories.estatisticas_jogo_repository import EstatisticaCategoriaRegisto
 from app.repositories.jogo_repository import PerguntaJogoRegisto
 from app.repositories.partida_jogo_repository import (
     AcertoRegisto,
@@ -36,7 +37,9 @@ class RepositorioPerguntasFalso:
     def __init__(self) -> None:
         self._perguntas: dict[str, PerguntaJogoRegisto] = {}
 
-    def adicionar(self, pergunta_id: str, resposta_correta: str, nivel_dificuldade: int) -> None:
+    def adicionar(
+        self, pergunta_id: str, resposta_correta: str, nivel_dificuldade: int, categoria: str = "curiosidades_visuais"
+    ) -> None:
         self._perguntas[pergunta_id] = PerguntaJogoRegisto(
             id=pergunta_id,
             texto_pergunta="pergunta",
@@ -47,6 +50,7 @@ class RepositorioPerguntasFalso:
             resposta_correta=resposta_correta,
             nivel_dificuldade=nivel_dificuldade,
             explicacao="explicação",
+            categoria=categoria,
         )
 
     def obter_aleatoria(
@@ -103,6 +107,21 @@ class RepositorioPartidasFalso:
         self._proximo = 1
         # utilizador -> (dia UTC, diamantes de sequências ganhos nesse dia)
         self.ganho_sequencias_por_dia: dict[str, tuple[date, int]] = {}
+        # (utilizador, categoria) -> [respostas, acertos]
+        self.estatisticas: dict[tuple[str, str], list[int]] = {}
+
+    def _contar(self, utilizador_id: str, categoria: str, certa: bool) -> None:
+        linha = self.estatisticas.setdefault((utilizador_id, categoria), [0, 0])
+        linha[0] += 1
+        linha[1] += int(certa)
+
+    def listar_por_categoria(self, utilizador_id: str) -> list[EstatisticaCategoriaRegisto]:
+        """Faz também de `EstatisticasJogoRepository` -- lê o que se contou aqui."""
+        return [
+            EstatisticaCategoriaRegisto(categoria, respostas, acertos)
+            for (u, categoria), (respostas, acertos) in self.estatisticas.items()
+            if u == utilizador_id
+        ]
 
     def obter_ativa(self, utilizador_id: str) -> PartidaRegisto | None:
         return next(
@@ -165,6 +184,7 @@ class RepositorioPartidasFalso:
         diamantes_bonus: int,
         hoje: date,
         limite_diario: int,
+        categoria: str,
     ) -> AcertoRegisto | None:
         atual = self.partidas.get(partida_id)
         if atual is None or atual.estado != "em_curso" or atual.pergunta_atual_id != pergunta_id:
@@ -189,16 +209,22 @@ class RepositorioPartidasFalso:
             melhor_sequencia=max(perfil.melhor_sequencia, sequencia_acertos),
         )
         self._perfis._perfis[utilizador_id] = perfil
+        self._contar(utilizador_id, categoria, certa=True)
         return AcertoRegisto(partida=partida, perfil=perfil, diamantes_creditados=creditados)
 
-    def registar_falha(self, partida_id: str, pergunta_id: str, opcao_falhada: str | None) -> PartidaRegisto | None:
-        return self._atualizar(
+    def registar_falha(
+        self, partida_id: str, utilizador_id: str, pergunta_id: str, opcao_falhada: str | None, categoria: str
+    ) -> PartidaRegisto | None:
+        partida = self._atualizar(
             partida_id,
             lambda p: p.estado == "em_curso" and p.pergunta_atual_id == pergunta_id,
             estado="a_aguardar_decisao",
             opcao_falhada=opcao_falhada,
             sequencia_acertos=0,
         )
+        if partida is not None:
+            self._contar(utilizador_id, categoria, certa=False)
+        return partida
 
     def marcar_ajuda(self, partida_id: str, ajuda: str) -> bool:
         campo = f"{ajuda}_usada"
@@ -239,9 +265,15 @@ class RepositorioPartidasFalso:
             diamantes=atual.diamantes + diamantes,
             partidas_jogadas=atual.partidas_jogadas + 1,
             patamar_maximo_alcancado=max(atual.patamar_maximo_alcancado, partida.patamar_superado),
+            patamares_superados_total=atual.patamares_superados_total + partida.patamar_superado,
+            moedas_ganhas_total=atual.moedas_ganhas_total + moedas,
         )
         self._perfis._perfis[utilizador_id] = perfil
         return PartidaTerminadaRegisto(partida=partida, perfil=perfil)
+
+
+# Cada pergunta do banco de teste numa categoria diferente, por nível.
+CATEGORIA_DO_NIVEL = {1: "anatomia_ocular", 2: "doencas_estrabismo", 3: "ciencia_ocular"}
 
 
 @pytest.fixture
@@ -249,7 +281,7 @@ def perguntas() -> RepositorioPerguntasFalso:
     repo = RepositorioPerguntasFalso()
     # Uma de cada nível, certa "C" -- chega para subir a escada toda.
     for nivel in (1, 2, 3):
-        repo.adicionar(f"n{nivel}", "C", nivel_dificuldade=nivel)
+        repo.adicionar(f"n{nivel}", "C", nivel_dificuldade=nivel, categoria=CATEGORIA_DO_NIVEL[nivel])
     return repo
 
 
@@ -648,3 +680,37 @@ def timezone_luanda():
     from datetime import timezone
 
     return timezone(timedelta(hours=1))
+
+
+class TestEstatisticasPorCategoria:
+    def test_acertos_e_erros_contam_na_categoria_da_pergunta(self, servico, partidas) -> None:
+        _acertar(servico, 2)  # 2 certas em anatomia (nível 1)
+        _errar(servico)  # 1 errada em anatomia
+        assert partidas.estatisticas[("u-1", "anatomia_ocular")] == [3, 2]
+
+    def test_tempo_esgotado_conta_como_resposta_errada(self, servico, partidas) -> None:
+        pergunta = servico.nova_pergunta("u-1").pergunta
+        servico.esgotar_tempo("u-1", pergunta.id)
+        assert partidas.estatisticas[("u-1", "anatomia_ocular")] == [1, 0]
+
+    def test_categorias_diferentes_por_nivel(self, servico, partidas) -> None:
+        _acertar(servico, 6)  # 5 de nível 1 + 1 de nível 2
+        assert partidas.estatisticas[("u-1", "anatomia_ocular")] == [5, 5]
+        assert partidas.estatisticas[("u-1", "doencas_estrabismo")] == [1, 1]
+
+    def test_uma_resposta_recusada_nao_conta(self, servico, perguntas, partidas) -> None:
+        perguntas.adicionar("outra", "B", nivel_dificuldade=1, categoria="ciencia_ocular")
+        servico.nova_pergunta("u-1")
+        with pytest.raises(PerguntaForaDaPartidaError):
+            servico.responder("u-1", "outra", "B")
+        assert ("u-1", "ciencia_ocular") not in partidas.estatisticas
+
+    def test_terminar_soma_patamares_e_moedas_aos_totais(self, servico, perfis) -> None:
+        _acertar(servico, 4)
+        servico.terminar_partida("u-1")
+        servico.iniciar_partida("u-1")
+        _acertar(servico, 2)
+        servico.terminar_partida("u-1")
+        perfil = perfis.obter_ou_criar("u-1")
+        assert perfil.patamares_superados_total == 6
+        assert perfil.moedas_ganhas_total == 6 * 50

@@ -22,6 +22,7 @@ from sqlalchemy.orm import Session
 from app.core.config import obter_settings
 from app.core.dependencies import obter_utilizador_admin, obter_utilizador_atual
 from app.db import obter_sessao
+from app.repositories.estatisticas_jogo_repository import SQLAlchemyEstatisticasJogoRepository
 from app.repositories.jogo_repository import PerguntaJogoRegisto, SQLAlchemyPerguntaJogoRepository
 from app.repositories.mercado_jogo_repository import SQLAlchemyMercadoJogoRepository
 from app.repositories.partida_jogo_repository import SQLAlchemyPartidaJogoRepository
@@ -36,8 +37,11 @@ from app.schemas.jogo import (
     CinquentaCinquentaResponse,
     ComprarAjudaMercadoRequest,
     ComprarPacoteRequest,
+    EstatisticaCategoriaPublica,
+    EstatisticasJogadorPublicas,
     LojaDiamantesPublica,
     MercadoPublico,
+    NivelJogadorPublico,
     OpiniaoPublicoResponse,
     PacoteDiamantesPublico,
     PartidaPublica,
@@ -51,6 +55,7 @@ from app.schemas.jogo import (
     VendedorMercadoPublico,
     VidaExtraResponse,
 )
+from app.services.estatisticas_jogador_service import EstatisticasJogadorService
 from app.services.jogo_service import (
     AjudaJaUsadaError,
     JogoService,
@@ -320,6 +325,44 @@ def obter_perfil_jogador(
     return repo.obter_ou_criar(utilizador.id)
 
 
+def obter_estatisticas_jogador_service(
+    sessao: Session = Depends(obter_sessao),
+) -> EstatisticasJogadorService:
+    return EstatisticasJogadorService(
+        SQLAlchemyPerfilJogadorRepository(sessao), SQLAlchemyEstatisticasJogoRepository(sessao)
+    )
+
+
+@router.get("/jogo/perfil/estatisticas", response_model=EstatisticasJogadorPublicas)
+def obter_estatisticas_jogador(
+    utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
+    servico: EstatisticasJogadorService = Depends(obter_estatisticas_jogador_service),
+) -> EstatisticasJogadorPublicas:
+    """Nível, totais e acertos por categoria -- do próprio jogador (o id vem
+    sempre da sessão, nunca do pedido)."""
+    e = servico.obter(utilizador.id)
+    return EstatisticasJogadorPublicas(
+        perfil=PerfilJogadorPublico.model_validate(e.perfil),
+        nivel=NivelJogadorPublico(
+            numero=e.nivel.nivel.numero,
+            id=e.nivel.nivel.id,
+            patamares_total=e.nivel.patamares_total,
+            minimo=e.nivel.nivel.minimo,
+            proximo_minimo=e.nivel.proximo_minimo,
+            progresso=round(e.nivel.progresso, 4),
+        ),
+        categorias=[
+            EstatisticaCategoriaPublica(
+                categoria=c.categoria,
+                respostas=c.respostas,
+                acertos=c.acertos,
+                taxa_acerto=round(c.taxa_acerto, 4),
+            )
+            for c in e.categorias
+        ],
+    )
+
+
 @router.post("/jogo/recompensas", response_model=PerfilJogadorPublico)
 def registar_recompensa(
     utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
@@ -391,4 +434,5 @@ def criar_pergunta(
         resposta_correta=dados.resposta_correta,
         nivel_dificuldade=dados.nivel_dificuldade,
         explicacao=dados.explicacao,
+        categoria=dados.categoria,
     )

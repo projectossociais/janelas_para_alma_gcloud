@@ -1,4 +1,4 @@
-"""partidas do jogo no servidor -- pergunta actual, vida extra, ajudas, sequências
+"""partidas do jogo no servidor -- pergunta actual, vida extra, ajudas, sequências, categorias
 
 Revision ID: c3d8f1a6e9b2
 Revises: b9e4d2a7c1f5
@@ -10,7 +10,14 @@ patamares superados, sequência de acertos, vidas extra e ajudas usadas).
 Índice único parcial: no máximo uma partida não terminada por utilizador.
 Novas colunas em `perfis_jogador`: `melhor_sequencia` (recorde de acertos
 seguidos) e `diamantes_sequencia_hoje`/`diamantes_sequencia_dia` (limite
-diário, em UTC, de diamantes ganhos em sequências).
+diário, em UTC, de diamantes ganhos em sequências), `patamares_superados_total`
+e `moedas_ganhas_total` (nível do jogador e Perfil).
+
+Categorias (6, lista fechada com CHECK): nova coluna `perguntas_jogo.categoria`
+(as que já existem ficam em `curiosidades_visuais` até o seed
+`scripts/seed_maciço_perguntas.py` as classificar -- corrê-lo outra vez
+actualiza a categoria das perguntas já semeadas) e nova tabela
+`estatisticas_categoria_jogador` (respostas e acertos por jogador e categoria).
 
 Substitui `perfis_jogador.patamar_em_curso`, que é removida: guardava só o
 progresso transitório da partida em curso. Quem estiver a meio de uma
@@ -30,7 +37,35 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
+_CATEGORIAS = (
+    "categoria IN ('anatomia_ocular', 'doencas_estrabismo', 'prevencao_cuidados', "
+    "'estilo_vida_visao', 'ciencia_ocular', 'curiosidades_visuais')"
+)
+
+
 def upgrade() -> None:
+    op.add_column(
+        "perguntas_jogo",
+        sa.Column("categoria", sa.Text(), server_default="curiosidades_visuais", nullable=False),
+    )
+    op.create_check_constraint("ck_perguntas_jogo_categoria", "perguntas_jogo", _CATEGORIAS)
+    op.create_table(
+        "estatisticas_categoria_jogador",
+        sa.Column("id", postgresql.UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), nullable=False),
+        sa.Column("utilizador_id", postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column("categoria", sa.Text(), nullable=False),
+        sa.Column("respostas", sa.Integer(), server_default="0", nullable=False),
+        sa.Column("acertos", sa.Integer(), server_default="0", nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.CheckConstraint(_CATEGORIAS, name="ck_estatisticas_categoria_jogador_categoria"),
+        sa.CheckConstraint("acertos BETWEEN 0 AND respostas", name="ck_estatisticas_categoria_jogador_acertos"),
+        sa.ForeignKeyConstraint(["utilizador_id"], ["utilizadores.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("utilizador_id", "categoria", name="uq_estatisticas_categoria_jogador"),
+    )
+    op.create_index(
+        op.f("ix_estatisticas_categoria_jogador_utilizador_id"), "estatisticas_categoria_jogador", ["utilizador_id"]
+    )
     op.create_table(
         "partidas_jogo",
         sa.Column("id", postgresql.UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), nullable=False),
@@ -75,9 +110,25 @@ def upgrade() -> None:
         sa.Column("diamantes_sequencia_hoje", sa.Integer(), server_default="0", nullable=False),
     )
     op.add_column("perfis_jogador", sa.Column("diamantes_sequencia_dia", sa.Date(), nullable=True))
+    op.add_column(
+        "perfis_jogador",
+        sa.Column("patamares_superados_total", sa.Integer(), server_default="0", nullable=False),
+    )
+    op.add_column(
+        "perfis_jogador",
+        sa.Column("moedas_ganhas_total", sa.Integer(), server_default="0", nullable=False),
+    )
 
 
 def downgrade() -> None:
+    op.drop_column("perfis_jogador", "moedas_ganhas_total")
+    op.drop_column("perfis_jogador", "patamares_superados_total")
+    op.drop_index(
+        op.f("ix_estatisticas_categoria_jogador_utilizador_id"), table_name="estatisticas_categoria_jogador"
+    )
+    op.drop_table("estatisticas_categoria_jogador")
+    op.drop_constraint("ck_perguntas_jogo_categoria", "perguntas_jogo", type_="check")
+    op.drop_column("perguntas_jogo", "categoria")
     op.drop_column("perfis_jogador", "diamantes_sequencia_dia")
     op.drop_column("perfis_jogador", "diamantes_sequencia_hoje")
     op.drop_column("perfis_jogador", "melhor_sequencia")

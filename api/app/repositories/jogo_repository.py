@@ -13,7 +13,7 @@ from typing import Protocol
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.repositories.orm_models import PerguntaJogo, RespostaOpcao
+from app.repositories.orm_models import CATEGORIA_PERGUNTA_POR_OMISSAO, PerguntaJogo, RespostaOpcao
 
 
 def nivel_dificuldade_do_patamar(patamar: int) -> int:
@@ -40,6 +40,7 @@ class PerguntaJogoRegisto:
     resposta_correta: str
     nivel_dificuldade: int
     explicacao: str | None
+    categoria: str = CATEGORIA_PERGUNTA_POR_OMISSAO
 
 
 class PerguntaJogoRepository(Protocol):
@@ -57,6 +58,7 @@ class PerguntaJogoRepository(Protocol):
         resposta_correta: str,
         nivel_dificuldade: int,
         explicacao: str | None,
+        categoria: str = CATEGORIA_PERGUNTA_POR_OMISSAO,
     ) -> PerguntaJogoRegisto: ...
 
 
@@ -71,6 +73,7 @@ def _para_registo(row: PerguntaJogo) -> PerguntaJogoRegisto:
         resposta_correta=row.resposta_correta.value,
         nivel_dificuldade=row.nivel_dificuldade,
         explicacao=row.explicacao,
+        categoria=row.categoria,
     )
 
 
@@ -106,6 +109,7 @@ class SQLAlchemyPerguntaJogoRepository:
         resposta_correta: str,
         nivel_dificuldade: int,
         explicacao: str | None,
+        categoria: str = CATEGORIA_PERGUNTA_POR_OMISSAO,
     ) -> PerguntaJogoRegisto:
         row = PerguntaJogo(
             texto_pergunta=texto_pergunta,
@@ -116,6 +120,7 @@ class SQLAlchemyPerguntaJogoRepository:
             resposta_correta=RespostaOpcao(resposta_correta),
             nivel_dificuldade=nivel_dificuldade,
             explicacao=explicacao,
+            categoria=categoria,
         )
         self._sessao.add(row)
         self._sessao.commit()

@@ -1119,6 +1119,37 @@ export interface PerfilJogadorPublico {
   patamar_maximo_alcancado: number;
   // Recorde de acertos seguidos numa partida.
   melhor_sequencia?: number;
+  // Totais de sempre -- o nível sai de `patamares_superados_total`.
+  patamares_superados_total?: number;
+  moedas_ganhas_total?: number;
+}
+
+// As 6 categorias oficiais das perguntas -- espelha `CATEGORIAS_PERGUNTA_JOGO`
+// da API (lista fechada; `curiosidades_visuais` é a de omissão).
+export type CategoriaPerguntaJogo =
+  | "anatomia_ocular"
+  | "doencas_estrabismo"
+  | "prevencao_cuidados"
+  | "estilo_vida_visao"
+  | "ciencia_ocular"
+  | "curiosidades_visuais";
+
+export type NivelJogadorId = "iniciante" | "aprendiz" | "conhecedor" | "especialista" | "mestre_visao";
+
+export interface EstatisticasJogador {
+  perfil: PerfilJogadorPublico;
+  nivel: {
+    numero: number;
+    id: NivelJogadorId;
+    patamares_total: number;
+    minimo: number;
+    // `null` no último nível.
+    proximo_minimo: number | null;
+    // 0 a 1, até ao nível seguinte.
+    progresso: number;
+  };
+  // Sempre as 6, pela ordem oficial.
+  categorias: { categoria: CategoriaPerguntaJogo; respostas: number; acertos: number; taxa_acerto: number }[];
 }
 
 export interface PacoteDiamantes {
@@ -1209,6 +1240,9 @@ export const jogoApi = {
       method: "POST",
       body: JSON.stringify({ vendedor_id: vendedorId, pergunta_id: perguntaId, opcoes_excluidas: opcoesExcluidas }),
     }),
+
+  // Nível, totais e acertos por categoria do próprio jogador (exige sessão).
+  obterEstatisticas: () => pedido<EstatisticasJogador>("/jogo/perfil/estatisticas"),
 
   // Exige sessão -- só tem sentido para quem tem conta (ver `useProfile`).
   obterPerfil: () => pedido<PerfilJogadorPublico>("/jogo/perfil"),

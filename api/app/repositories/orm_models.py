@@ -488,6 +488,20 @@ class UserFeedback(Base):
     comentario: Mapped[str | None] = mapped_column(Text)
 
 
+# As 6 categorias oficiais das perguntas do jogo (decisão do dono do
+# projecto, 2026-09-24). `curiosidades_visuais` é a de omissão. Lista fechada
+# também na base de dados (CHECK), para nenhuma categoria inventada entrar.
+CATEGORIAS_PERGUNTA_JOGO = (
+    "anatomia_ocular",
+    "doencas_estrabismo",
+    "prevencao_cuidados",
+    "estilo_vida_visao",
+    "ciencia_ocular",
+    "curiosidades_visuais",
+)
+CATEGORIA_PERGUNTA_POR_OMISSAO = "curiosidades_visuais"
+
+
 class RespostaOpcao(str, enum.Enum):
     A = "A"
     B = "B"
@@ -504,6 +518,11 @@ class PerguntaJogo(Base):
     __tablename__ = "perguntas_jogo"
     __table_args__ = (
         CheckConstraint("nivel_dificuldade BETWEEN 1 AND 3", name="ck_perguntas_jogo_nivel_dificuldade"),
+        CheckConstraint(
+            "categoria IN ('anatomia_ocular', 'doencas_estrabismo', 'prevencao_cuidados', "
+            "'estilo_vida_visao', 'ciencia_ocular', 'curiosidades_visuais')",
+            name="ck_perguntas_jogo_categoria",
+        ),
     )
 
     id: Mapped[uuid.UUID] = _uuid_pk()
@@ -517,6 +536,7 @@ class PerguntaJogo(Base):
     )
     nivel_dificuldade: Mapped[int] = mapped_column(nullable=False)
     explicacao: Mapped[str | None] = mapped_column(Text)
+    categoria: Mapped[str] = mapped_column(Text, nullable=False, server_default=CATEGORIA_PERGUNTA_POR_OMISSAO)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -545,6 +565,11 @@ class PerfilJogador(Base):
     # contador recomeça -- ver `JogoService.responder`.
     diamantes_sequencia_hoje: Mapped[int] = mapped_column(nullable=False, server_default="0")
     diamantes_sequencia_dia: Mapped[date | None] = mapped_column(Date)
+    # Totais de sempre, para o nível do jogador e o Perfil: patamares
+    # superados somados de todas as partidas, e moedas ganhas (o saldo
+    # `moedas` pode vir a descer se um dia as moedas se gastarem).
+    patamares_superados_total: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    moedas_ganhas_total: Mapped[int] = mapped_column(nullable=False, server_default="0")
     # O progresso da partida em curso vive em `PartidaJogo` desde 2026-09-24
     # (antes era a coluna `patamar_em_curso`, aqui).
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -605,6 +630,34 @@ class PartidaJogo(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     terminada_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class EstatisticaCategoriaJogador(Base):
+    """Respostas dadas e certas, por jogador e por categoria de pergunta --
+    agregado (uma linha por par), actualizado na mesma transacção que regista
+    a resposta (`PartidaJogoRepository.registar_acerto/registar_falha`), com
+    um upsert atómico. Só conta respostas a perguntas do servidor, dadas numa
+    partida com sessão; tempo esgotado conta como resposta errada."""
+
+    __tablename__ = "estatisticas_categoria_jogador"
+    __table_args__ = (
+        UniqueConstraint("utilizador_id", "categoria", name="uq_estatisticas_categoria_jogador"),
+        CheckConstraint(
+            "categoria IN ('anatomia_ocular', 'doencas_estrabismo', 'prevencao_cuidados', "
+            "'estilo_vida_visao', 'ciencia_ocular', 'curiosidades_visuais')",
+            name="ck_estatisticas_categoria_jogador_categoria",
+        ),
+        CheckConstraint("acertos BETWEEN 0 AND respostas", name="ck_estatisticas_categoria_jogador_acertos"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    utilizador_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    categoria: Mapped[str] = mapped_column(Text, nullable=False)
+    respostas: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    acertos: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class BloqueioVendedorJogo(Base):

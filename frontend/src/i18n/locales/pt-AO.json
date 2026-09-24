@@ -1086,15 +1086,38 @@
   },
   "PerfilJogador": {
     "inclusivamente": "Inclusivamente",
-    "oMeuPerfil": "O Meu Perfil",
-    "moedas": "Moedas",
-    "diamantes": "Diamantes",
     "partidasJogadas": "Partidas jogadas",
-    "melhorPatamar": "Melhor patamar",
-    "oSeuMelhorResultado": "O seu melhor resultado equivale a",
     "jogarAgora": "Jogar agora",
     "naoFoiPossivelCarregar": "Não foi possível carregar o seu perfil de jogo.",
-    "voltarAoMenu": "Voltar ao menu"
+    "voltarAoMenu": "Voltar ao menu",
+    "nivelNumero": "Nível {{numero}}",
+    "niveis": {
+      "iniciante": "Iniciante",
+      "aprendiz": "Aprendiz",
+      "conhecedor": "Conhecedor",
+      "especialista": "Especialista",
+      "mestre_visao": "Mestre da Visão"
+    },
+    "progressoNivel": "Progresso até ao próximo nível",
+    "faltamPatamares": "Faltam {{faltam}} patamares para o próximo nível ({{total}} superados)",
+    "nivelMaximo": "Nível máximo! {{total}} patamares superados",
+    "moedasGanhas": "Moedas ganhas",
+    "melhorSequencia": "Melhor sequência",
+    "melhorResultado": "Melhor resultado ({{patamar}}/{{total}})",
+    "estatisticasPorCategoria": "Estatísticas por categoria",
+    "semRespostasAinda": "Ainda não respondeu a perguntas com conta iniciada. Jogue uma partida para ver os seus pontos fortes!",
+    "semRespostas": "Sem respostas",
+    "acertosCategoria": "{{nome}}: {{acertos}} certas em {{respostas}} ({{percentagem}}%)",
+    "aCarregar": "A carregar o perfil",
+    "tentarNovamente": "Tentar novamente",
+    "categorias": {
+      "anatomia_ocular": "Anatomia Ocular",
+      "doencas_estrabismo": "Doenças e Estrabismo",
+      "prevencao_cuidados": "Prevenção e Cuidados",
+      "estilo_vida_visao": "Estilo de Vida e Visão",
+      "ciencia_ocular": "Ciência Ocular",
+      "curiosidades_visuais": "Curiosidades Visuais"
+    }
   },
   "PillarsSection": {
     "osNossosPilares": "Os Nossos Pilares",

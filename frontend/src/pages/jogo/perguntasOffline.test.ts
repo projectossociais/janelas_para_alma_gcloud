@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
+import i18n from "@/i18n";
 import {
   PERGUNTAS_OFFLINE_POR_PATAMAR,
   obterPerguntaOfflineNaoVista,
@@ -19,6 +20,30 @@ describe("perguntasOffline", () => {
       const perguntas = obterPerguntasDoPatamar(patamar);
       expect(perguntas.length).toBeGreaterThanOrEqual(MINIMO_POR_PATAMAR);
       expect(new Set(perguntas.map((p) => p.id)).size).toBe(perguntas.length);
+    }
+  });
+
+  it("todas as perguntas têm uma das 6 categorias oficiais, e todas as categorias aparecem", () => {
+    const oficiais = [
+      "anatomia_ocular",
+      "doencas_estrabismo",
+      "prevencao_cuidados",
+      "estilo_vida_visao",
+      "ciencia_ocular",
+      "curiosidades_visuais",
+    ];
+    const todas = Object.values(PERGUNTAS_OFFLINE_POR_PATAMAR).flat();
+    expect(todas.filter((p) => !oficiais.includes(p.categoria)).map((p) => p.id)).toEqual([]);
+    expect(new Set(todas.map((p) => p.categoria))).toEqual(new Set(oficiais));
+  });
+
+  it("a versão inglesa herda a categoria pelo id", () => {
+    i18n.changeLanguage("en-US");
+    try {
+      const original = obterPerguntasDoPatamar(1)[0];
+      expect(obterPerguntaOfflinePorId(original.id)?.categoria).toBe(original.categoria);
+    } finally {
+      i18n.changeLanguage("pt-AO");
     }
   });
 

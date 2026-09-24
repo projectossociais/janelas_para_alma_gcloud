@@ -1086,15 +1086,38 @@
   },
   "PerfilJogador": {
     "inclusivamente": "Inclusivamente",
-    "oMeuPerfil": "My Profile",
-    "moedas": "Coins",
-    "diamantes": "Diamonds",
     "partidasJogadas": "Games played",
-    "melhorPatamar": "Best level",
-    "oSeuMelhorResultado": "Your best result is worth",
     "jogarAgora": "Play now",
     "naoFoiPossivelCarregar": "We couldn't load your game profile.",
-    "voltarAoMenu": "Back to menu"
+    "voltarAoMenu": "Back to menu",
+    "nivelNumero": "Rank {{numero}}",
+    "niveis": {
+      "iniciante": "Beginner",
+      "aprendiz": "Apprentice",
+      "conhecedor": "Connoisseur",
+      "especialista": "Expert",
+      "mestre_visao": "Vision Master"
+    },
+    "progressoNivel": "Progress to the next rank",
+    "faltamPatamares": "{{faltam}} more levels to reach the next rank ({{total}} cleared)",
+    "nivelMaximo": "Top rank! {{total}} levels cleared",
+    "moedasGanhas": "Coins earned",
+    "melhorSequencia": "Best streak",
+    "melhorResultado": "Best result ({{patamar}}/{{total}})",
+    "estatisticasPorCategoria": "Category stats",
+    "semRespostasAinda": "You haven't answered any questions while signed in yet. Play a game to see your strengths!",
+    "semRespostas": "No answers yet",
+    "acertosCategoria": "{{nome}}: {{acertos}} right out of {{respostas}} ({{percentagem}}%)",
+    "aCarregar": "Loading profile",
+    "tentarNovamente": "Try again",
+    "categorias": {
+      "anatomia_ocular": "Eye Anatomy",
+      "doencas_estrabismo": "Diseases and Strabismus",
+      "prevencao_cuidados": "Prevention and Care",
+      "estilo_vida_visao": "Lifestyle and Vision",
+      "ciencia_ocular": "Eye Science",
+      "curiosidades_visuais": "Visual Trivia"
+    }
   },
   "PillarsSection": {
     "osNossosPilares": "Our Pillars",
