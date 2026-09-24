@@ -117,6 +117,7 @@ describe("Scanner — persistência do rastreio guiado", () => {
     expect(JSON.stringify(payload)).not.toContain("base64,AAAA");
     expect(payload.estado).toBe("concluido");
     expect(payload.qualidade_captura).toBe(0.9);
+    expect(payload.diagnostico).toBe("normal");
 
     // As 3 poses (frente, direita, esquerda) chegam ao microserviço como
     // Blobs reais, e o resultado guardado para o ecrã é o que ele devolveu.
@@ -127,6 +128,41 @@ describe("Scanner — persistência do rastreio guiado", () => {
     await waitFor(() => expect(sessionStorage.getItem("scanResult")).not.toBeNull(), { timeout: 4000 });
     const guardado = JSON.parse(sessionStorage.getItem("scanResult")!) as { apiData: Record<string, unknown> };
     expect(guardado.apiData.variacao_desalinhamento).toBe(1.4);
+  });
+
+  it("quando requer avaliação humana, grava diagnostico=requer_avaliacao (Fase 1 do matchmaker)", async () => {
+    submeterRastreioMultiGaze.mockResolvedValue({
+      estado: "concluido",
+      posicoes: [
+        {
+          posicao: "CENTRO",
+          estado: "ok",
+          rosto_detetado: true,
+          qualidade_captura: { pontuacao: 0.9, fiavel: true, motivos: [] },
+        },
+      ],
+      requer_avaliacao_humana: true,
+      variacao_desalinhamento: 4.2,
+    });
+    registarScreening.mockResolvedValue({ id: "screening-2" });
+
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <Scanner />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole("button", { name: /Usar Câmara/i }));
+    const avancar = () => screen.getByRole("button", { name: /Capturar|Iniciar Captura/i });
+    await user.click(await screen.findByRole("button", { name: /Iniciar Captura/i }));
+    await user.click(avancar());
+    await user.click(avancar());
+    await user.click(avancar());
+
+    await waitFor(() => expect(registarScreening).toHaveBeenCalled());
+    const payload = registarScreening.mock.calls[0][0] as Record<string, unknown>;
+    expect(payload.diagnostico).toBe("requer_avaliacao");
   });
 
   it("mostra a etiqueta 'Triagem Ocular' e nenhuma menção ao Supabase", () => {

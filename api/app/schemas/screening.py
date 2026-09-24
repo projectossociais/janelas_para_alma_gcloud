@@ -1,6 +1,13 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
+
+# Sinal real para o matchmaker clínico (Fase 1, docs/BACKLOG.md Sprint 4) --
+# só os dois valores que o janelas-scanner-api de facto calcula hoje. Não
+# confundir com as 4 subcategorias de estrabismo que o frontend antigo
+# mostrava (vinham do Math.random(), removido no PR #61).
+Diagnostico = Literal["normal", "requer_avaliacao"]
 
 
 class ScreeningCriar(BaseModel):
@@ -14,6 +21,7 @@ class ScreeningCriar(BaseModel):
     estado: str = Field(min_length=1, max_length=50)
     rosto_detetado: bool
     requer_avaliacao_humana: bool
+    diagnostico: Diagnostico = "normal"
     assimetria_horizontal: float | None = None
     assimetria_vertical: float | None = None
     qualidade_captura: float | None = Field(default=None, ge=0, le=1)
@@ -29,6 +37,7 @@ class ScreeningPublica(BaseModel):
     estado: str
     rosto_detetado: bool
     requer_avaliacao_humana: bool
+    diagnostico: str
     assimetria_horizontal: float | None
     assimetria_vertical: float | None
     qualidade_captura: float | None
