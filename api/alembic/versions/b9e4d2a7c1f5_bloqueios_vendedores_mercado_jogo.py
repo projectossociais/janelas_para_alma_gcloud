@@ -1,7 +1,7 @@
 """bloqueios dos vendedores do Mercado do jogo (cooldown de 4h por jogador)
 
 Revision ID: b9e4d2a7c1f5
-Revises: a8d3e5f1c2b7
+Revises: c3a8e5f2b9d1
 Create Date: 2026-09-24 00:00:00.000000
 
 Ajuda paga "Mercado" do jogo "Inclusivamente": cada vendedor ambulante vende
@@ -20,7 +20,7 @@ from alembic import op
 from sqlalchemy.dialects import postgresql
 
 revision: str = "b9e4d2a7c1f5"
-down_revision: Union[str, None] = "a8d3e5f1c2b7"
+down_revision: Union[str, None] = "c3a8e5f2b9d1"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
