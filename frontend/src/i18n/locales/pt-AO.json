@@ -1944,7 +1944,30 @@
     "pagar": "Pagar",
     "pagamentosEmBreve": "Pagamentos reais disponíveis em breve.",
     "compraConcluida": "Compra concluída! +{{quantidade}} diamantes.",
-    "naoFoiPossivelComprar": "Não foi possível concluir a compra. Nenhum valor foi cobrado."
+    "naoFoiPossivelComprar": "Não foi possível concluir a compra. Nenhum valor foi cobrado.",
+    "avisoDuasFormas": "Cada pacote paga-se de duas formas: em Kwanzas, por transferência (os diamantes chegam depois de confirmarmos o pagamento), ou com as moedas que ganha a jogar.",
+    "comprarPacoteMoedas": "Trocar {{moedas}} moedas por {{quantidade}} diamantes",
+    "precoMoedas": "{{moedas}} moedas",
+    "ouPrecoMoedas": "ou {{moedas}} moedas",
+    "faltamMoedas": "Faltam {{moedas}} moedas",
+    "confirmarCompraMoedas": "Vai trocar {{moedas}} moedas por {{quantidade}} diamantes.",
+    "trocarMoedas": "Trocar moedas",
+    "moedasInsuficientes": "Não tem moedas suficientes para este pacote.",
+    "pagarPorTransferencia": "Pagar por transferência",
+    "n1Transfira": "1. Transfira o valor para",
+    "n2AnexeOComprovativo": "2. Anexe o comprovativo",
+    "beneficiario": "Beneficiário",
+    "creditadoAposConfirmacao": "Os diamantes são creditados na sua conta assim que confirmarmos o pagamento.",
+    "enviarComprovativo": "Enviar comprovativo",
+    "anexeOComprovativo": "Anexe o comprovativo da transferência.",
+    "tipoDeComprovativoInvalido": "O comprovativo tem de ser uma imagem (PNG, JPG, WEBP) ou um PDF.",
+    "pedidoEnviado": "Pedido enviado! Os {{quantidade}} diamantes chegam assim que confirmarmos o pagamento.",
+    "osMeusPedidos": "Os meus pedidos",
+    "estados": {
+      "pendente": "A confirmar",
+      "aprovado": "Creditado",
+      "rejeitado": "Rejeitado"
+    }
   },
   "Mercado": {
     "titulo": "Mercado",
@@ -1971,6 +1994,10 @@
     "avisoSugestao": "É só uma opinião: os vendedores mais baratos enganam-se mais vezes. A decisão final é sua.",
     "voltarAPergunta": "Voltar à pergunta",
     "precisaDeMaisDiamantes": "Sem diamantes? Ganhe mais a jogar ou visite a Loja no menu do jogo.",
+    "especialistaEm": "Especialista em {{categoria}}",
+    "poucoAVontadeCom": "Pouco à vontade com {{categoria}}",
+    "variacaoBase": "certeza base {{base}}%",
+    "temaDaPergunta": "Tema desta pergunta: {{categoria}}",
     "indisponivelOffline": "O Mercado precisa de ligação ao servidor.",
     "vendedores": {
       "tio-ze": {

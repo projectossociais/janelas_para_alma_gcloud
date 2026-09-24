@@ -135,6 +135,13 @@ const MercadoModal = ({ open, onOpenChange, perguntaId, opcoesExcluidas, onAjuda
         <DialogHeader>
           <DialogTitle className="text-xl">{t("Mercado.titulo")}</DialogTitle>
           <DialogDescription>{t("Mercado.descricao")}</DialogDescription>
+          {mercado?.categoria && (
+            <p className="text-xs font-semibold uppercase tracking-wide text-teal">
+              {t("Mercado.temaDaPergunta", {
+                categoria: t(`PerfilJogador.categorias.${mercado.categoria}`, { defaultValue: mercado.categoria }),
+              })}
+            </p>
+          )}
         </DialogHeader>
 
         {!profile && (
@@ -195,6 +202,15 @@ const MercadoModal = ({ open, onOpenChange, perguntaId, opcoesExcluidas, onAjuda
                   const bloqueado = restante > 0;
                   const semSaldo = saldo < vendedor.custo_diamantes;
                   const nivel = nivelDeCerteza(vendedor.precisao);
+                  // Pontos percentuais acima/abaixo da certeza base, pela
+                  // categoria da pergunta -- 0 sem afinidade (ou API antiga).
+                  const variacao =
+                    vendedor.precisao_base === undefined
+                      ? 0
+                      : Math.round(vendedor.precisao * 100) - Math.round(vendedor.precisao_base * 100);
+                  const nomeCategoria = mercado?.categoria
+                    ? t(`PerfilJogador.categorias.${mercado.categoria}`, { defaultValue: mercado.categoria })
+                    : "";
                   const nome = t(`Mercado.vendedores.${vendedor.id}.nome`, { defaultValue: vendedor.id });
                   return (
                     <li
@@ -234,6 +250,17 @@ const MercadoModal = ({ open, onOpenChange, perguntaId, opcoesExcluidas, onAjuda
                           </span>
                         </div>
 
+                        {nomeCategoria && vendedor.afinidade === "especialista" && (
+                          <span className="inline-flex items-center gap-1 self-start rounded-full bg-green/15 text-green text-xs font-semibold px-2.5 py-0.5">
+                            {t("Mercado.especialistaEm", { categoria: nomeCategoria })}
+                          </span>
+                        )}
+                        {nomeCategoria && vendedor.afinidade === "fraco" && (
+                          <span className="inline-flex items-center gap-1 self-start rounded-full bg-muted text-muted-foreground text-xs font-medium px-2.5 py-0.5">
+                            {t("Mercado.poucoAVontadeCom", { categoria: nomeCategoria })}
+                          </span>
+                        )}
+
                         {!bloqueado && (
                           <p className="text-sm italic text-foreground/80">
                             “{t(`Mercado.vendedores.${vendedor.id}.bordao`, { defaultValue: "" })}”
@@ -245,6 +272,15 @@ const MercadoModal = ({ open, onOpenChange, perguntaId, opcoesExcluidas, onAjuda
                             <span className="text-muted-foreground">{t("Mercado.certeza")}</span>
                             <span className="font-semibold text-foreground">
                               {t(`Mercado.nivel.${nivel}`)} · {Math.round(vendedor.precisao * 100)}%
+                              {variacao !== 0 && (
+                                <span
+                                  className={cn("ml-1 font-medium", variacao > 0 ? "text-green" : "text-destructive")}
+                                  aria-label={t("Mercado.variacaoBase", { base: Math.round((vendedor.precisao_base ?? 0) * 100) })}
+                                >
+                                  ({variacao > 0 ? "+" : ""}
+                                  {variacao})
+                                </span>
+                              )}
                             </span>
                           </div>
                           <div className="h-2 rounded-full bg-muted overflow-hidden">

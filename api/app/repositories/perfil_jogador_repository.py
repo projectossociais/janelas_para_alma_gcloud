@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Protocol
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from app.repositories.orm_models import PerfilJogador
@@ -50,6 +50,9 @@ class PerfilJogadorRegisto:
 class PerfilJogadorRepository(Protocol):
     def obter_ou_criar(self, utilizador_id: str) -> PerfilJogadorRegisto: ...
     def creditar_diamantes(self, utilizador_id: str, quantidade: int) -> PerfilJogadorRegisto: ...
+    def trocar_moedas_por_diamantes(
+        self, utilizador_id: str, custo_moedas: int, diamantes: int
+    ) -> PerfilJogadorRegisto | None: ...
 
 
 def para_registo(row: PerfilJogador) -> PerfilJogadorRegisto:
@@ -109,3 +112,35 @@ class SQLAlchemyPerfilJogadorRepository:
         self._sessao.commit()
         self._sessao.refresh(row)
         return para_registo(row)
+
+    def trocar_moedas_por_diamantes(
+        self, utilizador_id: str, custo_moedas: int, diamantes: int
+    ) -> PerfilJogadorRegisto | None:
+        """Debita `custo_moedas` e credita `diamantes` numa só instrução, e
+        só se o saldo chegar (`moedas >= custo`) -- dois pedidos simultâneos
+        nunca gastam as mesmas moedas duas vezes nem deixam o saldo
+        negativo. `None` = moedas insuficientes (ou perfil inexistente)."""
+        try:
+            row = self._sessao.scalars(
+                update(PerfilJogador)
+                .where(
+                    PerfilJogador.utilizador_id == uuid.UUID(utilizador_id),
+                    PerfilJogador.moedas >= custo_moedas,
+                )
+                .values(
+                    moedas=PerfilJogador.moedas - custo_moedas,
+                    diamantes=PerfilJogador.diamantes + diamantes,
+                    updated_at=datetime.now(UTC),
+                )
+                .returning(PerfilJogador)
+                .execution_options(populate_existing=True)
+            ).first()
+            if row is None:
+                self._sessao.rollback()
+                return None
+            registo = para_registo(row)
+            self._sessao.commit()
+        except Exception:
+            self._sessao.rollback()
+            raise
+        return registo

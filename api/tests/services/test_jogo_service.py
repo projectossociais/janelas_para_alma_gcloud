@@ -108,6 +108,24 @@ class RepositorioPerfisFalso:
         self._perfis[utilizador_id] = novo
         return novo
 
+    def creditar_moedas(self, utilizador_id: str, quantidade: int) -> PerfilJogadorRegisto:
+        """Só para os testes -- no real, as moedas ganham-se a terminar partidas."""
+        atual = self.obter_ou_criar(utilizador_id)
+        novo = replace(atual, moedas=atual.moedas + quantidade)
+        self._perfis[utilizador_id] = novo
+        return novo
+
+    def trocar_moedas_por_diamantes(
+        self, utilizador_id: str, custo_moedas: int, diamantes: int
+    ) -> PerfilJogadorRegisto | None:
+        """Mesma semântica do real: tudo ou nada, só com saldo suficiente."""
+        atual = self._perfis.get(utilizador_id)
+        if atual is None or atual.moedas < custo_moedas:
+            return None
+        novo = replace(atual, moedas=atual.moedas - custo_moedas, diamantes=atual.diamantes + diamantes)
+        self._perfis[utilizador_id] = novo
+        return novo
+
 
 class RepositorioPartidasFalso:
     """Mesma semântica do repositório real: transições condicionais, e
@@ -378,14 +396,28 @@ class TestPerguntaDaPartida:
             servico.responder("u-1", pergunta.id, "C")
         assert _ativa(partidas).patamar_superado == 1
 
+    def test_pedir_de_novo_sem_trocar_devolve_a_mesma_e_nao_gasta_a_troca(self, servico, perguntas, partidas) -> None:
+        # Regressão (produção, 2026-09-24): "Tentar novamente" ou um pedido
+        # repetido gastavam a troca e, à terceira, davam AjudaJaUsadaError.
+        perguntas.adicionar("n1-b", "C", nivel_dificuldade=1)
+        ids = {servico.nova_pergunta("u-1").pergunta.id for _ in range(5)}
+        assert len(ids) == 1
+        assert _ativa(partidas).trocar_pergunta_usada is False
+        # A troca continua disponível depois disso.
+        assert servico.nova_pergunta("u-1", trocar=True).pergunta.id not in ids
+
+    def test_trocar_sem_pergunta_pendente_nao_gasta_a_ajuda(self, servico, partidas) -> None:
+        servico.nova_pergunta("u-1", trocar=True)
+        assert _ativa(partidas).trocar_pergunta_usada is False
+
     def test_pedir_outra_antes_de_responder_gasta_o_trocar_pergunta(self, servico, perguntas, partidas) -> None:
         perguntas.adicionar("n1-b", "C", nivel_dificuldade=1)
         primeira = servico.nova_pergunta("u-1").pergunta
-        segunda = servico.nova_pergunta("u-1").pergunta
+        segunda = servico.nova_pergunta("u-1", trocar=True).pergunta
         assert segunda.id != primeira.id
         assert _ativa(partidas).trocar_pergunta_usada is True
         with pytest.raises(AjudaJaUsadaError):
-            servico.nova_pergunta("u-1")
+            servico.nova_pergunta("u-1", trocar=True)
         # A pergunta trocada já não se pode responder.
         with pytest.raises(PerguntaForaDaPartidaError):
             servico.responder("u-1", primeira.id, "C")
@@ -419,6 +451,29 @@ class TestPerguntaDaPartida:
         _acertar(servico, 5)  # patamar 6 -> nível 2
 
         assert servico.nova_pergunta("u-1").pergunta.id == "r2"
+
+    def test_seed_a_falhar_nao_rebenta_e_usa_pergunta_de_outro_nivel(self, servico, perguntas, partidas) -> None:
+        # A migração atrasou/falhou e o seed em runtime também falha (ex.: a
+        # base de dados recusa o INSERT): o jogo segue com o que houver.
+        def seed_avariado() -> int:
+            raise RuntimeError("INSERT recusado")
+
+        perguntas.semear_reserva = seed_avariado
+        for p in [p for p in perguntas._perguntas.values() if p.nivel_dificuldade == 1]:
+            del perguntas._perguntas[p.id]
+
+        entregue = servico.nova_pergunta("u-1")
+
+        assert entregue.patamar == 1 and entregue.pergunta.nivel_dificuldade != 1
+
+    def test_seed_a_falhar_e_tabela_vazia_da_sem_perguntas(self, servico, perguntas) -> None:
+        def seed_avariado() -> int:
+            raise RuntimeError("INSERT recusado")
+
+        perguntas.semear_reserva = seed_avariado
+        perguntas._perguntas.clear()
+        with pytest.raises(SemPerguntasError):
+            servico.nova_pergunta("u-1")
 
     def test_com_perguntas_no_nivel_nao_semeia(self, servico, perguntas) -> None:
         servico.nova_pergunta("u-1")

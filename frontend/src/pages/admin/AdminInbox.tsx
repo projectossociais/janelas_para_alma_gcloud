@@ -6,21 +6,28 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   contactMessagesApi,
+  jogoApi,
   premiumApi,
   mensagemDeErroApi,
   type ContactMessageAdmin,
+  type PedidoDiamantesAdmin,
   type PedidoPremiumAdmin,
 } from "@/lib/apiClient";
 import { toast } from "sonner";
-import { Check, FileText, Mail, Phone, X } from "lucide-react";
+import { Check, FileText, Gem, Mail, Phone, X } from "lucide-react";
+
+const TABS_VALIDAS = ["messages", "premium", "diamantes"] as const;
+type Tab = (typeof TABS_VALIDAS)[number];
 
 const AdminInbox = () => {
   // Permite a Central de Pendências (AdminOverview) linkar directamente ao
   // separador certo -- ex.: /admin/mensagens?tab=premium.
   const [searchParams] = useSearchParams();
-  const tabInicial = searchParams.get("tab") === "premium" ? "premium" : "messages";
+  const pedida = searchParams.get("tab");
+  const tabInicial: Tab = TABS_VALIDAS.includes(pedida as Tab) ? (pedida as Tab) : "messages";
   const [msgs, setMsgs] = useState<ContactMessageAdmin[]>([]);
   const [premium, setPremium] = useState<PedidoPremiumAdmin[]>([]);
+  const [diamantes, setDiamantes] = useState<PedidoDiamantesAdmin[]>([]);
   const [ocupado, setOcupado] = useState<string | null>(null);
 
   const carregarMensagens = async () => {
@@ -39,10 +46,39 @@ const AdminInbox = () => {
     }
   };
 
+  const carregarDiamantes = async () => {
+    try {
+      setDiamantes(await jogoApi.listarPedidosDiamantes());
+    } catch (err) {
+      toast.error(mensagemDeErroApi(err, "Não foi possível carregar os pedidos de diamantes."));
+    }
+  };
+
   useEffect(() => {
     carregarMensagens();
     carregarPremium();
+    carregarDiamantes();
   }, []);
+
+  // Aprovar = pagamento confirmado: a API credita os diamantes uma única vez
+  // (um segundo clique ou outro admin recebe 409, sem crédito repetido).
+  const decidirDiamantes = async (id: string, decisao: "aprovar" | "rejeitar") => {
+    setOcupado(id);
+    try {
+      if (decisao === "aprovar") {
+        const pedido = await jogoApi.aprovarPedidoDiamantes(id);
+        toast.success(`Pagamento confirmado. ${pedido.diamantes} diamantes creditados.`);
+      } else {
+        await jogoApi.rejeitarPedidoDiamantes(id);
+        toast.success("Pedido rejeitado. Nenhum diamante foi creditado.");
+      }
+      await carregarDiamantes();
+    } catch (err) {
+      toast.error(mensagemDeErroApi(err, "Não foi possível decidir o pedido."));
+    } finally {
+      setOcupado(null);
+    }
+  };
 
   const marcarMensagemLida = async (id: string) => {
     try {
@@ -90,6 +126,9 @@ const AdminInbox = () => {
           <TabsList>
             <TabsTrigger value="messages">Mensagens ({msgs.length})</TabsTrigger>
             <TabsTrigger value="premium">Pedidos Premium ({premium.length})</TabsTrigger>
+            <TabsTrigger value="diamantes">
+              Pedidos de diamantes ({diamantes.filter((d) => d.estado === "pendente").length})
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="messages" className="space-y-3 mt-4">
@@ -214,6 +253,71 @@ const AdminInbox = () => {
             ))}
             {!premium.length && (
               <p className="text-center text-muted-foreground py-6">Sem pedidos.</p>
+            )}
+          </TabsContent>
+
+          <TabsContent value="diamantes" className="space-y-3 mt-4">
+            {diamantes.map((d) => (
+              <Card key={d.id} data-testid={`pedido-diamantes-${d.id}`}>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-3 flex-wrap">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold inline-flex items-center gap-1">
+                          <Gem className="w-4 h-4" /> {d.diamantes} diamantes · {d.preco_kz.toLocaleString("pt-PT")} Kz
+                        </span>
+                        <Badge
+                          variant={
+                            d.estado === "aprovado" ? "default" : d.estado === "rejeitado" ? "destructive" : "secondary"
+                          }
+                          className="text-xs"
+                        >
+                          {d.estado}
+                        </Badge>
+                        {!d.utilizador_id && (
+                          <Badge variant="outline" className="text-xs">conta apagada</Badge>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Pacote {d.pacote_id} · conta {d.utilizador_id ?? "—"}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-2">
+                        {new Date(d.created_at).toLocaleString("pt-PT")}
+                        {d.decidido_em && ` · decidido ${new Date(d.decidido_em).toLocaleString("pt-PT")}`}
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2 shrink-0">
+                      <Button size="sm" variant="outline" asChild>
+                        <a href={d.comprovativo_url} target="_blank" rel="noopener noreferrer">
+                          <FileText className="w-3 h-3" /> Ver comprovativo
+                        </a>
+                      </Button>
+                      {d.estado === "pendente" && (
+                        <>
+                          <Button
+                            size="sm"
+                            onClick={() => decidirDiamantes(d.id, "aprovar")}
+                            disabled={ocupado === d.id || !d.utilizador_id}
+                          >
+                            <Check className="w-3 h-3" /> Confirmar pagamento
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => decidirDiamantes(d.id, "rejeitar")}
+                            disabled={ocupado === d.id}
+                          >
+                            <X className="w-3 h-3" /> Rejeitar
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            {!diamantes.length && (
+              <p className="text-center text-muted-foreground py-6">Sem pedidos de diamantes.</p>
             )}
           </TabsContent>
         </Tabs>

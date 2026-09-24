@@ -689,6 +689,30 @@ describe("JogoCuriosidades", () => {
       expect(validarResposta).not.toHaveBeenCalled();
     });
 
+    it("com sessão, só 'trocar pergunta' pede a troca ao servidor; carregar/tentar de novo nunca a gasta", async () => {
+      mockProfile = { id: "utilizador-1" };
+      const TROCADA = { ...PERGUNTA_1, id: "pergunta-trocada", texto_pergunta: "Pergunta trocada?" };
+      obterPerguntaDaPartida.mockResolvedValueOnce(PERGUNTA_1).mockResolvedValueOnce(TROCADA);
+      render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+      await comecarJogo();
+      await screen.findByText(PERGUNTA_1.texto_pergunta);
+      expect(obterPerguntaDaPartida).toHaveBeenLastCalledWith(false);
+
+      await userEvent.click(screen.getByRole("button", { name: /Trocar pergunta/i }));
+
+      expect(await screen.findByText("Pergunta trocada?")).toBeInTheDocument();
+      expect(obterPerguntaDaPartida).toHaveBeenLastCalledWith(true);
+    });
+
+    it("o erro ao carregar a pergunta mostra o motivo dado pela API", async () => {
+      mockProfile = { id: "utilizador-1" };
+      obterPerguntaDaPartida.mockRejectedValue(Object.assign(new Error("sem perguntas disponíveis"), { status: 503 }));
+      render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+      await comecarJogo();
+
+      expect(await screen.findByText("sem perguntas disponíveis")).toBeInTheDocument();
+    });
+
     it("'trocar pergunta' em modo offline substitui por outra pergunta do mesmo patamar, sem voltar a tentar o servidor", async () => {
       obterPerguntaDaPartida.mockRejectedValue(falhaDeRede());
       render(<JogoCuriosidades />, { wrapper: MemoryRouter });
