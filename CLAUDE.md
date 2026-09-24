@@ -395,10 +395,10 @@ Não imitar estes padrões enquanto a migração módulo-a-módulo decorre (ver 
 
 | Onde | Problema |
 |---|---|
-| `ClinicalPartners.tsx` | Formulário de agendamento não persiste nada — só mostra um toast |
 | `ScannerAnalysis` (`orm_models.py`) | Modelo e tabela `scanner_analyses` ficaram órfãos depois de `analises_scanner` passar a contar `screenings` (corrigido 2026-09-23) — nada mais lê nem escreve esta tabela. Não apagada agora (dropar tabela é decisão à parte, ver CLAUDE.md §10); útil só se algum dado antigo lá dentro precisar de ser consultado uma vez |
+| `ScannerResultados.tsx` | Define 6 categorias de diagnóstico (`Esotropia`/`Exotropia`/`Hipertropia`/`Hipotropia`/etc.), mas o pipeline real (`Scanner.tsx`) só produz 2 — as 4 subcategorias eram do antigo `Math.random()` (removido no PR #61) e nunca foram atribuídas pelo cálculo real. Confirmado 2026-09-24 ao desenhar a Fase 1 do matchmaker (`docs/BACKLOG.md`, Sprint 4) |
 
-Itens antigos desta tabela já confirmados como resolvidos ou obsoletos (2026-09-17), removidos daqui: `ProfileContext.tsx` já usa `perfilApi` por completo (não é Supabase); `Produto.tsx` foi apagado do projecto num refactor antigo e já não existe.
+Itens antigos desta tabela já confirmados como resolvidos ou obsoletos: `ProfileContext.tsx` já usa `perfilApi` por completo (não é Supabase); `Produto.tsx` foi apagado do projecto num refactor antigo e já não existe (2026-09-17); `ClinicalPartners.tsx`/`OptioptikaBookingDialog.tsx` já persistem o pedido de consulta via `POST /agendamentos` (Sprint 4, Fase 0, PR #86, 2026-09-24).
 
 ---
 

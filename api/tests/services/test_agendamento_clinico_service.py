@@ -48,6 +48,10 @@ def _clinica(**over) -> ClinicaParceiraRegisto:
         "email_contacto": "geral@optioptika.com",
         "telefone_contacto": "+244931240304",
         "ativa": True,
+        "especialidades": [],
+        "cidade": "Luanda",
+        "modalidades_suportadas": ["presencial", "online"],
+        "preco_indicativo": None,
         "created_at": datetime.now(UTC),
     }
     base.update(over)

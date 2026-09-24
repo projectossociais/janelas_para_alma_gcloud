@@ -916,6 +916,34 @@ algo a dar. Faseado para que cada fase seja entregável e útil sozinha:
 - Disponibilidade do profissional: horário semanal recorrente simples, não um calendário
   completo — o paciente passa a escolher um horário real, não "de manhã, mais ou menos"
 
+**Progresso (revisto 2026-09-24) — três PRs sequenciais, cada um entregável sozinho:**
+
+- ✅ **PR A** (#88, em produção): `Screening` passa a guardar `diagnostico`
+  (`"normal"` / `"requer_avaliacao"`) calculado a partir do mesmo sinal que
+  `ScannerResultados.tsx` já mostra — base honesta para a correspondência da Fase 1.
+  Nota: `ScannerResultados.tsx` continua a definir 6 categorias de diagnóstico
+  (`Esotropia`/`Exotropia`/`Hipertropia`/`Hipotropia`/etc.), mas o pipeline real
+  (`Scanner.tsx`) só produz 2 — as 4 subcategorias eram do antigo `Math.random()`
+  (removido no PR #61) e nunca foram atribuídas pelo cálculo real. Persistir "o
+  diagnóstico exacto" só podia significar este sinal binário; as 4 subcategorias
+  ficam como dívida separada, não tocada nesta fase.
+- ✅ **PR B** (branch `feat/portal-clinico-fase1b`): perfil de clínica
+  (`especialidades`, `cidade`, `modalidades_suportadas`, `preco_indicativo` em
+  `clinicas_parceiras`) + login próprio de clínica. Nova tabela `equipa_clinica`
+  (`utilizador_id` FK único, `clinica_id` FK) é a **única** coisa que dá acesso ao
+  portal — criada só por um admin (`POST /admin/clinicas/{id}/equipa`), nunca pelo
+  próprio utilizador, porque `papel: "profissional"` já é auto-registável sem
+  verificação nenhuma (mesmo padrão de `POST /admin/utilizadores/promover`). Nova
+  dependency `obter_clinica_do_utilizador` (403 sem ligação). `DashboardPro.tsx`
+  deixa de ser "Em breve" — mostra os agendamentos reais da própria clínica via
+  `RequireClinica.tsx` (mirror de `RequireAdmin.tsx`). Nova página admin
+  `AdminClinicas.tsx` gere perfil e equipa de cada clínica.
+- ⬜ **PR C** (a seguir): tabela `disponibilidade_clinica` (horário semanal
+  recorrente, gerido pela própria clínica no portal, não pelo admin),
+  `POST /agendamentos` a trocar `periodo_preferido` livre por um horário real sem
+  double-booking, e `AgendamentoClinicoService.sugerir_clinicas` para correspondência
+  por regras (modalidade + prioridade Premium).
+
 ### Fase 2 — A teleconsulta em si
 - **Não construir infra de videochamada própria.** Usar um fornecedor alojado (Daily.co
   ou 100ms, SDK simples, custo por minuto) — montar sinalização WebRTC de raiz não se

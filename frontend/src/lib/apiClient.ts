@@ -966,6 +966,66 @@ export const agendamentosApi = {
     pedido<AgendamentoClinicoAdmin>(`/admin/agendamentos/${id}/recusar`, { method: "POST" }),
 };
 
+// --- Perfil de clínica + equipa (Sprint 4, Fase 1 do matchmaker -- ver docs/BACKLOG.md) --
+// `papel: "profissional"` é auto-registável sem verificação nenhuma -- o
+// acesso ao portal da clínica nunca vem desse papel sozinho, só de uma
+// ligação `equipa_clinica` criada por um admin (ver `adicionarEquipa` abaixo).
+
+export interface ClinicaParceiraAdmin {
+  id: string;
+  nome: string;
+  email_contacto: string;
+  telefone_contacto: string;
+  ativa: boolean;
+  especialidades: string[];
+  cidade: string | null;
+  modalidades_suportadas: string[];
+  preco_indicativo: string | null;
+  created_at: string;
+}
+
+export interface ClinicaPerfilInput {
+  especialidades: string[];
+  cidade: string | null;
+  modalidades_suportadas: ("presencial" | "online")[];
+  preco_indicativo: string | null;
+}
+
+export interface MembroEquipaPublico {
+  id: string;
+  utilizador_id: string;
+  utilizador_email: string;
+  utilizador_nome: string | null;
+  clinica_id: string;
+  created_at: string;
+}
+
+export const clinicasApi = {
+  // Portal da própria clínica ----------------------------------------------
+  aMinhaClinica: () => pedido<ClinicaParceiraAdmin | null>("/clinica/eu"),
+  meusAgendamentos: () => pedido<AgendamentoClinicoAdmin[]>("/clinica/agendamentos"),
+
+  // Administração ------------------------------------------------------------
+  listarAdmin: () => pedido<ClinicaParceiraAdmin[]>("/admin/clinicas"),
+
+  atualizarPerfil: (clinicaId: string, dados: ClinicaPerfilInput) =>
+    pedido<ClinicaParceiraAdmin>(`/admin/clinicas/${clinicaId}`, {
+      method: "PATCH",
+      body: JSON.stringify(dados),
+    }),
+
+  listarEquipa: (clinicaId: string) => pedido<MembroEquipaPublico[]>(`/admin/clinicas/${clinicaId}/equipa`),
+
+  adicionarEquipa: (clinicaId: string, email: string) =>
+    pedido<MembroEquipaPublico>(`/admin/clinicas/${clinicaId}/equipa`, {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    }),
+
+  removerEquipa: (clinicaId: string, utilizadorId: string) =>
+    pedido<void>(`/admin/clinicas/${clinicaId}/equipa/${utilizadorId}`, { method: "DELETE" }),
+};
+
 // --- Publicações (ADMIN-03) --------------------------------------------------
 // Substitui o padrão antigo de escrever uma página React nova por cada
 // campanha/actividade (ver ActivitiesFeed.tsx) por um CMS real gerido no
