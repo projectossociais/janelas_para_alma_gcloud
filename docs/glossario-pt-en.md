@@ -17,6 +17,7 @@ Convenções fixas: *color, behavior, organize, center, meter, license, canceled
 | Kamba / Kambas | Kamba / Kambas | Voluntário do programa. Na 1.ª ocorrência de uma página: *"kamba" (friend)*. |
 | Inclusivamente | Inclusivamente | Nome do jogo. |
 | Visão da Banda | Visão da Banda | Programa de rádio da Optioptika. |
+| Olhar Alinhado - Comércio & Prestação de Serviços, Lda. | igual | Denominação legal da firma; "Olhar Alinhado" sozinho quando basta o nome curto. |
 | Optioptika, Centroptico, Gamek, MULTICAIXA EXPRESS | iguais | Marcas e lugares. |
 | Províncias, bairros, moradas | iguais | Ex.: *Luanda Sul*, *Ingombotas*, *Urbanização Nova Vida*. |
 | Kz / AOA | Kz / AOA | Não se converte nem se reformata (`10.000 Kz` fica `10.000 Kz`). |
