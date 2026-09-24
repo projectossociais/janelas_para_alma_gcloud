@@ -1,7 +1,7 @@
 """perfil de clínica mais rico + equipa_clinica (login próprio da clínica)
 
 Revision ID: d5b1f8a3c6e2
-Revises: c3a8e5f2b9d1
+Revises: e5b1c8d2a4f7
 Create Date: 2026-09-24 00:00:00.000000
 
 Fase 1, parte 2, do matchmaker clínico (docs/BACKLOG.md, Sprint 4).
@@ -22,7 +22,7 @@ from alembic import op
 from sqlalchemy.dialects import postgresql
 
 revision: str = "d5b1f8a3c6e2"
-down_revision: Union[str, None] = "c3a8e5f2b9d1"
+down_revision: Union[str, None] = "e5b1c8d2a4f7"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
