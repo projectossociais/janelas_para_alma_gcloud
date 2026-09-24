@@ -4,11 +4,11 @@ Gerado por `frontend/scripts/gerar-revisao-en.mjs` a partir de `src/i18n/revisao
 
 | Categoria | Chaves |
 |---|---|
-| Saúde (AMA) | 171 |
-| Legal | 80 |
-| Dúvidas | 39 |
+| Saúde (AMA) | 176 |
+| Legal | 82 |
+| Dúvidas | 38 |
 
-## Saúde (AMA) (171)
+## Saúde (AMA) (176)
 
 Afirmações médicas ou de saúde. Validar com um profissional antes de publicar.
 
@@ -328,6 +328,16 @@ Afirmações médicas ou de saúde. Validar com um profissional antes de publica
 | `utilizarProteccaoUvAo` | Utilizar protecção UV ao ar livre | Wear UV protection outdoors |  |
 | `utilizeOculosDeSol` | Utilize óculos de sol com protecção UV sempre que estiver ao ar livre. | Wear sunglasses with UV protection whenever you are outdoors. |  |
 
+### seo
+
+| Chave | Português | Inglês | Nota |
+|---|---|---|---|
+| `exercicioEstereopsiaDescricao` | Exercício visual Premium: padrões estereoscópicos avaliam e treinam a percepção de profundidade binocular. | Premium vision exercise: stereoscopic patterns assess and train binocular depth perception. |  |
+| `scannerDescricao` | Utilize a câmara para uma análise visual guiada, assistida por inteligência artificial, e receba os resultados em segundos, de forma confidencial e segura. | Use your camera for a guided visual analysis assisted by artificial intelligence, and get your results in seconds, confidentially and securely. | Resumo do texto de entrada do Scanner ('análise visual guiada, assistida por inteligência artificial'). Confirmar com um clínico se a descrição pública é aceitável. |
+| `scannerResultadosDescricao` | Os resultados do seu rastreio de estrabismo e os próximos passos recomendados. | Your strabismus screening results and recommended next steps. |  |
+| `scannerTitulo` | Rastreio de Estrabismo | Strabismus Screening | Título SEO do Scanner: usa 'Rastreio'/'Screening' em vez de 'Diagnóstico', de propósito — os Termos dizem que a triagem automática não é diagnóstico. Confirmar o termo com um clínico. |
+| `sobreDescricao` | O que é o estrabismo, o que o causa e como se trata. Desmistificar a condição para promover a inclusão e o tratamento atempado. | What strabismus is, what causes it and how it is treated. Demystifying the condition to promote inclusion and timely treatment. | Descrição SEO da página Sobre: afirma que a página explica causas e tratamentos (StrabismusSection). Confirmar. |
+
 ### StrabismusIntroCard
 
 | Chave | Português | Inglês | Nota |
@@ -383,7 +393,7 @@ Afirmações médicas ou de saúde. Validar com um profissional antes de publica
 | `sigaOAlvoCom` | Siga o alvo com o olhar ao longo de uma trajectória em forma de oito. | Follow the target with your eyes along a figure-eight path. |  |
 | `sigaOPontoCom` | Siga o ponto com o olhar, sem mover a cabeça, ao longo da trajectória em forma de oito. | Follow the dot with your eyes along the figure-eight path, without moving your head. |  |
 
-## Legal (80)
+## Legal (82)
 
 Política de Privacidade, Termos e textos com efeito jurídico. Rascunho: não é uma tradução jurídica validada.
 
@@ -466,6 +476,13 @@ Política de Privacidade, Termos e textos com efeito jurídico. Rascunho: não �
 |---|---|---|---|
 | `pdfAvisoTexto` | Os resultados desta triagem são informativos, baseados em biometria facial, e não substituem uma avaliação oftalmológica presencial. A plataforma Janelas Para a Alma isenta-se de responsabilidade por diagnósticos ou acções médicas tomadas com base neste documento. Em caso de desconforto visual, consulte imediatamente um especialista. | The results of this screening are for information only, based on facial biometrics, and do not replace an in-person eye exam. The Janelas para a Alma platform accepts no liability for diagnoses or medical actions taken on the basis of this document. If you experience visual discomfort, see a specialist immediately. | Aviso de isenção de responsabilidade no PDF: rever como texto legal. |
 
+### seo
+
+| Chave | Português | Inglês | Nota |
+|---|---|---|---|
+| `politicaPrivacidadeDescricao` | O nosso compromisso com a protecção dos seus dados pessoais e de saúde, nos termos da legislação angolana de protecção de dados. | Our commitment to protecting your personal and health data, in accordance with Angolan data protection law. |  |
+| `termosUtilizacaoDescricao` | As regras que regem o acesso e a utilização da plataforma Janelas para a Alma. | The rules governing access to and use of the Janelas para a Alma platform. |  |
+
 ### TermosUtilizacao
 
 | Chave | Português | Inglês | Nota |
@@ -497,7 +514,7 @@ Política de Privacidade, Termos e textos com efeito jurídico. Rascunho: não �
 | `todosOsConteudosDisponibilizados` | Todos os conteúdos disponibilizados no website (textos, imagens, logótipos, código, metodologia dos exercícios de terapia visual e demais materiais) são propriedade do Janelas Para a Alma ou dos seus licenciadores. Nos termos do princípio da <strong>liberdade contratual</strong> (artigo 405.º, n.º 1, do Código Civil), é concedida ao utilizador uma licença limitada, pessoal, não exclusiva e não transferível de utilização destes conteúdos, sendo proibida a sua reprodução, modificação, distribuição ou exploração comercial sem autorização prévia e expressa. Esta licença, tal como os demais termos aqui fixados, tem força obrigatória entre as partes e só pode ser alterada nos termos previstos nestes Termos de Utilização ou por mútuo consentimento, nos termos do <strong>artigo 406.º, n.º 1, do Código Civil</strong>. | All content made available on the website (text, images, logos, code, the methodology of the vision therapy exercises and other materials) is the property of Janelas para a Alma or its licensors. Under the principle of <strong>freedom of contract</strong> (Article 405(1) of the Civil Code), you are granted a limited, personal, nonexclusive and nontransferable license to use this content; its reproduction, modification, distribution or commercial exploitation without prior express authorization is prohibited. This license, like the other terms set out here, is binding on the parties and may be changed only as provided for in these Terms of Use or by mutual consent, under <strong>Article 406(1) of the Civil Code</strong>. |  |
 | `ultimaActualizacaoSetembroDe` | Última actualização: Setembro de 2026. Para dúvidas legais, contacte <a>janelasparaalma18@gmail.com</a>. | Last updated: September 2026. For legal questions, contact <a>janelasparaalma18@gmail.com</a>. |  |
 
-## Dúvidas (39)
+## Dúvidas (38)
 
 Escolhas de tradução ambíguas ou problemas já existentes no português.
 
@@ -612,12 +629,6 @@ Escolhas de tradução ambíguas ou problemas já existentes no português.
 | Chave | Português | Inglês | Nota |
 |---|---|---|---|
 | `clinicasOpticasEEspecialistas` | Clínicas, ópticas e especialistas: junte-se à plataforma que vai democratizar o acesso à saúde visual em Angola. | Clinics, optical stores and specialists: join the platform that will make vision health accessible to everyone in Angola. | 'democratizar o acesso à saúde visual' → 'make vision health accessible to everyone' (sentido, sem o jargão). |
-
-### NotFound
-
-| Chave | Português | Inglês | Nota |
-|---|---|---|---|
-| `oopsPageNotFound` | Oops! Page not found | Oops! Page not found | O próprio texto português desta página já está em inglês ('Oops! Page not found'). Mantido em EN; o PT precisa de tradução para português (fora do âmbito desta fase). |
 
 ### optioptika
 

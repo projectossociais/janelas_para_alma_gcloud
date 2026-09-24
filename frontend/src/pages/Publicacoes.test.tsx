@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
@@ -15,9 +15,20 @@ vi.mock("@/components/Navbar", () => ({ default: () => null }));
 vi.mock("@/components/Footer", () => ({ default: () => null }));
 
 const toastError = vi.fn();
+const PUBLICACAO = {
+  id: "pub-1",
+  slug: "campanha-gamek",
+  titulo: "Campanha Gamek",
+  resumo: "resumo",
+  local: "Luanda",
+  data_evento: "2026-09-12",
+  capa_url: null,
+  midias: [],
+};
 vi.mock("sonner", () => ({ toast: { error: (...a: unknown[]) => toastError(...a) } }));
 
 import Publicacoes from "./Publicacoes";
+import i18n from "@/i18n";
 
 describe("Publicacoes (lista pública)", () => {
   beforeEach(() => {
@@ -56,5 +67,40 @@ describe("Publicacoes (lista pública)", () => {
     render(<Publicacoes />, { wrapper: MemoryRouter });
 
     await waitFor(() => expect(toastError).toHaveBeenCalledWith("falhou"));
+  });
+
+  it("em português não mostra aviso de idioma nem marca o conteúdo com lang", async () => {
+    listarPublicadas.mockResolvedValue([PUBLICACAO]);
+    render(<Publicacoes />, { wrapper: MemoryRouter });
+
+    const titulo = await screen.findByRole("heading", { name: "Campanha Gamek" });
+    expect(titulo).not.toHaveAttribute("lang");
+    expect(screen.queryByText("Em português")).not.toBeInTheDocument();
+  });
+
+  describe("no site inglês (/en/publications)", () => {
+    beforeEach(() => {
+      vi.stubEnv("VITE_ENABLE_EN", "true");
+      void i18n.changeLanguage("en-US");
+    });
+    afterEach(() => {
+      vi.unstubAllEnvs();
+      void i18n.changeLanguage("pt-AO");
+    });
+
+    it("avisa que cada publicação está em português e marca o conteúdo com lang", async () => {
+      listarPublicadas.mockResolvedValue([PUBLICACAO]);
+      render(
+        <MemoryRouter initialEntries={["/en/publications"]}>
+          <Publicacoes />
+        </MemoryRouter>,
+      );
+
+      const titulo = await screen.findByRole("heading", { name: "Campanha Gamek" });
+      expect(titulo).toHaveAttribute("lang", "pt-AO");
+      expect(screen.getByText("resumo")).toHaveAttribute("lang", "pt-AO");
+      expect(screen.getByText("In Portuguese")).toBeInTheDocument();
+      expect(screen.getByText("Out in the Community")).not.toHaveAttribute("lang");
+    });
   });
 });

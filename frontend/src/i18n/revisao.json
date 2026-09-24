@@ -79,7 +79,6 @@
   "KambaHeroCarousel.pessoasEstrabicasECom": "health",
   "Navbar.clinicasOpticasEEspecialistas": "duvida",
   "Navbar.diagnosticoAssistidoPorInteligencia": "health",
-  "NotFound.oopsPageNotFound": "duvida",
   "OptioptikaBookingDialog.consultaPorVideochamadaRecebera": "health",
   "OptioptikaBookingDialog.manha08h30As12h00": "duvida",
   "Parceiros.acessoDirectoARastreios": "health",
@@ -288,5 +287,12 @@
   "meta.descricao": "health",
   "meta.titulo": "duvida",
   "optioptika.equipaCertificada": "duvida",
-  "optioptika.parceiroClinicoOficialDo": "health"
+  "optioptika.parceiroClinicoOficialDo": "health",
+  "seo.exercicioEstereopsiaDescricao": "health",
+  "seo.politicaPrivacidadeDescricao": "legal",
+  "seo.scannerDescricao": "health",
+  "seo.scannerResultadosDescricao": "health",
+  "seo.scannerTitulo": "health",
+  "seo.sobreDescricao": "health",
+  "seo.termosUtilizacaoDescricao": "legal"
 }

@@ -30,7 +30,6 @@
   "KambaHeroCarousel.pessoasEstrabicasECom": "'Pessoas estrábicas' → linguagem centrada na pessoa (AMA): 'people with strabismus'.",
   "Navbar.clinicasOpticasEEspecialistas": "'democratizar o acesso à saúde visual' → 'make vision health accessible to everyone' (sentido, sem o jargão).",
   "Navbar.diagnosticoAssistidoPorInteligencia": "O PT diz 'Diagnóstico assistido por IA', mas o resto do site (Termos, FAQ) diz que o rastreio NÃO é diagnóstico. Traduzi fielmente ('AI-assisted diagnosis'); recomendo mudar PT e EN para 'rastreio'/'screening'.",
-  "NotFound.oopsPageNotFound": "O próprio texto português desta página já está em inglês ('Oops! Page not found'). Mantido em EN; o PT precisa de tradução para português (fora do âmbito desta fase).",
   "OptioptikaBookingDialog.manha08h30As12h00": "Horas no formato AP (8:30 a.m., noon, 2 p.m.). Os horários vêm da clínica; confirmar que continuam válidos.",
   "PartnerDialog.clinicaOftalmologica": "Rótulo mostrado 'Eye Clinic'; o valor enviado continua 'Clínica Oftalmológica' (tPt).",
   "PoliticaPrivacidade.dadosDeNavegacaoE": "Remissão errada já no PT: diz 'ver secção 10', mas os cookies são a secção 11 (a 10 é a conservação de dados). Traduzido à letra; corrigir nos dois idiomas.",
@@ -59,5 +58,8 @@
   "idioma.alternarRotulo": "Rótulo em português de propósito (é o link para a versão PT).",
   "meta.descricao": "O PT diz 'apoio para o estrabismo (ambliopia)': estrabismo e ambliopia são condições diferentes. Traduzido como está; rever a formulação no PT.",
   "meta.titulo": "Descritor em inglês da marca: 'Visual Inclusion and the Fight Against Strabismus' — usar o mesmo em todo o lado se for aprovado.",
-  "optioptika.equipaCertificada": "'Equipa Certificada': certificada por quem? Afirmação do parceiro; confirmar."
+  "optioptika.equipaCertificada": "'Equipa Certificada': certificada por quem? Afirmação do parceiro; confirmar.",
+  "seo.scannerDescricao": "Resumo do texto de entrada do Scanner ('análise visual guiada, assistida por inteligência artificial'). Confirmar com um clínico se a descrição pública é aceitável.",
+  "seo.scannerTitulo": "Título SEO do Scanner: usa 'Rastreio'/'Screening' em vez de 'Diagnóstico', de propósito — os Termos dizem que a triagem automática não é diagnóstico. Confirmar o termo com um clínico.",
+  "seo.sobreDescricao": "Descrição SEO da página Sobre: afirma que a página explica causas e tratamentos (StrabismusSection). Confirmar."
 }

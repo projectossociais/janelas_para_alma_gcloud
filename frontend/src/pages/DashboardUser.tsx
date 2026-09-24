@@ -19,6 +19,7 @@ const DashboardUser = () => {
   // Premium (ou admin), 0 sem nenhum dos dois -- o número vem da API.
   const { acesso } = useAcessoExercicios();
   const [scanCount, setScanCount] = useState(0);
+  const primeiroNome = user?.name?.split(" ")[0];
 
   const exerciciosDisponiveis = acesso.exercicios_desbloqueados.length;
 
@@ -35,7 +36,7 @@ const DashboardUser = () => {
       <Navbar />
       <main className="flex-1 container pt-28 pb-16 space-y-8">
         <div>
-          <h1 className="text-3xl font-bold">{t("DashboardUser.ola")}{" "}{user?.name?.split(" ")[0] || "utilizador"} 👋</h1>
+          <h1 className="text-3xl font-bold">{primeiroNome ? t("DashboardUser.saudacao", { nome: primeiroNome }) : t("DashboardUser.saudacaoSemNome")} 👋</h1>
           <p className="text-muted-foreground">{t("DashboardUser.oSeuEspacoDe")}</p>
         </div>
 
