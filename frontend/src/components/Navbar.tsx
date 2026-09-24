@@ -653,6 +653,17 @@ const Navbar = () => {
                 <LayoutDashboard className="w-4 h-4" />{" "}{t("Navbar.painelAdmin")}
               </button>
             )}
+            {!isAdmin && (
+              <button
+                onClick={() => {
+                  setProfileOpen(false);
+                  navigate(localizar(user?.role === "profissional" ? "/dashboard-pro" : "/dashboard"));
+                }}
+                className="flex items-center gap-3 px-3 py-3 rounded-xl bg-primary/10 text-primary hover:bg-primary/15 transition-colors text-sm font-semibold mb-1"
+              >
+                <LayoutDashboard className="w-4 h-4" />{" "}{t("Navbar.oMeuPainel")}
+              </button>
+            )}
             <button
               onClick={() => { setProfileOpen(false); navigate(localizar("/editar-perfil")); }}
               className="flex items-center gap-3 px-3 py-3 rounded-xl text-foreground hover:bg-muted transition-colors text-sm font-medium"
@@ -693,6 +704,17 @@ const Navbar = () => {
                 className="text-left flex items-center gap-3 px-4 py-3 mb-2 rounded-xl bg-primary/10 text-primary font-semibold text-base hover:bg-primary/15 transition-colors"
               >
                 <LayoutDashboard className="w-4 h-4" />{" "}{t("Navbar.painelAdmin")}
+              </button>
+            )}
+            {isLoggedIn && !isAdmin && (
+              <button
+                onClick={() => {
+                  setDrawerOpen(false);
+                  navigate(localizar(user?.role === "profissional" ? "/dashboard-pro" : "/dashboard"));
+                }}
+                className="text-left flex items-center gap-3 px-4 py-3 mb-2 rounded-xl bg-primary/10 text-primary font-semibold text-base hover:bg-primary/15 transition-colors"
+              >
+                <LayoutDashboard className="w-4 h-4" />{" "}{t("Navbar.oMeuPainel")}
               </button>
             )}
             {allLinks.map((link) => (
