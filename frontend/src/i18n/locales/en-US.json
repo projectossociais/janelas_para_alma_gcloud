@@ -826,6 +826,7 @@
     "jogarNovamente": "Play again",
     "patamarDe2": "Level {{patamar}} of {{TOTAL_PATAMARES}}",
     "modoOffline": "Offline mode",
+    "naoFoiPossivelCarregarPergunta": "We couldn't load the question. Please try again: only answers confirmed by the server count towards the prize.",
     "opiniaoDoPublico": "Ask the audience",
     "trocarPergunta": "Switch question",
     "vejaARespostaCerta": "See the right answer and the explanation before you try again.",

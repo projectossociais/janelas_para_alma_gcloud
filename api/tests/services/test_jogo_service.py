@@ -36,6 +36,10 @@ from app.services.jogo_service import (
 class RepositorioPerguntasFalso:
     def __init__(self) -> None:
         self._perguntas: dict[str, PerguntaJogoRegisto] = {}
+        # O que `semear_reserva` insere (id, resposta certa, nível) -- vazio
+        # por omissão, como se a reserva já estivesse toda na base de dados.
+        self.reserva: list[tuple[str, str, int]] = []
+        self.sementeiras = 0
 
     def adicionar(
         self, pergunta_id: str, resposta_correta: str, nivel_dificuldade: int, categoria: str = "curiosidades_visuais"
@@ -71,6 +75,14 @@ class RepositorioPerguntasFalso:
 
     def criar(self, *a, **k) -> PerguntaJogoRegisto:
         raise NotImplementedError
+
+    def semear_reserva(self) -> int:
+        """Idempotente, como o real: só insere o que ainda não existe."""
+        self.sementeiras += 1
+        novas = [r for r in self.reserva if r[0] not in self._perguntas]
+        for pergunta_id, resposta, nivel in novas:
+            self.adicionar(pergunta_id, resposta, nivel)
+        return len(novas)
 
 
 class RepositorioPerfisFalso:
@@ -382,10 +394,35 @@ class TestPerguntaDaPartida:
         _acertar(servico, 3)
         assert _ativa(partidas).trocar_pergunta_usada is False
 
-    def test_sem_perguntas_no_nivel(self, servico, perguntas) -> None:
+    def test_sem_perguntas_no_nivel_nem_na_reserva(self, servico, perguntas) -> None:
         perguntas._perguntas.clear()
         with pytest.raises(SemPerguntasError):
             servico.nova_pergunta("u-1")
+        assert perguntas.sementeiras == 1  # tentou semear antes de desistir
+
+    def test_tabela_vazia_semeia_a_reserva_e_entrega_a_pergunta(self, servico, perguntas, partidas) -> None:
+        # Base de dados nova sem seed: em vez de 404 (e a partida com conta a
+        # cair na reserva local sem prémio), semeia e segue.
+        perguntas._perguntas.clear()
+        perguntas.reserva = [("r1", "C", 1), ("r2", "C", 2), ("r3", "C", 3)]
+
+        entregue = servico.nova_pergunta("u-1")
+
+        assert (entregue.pergunta.id, entregue.patamar) == ("r1", 1)
+        assert _ativa(partidas).pergunta_atual_id == "r1"
+        assert perguntas.sementeiras == 1
+
+    def test_so_um_nivel_vazio_tambem_semeia(self, servico, perguntas, partidas) -> None:
+        perguntas.reserva = [("r2", "C", 2)]
+        for p in [p for p in perguntas._perguntas.values() if p.nivel_dificuldade == 2]:
+            del perguntas._perguntas[p.id]
+        _acertar(servico, 5)  # patamar 6 -> nível 2
+
+        assert servico.nova_pergunta("u-1").pergunta.id == "r2"
+
+    def test_com_perguntas_no_nivel_nao_semeia(self, servico, perguntas) -> None:
+        servico.nova_pergunta("u-1")
+        assert perguntas.sementeiras == 0
 
     def test_depois_do_patamar_15_nao_ha_mais_perguntas(self, servico, partidas) -> None:
         _acertar(servico, 15)
