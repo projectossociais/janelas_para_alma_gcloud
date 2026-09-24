@@ -10,7 +10,6 @@ import { ProfileProvider } from "@/contexts/ProfileContext";
 import { FeedbackProvider } from "@/contexts/FeedbackContext";
 import { AcessoExerciciosProvider } from "@/contexts/AcessoExerciciosContext";
 import { CarteiraJogoProvider } from "@/contexts/CarteiraJogoContext";
-import { AudioJogoProvider } from "@/contexts/AudioJogoContext";
 import Index from "./pages/Index";
 import Sobre from "./pages/Sobre";
 import Equipa from "./pages/Equipa";
@@ -134,7 +133,6 @@ const App = () => (
         <ProfileProvider>
           <AcessoExerciciosProvider>
           <CarteiraJogoProvider>
-          <AudioJogoProvider>
           <FeedbackProvider>
             <BrowserRouter>
               <SiteBannerProvider>
@@ -176,7 +174,6 @@ const App = () => (
               </SiteBannerProvider>
             </BrowserRouter>
           </FeedbackProvider>
-          </AudioJogoProvider>
           </CarteiraJogoProvider>
           </AcessoExerciciosProvider>
         </ProfileProvider>

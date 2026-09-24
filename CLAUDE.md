@@ -79,7 +79,10 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   (`JogoService`, `LojaJogoService`); o frontend só espelha em `CarteiraJogoContext`. A Loja
   de Diamantes (`/jogo-curiosidades/loja`) ainda **não tem pagamento real**: a compra só
   credita diamantes com `JOGO_PAGAMENTOS_SIMULADOS=true` (ligado só no `docker-compose.yml`
-  de desenvolvimento; **nunca** em produção, seriam diamantes grátis). O catálogo e os
+  de desenvolvimento; **nunca** em produção, seriam diamantes grátis). Sem essa flag,
+  `GET /jogo/loja/pacotes` devolve o catálogo na mesma (a vitrine abre sempre) e só
+  `POST /jogo/loja/compras` recusa, com **501** — o frontend mostra "Pagamentos reais
+  disponíveis em breve.", não um erro. O catálogo e os
   preços em Kz vivem só em `services/loja_jogo_service.py` (aprovados pelo dono do projecto
   em 2026-09-24: 500 / 1.250 / 3.000 Kz). **Tudo o que é do servidor exige sessão**
   (desde 2026-09-24): sem sessão, `/jogo/validar` revelava a resposta de qualquer pergunta
@@ -111,11 +114,9 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   sequência a 0; recorde em `perfis_jogador.melhor_sequencia`. Transições condicionais e
   atómicas em `PartidaJogoRepository` (um acerto só conta se a pergunta ainda for a actual —
   a mesma resposta nunca conta duas vezes); no máximo uma partida aberta por utilizador
-  (índice único parcial). **Som:** `AudioJogoContext` (música de fundo em loop e efeitos de
-  certo/errado/clique/Level Up, em `frontend/public/audio/jogo/`, provisórios, gerados por
-  `frontend/scripts/gerar-sons-jogo.mjs`); preferências "Música"/"Efeitos sonoros" no
-  `localStorage` do dispositivo (modal de Definições, ⚙️ na barra da carteira). Política de
-  autoplay: nada toca antes do primeiro toque/tecla do jogador. **Categorias e Perfil:** 6 categorias
+  (índice único parcial). **Sem som:** a música de fundo, os efeitos sonoros e o modal de
+  Definições (⚙️) foram retirados em 2026-09-24 depois dos testes — não reintroduzir sem nova
+  decisão. **Categorias e Perfil:** 6 categorias
   oficiais (lista fechada, `CATEGORIAS_PERGUNTA_JOGO` em `orm_models.py` + CHECK na base de
   dados; `curiosidades_visuais` é a de omissão) em `perguntas_jogo.categoria`, no seed
   (`scripts/seed_maciço_perguntas.py` — correr outra vez classifica as perguntas já semeadas)

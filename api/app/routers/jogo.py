@@ -380,6 +380,8 @@ def registar_recompensa(
 def listar_pacotes_diamantes(
     servico: LojaJogoService = Depends(obter_loja_jogo_service),
 ) -> LojaDiamantesPublica:
+    # O catálogo devolve-se sempre, com ou sem pagamentos disponíveis -- a
+    # vitrine tem de abrir em produção. A trava fica só na compra, abaixo.
     return LojaDiamantesPublica(
         pacotes=[
             PacoteDiamantesPublico(
@@ -406,9 +408,11 @@ def comprar_pacote_diamantes(
     except PacoteInexistenteError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="pacote de diamantes inexistente")
     except PagamentosIndisponiveisError:
+        # 501 e não 503: não é uma avaria passageira, é uma funcionalidade
+        # que ainda não existe -- o frontend mostra "disponíveis em breve".
         raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="a compra de diamantes ainda não está disponível",
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="pagamentos reais disponíveis em breve",
         )
 
 

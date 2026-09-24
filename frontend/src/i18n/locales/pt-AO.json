@@ -836,6 +836,7 @@
     "opcao": "Opção {{opcao}}",
     "continuarAJogar": "Continuar a jogar",
     "premioGanho": "Prémio ganho",
+    "respostasOfflineNaoContam": "Algumas perguntas desta partida foram jogadas sem ligação ao servidor (modo offline) e essas respostas não contam para o prémio.",
     "naoFoiPossivelTerminar": "Não foi possível terminar a pergunta.",
     "naoFoiPossivelValidar": "Não foi possível validar a resposta. Tente outra vez.",
     "naoFoiPossivelUsar": "Não foi possível usar a ajuda 50:50.",
@@ -1935,6 +1936,8 @@
     "confirmarCompraDescricao": "Vai receber {{quantidade}} diamantes por {{preco}}.",
     "cancelar": "Cancelar",
     "pagarSimulado": "Pagar (simulado)",
+    "pagar": "Pagar",
+    "pagamentosEmBreve": "Pagamentos reais disponíveis em breve.",
     "compraConcluida": "Compra concluída! +{{quantidade}} diamantes.",
     "naoFoiPossivelComprar": "Não foi possível concluir a compra. Nenhum valor foi cobrado."
   },
@@ -2015,17 +2018,5 @@
     "continuar": "Continuar",
     "sequenciaAtual": "Sequência de {{sequencia}} respostas certas",
     "limiteDiarioAtingido": "Atingiu o limite de 60 diamantes por dia em sequências. Continue a jogar: amanhã volta a ganhar diamantes."
-  },
-  "DefinicoesJogo": {
-    "abrir": "Abrir as definições do jogo",
-    "titulo": "Definições",
-    "descricao": "Escolha o que quer ouvir enquanto joga.",
-    "musica": "Música",
-    "musicaDescricao": "música de fundo durante a partida",
-    "efeitos": "Efeitos sonoros",
-    "efeitosDescricao": "sons de certo, errado e botões",
-    "ligado": "Ligado",
-    "desligado": "Desligado",
-    "guardadoNesteDispositivo": "As suas escolhas ficam guardadas neste dispositivo. O som só começa depois de tocar no ecrã."
   }
 }
