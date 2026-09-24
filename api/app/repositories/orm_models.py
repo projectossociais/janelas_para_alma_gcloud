@@ -692,11 +692,13 @@ class BloqueioVendedorJogo(Base):
 
 
 class ClinicaParceira(Base):
-    """Identidade mínima de uma clínica parceira -- não o perfil completo
-    (especialidades, preços, disponibilidade ficam para a Fase 1 do roteiro
-    de matchmaker clínico, ver docs/BACKLOG.md, Sprint 4). Nasce com uma
-    linha semeada na migração (Optioptika, o único parceiro assinado hoje)
-    -- `agendamentos_clinicos` nunca fica preso a essa única clínica."""
+    """Clínica parceira -- identidade + perfil (especialidades, cidade,
+    modalidade, preço indicativo; a disponibilidade semanal fica para a
+    parte seguinte da Fase 1, ver docs/BACKLOG.md, Sprint 4). Nasce com uma
+    linha semeada na migração baseline (Optioptika, o único parceiro
+    assinado hoje) -- `agendamentos_clinicos` nunca fica preso a essa única
+    clínica. Quem gere o perfil e a equipa é sempre um admin
+    (`routers/clinicas.py`), nunca a própria clínica a auto-editar-se."""
 
     __tablename__ = "clinicas_parceiras"
 
@@ -705,6 +707,31 @@ class ClinicaParceira(Base):
     email_contacto: Mapped[str] = mapped_column(Text, nullable=False)
     telefone_contacto: Mapped[str] = mapped_column(Text, nullable=False)
     ativa: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="true")
+    especialidades: Mapped[list[str]] = mapped_column(ARRAY(Text), nullable=False, server_default="{}")
+    cidade: Mapped[str | None] = mapped_column(Text)
+    modalidades_suportadas: Mapped[list[str]] = mapped_column(ARRAY(Text), nullable=False, server_default="{}")
+    preco_indicativo: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class EquipaClinica(Base):
+    """A única coisa que dá acesso ao portal de uma clínica (ver
+    `core/dependencies.py`, `obter_clinica_do_utilizador`). `papel:
+    "profissional"` é auto-registável sem verificação nenhuma
+    (`PAPEIS_AUTO_REGISTAVEIS`), por isso a ligação conta→clínica nunca
+    pode vir directamente desse papel -- só um admin a cria
+    (`POST /admin/clinicas/{id}/equipa`). `utilizador_id` é UNIQUE: uma
+    conta pertence, no máximo, a uma clínica nesta fase."""
+
+    __tablename__ = "equipa_clinica"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    utilizador_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="CASCADE"), nullable=False, unique=True
+    )
+    clinica_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("clinicas_parceiras.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 

@@ -12,6 +12,7 @@ import {
   ArrowLeft,
   HeartHandshake,
   CalendarPlus,
+  Stethoscope,
 } from "lucide-react";
 import {
   Sidebar,
@@ -37,6 +38,7 @@ const items = [
   { title: "Mensagens & Pedidos", url: "/admin/mensagens", icon: Inbox },
   { title: "Voluntariado", url: "/admin/voluntariado", icon: HeartHandshake },
   { title: "Agendamentos clínicos", url: "/admin/agendamentos", icon: CalendarPlus },
+  { title: "Clínicas parceiras", url: "/admin/clinicas", icon: Stethoscope },
   { title: "Banners", url: "/admin/banners", icon: Megaphone },
   { title: "Notificações", url: "/admin/notificacoes", icon: Bell },
   { title: "Publicações", url: "/admin/publicacoes", icon: Newspaper },
