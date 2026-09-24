@@ -12,8 +12,8 @@ desenvolvimento (`JOGO_PAGAMENTOS_SIMULADOS=true` no docker-compose). Em
 produção fica desligado por omissão e a compra é recusada: sem isto, um
 botão "Comprar" simulado seria diamantes grátis para qualquer conta.
 
-Os preços em Kz são uma **proposta** à espera de confirmação do dono do
-projecto (CLAUDE.md secção 10: preços nunca mudam sem confirmação humana).
+Preços em Kz aprovados pelo dono do projecto em 2026-09-24. Qualquer
+alteração exige de novo confirmação humana (CLAUDE.md secção 10).
 """
 
 from dataclasses import dataclass

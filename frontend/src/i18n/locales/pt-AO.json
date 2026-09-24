@@ -1899,5 +1899,58 @@
     "pagarSimulado": "Pagar (simulado)",
     "compraConcluida": "Compra concluída! +{{quantidade}} diamantes.",
     "naoFoiPossivelComprar": "Não foi possível concluir a compra. Nenhum valor foi cobrado."
+  },
+  "Mercado": {
+    "titulo": "Mercado",
+    "descricao": "Compre a opinião de um vendedor ambulante. Quanto mais caro, mais certeza. Depois de vender, cada vendedor descansa 4 horas.",
+    "inicieSessao": "Inicie sessão para comprar ajuda no Mercado com os seus diamantes.",
+    "entrar": "Entrar",
+    "oSeuSaldo": "O seu saldo",
+    "certeza": "Certeza",
+    "nivel": {
+      "baixa": "Baixa",
+      "media": "Média",
+      "alta": "Alta",
+      "muitoAlta": "Muito alta"
+    },
+    "comprar": "Comprar resposta",
+    "comprarA": "Comprar resposta a {{nome}} por {{custo}} diamantes",
+    "saldoInsuficiente": "Diamantes insuficientes",
+    "disponivelDaquiA": "Volta a vender daqui a {{tempo}}",
+    "diamantesInsuficientes": "Não tem diamantes suficientes para este vendedor.",
+    "vendedorBloqueado": "Este vendedor ainda está a descansar. Tente outro.",
+    "naoFoiPossivelComprar": "Não foi possível comprar a ajuda. Nenhum diamante foi gasto.",
+    "naoFoiPossivelCarregar": "Não foi possível abrir o Mercado.",
+    "tentarNovamente": "Tentar novamente",
+    "avisoSugestao": "É só uma opinião: os vendedores mais baratos enganam-se mais vezes. A decisão final é sua.",
+    "voltarAPergunta": "Voltar à pergunta",
+    "precisaDeMaisDiamantes": "Sem diamantes? Ganhe mais a jogar ou visite a Loja no menu do jogo.",
+    "indisponivelOffline": "O Mercado precisa de ligação ao servidor.",
+    "vendedores": {
+      "tio-ze": {
+        "nome": "Tio Zé",
+        "descricao": "Zungueiro de fruta, sabe um bocadinho de tudo",
+        "bordao": "Epá, não garanto nada, mas o mambo parece-me simples...",
+        "resposta": "Epá... acho que é a {{opcao}}. Mas não me culpes, ouviste?"
+      },
+      "mana-fefa": {
+        "nome": "Mana Fefa",
+        "descricao": "Vende saldo na paragem e ouve todas as conversas",
+        "bordao": "Ya, já ouvi bué de gente a falar disso na paragem!",
+        "resposta": "Ya, mano, eu ia na {{opcao}}."
+      },
+      "dona-maria": {
+        "nome": "Dona Maria",
+        "descricao": "Quitandeira há 30 anos, bué de experiência",
+        "bordao": "Filho, isso aí a tua kota sabe bem.",
+        "resposta": "Filho, é a {{opcao}}. Confia na tua kota."
+      },
+      "kota-beto": {
+        "nome": "Kota Beto",
+        "descricao": "Professor reformado, o mais-velho do mercado",
+        "bordao": "Mais-velho não fala à toa.",
+        "resposta": "Sem dúvida nenhuma: é a {{opcao}}. Está fixe!"
+      }
+    }
   }
 }

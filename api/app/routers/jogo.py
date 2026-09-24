@@ -33,7 +33,15 @@ from app.repositories.perfil_jogador_repository import (
     SQLAlchemyPerfilJogadorRepository,
 )
 from app.repositories.utilizadores_repository import UtilizadorRegisto
+from app.repositories.mercado_jogo_repository import SQLAlchemyMercadoJogoRepository
 from app.schemas.jogo import (
+    AjudaMercadoResponse,
+    AjudaPerguntaRequest,
+    CinquentaCinquentaResponse,
+    ComprarAjudaMercadoRequest,
+    MercadoPublico,
+    OpiniaoPublicoResponse,
+    VendedorMercadoPublico,
     ComprarPacoteRequest,
     LojaDiamantesPublica,
     PacoteDiamantesPublico,
@@ -49,6 +57,13 @@ from app.services.loja_jogo_service import (
     LojaJogoService,
     PacoteInexistenteError,
     PagamentosIndisponiveisError,
+)
+from app.services.mercado_jogo_service import (
+    AjudaVendida,
+    DiamantesInsuficientesError,
+    MercadoJogoService,
+    VendedorBloqueadoError,
+    VendedorInexistenteError,
 )
 
 router = APIRouter(tags=["jogo"])
@@ -79,6 +94,19 @@ def obter_loja_jogo_service(
     return LojaJogoService(perfis, pagamentos_simulados=obter_settings().jogo_pagamentos_simulados)
 
 
+def obter_mercado_jogo_repository(
+    sessao: Session = Depends(obter_sessao),
+) -> SQLAlchemyMercadoJogoRepository:
+    return SQLAlchemyMercadoJogoRepository(sessao)
+
+
+def obter_mercado_jogo_service(
+    mercado: SQLAlchemyMercadoJogoRepository = Depends(obter_mercado_jogo_repository),
+    perguntas: SQLAlchemyPerguntaJogoRepository = Depends(obter_pergunta_jogo_repository),
+) -> MercadoJogoService:
+    return MercadoJogoService(mercado, perguntas)
+
+
 @router.get("/jogo/pergunta-aleatoria", response_model=PerguntaPublica)
 def obter_pergunta_aleatoria(
     patamar: int = Query(ge=1, le=15),
@@ -103,6 +131,83 @@ def validar_resposta(
         )
     except PerguntaNaoEncontradaError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="pergunta não encontrada")
+
+
+@router.post("/jogo/tempo-esgotado", response_model=ValidarRespostaResponse)
+def tempo_esgotado(
+    dados: AjudaPerguntaRequest,
+    utilizador: UtilizadorRegisto | None = Depends(obter_utilizador_atual_opcional),
+    servico: JogoService = Depends(obter_jogo_service),
+) -> ResultadoResposta:
+    try:
+        return servico.esgotar_tempo(utilizador.id if utilizador else None, dados.pergunta_id)
+    except PerguntaNaoEncontradaError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="pergunta não encontrada")
+
+
+# --- Ajudas grátis (sem sessão; nunca mexem no progresso) -------------------
+
+
+@router.post("/jogo/ajudas/cinquenta-cinquenta", response_model=CinquentaCinquentaResponse)
+def ajuda_cinquenta_cinquenta(
+    dados: AjudaPerguntaRequest,
+    servico: JogoService = Depends(obter_jogo_service),
+) -> CinquentaCinquentaResponse:
+    try:
+        return CinquentaCinquentaResponse(opcoes_eliminadas=servico.cinquenta_cinquenta(dados.pergunta_id))
+    except PerguntaNaoEncontradaError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="pergunta não encontrada")
+
+
+@router.post("/jogo/ajudas/opiniao-publico", response_model=OpiniaoPublicoResponse)
+def ajuda_opiniao_publico(
+    dados: AjudaPerguntaRequest,
+    servico: JogoService = Depends(obter_jogo_service),
+) -> OpiniaoPublicoResponse:
+    try:
+        return OpiniaoPublicoResponse(percentagens=servico.opiniao_publico(dados.pergunta_id))
+    except PerguntaNaoEncontradaError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="pergunta não encontrada")
+
+
+# --- Mercado (ajuda paga, exige sessão) -------------------------------------
+
+
+@router.get("/jogo/mercado", response_model=MercadoPublico)
+def listar_mercado(
+    utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
+    servico: MercadoJogoService = Depends(obter_mercado_jogo_service),
+) -> MercadoPublico:
+    return MercadoPublico(
+        agora=servico.agora(),
+        vendedores=[
+            VendedorMercadoPublico(
+                id=e.vendedor.id,
+                custo_diamantes=e.vendedor.custo_diamantes,
+                precisao=e.vendedor.precisao,
+                disponivel_em=e.disponivel_em,
+            )
+            for e in servico.listar(utilizador.id)
+        ],
+    )
+
+
+@router.post("/jogo/mercado/comprar", response_model=AjudaMercadoResponse)
+def comprar_ajuda_mercado(
+    dados: ComprarAjudaMercadoRequest,
+    utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
+    servico: MercadoJogoService = Depends(obter_mercado_jogo_service),
+) -> AjudaVendida:
+    try:
+        return servico.comprar(utilizador.id, dados.vendedor_id, dados.pergunta_id, dados.opcoes_excluidas)
+    except VendedorInexistenteError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="vendedor inexistente")
+    except PerguntaNaoEncontradaError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="pergunta não encontrada")
+    except VendedorBloqueadoError:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="este vendedor ainda está bloqueado")
+    except DiamantesInsuficientesError:
+        raise HTTPException(status_code=status.HTTP_402_PAYMENT_REQUIRED, detail="diamantes insuficientes")
 
 
 # --- Perfil e economia (exige sessão) ---------------------------------------

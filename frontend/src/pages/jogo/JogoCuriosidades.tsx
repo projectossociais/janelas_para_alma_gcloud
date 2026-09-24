@@ -9,6 +9,7 @@ import {
   RefreshCw,
   Share2,
   Shuffle,
+  Store,
   Trophy,
   Users,
   WifiOff,
@@ -31,9 +32,11 @@ import { cn } from "@/lib/utils";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useCarteiraJogo } from "@/contexts/CarteiraJogoContext";
 import CarteiraJogo from "@/components/jogo/CarteiraJogo";
+import MercadoModal from "@/components/jogo/MercadoModal";
 import {
   jogoApi,
   mensagemDeErroApi,
+  type AjudaMercado,
   type PerguntaJogoPublica,
   type RespostaOpcaoJogo,
   type ValidarRespostaJogoResponse,
@@ -61,7 +64,8 @@ interface RecompensaLocal {
   diamantes: number;
 }
 
-// Simula uma sondagem: a opção certa fica sempre entre 55% e 75%, o resto
+// Só para o modo offline (perguntas locais) -- com servidor, a sondagem vem
+// de `jogoApi.opiniaoPublico`. Simula uma sondagem: a opção certa fica sempre entre 55% e 75%, o resto
 // reparte-se pelas outras três de forma plausível (nunca 0%, soma sempre 100).
 const gerarOpiniaoPublico = (correta: RespostaOpcaoJogo): Record<RespostaOpcaoJogo, number> => {
   const percentagemCorreta = 55 + Math.floor(Math.random() * 21);
@@ -107,6 +111,10 @@ const JogoCuriosidades = () => {
   const [ajudaPublicoUsada, setAjudaPublicoUsada] = useState(false);
   const [opiniaoPublico, setOpiniaoPublico] = useState<Record<RespostaOpcaoJogo, number> | null>(null);
   const [mostrarModalPublico, setMostrarModalPublico] = useState(false);
+  const [mostrarMercado, setMostrarMercado] = useState(false);
+  // Sugestão comprada no Mercado para a pergunta em curso (só se mostra;
+  // quem responde continua a ser o jogador).
+  const [sugestaoMercado, setSugestaoMercado] = useState<AjudaMercado | null>(null);
 
   const [tempoRestante, setTempoRestante] = useState(TEMPO_POR_PERGUNTA);
   const [jogoTerminado, setJogoTerminado] = useState(false);
@@ -169,6 +177,8 @@ const JogoCuriosidades = () => {
     setResultado(null);
     setMostrarModalErrado(false);
     setOpcoesEliminadas([]);
+    setSugestaoMercado(null);
+    setMostrarMercado(false);
     setTempoRestante(TEMPO_POR_PERGUNTA);
     if (emIngles) {
       setPergunta(escolherPerguntaOfflineParaPatamar(novoPatamar));
@@ -222,6 +232,8 @@ const JogoCuriosidades = () => {
   // o modal com a explicação -- não há motivo para atrasar essa revelação.
   useEffect(() => {
     if (!resultado) return;
+    // O tempo pode esgotar com o Mercado aberto -- fecha-o antes do resultado.
+    setMostrarMercado(false);
     if (resultado.correta) {
       const id = setTimeout(() => {
         if (patamar >= TOTAL_PATAMARES) {
@@ -283,7 +295,7 @@ const JogoCuriosidades = () => {
     }
     setAValidar(true);
     try {
-      const resp = await jogoApi.validarResposta(pergunta.id, "A");
+      const resp = await jogoApi.tempoEsgotado(pergunta.id);
       setResultado({
         correta: false,
         resposta_correta: resp.resposta_correta,
@@ -331,13 +343,8 @@ const JogoCuriosidades = () => {
       return;
     }
     try {
-      // Chamada silenciosa: só serve para saber quais são as 2 opções erradas
-      // a esconder -- a letra enviada aqui é arbitrária e nunca é mostrada
-      // como "a tua resposta".
-      const resp = await jogoApi.validarResposta(pergunta.id, "A");
-      const erradas = OPCOES.filter((o) => o !== resp.resposta_correta);
-      const paraEsconder = erradas.sort(() => Math.random() - 0.5).slice(0, 2);
-      setOpcoesEliminadas(paraEsconder);
+      const resp = await jogoApi.cinquentaCinquenta(pergunta.id);
+      setOpcoesEliminadas(resp.opcoes_eliminadas);
     } catch (err) {
       toast.error(mensagemDeErroApi(err, tr("JogoCuriosidades.naoFoiPossivelUsar")));
       setAjudaCincoUsada(false);
@@ -354,10 +361,8 @@ const JogoCuriosidades = () => {
       return;
     }
     try {
-      // Mesma técnica do 50:50 -- só usa a resposta para gerar a sondagem
-      // simulada, nunca a revela directamente.
-      const resp = await jogoApi.validarResposta(pergunta.id, "A");
-      setOpiniaoPublico(gerarOpiniaoPublico(resp.resposta_correta));
+      const resp = await jogoApi.opiniaoPublico(pergunta.id);
+      setOpiniaoPublico(resp.percentagens);
       setMostrarModalPublico(true);
     } catch (err) {
       toast.error(mensagemDeErroApi(err, tr("JogoCuriosidades.naoFoiPossivelConsultar")));
@@ -376,6 +381,7 @@ const JogoCuriosidades = () => {
       setOpcaoSelecionada(null);
       setResultado(null);
       setOpcoesEliminadas([]);
+      setSugestaoMercado(null);
       setTempoRestante(TEMPO_POR_PERGUNTA);
       return;
     }
@@ -587,7 +593,13 @@ const JogoCuriosidades = () => {
                               >
                                 {mostrarComoCerta ? <Check className="w-4 h-4" /> : mostrarComoErrada ? <X className="w-4 h-4" /> : opcao}
                               </span>
-                              <span className="text-sm sm:text-base text-foreground">{textoDaOpcao(opcao)}</span>
+                              <span className="text-sm sm:text-base text-foreground flex-1">{textoDaOpcao(opcao)}</span>
+                              {sugestaoMercado?.resposta_sugerida === opcao && !resultado && (
+                                <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-gold/15 text-gold text-[11px] font-bold px-2 py-0.5">
+                                  <Store className="w-3 h-3" />
+                                  {tr(`Mercado.vendedores.${sugestaoMercado.vendedor_id}.nome`)}
+                                </span>
+                              )}
                             </button>
                           );
                         })}
@@ -620,7 +632,21 @@ const JogoCuriosidades = () => {
                           <Shuffle className="w-4 h-4" />
                           {tr("JogoCuriosidades.trocarPergunta")}
                         </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => setMostrarMercado(true)}
+                          disabled={!!resultado || aValidar || emModoOffline}
+                          className="border-gold/60 text-gold hover:bg-gold/10"
+                        >
+                          <Store className="w-4 h-4" />
+                          {tr("Mercado.titulo")}
+                        </Button>
                       </div>
+                      {emModoOffline && (
+                        <p className="text-center text-xs text-muted-foreground -mt-2">
+                          {tr("Mercado.indisponivelOffline")}
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -679,6 +705,16 @@ const JogoCuriosidades = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {pergunta && !emModoOffline && (
+        <MercadoModal
+          open={mostrarMercado}
+          onOpenChange={setMostrarMercado}
+          perguntaId={pergunta.id}
+          opcoesExcluidas={opcoesEliminadas}
+          onAjudaComprada={setSugestaoMercado}
+        />
+      )}
 
       <Dialog open={mostrarModalPublico} onOpenChange={setMostrarModalPublico}>
         <DialogContent className="sm:max-w-md">

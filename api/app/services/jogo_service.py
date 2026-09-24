@@ -9,14 +9,22 @@ servidor, que a resposta está certa **e** que a pergunta é do nível esperado
 para o próximo patamar -- nunca aceite tal e qual do cliente.
 """
 
+import random
 from dataclasses import dataclass
 
-from app.repositories.jogo_repository import PerguntaJogoRepository, nivel_dificuldade_do_patamar
+from app.repositories.jogo_repository import (
+    PerguntaJogoRegisto,
+    PerguntaJogoRepository,
+    nivel_dificuldade_do_patamar,
+)
 from app.repositories.perfil_jogador_repository import (
     PerfilJogadorRegisto,
     PerfilJogadorRepository,
     calcular_recompensa,
 )
+
+
+OPCOES = ("A", "B", "C", "D")
 
 
 class PerguntaNaoEncontradaError(Exception):
@@ -70,6 +78,61 @@ class JogoService:
             resposta_correta=pergunta.resposta_correta,
             explicacao=pergunta.explicacao,
         )
+
+    def esgotar_tempo(self, utilizador_id: str | None, pergunta_id: str) -> ResultadoResposta:
+        """O tempo acabou sem resposta -- conta sempre como errada. Antes
+        disto (2026-09-24) o cliente enviava "A" a `responder`; quando "A"
+        era a certa, o servidor avançava o progresso e pagava uma recompensa
+        por uma pergunta que o jogador nunca respondeu."""
+        pergunta = self._obter(pergunta_id)
+        if utilizador_id is not None:
+            self._perfis.atualizar_patamar_em_curso(utilizador_id, 0)
+        return ResultadoResposta(
+            correta=False,
+            resposta_correta=pergunta.resposta_correta,
+            explicacao=pergunta.explicacao,
+        )
+
+    # --- Ajudas grátis ------------------------------------------------------
+    #
+    # Antes disto (2026-09-24) o 50:50 e a Opinião do Público chamavam
+    # `responder` com "A" para descobrir a resposta certa -- e quando "A"
+    # estava errada o servidor punha o progresso a 0, apagando a recompensa
+    # da partida. Agora têm endpoints próprios que nunca mexem no progresso.
+    #
+    # Deterministas por pergunta (semente = id da pergunta): repetir o pedido
+    # devolve sempre o mesmo resultado, por isso não dá para somar várias
+    # sondagens até a resposta certa sobressair.
+
+    def cinquenta_cinquenta(self, pergunta_id: str) -> list[str]:
+        """Duas opções erradas a esconder, por ordem alfabética."""
+        pergunta = self._obter(pergunta_id)
+        erradas = [o for o in OPCOES if o != pergunta.resposta_correta]
+        return sorted(random.Random(f"5050:{pergunta_id}").sample(erradas, 2))
+
+    def opiniao_publico(self, pergunta_id: str) -> dict[str, int]:
+        """Sondagem simulada: a certa entre 55% e 75%, o resto repartido
+        pelas outras três (nunca 0%), soma sempre 100."""
+        pergunta = self._obter(pergunta_id)
+        gerador = random.Random(f"publico:{pergunta_id}")
+        correta = pergunta.resposta_correta
+        percentagem_correta = gerador.randint(55, 75)
+        restantes = [o for o in OPCOES if o != correta]
+        pesos = [gerador.random() + 0.1 for _ in restantes]
+        disponivel = 100 - percentagem_correta
+        valores = [max(1, round(p / sum(pesos) * disponivel)) for p in pesos]
+        # Acerta o arredondamento na maior das erradas, para a soma dar 100.
+        maior = valores.index(max(valores))
+        valores[maior] += disponivel - sum(valores)
+        resultado = {correta: percentagem_correta}
+        resultado.update(zip(restantes, valores, strict=True))
+        return {o: resultado[o] for o in OPCOES}
+
+    def _obter(self, pergunta_id: str) -> PerguntaJogoRegisto:
+        pergunta = self._perguntas.obter_por_id(pergunta_id)
+        if pergunta is None:
+            raise PerguntaNaoEncontradaError(pergunta_id)
+        return pergunta
 
     def reclamar_recompensa(self, utilizador_id: str) -> PerfilJogadorRegisto:
         """O patamar pago é sempre o que o servidor rastreou -- nunca um

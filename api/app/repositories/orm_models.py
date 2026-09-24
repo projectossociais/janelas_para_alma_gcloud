@@ -541,3 +541,27 @@ class PerfilJogador(Base):
     patamar_em_curso: Mapped[int] = mapped_column(nullable=False, server_default="0")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class BloqueioVendedorJogo(Base):
+    """Até quando um vendedor ambulante do Mercado (jogo "Inclusivamente")
+    está bloqueado para um jogador, depois de lhe ter vendido uma ajuda --
+    uma linha por par (utilizador, vendedor), reaproveitada a cada compra.
+    `disponivel_em` em UTC; o bloqueio acaba sozinho quando passa, sem job
+    nenhum a limpar (mesmo padrão de `premium_expira_em`). A duração (4h) e
+    o catálogo de vendedores vivem em `services/mercado_jogo_service.py`;
+    `vendedor_id` é o id estável desse catálogo, não uma FK."""
+
+    __tablename__ = "bloqueios_vendedores_jogo"
+    __table_args__ = (
+        UniqueConstraint("utilizador_id", "vendedor_id", name="uq_bloqueios_vendedores_jogo_utilizador_vendedor"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    utilizador_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    vendedor_id: Mapped[str] = mapped_column(Text, nullable=False)
+    disponivel_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

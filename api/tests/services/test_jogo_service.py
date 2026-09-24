@@ -180,3 +180,78 @@ class TestReclamarRecompensa:
         assert primeira.moedas == 50
         assert segunda.moedas == 50  # nada ganho na segunda chamada
         assert segunda.partidas_jogadas == 2
+
+
+class TestTempoEsgotado:
+    def test_conta_como_errada_mesmo_que_a_seria_a_certa(self, servico, perguntas, perfis) -> None:
+        # O bug reproduzido: o cliente mandava "A" ao esgotar o tempo; se "A"
+        # fosse a certa, o progresso avançava sem o jogador ter respondido.
+        perguntas.adicionar("p1", "A", nivel_dificuldade=1)
+        perfis.atualizar_patamar_em_curso("u-1", 0)
+
+        resultado = servico.esgotar_tempo("u-1", "p1")
+
+        assert resultado.correta is False
+        assert resultado.resposta_correta == "A"
+        assert perfis.obter_ou_criar("u-1").patamar_em_curso == 0
+
+    def test_zera_o_progresso_da_partida(self, servico, perguntas, perfis) -> None:
+        perguntas.adicionar("p1", "B", nivel_dificuldade=1)
+        perfis.atualizar_patamar_em_curso("u-1", 4)
+        servico.esgotar_tempo("u-1", "p1")
+        assert perfis.obter_ou_criar("u-1").patamar_em_curso == 0
+
+    def test_anonimo_nao_cria_perfil(self, servico, perguntas, perfis) -> None:
+        perguntas.adicionar("p1", "B", nivel_dificuldade=1)
+        servico.esgotar_tempo(None, "p1")
+        assert perfis._perfis == {}
+
+    def test_pergunta_inexistente(self, servico) -> None:
+        with pytest.raises(PerguntaNaoEncontradaError):
+            servico.esgotar_tempo("u-1", "nao-existe")
+
+
+class TestAjudasGratis:
+    @pytest.mark.parametrize("correta", ["A", "B", "C", "D"])
+    def test_cinquenta_cinquenta_esconde_duas_erradas_e_nunca_a_certa(self, servico, perguntas, correta) -> None:
+        perguntas.adicionar("p1", correta, nivel_dificuldade=1)
+        eliminadas = servico.cinquenta_cinquenta("p1")
+        assert len(eliminadas) == 2
+        assert correta not in eliminadas
+        assert len(set(eliminadas)) == 2
+
+    def test_cinquenta_cinquenta_e_determinista_por_pergunta(self, servico, perguntas) -> None:
+        # Repetir o pedido nunca pode revelar mais do que a primeira vez.
+        perguntas.adicionar("p1", "C", nivel_dificuldade=1)
+        assert {tuple(servico.cinquenta_cinquenta("p1")) for _ in range(20)} == {
+            tuple(servico.cinquenta_cinquenta("p1"))
+        }
+
+    @pytest.mark.parametrize("correta", ["A", "B", "C", "D"])
+    def test_opiniao_publico_favorece_a_certa_e_soma_100(self, servico, perguntas, correta) -> None:
+        perguntas.adicionar(f"p-{correta}", correta, nivel_dificuldade=1)
+        percentagens = servico.opiniao_publico(f"p-{correta}")
+        assert set(percentagens) == {"A", "B", "C", "D"}
+        assert sum(percentagens.values()) == 100
+        assert 55 <= percentagens[correta] <= 75
+        assert all(v >= 1 for v in percentagens.values())
+        assert percentagens[correta] == max(percentagens.values())
+
+    def test_opiniao_publico_e_determinista_por_pergunta(self, servico, perguntas) -> None:
+        perguntas.adicionar("p1", "D", nivel_dificuldade=1)
+        assert all(servico.opiniao_publico("p1") == servico.opiniao_publico("p1") for _ in range(10))
+
+    def test_ajudas_nunca_mexem_no_progresso(self, servico, perguntas, perfis) -> None:
+        # O bug que isto corrige: as ajudas chamavam `responder` com "A" e
+        # zeravam o progresso sempre que "A" estava errada.
+        perguntas.adicionar("p1", "B", nivel_dificuldade=1)
+        perfis.atualizar_patamar_em_curso("u-1", 3)
+        servico.cinquenta_cinquenta("p1")
+        servico.opiniao_publico("p1")
+        assert perfis.obter_ou_criar("u-1").patamar_em_curso == 3
+
+    def test_ajuda_com_pergunta_inexistente(self, servico) -> None:
+        with pytest.raises(PerguntaNaoEncontradaError):
+            servico.cinquenta_cinquenta("nao-existe")
+        with pytest.raises(PerguntaNaoEncontradaError):
+            servico.opiniao_publico("nao-existe")

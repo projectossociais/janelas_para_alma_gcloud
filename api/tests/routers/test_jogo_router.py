@@ -12,6 +12,8 @@ from app.repositories.utilizadores_repository import UtilizadorRegisto
 from app.routers import jogo as jogo_router
 from app.services.auth_service import AuthService
 from app.services.loja_jogo_service import PACOTES_DIAMANTES, LojaJogoService
+from app.services.mercado_jogo_service import VENDEDORES, MercadoJogoService
+from tests.services.test_mercado_jogo_service import RepositorioMercadoFalso
 from tests.services.test_auth_service import RepositorioFalso as RepositorioAuthFalso
 
 
@@ -474,3 +476,161 @@ def test_comprar_sem_pagamentos_simulados_devolve_503_sem_creditar(loja_sem_paga
     resposta = c.post("/jogo/loja/compras", json={"pacote_id": "grande"})
     assert resposta.status_code == 503
     assert repo_perfil.obter_ou_criar("id-comum").diamantes == 0
+
+
+# --- Tempo esgotado e ajudas grátis -----------------------------------------
+
+
+def test_tempo_esgotado_nunca_conta_como_certa_nem_avanca_progresso(ambiente) -> None:
+    c, repo, _admin, token, repo_perfil = ambiente
+    pergunta = repo.criar("2+2?", "4", "1", "2", "3", "A", 1, "porque sim")
+    c.cookies.set("access_token", token)
+    repo_perfil.atualizar_patamar_em_curso("id-comum", 2)
+
+    resposta = c.post("/jogo/tempo-esgotado", json={"pergunta_id": pergunta.id})
+
+    assert resposta.status_code == 200
+    assert resposta.json() == {"correta": False, "resposta_correta": "A", "explicacao": "porque sim"}
+    assert repo_perfil.obter_ou_criar("id-comum").patamar_em_curso == 0
+
+
+def test_tempo_esgotado_sem_sessao_funciona_e_pergunta_inexistente_404(ambiente) -> None:
+    c, repo, *_ = ambiente
+    pergunta = repo.criar("2+2?", "4", "1", "2", "3", "A", 1, None)
+    assert c.post("/jogo/tempo-esgotado", json={"pergunta_id": pergunta.id}).status_code == 200
+    assert c.post("/jogo/tempo-esgotado", json={"pergunta_id": "nao-existe"}).status_code == 404
+
+
+def test_cinquenta_cinquenta_nao_toca_no_progresso(ambiente) -> None:
+    c, repo, _admin, token, repo_perfil = ambiente
+    pergunta = repo.criar("2+2?", "1", "4", "2", "3", "B", 1, None)
+    c.cookies.set("access_token", token)
+    repo_perfil.atualizar_patamar_em_curso("id-comum", 3)
+
+    resposta = c.post("/jogo/ajudas/cinquenta-cinquenta", json={"pergunta_id": pergunta.id})
+
+    assert resposta.status_code == 200
+    eliminadas = resposta.json()["opcoes_eliminadas"]
+    assert len(eliminadas) == 2 and "B" not in eliminadas
+    assert repo_perfil.obter_ou_criar("id-comum").patamar_em_curso == 3
+
+
+def test_opiniao_publico_devolve_percentagens_e_nao_revela_mais_nada(ambiente) -> None:
+    c, repo, *_ = ambiente
+    pergunta = repo.criar("2+2?", "1", "2", "4", "3", "C", 1, "segredo")
+
+    resposta = c.post("/jogo/ajudas/opiniao-publico", json={"pergunta_id": pergunta.id})
+
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert set(corpo) == {"percentagens"}
+    assert sum(corpo["percentagens"].values()) == 100
+
+
+def test_ajudas_com_pergunta_inexistente_devolvem_404(ambiente) -> None:
+    c, *_ = ambiente
+    for rota in ("/jogo/ajudas/cinquenta-cinquenta", "/jogo/ajudas/opiniao-publico"):
+        assert c.post(rota, json={"pergunta_id": "nao-existe"}).status_code == 404
+
+
+# --- Mercado -----------------------------------------------------------------
+
+
+@pytest.fixture
+def mercado(ambiente):
+    c, repo, _admin, token, repo_perfil = ambiente
+    repo_mercado = RepositorioMercadoFalso(repo_perfil)
+    app.dependency_overrides[jogo_router.obter_mercado_jogo_service] = lambda: MercadoJogoService(
+        repo_mercado, repo
+    )
+    pergunta = repo.criar("2+2?", "1", "2", "3", "4", "D", 1, None)
+    return c, token, repo_perfil, repo_mercado, pergunta
+
+
+def test_mercado_exige_sessao(mercado) -> None:
+    c, *_ = mercado
+    assert c.get("/jogo/mercado").status_code == 401
+    assert c.post("/jogo/mercado/comprar", json={"vendedor_id": "tio-ze", "pergunta_id": "x"}).status_code == 401
+
+
+def test_listar_mercado_devolve_catalogo_do_servidor(mercado) -> None:
+    c, token, *_ = mercado
+    c.cookies.set("access_token", token)
+
+    corpo = c.get("/jogo/mercado").json()
+
+    assert "agora" in corpo
+    assert [(v["id"], v["custo_diamantes"], v["precisao"]) for v in corpo["vendedores"]] == [
+        (v.id, v.custo_diamantes, v.precisao) for v in VENDEDORES
+    ]
+    assert all(v["disponivel_em"] is None for v in corpo["vendedores"])
+
+
+def test_comprar_debita_bloqueia_e_devolve_sugestao(mercado) -> None:
+    c, token, repo_perfil, _, pergunta = mercado
+    c.cookies.set("access_token", token)
+    repo_perfil.creditar_diamantes("id-comum", 50)
+
+    resposta = c.post("/jogo/mercado/comprar", json={"vendedor_id": "mana-fefa", "pergunta_id": pergunta.id})
+
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["resposta_sugerida"] in {"A", "B", "C", "D"}
+    assert corpo["perfil"]["diamantes"] == 50 - 12
+    listado = {v["id"]: v["disponivel_em"] for v in c.get("/jogo/mercado").json()["vendedores"]}
+    assert listado["mana-fefa"] is not None
+
+
+def test_comprar_ignora_custo_enviado_pelo_cliente(mercado) -> None:
+    c, token, repo_perfil, _, pergunta = mercado
+    c.cookies.set("access_token", token)
+    repo_perfil.creditar_diamantes("id-comum", 50)
+
+    resposta = c.post(
+        "/jogo/mercado/comprar",
+        json={"vendedor_id": "kota-beto", "pergunta_id": pergunta.id, "custo_diamantes": 0, "precisao": 1},
+    )
+
+    assert resposta.status_code == 200
+    assert resposta.json()["perfil"]["diamantes"] == 50 - 45
+
+
+def test_comprar_duas_vezes_ao_mesmo_vendedor_devolve_409_sem_debitar(mercado) -> None:
+    c, token, repo_perfil, _, pergunta = mercado
+    c.cookies.set("access_token", token)
+    repo_perfil.creditar_diamantes("id-comum", 50)
+    c.post("/jogo/mercado/comprar", json={"vendedor_id": "tio-ze", "pergunta_id": pergunta.id})
+
+    resposta = c.post("/jogo/mercado/comprar", json={"vendedor_id": "tio-ze", "pergunta_id": pergunta.id})
+
+    assert resposta.status_code == 409
+    assert repo_perfil.obter_ou_criar("id-comum").diamantes == 45
+
+
+def test_comprar_sem_diamantes_devolve_402(mercado) -> None:
+    c, token, _, repo_mercado, pergunta = mercado
+    c.cookies.set("access_token", token)
+
+    resposta = c.post("/jogo/mercado/comprar", json={"vendedor_id": "tio-ze", "pergunta_id": pergunta.id})
+
+    assert resposta.status_code == 402
+    assert repo_mercado.bloqueios == {}
+
+
+def test_comprar_vendedor_ou_pergunta_inexistente_devolve_404(mercado) -> None:
+    c, token, repo_perfil, _, pergunta = mercado
+    c.cookies.set("access_token", token)
+    repo_perfil.creditar_diamantes("id-comum", 50)
+    assert c.post("/jogo/mercado/comprar", json={"vendedor_id": "x", "pergunta_id": pergunta.id}).status_code == 404
+    assert c.post("/jogo/mercado/comprar", json={"vendedor_id": "tio-ze", "pergunta_id": "x"}).status_code == 404
+    assert repo_perfil.obter_ou_criar("id-comum").diamantes == 50
+
+
+def test_comprar_com_opcoes_excluidas_invalidas_devolve_422(mercado) -> None:
+    c, token, _, _, pergunta = mercado
+    c.cookies.set("access_token", token)
+    resposta = c.post(
+        "/jogo/mercado/comprar",
+        json={"vendedor_id": "tio-ze", "pergunta_id": pergunta.id, "opcoes_excluidas": ["Z"]},
+    )
+    assert resposta.status_code == 422

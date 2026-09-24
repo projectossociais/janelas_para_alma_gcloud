@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -79,3 +80,49 @@ class LojaDiamantesPublica(BaseModel):
 
 class ComprarPacoteRequest(BaseModel):
     pacote_id: str = Field(min_length=1, max_length=40)
+
+
+# --- Ajudas ------------------------------------------------------------------
+
+
+class AjudaPerguntaRequest(BaseModel):
+    pergunta_id: str
+
+
+class CinquentaCinquentaResponse(BaseModel):
+    opcoes_eliminadas: list[RespostaOpcao]
+
+
+class OpiniaoPublicoResponse(BaseModel):
+    percentagens: dict[RespostaOpcao, int]
+
+
+# --- Mercado -----------------------------------------------------------------
+
+
+class VendedorMercadoPublico(BaseModel):
+    id: str
+    custo_diamantes: int
+    precisao: float
+    # `None` = disponível agora; senão, até quando está bloqueado (UTC).
+    disponivel_em: datetime | None
+
+
+class MercadoPublico(BaseModel):
+    # Hora do servidor -- o cliente usa-a para acertar o cronómetro do
+    # bloqueio mesmo que o relógio do dispositivo esteja errado.
+    agora: datetime
+    vendedores: list[VendedorMercadoPublico]
+
+
+class ComprarAjudaMercadoRequest(BaseModel):
+    vendedor_id: str = Field(min_length=1, max_length=40)
+    pergunta_id: str
+    opcoes_excluidas: list[RespostaOpcao] = Field(default_factory=list, max_length=3)
+
+
+class AjudaMercadoResponse(BaseModel):
+    vendedor_id: str
+    resposta_sugerida: RespostaOpcao
+    disponivel_em: datetime
+    perfil: PerfilJogadorPublico

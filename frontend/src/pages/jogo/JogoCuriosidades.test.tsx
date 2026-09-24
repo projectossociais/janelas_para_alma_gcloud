@@ -1,16 +1,22 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
 const obterPerguntaAleatoria = vi.fn();
 const validarResposta = vi.fn();
 const registarRecompensa = vi.fn();
+const cinquentaCinquenta = vi.fn();
+const opiniaoPublico = vi.fn();
+const tempoEsgotado = vi.fn();
 vi.mock("@/lib/apiClient", () => ({
   jogoApi: {
     obterPerguntaAleatoria: (...a: unknown[]) => obterPerguntaAleatoria(...a),
     validarResposta: (...a: unknown[]) => validarResposta(...a),
     registarRecompensa: (...a: unknown[]) => registarRecompensa(...a),
+    cinquentaCinquenta: (...a: unknown[]) => cinquentaCinquenta(...a),
+    opiniaoPublico: (...a: unknown[]) => opiniaoPublico(...a),
+    tempoEsgotado: (...a: unknown[]) => tempoEsgotado(...a),
   },
   mensagemDeErroApi: (err: unknown, fallback: string) => {
     const status = (err as { status?: unknown } | null)?.status;
@@ -22,6 +28,30 @@ vi.mock("@/components/Navbar", () => ({ default: () => null }));
 vi.mock("@/components/Footer", () => ({ default: () => null }));
 vi.mock("@/components/BackButton", () => ({ default: () => null }));
 vi.mock("@/components/jogo/CarteiraJogo", () => ({ default: () => null }));
+
+// O modal real é testado em MercadoModal.test.tsx -- aqui só interessa o que
+// o jogo faz com uma ajuda comprada.
+const mercadoProps = vi.fn();
+vi.mock("@/components/jogo/MercadoModal", () => ({
+  default: (props: { open: boolean; onAjudaComprada: (a: unknown) => void }) => {
+    mercadoProps(props);
+    return props.open ? (
+      <button
+        type="button"
+        onClick={() =>
+          props.onAjudaComprada({
+            vendedor_id: "kota-beto",
+            resposta_sugerida: "B",
+            disponivel_em: "2026-09-24T16:00:00Z",
+            perfil: { moedas: 0, diamantes: 5, partidas_jogadas: 0, patamar_maximo_alcancado: 0 },
+          })
+        }
+      >
+        simular compra
+      </button>
+    ) : null;
+  },
+}));
 
 const definirPerfil = vi.fn();
 vi.mock("@/contexts/CarteiraJogoContext", () => ({
@@ -66,6 +96,10 @@ describe("JogoCuriosidades", () => {
   beforeEach(() => {
     obterPerguntaAleatoria.mockReset();
     validarResposta.mockReset();
+    cinquentaCinquenta.mockReset();
+    opiniaoPublico.mockReset();
+    tempoEsgotado.mockReset();
+    mercadoProps.mockReset();
     registarRecompensa.mockReset();
     definirPerfil.mockReset();
     registarRecompensa.mockResolvedValue({ moedas: 0, diamantes: 0, partidas_jogadas: 1, patamar_maximo_alcancado: 0 });
@@ -159,7 +193,7 @@ describe("JogoCuriosidades", () => {
 
   it("a ajuda 50:50 esconde exactamente duas opções erradas e fica desactivada", async () => {
     obterPerguntaAleatoria.mockResolvedValue(PERGUNTA_1);
-    validarResposta.mockResolvedValue({ correta: false, resposta_correta: "B", explicacao: null });
+    cinquentaCinquenta.mockResolvedValue({ opcoes_eliminadas: ["A", "D"] });
     render(<JogoCuriosidades />, { wrapper: MemoryRouter });
     await comecarJogo();
     await screen.findByText(PERGUNTA_1.texto_pergunta);
@@ -176,11 +210,15 @@ describe("JogoCuriosidades", () => {
 
     expect(opcaoB).not.toBeDisabled();
     expect(desativadas).toBe(2);
+    expect(cinquentaCinquenta).toHaveBeenCalledWith("pergunta-1");
+    // O bug corrigido: as ajudas já não "respondem" à pergunta às escondidas
+    // (isso zerava o progresso no servidor sempre que "A" estava errada).
+    expect(validarResposta).not.toHaveBeenCalled();
   });
 
-  it("a opinião do público mostra 4 percentagens que somam 100, com a certa entre 55% e 75%", async () => {
+  it("a opinião do público mostra as 4 percentagens vindas do servidor", async () => {
     obterPerguntaAleatoria.mockResolvedValue(PERGUNTA_1);
-    validarResposta.mockResolvedValue({ correta: false, resposta_correta: "B", explicacao: null });
+    opiniaoPublico.mockResolvedValue({ percentagens: { A: 10, B: 62, C: 20, D: 8 } });
     render(<JogoCuriosidades />, { wrapper: MemoryRouter });
     await comecarJogo();
     await screen.findByText(PERGUNTA_1.texto_pergunta);
@@ -197,9 +235,66 @@ describe("JogoCuriosidades", () => {
 
     expect(percentagens).toHaveLength(4);
     expect(percentagens.reduce((a, b) => a + b, 0)).toBe(100);
-    expect(percentagens[1]).toBeGreaterThanOrEqual(55); // opção B é a certa
-    expect(percentagens[1]).toBeLessThanOrEqual(75);
+    expect(percentagens).toEqual([10, 62, 20, 8]);
     await waitFor(() => expect(botaoPublico).toBeDisabled());
+    expect(validarResposta).not.toHaveBeenCalled();
+  });
+
+  it("ao esgotar o tempo, usa o endpoint próprio -- nunca 'responde' com uma letra ao acaso", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      obterPerguntaAleatoria.mockResolvedValue(PERGUNTA_1);
+      tempoEsgotado.mockResolvedValue({ correta: false, resposta_correta: "B", explicacao: "Explicação." });
+      render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+      await comecarJogo();
+      await screen.findByText(PERGUNTA_1.texto_pergunta);
+
+      for (let i = 0; i < 46; i++) {
+        await act(async () => {
+          vi.advanceTimersByTime(1000);
+        });
+      }
+
+      await waitFor(() => expect(tempoEsgotado).toHaveBeenCalledWith("pergunta-1"));
+      expect(validarResposta).not.toHaveBeenCalled();
+      expect(await screen.findByText("Explicação.")).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("uma ajuda que falha mostra erro e volta a ficar disponível", async () => {
+    obterPerguntaAleatoria.mockResolvedValue(PERGUNTA_1);
+    cinquentaCinquenta.mockRejectedValue(new Error("rede"));
+    render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+    await comecarJogo();
+    await screen.findByText(PERGUNTA_1.texto_pergunta);
+
+    const botao5050 = screen.getByRole("button", { name: "50:50" });
+    await userEvent.click(botao5050);
+
+    await waitFor(() => expect(toastError).toHaveBeenCalled());
+    expect(botao5050).toBeEnabled();
+  });
+
+  it("uma sugestão comprada no Mercado aparece junto da opção, com o nome do vendedor", async () => {
+    obterPerguntaAleatoria.mockResolvedValue(PERGUNTA_1);
+    cinquentaCinquenta.mockResolvedValue({ opcoes_eliminadas: ["A", "D"] });
+    render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+    await comecarJogo();
+    await screen.findByText(PERGUNTA_1.texto_pergunta);
+
+    await userEvent.click(screen.getByRole("button", { name: "50:50" }));
+    await userEvent.click(screen.getByRole("button", { name: /Mercado/ }));
+    // O Mercado recebe as opções já escondidas, para não sugerir uma delas.
+    await waitFor(() =>
+      expect(mercadoProps).toHaveBeenLastCalledWith(
+        expect.objectContaining({ open: true, perguntaId: "pergunta-1", opcoesExcluidas: ["A", "D"] })
+      )
+    );
+    await userEvent.click(screen.getByRole("button", { name: "simular compra" }));
+
+    expect(screen.getByText("Certa B").closest("button")).toHaveTextContent("Kota Beto");
   });
 
   it("com sessão iniciada, sincroniza a recompensa da derrota com o servidor", async () => {

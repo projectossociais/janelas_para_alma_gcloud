@@ -80,8 +80,15 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   de Diamantes (`/jogo-curiosidades/loja`) ainda **não tem pagamento real**: a compra só
   credita diamantes com `JOGO_PAGAMENTOS_SIMULADOS=true` (ligado só no `docker-compose.yml`
   de desenvolvimento; **nunca** em produção, seriam diamantes grátis). O catálogo e os
-  preços em Kz vivem só em `services/loja_jogo_service.py` e são uma proposta à espera de
-  confirmação (§10)
+  preços em Kz vivem só em `services/loja_jogo_service.py` (aprovados pelo dono do projecto
+  em 2026-09-24: 500 / 1.250 / 3.000 Kz). **Ajudas:** 50:50, Opinião do Público e tempo
+  esgotado têm endpoints próprios (`/jogo/ajudas/*`, `/jogo/tempo-esgotado`) que nunca
+  avançam o progresso — nunca usar `/jogo/validar` com uma letra qualquer para descobrir a
+  resposta (bug real corrigido em 2026-09-24: zerava ou inflacionava `patamar_em_curso`).
+  **Mercado** (ajuda paga): vendedores ambulantes com custo em diamantes e precisão
+  crescente, bloqueados 4h por jogador após cada venda — catálogo em
+  `services/mercado_jogo_service.py`, bloqueio na tabela `bloqueios_vendedores_jogo`;
+  débito e bloqueio gravados atomicamente (`MercadoJogoRepository.debitar_e_bloquear`)
 
 Público-alvo inclui **crianças**. Todo o tratamento de dados deve assumir isso.
 

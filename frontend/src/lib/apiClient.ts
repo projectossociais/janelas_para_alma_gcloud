@@ -1092,6 +1092,28 @@ export interface LojaDiamantes {
   pagamento_simulado: boolean;
 }
 
+export interface VendedorMercado {
+  id: string;
+  custo_diamantes: number;
+  // Probabilidade (0-1) de a sugestão estar certa.
+  precisao: number;
+  // `null` = disponível; senão, até quando está bloqueado (ISO, UTC).
+  disponivel_em: string | null;
+}
+
+export interface MercadoJogo {
+  // Hora do servidor -- acerta o cronómetro mesmo com o relógio do dispositivo errado.
+  agora: string;
+  vendedores: VendedorMercado[];
+}
+
+export interface AjudaMercado {
+  vendedor_id: string;
+  resposta_sugerida: RespostaOpcaoJogo;
+  disponivel_em: string;
+  perfil: PerfilJogadorPublico;
+}
+
 export const jogoApi = {
   // `patamar` (1-15) é só do jogo -- o backend mapeia-o para um dos 3 níveis
   // de dificuldade da reserva de perguntas (ver nivel_dificuldade_do_patamar).
@@ -1104,6 +1126,40 @@ export const jogoApi = {
     pedido<ValidarRespostaJogoResponse>("/jogo/validar", {
       method: "POST",
       body: JSON.stringify({ pergunta_id: perguntaId, resposta_usuario: respostaUsuario }),
+    }),
+
+  // O tempo acabou -- conta sempre como errada. Nunca usar `validarResposta`
+  // com uma letra qualquer para isto: se fosse a certa, o servidor avançava
+  // o progresso sem o jogador ter respondido (corrigido 2026-09-24).
+  tempoEsgotado: (perguntaId: string) =>
+    pedido<ValidarRespostaJogoResponse>("/jogo/tempo-esgotado", {
+      method: "POST",
+      body: JSON.stringify({ pergunta_id: perguntaId }),
+    }),
+
+  // Ajudas grátis -- endpoints próprios que nunca mexem no progresso da
+  // partida. Antes (até 2026-09-24) usavam `validarResposta` com "A", o que
+  // zerava o progresso sempre que "A" estava errada.
+  cinquentaCinquenta: (perguntaId: string) =>
+    pedido<{ opcoes_eliminadas: RespostaOpcaoJogo[] }>("/jogo/ajudas/cinquenta-cinquenta", {
+      method: "POST",
+      body: JSON.stringify({ pergunta_id: perguntaId }),
+    }),
+
+  opiniaoPublico: (perguntaId: string) =>
+    pedido<{ percentagens: Record<RespostaOpcaoJogo, number> }>("/jogo/ajudas/opiniao-publico", {
+      method: "POST",
+      body: JSON.stringify({ pergunta_id: perguntaId }),
+    }),
+
+  // Mercado (exige sessão). Custo, precisão e bloqueio de 4h vivem só no
+  // servidor -- a compra envia apenas o vendedor e a pergunta.
+  obterMercado: () => pedido<MercadoJogo>("/jogo/mercado"),
+
+  comprarAjudaMercado: (vendedorId: string, perguntaId: string, opcoesExcluidas: RespostaOpcaoJogo[]) =>
+    pedido<AjudaMercado>("/jogo/mercado/comprar", {
+      method: "POST",
+      body: JSON.stringify({ vendedor_id: vendedorId, pergunta_id: perguntaId, opcoes_excluidas: opcoesExcluidas }),
     }),
 
   // Exige sessão -- só tem sentido para quem tem conta (ver `useProfile`).
