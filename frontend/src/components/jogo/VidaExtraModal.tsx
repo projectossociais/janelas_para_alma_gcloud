@@ -13,10 +13,9 @@ interface VidaExtraModalProps {
   tempoEsgotado: boolean;
   onVidaUsada: (vida: VidaExtraJogo) => void;
   /** Recusou (ou fechou o modal): a partida termina normalmente. */
+  /** "Encerrar partida" -- a única saída do modal além de usar a vida extra.
+   *  Leva sempre ao ecrã da resposta certa e da explicação. */
   onEncerrar: () => void;
-  /** "×", Esc ou clique fora: sair do jogo para o menu. Sem isto, fechar
-   *  equivale a "Encerrar partida" (mostra o resultado). */
-  onSair?: () => void;
 }
 
 /**
@@ -25,7 +24,7 @@ interface VidaExtraModalProps {
  * sem a opção falhada. Custo, limite por partida e débito são decididos e
  * gravados pela API (`JogoService.usar_vida_extra`); aqui só se mostra.
  */
-const VidaExtraModal = ({ oferta, tempoEsgotado, onVidaUsada, onEncerrar, onSair }: VidaExtraModalProps) => {
+const VidaExtraModal = ({ oferta, tempoEsgotado, onVidaUsada, onEncerrar }: VidaExtraModalProps) => {
   const { t } = useTranslation();
   const { perfil, definirPerfil, recarregar } = useCarteiraJogo();
   const [aUsar, setAUsar] = useState(false);
@@ -56,8 +55,17 @@ const VidaExtraModal = ({ oferta, tempoEsgotado, onVidaUsada, onEncerrar, onSair
   };
 
   return (
-    <Dialog open={oferta !== null} onOpenChange={(aberto) => !aberto && !aUsar && (onSair ?? onEncerrar)()}>
-      <DialogContent className="sm:max-w-md text-center">
+    // Sem "×", sem Esc, sem clique fora: o jogador escolhe usar a vida extra
+    // ou "Encerrar partida" -- e encerrar passa sempre pelo ecrã educativo
+    // (resposta certa + explicação). Até 2026-09-24 o "×" ia directo ao
+    // menu e saltava esse ecrã.
+    <Dialog open={oferta !== null}>
+      <DialogContent
+        className="sm:max-w-md text-center"
+        semBotaoFechar
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader className="sm:text-center">
           <DialogTitle className="text-2xl text-center">{t("VidaExtra.titulo")}</DialogTitle>
           <DialogDescription className="text-center text-base text-foreground">
