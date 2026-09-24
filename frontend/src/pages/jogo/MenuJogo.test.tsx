@@ -18,11 +18,14 @@ vi.mock("@/contexts/ProfileContext", () => ({
 
 import MenuJogo from "./MenuJogo";
 import { CarteiraJogoProvider } from "@/contexts/CarteiraJogoContext";
+import { AudioJogoProvider } from "@/contexts/AudioJogoContext";
 import type { ReactNode } from "react";
 
 const Envoltorio = ({ children }: { children: ReactNode }) => (
   <MemoryRouter>
-    <CarteiraJogoProvider>{children}</CarteiraJogoProvider>
+    <CarteiraJogoProvider>
+      <AudioJogoProvider>{children}</AudioJogoProvider>
+    </CarteiraJogoProvider>
   </MemoryRouter>
 );
 
@@ -63,6 +66,16 @@ describe("MenuJogo (Lobby)", () => {
 
     await userEvent.click(await screen.findByRole("button", { name: /^Moedas/ }));
     expect(await screen.findByText(/ganham-se a jogar/i)).toBeInTheDocument();
+  });
+
+  it("o botão de definições abre os interruptores de música e efeitos sonoros", async () => {
+    render(<MenuJogo />, { wrapper: Envoltorio });
+
+    await userEvent.click(await screen.findByRole("button", { name: "Abrir as definições do jogo" }));
+
+    expect(await screen.findByRole("heading", { name: "Definições" })).toBeInTheDocument();
+    expect(screen.getByRole("switch", { name: "Música" })).toBeInTheDocument();
+    expect(screen.getByRole("switch", { name: "Efeitos sonoros" })).toBeInTheDocument();
   });
 
   it("os três modos de jogo estão presentes, com os dois multijogador marcados 'Em breve'", async () => {

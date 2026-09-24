@@ -1981,5 +1981,17 @@
     "continuar": "Continue",
     "sequenciaAtual": "Streak of {{sequencia}} right answers",
     "limiteDiarioAtingido": "You've reached the daily limit of 60 streak diamonds. Keep playing: you'll earn diamonds again tomorrow."
+  },
+  "DefinicoesJogo": {
+    "abrir": "Open game settings",
+    "titulo": "Settings",
+    "descricao": "Choose what you want to hear while you play.",
+    "musica": "Music",
+    "musicaDescricao": "background music during the game",
+    "efeitos": "Sound effects",
+    "efeitosDescricao": "right, wrong and button sounds",
+    "ligado": "On",
+    "desligado": "Off",
+    "guardadoNesteDispositivo": "Your choices are saved on this device. Sound only starts after you tap the screen."
   }
 }

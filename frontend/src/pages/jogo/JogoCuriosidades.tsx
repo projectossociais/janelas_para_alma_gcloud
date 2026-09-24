@@ -33,6 +33,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { cn } from "@/lib/utils";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useCarteiraJogo } from "@/contexts/CarteiraJogoContext";
+import { useAudioJogo, useMusicaDeFundo } from "@/contexts/AudioJogoContext";
 import CarteiraJogo from "@/components/jogo/CarteiraJogo";
 import MercadoModal from "@/components/jogo/MercadoModal";
 import VidaExtraModal from "@/components/jogo/VidaExtraModal";
@@ -97,6 +98,7 @@ const JogoCuriosidades = () => {
   const { t: tr } = useTranslation();
   const { profile, loading: aCarregarPerfil } = useProfile();
   const { definirPerfil } = useCarteiraJogo();
+  const { tocarEfeito } = useAudioJogo();
   // As perguntas da API (base de dados) só existem em português: no site
   // inglês o jogo usa sempre a reserva local, traduzida em
   // perguntasOffline.en-US.ts. Não é "modo offline" -- o aviso não aparece.
@@ -236,6 +238,9 @@ const JogoCuriosidades = () => {
     }
   }, [escolherPerguntaOfflineParaPatamar, usaServidor]);
 
+  // Música de fundo enquanto se joga (não no ecrã de apresentação nem no fim).
+  useMusicaDeFundo(!mostrarSplash && !jogoTerminado);
+
   // Arranque do jogo -- espera só por saber se há sessão (define o modo) e
   // corre em paralelo com o ecrã de apresentação, para a pergunta já estar
   // pronta quando o "splash" da escada terminar. Uma única vez.
@@ -342,6 +347,13 @@ const JogoCuriosidades = () => {
     setMostrarModalErrado(true);
   };
 
+  // Todo o resultado novo (certo, errado, tempo esgotado) passa por aqui --
+  // um só sítio decide o som, para nunca tocar duas vezes nem esquecer um caso.
+  const definirResultado = (novo: ResultadoResposta) => {
+    setResultado(novo);
+    tocarEfeito(novo.correta ? "certo" : "errado");
+  };
+
   // Compara localmente contra a reserva de contingência -- só chamado
   // quando `emModoOffline` já garantiu que `pergunta.id` é um dos ids
   // "offline-N", nunca para uma pergunta vinda do servidor.
@@ -357,7 +369,7 @@ const JogoCuriosidades = () => {
   const aoTempoEsgotar = async () => {
     if (!pergunta || aValidar) return;
     if (emModoOffline) {
-      setResultado({ ...validarLocalmente("A"), tempoEsgotado: true });
+      definirResultado({ ...validarLocalmente("A"), tempoEsgotado: true });
       return;
     }
     setAValidar(true);
@@ -365,7 +377,7 @@ const JogoCuriosidades = () => {
       await inicioPartida.current;
       const resp = await jogoApi.tempoEsgotado(pergunta.id);
       setSequenciaAcertos(0);
-      setResultado({
+      definirResultado({
         correta: false,
         resposta_correta: resp.resposta_correta,
         explicacao: resp.explicacao,
@@ -383,7 +395,7 @@ const JogoCuriosidades = () => {
     if (!pergunta || resultado || aValidar || opcoesEliminadas.includes(opcao)) return;
     setOpcaoSelecionada(opcao);
     if (emModoOffline) {
-      setResultado({ ...validarLocalmente(opcao), tempoEsgotado: false });
+      definirResultado({ ...validarLocalmente(opcao), tempoEsgotado: false });
       return;
     }
     setAValidar(true);
@@ -395,13 +407,15 @@ const JogoCuriosidades = () => {
         // Os diamantes já estão na conta (creditados na validação) -- a barra
         // actualiza já, e o marco celebra-se por cima da pergunta seguinte.
         definirPerfil(resp.recompensa_sequencia.perfil);
+        // Depois do som de "certo", para não se atropelarem.
+        setTimeout(() => tocarEfeito("levelUp"), 450);
         setRecompensaSequencia({
           sequencia: resp.recompensa_sequencia.sequencia,
           diamantes: resp.recompensa_sequencia.diamantes,
           limiteDiarioAtingido: resp.recompensa_sequencia.limite_diario_atingido,
         });
       }
-      setResultado({
+      definirResultado({
         correta: resp.correta,
         resposta_correta: resp.resposta_correta,
         explicacao: resp.explicacao,
@@ -418,6 +432,7 @@ const JogoCuriosidades = () => {
 
   const usar5050 = async () => {
     if (!pergunta || ajudaCincoUsada || resultado || aValidar) return;
+    tocarEfeito("clique");
     setAjudaCincoUsada(true);
     if (emModoOffline) {
       const respostaCerta = obterPerguntaOfflinePorId(pergunta.id)?.resposta_correta ?? "A";
@@ -437,6 +452,7 @@ const JogoCuriosidades = () => {
 
   const usarOpiniaoPublico = async () => {
     if (!pergunta || ajudaPublicoUsada || resultado || aValidar) return;
+    tocarEfeito("clique");
     setAjudaPublicoUsada(true);
     if (emModoOffline) {
       const respostaCerta = obterPerguntaOfflinePorId(pergunta.id)?.resposta_correta ?? "A";
@@ -457,6 +473,7 @@ const JogoCuriosidades = () => {
 
   const trocarPergunta = () => {
     if (ajudaTrocarUsada || resultado || aValidar || aCarregarPergunta) return;
+    tocarEfeito("clique");
     setAjudaTrocarUsada(true);
     if (emModoOffline) {
       // Sem rede, troca dentro da própria reserva local do patamar (5
@@ -542,7 +559,10 @@ const JogoCuriosidades = () => {
               </div>
               <EscadaPatamares patamarAtual={1} />
               <Button
-                onClick={() => setMostrarSplash(false)}
+                onClick={() => {
+                  tocarEfeito("clique");
+                  setMostrarSplash(false);
+                }}
                 size="lg"
                 className="w-full bg-teal text-teal-foreground hover:bg-teal/90"
               >
@@ -748,7 +768,10 @@ const JogoCuriosidades = () => {
                         {usaServidor && (
                           <Button
                             variant="outline"
-                            onClick={() => setMostrarMercado(true)}
+                            onClick={() => {
+                              tocarEfeito("clique");
+                              setMostrarMercado(true);
+                            }}
                             disabled={!!resultado || aValidar || emModoOffline}
                             className="border-gold/60 text-gold hover:bg-gold/10"
                           >

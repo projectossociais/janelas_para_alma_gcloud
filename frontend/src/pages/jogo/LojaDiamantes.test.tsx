@@ -34,10 +34,13 @@ vi.mock("sonner", () => ({
 
 import LojaDiamantes from "./LojaDiamantes";
 import { CarteiraJogoProvider } from "@/contexts/CarteiraJogoContext";
+import { AudioJogoProvider } from "@/contexts/AudioJogoContext";
 
 const Envoltorio = ({ children }: { children: ReactNode }) => (
   <MemoryRouter>
-    <CarteiraJogoProvider>{children}</CarteiraJogoProvider>
+    <CarteiraJogoProvider>
+      <AudioJogoProvider>{children}</AudioJogoProvider>
+    </CarteiraJogoProvider>
   </MemoryRouter>
 );
 

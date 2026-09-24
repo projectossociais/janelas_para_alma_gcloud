@@ -33,10 +33,16 @@ vi.mock("@/components/jogo/CarteiraJogo", () => ({ default: () => null }));
 
 // O modal real é testado em RecompensaSequenciaModal.test.tsx.
 vi.mock("@/components/jogo/RecompensaSequenciaModal", () => ({
-  default: (props: { recompensa: { sequencia: number; diamantes: number } | null; onContinuar: () => void }) =>
+  default: (props: {
+    recompensa: { sequencia: number; diamantes: number; limiteDiarioAtingido?: boolean } | null;
+    onContinuar: () => void;
+  }) =>
     props.recompensa ? (
       <div data-testid="modal-sequencia">
-        <span>{`sequencia ${props.recompensa.sequencia}, diamantes ${props.recompensa.diamantes}`}</span>
+        <span>
+          {`sequencia ${props.recompensa.sequencia}, diamantes ${props.recompensa.diamantes}`}
+          {props.recompensa.limiteDiarioAtingido ? ", limite" : ""}
+        </span>
         <button type="button" onClick={props.onContinuar}>
           simular continuar
         </button>
@@ -100,6 +106,12 @@ vi.mock("@/components/jogo/MercadoModal", () => ({
 }));
 
 const definirPerfil = vi.fn();
+const tocarEfeito = vi.fn();
+const musicaPedida = vi.fn();
+vi.mock("@/contexts/AudioJogoContext", () => ({
+  useAudioJogo: () => ({ tocarEfeito: (...a: unknown[]) => tocarEfeito(...a) }),
+  useMusicaDeFundo: (ativa: boolean) => musicaPedida(ativa),
+}));
 vi.mock("@/contexts/CarteiraJogoContext", () => ({
   useCarteiraJogo: () => ({ definirPerfil: (...a: unknown[]) => definirPerfil(...a) }),
 }));
@@ -161,6 +173,8 @@ describe("JogoCuriosidades", () => {
     iniciarPartida.mockReset().mockResolvedValue({ estado: "em_curso" });
     terminarPartida.mockReset().mockResolvedValue(TERMINADA);
     definirPerfil.mockReset();
+    tocarEfeito.mockReset();
+    musicaPedida.mockReset();
     toastError.mockReset();
     toastSuccess.mockReset();
     toastInfo.mockReset();
@@ -712,5 +726,109 @@ describe("JogoCuriosidades", () => {
       expect(await screen.findByText("Strabismus is a misalignment of the visual axes of the two eyes.")).toBeInTheDocument();
       expect(validarResposta).not.toHaveBeenCalled();
     });
+  });
+});
+
+
+describe("JogoCuriosidades -- som", () => {
+  beforeEach(() => {
+    mockProfile = { id: "utilizador-1" };
+    obterPerguntaDaPartida.mockReset().mockResolvedValue(PERGUNTA_1);
+    validarResposta.mockReset();
+    iniciarPartida.mockReset().mockResolvedValue({ estado: "em_curso" });
+    terminarPartida.mockReset().mockResolvedValue(TERMINADA);
+    tocarEfeito.mockReset();
+    musicaPedida.mockReset();
+    vi.spyOn(Math, "random").mockReturnValue(0);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("a música de fundo só é pedida depois do ecrã de apresentação", async () => {
+    render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+    await screen.findByText("Prepare-se para subir a escada");
+    expect(musicaPedida).toHaveBeenLastCalledWith(false);
+
+    await comecarJogo();
+    await screen.findByText(PERGUNTA_1.texto_pergunta);
+    expect(musicaPedida).toHaveBeenLastCalledWith(true);
+  });
+
+  it("toca 'certo' ao acertar", async () => {
+    validarResposta.mockResolvedValue({ correta: true, resposta_correta: "B", explicacao: null });
+    render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+    await comecarJogo();
+    await screen.findByText(PERGUNTA_1.texto_pergunta);
+
+    await userEvent.click(screen.getByText("Certa B"));
+
+    await waitFor(() => expect(tocarEfeito).toHaveBeenCalledWith("certo"));
+    expect(tocarEfeito).not.toHaveBeenCalledWith("errado");
+  });
+
+  it("toca 'errado' uma só vez ao errar, mesmo quando a resposta é revelada depois", async () => {
+    validarResposta.mockResolvedValue({
+      correta: false,
+      resposta_correta: null,
+      explicacao: null,
+      vida_extra: { custo: 20, restantes: 0 },
+    });
+    terminarPartida.mockResolvedValue({ ...TERMINADA, resposta_correta: "B", explicacao: "Porque sim." });
+    render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+    await comecarJogo();
+    await screen.findByText(PERGUNTA_1.texto_pergunta);
+
+    await userEvent.click(screen.getByText("Errada A"));
+
+    expect(await screen.findByText("Porque sim.")).toBeInTheDocument();
+    expect(tocarEfeito.mock.calls.filter(([e]) => e === "errado")).toHaveLength(1);
+  });
+
+  it("toca 'levelUp' ao atingir um marco de sequência", async () => {
+    validarResposta.mockResolvedValue({
+      correta: true,
+      resposta_correta: "B",
+      explicacao: null,
+      sequencia_acertos: 3,
+      recompensa_sequencia: {
+        sequencia: 3,
+        diamantes: 10,
+        diamantes_do_marco: 10,
+        limite_diario_atingido: false,
+        perfil: { moedas: 0, diamantes: 10, partidas_jogadas: 0, patamar_maximo_alcancado: 0 },
+      },
+    });
+    render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+    await comecarJogo();
+    await screen.findByText(PERGUNTA_1.texto_pergunta);
+
+    await userEvent.click(screen.getByText("Certa B"));
+
+    await waitFor(() => expect(tocarEfeito).toHaveBeenCalledWith("levelUp"));
+  });
+
+  it("o limite diário passa para o modal de Level Up", async () => {
+    validarResposta.mockResolvedValue({
+      correta: true,
+      resposta_correta: "B",
+      explicacao: null,
+      sequencia_acertos: 12,
+      recompensa_sequencia: {
+        sequencia: 12,
+        diamantes: 0,
+        diamantes_do_marco: 40,
+        limite_diario_atingido: true,
+        perfil: { moedas: 0, diamantes: 60, partidas_jogadas: 0, patamar_maximo_alcancado: 0 },
+      },
+    });
+    render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+    await comecarJogo();
+    await screen.findByText(PERGUNTA_1.texto_pergunta);
+
+    await userEvent.click(screen.getByText("Certa B"));
+
+    expect(await screen.findByTestId("modal-sequencia")).toHaveTextContent("sequencia 12, diamantes 0, limite");
   });
 });

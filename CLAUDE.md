@@ -111,7 +111,11 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   sequência a 0; recorde em `perfis_jogador.melhor_sequencia`. Transições condicionais e
   atómicas em `PartidaJogoRepository` (um acerto só conta se a pergunta ainda for a actual —
   a mesma resposta nunca conta duas vezes); no máximo uma partida aberta por utilizador
-  (índice único parcial)
+  (índice único parcial). **Som:** `AudioJogoContext` (música de fundo em loop e efeitos de
+  certo/errado/clique/Level Up, em `frontend/public/audio/jogo/`, provisórios, gerados por
+  `frontend/scripts/gerar-sons-jogo.mjs`); preferências "Música"/"Efeitos sonoros" no
+  `localStorage` do dispositivo (modal de Definições, ⚙️ na barra da carteira). Política de
+  autoplay: nada toca antes do primeiro toque/tecla do jogador
 
 Público-alvo inclui **crianças**. Todo o tratamento de dados deve assumir isso.
 
