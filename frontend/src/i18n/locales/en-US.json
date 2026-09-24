@@ -992,6 +992,7 @@
     "lancamentoDoNossoJogo": "Launching our game: Inclusivamente"
   },
   "OptioptikaBookingDialog": {
+    "aEnviarOSeuPedido": "Sending your request...",
     "pedidoDeConsultaConfirmado": "Appointment Request Confirmed",
     "aEntraraEmContacto": "{{name}} will contact you by email or phone to confirm the final time.",
     "nDoPedido": "Request no.",

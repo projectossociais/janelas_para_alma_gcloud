@@ -30,6 +30,7 @@ class RepositorioScreeningsFalso:
         estado: str,
         rosto_detetado: bool,
         requer_avaliacao_humana: bool,
+        diagnostico: str,
         assimetria_horizontal: float | None,
         assimetria_vertical: float | None,
         qualidade_captura: float | None,
@@ -45,6 +46,7 @@ class RepositorioScreeningsFalso:
             "estado": estado,
             "rosto_detetado": rosto_detetado,
             "requer_avaliacao_humana": requer_avaliacao_humana,
+            "diagnostico": diagnostico,
             "encaminhado": False,
             "assimetria_horizontal": assimetria_horizontal,
             "assimetria_vertical": assimetria_vertical,
@@ -95,6 +97,7 @@ PAYLOAD_VALIDO = {
     "estado": "concluido",
     "rosto_detetado": True,
     "requer_avaliacao_humana": False,
+    "diagnostico": "normal",
     "assimetria_horizontal": 1.2,
     "assimetria_vertical": 0.3,
     "qualidade_captura": 0.91,
@@ -145,6 +148,36 @@ def test_estado_em_branco_devolve_422(ambiente) -> None:
     c, _ = ambiente
     _registar(c)
     resposta = c.post("/screenings", json={**PAYLOAD_VALIDO, "estado": ""})
+    assert resposta.status_code == 422
+
+
+def test_diagnostico_omitido_usa_normal_por_omissao(ambiente) -> None:
+    c, repo = ambiente
+    _registar(c)
+    dados = {k: v for k, v in PAYLOAD_VALIDO.items() if k != "diagnostico"}
+
+    resposta = c.post("/screenings", json=dados)
+
+    assert resposta.status_code == 201
+    assert resposta.json()["diagnostico"] == "normal"
+    assert repo.gravadas[0]["diagnostico"] == "normal"
+
+
+def test_diagnostico_requer_avaliacao_e_gravado(ambiente) -> None:
+    c, repo = ambiente
+    _registar(c)
+
+    resposta = c.post("/screenings", json={**PAYLOAD_VALIDO, "diagnostico": "requer_avaliacao"})
+
+    assert resposta.status_code == 201
+    assert resposta.json()["diagnostico"] == "requer_avaliacao"
+    assert repo.gravadas[0]["diagnostico"] == "requer_avaliacao"
+
+
+def test_diagnostico_com_valor_forjado_devolve_422(ambiente) -> None:
+    c, _ = ambiente
+    _registar(c)
+    resposta = c.post("/screenings", json={**PAYLOAD_VALIDO, "diagnostico": "esotropia"})
     assert resposta.status_code == 422
 
 

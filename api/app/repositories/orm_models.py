@@ -336,6 +336,13 @@ class Screening(Base):
     estado: Mapped[str] = mapped_column(Text, nullable=False)
     rosto_detetado: Mapped[bool] = mapped_column(Boolean, nullable=False)
     requer_avaliacao_humana: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    # Sinal real para o matchmaker clínico (Fase 1, docs/BACKLOG.md Sprint 4) --
+    # só "normal"/"requer_avaliacao", os únicos que o janelas-scanner-api de
+    # facto calcula hoje. Não confundir com as 4 subcategorias de estrabismo
+    # que `ScannerResultados.tsx` ainda mostra (Esotropia/Exotropia/...) --
+    # essas vêm do antigo Math.random() (removido no PR #61) e nunca são
+    # atribuídas pelo cálculo real; dívida à parte, não este campo.
+    diagnostico: Mapped[str] = mapped_column(Text, nullable=False, server_default="normal")
     consentimento_imagem: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     encaminhado: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     assimetria_horizontal: Mapped[float | None] = mapped_column(Numeric)
@@ -682,3 +689,52 @@ class BloqueioVendedorJogo(Base):
     disponivel_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class ClinicaParceira(Base):
+    """Identidade mínima de uma clínica parceira -- não o perfil completo
+    (especialidades, preços, disponibilidade ficam para a Fase 1 do roteiro
+    de matchmaker clínico, ver docs/BACKLOG.md, Sprint 4). Nasce com uma
+    linha semeada na migração (Optioptika, o único parceiro assinado hoje)
+    -- `agendamentos_clinicos` nunca fica preso a essa única clínica."""
+
+    __tablename__ = "clinicas_parceiras"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    nome: Mapped[str] = mapped_column(Text, nullable=False)
+    email_contacto: Mapped[str] = mapped_column(Text, nullable=False)
+    telefone_contacto: Mapped[str] = mapped_column(Text, nullable=False)
+    ativa: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="true")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class AgendamentoClinico(Base):
+    """Pedido de consulta a uma clínica parceira. Não exige sessão -- mesmo
+    padrão de `Doacao` (pedir ajuda médica não é uma relação contínua como o
+    voluntariado, exigir conta seria fricção sem benefício real). Quando
+    parte de uma sessão activa (ex.: a partir de um resultado de rastreio),
+    liga-se a `utilizador_id`/`screening_id`; `nome`/`email`/`telefone`
+    guardam-se sempre directamente, tal como `Doacao.email`, para o pedido
+    nunca depender de um join para se conseguir contactar alguém."""
+
+    __tablename__ = "agendamentos_clinicos"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    clinica_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("clinicas_parceiras.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    utilizador_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="SET NULL"), index=True
+    )
+    screening_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("screenings.id", ondelete="SET NULL"))
+    nome: Mapped[str] = mapped_column(Text, nullable=False)
+    email: Mapped[str] = mapped_column(Text, nullable=False)
+    telefone: Mapped[str] = mapped_column(Text, nullable=False)
+    modalidade: Mapped[str] = mapped_column(Text, nullable=False)
+    data_preferida: Mapped[date | None] = mapped_column(Date)
+    periodo_preferido: Mapped[str | None] = mapped_column(Text)
+    motivo: Mapped[str | None] = mapped_column(Text)
+    estado: Mapped[str] = mapped_column(Text, nullable=False, server_default="pendente")
+    decidido_por: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("utilizadores.id", ondelete="SET NULL"))
+    decidido_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

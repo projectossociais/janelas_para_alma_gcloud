@@ -33,6 +33,7 @@ def registar_screening(
         estado=dados.estado,
         rosto_detetado=dados.rosto_detetado,
         requer_avaliacao_humana=dados.requer_avaliacao_humana,
+        diagnostico=dados.diagnostico,
         assimetria_horizontal=dados.assimetria_horizontal,
         assimetria_vertical=dados.assimetria_vertical,
         qualidade_captura=dados.qualidade_captura,
