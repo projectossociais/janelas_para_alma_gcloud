@@ -1849,12 +1849,21 @@ admin já filtra actividades por estado/período (`AdminVoluntariado.tsx`), mas 
 trabalho fica invisível ao utilizador comum. Consumir a listagem numa secção pública de
 `/kamba`.
 
-### UX-06 — Sem link permanente para o dashboard na Navbar · L
+### UX-06 — Sem link permanente para o dashboard na Navbar · L — ✅ **FEITO 2026-09-24**
 
 `Navbar.tsx:160-180` (`allLinks`, utilizador autenticado não-admin): Sobre Nós, Sobre o
 Estrabismo, Equipa, Triagem Ocular, Meu Kamba Estrábico, Exercícios, Portal Clínico,
 Contactos — nenhum leva a `/dashboard`. O único caminho é adivinhar o URL. Adicionar "O
 meu painel" à Navbar — maior ganho de discoverability desta lista pelo menor esforço.
+
+**Corrigido:** novo botão "O Meu Painel" nos dois menus do Navbar (Sheet de perfil à
+esquerda e drawer de menu à direita), a seguir ao "Painel Admin" (só admin) e antes de
+"Editar Perfil". Ainda mais relevante do que quando este item foi escrito: com o portal
+próprio de clínica (Sprint 4, Fase 1, PR B — `DashboardPro.tsx`), um `profissional`
+ligado a uma clínica também não tinha forma de lá chegar. O destino é decidido por
+`user.role`: `estrabico`/`comum` → `/dashboard`, `profissional` → `/dashboard-pro` (que
+já redirecciona para `/` sozinho, via `RequireClinica`, se a conta não estiver
+efectivamente ligada a nenhuma clínica). Testado em `Navbar.test.tsx` (novo).
 
 ### UX-07 — `DashboardUser.tsx` mostra dados fixos · W+L
 
