@@ -41,6 +41,10 @@ class RepositorioPerguntaJogoFalso:
     def obter_por_id(self, pergunta_id: str) -> PerguntaJogoRegisto | None:
         return next((p for p in self._perguntas if p.id == pergunta_id), None)
 
+    def semear_reserva(self) -> int:
+        # Reserva vazia: o caso "nem semeando há perguntas" (404).
+        return 0
+
     def criar(
         self,
         texto_pergunta: str,

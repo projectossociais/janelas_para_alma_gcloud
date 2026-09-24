@@ -117,6 +117,10 @@ const JogoCuriosidades = () => {
   // servidor falhou)? Essas respostas o servidor nunca viu, por isso não
   // entram no prémio -- que ele paga só pelos patamares que confirmou.
   const [partidaComPerguntasOffline, setPartidaComPerguntasOffline] = useState(false);
+  // Com sessão, o servidor respondeu com erro ao pedir a pergunta (ex.: 404
+  // sem perguntas, 5xx) -- mostra-se o erro com "Tentar novamente" em vez de
+  // cair calado na reserva local, onde os acertos não contam para o prémio.
+  const [erroPerguntaServidor, setErroPerguntaServidor] = useState(false);
 
   const [opcaoSelecionada, setOpcaoSelecionada] = useState<RespostaOpcaoJogo | null>(null);
   const [aValidar, setAValidar] = useState(false);
@@ -215,6 +219,7 @@ const JogoCuriosidades = () => {
     setSugestaoMercado(null);
     setMostrarMercado(false);
     setTempoRestante(TEMPO_POR_PERGUNTA);
+    setErroPerguntaServidor(false);
     if (!usaServidor) {
       setPergunta(escolherPerguntaOfflineParaPatamar(novoPatamar));
       setEmModoOffline(true);
@@ -231,6 +236,15 @@ const JogoCuriosidades = () => {
       setPatamar(nova.patamar);
       setEmModoOffline(false);
     } catch (err) {
+      // Duck-typing no `status` (CLAUDE.md secção 6): só uma falha de rede
+      // (sem resposta, status 0/ausente) justifica o modo offline.
+      const status = (err as { status?: unknown } | null)?.status;
+      if (typeof status === "number" && status > 0) {
+        console.error("A API do jogo respondeu com erro ao pedir a pergunta:", err);
+        setPatamar(novoPatamar);
+        setErroPerguntaServidor(true);
+        return;
+      }
       console.error("Falha ao contactar a API do jogo, a usar o modo offline:", err);
       setPergunta(escolherPerguntaOfflineParaPatamar(novoPatamar));
       setPatamar(novoPatamar);
@@ -647,6 +661,16 @@ const JogoCuriosidades = () => {
                           {tr("JogoCuriosidades.jogarNovamente")}
                         </Button>
                       </div>
+                    </div>
+                  )}
+
+                  {!aCarregarPergunta && !jogoTerminado && !pergunta && erroPerguntaServidor && (
+                    <div className="rounded-2xl bg-card border border-border/60 shadow-card p-8 text-center space-y-4">
+                      <p className="text-muted-foreground">{tr("JogoCuriosidades.naoFoiPossivelCarregarPergunta")}</p>
+                      <Button variant="outline" onClick={() => void carregarPergunta(patamar)}>
+                        <RefreshCw className="w-4 h-4" />
+                        {tr("JogoCuriosidades.tentarNovamente")}
+                      </Button>
                     </div>
                   )}
 

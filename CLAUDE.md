@@ -119,10 +119,18 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   decisão. **Categorias e Perfil:** 6 categorias
   oficiais (lista fechada, `CATEGORIAS_PERGUNTA_JOGO` em `orm_models.py` + CHECK na base de
   dados; `curiosidades_visuais` é a de omissão) em `perguntas_jogo.categoria`, no seed
-  (`scripts/seed_maciço_perguntas.py` — correr outra vez classifica as perguntas já semeadas)
   e na reserva local (`perguntasOffline.ts`; o inglês herda pelo `id`). Respostas e acertos
   por categoria em `estatisticas_categoria_jogador` (upsert atómico na transacção da
-  resposta). Nível do jogador pelos patamares superados no total
+  resposta). **Seed das 225 perguntas é automático** (desde 2026-09-24): fonte única em
+  `api/app/repositories/reserva_perguntas_jogo.py` (só SQLAlchemy Core, sem ORM — uma
+  migração não pode depender de `orm_models.py`), aplicada pela migração `e5b1c8d2a4f7` no
+  `alembic upgrade head` do deploy (idempotente: insere as que faltam pelo texto exacto e
+  acerta a categoria das existentes; o downgrade não apaga nada) e, como rede de segurança,
+  por `JogoService.nova_pergunta` se um nível estiver vazio. Perguntas novas nessa lista só
+  chegam à produção com uma migração nova que volte a chamar `semear_perguntas`.
+  `scripts/seed_maciço_perguntas.py` fica só para correr à mão. Com sessão, um erro HTTP ao
+  pedir a pergunta mostra "Tentar novamente" — só uma falha de rede cai na reserva local
+  (cujos acertos não contam para o prémio). Nível do jogador pelos patamares superados no total
   (`perfis_jogador.patamares_superados_total`): 0-15 Iniciante, 16-45 Aprendiz, 46-90
   Conhecedor, 91-150 Especialista, 151+ Mestre da Visão (`estatisticas_jogador_service.py`,
   exposto em `GET /jogo/perfil/estatisticas`)

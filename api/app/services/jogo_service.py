@@ -259,9 +259,14 @@ class JogoService:
         if troca and partida.trocar_pergunta_usada:
             raise AjudaJaUsadaError("trocar_pergunta")
 
-        pergunta = self._perguntas.obter_aleatoria(
-            nivel_dificuldade_do_patamar(patamar), excluir_id=partida.pergunta_atual_id
-        )
+        nivel = nivel_dificuldade_do_patamar(patamar)
+        pergunta = self._perguntas.obter_aleatoria(nivel, excluir_id=partida.pergunta_atual_id)
+        if pergunta is None and self._perguntas.semear_reserva() > 0:
+            # Rede de segurança: a migração `e5b1c8d2a4f7` já semeia no deploy,
+            # mas se o nível estiver vazio (base de dados nova, perguntas
+            # apagadas), semeia-se aqui em vez de a partida com conta cair na
+            # reserva local do frontend, onde os acertos não contam para o prémio.
+            pergunta = self._perguntas.obter_aleatoria(nivel, excluir_id=partida.pergunta_atual_id)
         if pergunta is None:
             raise SemPerguntasError()
         if self._partidas.definir_pergunta(partida.id, pergunta.id, troca) is None:

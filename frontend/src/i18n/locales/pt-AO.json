@@ -826,6 +826,7 @@
     "jogarNovamente": "Jogar novamente",
     "patamarDe2": "Patamar {{patamar}} de {{TOTAL_PATAMARES}}",
     "modoOffline": "Modo offline",
+    "naoFoiPossivelCarregarPergunta": "Não foi possível carregar a pergunta. Tente novamente: só as respostas confirmadas pelo servidor contam para o prémio.",
     "opiniaoDoPublico": "Opinião do público",
     "trocarPergunta": "Trocar pergunta",
     "vejaARespostaCerta": "Veja a resposta certa e a explicação antes de tentar novamente.",

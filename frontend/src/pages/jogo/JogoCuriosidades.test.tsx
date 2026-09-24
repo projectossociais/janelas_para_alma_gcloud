@@ -634,6 +634,24 @@ describe("JogoCuriosidades", () => {
       expect(validarResposta).not.toHaveBeenCalled();
     });
 
+    it("com sessão, um erro HTTP do servidor (ex.: 404 sem perguntas) não cai calado no modo offline", async () => {
+      mockProfile = { id: "utilizador-1" };
+      obterPerguntaDaPartida
+        .mockRejectedValueOnce(Object.assign(new Error("sem perguntas disponíveis"), { status: 404 }))
+        .mockResolvedValueOnce(PERGUNTA_1);
+      render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+      await comecarJogo();
+
+      expect(await screen.findByText(/Não foi possível carregar a pergunta/)).toBeInTheDocument();
+      expect(screen.queryByText("Modo offline")).not.toBeInTheDocument();
+      expect(screen.queryByText("O que é o estrabismo, em termos simples?")).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
+
+      expect(await screen.findByText(PERGUNTA_1.texto_pergunta)).toBeInTheDocument();
+      expect(screen.queryByText("Modo offline")).not.toBeInTheDocument();
+    });
+
     it("com sessão, avisa que as respostas offline não contam para o prémio pago pelo servidor", async () => {
       // Regressão (2026-09-24): em produção, "acertei 2 e errei a 3.ª -> 0
       // moedas" era isto -- as perguntas vieram da reserva local, o servidor
