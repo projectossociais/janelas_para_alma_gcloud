@@ -28,11 +28,13 @@ from sqlalchemy import (
     DateTime,
     Enum,
     ForeignKey,
+    Index,
     Numeric,
     String,
     Text,
     UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -493,6 +495,20 @@ class UserFeedback(Base):
     comentario: Mapped[str | None] = mapped_column(Text)
 
 
+# As 6 categorias oficiais das perguntas do jogo (decisão do dono do
+# projecto, 2026-09-24). `curiosidades_visuais` é a de omissão. Lista fechada
+# também na base de dados (CHECK), para nenhuma categoria inventada entrar.
+CATEGORIAS_PERGUNTA_JOGO = (
+    "anatomia_ocular",
+    "doencas_estrabismo",
+    "prevencao_cuidados",
+    "estilo_vida_visao",
+    "ciencia_ocular",
+    "curiosidades_visuais",
+)
+CATEGORIA_PERGUNTA_POR_OMISSAO = "curiosidades_visuais"
+
+
 class RespostaOpcao(str, enum.Enum):
     A = "A"
     B = "B"
@@ -509,6 +525,11 @@ class PerguntaJogo(Base):
     __tablename__ = "perguntas_jogo"
     __table_args__ = (
         CheckConstraint("nivel_dificuldade BETWEEN 1 AND 3", name="ck_perguntas_jogo_nivel_dificuldade"),
+        CheckConstraint(
+            "categoria IN ('anatomia_ocular', 'doencas_estrabismo', 'prevencao_cuidados', "
+            "'estilo_vida_visao', 'ciencia_ocular', 'curiosidades_visuais')",
+            name="ck_perguntas_jogo_categoria",
+        ),
     )
 
     id: Mapped[uuid.UUID] = _uuid_pk()
@@ -522,6 +543,7 @@ class PerguntaJogo(Base):
     )
     nivel_dificuldade: Mapped[int] = mapped_column(nullable=False)
     explicacao: Mapped[str | None] = mapped_column(Text)
+    categoria: Mapped[str] = mapped_column(Text, nullable=False, server_default=CATEGORIA_PERGUNTA_POR_OMISSAO)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -543,9 +565,128 @@ class PerfilJogador(Base):
     diamantes: Mapped[int] = mapped_column(nullable=False, server_default="0")
     partidas_jogadas: Mapped[int] = mapped_column(nullable=False, server_default="0")
     patamar_maximo_alcancado: Mapped[int] = mapped_column(nullable=False, server_default="0")
-    # Progresso da partida em curso, controlado só pelo servidor (nunca pelo
-    # corpo do pedido) -- ver JogoService.responder / reclamar_recompensa.
-    patamar_em_curso: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    # Maior número de acertos seguidos numa só partida (recorde de sempre).
+    melhor_sequencia: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    # Limite diário de diamantes ganhos em sequências de acertos (dia UTC):
+    # quanto já se ganhou em `diamantes_sequencia_dia`. Num dia novo, o
+    # contador recomeça -- ver `JogoService.responder`.
+    diamantes_sequencia_hoje: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    diamantes_sequencia_dia: Mapped[date | None] = mapped_column(Date)
+    # Totais de sempre, para o nível do jogador e o Perfil: patamares
+    # superados somados de todas as partidas, e moedas ganhas (o saldo
+    # `moedas` pode vir a descer se um dia as moedas se gastarem).
+    patamares_superados_total: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    moedas_ganhas_total: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    # O progresso da partida em curso vive em `PartidaJogo` desde 2026-09-24
+    # (antes era a coluna `patamar_em_curso`, aqui).
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class PartidaJogo(Base):
+    """Uma partida do jogo "Inclusivamente", do primeiro patamar até terminar
+    (vitória, derrota, desistência ou nova partida). Todo o estado que o
+    jogador podia querer inventar vive aqui, controlado só pelo servidor
+    (`JogoService`): a pergunta que o servidor entregou e à qual se está a
+    responder, patamares superados, sequência de acertos, vidas extra e
+    ajudas usadas.
+
+    Estados: `em_curso` -> (erra ou esgota o tempo) -> `a_aguardar_decisao`
+    -> (vida extra) -> `em_curso`, ou -> (encerra) -> `terminada`. No máximo
+    uma partida não terminada por utilizador (índice único parcial).
+    A recompensa é paga uma única vez, ao passar a `terminada`."""
+
+    __tablename__ = "partidas_jogo"
+    __table_args__ = (
+        CheckConstraint(
+            "estado IN ('em_curso', 'a_aguardar_decisao', 'terminada')", name="ck_partidas_jogo_estado"
+        ),
+        CheckConstraint("patamar_superado BETWEEN 0 AND 15", name="ck_partidas_jogo_patamar_superado"),
+        Index(
+            "uq_partidas_jogo_uma_ativa_por_utilizador",
+            "utilizador_id",
+            unique=True,
+            postgresql_where=text("estado <> 'terminada'"),
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    utilizador_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    estado: Mapped[str] = mapped_column(Text, nullable=False, server_default="em_curso")
+    patamar_superado: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    vidas_extra_usadas: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    cinquenta_cinquenta_usada: Mapped[bool] = mapped_column(nullable=False, server_default=text("false"))
+    opiniao_publico_usada: Mapped[bool] = mapped_column(nullable=False, server_default=text("false"))
+    trocar_pergunta_usada: Mapped[bool] = mapped_column(nullable=False, server_default=text("false"))
+    # A pergunta que o servidor entregou a esta partida e ainda não foi
+    # acertada. Só esta se pode validar (e só para esta se usam ajudas) --
+    # sem isto, qualquer id de pergunta servia de oráculo para a resposta.
+    # Mantém-se depois de uma falha, para a segunda tentativa (vida extra).
+    pergunta_atual_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    # A opção falhada na pergunta actual (`None` se o tempo esgotou), para a
+    # esconder na segunda tentativa.
+    opcao_falhada: Mapped[str | None] = mapped_column(Text)
+    # Acertos seguidos nesta partida; volta a 0 ao errar. Cada múltiplo de 3
+    # dá diamantes (ver `recompensa_sequencia` em jogo_service.py).
+    sequencia_acertos: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    diamantes_sequencia: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    moedas_ganhas: Mapped[int | None] = mapped_column()
+    diamantes_ganhos: Mapped[int | None] = mapped_column()
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    terminada_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class EstatisticaCategoriaJogador(Base):
+    """Respostas dadas e certas, por jogador e por categoria de pergunta --
+    agregado (uma linha por par), actualizado na mesma transacção que regista
+    a resposta (`PartidaJogoRepository.registar_acerto/registar_falha`), com
+    um upsert atómico. Só conta respostas a perguntas do servidor, dadas numa
+    partida com sessão; tempo esgotado conta como resposta errada."""
+
+    __tablename__ = "estatisticas_categoria_jogador"
+    __table_args__ = (
+        UniqueConstraint("utilizador_id", "categoria", name="uq_estatisticas_categoria_jogador"),
+        CheckConstraint(
+            "categoria IN ('anatomia_ocular', 'doencas_estrabismo', 'prevencao_cuidados', "
+            "'estilo_vida_visao', 'ciencia_ocular', 'curiosidades_visuais')",
+            name="ck_estatisticas_categoria_jogador_categoria",
+        ),
+        CheckConstraint("acertos BETWEEN 0 AND respostas", name="ck_estatisticas_categoria_jogador_acertos"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    utilizador_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    categoria: Mapped[str] = mapped_column(Text, nullable=False)
+    respostas: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    acertos: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class BloqueioVendedorJogo(Base):
+    """Até quando um vendedor ambulante do Mercado (jogo "Inclusivamente")
+    está bloqueado para um jogador, depois de lhe ter vendido uma ajuda --
+    uma linha por par (utilizador, vendedor), reaproveitada a cada compra.
+    `disponivel_em` em UTC; o bloqueio acaba sozinho quando passa, sem job
+    nenhum a limpar (mesmo padrão de `premium_expira_em`). A duração (4h) e
+    o catálogo de vendedores vivem em `services/mercado_jogo_service.py`;
+    `vendedor_id` é o id estável desse catálogo, não uma FK."""
+
+    __tablename__ = "bloqueios_vendedores_jogo"
+    __table_args__ = (
+        UniqueConstraint("utilizador_id", "vendedor_id", name="uq_bloqueios_vendedores_jogo_utilizador_vendedor"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    utilizador_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    vendedor_id: Mapped[str] = mapped_column(Text, nullable=False)
+    disponivel_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

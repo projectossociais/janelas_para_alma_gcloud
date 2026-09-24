@@ -13,7 +13,7 @@ from typing import Protocol
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.repositories.orm_models import PerguntaJogo, RespostaOpcao
+from app.repositories.orm_models import CATEGORIA_PERGUNTA_POR_OMISSAO, PerguntaJogo, RespostaOpcao
 
 
 def nivel_dificuldade_do_patamar(patamar: int) -> int:
@@ -40,10 +40,13 @@ class PerguntaJogoRegisto:
     resposta_correta: str
     nivel_dificuldade: int
     explicacao: str | None
+    categoria: str = CATEGORIA_PERGUNTA_POR_OMISSAO
 
 
 class PerguntaJogoRepository(Protocol):
-    def obter_aleatoria(self, nivel_dificuldade: int | None = None) -> PerguntaJogoRegisto | None: ...
+    def obter_aleatoria(
+        self, nivel_dificuldade: int | None = None, excluir_id: str | None = None
+    ) -> PerguntaJogoRegisto | None: ...
     def obter_por_id(self, pergunta_id: str) -> PerguntaJogoRegisto | None: ...
     def criar(
         self,
@@ -55,6 +58,7 @@ class PerguntaJogoRepository(Protocol):
         resposta_correta: str,
         nivel_dificuldade: int,
         explicacao: str | None,
+        categoria: str = CATEGORIA_PERGUNTA_POR_OMISSAO,
     ) -> PerguntaJogoRegisto: ...
 
 
@@ -69,6 +73,7 @@ def _para_registo(row: PerguntaJogo) -> PerguntaJogoRegisto:
         resposta_correta=row.resposta_correta.value,
         nivel_dificuldade=row.nivel_dificuldade,
         explicacao=row.explicacao,
+        categoria=row.categoria,
     )
 
 
@@ -76,10 +81,15 @@ class SQLAlchemyPerguntaJogoRepository:
     def __init__(self, sessao: Session) -> None:
         self._sessao = sessao
 
-    def obter_aleatoria(self, nivel_dificuldade: int | None = None) -> PerguntaJogoRegisto | None:
+    def obter_aleatoria(
+        self, nivel_dificuldade: int | None = None, excluir_id: str | None = None
+    ) -> PerguntaJogoRegisto | None:
         query = select(PerguntaJogo)
         if nivel_dificuldade is not None:
             query = query.where(PerguntaJogo.nivel_dificuldade == nivel_dificuldade)
+        if excluir_id is not None:
+            # "Trocar pergunta" nunca devolve a mesma.
+            query = query.where(PerguntaJogo.id != uuid.UUID(excluir_id))
         # ORDER BY random() -- banco de perguntas de quiz, não um hot path;
         # não vale complicar com TABLESAMPLE por isto.
         row = self._sessao.scalars(query.order_by(func.random()).limit(1)).first()
@@ -99,6 +109,7 @@ class SQLAlchemyPerguntaJogoRepository:
         resposta_correta: str,
         nivel_dificuldade: int,
         explicacao: str | None,
+        categoria: str = CATEGORIA_PERGUNTA_POR_OMISSAO,
     ) -> PerguntaJogoRegisto:
         row = PerguntaJogo(
             texto_pergunta=texto_pergunta,
@@ -109,6 +120,7 @@ class SQLAlchemyPerguntaJogoRepository:
             resposta_correta=RespostaOpcao(resposta_correta),
             nivel_dificuldade=nivel_dificuldade,
             explicacao=explicacao,
+            categoria=categoria,
         )
         self._sessao.add(row)
         self._sessao.commit()

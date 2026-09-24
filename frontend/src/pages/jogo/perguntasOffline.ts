@@ -1,16 +1,16 @@
-import type { RespostaOpcaoJogo } from "@/lib/apiClient";
+import type { CategoriaPerguntaJogo, RespostaOpcaoJogo } from "@/lib/apiClient";
 import i18n from "@/i18n";
 import { IDIOMA_EN } from "@/i18n/idiomas";
 import { PERGUNTAS_OFFLINE_EN } from "./perguntasOffline.en-US";
 
 /**
- * Reserva do Modo de Contingência: pelo menos 5 perguntas distintas por
- * patamar (1 a 15), embutidas no bundle para o modo "Um Jogador" continuar a
- * funcionar quando `GET /jogo/pergunta-aleatoria` falha (sem internet,
- * backend em baixo). Ao contrário da reserva real (54 perguntas na base de
- * dados), esta fica sempre visível no código-fonte do cliente -- é o preço
- * inevitável de um "offline first" sem servidor por perto; nunca é tratada
- * como segura.
+ * Reserva local: pelo menos 5 perguntas distintas por patamar (1 a 15),
+ * embutidas no bundle. Serve quem joga sem conta (modo convidado, desde
+ * 2026-09-24 -- sem sessão já não há perguntas do servidor), o site inglês, e
+ * o Modo de Contingência quando a API falha (sem internet, backend em baixo).
+ * Ao contrário da reserva real (na base de dados), esta fica sempre visível no
+ * código-fonte do cliente -- por isso nunca dá prémios nem é tratada como
+ * segura.
  *
  * As respostas certas estão distribuídas de propósito por A/B/C/D em
  * quantidades quase iguais (ver `obterPerguntaOfflineNaoVista` e o teste
@@ -29,6 +29,9 @@ export interface PerguntaOffline {
   opcao_d: string;
   resposta_correta: RespostaOpcaoJogo;
   explicacao: string;
+  // Uma das 6 categorias oficiais. Vive só aqui (a versão inglesa herda-a
+  // pelo `id`, como a resposta certa).
+  categoria: CategoriaPerguntaJogo;
 }
 
 /** Os textos de uma pergunta -- o que muda de idioma para idioma. */
@@ -48,6 +51,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Um tipo particular de miopia elevada",
       resposta_correta: "C",
       explicacao: "O estrabismo é um desalinhamento dos eixos visuais dos dois olhos.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-1-2",
@@ -58,6 +62,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Oito músculos, incluindo dois pares extra",
       resposta_correta: "C",
       explicacao: "Cada olho tem seis músculos extraoculares: quatro rectos e dois oblíquos.",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-1-3",
@@ -68,6 +73,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A abertura no centro da íris que deixa entrar a luz",
       resposta_correta: "D",
       explicacao: "A pupila é a abertura central da íris por onde a luz entra no olho.",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-1-4",
@@ -78,6 +84,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Para reduzir a quantidade de luz que entra no olho",
       resposta_correta: "D",
       explicacao: "O reflexo pupilar (miose) regula a quantidade de luz que chega à retina.",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-1-5",
@@ -88,6 +95,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Dá cor à íris consoante a quantidade de pigmento",
       resposta_correta: "C",
       explicacao: "As lágrimas produzidas pela glândula lacrimal lubrificam, nutrem e protegem a superfície do olho.",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-1-6",
@@ -98,6 +106,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A glândula responsável por produzir as lágrimas do olho",
       resposta_correta: "C",
       explicacao: "A esclera é a camada externa, opaca e resistente, que dá forma e protecção ao globo ocular.",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-1-7",
@@ -108,6 +117,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Controlar o movimento do olho em todas as direcções",
       resposta_correta: "C",
       explicacao: "A córnea é a 'janela' transparente da frente do olho e a principal responsável por focar a luz.",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-1-8",
@@ -118,6 +128,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A camada na parte de trás do olho que capta a luz",
       resposta_correta: "D",
       explicacao: "A retina transforma a luz em sinais eléctricos, transmitidos depois ao cérebro pelo nervo óptico.",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-1-9",
@@ -128,6 +139,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Dar cor à íris consoante a quantidade de pigmento",
       resposta_correta: "C",
       explicacao: "É este 'cabo' de fibras nervosas que liga a retina às áreas visuais do cérebro.",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-1-10",
@@ -138,6 +150,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A retina, na parte interna do olho",
       resposta_correta: "C",
       explicacao: "A quantidade e o tipo de pigmento na íris determinam se os olhos são castanhos, verdes, azuis, etc.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-1-11",
@@ -148,6 +161,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A visão central mais nítida, usada sobretudo para ler e focar",
       resposta_correta: "C",
       explicacao: "A visão periférica é captada sobretudo pelas zonas mais externas da retina, com menos detalhe do que a visão central.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-1-12",
@@ -158,6 +172,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Para espalhar as lágrimas e manter a superfície do olho húmida",
       resposta_correta: "D",
       explicacao: "Cada piscadela renova o filme lacrimal, protegendo e lubrificando a córnea.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-1-13",
@@ -168,6 +183,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Uma avaliação da saúde dos olhos e da visão, mesmo sem sintomas",
       resposta_correta: "D",
       explicacao: "Muitos problemas oculares só se detectam cedo com exames regulares, mesmo sem queixas aparentes.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-1-14",
@@ -178,6 +194,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A íris, ao redor da pupila",
       resposta_correta: "C",
       explicacao: "O tímpano é uma estrutura do ouvido, sem qualquer relação com a anatomia do olho.",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-1-15",
@@ -188,6 +205,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A nitidez com que uma pessoa consegue ver",
       resposta_correta: "D",
       explicacao: "É a medida clássica de quão nítido é aquilo que se consegue distinguir a uma dada distância.",
+      categoria: "ciencia_ocular",
     },
   ],
   2: [
@@ -200,6 +218,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Para colorir a íris com um tom mais escuro",
       resposta_correta: "C",
       explicacao: "As lentes graduadas mudam o percurso da luz para que a imagem se forme correctamente na retina.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-2-2",
@@ -210,6 +229,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Dificuldade em ver nitidamente ao longe, com a imagem antes da retina",
       resposta_correta: "D",
       explicacao: "Na miopia, o olho é geralmente mais alongado e a imagem foca-se antes de chegar à retina.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-2-3",
@@ -220,6 +240,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Dificuldade em focar de perto, com a imagem a formar-se atrás da retina",
       resposta_correta: "D",
       explicacao: "Na hipermetropia, sem esforço de acomodação, a imagem tende a formar-se atrás da retina.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-2-4",
@@ -230,6 +251,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Uma infecção bacteriana comum das pálpebras",
       resposta_correta: "C",
       explicacao: "A superfície irregular impede que a luz seja focada igualmente em todas as direcções.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-2-5",
@@ -240,6 +262,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Coloridas, apenas para filtrar a luz do sol",
       resposta_correta: "C",
       explicacao: "As lentes côncavas (negativas) afastam o ponto de foco, compensando o alongamento do olho míope.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-2-6",
@@ -250,6 +273,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Lentes bifocais ou multifocais, com duas ou mais zonas de grau",
       resposta_correta: "D",
       explicacao: "São muito usadas a partir da idade em que surge a presbiopia, somada a um erro refractivo prévio.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-2-7",
@@ -260,6 +284,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Substituem por completo a necessidade de óculos em qualquer caso",
       resposta_correta: "C",
       explicacao: "Por ficarem em contacto directo com o olho, dispensam a armação mas exigem mais cuidados de higiene.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-2-8",
@@ -270,6 +295,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Para avaliar exclusivamente a audição do paciente",
       resposta_correta: "C",
       explicacao: "É este exame que determina, em dioptrias, a correcção necessária para cada olho.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-2-9",
@@ -280,6 +306,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Sim, é frequente estes problemas existirem em conjunto",
       resposta_correta: "D",
       explicacao: "É comum encontrar-se, por exemplo, miopia associada a astigmatismo na mesma receita de óculos.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-2-10",
@@ -290,6 +317,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A curvatura irregular da córnea na parte frontal do olho",
       resposta_correta: "D",
       explicacao: "Quando a córnea não é perfeitamente esférica, a luz não é focada igualmente em todas as direcções.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-2-11",
@@ -300,6 +328,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Que a miopia afecta apenas um dos dois olhos",
       resposta_correta: "C",
       explicacao: "É por isso que crianças míopes costumam repetir o exame de vista com regularidade durante o crescimento.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-2-12",
@@ -310,6 +339,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Lentes convexas, para convergir a luz antes do olho",
       resposta_correta: "D",
       explicacao: "As lentes convexas (positivas) adiantam o ponto de foco, compensando o olho hipermetrope.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-2-13",
@@ -320,6 +350,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "O daltonismo, por causa da alteração na percepção de cor",
       resposta_correta: "C",
       explicacao: "Sem relaxar a acomodação, a criança pode compensar parte da hipermetropia, mascarando o grau real.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-2-14",
@@ -330,6 +361,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Um tipo específico e raro de estrabismo paralítico",
       resposta_correta: "C",
       explicacao: "Miopia, hipermetropia e astigmatismo são, todos eles, formas de ametropia.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-2-15",
@@ -340,6 +372,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Anualmente, ou conforme indicação do oftalmologista",
       resposta_correta: "D",
       explicacao: "Erros refractivos mudam com o crescimento, por isso a graduação deve ser revista com regularidade.",
+      categoria: "prevencao_cuidados",
     },
   ],
   3: [
@@ -352,6 +385,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Olhos secos, irritados e visivelmente cansados",
       resposta_correta: "D",
       explicacao: "Passar muito tempo a olhar para um ecrã reduz a frequência do piscar, secando e cansando os olhos.",
+      categoria: "estilo_vida_visao",
     },
     {
       id: "offline-3-2",
@@ -362,6 +396,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Fazer pausas regulares e olhar para longe de vez em quando",
       resposta_correta: "D",
       explicacao: "Alternar o foco para longe e piscar com frequência dá descanso aos músculos do olho.",
+      categoria: "estilo_vida_visao",
     },
     {
       id: "offline-3-3",
@@ -372,6 +407,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Piscar exactamente vinte vezes a cada minuto de trabalho contínuo",
       resposta_correta: "C",
       explicacao: "É uma regra prática popular para lembrar o olho de descansar do foco próximo ao ecrã.",
+      categoria: "estilo_vida_visao",
     },
     {
       id: "offline-3-4",
@@ -382,6 +418,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Porque o calor emitido pelo ecrã seca directamente as pálpebras",
       resposta_correta: "C",
       explicacao: "Estudos mostram que a taxa de piscadela diminui significativamente durante tarefas visuais concentradas.",
+      categoria: "estilo_vida_visao",
     },
     {
       id: "offline-3-5",
@@ -392,6 +429,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Esfregar os olhos com força quando estão cansados",
       resposta_correta: "D",
       explicacao: "Esfregar os olhos com força pode irritar a superfície ocular e, em casos raros, lesar a córnea.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-3-6",
@@ -402,6 +440,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Sem dano comprovado à retina, mas pode interferir no sono",
       resposta_correta: "D",
       explicacao: "A preocupação mais consistentemente documentada é o efeito no ritmo circadiano, não uma lesão retiniana directa.",
+      categoria: "estilo_vida_visao",
     },
     {
       id: "offline-3-7",
@@ -412,6 +451,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Evitar piscar os olhos até terminar de ler o texto",
       resposta_correta: "C",
       explicacao: "Um brilho mal ajustado e a leitura contínua sem pausas são dos principais factores de fadiga ocular digital.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-3-8",
@@ -422,6 +462,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Um sinónimo pouco comum e impreciso de daltonismo adquirido",
       resposta_correta: "C",
       explicacao: "Inclui sintomas como olhos secos, visão turva intermitente, dor de cabeça e tensão ocular.",
+      categoria: "estilo_vida_visao",
     },
     {
       id: "offline-3-9",
@@ -432,6 +473,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Cerca de cinquenta a setenta centímetros, um braço de distância",
       resposta_correta: "D",
       explicacao: "Uma distância demasiado curta obriga a um esforço de acomodação maior e mais continuado.",
+      categoria: "estilo_vida_visao",
     },
     {
       id: "offline-3-10",
@@ -442,6 +484,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Para reduzir a abertura das pálpebras e a evaporação lacrimal",
       resposta_correta: "D",
       explicacao: "Olhar ligeiramente para baixo reduz a área de olho exposta ao ar, ajudando a manter a superfície húmida.",
+      categoria: "estilo_vida_visao",
     },
     {
       id: "offline-3-11",
@@ -452,6 +495,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Uma evidência ainda limitada, fraca e pouco conclusiva",
       resposta_correta: "D",
       explicacao: "As revisões científicas disponíveis não encontram, até hoje, benefício claro e consistente destes filtros.",
+      categoria: "estilo_vida_visao",
     },
     {
       id: "offline-3-12",
@@ -462,6 +506,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Dor de cabeça associada ao esforço visual prolongado",
       resposta_correta: "C",
       explicacao: "A fadiga ocular digital causa desconforto reversível, nunca perda de visão permanente.",
+      categoria: "estilo_vida_visao",
     },
     {
       id: "offline-3-13",
@@ -472,6 +517,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Piscar conscientemente com mais frequência ao longo do dia",
       resposta_correta: "D",
       explicacao: "Como a concentração numa tarefa visual reduz o piscar espontâneo, é útil compensar de forma consciente.",
+      categoria: "estilo_vida_visao",
     },
     {
       id: "offline-3-14",
@@ -482,6 +528,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Ar condicionado seco e pouca humidade no ambiente",
       resposta_correta: "D",
       explicacao: "Um ambiente seco acelera a evaporação do filme lacrimal, agravando a sensação de olho seco.",
+      categoria: "estilo_vida_visao",
     },
     {
       id: "offline-3-15",
@@ -492,6 +539,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Substituir por completo a necessidade de usar óculos",
       resposta_correta: "C",
       explicacao: "Olhar periodicamente para longe relaxa o músculo ciliar, que se mantém contraído ao focar de perto.",
+      categoria: "estilo_vida_visao",
     },
   ],
   4: [
@@ -504,6 +552,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Um tipo específico de armação usada em óculos infantis",
       resposta_correta: "A",
       explicacao: "Quando um olho não recebe um estímulo visual nítido na infância, o cérebro pode nunca aprender a usá-lo bem.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-4-2",
@@ -514,6 +563,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Durante a infância, idealmente antes dos sete a dez anos",
       resposta_correta: "D",
       explicacao: "Existe um período crítico de desenvolvimento visual; depois dele, a capacidade de recuperação diminui muito.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-4-3",
@@ -524,6 +574,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Gotas usadas exclusivamente para dilatar a pupila do paciente",
       resposta_correta: "C",
       explicacao: "O penso oclusivo no olho bom é o método mais eficaz para forçar o cérebro a usar o olho amblíope.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-4-4",
@@ -534,6 +585,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Um exame de acuidade visual realizado na infância",
       resposta_correta: "D",
       explicacao: "A comparação da acuidade visual entre os dois olhos é a forma clássica de rastrear a ambliopia.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-4-5",
@@ -544,6 +596,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Porque a ambliopia não tem, na verdade, qualquer relação com a visão",
       resposta_correta: "A",
       explicacao: "Passado o período crítico do desenvolvimento visual, a resposta ao tratamento piora significativamente.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-4-6",
@@ -554,6 +607,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Habitualmente um só olho, com formas bilaterais mais raras",
       resposta_correta: "D",
       explicacao: "A forma mais comum é unilateral, com um olho a desenvolver-se pior por falta de estímulo adequado.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-4-7",
@@ -564,6 +618,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "O cérebro suprime a imagem do olho desviado, impedindo o seu desenvolvimento",
       resposta_correta: "D",
       explicacao: "É esta supressão prolongada, e não o desvio em si, que acaba por causar a ambliopia.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-4-8",
@@ -574,6 +629,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Porque aumenta sempre e de forma permanente a pressão intraocular",
       resposta_correta: "C",
       explicacao: "O olho com pior imagem acaba por ser 'ignorado' pelo cérebro, atrasando o seu desenvolvimento visual.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-4-9",
@@ -584,6 +640,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Um colírio de atropina que desfoca a visão de perto",
       resposta_correta: "D",
       explicacao: "A atropina desfoca temporariamente o olho bom, forçando o cérebro a usar mais o olho amblíope.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-4-10",
@@ -594,6 +651,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A exigência de uma cirurgia complexa e obrigatória",
       resposta_correta: "B",
       explicacao: "Manter a criança motivada a usar o penso o tempo indicado é, na prática, o maior obstáculo ao sucesso.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-4-11",
@@ -604,6 +662,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Uma condição exclusiva de pessoas já adultas",
       resposta_correta: "B",
       explicacao: "É por isso que a detecção e o tratamento precoces são tão insistentemente recomendados.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-4-12",
@@ -614,6 +673,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Avaliar apenas a cor natural dos olhos da criança",
       resposta_correta: "A",
       explicacao: "Quanto mais cedo se detecta, maior a probabilidade de recuperação total da visão desse olho.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-4-13",
@@ -624,6 +684,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Porque afecta apenas a aparência estética do olho",
       resposta_correta: "B",
       explicacao: "Sem uma imagem nítida durante essa janela, a via visual desse olho não se desenvolve correctamente.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-4-14",
@@ -634,6 +695,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Uma infecção bacteriana ligeira e de curta duração",
       resposta_correta: "A",
       explicacao: "É considerada a forma potencialmente mais grave de ambliopia, por bloquear totalmente o estímulo visual.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-4-15",
@@ -644,6 +706,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Porque deixa logo de ser necessário qualquer uso de óculos",
       resposta_correta: "B",
       explicacao: "A melhoria alcançada pode perder-se se o acompanhamento terminar demasiado cedo.",
+      categoria: "prevencao_cuidados",
     },
   ],
   5: [
@@ -656,6 +719,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A tonalidade de cor natural presente na retina",
       resposta_correta: "B",
       explicacao: "Ao tapar um olho e observar o outro, detecta-se um eventual desvio (tropia ou foria).",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-5-2",
@@ -666,6 +730,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A tonalidade de cor apresentada pela esclera visível",
       resposta_correta: "C",
       explicacao: "Se o olho destapado precisar de se mover para retomar a fixação, há um desvio (tropia).",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-5-3",
@@ -676,6 +741,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A tropia é sempre manifesta; a foria só aparece ao romper a fusão binocular",
       resposta_correta: "D",
       explicacao: "A foria é controlada pelo mecanismo de fusão binocular e só se manifesta quando este é interrompido.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-5-4",
@@ -686,6 +752,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Um termómetro, usado para medir a temperatura corporal",
       resposta_correta: "A",
       explicacao: "O teste de Hirschberg observa a posição do reflexo luminoso na córnea de cada olho.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-5-5",
@@ -696,6 +763,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Nistagmo, um movimento rítmico e involuntário dos olhos",
       resposta_correta: "B",
       explicacao: "O estrabismo intermitente alterna entre períodos de alinhamento normal e períodos de desvio.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-5-6",
@@ -706,6 +774,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A ausência total de qualquer desvio ocular presente",
       resposta_correta: "A",
       explicacao: "Na esotropia, um ou ambos os olhos desviam-se para dentro, em direcção ao nariz.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-5-7",
@@ -716,6 +785,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Um sinónimo pouco preciso do termo ambliopia",
       resposta_correta: "B",
       explicacao: "Na exotropia, o olho desvia-se para fora, afastando-se do nariz.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-5-8",
@@ -726,6 +796,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Um sinónimo pouco rigoroso e impreciso do termo esotropia",
       resposta_correta: "A",
       explicacao: "Os desvios verticais são menos frequentes do que os horizontais, mas seguem a mesma lógica de classificação.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-5-9",
@@ -736,6 +807,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "O desvio é sempre causado por uma paralisia muscular grave",
       resposta_correta: "A",
       explicacao: "É o tipo de estrabismo mais comum na infância, geralmente sem paralisia muscular associada.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-5-10",
@@ -746,6 +818,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "O desvio afecta exclusivamente bebés com poucos meses de idade",
       resposta_correta: "B",
       explicacao: "É típico de paralisias de nervos cranianos ou de restrições mecânicas de um músculo específico.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-5-11",
@@ -756,6 +829,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A presença de cataratas num ou em ambos os olhos",
       resposta_correta: "B",
       explicacao: "Usando óculos vermelho-verde e luzes de cores diferentes, permite inferir como o cérebro combina as duas imagens.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-5-12",
@@ -766,6 +840,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A tonalidade de cor natural apresentada pelos olhos",
       resposta_correta: "A",
       explicacao: "Estes testes usam imagens escondidas que só se percebem com boa visão binocular em profundidade.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-5-13",
@@ -776,6 +851,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Porque este exame substitui totalmente a necessidade do cover test",
       resposta_correta: "B",
       explicacao: "Observar o olho a mover-se em todas as direcções ajuda a localizar exactamente qual músculo está afectado.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-5-14",
@@ -786,6 +862,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A tonalidade de cor apresentada pela retina do paciente",
       resposta_correta: "A",
       explicacao: "Um ponto próximo de convergência mais afastado do que o esperado pode indicar insuficiência de convergência.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-5-15",
@@ -796,6 +873,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Um daltonismo adquirido já na idade adulta",
       resposta_correta: "B",
       explicacao: "É uma causa comum de fadiga ocular e desconforto na leitura, sobretudo em crianças e jovens adultos.",
+      categoria: "ciencia_ocular",
     },
   ],
   6: [
@@ -808,6 +886,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "O astigmatismo, associado a uma córnea irregular",
       resposta_correta: "C",
       explicacao: "A bronquite é uma doença respiratória, sem qualquer relação com a forma como o olho foca a luz.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-6-2",
@@ -818,6 +897,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "O poder de convergência ou divergência de uma lente",
       resposta_correta: "D",
       explicacao: "A dioptria é o inverso da distância focal, em metros, de uma lente.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-6-3",
@@ -828,6 +908,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Exactamente o mesmo problema óptico que o astigmatismo",
       resposta_correta: "A",
       explicacao: "Com a idade, o cristalino perde elasticidade e a acomodação para perto torna-se mais difícil.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-6-4",
@@ -838,6 +919,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Presbiopia, ainda invulgar em crianças pequenas",
       resposta_correta: "B",
       explicacao: "A maioria das crianças nasce com uma hipermetropia ligeira que tende a diminuir com o crescimento (emetropização).",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-6-5",
@@ -848,6 +930,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Um tipo específico e raro de daltonismo hereditário",
       resposta_correta: "C",
       explicacao: "Quando os dois olhos têm graus muito diferentes, o cérebro tende a favorecer o olho com melhor imagem, podendo causar ambliopia.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-6-6",
@@ -858,6 +941,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A perda completa e permanente da visão de cor",
       resposta_correta: "A",
       explicacao: "É o estado 'ideal' para o qual tende o processo natural de emetropização durante o crescimento.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-6-7",
@@ -868,6 +952,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Um olho com forma perfeitamente esférica, sempre",
       resposta_correta: "B",
       explicacao: "O alongamento axial faz com que a imagem se forme antes de chegar à retina.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-6-8",
@@ -878,6 +963,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Uma lente que não possui qualquer poder refractivo real",
       resposta_correta: "B",
       explicacao: "Ao contrário da lente cilíndrica, a esférica tem o mesmo poder de refracção em qualquer direcção.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-6-9",
@@ -888,6 +974,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A presbiopia isolada, comum já na idade adulta",
       resposta_correta: "C",
       explicacao: "A lente cilíndrica compensa a curvatura irregular que causa o astigmatismo.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-6-10",
@@ -898,6 +985,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A cor escolhida para a armação dos óculos",
       resposta_correta: "B",
       explicacao: "O eixo (0º a 180º) indica em que direcção está orientado o componente cilíndrico da lente.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-6-11",
@@ -908,6 +996,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Uma conjuntivite recorrente, sem relação com o grau",
       resposta_correta: "A",
       explicacao: "O estiramento da retina em olhos muito míopes aumenta o risco de roturas e descolamento.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-6-12",
@@ -918,6 +1007,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "O valor numérico correspondente ao ângulo kappa",
       resposta_correta: "A",
       explicacao: "Lentes mal centradas em relação à distância interpupilar podem causar desconforto visual.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-6-13",
@@ -928,6 +1018,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Nenhum efeito relevante além do desconforto visual",
       resposta_correta: "A",
       explicacao: "É por isso que a correcção atempada dos erros refractivos é uma prioridade em oftalmologia pediátrica.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-6-14",
@@ -938,6 +1029,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Um desvio que ocorre apenas durante as horas de sono",
       resposta_correta: "A",
       explicacao: "A acomodação e a convergência estão neurologicamente ligadas, por isso o esforço excessivo de uma pode arrastar a outra.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-6-15",
@@ -948,6 +1040,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Provoca sempre uma diplopia permanente e irreversível",
       resposta_correta: "B",
       explicacao: "Nestes casos, os óculos por si só podem corrigir total ou parcialmente o estrabismo, sem necessidade de cirurgia.",
+      categoria: "prevencao_cuidados",
     },
   ],
   7: [
@@ -960,6 +1053,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "No músculo, bloqueando o sinal nervoso que o contrai",
       resposta_correta: "D",
       explicacao: "Ao impedir a libertação do neurotransmissor na junção neuromuscular, a toxina paralisa temporariamente o músculo.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-7-2",
@@ -970,6 +1064,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A bactéria Streptococcus pneumoniae, respiratória",
       resposta_correta: "A",
       explicacao: "É um bacilo gram-positivo, esporulado e anaeróbio.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-7-3",
@@ -980,6 +1075,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Só visível clinicamente ao fim de cerca de um ano",
       resposta_correta: "B",
       explicacao: "O bloqueio da junção neuromuscular é temporário; a função do músculo acaba por ser recuperada.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-7-4",
@@ -990,6 +1086,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Para alterar de forma permanente a cor da íris",
       resposta_correta: "C",
       explicacao: "A toxina botulínica tem múltiplas aplicações terapêuticas e estéticas para além da oftalmologia.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-7-5",
@@ -1000,6 +1097,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "O tipo e a magnitude do desvio ocular presente",
       resposta_correta: "D",
       explicacao: "A escolha do tratamento (toxina, óculos ou cirurgia) depende das características específicas do desvio.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-7-6",
@@ -1010,6 +1108,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "O astigmatismo, associado a uma curvatura irregular",
       resposta_correta: "A",
       explicacao: "O blefarospasmo é uma das primeiras aplicações oftalmológicas da toxina botulínica, além do estrabismo.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-7-7",
@@ -1020,6 +1119,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Uma simples radiografia da órbita, feita antes da injecção",
       resposta_correta: "B",
       explicacao: "O sinal eléctrico captado pela agulha-elétrodo confirma que esta está mesmo dentro do músculo pretendido.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-7-8",
@@ -1030,6 +1130,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Substitui sempre e por completo o uso de óculos",
       resposta_correta: "A",
       explicacao: "Pode ser feita em consultório, em casos seleccionados, evitando ou adiando uma cirurgia.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-7-9",
@@ -1040,6 +1141,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Um episódio agudo e súbito de glaucoma no olho tratado",
       resposta_correta: "A",
       explicacao: "A queda transitória da pálpebra é um efeito adverso conhecido, que se resolve com a recuperação do efeito da toxina.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-7-10",
@@ -1050,6 +1152,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Jacques Daviel, associado sobretudo à cirurgia de catarata",
       resposta_correta: "A",
       explicacao: "Alan Scott usou-a inicialmente no tratamento do estrabismo, antes de se expandir a outras aplicações.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-7-11",
@@ -1060,6 +1163,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Apenas já depois de a cirurgia ter sido realizada",
       resposta_correta: "A",
       explicacao: "Este uso permite prever, com alguma margem, o efeito de uma futura cirurgia de enfraquecimento muscular.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-7-12",
@@ -1070,6 +1174,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A perda de olfacto, associada a doenças neurológicas",
       resposta_correta: "A",
       explicacao: "Em casos seleccionados de nistagmo incapacitante, a toxina pode ajudar a reduzir a oscilação ocular.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-7-13",
@@ -1080,6 +1185,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Ser proibida por lei na grande maioria dos países",
       resposta_correta: "A",
       explicacao: "Como o bloqueio neuromuscular é temporário, o efeito sobre o alinhamento também tende a diminuir com o tempo.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-7-14",
@@ -1090,6 +1196,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A cor natural dos olhos apresentada pelo doente",
       resposta_correta: "A",
       explicacao: "São contraindicações e cuidados de segurança habituais antes de qualquer aplicação de toxina botulínica.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-7-15",
@@ -1100,6 +1207,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Anestésico local, usado para bloquear a dor na zona",
       resposta_correta: "B",
       explicacao: "Actua especificamente bloqueando a transmissão do sinal nervoso ao músculo, sem qualquer acção antibiótica ou anestésica directa.",
+      categoria: "prevencao_cuidados",
     },
   ],
   8: [
@@ -1112,6 +1220,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "O tamanho habitual da pupila em repouso",
       resposta_correta: "A",
       explicacao: "É a medida clássica de quão nítido é o que se consegue distinguir a uma dada distância.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-8-2",
@@ -1122,6 +1231,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Na escala de Beaufort, usada normalmente para o vento",
       resposta_correta: "B",
       explicacao: "A tabela de Snellen, com letras de tamanho decrescente, é o teste clássico de acuidade visual.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-8-3",
@@ -1132,6 +1242,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Que a pessoa usa óculos com um grau exactamente igual a vinte",
       resposta_correta: "C",
       explicacao: "\"20/20\" não significa visão perfeita, apenas visão dentro do esperado a essa distância padrão.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-8-4",
@@ -1142,6 +1253,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Observando o comportamento de fixação e seguimento visual",
       resposta_correta: "D",
       explicacao: "Em bebés, a avaliação é sobretudo qualitativa, com base no comportamento visual observado.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-8-5",
@@ -1152,6 +1264,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Porque as letras em linha demoram mais tempo a ser mostradas",
       resposta_correta: "A",
       explicacao: "O efeito de crowding torna a detecção de ambliopia mais sensível do que com optotipos isolados.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-8-6",
@@ -1162,6 +1275,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A capacidade auditiva geral do paciente examinado",
       resposta_correta: "A",
       explicacao: "É o teste clássico e mais difundido para medir a acuidade visual.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-8-7",
@@ -1172,6 +1286,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Não existe qualquer alternativa possível a letras impressas",
       resposta_correta: "C",
       explicacao: "Estes optotipos permitem à criança indicar a direcção ou nomear a figura, sem precisar de saber ler.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-8-8",
@@ -1182,6 +1297,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Que a pessoa tem uma visão melhor do que a média da população",
       resposta_correta: "B",
       explicacao: "Quanto maior o segundo número, pior a acuidade visual da pessoa testada em relação ao esperado.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-8-9",
@@ -1192,6 +1308,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Porque um dos olhos é sempre dominante e o outro é ignorado",
       resposta_correta: "A",
       explicacao: "Uma diferença significativa entre os dois olhos é, muitas vezes, o primeiro sinal de alerta de ambliopia.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-8-10",
@@ -1202,6 +1319,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A distância exacta que separa o olho do objecto observado",
       resposta_correta: "A",
       explicacao: "Inclui a visão central e toda a visão periférica captada numa fixação.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-8-11",
@@ -1212,6 +1330,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Uma presbiopia normal, associada ao envelhecimento",
       resposta_correta: "A",
       explicacao: "É por isso que o glaucoma pode passar despercebido durante muito tempo, já que a visão central se mantém boa.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-8-12",
@@ -1222,6 +1341,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A pressão registada dentro do globo ocular",
       resposta_correta: "A",
       explicacao: "Pode estar reduzida mesmo quando a acuidade visual medida com letras nítidas parece normal.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-8-13",
@@ -1232,6 +1352,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Uma escoliose, uma curvatura anormal da coluna",
       resposta_correta: "A",
       explicacao: "A ausência ou assimetria do reflexo vermelho é um sinal de alarme que exige avaliação oftalmológica urgente.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-8-14",
@@ -1242,6 +1363,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "De um simples cansaço momentâneo do bebé examinado",
       resposta_correta: "B",
       explicacao: "É um dos poucos sinais que um exame simples e rápido pode revelar em bebés muito pequenos.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-8-15",
@@ -1252,6 +1374,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Impossível de estimar por qualquer método disponível",
       resposta_correta: "B",
       explicacao: "A visão do bebé amadurece ao longo dos primeiros meses e anos, à medida que as vias visuais se desenvolvem.",
+      categoria: "ciencia_ocular",
     },
   ],
   9: [
@@ -1264,6 +1387,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Um tipo específico e pouco comum de daltonismo",
       resposta_correta: "B",
       explicacao: "A visão binocular normal funde as duas imagens (uma de cada olho) numa só, com noção de profundidade.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-9-2",
@@ -1274,6 +1398,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A capacidade de perceber cores particularmente vivas",
       resposta_correta: "C",
       explicacao: "A estereopsia é a forma mais fina de percepção de profundidade, exigindo boa visão binocular.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-9-3",
@@ -1284,6 +1409,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Por volta dos quatro a seis meses de idade",
       resposta_correta: "D",
       explicacao: "É também nesta janela que se espera o alinhamento ocular normal e o início da fusão binocular.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-9-4",
@@ -1294,6 +1420,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Deixar de conseguir distinguir correctamente as cores vivas",
       resposta_correta: "A",
       explicacao: "A diplopia surge quando as imagens dos dois olhos não caem em pontos retinianos correspondentes.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-9-5",
@@ -1304,6 +1431,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Porque o estrabismo infantil nunca chega a afectar a visão",
       resposta_correta: "B",
       explicacao: "A supressão cortical é uma adaptação do cérebro imaturo para evitar a confusão de duas imagens diferentes.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-9-6",
@@ -1314,6 +1442,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Um tipo específico de cirurgia usada no tratamento ocular",
       resposta_correta: "B",
       explicacao: "É esta fusão cortical que, quando bem desenvolvida, permite ainda a estereopsia.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-9-7",
@@ -1324,6 +1453,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "É apenas um sinónimo pouco preciso e rigoroso do termo estrabismo",
       resposta_correta: "C",
       explicacao: "É esta correspondência ponto a ponto que permite ao cérebro fundir as duas imagens numa só.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-9-8",
@@ -1334,6 +1464,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Um estrabismo de longa data, numa tentativa de manter alguma fusão",
       resposta_correta: "D",
       explicacao: "É uma adaptação sensorial complexa, distinta da simples supressão, que redefine a correspondência entre as retinas.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-9-9",
@@ -1344,6 +1475,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Uma alteração pontual e transitória da pressão intraocular",
       resposta_correta: "B",
       explicacao: "É a base neural da ausência de queixa de diplopia em muitas crianças estrábicas.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-9-10",
@@ -1354,6 +1486,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Porque não acarreta absolutamente nenhuma consequência futura",
       resposta_correta: "C",
       explicacao: "É precisamente este compromisso entre conforto imediato e desenvolvimento visual que torna a supressão problemática.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-9-11",
@@ -1364,6 +1497,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Boa acuidade visual nos dois olhos e boa fusão binocular",
       resposta_correta: "D",
       explicacao: "Sem boa visão e fusão nos dois olhos, a estereopsia mais fina fica comprometida.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-9-12",
@@ -1374,6 +1508,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "O cérebro adulto já não suprime tão facilmente uma das imagens",
       resposta_correta: "D",
       explicacao: "A capacidade de suprimir uma imagem é muito maior num cérebro ainda em desenvolvimento do que num já maduro.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-9-13",
@@ -1384,6 +1519,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "O uso continuado e prolongado de óculos de sol escuros",
       resposta_correta: "C",
       explicacao: "É a supressão mantida ao longo do tempo, e não o desvio pontual, que compromete o desenvolvimento visual desse olho.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-9-14",
@@ -1394,6 +1530,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A temperatura corporal registada durante a realização do teste",
       resposta_correta: "B",
       explicacao: "Ao apresentar cores diferentes a cada olho, permite inferir se há fusão, supressão ou diplopia.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-9-15",
@@ -1404,6 +1541,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Perda da estereopsia fina, compensada em parte por outras pistas",
       resposta_correta: "D",
       explicacao: "Sem dois olhos a colaborar, a estereopsia verdadeira deixa de ser possível, embora outras pistas ajudem a estimar profundidade.",
+      categoria: "ciencia_ocular",
     },
   ],
   10: [
@@ -1416,6 +1554,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Um nutricionista, especializado em alimentação",
       resposta_correta: "C",
       explicacao: "O oftalmologista é o médico especializado em diagnosticar e tratar doenças e desvios oculares.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-10-2",
@@ -1426,6 +1565,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Avalia e trata problemas de alinhamento ocular e visão binocular",
       resposta_correta: "D",
       explicacao: "O ortoptista é um técnico especializado na avaliação da motilidade ocular e da visão binocular.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-10-3",
@@ -1436,6 +1576,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Apenas depois de a criança entrar na universidade",
       resposta_correta: "A",
       explicacao: "A detecção precoce de problemas visuais é essencial, dado o período crítico de desenvolvimento da visão.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-10-4",
@@ -1446,6 +1587,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A esquiascopia, usada para medir o erro refractivo",
       resposta_correta: "B",
       explicacao: "A fundoscopia permite observar directamente a retina, a mácula e o nervo óptico.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-10-5",
@@ -1456,6 +1598,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Porque a sua realização é exigida por lei em todos os países",
       resposta_correta: "C",
       explicacao: "Casos raros de doença ocular grave só são detectados através da observação directa do fundo do olho.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-10-6",
@@ -1466,6 +1609,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "O enfermeiro, presente habitualmente na sala de consulta",
       resposta_correta: "C",
       explicacao: "O óptico trabalha a partir da receita emitida pelo oftalmologista ou optometrista, montando as lentes na armação.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-10-7",
@@ -1476,6 +1620,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Avalia a visão e prescreve óculos, encaminhando quando há sinais de doença",
       resposta_correta: "D",
       explicacao: "O optometrista actua sobretudo na correcção óptica, articulando-se com a medicina oftalmológica quando necessário.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-10-8",
@@ -1486,6 +1631,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Exclusivamente em laboratórios dedicados à investigação científica",
       resposta_correta: "A",
       explicacao: "A colaboração entre oftalmologista e ortoptista é típica no acompanhamento de crianças com estrabismo.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-10-9",
@@ -1496,6 +1642,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Apresentam apenas um quadro isolado e ligeiro de daltonismo",
       resposta_correta: "B",
       explicacao: "Usa ajudas ópticas e não ópticas para maximizar a funcionalidade da visão que ainda resta ao doente.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-10-10",
@@ -1506,6 +1653,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Avaliar exclusivamente a capacidade auditiva das crianças",
       resposta_correta: "C",
       explicacao: "É um primeiro filtro, não um diagnóstico definitivo, que encaminha os casos suspeitos para consulta.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-10-11",
@@ -1516,6 +1664,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Um oftalmologista, habitualmente com subespecialização em estrabismo",
       resposta_correta: "D",
       explicacao: "A cirurgia de estrabismo exige formação médica e cirúrgica específica em oftalmologia.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-10-12",
@@ -1526,6 +1675,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Substituir formalmente o consentimento informado assinado pelos pais",
       resposta_correta: "A",
       explicacao: "Estas medições orientam o cirurgião sobre que músculos operar e em que grau.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-10-13",
@@ -1536,6 +1686,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Porque este passo substitui totalmente o exame pré-operatório",
       resposta_correta: "B",
       explicacao: "O consentimento informado é uma exigência ética e legal em qualquer procedimento cirúrgico electivo.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-10-14",
@@ -1546,6 +1697,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Substituir de forma definitiva a necessidade de usar óculos",
       resposta_correta: "C",
       explicacao: "O resultado do alinhamento pode continuar a ajustar-se nas semanas seguintes à cirurgia.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-10-15",
@@ -1556,6 +1708,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Um neurologista, quando há suspeita de causa neurológica",
       resposta_correta: "D",
       explicacao: "Alguns estrabismos incomitantes têm origem neurológica, exigindo avaliação conjunta com neurologia.",
+      categoria: "prevencao_cuidados",
     },
   ],
   11: [
@@ -1568,6 +1721,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Uma dificuldade em distinguir correctamente certas cores",
       resposta_correta: "D",
       explicacao: "É uma alteração, geralmente hereditária, na percepção de certas cores -- não afecta a nitidez da visão.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-11-2",
@@ -1578,6 +1732,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Ao cromossoma vinte e um, associado a outras condições",
       resposta_correta: "A",
       explicacao: "É por isso que o daltonismo é mais comum em homens, que têm apenas um cromossoma X.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-11-3",
@@ -1588,6 +1743,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "As células da córnea, na parte frontal do olho",
       resposta_correta: "B",
       explicacao: "Os cones são responsáveis pela visão das cores e pela visão detalhada em boas condições de luz.",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-11-4",
@@ -1598,6 +1754,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Perceber a profundidade em visão binocular",
       resposta_correta: "C",
       explicacao: "Os bastonetes são muito sensíveis à luz mas não distinguem cores, sendo essenciais à visão nocturna.",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-11-5",
@@ -1608,6 +1765,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Dificuldade em distinguir entre o vermelho e o verde",
       resposta_correta: "D",
       explicacao: "A deficiência na percepção do vermelho-verde é, de longe, a forma mais frequente de daltonismo.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-11-6",
@@ -1618,6 +1776,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Uma condição reversível com o uso de óculos comuns",
       resposta_correta: "A",
       explicacao: "A forma hereditária, ligada ao cromossoma X, é de longe a mais comum.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-11-7",
@@ -1628,6 +1787,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Sim, através da toma continuada de antibióticos",
       resposta_correta: "B",
       explicacao: "Estas lentes especiais realçam certos contrastes de cor, mas não corrigem a alteração genética subjacente.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-11-8",
@@ -1638,6 +1798,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Um sinónimo exacto e rigoroso do mesmo problema",
       resposta_correta: "C",
       explicacao: "Ao contrário do daltonismo vermelho-verde, a acromatopsia total é rara e costuma vir acompanhada de outros défices visuais.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-11-9",
@@ -1648,6 +1809,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Teste de Ishihara, usado especificamente para daltonismo",
       resposta_correta: "D",
       explicacao: "As pranchas de Ishihara são o teste de rastreio de daltonismo mais usado em todo o mundo.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-11-10",
@@ -1658,6 +1820,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A produção contínua das lágrimas que protegem o olho",
       resposta_correta: "A",
       explicacao: "É na mácula, e sobretudo na fóvea no seu centro, que a visão é mais nítida e detalhada.",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-11-11",
@@ -1668,6 +1831,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Apenas a visão nocturna, mantendo a visão diurna intacta",
       resposta_correta: "B",
       explicacao: "É o padrão típico de doenças maculares, como a degenerescência macular relacionada com a idade.",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-11-12",
@@ -1678,6 +1842,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Porque funcionam exclusivamente durante o período diurno",
       resposta_correta: "C",
       explicacao: "Ao contrário dos cones (que têm três tipos, sensíveis a diferentes cores), os bastonetes têm um único fotopigmento.",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-11-13",
@@ -1688,6 +1853,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Aos bastonetes, que se tornam gradualmente mais sensíveis",
       resposta_correta: "D",
       explicacao: "É por depender dos bastonetes que a adaptação completa ao escuro demora vários minutos.",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-11-14",
@@ -1698,6 +1864,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Apenas com visão adaptada às condições nocturnas",
       resposta_correta: "B",
       explicacao: "É um erro comum pensar que o daltonismo significa ver tudo a preto e branco; a maioria dos casos é bem mais específica.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-11-15",
@@ -1708,6 +1875,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Praticamente cem por cento de todos os homens",
       resposta_correta: "B",
       explicacao: "É uma das alterações genéticas mais comuns em homens, precisamente por ser ligada ao cromossoma X.",
+      categoria: "doencas_estrabismo",
     },
   ],
   12: [
@@ -1720,6 +1888,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Controlar o ritmo do batimento cardíaco em todo o corpo",
       resposta_correta: "A",
       explicacao: "A córnea é responsável por grande parte do poder refractivo do olho, antes mesmo do cristalino.",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-12-2",
@@ -1730,6 +1899,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A totalidade, já que o cristalino não refracta luz",
       resposta_correta: "B",
       explicacao: "A córnea contribui com a maior parte do poder refractivo total; o cristalino ajusta o resto (acomodação).",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-12-3",
@@ -1740,6 +1910,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "O canal responsável por drenar as lágrimas do olho",
       resposta_correta: "C",
       explicacao: "O cristalino muda de forma para ajudar o olho a focar objectos a diferentes distâncias.",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-12-4",
@@ -1750,6 +1921,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Uma opacificação do cristalino que turva a visão",
       resposta_correta: "D",
       explicacao: "A catarata é a perda de transparência do cristalino, comum com o envelhecimento mas também congénita.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-12-5",
@@ -1760,6 +1932,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Porque contagia directamente a visão do outro olho",
       resposta_correta: "A",
       explicacao: "Sem uma imagem nítida durante o período crítico, o cérebro não desenvolve bem a via visual desse olho.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-12-6",
@@ -1770,6 +1943,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A glândula responsável por produzir as lágrimas",
       resposta_correta: "B",
       explicacao: "É neste espaço que circula o humor aquoso, nutrindo estruturas vizinhas sem vasos sanguíneos próprios.",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-12-7",
@@ -1780,6 +1954,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Transmitir os sinais visuais captados até ao cérebro",
       resposta_correta: "C",
       explicacao: "O equilíbrio entre produção e drenagem do humor aquoso regula a pressão dentro do olho.",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-12-8",
@@ -1790,6 +1965,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "O humor aquoso, presente na câmara anterior do olho",
       resposta_correta: "D",
       explicacao: "Quando a drenagem do humor aquoso é insuficiente, a pressão intraocular tende a subir.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-12-9",
@@ -1800,6 +1976,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Uma substância gelatinosa que preenche a maior parte do olho",
       resposta_correta: "D",
       explicacao: "Ocupa a maior câmara do olho e ajuda a manter a forma esférica do globo ocular.",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-12-10",
@@ -1810,6 +1987,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Injectar toxina botulínica directamente no cristalino",
       resposta_correta: "A",
       explicacao: "É uma das cirurgias mais realizadas e com melhores taxas de sucesso em toda a medicina.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-12-11",
@@ -1820,6 +1998,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A exposição normal e habitual à luz do ambiente",
       resposta_correta: "C",
       explicacao: "Existem várias cataratas ditas 'secundárias', associadas a trauma, doenças metabólicas ou certos fármacos.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-12-12",
@@ -1830,6 +2009,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Uma visão cada vez mais turva, como um vidro embaciado",
       resposta_correta: "D",
       explicacao: "A progressão é tipicamente lenta e gradual, ao contrário de uma perda súbita de visão.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-12-13",
@@ -1840,6 +2020,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Fica automaticamente curado de qualquer outro problema ocular",
       resposta_correta: "B",
       explicacao: "A lente intraocular corrige grande parte do erro refractivo, mas nem sempre elimina totalmente a necessidade de óculos.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-12-14",
@@ -1850,6 +2031,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Não recebe nutrientes, sendo um tecido inteiramente morto",
       resposta_correta: "B",
       explicacao: "Ser avascular é essencial para a transparência da córnea; por isso depende de difusão, e não de vasos sanguíneos.",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-12-15",
@@ -1860,6 +2042,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Apenas uma ligeira alteração na cor natural da íris",
       resposta_correta: "A",
       explicacao: "Uma cicatriz na córnea, se atravessar o eixo visual, pode reduzir significativamente a visão desse olho.",
+      categoria: "prevencao_cuidados",
     },
   ],
   13: [
@@ -1872,6 +2055,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Que a córnea é capaz de regenerar-se sozinha após lesão",
       resposta_correta: "B",
       explicacao: "A Lei de Sherrington aplica-se a um só olho: quando o agonista recebe mais inervação, o antagonista recebe menos e relaxa, o que permite o movimento do olho.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-13-2",
@@ -1882,6 +2066,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Apenas durante o sono profundo, sem qualquer relevância diurna",
       resposta_correta: "C",
       explicacao: "A Lei de Hering explica, por exemplo, a semiologia dos estrabismos paralíticos inconcomitantes.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-13-3",
@@ -1892,6 +2077,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "O desvio secundário, com o olho parético a fixar, costuma ser maior",
       resposta_correta: "D",
       explicacao: "É consequência directa da Lei de Hering: o conjugado do músculo parético recebe inervação extra.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-13-4",
@@ -1902,6 +2088,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Um músculo que só existe em determinadas espécies animais",
       resposta_correta: "A",
       explicacao: "O agonista é o principal responsável pelo movimento do olho numa determinada direcção.",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-13-5",
@@ -1912,6 +2099,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Músculos que estão, na verdade, ligados ao sentido da audição",
       resposta_correta: "B",
       explicacao: "Por exemplo, o recto lateral de um olho e o recto medial do outro são conjugados na versão lateral.",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-13-6",
@@ -1922,6 +2110,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Oito músculos rectos por cada olho",
       resposta_correta: "B",
       explicacao: "Os quatro rectos (superior, inferior, medial e lateral) juntam-se a dois oblíquos, totalizando seis músculos por olho.",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-13-7",
@@ -1932,6 +2121,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Quatro músculos oblíquos por cada olho",
       resposta_correta: "C",
       explicacao: "O oblíquo superior e o oblíquo inferior completam os seis músculos extraoculares de cada olho.",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-13-8",
@@ -1942,6 +2132,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Depressão, ou seja, mover o olho para baixo",
       resposta_correta: "A",
       explicacao: "O recto lateral é o principal abdutor do olho, movendo-o para fora, em direcção à têmpora.",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-13-9",
@@ -1952,6 +2143,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Depressão, ou seja, mover o olho para baixo",
       resposta_correta: "B",
       explicacao: "O recto medial é o principal responsável pela convergência dos olhos para dentro.",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-13-10",
@@ -1962,6 +2154,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "O sétimo par, também chamado nervo facial",
       resposta_correta: "B",
       explicacao: "O nervo troclear é o único que inerva exclusivamente o oblíquo superior, atravessando a tróclea.",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-13-11",
@@ -1972,6 +2165,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "O quinto par, também chamado nervo trigémeo",
       resposta_correta: "C",
       explicacao: "Uma paralisia do nervo abducente causa tipicamente uma esotropia por perda da abdução desse olho.",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-13-12",
@@ -1982,6 +2176,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "O oitavo par, também chamado nervo vestibulococlear",
       resposta_correta: "A",
       explicacao: "O nervo oculomotor é o mais 'ocupado' dos três nervos que movem o olho, controlando quatro dos seis músculos.",
+      categoria: "anatomia_ocular",
     },
     {
       id: "offline-13-13",
@@ -1992,6 +2187,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Um movimento rítmico e involuntário, chamado nistagmo",
       resposta_correta: "A",
       explicacao: "Olhar para a direita, por exemplo, é uma versão: os dois olhos movem-se juntos na mesma direcção.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-13-14",
@@ -2002,6 +2198,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Um movimento involuntário, rítmico e de amplitude constante",
       resposta_correta: "B",
       explicacao: "Ao focar um objecto próximo, os dois olhos convergem, movendo-se em direcções opostas um em relação ao outro.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-13-15",
@@ -2012,6 +2209,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Nenhum músculo ocular fica realmente afectado neste quadro",
       resposta_correta: "B",
       explicacao: "É por isso que uma paralisia completa do III par costuma incluir ptose e midríase, além da limitação de vários movimentos.",
+      categoria: "doencas_estrabismo",
     },
   ],
   14: [
@@ -2024,6 +2222,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Porque aumentam automaticamente a qualidade da visão de qualquer pessoa",
       resposta_correta: "C",
       explicacao: "Doenças como o glaucoma podem avançar sem sintomas perceptíveis até causarem dano já difícil de reverter.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-14-2",
@@ -2034,6 +2233,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Um grupo de doenças que danifica o nervo óptico",
       resposta_correta: "D",
       explicacao: "O glaucoma é uma das principais causas de cegueira irreversível no mundo, mas evitável com detecção precoce.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-14-3",
@@ -2044,6 +2244,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Porque só costuma ocorrer durante o período nocturno",
       resposta_correta: "A",
       explicacao: "A perda de campo visual no glaucoma é tipicamente gradual e só notada quando já é extensa.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-14-4",
@@ -2054,6 +2255,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "O ângulo correspondente à inclinação natural da cabeça",
       resposta_correta: "B",
       explicacao: "O eixo visual e o eixo pupilar raramente coincidem exactamente; a diferença é o ângulo kappa.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-14-5",
@@ -2064,6 +2266,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Uma reacção alérgica ocular de origem sazonal",
       resposta_correta: "C",
       explicacao: "Um ângulo kappa grande pode dar a falsa impressão de um desvio ocular que, na realidade, não existe (ou o contrário).",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-14-6",
@@ -2074,6 +2277,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Exclusiva de crianças, raramente afectando adultos",
       resposta_correta: "B",
       explicacao: "É esta evolução silenciosa que torna o rastreio regular tão importante para o diagnóstico precoce.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-14-7",
@@ -2084,6 +2288,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Ocorrer apenas em crianças, nunca em pessoas adultas",
       resposta_correta: "A",
       explicacao: "É uma verdadeira urgência oftalmológica, ao contrário da evolução lenta do glaucoma de ângulo aberto.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-14-8",
@@ -2094,6 +2299,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Praticar exercício físico com uma frequência regular",
       resposta_correta: "A",
       explicacao: "A idade e a história familiar estão entre os factores de risco mais consistentemente associados ao glaucoma.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-14-9",
@@ -2104,6 +2310,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Melhorar exclusivamente a acuidade visual do paciente",
       resposta_correta: "B",
       explicacao: "Como o dano já causado é irreversível, o objectivo do tratamento é travar a progressão futura.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-14-10",
@@ -2114,6 +2321,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Porque não existe, até hoje, nenhum tratamento disponível",
       resposta_correta: "A",
       explicacao: "É por isso que a detecção precoce, antes de haver dano extenso, é tão determinante no prognóstico.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-14-11",
@@ -2124,6 +2332,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A retinoscopia, que avalia o erro refractivo do olho",
       resposta_correta: "A",
       explicacao: "A tonometria é o exame padrão para medir a pressão intraocular em consulta.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-14-12",
@@ -2134,6 +2343,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Substituir totalmente a necessidade da tonometria",
       resposta_correta: "B",
       explicacao: "O glaucoma afecta primeiro a visão periférica, por isso a perimetria é essencial no seu acompanhamento.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-14-13",
@@ -2144,6 +2354,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Impossível de medir com os métodos clínicos disponíveis",
       resposta_correta: "B",
       explicacao: "É esta pequena assimetria fisiológica que torna o teste de Hirschberg útil, mas também sujeito a interpretação cuidadosa.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-14-14",
@@ -2154,6 +2365,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Um nistagmo, com um movimento rítmico e involuntário",
       resposta_correta: "B",
       explicacao: "Um reflexo corneano deslocado para o lado temporal é o que se vê num olho desviado para dentro, por isso um ângulo kappa muito negativo pode dar a falsa impressão de uma esotropia (pseudoesotropia).",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-14-15",
@@ -2164,6 +2376,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A presbiopia precoce, associada ao envelhecimento do cristalino",
       resposta_correta: "A",
       explicacao: "A vascularização incompleta da retina em prematuros exige rastreio sistemático desta doença, potencialmente cegante.",
+      categoria: "doencas_estrabismo",
     },
   ],
   15: [
@@ -2176,6 +2389,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Cerca de oitenta por cento de toda a informação recebida",
       resposta_correta: "D",
       explicacao: "A visão é frequentemente apontada como o sentido responsável pela maior fatia da informação que recebemos do ambiente.",
+      categoria: "curiosidades_visuais",
     },
     {
       id: "offline-15-2",
@@ -2186,6 +2400,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A Giraud-Teulon, conhecido pela sua definição clássica",
       resposta_correta: "A",
       explicacao: "Stromeyer formulou a técnica na sua ortopedia operatória; Dieffenbach popularizou-a depois.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-15-3",
@@ -2196,6 +2411,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Hering, associado à lei da inervação equivalente",
       resposta_correta: "B",
       explicacao: "Bonnet estudou as relações dos músculos oculares com a cápsula de Tenon e propôs a tenotomia.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-15-4",
@@ -2206,6 +2422,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Um sinónimo, em rigor, de cegueira total e permanente",
       resposta_correta: "C",
       explicacao: "Esta definição do século XIX é ainda hoje reconhecida como uma descrição essencialmente correcta do fenómeno.",
+      categoria: "prevencao_cuidados",
     },
     {
       id: "offline-15-5",
@@ -2216,6 +2433,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A demonstração de dano nas colunas de dominância ocular por privação visual",
       resposta_correta: "D",
       explicacao: "O trabalho, feito em gatinhos, confirmou que a ambliopia é, na sua essência, um fenómeno cortical.",
+      categoria: "doencas_estrabismo",
     },
     {
       id: "offline-15-6",
@@ -2226,6 +2444,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Albrecht von Graefe, associado sobretudo à cirurgia de glaucoma",
       resposta_correta: "C",
       explicacao: "Daviel é creditado pela primeira extracção extracapsular de catarata bem documentada, em 1747.",
+      categoria: "curiosidades_visuais",
     },
     {
       id: "offline-15-7",
@@ -2236,6 +2455,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Robert Koch, conhecido pelos seus postulados em microbiologia",
       resposta_correta: "B",
       explicacao: "A invenção de Helmholtz, em 1851, revolucionou a oftalmologia ao tornar visível o interior do olho vivo.",
+      categoria: "curiosidades_visuais",
     },
     {
       id: "offline-15-8",
@@ -2246,6 +2466,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A genética associada ao daltonismo hereditário",
       resposta_correta: "A",
       explicacao: "A sua obra sistematizou, pela primeira vez, a compreensão moderna dos erros de refracção.",
+      categoria: "curiosidades_visuais",
     },
     {
       id: "offline-15-9",
@@ -2256,6 +2477,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "O glaucoma, uma doença que danifica o nervo óptico",
       resposta_correta: "D",
       explicacao: "Von Graefe é uma figura central da oftalmologia do século XIX, com contribuições marcantes na cirurgia do glaucoma.",
+      categoria: "curiosidades_visuais",
     },
     {
       id: "offline-15-10",
@@ -2266,6 +2488,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Johannes Kepler, conhecido pelas leis do movimento planetário",
       resposta_correta: "B",
       explicacao: "A teoria de Young-Helmholtz propõe três tipos de receptores de cor na retina, hoje confirmados como os três tipos de cones.",
+      categoria: "curiosidades_visuais",
     },
     {
       id: "offline-15-11",
@@ -2276,6 +2499,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Charles Darwin, conhecido pela teoria da evolução",
       resposta_correta: "C",
       explicacao: "A Lei de Sherrington continua a ser citada como base da compreensão da motilidade ocular.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-15-12",
@@ -2286,6 +2510,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Fisiologia da visão e da percepção sensorial",
       resposta_correta: "D",
       explicacao: "Hering dedicou grande parte da sua obra à fisiologia sensorial e à percepção visual, incluindo a teoria das cores opostas.",
+      categoria: "ciencia_ocular",
     },
     {
       id: "offline-15-13",
@@ -2296,6 +2521,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Ao século dezanove, com nomes como Stromeyer e Bonnet",
       resposta_correta: "D",
       explicacao: "Foi sobretudo no século XIX que a cirurgia e a compreensão científica do estrabismo se consolidaram.",
+      categoria: "curiosidades_visuais",
     },
     {
       id: "offline-15-14",
@@ -2306,6 +2532,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "Nenhuma tentativa terapêutica foi alguma vez registada na história",
       resposta_correta: "C",
       explicacao: "A história da medicina regista várias tentativas empíricas, nem sempre eficazes, antes da era da cirurgia muscular moderna.",
+      categoria: "curiosidades_visuais",
     },
     {
       id: "offline-15-15",
@@ -2316,6 +2543,7 @@ export const PERGUNTAS_OFFLINE_POR_PATAMAR: Record<number, PerguntaOffline[]> = 
       opcao_d: "A precisão diagnóstica e a variedade de opções terapêuticas disponíveis",
       resposta_correta: "D",
       explicacao: "O arsenal terapêutico e o conhecimento científico expandiram-se enormemente desde as primeiras cirurgias do século XIX.",
+      categoria: "curiosidades_visuais",
     },
   ],
 };

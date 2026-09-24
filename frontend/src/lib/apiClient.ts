@@ -1127,9 +1127,51 @@ export interface PerguntaJogoPublica {
   opcao_d: string;
 }
 
+export interface OfertaVidaExtra {
+  custo: number;
+  // Vidas extra que ainda se podem usar nesta partida (0 = acabou-se).
+  restantes: number;
+}
+
+export interface RecompensaSequencia {
+  // Acertos seguidos que deram o marco (3, 6, 9...) e os diamantes que
+  // entraram mesmo na conta -- menos do que `diamantes_do_marco` (ou 0) se o
+  // limite diário de diamantes de sequências (60, dia UTC) já foi atingido.
+  sequencia: number;
+  diamantes: number;
+  diamantes_do_marco: number;
+  limite_diario_atingido: boolean;
+  // O perfil já com os diamantes creditados pela API.
+  perfil: PerfilJogadorPublico;
+}
+
 export interface ValidarRespostaJogoResponse {
   correta: boolean;
-  resposta_correta: RespostaOpcaoJogo;
+  // `null` quando, com sessão, o jogador errou: a partida fica à espera da
+  // decisão sobre a vida extra e a resposta só se revela ao terminar.
+  resposta_correta: RespostaOpcaoJogo | null;
+  explicacao: string | null;
+  vida_extra?: OfertaVidaExtra | null;
+  sequencia_acertos?: number;
+  // Só quando este acerto atinge um marco de sequência (3, 6, 9...).
+  recompensa_sequencia?: RecompensaSequencia | null;
+}
+
+export interface VidaExtraJogo {
+  perfil: PerfilJogadorPublico;
+  pergunta_id: string;
+  // Opção a esconder na nova tentativa (`null` se o tempo tinha esgotado).
+  opcao_falhada: RespostaOpcaoJogo | null;
+  vidas_restantes: number;
+}
+
+export interface PartidaTerminadaJogo {
+  perfil: PerfilJogadorPublico;
+  patamar_superado: number;
+  moedas_ganhas: number;
+  diamantes_ganhos: number;
+  // Preenchidas quando a partida acabou numa pergunta falhada.
+  resposta_correta: RespostaOpcaoJogo | null;
   explicacao: string | null;
 }
 
@@ -1138,15 +1180,89 @@ export interface PerfilJogadorPublico {
   diamantes: number;
   partidas_jogadas: number;
   patamar_maximo_alcancado: number;
+  // Recorde de acertos seguidos numa partida.
+  melhor_sequencia?: number;
+  // Totais de sempre -- o nível sai de `patamares_superados_total`.
+  patamares_superados_total?: number;
+  moedas_ganhas_total?: number;
+}
+
+// As 6 categorias oficiais das perguntas -- espelha `CATEGORIAS_PERGUNTA_JOGO`
+// da API (lista fechada; `curiosidades_visuais` é a de omissão).
+export type CategoriaPerguntaJogo =
+  | "anatomia_ocular"
+  | "doencas_estrabismo"
+  | "prevencao_cuidados"
+  | "estilo_vida_visao"
+  | "ciencia_ocular"
+  | "curiosidades_visuais";
+
+export type NivelJogadorId = "iniciante" | "aprendiz" | "conhecedor" | "especialista" | "mestre_visao";
+
+export interface EstatisticasJogador {
+  perfil: PerfilJogadorPublico;
+  nivel: {
+    numero: number;
+    id: NivelJogadorId;
+    patamares_total: number;
+    minimo: number;
+    // `null` no último nível.
+    proximo_minimo: number | null;
+    // 0 a 1, até ao nível seguinte.
+    progresso: number;
+  };
+  // Sempre as 6, pela ordem oficial.
+  categorias: { categoria: CategoriaPerguntaJogo; respostas: number; acertos: number; taxa_acerto: number }[];
+}
+
+export interface PacoteDiamantes {
+  id: string;
+  diamantes: number;
+  bonus: number;
+  total_diamantes: number;
+  preco_kz: number;
+}
+
+export interface LojaDiamantes {
+  pacotes: PacoteDiamantes[];
+  // `true` enquanto não há pagamento real: a compra credita diamantes sem
+  // cobrar nada (só em desenvolvimento). `false` -- comprar ainda não existe.
+  pagamento_simulado: boolean;
+}
+
+export interface VendedorMercado {
+  id: string;
+  custo_diamantes: number;
+  // Probabilidade (0-1) de a sugestão estar certa.
+  precisao: number;
+  // `null` = disponível; senão, até quando está bloqueado (ISO, UTC).
+  disponivel_em: string | null;
+}
+
+export interface MercadoJogo {
+  // Hora do servidor -- acerta o cronómetro mesmo com o relógio do dispositivo errado.
+  agora: string;
+  vendedores: VendedorMercado[];
+}
+
+export interface AjudaMercado {
+  vendedor_id: string;
+  resposta_sugerida: RespostaOpcaoJogo;
+  disponivel_em: string;
+  perfil: PerfilJogadorPublico;
 }
 
 export const jogoApi = {
   // `patamar` (1-15) é só do jogo -- o backend mapeia-o para um dos 3 níveis
   // de dificuldade da reserva de perguntas (ver nivel_dificuldade_do_patamar).
-  obterPerguntaAleatoria: (patamar: number) =>
-    pedido<PerguntaJogoPublica>(`/jogo/pergunta-aleatoria?patamar=${patamar}`),
+  // Exige sessão. O servidor sorteia a pergunta do próximo patamar da
+  // partida e prende-a à partida -- só essa se pode validar, ajudar ou comprar
+  // no Mercado. Pedir outra antes de responder gasta o "trocar pergunta".
+  // Sem sessão não há perguntas do servidor: o jogo usa a reserva local.
+  obterPerguntaDaPartida: () =>
+    pedido<PerguntaJogoPublica & { patamar: number }>("/jogo/partidas/atual/pergunta", { method: "POST" }),
 
-  // A resposta certa nunca chega em `obterPerguntaAleatoria` -- só esta
+  // A resposta certa nunca chega em `obterPerguntaDaPartida` -- só esta
   // chamada, depois de o jogador já ter escolhido, é que a revela.
   validarResposta: (perguntaId: string, respostaUsuario: RespostaOpcaoJogo) =>
     pedido<ValidarRespostaJogoResponse>("/jogo/validar", {
@@ -1154,13 +1270,63 @@ export const jogoApi = {
       body: JSON.stringify({ pergunta_id: perguntaId, resposta_usuario: respostaUsuario }),
     }),
 
+  // O tempo acabou -- conta sempre como errada. Nunca usar `validarResposta`
+  // com uma letra qualquer para isto: se fosse a certa, o servidor avançava
+  // o progresso sem o jogador ter respondido (corrigido 2026-09-24).
+  tempoEsgotado: (perguntaId: string) =>
+    pedido<ValidarRespostaJogoResponse>("/jogo/tempo-esgotado", {
+      method: "POST",
+      body: JSON.stringify({ pergunta_id: perguntaId }),
+    }),
+
+  // Ajudas grátis -- endpoints próprios que nunca mexem no progresso da
+  // partida. Antes (até 2026-09-24) usavam `validarResposta` com "A", o que
+  // zerava o progresso sempre que "A" estava errada.
+  cinquentaCinquenta: (perguntaId: string) =>
+    pedido<{ opcoes_eliminadas: RespostaOpcaoJogo[] }>("/jogo/ajudas/cinquenta-cinquenta", {
+      method: "POST",
+      body: JSON.stringify({ pergunta_id: perguntaId }),
+    }),
+
+  opiniaoPublico: (perguntaId: string) =>
+    pedido<{ percentagens: Record<RespostaOpcaoJogo, number> }>("/jogo/ajudas/opiniao-publico", {
+      method: "POST",
+      body: JSON.stringify({ pergunta_id: perguntaId }),
+    }),
+
+  // Mercado (exige sessão). Custo, precisão e bloqueio de 4h vivem só no
+  // servidor -- a compra envia apenas o vendedor e a pergunta.
+  obterMercado: () => pedido<MercadoJogo>("/jogo/mercado"),
+
+  comprarAjudaMercado: (vendedorId: string, perguntaId: string, opcoesExcluidas: RespostaOpcaoJogo[]) =>
+    pedido<AjudaMercado>("/jogo/mercado/comprar", {
+      method: "POST",
+      body: JSON.stringify({ vendedor_id: vendedorId, pergunta_id: perguntaId, opcoes_excluidas: opcoesExcluidas }),
+    }),
+
+  // Nível, totais e acertos por categoria do próprio jogador (exige sessão).
+  obterEstatisticas: () => pedido<EstatisticasJogador>("/jogo/perfil/estatisticas"),
+
   // Exige sessão -- só tem sentido para quem tem conta (ver `useProfile`).
   obterPerfil: () => pedido<PerfilJogadorPublico>("/jogo/perfil"),
 
-  // Sem corpo nenhum -- o servidor paga com base no progresso que ele
-  // próprio rastreou a partir de respostas certas confirmadas em
-  // `validarResposta` (ver JogoService), nunca num patamar que o cliente
-  // diga ter alcançado. Corrigido 2026-09-23: antes disto o patamar vinha
-  // do corpo do pedido, e dava para "inventar" prémios com um pedido forjado.
-  registarRecompensa: () => pedido<PerfilJogadorPublico>("/jogo/recompensas", { method: "POST" }),
+  // Partida no servidor (exige sessão): progresso, vidas extra, ajudas
+  // usadas e prémio vivem lá -- o cliente nunca diz patamar nem preço.
+  iniciarPartida: () => pedido<unknown>("/jogo/partidas", { method: "POST" }),
+
+  usarVidaExtra: () => pedido<VidaExtraJogo>("/jogo/partidas/atual/vida-extra", { method: "POST" }),
+
+  // Vitória, derrota ou desistência. Paga o prémio (uma única vez) e revela a
+  // resposta que ficou por mostrar se a partida acabou numa pergunta falhada.
+  terminarPartida: () => pedido<PartidaTerminadaJogo>("/jogo/partidas/atual/terminar", { method: "POST" }),
+
+  // O catálogo (quantidades e preços) vive só no servidor -- a compra envia
+  // apenas o id do pacote, nunca quantos diamantes quer receber.
+  obterLojaDiamantes: () => pedido<LojaDiamantes>("/jogo/loja/pacotes"),
+
+  comprarPacoteDiamantes: (pacoteId: string) =>
+    pedido<PerfilJogadorPublico>("/jogo/loja/compras", {
+      method: "POST",
+      body: JSON.stringify({ pacote_id: pacoteId }),
+    }),
 };

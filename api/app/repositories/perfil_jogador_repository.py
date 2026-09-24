@@ -1,15 +1,12 @@
-"""Acesso a dados da economia do jogo "Você Sabia Que..." -- moedas,
-diamantes e estatísticas por utilizador.
+"""Acesso a dados da economia do jogo "Inclusivamente" -- moedas, diamantes
+e estatísticas por utilizador.
 
 `calcular_recompensa` é a única fonte de verdade sobre quanto vale cada
-patamar -- o valor nunca vem do cliente. E o próprio patamar também não: o
-`patamar_alcancado` que chega a `registar_recompensa` vem sempre de
-`patamar_em_curso`, rastreado aqui e só avançado por `JogoService.responder`
-quando uma resposta certa é confirmada no servidor (ver
-`services/jogo_service.py`) -- nunca aceite tal e qual do corpo de um pedido.
-Antes desta correcção (2026-09-23) `POST /jogo/recompensas` aceitava
-`patamar_alcancado` directo do cliente; um pedido forjado dava o prémio
-máximo sem responder a nada.
+patamar -- o valor nunca vem do cliente. E o próprio patamar também não: é
+o `patamar_superado` da partida (`partidas_jogo`), que só avança quando
+`JogoService.responder` confirma no servidor uma resposta certa. A
+recompensa é paga ao terminar a partida, em
+`PartidaJogoRepository.terminar` (uma única vez por partida).
 """
 
 import uuid
@@ -45,18 +42,17 @@ class PerfilJogadorRegisto:
     diamantes: int
     partidas_jogadas: int
     patamar_maximo_alcancado: int
-    patamar_em_curso: int
+    melhor_sequencia: int = 0
+    patamares_superados_total: int = 0
+    moedas_ganhas_total: int = 0
 
 
 class PerfilJogadorRepository(Protocol):
     def obter_ou_criar(self, utilizador_id: str) -> PerfilJogadorRegisto: ...
-    def atualizar_patamar_em_curso(self, utilizador_id: str, patamar_em_curso: int) -> PerfilJogadorRegisto: ...
-    def registar_recompensa(
-        self, utilizador_id: str, moedas_ganhas: int, diamantes_ganhos: int, patamar_alcancado: int
-    ) -> PerfilJogadorRegisto: ...
+    def creditar_diamantes(self, utilizador_id: str, quantidade: int) -> PerfilJogadorRegisto: ...
 
 
-def _para_registo(row: PerfilJogador) -> PerfilJogadorRegisto:
+def para_registo(row: PerfilJogador) -> PerfilJogadorRegisto:
     return PerfilJogadorRegisto(
         id=str(row.id),
         utilizador_id=str(row.utilizador_id),
@@ -64,7 +60,9 @@ def _para_registo(row: PerfilJogador) -> PerfilJogadorRegisto:
         diamantes=row.diamantes,
         partidas_jogadas=row.partidas_jogadas,
         patamar_maximo_alcancado=row.patamar_maximo_alcancado,
-        patamar_em_curso=row.patamar_em_curso,
+        melhor_sequencia=row.melhor_sequencia,
+        patamares_superados_total=row.patamares_superados_total,
+        moedas_ganhas_total=row.moedas_ganhas_total,
     )
 
 
@@ -86,14 +84,16 @@ class SQLAlchemyPerfilJogadorRepository:
                 diamantes=0,
                 partidas_jogadas=0,
                 patamar_maximo_alcancado=0,
-                patamar_em_curso=0,
             )
             self._sessao.add(row)
             self._sessao.commit()
             self._sessao.refresh(row)
-        return _para_registo(row)
+        return para_registo(row)
 
-    def atualizar_patamar_em_curso(self, utilizador_id: str, patamar_em_curso: int) -> PerfilJogadorRegisto:
+    def creditar_diamantes(self, utilizador_id: str, quantidade: int) -> PerfilJogadorRegisto:
+        """Soma `quantidade` ao saldo de diamantes -- sem tocar em partidas
+        nem patamares. Quem decide *quanto* e *porquê* é sempre um service
+        (ex.: `LojaJogoService`), nunca o corpo de um pedido."""
         row = self._obter_row(utilizador_id)
         if row is None:
             row = PerfilJogador(
@@ -102,37 +102,10 @@ class SQLAlchemyPerfilJogadorRepository:
                 diamantes=0,
                 partidas_jogadas=0,
                 patamar_maximo_alcancado=0,
-                patamar_em_curso=0,
             )
             self._sessao.add(row)
-        row.patamar_em_curso = patamar_em_curso
+        row.diamantes += quantidade
         row.updated_at = datetime.now(UTC)
         self._sessao.commit()
         self._sessao.refresh(row)
-        return _para_registo(row)
-
-    def registar_recompensa(
-        self, utilizador_id: str, moedas_ganhas: int, diamantes_ganhos: int, patamar_alcancado: int
-    ) -> PerfilJogadorRegisto:
-        row = self._obter_row(utilizador_id)
-        if row is None:
-            row = PerfilJogador(
-                utilizador_id=uuid.UUID(utilizador_id),
-                moedas=0,
-                diamantes=0,
-                partidas_jogadas=0,
-                patamar_maximo_alcancado=0,
-                patamar_em_curso=0,
-            )
-            self._sessao.add(row)
-        row.moedas += moedas_ganhas
-        row.diamantes += diamantes_ganhos
-        row.partidas_jogadas += 1
-        row.patamar_maximo_alcancado = max(row.patamar_maximo_alcancado, patamar_alcancado)
-        # A partida termina ao reclamar a recompensa -- o progresso não pode
-        # continuar a "existir" para ser reclamado outra vez.
-        row.patamar_em_curso = 0
-        row.updated_at = datetime.now(UTC)
-        self._sessao.commit()
-        self._sessao.refresh(row)
-        return _para_registo(row)
+        return para_registo(row)
