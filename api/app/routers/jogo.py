@@ -315,8 +315,6 @@ def listar_mercado(
                 id=e.vendedor.id,
                 custo_diamantes=e.vendedor.custo_diamantes,
                 precisao=e.precisao,
-                precisao_base=e.vendedor.precisao,
-                afinidade=e.afinidade,
                 disponivel_em=e.disponivel_em,
             )
             for e in mercado.vendedores

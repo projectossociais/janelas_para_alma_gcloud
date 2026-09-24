@@ -111,64 +111,45 @@ describe("MercadoModal", () => {
     ).toBeInTheDocument();
   });
 
-  it("explica o bónus e a penalização de cada profissional nesta pergunta, e a variação face à base", async () => {
+  it("mostra a certeza que a API calculou para esta pergunta, tal como vem (sem arredondar à base)", async () => {
     obterMercado.mockResolvedValue({
       agora: AGORA_SERVIDOR,
       categoria: "doencas_estrabismo",
       vendedores: [
-        { id: "estudante-medicina", custo_diamantes: 5, precisao: 0.35, precisao_base: 0.5, afinidade: "fraco", disponivel_em: null },
-        { id: "enfermeira-oftalmica", custo_diamantes: 12, precisao: 0.7, precisao_base: 0.7, afinidade: "neutro", disponivel_em: null },
-        { id: "optometrista", custo_diamantes: 25, precisao: 0.75, precisao_base: 0.85, afinidade: "fraco", disponivel_em: null },
-        { id: "oftalmologista", custo_diamantes: 45, precisao: 0.98, precisao_base: 0.9, afinidade: "especialista", disponivel_em: null },
+        { id: "estudante-medicina", custo_diamantes: 5, precisao: 0.3, disponivel_em: null },
+        { id: "enfermeira-oftalmica", custo_diamantes: 12, precisao: 0.57, disponivel_em: null },
+        { id: "optometrista", custo_diamantes: 25, precisao: 0.87, disponivel_em: null },
+        { id: "oftalmologista", custo_diamantes: 45, precisao: 0.97, disponivel_em: null },
       ],
     });
     abrir();
 
     expect(await screen.findByText("Tema desta pergunta: Doenças e Estrabismo")).toBeInTheDocument();
-    const helena = screen.getByTestId("vendedor-oftalmologista");
-    expect(within(helena).getByText("Especialista em Doenças e Estrabismo")).toBeInTheDocument();
-    expect(within(helena).getByLabelText("certeza base 90%")).toHaveTextContent("(+8)");
-    expect(screen.getByTestId("motivo-oftalmologista")).toHaveTextContent(
-      "Porquê: Doenças e Estrabismo é a sua especialidade clínica há muitos anos."
-    );
-    const estudante = screen.getByTestId("vendedor-estudante-medicina");
-    expect(within(estudante).getByText("Fora da especialidade: Doenças e Estrabismo")).toBeInTheDocument();
-    expect(within(estudante).getByLabelText("certeza base 50%")).toHaveTextContent("(-15)");
-    expect(screen.getByTestId("motivo-estudante-medicina")).toHaveTextContent(
-      "Porquê: ainda não viu casos clínicos de Doenças e Estrabismo, só conhece os livros."
-    );
-    expect(screen.getByTestId("motivo-optometrista")).toHaveTextContent(/trabalho do oftalmologista/);
-    // Neutro: sem selo nem variação, mas diz porquê vale a certeza base.
-    const marta = screen.getByTestId("vendedor-enfermeira-oftalmica");
-    expect(within(marta).queryByText(/Especialista em|Fora da especialidade/)).not.toBeInTheDocument();
-    expect(within(marta).queryByLabelText(/certeza base/)).not.toBeInTheDocument();
-    expect(screen.getByTestId("motivo-enfermeira-oftalmica")).toHaveTextContent(
-      "Porquê: Doenças e Estrabismo não é a especialidade nem o ponto fraco deste profissional: vale a certeza base."
-    );
+    expect(within(screen.getByTestId("vendedor-estudante-medicina")).getByText(/Baixa · 30%/)).toBeInTheDocument();
+    expect(within(screen.getByTestId("vendedor-enfermeira-oftalmica")).getByText(/Baixa · 57%/)).toBeInTheDocument();
+    expect(within(screen.getByTestId("vendedor-optometrista")).getByText(/Alta · 87%/)).toBeInTheDocument();
+    expect(within(screen.getByTestId("vendedor-oftalmologista")).getByText(/Muito alta · 97%/)).toBeInTheDocument();
   });
 
-  it("a Enfermeira Marta tem bónus em Prevenção e Cuidados e diz porquê", async () => {
+  it("não explica a mecânica: sem 'Porquê', sem selo de especialidade, sem variação face à base", async () => {
     obterMercado.mockResolvedValue({
       agora: AGORA_SERVIDOR,
-      categoria: "prevencao_cuidados",
-      vendedores: [
-        { id: "enfermeira-oftalmica", custo_diamantes: 12, precisao: 0.85, precisao_base: 0.7, afinidade: "especialista", disponivel_em: null },
-      ],
+      categoria: "doencas_estrabismo",
+      // Mesmo que uma API antiga ainda envie os campos antigos, não se mostram.
+      vendedores: VENDEDORES.map((v) => ({ ...v, precisao_base: 0.5, afinidade: "especialista" })),
     });
     abrir();
 
-    expect(await screen.findByText("Especialista em Prevenção e Cuidados")).toBeInTheDocument();
-    expect(screen.getByTestId("motivo-enfermeira-oftalmica")).toHaveTextContent(
-      "Porquê: todos os dias aconselha doentes sobre Prevenção e Cuidados."
-    );
-  });
-
-  it("sem afinidade nem categoria (API antiga) não mostra selo, variação nem porquê", async () => {
-    abrir();
     const helena = await screen.findByTestId("vendedor-oftalmologista");
-    expect(within(helena).queryByText(/Especialista em/)).not.toBeInTheDocument();
-    expect(within(helena).queryByLabelText(/certeza base/)).not.toBeInTheDocument();
-    expect(screen.queryByTestId("motivo-oftalmologista")).not.toBeInTheDocument();
+    // Só nome, profissão, frase, custo, certeza e o botão.
+    expect(within(helena).getByText("Dra. Helena")).toBeInTheDocument();
+    expect(within(helena).getByText("Oftalmologista Especialista")).toBeInTheDocument();
+    expect(within(helena).getByText(/o diagnóstico é claro/)).toBeInTheDocument();
+    expect(within(helena).getByText(/Muito alta · 90%/)).toBeInTheDocument();
+    for (const cartao of screen.getAllByRole("listitem")) {
+      expect(cartao).not.toHaveTextContent(/Porquê|Especialista em|Fora da especialidade|certeza base|\([+-]\d+\)/);
+    }
+    expect(screen.queryByTestId(/^motivo-/)).not.toBeInTheDocument();
   });
 
   it("vendedor mais caro do que o saldo fica com o botão desactivado", async () => {

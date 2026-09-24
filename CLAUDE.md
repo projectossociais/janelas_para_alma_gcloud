@@ -110,12 +110,17 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   — nunca usar `/jogo/validar` com uma letra qualquer para descobrir a resposta (bug real
   corrigido em 2026-09-24).
   **Consultório** (ajuda paga; no código, endpoints e tabelas ainda "Mercado"/"vendedores"):
-  quatro profissionais de saúde ocular com custo em diamantes e precisão base crescente,
-  que muda com a **categoria da pergunta** (`VendedorAmbulante.precisao_para`): Estudante
-  de Medicina (forte em anatomia/curiosidades), Enfermeira Oftálmica (prevenção/estilo de
-  vida), Optometrista (ciência ocular), Oftalmologista Especialista (doenças e estrabismo);
-  cada um com um ponto fraco; determinista — reabrir não "sorteia" melhor. O frontend
-  explica o porquê de cada bónus/penalização (`Mercado.vendedores.<id>.motivoForte|Fraco`).
+  quatro profissionais de saúde ocular com custo em diamantes e certeza base crescente.
+  A certeza para a pergunta em curso é um modelo em `services/certeza_consultorio.py`:
+  base + ajuste por **categoria** + ajuste por **faixa de patamar da partida** (1-5, 6-10,
+  11-15) + variação de ±4 p.p. por hash SHA-256 de profissional+pergunta, com tectos por
+  perfil e limites 30%-98% (nunca 100%). Estudante João: fundamentos e anatomia, cai muito
+  no fim de jogo e em doenças; Enfermeira Marta: bónus constante em prevenção, estável até
+  ao 10, cai no 11-15; Dr. Paulo: ciência ocular e patamares médios/altos, ligeira
+  penalização em curiosidades; Dra. Helena: máximo em doenças no 11-15, mas ≤80% em estilo
+  de vida nos patamares 1-3. Determinista — reabrir não "sorteia" outra certeza. De
+  propósito, o frontend **não explica** a mecânica (sem "porquê", selo nem variação): só
+  nome, profissão, frase e a barra de certeza.
   Bloqueados 4h por jogador após cada consulta — catálogo em
   `services/mercado_jogo_service.py`, bloqueio na tabela `bloqueios_vendedores_jogo`;
   débito e bloqueio gravados atomicamente (`MercadoJogoRepository.debitar_e_bloquear`).

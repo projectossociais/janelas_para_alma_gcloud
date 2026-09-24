@@ -2033,9 +2033,6 @@
     "avisoSugestao": "É só uma opinião: os profissionais com menos experiência enganam-se mais vezes. A decisão final é sua.",
     "voltarAPergunta": "Voltar à pergunta",
     "precisaDeMaisDiamantes": "Sem diamantes? Ganhe mais a jogar ou visite a Loja no menu do jogo.",
-    "especialistaEm": "Especialista em {{categoria}}",
-    "poucoAVontadeCom": "Fora da especialidade: {{categoria}}",
-    "variacaoBase": "certeza base {{base}}%",
     "temaDaPergunta": "Tema desta pergunta: {{categoria}}",
     "indisponivelOffline": "O Consultório precisa de ligação ao servidor.",
     "vendedores": {
@@ -2043,37 +2040,27 @@
         "nome": "Estudante João",
         "profissao": "Estudante de Medicina",
         "bordao": "Ainda estou a aprender, mas lembro-me de ler sobre isso.",
-        "resposta": "Pelo que estudei, acho que é a {{opcao}}. Mas confirme, está bem?",
-        "motivoForte": "acabou de estudar {{categoria}} nas aulas e leu tudo sobre o tema.",
-        "motivoFraco": "ainda não viu casos clínicos de {{categoria}}, só conhece os livros."
+        "resposta": "Pelo que estudei, acho que é a {{opcao}}. Mas confirme, está bem?"
       },
       "enfermeira-oftalmica": {
         "nome": "Enfermeira Marta",
         "profissao": "Enfermeira Oftálmica",
         "bordao": "No consultório vemos muitos casos práticos assim.",
-        "resposta": "Pela minha experiência no consultório, é a {{opcao}}.",
-        "motivoForte": "todos os dias aconselha doentes sobre {{categoria}}.",
-        "motivoFraco": "{{categoria}} é mais teoria do que prática: está menos à vontade."
+        "resposta": "Pela minha experiência no consultório, é a {{opcao}}."
       },
       "optometrista": {
         "nome": "Dr. Paulo",
         "profissao": "Optometrista",
         "bordao": "Deixe-me analisar a sua acuidade visual.",
-        "resposta": "Analisei com cuidado: a resposta é a {{opcao}}.",
-        "motivoForte": "{{categoria}} (óptica, refracção e acuidade) é o centro do seu trabalho.",
-        "motivoFraco": "diagnosticar e tratar {{categoria}} é trabalho do oftalmologista; ele encaminha estes casos."
+        "resposta": "Analisei com cuidado: a resposta é a {{opcao}}."
       },
       "oftalmologista": {
         "nome": "Dra. Helena",
         "profissao": "Oftalmologista Especialista",
         "bordao": "Com os meus anos de experiência clínica, o diagnóstico é claro.",
-        "resposta": "O diagnóstico é claro: é a {{opcao}}.",
-        "motivoForte": "{{categoria}} é a sua especialidade clínica há muitos anos.",
-        "motivoFraco": "os hábitos do dia a dia ({{categoria}}) são o tema em que está menos atenta."
+        "resposta": "O diagnóstico é claro: é a {{opcao}}."
       }
-    },
-    "porque": "Porquê: {{motivo}}",
-    "motivoNeutro": "{{categoria}} não é a especialidade nem o ponto fraco deste profissional: vale a certeza base."
+    }
   },
   "VidaExtra": {
     "titulo": "Vida Extra",

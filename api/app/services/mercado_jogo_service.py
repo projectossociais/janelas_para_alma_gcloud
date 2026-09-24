@@ -2,9 +2,8 @@
 diamantes.
 
 Cada profissional de saúde ocular dá uma opinião sobre a pergunta em curso. Quanto mais caro o vendedor, maior a probabilidade de a sugestão
-estar certa (`precisao`) -- e essa certeza muda com a categoria da pergunta
-(`VendedorAmbulante.precisao_para`): cada vendedor é especialista nuns temas
-e está pouco à vontade noutros. Depois de vender, fica bloqueado para esse jogador
+estar certa (`precisao`) -- e essa certeza muda com a categoria da pergunta,
+o patamar da partida e a própria pergunta (`certeza_consultorio.py`). Depois de vender, fica bloqueado para esse jogador
 durante `DURACAO_BLOQUEIO` (4 horas, UTC).
 
 A pergunta de sempre (CLAUDE.md secção 3): "o utilizador podia mentir sobre
@@ -23,51 +22,37 @@ import random
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from typing import Literal
 
 from app.repositories.jogo_repository import PerguntaJogoRepository
 from app.repositories.mercado_jogo_repository import MercadoJogoRepository
 from app.repositories.partida_jogo_repository import PartidaJogoRepository
 from app.repositories.perfil_jogador_repository import PerfilJogadorRegisto
-from app.services.jogo_service import PerguntaForaDaPartidaError, PerguntaNaoEncontradaError
+from app.services.certeza_consultorio import PERFIS, calcular_certeza
+from app.services.jogo_service import (
+    TOTAL_PATAMARES,
+    PerguntaForaDaPartidaError,
+    PerguntaNaoEncontradaError,
+)
 
 OPCOES = ("A", "B", "C", "D")
 
 DURACAO_BLOQUEIO = timedelta(hours=4)
 
 
-Afinidade = Literal["especialista", "neutro", "fraco"]
-
-
 @dataclass(frozen=True)
 class VendedorAmbulante:
     id: str
     custo_diamantes: int
-    # Probabilidade (0-1) de a sugestão estar certa numa categoria neutra --
-    # a "certeza base" que o Mercado mostra.
-    precisao: float
-    # Categorias em que o vendedor é especialista (mais certeza) ou está
-    # pouco à vontade (menos certeza) -- ver `precisao_para`.
-    especialidades: frozenset[str] = frozenset()
-    precisao_especialidade: float = 0.0
-    pontos_fracos: frozenset[str] = frozenset()
-    precisao_fraca: float = 0.0
 
-    def afinidade(self, categoria: str | None) -> Afinidade:
-        if categoria in self.especialidades:
-            return "especialista"
-        if categoria in self.pontos_fracos:
-            return "fraco"
-        return "neutro"
+    @property
+    def precisao(self) -> float:
+        """Certeza base (sem pergunta em curso) -- a de `PERFIS`."""
+        return PERFIS[self.id].base
 
-    def precisao_para(self, categoria: str | None) -> float:
-        """Certeza para uma pergunta desta categoria. Determinista: reabrir o
-        Mercado para a mesma pergunta nunca "sorteia" uma certeza melhor."""
-        return {
-            "especialista": self.precisao_especialidade,
-            "fraco": self.precisao_fraca,
-            "neutro": self.precisao,
-        }[self.afinidade(categoria)]
+    def precisao_para(self, categoria: str | None, patamar: int | None, pergunta_id: str | None) -> float:
+        """Certeza para esta pergunta, neste patamar -- o modelo contextual
+        de `certeza_consultorio.py`. Determinista."""
+        return calcular_certeza(self.id, categoria, patamar, pergunta_id)
 
 
 # O "Consultório" (2026-09-24; antes "Mercado", com vendedores ambulantes):
@@ -77,54 +62,13 @@ class VendedorAmbulante:
 # -- a especialista mais fiável custa quase isso. Os ids, nomes, profissões
 # e falas vivem nas traduções do frontend (`Mercado.vendedores.<id>`); o
 # código interno continua a chamar-lhes "vendedores" e "Mercado" (endpoints
-# e tabela `bloqueios_vendedores_jogo` inalterados).
-#
-# Afinidades por categoria -- o que cada profissão sabe de perto:
-# - Estudante de Medicina: acabou de estudar anatomia e lê tudo o que é
-#   curiosidade; ainda não viu casos clínicos (doenças e estrabismo).
-# - Enfermeira Oftálmica: prática do consultório -- prevenção, cuidados e
-#   hábitos do dia a dia; menos à vontade com ciência pura.
-# - Optometrista: ciência da visão (óptica, refracção, acuidade); diagnosticar
-#   e tratar doenças é trabalho do oftalmologista.
-# - Oftalmologista Especialista: doenças e estrabismo são a sua clínica; os
-#   hábitos do dia a dia são o tema em que está menos atenta.
+# e tabela `bloqueios_vendedores_jogo` inalterados). A certeza de cada um
+# (personalidade por categoria e patamar) vive em `certeza_consultorio.py`.
 VENDEDORES: tuple[VendedorAmbulante, ...] = (
-    VendedorAmbulante(
-        id="estudante-medicina",
-        custo_diamantes=5,
-        precisao=0.50,
-        especialidades=frozenset({"anatomia_ocular", "curiosidades_visuais"}),
-        precisao_especialidade=0.75,
-        pontos_fracos=frozenset({"doencas_estrabismo"}),
-        precisao_fraca=0.35,
-    ),
-    VendedorAmbulante(
-        id="enfermeira-oftalmica",
-        custo_diamantes=12,
-        precisao=0.70,
-        especialidades=frozenset({"prevencao_cuidados", "estilo_vida_visao"}),
-        precisao_especialidade=0.85,
-        pontos_fracos=frozenset({"ciencia_ocular"}),
-        precisao_fraca=0.50,
-    ),
-    VendedorAmbulante(
-        id="optometrista",
-        custo_diamantes=25,
-        precisao=0.85,
-        especialidades=frozenset({"ciencia_ocular"}),
-        precisao_especialidade=0.95,
-        pontos_fracos=frozenset({"doencas_estrabismo"}),
-        precisao_fraca=0.75,
-    ),
-    VendedorAmbulante(
-        id="oftalmologista",
-        custo_diamantes=45,
-        precisao=0.90,
-        especialidades=frozenset({"doencas_estrabismo"}),
-        precisao_especialidade=0.98,
-        pontos_fracos=frozenset({"estilo_vida_visao"}),
-        precisao_fraca=0.80,
-    ),
+    VendedorAmbulante(id="estudante-medicina", custo_diamantes=5),
+    VendedorAmbulante(id="enfermeira-oftalmica", custo_diamantes=12),
+    VendedorAmbulante(id="optometrista", custo_diamantes=25),
+    VendedorAmbulante(id="oftalmologista", custo_diamantes=45),
 )
 
 
@@ -153,7 +97,6 @@ class EstadoVendedor:
     disponivel_em: datetime | None
     # Certeza para a pergunta em curso (a base, se não houver pergunta).
     precisao: float
-    afinidade: Afinidade
 
 
 @dataclass(frozen=True)
@@ -169,6 +112,11 @@ class AjudaVendida:
     resposta_sugerida: str
     disponivel_em: datetime
     perfil: PerfilJogadorRegisto
+
+
+def _patamar_da_pergunta(patamar_superado: int) -> int:
+    """A pergunta por responder vale o patamar seguinte ao já superado."""
+    return min(patamar_superado + 1, TOTAL_PATAMARES)
 
 
 def _agora_utc() -> datetime:
@@ -194,11 +142,11 @@ class MercadoJogoService:
         return self._relogio()
 
     def listar(self, utilizador_id: str) -> MercadoParaPergunta:
-        """Os vendedores com a certeza para a pergunta em curso (pela
-        categoria dela) -- a mesma que `comprar` usa."""
+        """Os profissionais com a certeza para a pergunta em curso (categoria,
+        patamar da partida e a própria pergunta) -- a mesma que `comprar` usa."""
         agora = self._relogio()
         bloqueios = self._mercado.listar_bloqueios(utilizador_id)
-        categoria = self._categoria_em_curso(utilizador_id)
+        categoria, patamar, pergunta_id = self._contexto_em_curso(utilizador_id)
         estados = []
         for vendedor in VENDEDORES:
             ate = bloqueios.get(vendedor.id)
@@ -206,18 +154,21 @@ class MercadoJogoService:
                 EstadoVendedor(
                     vendedor=vendedor,
                     disponivel_em=ate if ate and ate > agora else None,
-                    precisao=vendedor.precisao_para(categoria),
-                    afinidade=vendedor.afinidade(categoria),
+                    precisao=vendedor.precisao_para(categoria, patamar, pergunta_id),
                 )
             )
         return MercadoParaPergunta(categoria=categoria, vendedores=estados)
 
-    def _categoria_em_curso(self, utilizador_id: str) -> str | None:
+    def _contexto_em_curso(self, utilizador_id: str) -> tuple[str | None, int | None, str | None]:
+        """(categoria, patamar, id) da pergunta por responder -- tudo `None`
+        sem partida em curso ou sem pergunta entregue."""
         partida = self._partidas.obter_ativa(utilizador_id)
         if partida is None or partida.estado != "em_curso" or partida.pergunta_atual_id is None:
-            return None
+            return None, None, None
         pergunta = self._perguntas.obter_por_id(partida.pergunta_atual_id)
-        return pergunta.categoria if pergunta is not None else None
+        if pergunta is None:
+            return None, None, None
+        return pergunta.categoria, _patamar_da_pergunta(partida.patamar_superado), pergunta.id
 
     def comprar(
         self,
@@ -254,7 +205,9 @@ class MercadoJogoService:
         return AjudaVendida(
             vendedor_id=vendedor.id,
             resposta_sugerida=self._sugerir(
-                vendedor.precisao_para(pergunta.categoria), pergunta.resposta_correta, set(opcoes_excluidas)
+                vendedor.precisao_para(pergunta.categoria, _patamar_da_pergunta(partida.patamar_superado), pergunta.id),
+                pergunta.resposta_correta,
+                set(opcoes_excluidas),
             ),
             disponivel_em=disponivel_em,
             perfil=resultado.perfil,

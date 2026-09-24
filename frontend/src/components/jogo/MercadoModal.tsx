@@ -47,7 +47,9 @@ interface MercadoModalProps {
  * Consultório (no código ainda "Mercado") -- ajuda paga por diamantes, aberta
  * durante a partida. Cada profissional de saúde ocular dá uma opinião sobre
  * a resposta; quanto mais experiente, mais fiável, e a certeza muda com o
- * tema da pergunta (especialidade / ponto fraco). Depois de uma consulta,
+ * pergunta (categoria, patamar da partida e a própria pergunta -- calculado
+ * na API). De propósito, o cartão não explica porquê: o jogador infere a
+ * especialidade pela profissão e pela percentagem. Depois de uma consulta,
  * o profissional fica ocupado 4h para este jogador (cronómetro no cartão). Tudo o que importa -- custo, precisão, bloqueio, saldo -- é
  * decidido e guardado pela API; aqui só se mostra.
  */
@@ -203,27 +205,7 @@ const MercadoModal = ({ open, onOpenChange, perguntaId, opcoesExcluidas, onAjuda
                   const bloqueado = restante > 0;
                   const semSaldo = saldo < vendedor.custo_diamantes;
                   const nivel = nivelDeCerteza(vendedor.precisao);
-                  // Pontos percentuais acima/abaixo da certeza base, pela
-                  // categoria da pergunta -- 0 sem afinidade (ou API antiga).
-                  const variacao =
-                    vendedor.precisao_base === undefined
-                      ? 0
-                      : Math.round(vendedor.precisao * 100) - Math.round(vendedor.precisao_base * 100);
-                  const nomeCategoria = mercado?.categoria
-                    ? t(`PerfilJogador.categorias.${mercado.categoria}`, { defaultValue: mercado.categoria })
-                    : "";
                   const nome = t(`Mercado.vendedores.${vendedor.id}.nome`, { defaultValue: vendedor.id });
-                  // Porquê desta certeza nesta pergunta -- a especialidade, o
-                  // ponto fraco ou a certeza base, sempre dito por extenso.
-                  const motivo = !nomeCategoria
-                    ? ""
-                    : vendedor.afinidade === "especialista"
-                      ? t(`Mercado.vendedores.${vendedor.id}.motivoForte`, { categoria: nomeCategoria })
-                      : vendedor.afinidade === "fraco"
-                        ? t(`Mercado.vendedores.${vendedor.id}.motivoFraco`, { categoria: nomeCategoria })
-                        : vendedor.afinidade === "neutro"
-                          ? t("Mercado.motivoNeutro", { categoria: nomeCategoria })
-                          : "";
                   return (
                     <li
                       key={vendedor.id}
@@ -262,17 +244,6 @@ const MercadoModal = ({ open, onOpenChange, perguntaId, opcoesExcluidas, onAjuda
                           </span>
                         </div>
 
-                        {nomeCategoria && vendedor.afinidade === "especialista" && (
-                          <span className="inline-flex items-center gap-1 self-start rounded-full bg-green/15 text-green text-xs font-semibold px-2.5 py-0.5">
-                            {t("Mercado.especialistaEm", { categoria: nomeCategoria })}
-                          </span>
-                        )}
-                        {nomeCategoria && vendedor.afinidade === "fraco" && (
-                          <span className="inline-flex items-center gap-1 self-start rounded-full bg-muted text-muted-foreground text-xs font-medium px-2.5 py-0.5">
-                            {t("Mercado.poucoAVontadeCom", { categoria: nomeCategoria })}
-                          </span>
-                        )}
-
                         {!bloqueado && (
                           <p className="text-sm italic text-foreground/80">
                             “{t(`Mercado.vendedores.${vendedor.id}.bordao`, { defaultValue: "" })}”
@@ -284,15 +255,6 @@ const MercadoModal = ({ open, onOpenChange, perguntaId, opcoesExcluidas, onAjuda
                             <span className="text-muted-foreground">{t("Mercado.certeza")}</span>
                             <span className="font-semibold text-foreground">
                               {t(`Mercado.nivel.${nivel}`)} · {Math.round(vendedor.precisao * 100)}%
-                              {variacao !== 0 && (
-                                <span
-                                  className={cn("ml-1 font-medium", variacao > 0 ? "text-green" : "text-destructive")}
-                                  aria-label={t("Mercado.variacaoBase", { base: Math.round((vendedor.precisao_base ?? 0) * 100) })}
-                                >
-                                  ({variacao > 0 ? "+" : ""}
-                                  {variacao})
-                                </span>
-                              )}
                             </span>
                           </div>
                           <div className="h-2 rounded-full bg-muted overflow-hidden">
@@ -301,11 +263,6 @@ const MercadoModal = ({ open, onOpenChange, perguntaId, opcoesExcluidas, onAjuda
                               style={{ width: `${vendedor.precisao * 100}%` }}
                             />
                           </div>
-                          {motivo && (
-                            <p className="text-xs text-muted-foreground" data-testid={`motivo-${vendedor.id}`}>
-                              {t("Mercado.porque", { motivo })}
-                            </p>
-                          )}
                         </div>
 
                         {bloqueado ? (

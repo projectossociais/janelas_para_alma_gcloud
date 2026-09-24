@@ -2033,9 +2033,6 @@
     "avisoSugestao": "It's just an opinion: less experienced professionals get it wrong more often. The final decision is yours.",
     "voltarAPergunta": "Back to the question",
     "precisaDeMaisDiamantes": "Out of diamonds? Earn more by playing or visit the Shop from the game menu.",
-    "especialistaEm": "Expert in {{categoria}}",
-    "poucoAVontadeCom": "Outside their field: {{categoria}}",
-    "variacaoBase": "base certainty {{base}}%",
     "temaDaPergunta": "This question's topic: {{categoria}}",
     "indisponivelOffline": "The Eye Clinic needs a connection to the server.",
     "vendedores": {
@@ -2043,37 +2040,27 @@
         "nome": "Student João",
         "profissao": "Medical Student",
         "bordao": "I'm still learning, but I remember reading about this.",
-        "resposta": "From what I've studied, I think it's {{opcao}}. But double-check, okay?",
-        "motivoForte": "he has just studied {{categoria}} in class and read everything on the topic.",
-        "motivoFraco": "he hasn't seen clinical cases of {{categoria}} yet, only the textbooks."
+        "resposta": "From what I've studied, I think it's {{opcao}}. But double-check, okay?"
       },
       "enfermeira-oftalmica": {
         "nome": "Nurse Marta",
         "profissao": "Ophthalmic Nurse",
         "bordao": "At the clinic we see lots of practical cases like this.",
-        "resposta": "From my experience at the clinic, it's {{opcao}}.",
-        "motivoForte": "she advises patients about {{categoria}} every day.",
-        "motivoFraco": "{{categoria}} is more theory than practice: she's less at ease."
+        "resposta": "From my experience at the clinic, it's {{opcao}}."
       },
       "optometrista": {
         "nome": "Dr. Paulo",
         "profissao": "Optometrist",
         "bordao": "Let me assess your visual acuity.",
-        "resposta": "I've looked carefully: the answer is {{opcao}}.",
-        "motivoForte": "{{categoria}} (optics, refraction and acuity) is the core of his work.",
-        "motivoFraco": "diagnosing and treating {{categoria}} is the ophthalmologist's job; he refers these cases."
+        "resposta": "I've looked carefully: the answer is {{opcao}}."
       },
       "oftalmologista": {
         "nome": "Dr. Helena",
         "profissao": "Consultant Ophthalmologist",
         "bordao": "With my years of clinical experience, the diagnosis is clear.",
-        "resposta": "The diagnosis is clear: it's {{opcao}}.",
-        "motivoForte": "{{categoria}} has been her clinical specialty for many years.",
-        "motivoFraco": "everyday habits ({{categoria}}) are the topic she follows least closely."
+        "resposta": "The diagnosis is clear: it's {{opcao}}."
       }
-    },
-    "porque": "Why: {{motivo}}",
-    "motivoNeutro": "{{categoria}} is neither this professional's specialty nor weak spot: base certainty applies."
+    }
   },
   "VidaExtra": {
     "titulo": "Extra Life",
