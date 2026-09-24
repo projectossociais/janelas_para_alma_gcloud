@@ -758,6 +758,43 @@ visivelmente avariado. Nenhuma destas tarefas toca base de dados, RLS ou paywall
   `EyeLandmarkOverlay.tsx`, FaceMesh) continua a ser usada só para o overlay ao vivo, não
   para o cálculo em si — isso acontece no microserviço
 
+**Investigação adicional (2026-09-24), ao equacionar investir no `janelas-scanner-api`
+para ele distinguir Esotropia/Exotropia/Hipertropia/Hipotropia (as 4 subcategorias que
+`ScannerResultados.tsx` define mas nunca produz de facto — ver Sprint 4 mais abaixo):**
+
+- **Localização do repositório: por confirmar.** Não há submódulo git, `docker-compose.yml`,
+  nem pasta local neste computador que aponte para o código-fonte do
+  `janelas-scanner-api` — só existe a **URL de configuração** que o liga a este monorepo
+  (`VITE_API_SCANNER_URL`, por omissão `http://localhost:8001/api/v1`,
+  `frontend/.env.example`). A nota do W-09 acima já dizia isto: quem o construiu e onde
+  vive nunca ficou documentado. Antes de qualquer trabalho no motor de análise em si,
+  é preciso obter o URL do GitHub (provavelmente com o Lukeny) e confirmar quem o mantém
+  hoje — não é seguro alterar às cegas um serviço de produção que processa fotografias
+  faciais de crianças (CLAUDE.md §4), mesmo que a imagem em si nunca seja guardada.
+- **Descoberta que pode evitar mexer no microserviço:** a resposta que ele já devolve
+  hoje (`ScreeningResponse` em `frontend/src/services/api/screeningApi.ts`) inclui, por
+  posição e por olho, `alinhamento_ocular.olho_direito/esquerdo.desvio_horizontal` e
+  `.desvio_vertical` — dados brutos de desvio angular/posicional, não só os booleanos
+  `incomitante`/`requer_avaliacao_humana` que `Scanner.tsx` hoje lê (linha 184). Em
+  princípio: sinal do desvio horizontal distingue convergente (Esotropia) de divergente
+  (Exotropia); sinal do desvio vertical distingue Hipertropia de Hipotropia. Se esta
+  leitura se confirmar clinicamente válida, a classificação das 4 subcategorias pode
+  fazer-se **inteiramente do lado de cá** (`Scanner.tsx` ou `api/app/services/`), sem
+  qualquer alteração ao `janelas-scanner-api` — só interpretando dados já devolvidos e
+  hoje ignorados
+- **Risco a não ignorar nesta via alternativa:** os valores de `desvio_horizontal`/
+  `desvio_vertical` nunca foram validados clinicamente (o próprio bloqueio nº8 desta
+  secção já apontava isso para o binário actual) — inventar uma regra de classificação
+  em 4 categorias a partir deles, sem confirmação de um profissional, arriscaria
+  reintroduzir exactamente o problema que o W-04 corrigiu (mostrar um diagnóstico que
+  parece preciso mas não foi validado). Qualquer trabalho nesta frente exige o mesmo
+  cuidado do bloqueio nº8: um parceiro clínico a confirmar contra casos reais antes de
+  qualquer subcategoria aparecer a um utilizador
+- **Estado:** ainda não iniciado — decisão do dono do projecto (2026-09-24) foi
+  avançar para outras funcionalidades primeiro e voltar a isto depois de (a) localizar
+  o repositório e confirmar quem o mantém, e (b) decidir se se persegue a via directa
+  (alterar o microserviço) ou a alternativa acima (interpretar dados já devolvidos)
+
 ### Lukeny — conteúdo e estrutura
 
 #### L-07 · Termos de Uso
