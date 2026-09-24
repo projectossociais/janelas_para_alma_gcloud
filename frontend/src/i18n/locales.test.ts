@@ -87,6 +87,7 @@ describe("tradução en-US (Fase 3)", () => {
     /Clínica Sagrada Esperança|Centro Óptico Angolano|Clínica Multiperfil|Ilha de Luanda/g,
     /Palco Universitário|Estudante Blindado|ASG Conexão Mulheres/g,
     /Agência de Protecção de Dados/g,
+    /Olhar Alinhado - Comércio & Prestação de Serviços, Lda\./g,
     /"Estrabismos: da teoria à prática, dos conceitos às suas operacionalizações"\. Arquivos Brasileiros de Oftalmologia/g,
     /"Estrabismo para Totós"\. Sociedade Portuguesa de Oftalmologia/g,
     /"Breves Considerações sobre o Estrabismo", Repositório Aberto da Universidade do Porto/g,
