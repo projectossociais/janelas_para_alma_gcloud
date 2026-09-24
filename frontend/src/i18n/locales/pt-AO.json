@@ -768,7 +768,7 @@
     "inicio": "Início",
     "sobreNos": "Sobre Nós",
     "apoiarACausa": "Apoiar a Causa",
-    "scannerDeEstrabismo": "Scanner de Estrabismo",
+    "scannerDeEstrabismo": "Triagem Ocular",
     "exerciciosVisuais": "Exercícios Visuais",
     "doacaoDeOculos": "Doação de Óculos"
   },
@@ -944,7 +944,7 @@
     "interfaceTecnologica": "Interface Tecnológica",
     "plataformaIntuitivaQueCentraliza": "Plataforma intuitiva que centraliza agendamentos, marketplace e comunicação para democratizar o acesso à saúde visual.",
     "tecnologiaInterfaceAppPlataforma": "tecnologia, interface, app, plataforma, agendamento, marketplace, comunicação, digital, mobile, acessibilidade",
-    "scannerDeEstrabismoIa": "Scanner de Estrabismo (IA)",
+    "scannerDeEstrabismoIa": "Triagem Ocular",
     "diagnosticoAssistidoPorInteligencia": "Diagnóstico assistido por inteligência artificial: carregue uma foto ou use a câmara e receba uma análise orientadora em segundos.",
     "scannerIaAiInteligencia": "scanner, ia, ai, inteligência artificial, diagnóstico, esotropia, exotropia, estrabismo, análise, foto, câmara",
     "sobreNos": "Sobre Nós",
@@ -1388,7 +1388,7 @@
     "alternaRapidamenteOFoco": "Alterna rapidamente o foco entre alvos próximos e distantes, treinando a convergência dinâmica."
   },
   "Scanner": {
-    "scannerDeEstrabismoIa": "Scanner de Estrabismo · IA",
+    "scannerDeEstrabismoIa": "Triagem Ocular",
     "areaDeDiagnosticoInteligente": "Área de Diagnóstico Inteligente",
     "utilizeACamaraPara": "Utilize a câmara para uma análise visual guiada, assistida por inteligência artificial. Recebe os resultados em segundos, de forma confidencial e segura.",
     "estaEUmaSimulacao": "Esta é uma simulação demonstrativa. Não substitui diagnóstico clínico.",
@@ -1398,7 +1398,7 @@
     "capturarFrente13": "Capturar Frente (1/3)",
     "capturarDireita23": "Capturar Direita (2/3)",
     "capturarEsquerda33": "Capturar Esquerda (3/3)",
-    "aEnviarImagensPara": "A enviar imagens para o Supabase… Não feche a página",
+    "aEnviarImagensPara": "A processar imagens de forma segura... Não feche a página",
     "aAnalisar": "A analisar…",
     "cancelar": "Cancelar",
     "ambienteMuitoEscuroPor": "Ambiente muito escuro. Por favor, vá para um local mais iluminado para garantir a precisão do diagnóstico.",

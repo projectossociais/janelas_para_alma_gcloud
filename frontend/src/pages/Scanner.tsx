@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Camera, ScanLine, ShieldCheck, Sparkles, Loader2, CameraOff, RefreshCw, AlertTriangle } from "lucide-react";
+import { Camera, ScanLine, ShieldCheck, Loader2, CameraOff, RefreshCw, AlertTriangle } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
@@ -349,8 +349,8 @@ const Scanner = () => {
       <main className="flex-1">
         <section className="container py-10 md:py-16">
           <div className="max-w-3xl mx-auto text-center animate-fade-in">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal/10 text-teal text-xs font-semibold tracking-wide uppercase mb-5">
-              <Sparkles className="w-3.5 h-3.5" />{" "}{tr("Scanner.scannerDeEstrabismoIa")}
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal/10 text-teal text-xs font-semibold mb-5">
+              {tr("Scanner.scannerDeEstrabismoIa")}
             </div>
             <h1 className="text-3xl md:text-5xl font-bold text-foreground leading-tight">
               {tr("Scanner.areaDeDiagnosticoInteligente")}
