@@ -33,7 +33,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { cn } from "@/lib/utils";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useCarteiraJogo } from "@/contexts/CarteiraJogoContext";
-import { useAudioJogo, useMusicaDeFundo } from "@/contexts/AudioJogoContext";
 import CarteiraJogo from "@/components/jogo/CarteiraJogo";
 import MercadoModal from "@/components/jogo/MercadoModal";
 import VidaExtraModal from "@/components/jogo/VidaExtraModal";
@@ -98,7 +97,6 @@ const JogoCuriosidades = () => {
   const { t: tr } = useTranslation();
   const { profile, loading: aCarregarPerfil } = useProfile();
   const { definirPerfil } = useCarteiraJogo();
-  const { tocarEfeito } = useAudioJogo();
   // As perguntas da API (base de dados) só existem em português: no site
   // inglês o jogo usa sempre a reserva local, traduzida em
   // perguntasOffline.en-US.ts. Não é "modo offline" -- o aviso não aparece.
@@ -115,6 +113,10 @@ const JogoCuriosidades = () => {
   const [pergunta, setPergunta] = useState<PerguntaJogoPublica | null>(null);
   const [aCarregarPergunta, setACarregarPergunta] = useState(true);
   const [emModoOffline, setEmModoOffline] = useState(false);
+  // Com sessão, alguma pergunta desta partida veio da reserva local (o
+  // servidor falhou)? Essas respostas o servidor nunca viu, por isso não
+  // entram no prémio -- que ele paga só pelos patamares que confirmou.
+  const [partidaComPerguntasOffline, setPartidaComPerguntasOffline] = useState(false);
 
   const [opcaoSelecionada, setOpcaoSelecionada] = useState<RespostaOpcaoJogo | null>(null);
   const [aValidar, setAValidar] = useState(false);
@@ -233,13 +235,11 @@ const JogoCuriosidades = () => {
       setPergunta(escolherPerguntaOfflineParaPatamar(novoPatamar));
       setPatamar(novoPatamar);
       setEmModoOffline(true);
+      setPartidaComPerguntasOffline(true);
     } finally {
       setACarregarPergunta(false);
     }
   }, [escolherPerguntaOfflineParaPatamar, usaServidor]);
-
-  // Música de fundo enquanto se joga (não no ecrã de apresentação nem no fim).
-  useMusicaDeFundo(!mostrarSplash && !jogoTerminado);
 
   // Arranque do jogo -- espera só por saber se há sessão (define o modo) e
   // corre em paralelo com o ecrã de apresentação, para a pergunta já estar
@@ -310,8 +310,12 @@ const JogoCuriosidades = () => {
     setRecompensaEnviada(true);
     // Sem servidor (convidado ou site inglês) não há partida nem prémio.
     if (!usaServidor) return;
-    const patamarAlcancado = jogoTerminado ? TOTAL_PATAMARES : Math.max(patamar - 1, 0);
-    setRecompensaLocal(calcularRecompensaCliente(patamarAlcancado));
+    // A estimativa local só enche o ecrã quando o servidor viu a partida
+    // toda -- com perguntas offline, mostraria um valor que ele não paga.
+    if (!partidaComPerguntasOffline) {
+      const patamarAlcancado = jogoTerminado ? TOTAL_PATAMARES : Math.max(patamar - 1, 0);
+      setRecompensaLocal(calcularRecompensaCliente(patamarAlcancado));
+    }
     jogoApi
       .terminarPartida()
       .then((terminada) => {
@@ -347,13 +351,6 @@ const JogoCuriosidades = () => {
     setMostrarModalErrado(true);
   };
 
-  // Todo o resultado novo (certo, errado, tempo esgotado) passa por aqui --
-  // um só sítio decide o som, para nunca tocar duas vezes nem esquecer um caso.
-  const definirResultado = (novo: ResultadoResposta) => {
-    setResultado(novo);
-    tocarEfeito(novo.correta ? "certo" : "errado");
-  };
-
   // Compara localmente contra a reserva de contingência -- só chamado
   // quando `emModoOffline` já garantiu que `pergunta.id` é um dos ids
   // "offline-N", nunca para uma pergunta vinda do servidor.
@@ -369,7 +366,7 @@ const JogoCuriosidades = () => {
   const aoTempoEsgotar = async () => {
     if (!pergunta || aValidar) return;
     if (emModoOffline) {
-      definirResultado({ ...validarLocalmente("A"), tempoEsgotado: true });
+      setResultado({ ...validarLocalmente("A"), tempoEsgotado: true });
       return;
     }
     setAValidar(true);
@@ -377,7 +374,7 @@ const JogoCuriosidades = () => {
       await inicioPartida.current;
       const resp = await jogoApi.tempoEsgotado(pergunta.id);
       setSequenciaAcertos(0);
-      definirResultado({
+      setResultado({
         correta: false,
         resposta_correta: resp.resposta_correta,
         explicacao: resp.explicacao,
@@ -395,7 +392,7 @@ const JogoCuriosidades = () => {
     if (!pergunta || resultado || aValidar || opcoesEliminadas.includes(opcao)) return;
     setOpcaoSelecionada(opcao);
     if (emModoOffline) {
-      definirResultado({ ...validarLocalmente(opcao), tempoEsgotado: false });
+      setResultado({ ...validarLocalmente(opcao), tempoEsgotado: false });
       return;
     }
     setAValidar(true);
@@ -407,15 +404,13 @@ const JogoCuriosidades = () => {
         // Os diamantes já estão na conta (creditados na validação) -- a barra
         // actualiza já, e o marco celebra-se por cima da pergunta seguinte.
         definirPerfil(resp.recompensa_sequencia.perfil);
-        // Depois do som de "certo", para não se atropelarem.
-        setTimeout(() => tocarEfeito("levelUp"), 450);
         setRecompensaSequencia({
           sequencia: resp.recompensa_sequencia.sequencia,
           diamantes: resp.recompensa_sequencia.diamantes,
           limiteDiarioAtingido: resp.recompensa_sequencia.limite_diario_atingido,
         });
       }
-      definirResultado({
+      setResultado({
         correta: resp.correta,
         resposta_correta: resp.resposta_correta,
         explicacao: resp.explicacao,
@@ -432,7 +427,6 @@ const JogoCuriosidades = () => {
 
   const usar5050 = async () => {
     if (!pergunta || ajudaCincoUsada || resultado || aValidar) return;
-    tocarEfeito("clique");
     setAjudaCincoUsada(true);
     if (emModoOffline) {
       const respostaCerta = obterPerguntaOfflinePorId(pergunta.id)?.resposta_correta ?? "A";
@@ -452,7 +446,6 @@ const JogoCuriosidades = () => {
 
   const usarOpiniaoPublico = async () => {
     if (!pergunta || ajudaPublicoUsada || resultado || aValidar) return;
-    tocarEfeito("clique");
     setAjudaPublicoUsada(true);
     if (emModoOffline) {
       const respostaCerta = obterPerguntaOfflinePorId(pergunta.id)?.resposta_correta ?? "A";
@@ -473,7 +466,6 @@ const JogoCuriosidades = () => {
 
   const trocarPergunta = () => {
     if (ajudaTrocarUsada || resultado || aValidar || aCarregarPergunta) return;
-    tocarEfeito("clique");
     setAjudaTrocarUsada(true);
     if (emModoOffline) {
       // Sem rede, troca dentro da própria reserva local do patamar (5
@@ -496,6 +488,7 @@ const JogoCuriosidades = () => {
     setAjudaPublicoUsada(false);
     setJogoTerminado(false);
     setRecompensaEnviada(false);
+    setPartidaComPerguntasOffline(false);
     setRecompensaLocal(null);
     setOfertaVidaExtra(null);
     setSequenciaAcertos(0);
@@ -559,10 +552,7 @@ const JogoCuriosidades = () => {
               </div>
               <EscadaPatamares patamarAtual={1} />
               <Button
-                onClick={() => {
-                  tocarEfeito("clique");
-                  setMostrarSplash(false);
-                }}
+                onClick={() => setMostrarSplash(false)}
                 size="lg"
                 className="w-full bg-teal text-teal-foreground hover:bg-teal/90"
               >
@@ -646,7 +636,7 @@ const JogoCuriosidades = () => {
                         {tr("JogoCuriosidades.completouOs15Patamares")}
                       </p>
                       <p className="text-3xl font-bold text-gold">{formatarKz(valorDoPatamar(TOTAL_PATAMARES))}</p>
-                      <RecompensaGanha recompensa={recompensaLocal} modo={modoRecompensa} />
+                      <RecompensaGanha recompensa={recompensaLocal} modo={modoRecompensa} comPerguntasOffline={partidaComPerguntasOffline} />
                       <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
                         <Button onClick={partilhar} variant="outline" className="border-teal text-teal hover:bg-teal/10">
                           <Share2 className="w-4 h-4" />
@@ -768,10 +758,7 @@ const JogoCuriosidades = () => {
                         {usaServidor && (
                           <Button
                             variant="outline"
-                            onClick={() => {
-                              tocarEfeito("clique");
-                              setMostrarMercado(true);
-                            }}
+                            onClick={() => setMostrarMercado(true)}
                             disabled={!!resultado || aValidar || emModoOffline}
                             className="border-gold/60 text-gold hover:bg-gold/10"
                           >
@@ -836,7 +823,7 @@ const JogoCuriosidades = () => {
               <p className="text-sm text-foreground">
                 <Trans i18nKey="JogoCuriosidades.chegouAoPatamarDe" values={{ patamar, TOTAL_PATAMARES }} />
               </p>
-              <RecompensaGanha recompensa={recompensaLocal} modo={modoRecompensa} />
+              <RecompensaGanha recompensa={recompensaLocal} modo={modoRecompensa} comPerguntasOffline={partidaComPerguntasOffline} />
             </div>
           )}
 
@@ -917,9 +904,10 @@ interface RecompensaGanhaProps {
   // "servidor": prémio pago pela API. "convidado"/"treino": reserva local,
   // sem prémio nenhum -- só se explica porquê.
   modo: "servidor" | "convidado" | "treino";
+  comPerguntasOffline?: boolean;
 }
 
-const RecompensaGanha = ({ recompensa, modo }: RecompensaGanhaProps) => {
+const RecompensaGanha = ({ recompensa, modo, comPerguntasOffline = false }: RecompensaGanhaProps) => {
   const { t } = useTranslation();
   if (modo !== "servidor") {
     return (
@@ -949,6 +937,9 @@ const RecompensaGanha = ({ recompensa, modo }: RecompensaGanhaProps) => {
           <Gem className="w-4 h-4" />+{recompensa.diamantes}
         </span>
       </div>
+      {comPerguntasOffline && (
+        <p className="text-xs text-muted-foreground text-center">{t("JogoCuriosidades.respostasOfflineNaoContam")}</p>
+      )}
     </div>
   );
 };

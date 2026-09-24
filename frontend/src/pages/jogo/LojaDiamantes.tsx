@@ -70,7 +70,14 @@ const LojaDiamantes = () => {
     } catch (err) {
       // Nunca mostrar sucesso a partir daqui (CLAUDE.md secção 6) -- o
       // saldo só muda com a resposta da API, acima.
-      toast.error(mensagemDeErroApi(err, t("LojaDiamantes.naoFoiPossivelComprar")));
+      // 501: pagamentos reais ainda não existem (produção) -- não é uma
+      // avaria, é "em breve". Duck-typing no `status` (CLAUDE.md secção 6).
+      if ((err as { status?: unknown } | null)?.status === 501) {
+        toast.info(t("LojaDiamantes.pagamentosEmBreve"));
+        setPacoteEscolhido(null);
+      } else {
+        toast.error(mensagemDeErroApi(err, t("LojaDiamantes.naoFoiPossivelComprar")));
+      }
     } finally {
       setAComprar(false);
     }
@@ -156,7 +163,6 @@ const LojaDiamantes = () => {
                       {profile ? (
                         <Button
                           className="w-full mt-auto bg-teal text-teal-foreground hover:bg-teal/90"
-                          disabled={!compraDisponivel}
                           onClick={() => setPacoteEscolhido(pacote)}
                           aria-label={t("LojaDiamantes.comprarPacote", {
                             quantidade: pacote.total_diamantes,
@@ -194,7 +200,9 @@ const LojaDiamantes = () => {
                 })}
             </DialogDescription>
           </DialogHeader>
-          <p className="text-xs text-muted-foreground">{t("LojaDiamantes.avisoPagamentoSimulado")}</p>
+          {compraDisponivel && (
+            <p className="text-xs text-muted-foreground">{t("LojaDiamantes.avisoPagamentoSimulado")}</p>
+          )}
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setPacoteEscolhido(null)} disabled={aComprar}>
               {t("LojaDiamantes.cancelar")}
@@ -205,7 +213,7 @@ const LojaDiamantes = () => {
               className="bg-teal text-teal-foreground hover:bg-teal/90"
             >
               {aComprar && <Loader2 className="w-4 h-4 animate-spin" />}
-              {t("LojaDiamantes.pagarSimulado")}
+              {compraDisponivel ? t("LojaDiamantes.pagarSimulado") : t("LojaDiamantes.pagar")}
             </Button>
           </DialogFooter>
         </DialogContent>

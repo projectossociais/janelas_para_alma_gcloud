@@ -9,8 +9,9 @@ Pagamento ainda **simulado**: não há integração real (nem transferência com
 comprovativo como no Premium, nem gateway). Enquanto for assim, a compra só
 credita diamantes quando `pagamentos_simulados` está ligado -- em
 desenvolvimento (`JOGO_PAGAMENTOS_SIMULADOS=true` no docker-compose). Em
-produção fica desligado por omissão e a compra é recusada: sem isto, um
-botão "Comprar" simulado seria diamantes grátis para qualquer conta.
+produção fica desligado por omissão e a compra é recusada (o router devolve
+501): sem isto, um botão "Comprar" simulado seria diamantes grátis para
+qualquer conta. O catálogo (`listar_pacotes`) nunca depende desta trava.
 
 Preços em Kz aprovados pelo dono do projecto em 2026-09-24. Qualquer
 alteração exige de novo confirmação humana (CLAUDE.md secção 10).

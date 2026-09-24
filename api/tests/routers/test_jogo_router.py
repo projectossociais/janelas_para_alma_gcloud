@@ -256,12 +256,25 @@ def test_comprar_pacote_inexistente_devolve_404(loja_simulada) -> None:
     assert resposta.status_code == 404
 
 
-def test_comprar_sem_pagamentos_simulados_devolve_503_sem_creditar(loja_sem_pagamentos) -> None:
+def test_comprar_sem_pagamentos_simulados_devolve_501_sem_creditar(loja_sem_pagamentos) -> None:
+    # 501 (ainda não existe), não 503 (avaria) -- o frontend distingue os
+    # dois para mostrar "disponíveis em breve" em vez de um erro grave.
     c, token, repo_perfil = loja_sem_pagamentos
     c.cookies.set("access_token", token)
     resposta = c.post("/jogo/loja/compras", json={"pacote_id": "grande"})
-    assert resposta.status_code == 503
+    assert resposta.status_code == 501
+    assert resposta.json()["detail"] == "pagamentos reais disponíveis em breve"
     assert repo_perfil.obter_ou_criar("id-comum").diamantes == 0
+
+
+def test_catalogo_abre_com_sessao_mesmo_sem_pagamentos(loja_sem_pagamentos) -> None:
+    # A trava é só na compra: com sessão e pagamentos desligados (produção),
+    # a vitrine continua a carregar.
+    c, token, _ = loja_sem_pagamentos
+    c.cookies.set("access_token", token)
+    resposta = c.get("/jogo/loja/pacotes")
+    assert resposta.status_code == 200
+    assert len(resposta.json()["pacotes"]) == len(PACOTES_DIAMANTES)
 
 
 

@@ -537,6 +537,34 @@ class TestTerminar:
         assert terminada.perfil.moedas == 300 and terminada.perfil.partidas_jogadas == 1
         assert (terminada.resposta_correta, terminada.explicacao) == ("C", "explicação")
 
+    @pytest.mark.parametrize("tempo_esgotado", [False, True])
+    def test_derrota_no_patamar_3_paga_os_patamares_1_e_2(self, servico, tempo_esgotado) -> None:
+        # Regressão (2026-09-24): perder não é "tudo ou nada" -- os patamares
+        # já superados pagam-se sempre, errando ou deixando o tempo esgotar.
+        _acertar(servico, 2)
+        pergunta = servico.nova_pergunta("u-1").pergunta
+        if tempo_esgotado:
+            servico.esgotar_tempo("u-1", pergunta.id)
+        else:
+            servico.responder("u-1", pergunta.id, "A")
+
+        terminada = servico.terminar_partida("u-1")
+
+        assert terminada.patamar_superado == 2
+        assert terminada.moedas_ganhas == 2 * 50
+        assert terminada.perfil.moedas == 100
+
+    def test_derrota_depois_de_usar_a_vida_extra_paga_os_patamares(self, servico, perfis) -> None:
+        perfis.creditar_diamantes("u-1", 100)
+        _acertar(servico, 2)
+        _errar(servico)
+        usada = servico.usar_vida_extra("u-1")
+        servico.responder("u-1", usada.pergunta_id, "B")  # erra outra vez e desiste
+
+        terminada = servico.terminar_partida("u-1")
+
+        assert (terminada.patamar_superado, terminada.moedas_ganhas) == (2, 100)
+
     def test_vitoria_paga_o_premio_maximo(self, servico) -> None:
         _acertar(servico, 15)
         terminada = servico.terminar_partida("u-1")

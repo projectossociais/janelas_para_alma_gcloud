@@ -39,13 +39,10 @@ vi.mock("sonner", () => ({ toast: { error: (...a: unknown[]) => toastError(...a)
 
 import PerfilJogador from "./PerfilJogador";
 import { CarteiraJogoProvider } from "@/contexts/CarteiraJogoContext";
-import { AudioJogoProvider } from "@/contexts/AudioJogoContext";
 
 const Envoltorio = ({ children }: { children: ReactNode }) => (
   <MemoryRouter>
-    <CarteiraJogoProvider>
-      <AudioJogoProvider>{children}</AudioJogoProvider>
-    </CarteiraJogoProvider>
+    <CarteiraJogoProvider>{children}</CarteiraJogoProvider>
   </MemoryRouter>
 );
 

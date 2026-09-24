@@ -28,19 +28,21 @@ vi.mock("@/contexts/ProfileContext", () => ({ useProfile: () => ({ profile: mock
 
 const toastError = vi.fn();
 const toastSuccess = vi.fn();
+const toastInfo = vi.fn();
 vi.mock("sonner", () => ({
-  toast: { error: (...a: unknown[]) => toastError(...a), success: (...a: unknown[]) => toastSuccess(...a) },
+  toast: {
+    error: (...a: unknown[]) => toastError(...a),
+    success: (...a: unknown[]) => toastSuccess(...a),
+    info: (...a: unknown[]) => toastInfo(...a),
+  },
 }));
 
 import LojaDiamantes from "./LojaDiamantes";
 import { CarteiraJogoProvider } from "@/contexts/CarteiraJogoContext";
-import { AudioJogoProvider } from "@/contexts/AudioJogoContext";
 
 const Envoltorio = ({ children }: { children: ReactNode }) => (
   <MemoryRouter>
-    <CarteiraJogoProvider>
-      <AudioJogoProvider>{children}</AudioJogoProvider>
-    </CarteiraJogoProvider>
+    <CarteiraJogoProvider>{children}</CarteiraJogoProvider>
   </MemoryRouter>
 );
 
@@ -59,6 +61,7 @@ describe("LojaDiamantes", () => {
     comprarPacoteDiamantes.mockReset();
     toastError.mockReset();
     toastSuccess.mockReset();
+    toastInfo.mockReset();
     mockProfile = { id: "u1", nome_completo: "Ana", email: "ana@example.com", avatar_url: null };
     obterPerfil.mockResolvedValue(PERFIL);
   });
@@ -102,12 +105,31 @@ describe("LojaDiamantes", () => {
     expect(screen.getByRole("link", { name: /^Diamantes/, hidden: true })).toHaveTextContent("10");
   });
 
-  it("sem pagamento disponível, os botões ficam desactivados e aparece o aviso", async () => {
+  it("sem pagamento disponível, a vitrine abre com os pacotes e o aviso 'em breve'", async () => {
     obterLojaDiamantes.mockResolvedValue({ pacotes: PACOTES, pagamento_simulado: false });
     render(<LojaDiamantes />, { wrapper: Envoltorio });
 
     expect(await screen.findByText(/disponível em breve/i)).toBeInTheDocument();
-    for (const b of screen.getAllByRole("button", { name: /diamantes por/ })) expect(b).toBeDisabled();
+    expect(screen.getAllByRole("button", { name: /diamantes por/ })).toHaveLength(3);
+    expect(screen.queryByText("Não foi possível carregar a loja.")).not.toBeInTheDocument();
+  });
+
+  it("comprar com pagamentos reais ainda indisponíveis (501) mostra 'em breve', nunca erro nem sucesso", async () => {
+    obterLojaDiamantes.mockResolvedValue({ pacotes: PACOTES, pagamento_simulado: false });
+    comprarPacoteDiamantes.mockRejectedValue(
+      Object.assign(new Error("pagamentos reais disponíveis em breve"), { status: 501 })
+    );
+    render(<LojaDiamantes />, { wrapper: Envoltorio });
+
+    await userEvent.click(await screen.findByRole("button", { name: /Comprar 50 diamantes/ }));
+    const dialogo = await screen.findByRole("dialog");
+    expect(within(dialogo).queryByText(/Pagamento simulado/)).not.toBeInTheDocument();
+    await userEvent.click(within(dialogo).getByRole("button", { name: "Pagar" }));
+
+    await waitFor(() => expect(toastInfo).toHaveBeenCalledWith("Pagamentos reais disponíveis em breve."));
+    expect(toastError).not.toHaveBeenCalled();
+    expect(toastSuccess).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   });
 
   it("sem sessão, pede para entrar em vez de comprar", async () => {
