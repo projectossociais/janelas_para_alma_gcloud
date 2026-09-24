@@ -129,6 +129,32 @@ export function caminhoNoIdioma(
   return foraDoMapa === "manter" ? url : caminhoDe("inicio", destino);
 }
 
+/**
+ * Chave do mapa da página em `pathname` (PT, alias PT ou EN), ou `null` para
+ * páginas fora do mapa (admin, 404). É o que liga cada página ao seu título e
+ * descrição (`seo.<chave>Titulo` / `seo.<chave>Descricao`).
+ */
+export function chaveDaRota(pathname: string): ChaveRota | null {
+  const candidatas = eRotaInglesa(pathname)
+    ? ROTAS_BILINGUES.map((r) => ({ chave: r.chave, padrao: r.en }))
+    : ENTRADAS_PT.map((r) => ({ chave: r.chave, padrao: r.pt }));
+  return candidatas.find(({ padrao }) => matchPath({ path: padrao, end: true }, pathname))?.chave ?? null;
+}
+
+/**
+ * Título e descrição da página em `pathname`, no idioma actual. Cada página do
+ * mapa tem os seus (`seo.<chave>Titulo` / `seo.<chave>Descricao`); a página
+ * inicial e as páginas fora do mapa (admin, 404) usam os do site (`meta.*`).
+ */
+export function tituloEDescricao(pathname: string): { titulo: string; descricao: string } {
+  const chave = chaveDaRota(pathname);
+  if (!chave || chave === "inicio") return { titulo: i18n.t("meta.titulo"), descricao: i18n.t("meta.descricao") };
+  return {
+    titulo: i18n.t("seo.modeloTitulo", { pagina: i18n.t(`seo.${chave}Titulo`) }),
+    descricao: i18n.t(`seo.${chave}Descricao`),
+  };
+}
+
 export const caminhoEmIngles = (url: string) => caminhoNoIdioma(url, IDIOMA_EN);
 export const caminhoEmPortugues = (url: string) => caminhoNoIdioma(url, IDIOMA_PT);
 

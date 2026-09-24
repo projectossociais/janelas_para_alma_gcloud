@@ -125,7 +125,21 @@ describe("com VITE_ENABLE_EN=true", () => {
       "en-US https://www.janelasparaalma.com/en/faq",
       "x-default https://www.janelasparaalma.com/faq",
     ]);
-    await waitFor(() => expect(document.title).toBe("Janelas para a Alma | Visual Inclusion and the Fight Against Strabismus"));
+    await waitFor(() => expect(document.title).toBe("Frequently Asked Questions | Janelas para a Alma"));
+  });
+
+  it("cada página escreve o seu título e a sua descrição em inglês", async () => {
+    const meta = document.createElement("meta");
+    meta.setAttribute("name", "description");
+    document.head.appendChild(meta);
+    abrir("/en/donate");
+    await screen.findByRole("heading", { name: "Make a Difference" });
+    await waitFor(() => expect(document.title).toBe("Support the Cause | Janelas para a Alma"));
+    expect(meta).toHaveAttribute(
+      "content",
+      "Make a difference: donate essential supplies for our patients or support Janelas para a Alma financially.",
+    );
+    meta.remove();
   });
 
   it("o jogo não existe em inglês: /en/trivia-game dá 404 com noindex, e os links para o jogo desaparecem", async () => {

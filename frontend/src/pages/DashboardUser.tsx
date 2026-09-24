@@ -22,6 +22,7 @@ const DashboardUser = () => {
   const { user } = useAuth();
   const { profile } = useProfile();
   const [scanCount, setScanCount] = useState(0);
+  const primeiroNome = user?.name?.split(" ")[0];
 
   const temAcessoPremium = !!profile && (profile.premium_ativo || profile.papel === "admin");
   const exerciciosDisponiveis =
@@ -40,7 +41,7 @@ const DashboardUser = () => {
       <Navbar />
       <main className="flex-1 container pt-28 pb-16 space-y-8">
         <div>
-          <h1 className="text-3xl font-bold">{t("DashboardUser.ola")}{" "}{user?.name?.split(" ")[0] || "utilizador"} 👋</h1>
+          <h1 className="text-3xl font-bold">{primeiroNome ? t("DashboardUser.saudacao", { nome: primeiroNome }) : t("DashboardUser.saudacaoSemNome")} 👋</h1>
           <p className="text-muted-foreground">{t("DashboardUser.oSeuEspacoDe")}</p>
         </div>
 

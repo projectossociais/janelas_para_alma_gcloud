@@ -3,7 +3,12 @@ import { useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import i18n from "./index";
 import { idiomaDaRota, inglesAtivo } from "./idiomas";
-import { metadadosSeo } from "./rotas";
+import { metadadosSeo, tituloEDescricao } from "./rotas";
+
+// Metadados que já existem no index.html (para crawlers sem JavaScript):
+// actualizam-se esses, em vez de o Helmet acrescentar duplicados.
+const META_DESCRICAO = ['meta[name="description"]', 'meta[property="og:description"]', 'meta[name="twitter:description"]'];
+const META_TITULO = ['meta[property="og:title"]', 'meta[name="twitter:title"]'];
 
 /**
  * Põe o i18next e o documento no idioma da rota actual.
@@ -14,25 +19,25 @@ import { metadadosSeo } from "./rotas";
  * texto do idioma anterior -- incluindo dados ao nível do módulo, que são lidos
  * com `i18n.t` no momento do render.
  *
- * Também escreve o <head> de SEO: `<html lang>`, título, descrição, canonical
- * e hreflang (ver `metadadosSeo`).
+ * Também escreve o <head> de SEO: `<html lang>`, título e descrição da página,
+ * canonical e hreflang (ver `metadadosSeo`).
  */
 const IdiomaDaRota = ({ children }: { children: ReactNode }) => {
   const { pathname } = useLocation();
   const idioma = idiomaDaRota(pathname);
   if (i18n.language !== idioma) void i18n.changeLanguage(idioma);
   const { canonical, alternativas } = metadadosSeo(pathname, inglesAtivo());
+  const { titulo, descricao } = tituloEDescricao(pathname);
 
-  // A descrição já existe no index.html (para crawlers sem JavaScript):
-  // actualiza-se essa, em vez de o Helmet acrescentar uma segunda.
   useEffect(() => {
-    document.querySelector('meta[name="description"]')?.setAttribute("content", i18n.t("meta.descricao"));
-  }, [idioma]);
+    META_DESCRICAO.forEach((s) => document.querySelector(s)?.setAttribute("content", descricao));
+    META_TITULO.forEach((s) => document.querySelector(s)?.setAttribute("content", titulo));
+  }, [titulo, descricao]);
 
   return (
     <>
       <Helmet htmlAttributes={{ lang: idioma }}>
-        <title>{i18n.t("meta.titulo")}</title>
+        <title>{titulo}</title>
         {canonical && <link rel="canonical" href={canonical} />}
         {alternativas.map((a) => (
           <link key={a.hreflang} rel="alternate" hrefLang={a.hreflang} href={a.href} />

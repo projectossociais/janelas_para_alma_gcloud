@@ -17,6 +17,7 @@ const NotFound = () => {
       {/* O vercel.json serve o index.html (200) para qualquer URL: sem isto, um
           URL inexistente seria indexável como página ("soft 404"). */}
       <Helmet>
+        <title>{t("seo.modeloTitulo", { pagina: t("seo.naoEncontradaTitulo") })}</title>
         <meta name="robots" content="noindex" />
       </Helmet>
       <div className="text-center">

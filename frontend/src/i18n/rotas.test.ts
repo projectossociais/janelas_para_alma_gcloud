@@ -1,4 +1,6 @@
 import i18n from "./index";
+import ptAO from "./locales/pt-AO.json";
+import enUS from "./locales/en-US.json";
 import {
   ALIASES_PT,
   ROTAS,
@@ -6,9 +8,11 @@ import {
   SITE,
   caminhoEmIngles,
   caminhoEmPortugues,
+  chaveDaRota,
   disponivelNoIdiomaActual,
   localizar,
   metadadosSeo,
+  tituloEDescricao,
 } from "./rotas";
 
 describe("mapa de rotas PT <-> EN", () => {
@@ -176,5 +180,49 @@ describe("metadadosSeo (canonical + hreflang)", () => {
     expect(metadadosSeo("/admin/utilizadores", true)).toEqual({ canonical: null, alternativas: [] });
     expect(metadadosSeo("/nao-existe", true)).toEqual({ canonical: null, alternativas: [] });
     expect(metadadosSeo("/en/trivia-game", true)).toEqual({ canonical: null, alternativas: [] });
+  });
+});
+
+describe("título e descrição por página", () => {
+  afterEach(() => i18n.changeLanguage("pt-AO"));
+
+  it("chaveDaRota reconhece caminhos PT, aliases PT e caminhos EN (com parâmetros)", () => {
+    expect(chaveDaRota("/faq")).toBe("faq");
+    expect(chaveDaRota("/en/faq")).toBe("faq");
+    expect(chaveDaRota("/auth")).toBe("entrar");
+    expect(chaveDaRota("/en/publications/campanha-gamek")).toBe("publicacaoDetalhe");
+    expect(chaveDaRota("/admin")).toBeNull();
+    expect(chaveDaRota("/en/trivia-game")).toBeNull();
+  });
+
+  it("todas as páginas com versão inglesa (menos a inicial) têm título e descrição nos dois idiomas", () => {
+    for (const dic of [ptAO, enUS] as { seo: Record<string, string> }[]) {
+      const emFalta = ROTAS_BILINGUES.filter((r) => r.chave !== "inicio").flatMap((r) =>
+        [`${r.chave}Titulo`, `${r.chave}Descricao`].filter((k) => !dic.seo[k]?.trim()),
+      );
+      expect(emFalta).toEqual([]);
+    }
+  });
+
+  it("cada página tem um título próprio, diferente do de todas as outras", () => {
+    for (const idioma of ["pt-AO", "en-US"]) {
+      void i18n.changeLanguage(idioma);
+      const titulos = ROTAS_BILINGUES.map((r) => tituloEDescricao(idioma === "en-US" ? r.en.replace(":slug", "x") : r.pt.replace(":slug", "x")).titulo);
+      expect(new Set(titulos).size).toBe(titulos.length);
+    }
+  });
+
+  it("em inglês o título e a descrição saem em inglês, com o nome do site", () => {
+    void i18n.changeLanguage("en-US");
+    expect(tituloEDescricao("/en/faq")).toEqual({
+      titulo: "Frequently Asked Questions | Janelas para a Alma",
+      descricao: "Quick answers about privacy, health data and using the Janelas para a Alma platform.",
+    });
+    expect(tituloEDescricao("/en").titulo).toBe("Janelas para a Alma | Visual Inclusion and the Fight Against Strabismus");
+  });
+
+  it("em português, páginas fora do mapa (admin) ficam com o título do site", () => {
+    expect(tituloEDescricao("/admin").titulo).toBe("Janelas Para a Alma | Inclusão Visual e Combate ao Estrabismo");
+    expect(tituloEDescricao("/faq").titulo).toBe("Perguntas Frequentes | Janelas Para a Alma");
   });
 });
