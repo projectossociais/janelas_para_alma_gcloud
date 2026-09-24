@@ -5,7 +5,8 @@ import { MemoryRouter } from "react-router-dom";
 
 const obterPerguntaAleatoria = vi.fn();
 const validarResposta = vi.fn();
-const registarRecompensa = vi.fn();
+const iniciarPartida = vi.fn();
+const terminarPartida = vi.fn();
 const cinquentaCinquenta = vi.fn();
 const opiniaoPublico = vi.fn();
 const tempoEsgotado = vi.fn();
@@ -13,7 +14,8 @@ vi.mock("@/lib/apiClient", () => ({
   jogoApi: {
     obterPerguntaAleatoria: (...a: unknown[]) => obterPerguntaAleatoria(...a),
     validarResposta: (...a: unknown[]) => validarResposta(...a),
-    registarRecompensa: (...a: unknown[]) => registarRecompensa(...a),
+    iniciarPartida: (...a: unknown[]) => iniciarPartida(...a),
+    terminarPartida: (...a: unknown[]) => terminarPartida(...a),
     cinquentaCinquenta: (...a: unknown[]) => cinquentaCinquenta(...a),
     opiniaoPublico: (...a: unknown[]) => opiniaoPublico(...a),
     tempoEsgotado: (...a: unknown[]) => tempoEsgotado(...a),
@@ -28,6 +30,37 @@ vi.mock("@/components/Navbar", () => ({ default: () => null }));
 vi.mock("@/components/Footer", () => ({ default: () => null }));
 vi.mock("@/components/BackButton", () => ({ default: () => null }));
 vi.mock("@/components/jogo/CarteiraJogo", () => ({ default: () => null }));
+
+// O modal real é testado em VidaExtraModal.test.tsx -- aqui simulam-se as
+// duas decisões do jogador.
+vi.mock("@/components/jogo/VidaExtraModal", () => ({
+  default: (props: {
+    oferta: { custo: number; restantes: number } | null;
+    onVidaUsada: (v: unknown) => void;
+    onEncerrar: () => void;
+  }) =>
+    props.oferta ? (
+      <div data-testid="modal-vida-extra">
+        <span>{`custo ${props.oferta.custo}, restantes ${props.oferta.restantes}`}</span>
+        <button
+          type="button"
+          onClick={() =>
+            props.onVidaUsada({
+              perfil: { moedas: 0, diamantes: 30, partidas_jogadas: 0, patamar_maximo_alcancado: 0 },
+              pergunta_id: "pergunta-1",
+              opcao_falhada: "A",
+              vidas_restantes: 1,
+            })
+          }
+        >
+          simular usar vida
+        </button>
+        <button type="button" onClick={props.onEncerrar}>
+          simular encerrar
+        </button>
+      </div>
+    ) : null,
+}));
 
 // O modal real é testado em MercadoModal.test.tsx -- aqui só interessa o que
 // o jogo faz com uma ajuda comprada.
@@ -77,6 +110,15 @@ vi.mock("sonner", () => ({
 import JogoCuriosidades from "./JogoCuriosidades";
 import i18n from "@/i18n";
 
+const TERMINADA = {
+  perfil: { moedas: 0, diamantes: 0, partidas_jogadas: 1, patamar_maximo_alcancado: 0 },
+  patamar_superado: 0,
+  moedas_ganhas: 0,
+  diamantes_ganhos: 0,
+  resposta_correta: null,
+  explicacao: null,
+};
+
 const PERGUNTA_1 = {
   id: "pergunta-1",
   texto_pergunta: "Qual destas é a opção certa?",
@@ -100,9 +142,9 @@ describe("JogoCuriosidades", () => {
     opiniaoPublico.mockReset();
     tempoEsgotado.mockReset();
     mercadoProps.mockReset();
-    registarRecompensa.mockReset();
+    iniciarPartida.mockReset().mockResolvedValue({ estado: "em_curso" });
+    terminarPartida.mockReset().mockResolvedValue(TERMINADA);
     definirPerfil.mockReset();
-    registarRecompensa.mockResolvedValue({ moedas: 0, diamantes: 0, partidas_jogadas: 1, patamar_maximo_alcancado: 0 });
     toastError.mockReset();
     toastSuccess.mockReset();
     toastInfo.mockReset();
@@ -297,25 +339,127 @@ describe("JogoCuriosidades", () => {
     expect(screen.getByText("Certa B").closest("button")).toHaveTextContent("Kota Beto");
   });
 
-  it("com sessão iniciada, sincroniza a recompensa da derrota com o servidor", async () => {
+  it("com sessão, inicia a partida no servidor ao abrir o jogo; sem sessão, não", async () => {
     mockProfile = { id: "utilizador-1" };
     obterPerguntaAleatoria.mockResolvedValue(PERGUNTA_1);
-    validarResposta.mockResolvedValue({ correta: false, resposta_correta: "B", explicacao: null });
+    const { unmount } = render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+    await waitFor(() => expect(iniciarPartida).toHaveBeenCalledTimes(1));
+    unmount();
+
+    iniciarPartida.mockClear();
+    mockProfile = null;
+    render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+    await comecarJogo();
+    await screen.findByText(PERGUNTA_1.texto_pergunta);
+    expect(iniciarPartida).not.toHaveBeenCalled();
+  });
+
+  it("uma resposta espera que o início da partida chegue ao servidor", async () => {
+    mockProfile = { id: "utilizador-1" };
+    let concluirInicio: (v: unknown) => void = () => {};
+    iniciarPartida.mockReturnValue(new Promise((r) => (concluirInicio = r)));
+    obterPerguntaAleatoria.mockResolvedValue(PERGUNTA_1);
+    validarResposta.mockResolvedValue({ correta: true, resposta_correta: "B", explicacao: null });
     render(<JogoCuriosidades />, { wrapper: MemoryRouter });
     await comecarJogo();
     await screen.findByText(PERGUNTA_1.texto_pergunta);
 
-    await userEvent.click(screen.getByText("Errada A"));
+    await userEvent.click(screen.getByText("Certa B"));
+    expect(validarResposta).not.toHaveBeenCalled();
 
-    // Sem argumento -- o servidor é que decide quanto vale, a partir do
-    // progresso que rastreou (ver JogoService), nunca de um patamar
-    // mandado pelo cliente.
-    await waitFor(() => expect(registarRecompensa).toHaveBeenCalledWith());
-    // O saldo devolvido pelo servidor actualiza logo a barra da carteira.
-    await waitFor(() =>
-      expect(definirPerfil).toHaveBeenCalledWith(expect.objectContaining({ partidas_jogadas: 1 }))
-    );
-    expect(await screen.findByText("Prémio ganho")).toBeInTheDocument();
+    concluirInicio({ estado: "em_curso" });
+    await waitFor(() => expect(validarResposta).toHaveBeenCalledWith("pergunta-1", "B"));
+  });
+
+  describe("Vida Extra", () => {
+    const ERRO_COM_OFERTA = {
+      correta: false,
+      resposta_correta: null,
+      explicacao: null,
+      vida_extra: { custo: 20, restantes: 2 },
+    };
+
+    it("ao errar com sessão, abre a Vida Extra em vez do ecrã final, sem revelar a resposta", async () => {
+      mockProfile = { id: "utilizador-1" };
+      obterPerguntaAleatoria.mockResolvedValue(PERGUNTA_1);
+      validarResposta.mockResolvedValue(ERRO_COM_OFERTA);
+      render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+      await comecarJogo();
+      await screen.findByText(PERGUNTA_1.texto_pergunta);
+
+      await userEvent.click(screen.getByText("Errada A"));
+
+      expect(await screen.findByTestId("modal-vida-extra")).toHaveTextContent("custo 20, restantes 2");
+      expect(screen.queryByText("Essa não era a resposta certa")).not.toBeInTheDocument();
+      expect(terminarPartida).not.toHaveBeenCalled();
+      // Nenhuma opção aparece como a certa.
+      expect(screen.getByText("Certa B").closest("button")).not.toHaveClass("border-green");
+    });
+
+    it("usar a vida extra: mesma pergunta, sem a opção falhada, e continua a jogar", async () => {
+      mockProfile = { id: "utilizador-1" };
+      obterPerguntaAleatoria.mockResolvedValue(PERGUNTA_1);
+      validarResposta.mockResolvedValueOnce(ERRO_COM_OFERTA).mockResolvedValueOnce({
+        correta: true,
+        resposta_correta: "B",
+        explicacao: null,
+      });
+      render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+      await comecarJogo();
+      await screen.findByText(PERGUNTA_1.texto_pergunta);
+      await userEvent.click(screen.getByText("Errada A"));
+
+      await userEvent.click(await screen.findByRole("button", { name: "simular usar vida" }));
+
+      await waitFor(() => expect(screen.queryByTestId("modal-vida-extra")).not.toBeInTheDocument());
+      expect(screen.getByText("Errada A").closest("button")).toBeDisabled();
+      expect(screen.getByText("Certa B").closest("button")).toBeEnabled();
+      expect(screen.getByRole("timer")).toHaveTextContent("45");
+
+      await userEvent.click(screen.getByText("Certa B"));
+      await waitFor(() => expect(validarResposta).toHaveBeenLastCalledWith("pergunta-1", "B"));
+      expect(terminarPartida).not.toHaveBeenCalled();
+    });
+
+    it("encerrar: termina a partida no servidor, revela a resposta e mostra o prémio pago", async () => {
+      mockProfile = { id: "utilizador-1" };
+      obterPerguntaAleatoria.mockResolvedValue(PERGUNTA_1);
+      validarResposta.mockResolvedValue(ERRO_COM_OFERTA);
+      terminarPartida.mockResolvedValue({
+        ...TERMINADA,
+        perfil: { ...TERMINADA.perfil, moedas: 150 },
+        patamar_superado: 3,
+        moedas_ganhas: 150,
+        resposta_correta: "B",
+        explicacao: "A explicação da certa.",
+      });
+      render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+      await comecarJogo();
+      await screen.findByText(PERGUNTA_1.texto_pergunta);
+      await userEvent.click(screen.getByText("Errada A"));
+
+      await userEvent.click(await screen.findByRole("button", { name: "simular encerrar" }));
+
+      await waitFor(() => expect(terminarPartida).toHaveBeenCalledTimes(1));
+      expect(await screen.findByText("A explicação da certa.")).toBeInTheDocument();
+      expect(screen.getByText("+150")).toBeInTheDocument();
+      expect(definirPerfil).toHaveBeenCalledWith(expect.objectContaining({ moedas: 150 }));
+    });
+
+    it("sem vidas restantes, vai directo ao ecrã final", async () => {
+      mockProfile = { id: "utilizador-1" };
+      obterPerguntaAleatoria.mockResolvedValue(PERGUNTA_1);
+      validarResposta.mockResolvedValue({ ...ERRO_COM_OFERTA, vida_extra: { custo: 20, restantes: 0 } });
+      terminarPartida.mockResolvedValue({ ...TERMINADA, resposta_correta: "B", explicacao: "Porque sim." });
+      render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+      await comecarJogo();
+      await screen.findByText(PERGUNTA_1.texto_pergunta);
+
+      await userEvent.click(screen.getByText("Errada A"));
+
+      expect(await screen.findByText("Porque sim.")).toBeInTheDocument();
+      expect(screen.queryByTestId("modal-vida-extra")).not.toBeInTheDocument();
+    });
   });
 
   it("sem sessão, mostra o prémio localmente mas não tenta sincronizar", async () => {
@@ -330,7 +474,7 @@ describe("JogoCuriosidades", () => {
 
     expect(await screen.findByText("Prémio ganho")).toBeInTheDocument();
     expect(screen.getByText(/Inicie sessão para guardar/i)).toBeInTheDocument();
-    expect(registarRecompensa).not.toHaveBeenCalled();
+    expect(terminarPartida).not.toHaveBeenCalled();
   });
 
   describe("Modo de Contingência (offline)", () => {

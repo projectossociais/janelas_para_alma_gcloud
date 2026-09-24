@@ -7,14 +7,19 @@ from app.core.dependencies import obter_auth_service
 from app.core.security import criar_access_token, hash_password
 from app.main import app
 from app.repositories.jogo_repository import PerguntaJogoRegisto
-from app.repositories.perfil_jogador_repository import PerfilJogadorRegisto
 from app.repositories.utilizadores_repository import UtilizadorRegisto
 from app.routers import jogo as jogo_router
 from app.services.auth_service import AuthService
 from app.services.loja_jogo_service import PACOTES_DIAMANTES, LojaJogoService
 from app.services.mercado_jogo_service import VENDEDORES, MercadoJogoService
-from tests.services.test_mercado_jogo_service import RepositorioMercadoFalso
 from tests.services.test_auth_service import RepositorioFalso as RepositorioAuthFalso
+from tests.services.test_jogo_service import (
+    RepositorioPartidasFalso,
+)
+from tests.services.test_jogo_service import (
+    RepositorioPerfisFalso as RepositorioPerfilJogadorFalso,
+)
+from tests.services.test_mercado_jogo_service import RepositorioMercadoFalso
 
 
 class RepositorioPerguntaJogoFalso:
@@ -60,54 +65,6 @@ class RepositorioPerguntaJogoFalso:
         return registo
 
 
-class RepositorioPerfilJogadorFalso:
-    """Mesmo contrato (Protocol) que o repositório real, em memória."""
-
-    def __init__(self) -> None:
-        self._perfis: dict[str, PerfilJogadorRegisto] = {}
-
-    def obter_ou_criar(self, utilizador_id: str) -> PerfilJogadorRegisto:
-        if utilizador_id not in self._perfis:
-            self._perfis[utilizador_id] = PerfilJogadorRegisto(
-                id=f"perfil-{utilizador_id}",
-                utilizador_id=utilizador_id,
-                moedas=0,
-                diamantes=0,
-                partidas_jogadas=0,
-                patamar_maximo_alcancado=0,
-                patamar_em_curso=0,
-            )
-        return self._perfis[utilizador_id]
-
-    def atualizar_patamar_em_curso(self, utilizador_id: str, patamar_em_curso: int) -> PerfilJogadorRegisto:
-        atual = self.obter_ou_criar(utilizador_id)
-        atualizado = PerfilJogadorRegisto(**{**atual.__dict__, "patamar_em_curso": patamar_em_curso})
-        self._perfis[utilizador_id] = atualizado
-        return atualizado
-
-    def registar_recompensa(
-        self, utilizador_id: str, moedas_ganhas: int, diamantes_ganhos: int, patamar_alcancado: int
-    ) -> PerfilJogadorRegisto:
-        atual = self.obter_ou_criar(utilizador_id)
-        atualizado = PerfilJogadorRegisto(
-            id=atual.id,
-            utilizador_id=utilizador_id,
-            moedas=atual.moedas + moedas_ganhas,
-            diamantes=atual.diamantes + diamantes_ganhos,
-            partidas_jogadas=atual.partidas_jogadas + 1,
-            patamar_maximo_alcancado=max(atual.patamar_maximo_alcancado, patamar_alcancado),
-            patamar_em_curso=0,
-        )
-        self._perfis[utilizador_id] = atualizado
-        return atualizado
-
-    def creditar_diamantes(self, utilizador_id: str, quantidade: int) -> PerfilJogadorRegisto:
-        atual = self.obter_ou_criar(utilizador_id)
-        atualizado = PerfilJogadorRegisto(**{**atual.__dict__, "diamantes": atual.diamantes + quantidade})
-        self._perfis[utilizador_id] = atualizado
-        return atualizado
-
-
 def _seed(repo_auth: RepositorioAuthFalso, id_: str, papel: str) -> str:
     repo_auth._utilizadores[f"{id_}@example.com"] = UtilizadorRegisto(
         id=id_,
@@ -123,15 +80,25 @@ def _seed(repo_auth: RepositorioAuthFalso, id_: str, papel: str) -> str:
 
 
 @pytest.fixture
-def ambiente():
+def repo_perfil() -> RepositorioPerfilJogadorFalso:
+    return RepositorioPerfilJogadorFalso()
+
+
+@pytest.fixture
+def repo_partidas(repo_perfil) -> RepositorioPartidasFalso:
+    return RepositorioPartidasFalso(repo_perfil)
+
+
+@pytest.fixture
+def ambiente(repo_perfil, repo_partidas):
     repo_auth = RepositorioAuthFalso()
     repo_jogo = RepositorioPerguntaJogoFalso()
-    repo_perfil = RepositorioPerfilJogadorFalso()
     token_admin = _seed(repo_auth, "id-admin", "admin")
     token_comum = _seed(repo_auth, "id-comum", "comum")
     app.dependency_overrides[obter_auth_service] = lambda: AuthService(repo_auth)
     app.dependency_overrides[jogo_router.obter_pergunta_jogo_repository] = lambda: repo_jogo
     app.dependency_overrides[jogo_router.obter_perfil_jogador_repository] = lambda: repo_perfil
+    app.dependency_overrides[jogo_router.obter_partida_jogo_repository] = lambda: repo_partidas
     with TestClient(app) as c:
         yield c, repo_jogo, token_admin, token_comum, repo_perfil
     app.dependency_overrides.clear()
@@ -382,7 +349,7 @@ def test_responder_de_nivel_errado_nao_conta_para_a_recompensa(ambiente) -> None
 
     for i in range(5):
         _responder_certo(c, repo, f"facil {i}", nivel=1)
-    # Nível 1 esgotado (patamar_em_curso == 5) -- mais uma pergunta fácil.
+    # Nível 1 esgotado (patamar 5 superado) -- mais uma pergunta fácil.
     _responder_certo(c, repo, "facil extra", nivel=1)
 
     resposta = c.post("/jogo/recompensas")
@@ -481,17 +448,21 @@ def test_comprar_sem_pagamentos_simulados_devolve_503_sem_creditar(loja_sem_paga
 # --- Tempo esgotado e ajudas grátis -----------------------------------------
 
 
-def test_tempo_esgotado_nunca_conta_como_certa_nem_avanca_progresso(ambiente) -> None:
-    c, repo, _admin, token, repo_perfil = ambiente
+def test_tempo_esgotado_nunca_conta_como_certa_nem_avanca_progresso(ambiente, repo_partidas) -> None:
+    c, repo, _admin, token, _ = ambiente
     pergunta = repo.criar("2+2?", "4", "1", "2", "3", "A", 1, "porque sim")
     c.cookies.set("access_token", token)
-    repo_perfil.atualizar_patamar_em_curso("id-comum", 2)
+    c.post("/jogo/partidas")
 
     resposta = c.post("/jogo/tempo-esgotado", json={"pergunta_id": pergunta.id})
 
     assert resposta.status_code == 200
-    assert resposta.json() == {"correta": False, "resposta_correta": "A", "explicacao": "porque sim"}
-    assert repo_perfil.obter_ou_criar("id-comum").patamar_em_curso == 0
+    corpo = resposta.json()
+    assert corpo["correta"] is False
+    assert corpo["resposta_correta"] is None  # só se revela ao terminar
+    assert corpo["vida_extra"]["restantes"] == 2
+    partida = repo_partidas.obter_ativa("id-comum")
+    assert partida.patamar_superado == 0 and partida.estado == "a_aguardar_decisao"
 
 
 def test_tempo_esgotado_sem_sessao_funciona_e_pergunta_inexistente_404(ambiente) -> None:
@@ -501,18 +472,21 @@ def test_tempo_esgotado_sem_sessao_funciona_e_pergunta_inexistente_404(ambiente)
     assert c.post("/jogo/tempo-esgotado", json={"pergunta_id": "nao-existe"}).status_code == 404
 
 
-def test_cinquenta_cinquenta_nao_toca_no_progresso(ambiente) -> None:
-    c, repo, _admin, token, repo_perfil = ambiente
+def test_cinquenta_cinquenta_nao_toca_no_progresso_e_so_se_usa_uma_vez(ambiente, repo_partidas) -> None:
+    c, repo, _admin, token, _ = ambiente
     pergunta = repo.criar("2+2?", "1", "4", "2", "3", "B", 1, None)
     c.cookies.set("access_token", token)
-    repo_perfil.atualizar_patamar_em_curso("id-comum", 3)
+    c.post("/jogo/partidas")
+    _responder_certo(c, repo, "aquecimento", nivel=1)
 
     resposta = c.post("/jogo/ajudas/cinquenta-cinquenta", json={"pergunta_id": pergunta.id})
 
     assert resposta.status_code == 200
     eliminadas = resposta.json()["opcoes_eliminadas"]
     assert len(eliminadas) == 2 and "B" not in eliminadas
-    assert repo_perfil.obter_ou_criar("id-comum").patamar_em_curso == 3
+    assert repo_partidas.obter_ativa("id-comum").patamar_superado == 1
+    segunda = c.post("/jogo/ajudas/cinquenta-cinquenta", json={"pergunta_id": pergunta.id})
+    assert segunda.status_code == 409
 
 
 def test_opiniao_publico_devolve_percentagens_e_nao_revela_mais_nada(ambiente) -> None:
@@ -634,3 +608,139 @@ def test_comprar_com_opcoes_excluidas_invalidas_devolve_422(mercado) -> None:
         json={"vendedor_id": "tio-ze", "pergunta_id": pergunta.id, "opcoes_excluidas": ["Z"]},
     )
     assert resposta.status_code == 422
+
+
+# --- Partida e vida extra ----------------------------------------------------
+
+
+def _errar(c, repo, texto: str = "errada?", nivel: int = 1) -> dict:
+    pergunta = repo.criar(texto, "a", "b", "c", "d", "C", nivel, "explicação")
+    resposta = c.post("/jogo/validar", json={"pergunta_id": pergunta.id, "resposta_usuario": "A"})
+    assert resposta.status_code == 200
+    return {"pergunta": pergunta, "corpo": resposta.json()}
+
+
+def test_partidas_exigem_sessao(ambiente) -> None:
+    c, *_ = ambiente
+    assert c.post("/jogo/partidas").status_code == 401
+    assert c.post("/jogo/partidas/atual/vida-extra").status_code == 401
+    assert c.post("/jogo/partidas/atual/terminar").status_code == 401
+
+
+def test_iniciar_partida_devolve_o_estado_inicial(ambiente) -> None:
+    c, _repo, _admin, token, _ = ambiente
+    c.cookies.set("access_token", token)
+    resposta = c.post("/jogo/partidas")
+    assert resposta.status_code == 201
+    assert resposta.json() == {
+        "estado": "em_curso",
+        "patamar_superado": 0,
+        "vidas_extra_usadas": 0,
+        "cinquenta_cinquenta_usada": False,
+        "opiniao_publico_usada": False,
+    }
+
+
+def test_errar_com_sessao_esconde_a_resposta_e_oferece_vida_extra(ambiente) -> None:
+    c, repo, _admin, token, _ = ambiente
+    c.cookies.set("access_token", token)
+    c.post("/jogo/partidas")
+
+    corpo = _errar(c, repo)["corpo"]
+
+    assert corpo == {
+        "correta": False,
+        "resposta_correta": None,
+        "explicacao": None,
+        "vida_extra": {"custo": 20, "restantes": 2},
+    }
+
+
+def test_a_aguardar_decisao_validar_outra_pergunta_devolve_409(ambiente) -> None:
+    c, repo, _admin, token, _ = ambiente
+    c.cookies.set("access_token", token)
+    c.post("/jogo/partidas")
+    _errar(c, repo)
+    outra = repo.criar("outra?", "a", "b", "c", "d", "A", 1, None)
+    resposta = c.post("/jogo/validar", json={"pergunta_id": outra.id, "resposta_usuario": "A"})
+    assert resposta.status_code == 409
+
+
+def test_vida_extra_debita_e_devolve_a_pergunta_e_a_opcao_a_esconder(ambiente, repo_perfil) -> None:
+    c, repo, _admin, token, _ = ambiente
+    c.cookies.set("access_token", token)
+    repo_perfil.creditar_diamantes("id-comum", 50)
+    c.post("/jogo/partidas")
+    _responder_certo(c, repo, "certa 1", nivel=1)
+    falha = _errar(c, repo)
+
+    resposta = c.post("/jogo/partidas/atual/vida-extra")
+
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["perfil"]["diamantes"] == 30
+    assert corpo["pergunta_id"] == falha["pergunta"].id
+    assert corpo["opcao_falhada"] == "A"
+    assert corpo["vidas_restantes"] == 1
+    # Continua no mesmo patamar: acertar agora sobe para o 2.
+    certa = c.post("/jogo/validar", json={"pergunta_id": falha["pergunta"].id, "resposta_usuario": "C"})
+    assert certa.json()["correta"] is True
+    terminada = c.post("/jogo/partidas/atual/terminar").json()
+    assert terminada["patamar_superado"] == 2
+
+
+def test_vida_extra_sem_diamantes_devolve_402_sem_debitar(ambiente, repo_perfil, repo_partidas) -> None:
+    c, repo, _admin, token, _ = ambiente
+    c.cookies.set("access_token", token)
+    repo_perfil.creditar_diamantes("id-comum", 19)
+    c.post("/jogo/partidas")
+    _errar(c, repo)
+
+    resposta = c.post("/jogo/partidas/atual/vida-extra")
+
+    assert resposta.status_code == 402
+    assert repo_perfil.obter_ou_criar("id-comum").diamantes == 19
+    assert repo_partidas.obter_ativa("id-comum").estado == "a_aguardar_decisao"
+
+
+def test_vida_extra_sem_ter_errado_devolve_409(ambiente, repo_perfil) -> None:
+    c, _repo, _admin, token, _ = ambiente
+    c.cookies.set("access_token", token)
+    repo_perfil.creditar_diamantes("id-comum", 100)
+    c.post("/jogo/partidas")
+    assert c.post("/jogo/partidas/atual/vida-extra").status_code == 409
+    assert repo_perfil.obter_ou_criar("id-comum").diamantes == 100
+
+
+def test_vida_extra_esgota_depois_do_limite(ambiente, repo_perfil) -> None:
+    c, repo, _admin, token, _ = ambiente
+    c.cookies.set("access_token", token)
+    repo_perfil.creditar_diamantes("id-comum", 100)
+    c.post("/jogo/partidas")
+    for i in range(2):
+        _errar(c, repo, f"errada {i}")
+        assert c.post("/jogo/partidas/atual/vida-extra").status_code == 200
+
+    assert _errar(c, repo, "errada 3")["corpo"]["vida_extra"]["restantes"] == 0
+    assert c.post("/jogo/partidas/atual/vida-extra").status_code == 409
+    assert repo_perfil.obter_ou_criar("id-comum").diamantes == 60
+
+
+def test_encerrar_revela_a_resposta_e_paga_os_patamares_superados(ambiente) -> None:
+    c, repo, _admin, token, _ = ambiente
+    c.cookies.set("access_token", token)
+    c.post("/jogo/partidas")
+    for i in range(3):
+        _responder_certo(c, repo, f"certa {i}", nivel=1)
+    _errar(c, repo)
+
+    resposta = c.post("/jogo/partidas/atual/terminar")
+
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["resposta_correta"] == "C"
+    assert corpo["explicacao"] == "explicação"
+    assert (corpo["patamar_superado"], corpo["moedas_ganhas"], corpo["diamantes_ganhos"]) == (3, 150, 0)
+    assert corpo["perfil"]["moedas"] == 150 and corpo["perfil"]["partidas_jogadas"] == 1
+    # Segunda vez: já não há partida aberta, não paga outra vez.
+    assert c.post("/jogo/partidas/atual/terminar").json()["moedas_ganhas"] == 0

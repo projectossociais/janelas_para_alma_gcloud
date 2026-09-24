@@ -1,0 +1,248 @@
+"""Acesso a dados das partidas do jogo "Inclusivamente".
+
+As regras (quando avança, quanto custa uma vida extra, quanto vale uma
+partida) vivem em `services/jogo_service.py`. Aqui garante-se que as
+transições de estado são **condicionais e atómicas**: cada `UPDATE` só
+acontece se a partida ainda estiver no estado esperado, e as operações que
+mexem em dinheiro virtual (vida extra, terminar) gravam a partida e o saldo
+na mesma transacção. Dois pedidos simultâneos nunca pagam duas vezes a mesma
+partida nem usam a mesma vida extra duas vezes.
+"""
+
+import uuid
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from typing import Literal, Protocol
+
+from sqlalchemy import func, select, update
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+
+from app.repositories.orm_models import PartidaJogo, PerfilJogador
+from app.repositories.perfil_jogador_repository import PerfilJogadorRegisto, para_registo
+
+EstadoPartida = Literal["em_curso", "a_aguardar_decisao", "terminada"]
+AjudaPartida = Literal["cinquenta_cinquenta", "opiniao_publico"]
+
+
+@dataclass(frozen=True)
+class PartidaRegisto:
+    id: str
+    utilizador_id: str
+    estado: EstadoPartida
+    patamar_superado: int
+    vidas_extra_usadas: int
+    cinquenta_cinquenta_usada: bool
+    opiniao_publico_usada: bool
+    pergunta_falhada_id: str | None
+    opcao_falhada: str | None
+    moedas_ganhas: int | None
+    diamantes_ganhos: int | None
+
+
+@dataclass(frozen=True)
+class ResultadoVidaExtra:
+    estado: Literal["ok", "indisponivel", "saldo_insuficiente"]
+    partida: PartidaRegisto | None = None
+    perfil: PerfilJogadorRegisto | None = None
+
+
+@dataclass(frozen=True)
+class PartidaTerminadaRegisto:
+    partida: PartidaRegisto
+    perfil: PerfilJogadorRegisto
+
+
+class PartidaJogoRepository(Protocol):
+    def obter_ativa(self, utilizador_id: str) -> PartidaRegisto | None: ...
+    def criar(self, utilizador_id: str) -> PartidaRegisto: ...
+    def registar_acerto(self, partida_id: str, patamar_superado: int) -> PartidaRegisto | None: ...
+    def registar_falha(
+        self, partida_id: str, pergunta_id: str, opcao_falhada: str | None
+    ) -> PartidaRegisto | None: ...
+    def marcar_ajuda(self, partida_id: str, ajuda: AjudaPartida) -> bool: ...
+    def usar_vida_extra(
+        self, partida_id: str, utilizador_id: str, custo: int, maximo: int
+    ) -> ResultadoVidaExtra: ...
+    def terminar(
+        self, partida_id: str, utilizador_id: str, moedas: int, diamantes: int
+    ) -> PartidaTerminadaRegisto | None: ...
+
+
+def _para_registo(row: PartidaJogo) -> PartidaRegisto:
+    return PartidaRegisto(
+        id=str(row.id),
+        utilizador_id=str(row.utilizador_id),
+        estado=row.estado,  # type: ignore[arg-type]
+        patamar_superado=row.patamar_superado,
+        vidas_extra_usadas=row.vidas_extra_usadas,
+        cinquenta_cinquenta_usada=row.cinquenta_cinquenta_usada,
+        opiniao_publico_usada=row.opiniao_publico_usada,
+        pergunta_falhada_id=str(row.pergunta_falhada_id) if row.pergunta_falhada_id else None,
+        opcao_falhada=row.opcao_falhada,
+        moedas_ganhas=row.moedas_ganhas,
+        diamantes_ganhos=row.diamantes_ganhos,
+    )
+
+
+class SQLAlchemyPartidaJogoRepository:
+    def __init__(self, sessao: Session) -> None:
+        self._sessao = sessao
+
+    def obter_ativa(self, utilizador_id: str) -> PartidaRegisto | None:
+        row = self._sessao.scalars(
+            select(PartidaJogo).where(
+                PartidaJogo.utilizador_id == uuid.UUID(utilizador_id), PartidaJogo.estado != "terminada"
+            )
+        ).first()
+        return _para_registo(row) if row is not None else None
+
+    def criar(self, utilizador_id: str) -> PartidaRegisto:
+        row = PartidaJogo(utilizador_id=uuid.UUID(utilizador_id))
+        self._sessao.add(row)
+        try:
+            self._sessao.commit()
+        except IntegrityError:
+            # Outro pedido criou uma partida ao mesmo tempo (índice único
+            # parcial) -- fica essa, em vez de rebentar.
+            self._sessao.rollback()
+            ativa = self.obter_ativa(utilizador_id)
+            if ativa is None:
+                raise
+            return ativa
+        self._sessao.refresh(row)
+        return _para_registo(row)
+
+    def _atualizar(self, partida_id: str, condicoes: list, valores: dict) -> PartidaRegisto | None:
+        valores = {**valores, "updated_at": datetime.now(UTC)}
+        row = self._sessao.scalars(
+            update(PartidaJogo)
+            .where(PartidaJogo.id == uuid.UUID(partida_id), *condicoes)
+            .values(**valores)
+            .returning(PartidaJogo)
+        ).first()
+        if row is None:
+            self._sessao.rollback()
+            return None
+        registo = _para_registo(row)
+        self._sessao.commit()
+        return registo
+
+    def registar_acerto(self, partida_id: str, patamar_superado: int) -> PartidaRegisto | None:
+        return self._atualizar(
+            partida_id,
+            [PartidaJogo.estado == "em_curso"],
+            {"patamar_superado": patamar_superado, "pergunta_falhada_id": None, "opcao_falhada": None},
+        )
+
+    def registar_falha(
+        self, partida_id: str, pergunta_id: str, opcao_falhada: str | None
+    ) -> PartidaRegisto | None:
+        return self._atualizar(
+            partida_id,
+            [PartidaJogo.estado == "em_curso"],
+            {
+                "estado": "a_aguardar_decisao",
+                "pergunta_falhada_id": uuid.UUID(pergunta_id),
+                "opcao_falhada": opcao_falhada,
+            },
+        )
+
+    def marcar_ajuda(self, partida_id: str, ajuda: AjudaPartida) -> bool:
+        coluna = getattr(PartidaJogo, f"{ajuda}_usada")
+        return (
+            self._atualizar(
+                partida_id, [PartidaJogo.estado == "em_curso", coluna.is_(False)], {f"{ajuda}_usada": True}
+            )
+            is not None
+        )
+
+    def usar_vida_extra(
+        self, partida_id: str, utilizador_id: str, custo: int, maximo: int
+    ) -> ResultadoVidaExtra:
+        try:
+            partida = self._sessao.scalars(
+                update(PartidaJogo)
+                .where(
+                    PartidaJogo.id == uuid.UUID(partida_id),
+                    PartidaJogo.estado == "a_aguardar_decisao",
+                    PartidaJogo.vidas_extra_usadas < maximo,
+                )
+                .values(
+                    estado="em_curso",
+                    vidas_extra_usadas=PartidaJogo.vidas_extra_usadas + 1,
+                    updated_at=datetime.now(UTC),
+                )
+                .returning(PartidaJogo)
+            ).first()
+            if partida is None:
+                self._sessao.rollback()
+                return ResultadoVidaExtra(estado="indisponivel")
+            registo_partida = _para_registo(partida)
+
+            perfil = self._sessao.scalars(
+                update(PerfilJogador)
+                .where(PerfilJogador.utilizador_id == uuid.UUID(utilizador_id), PerfilJogador.diamantes >= custo)
+                .values(diamantes=PerfilJogador.diamantes - custo, updated_at=datetime.now(UTC))
+                .returning(PerfilJogador)
+            ).first()
+            if perfil is None:
+                # Desfaz também a mudança de estado da partida.
+                self._sessao.rollback()
+                return ResultadoVidaExtra(estado="saldo_insuficiente")
+            registo_perfil = para_registo(perfil)
+            self._sessao.commit()
+        except Exception:
+            self._sessao.rollback()
+            raise
+        return ResultadoVidaExtra(estado="ok", partida=registo_partida, perfil=registo_perfil)
+
+    def terminar(
+        self, partida_id: str, utilizador_id: str, moedas: int, diamantes: int
+    ) -> PartidaTerminadaRegisto | None:
+        agora = datetime.now(UTC)
+        try:
+            partida = self._sessao.scalars(
+                update(PartidaJogo)
+                .where(PartidaJogo.id == uuid.UUID(partida_id), PartidaJogo.estado != "terminada")
+                .values(
+                    estado="terminada",
+                    moedas_ganhas=moedas,
+                    diamantes_ganhos=diamantes,
+                    terminada_em=agora,
+                    updated_at=agora,
+                )
+                .returning(PartidaJogo)
+            ).first()
+            if partida is None:
+                # Já terminada por outro pedido -- não se paga outra vez.
+                self._sessao.rollback()
+                return None
+            registo_partida = _para_registo(partida)
+
+            perfil = self._sessao.scalars(
+                update(PerfilJogador)
+                .where(PerfilJogador.utilizador_id == uuid.UUID(utilizador_id))
+                .values(
+                    moedas=PerfilJogador.moedas + moedas,
+                    diamantes=PerfilJogador.diamantes + diamantes,
+                    partidas_jogadas=PerfilJogador.partidas_jogadas + 1,
+                    patamar_maximo_alcancado=func.greatest(
+                        PerfilJogador.patamar_maximo_alcancado, registo_partida.patamar_superado
+                    ),
+                    updated_at=agora,
+                )
+                .returning(PerfilJogador)
+            ).first()
+            if perfil is None:
+                # O service cria sempre o perfil antes de terminar; se não
+                # existir, não se perde a partida a meio -- desfaz tudo.
+                self._sessao.rollback()
+                raise RuntimeError(f"perfil de jogo inexistente para {utilizador_id}")
+            registo_perfil = para_registo(perfil)
+            self._sessao.commit()
+        except Exception:
+            self._sessao.rollback()
+            raise
+        return PartidaTerminadaRegisto(partida=registo_partida, perfil=registo_perfil)
+

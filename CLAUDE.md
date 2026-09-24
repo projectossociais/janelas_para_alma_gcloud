@@ -88,7 +88,16 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   **Mercado** (ajuda paga): vendedores ambulantes com custo em diamantes e precisão
   crescente, bloqueados 4h por jogador após cada venda — catálogo em
   `services/mercado_jogo_service.py`, bloqueio na tabela `bloqueios_vendedores_jogo`;
-  débito e bloqueio gravados atomicamente (`MercadoJogoRepository.debitar_e_bloquear`)
+  débito e bloqueio gravados atomicamente (`MercadoJogoRepository.debitar_e_bloquear`).
+  **Partidas** (tabela `partidas_jogo`, desde 2026-09-24; substitui a antiga coluna
+  `perfis_jogador.patamar_em_curso`): com sessão, cada partida guarda no servidor os
+  patamares superados, as vidas extra e as ajudas grátis usadas (uma de cada por partida).
+  Ao errar ou esgotar o tempo, a resposta certa **não** é revelada — a partida fica
+  `a_aguardar_decisao` e o jogador pode pagar uma **Vida Extra** (20 diamantes, máx. 2 por
+  partida, constantes em `jogo_service.py`) para voltar a tentar a mesma pergunta sem a
+  opção falhada. A resposta revela-se e o prémio paga-se (uma única vez, pelos patamares
+  superados) em `POST /jogo/partidas/atual/terminar`. Transições condicionais e atómicas em
+  `PartidaJogoRepository`; no máximo uma partida aberta por utilizador (índice único parcial)
 
 Público-alvo inclui **crianças**. Todo o tratamento de dados deve assumir isso.
 

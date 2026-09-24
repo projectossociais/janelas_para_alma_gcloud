@@ -1064,9 +1064,36 @@ export interface PerguntaJogoPublica {
   opcao_d: string;
 }
 
+export interface OfertaVidaExtra {
+  custo: number;
+  // Vidas extra que ainda se podem usar nesta partida (0 = acabou-se).
+  restantes: number;
+}
+
 export interface ValidarRespostaJogoResponse {
   correta: boolean;
-  resposta_correta: RespostaOpcaoJogo;
+  // `null` quando, com sessão, o jogador errou: a partida fica à espera da
+  // decisão sobre a vida extra e a resposta só se revela ao terminar.
+  resposta_correta: RespostaOpcaoJogo | null;
+  explicacao: string | null;
+  vida_extra?: OfertaVidaExtra | null;
+}
+
+export interface VidaExtraJogo {
+  perfil: PerfilJogadorPublico;
+  pergunta_id: string;
+  // Opção a esconder na nova tentativa (`null` se o tempo tinha esgotado).
+  opcao_falhada: RespostaOpcaoJogo | null;
+  vidas_restantes: number;
+}
+
+export interface PartidaTerminadaJogo {
+  perfil: PerfilJogadorPublico;
+  patamar_superado: number;
+  moedas_ganhas: number;
+  diamantes_ganhos: number;
+  // Preenchidas quando a partida acabou numa pergunta falhada.
+  resposta_correta: RespostaOpcaoJogo | null;
   explicacao: string | null;
 }
 
@@ -1165,12 +1192,15 @@ export const jogoApi = {
   // Exige sessão -- só tem sentido para quem tem conta (ver `useProfile`).
   obterPerfil: () => pedido<PerfilJogadorPublico>("/jogo/perfil"),
 
-  // Sem corpo nenhum -- o servidor paga com base no progresso que ele
-  // próprio rastreou a partir de respostas certas confirmadas em
-  // `validarResposta` (ver JogoService), nunca num patamar que o cliente
-  // diga ter alcançado. Corrigido 2026-09-23: antes disto o patamar vinha
-  // do corpo do pedido, e dava para "inventar" prémios com um pedido forjado.
-  registarRecompensa: () => pedido<PerfilJogadorPublico>("/jogo/recompensas", { method: "POST" }),
+  // Partida no servidor (exige sessão): progresso, vidas extra, ajudas
+  // usadas e prémio vivem lá -- o cliente nunca diz patamar nem preço.
+  iniciarPartida: () => pedido<unknown>("/jogo/partidas", { method: "POST" }),
+
+  usarVidaExtra: () => pedido<VidaExtraJogo>("/jogo/partidas/atual/vida-extra", { method: "POST" }),
+
+  // Vitória, derrota ou desistência. Paga o prémio (uma única vez) e revela a
+  // resposta que ficou por mostrar se a partida acabou numa pergunta falhada.
+  terminarPartida: () => pedido<PartidaTerminadaJogo>("/jogo/partidas/atual/terminar", { method: "POST" }),
 
   // O catálogo (quantidades e preços) vive só no servidor -- a compra envia
   // apenas o id do pacote, nunca quantos diamantes quer receber.

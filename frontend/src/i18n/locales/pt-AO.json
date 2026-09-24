@@ -847,7 +847,8 @@
     "voltarAoMenu": "Voltar ao menu",
     "tempoEsgotado": "Tempo esgotado!",
     "essaNaoEraA": "Essa não era a resposta certa",
-    "segundosRestantes": "{{tempoRestante}} segundos restantes"
+    "segundosRestantes": "{{tempoRestante}} segundos restantes",
+    "aRevelar": "A revelar a resposta certa"
   },
   "KambaHeroCarousel": {
     "programaMeuKambaEstrabico": "Programa Meu Kamba Estrábico",
@@ -1952,5 +1953,20 @@
         "resposta": "Sem dúvida nenhuma: é a {{opcao}}. Está fixe!"
       }
     }
+  },
+  "VidaExtra": {
+    "titulo": "Vida Extra",
+    "errou": "Oh não! Essa não era a resposta certa.",
+    "tempoEsgotou": "Oh não! O tempo esgotou.",
+    "explicacao": "Use uma Vida Extra para manter o seu patamar e tentar outra vez a mesma pergunta, sem a opção que falhou e com o tempo todo.",
+    "restantes": "Vidas extra restantes nesta partida: {{restantes}}",
+    "custo": "Custo",
+    "oSeuSaldo": "O seu saldo",
+    "usar": "Usar Vida Extra ({{custo}} diamantes)",
+    "encerrar": "Encerrar partida",
+    "saldoInsuficienteAviso": "Não tem diamantes suficientes. Ganhe mais a jogar ou visite a Loja no menu do jogo.",
+    "diamantesInsuficientesBotao": "Diamantes insuficientes",
+    "diamantesInsuficientes": "Não tem diamantes suficientes para a Vida Extra.",
+    "naoFoiPossivelUsar": "Não foi possível usar a Vida Extra. Nenhum diamante foi gasto."
   }
 }

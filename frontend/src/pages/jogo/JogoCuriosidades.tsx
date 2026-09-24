@@ -33,13 +33,16 @@ import { useProfile } from "@/contexts/ProfileContext";
 import { useCarteiraJogo } from "@/contexts/CarteiraJogoContext";
 import CarteiraJogo from "@/components/jogo/CarteiraJogo";
 import MercadoModal from "@/components/jogo/MercadoModal";
+import VidaExtraModal from "@/components/jogo/VidaExtraModal";
 import {
   jogoApi,
   mensagemDeErroApi,
   type AjudaMercado,
+  type OfertaVidaExtra,
   type PerguntaJogoPublica,
   type RespostaOpcaoJogo,
   type ValidarRespostaJogoResponse,
+  type VidaExtraJogo,
 } from "@/lib/apiClient";
 import { OPCOES, PATAMARES, TOTAL_PATAMARES, calcularRecompensaCliente, formatarKz, valorDoPatamar } from "./jogoConfig";
 import { obterPerguntaOfflineNaoVista, obterPerguntaOfflinePorId, obterPerguntasDoPatamar } from "./perguntasOffline";
@@ -54,9 +57,12 @@ const TEMPO_POR_PERGUNTA = 45;
 
 interface ResultadoResposta {
   correta: boolean;
-  resposta_correta: RespostaOpcaoJogo;
+  // `null` enquanto a partida (com sessão) está à espera da decisão sobre a
+  // vida extra -- a API só revela a resposta ao terminar a partida.
+  resposta_correta: RespostaOpcaoJogo | null;
   explicacao: string | null;
   tempoEsgotado: boolean;
+  vidaExtra?: OfertaVidaExtra | null;
 }
 
 interface RecompensaLocal {
@@ -121,6 +127,25 @@ const JogoCuriosidades = () => {
 
   const [recompensaEnviada, setRecompensaEnviada] = useState(false);
   const [recompensaLocal, setRecompensaLocal] = useState<RecompensaLocal | null>(null);
+  // Oferta de vida extra em cima da mesa (modal aberto) -- vem da API ao errar.
+  const [ofertaVidaExtra, setOfertaVidaExtra] = useState<OfertaVidaExtra | null>(null);
+
+  // Partida no servidor (só com sessão). As respostas esperam por este pedido:
+  // se `iniciarPartida` chegasse depois da primeira resposta, terminaria a
+  // partida que essa resposta acabou de criar.
+  const inicioPartida = useRef<Promise<unknown>>(Promise.resolve());
+  const iniciarPartidaNoServidor = useCallback(() => {
+    inicioPartida.current = jogoApi.iniciarPartida().catch((err: unknown) => {
+      // Sem bloquear o jogo -- o servidor cria a partida na primeira resposta.
+      console.error("Falha ao iniciar a partida no servidor:", err);
+    });
+  }, []);
+  const partidaIniciadaPara = useRef<string | null>(null);
+  useEffect(() => {
+    if (!profile?.id || partidaIniciadaPara.current === profile.id) return;
+    partidaIniciadaPara.current = profile.id;
+    iniciarPartidaNoServidor();
+  }, [profile?.id, iniciarPartidaNoServidor]);
 
   // Ids das perguntas offline já mostradas nesta sessão -- evita repetição
   // enquanto a reserva do patamar não se esgota. Guardado também numa ref
@@ -244,22 +269,21 @@ const JogoCuriosidades = () => {
       }, 1200);
       return () => clearTimeout(id);
     }
-    setMostrarModalErrado(true);
+    // Já revelado (terminou) -- nada a decidir.
+    if (resultado.resposta_correta !== null || !resultado.vidaExtra || resultado.vidaExtra.restantes <= 0) {
+      setMostrarModalErrado(true);
+      return;
+    }
+    setOfertaVidaExtra(resultado.vidaExtra);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resultado]);
 
-  // Sincroniza a recompensa da partida com a conta assim que o jogo termina
-  // (vitória ou derrota) -- uma única vez por partida. Sem sessão, guarda-se
-  // só localmente para mostrar no ecrã; mesmo padrão de
-  // `sessoesExercicioApi.registar` (CerebroExercise.tsx): nunca bloqueia o
-  // ecrã final, uma falha de rede só fica no `console.error`.
-  //
-  // `registarRecompensa` já não recebe o patamar -- o servidor paga com
-  // base no progresso que ele próprio rastreou a partir das respostas
-  // certas confirmadas em `validarResposta` (JogoService). O valor local
-  // (`calcularRecompensaCliente`) é só para o ecrã não ficar vazio antes da
-  // resposta do servidor chegar; se os dois divergirem (ex.: perguntas
-  // reutilizadas de nível errado), quem manda é sempre o servidor.
+  // Termina a partida assim que o jogo acaba (vitória, ou derrota depois de
+  // recusar a vida extra) -- uma única vez por partida. Sem sessão, o prémio
+  // é só mostrado (calculado localmente). Com sessão, é o servidor que paga,
+  // pelos patamares que ele próprio confirmou, e que revela a resposta certa
+  // que ficou por mostrar; o valor local só enche o ecrã até ele responder.
+  // Nunca bloqueia o ecrã final: uma falha de rede fica no `console.error`.
   useEffect(() => {
     if (recompensaEnviada || (!jogoTerminado && !mostrarModalErrado)) return;
     const patamarAlcancado = jogoTerminado ? TOTAL_PATAMARES : Math.max(patamar - 1, 0);
@@ -267,13 +291,39 @@ const JogoCuriosidades = () => {
     setRecompensaLocal(calcularRecompensaCliente(patamarAlcancado));
     if (!profile?.id) return;
     jogoApi
-      .registarRecompensa()
-      .then(definirPerfil)
+      .terminarPartida()
+      .then((terminada) => {
+        definirPerfil(terminada.perfil);
+        setRecompensaLocal({ moedas: terminada.moedas_ganhas, diamantes: terminada.diamantes_ganhos });
+        if (terminada.resposta_correta) {
+          const revelada = terminada.resposta_correta;
+          setResultado((atual) =>
+            atual && atual.resposta_correta === null
+              ? { ...atual, resposta_correta: revelada, explicacao: terminada.explicacao }
+              : atual
+          );
+        }
+      })
       .catch((err: unknown) => {
-        console.error("Falha ao sincronizar a recompensa do jogo:", err);
+        console.error("Falha ao terminar a partida no servidor:", err);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jogoTerminado, mostrarModalErrado, recompensaEnviada]);
+
+  const aoUsarVidaExtra = (vida: VidaExtraJogo) => {
+    // Mesmo patamar, mesma pergunta, sem a opção falhada e com o tempo todo.
+    const falhada = vida.opcao_falhada;
+    if (falhada) setOpcoesEliminadas((atuais) => (atuais.includes(falhada) ? atuais : [...atuais, falhada]));
+    setOfertaVidaExtra(null);
+    setOpcaoSelecionada(null);
+    setResultado(null);
+    setTempoRestante(TEMPO_POR_PERGUNTA);
+  };
+
+  const aoRecusarVidaExtra = () => {
+    setOfertaVidaExtra(null);
+    setMostrarModalErrado(true);
+  };
 
   // Compara localmente contra a reserva de contingência -- só chamado
   // quando `emModoOffline` já garantiu que `pergunta.id` é um dos ids
@@ -295,12 +345,14 @@ const JogoCuriosidades = () => {
     }
     setAValidar(true);
     try {
+      await inicioPartida.current;
       const resp = await jogoApi.tempoEsgotado(pergunta.id);
       setResultado({
         correta: false,
         resposta_correta: resp.resposta_correta,
         explicacao: resp.explicacao,
         tempoEsgotado: true,
+        vidaExtra: resp.vida_extra,
       });
     } catch (err) {
       toast.error(mensagemDeErroApi(err, tr("JogoCuriosidades.naoFoiPossivelTerminar")));
@@ -318,12 +370,14 @@ const JogoCuriosidades = () => {
     }
     setAValidar(true);
     try {
+      await inicioPartida.current;
       const resp = await jogoApi.validarResposta(pergunta.id, opcao);
       setResultado({
         correta: resp.correta,
         resposta_correta: resp.resposta_correta,
         explicacao: resp.explicacao,
         tempoEsgotado: false,
+        vidaExtra: resp.vida_extra,
       });
     } catch (err) {
       toast.error(mensagemDeErroApi(err, tr("JogoCuriosidades.naoFoiPossivelValidar")));
@@ -343,6 +397,7 @@ const JogoCuriosidades = () => {
       return;
     }
     try {
+      await inicioPartida.current;
       const resp = await jogoApi.cinquentaCinquenta(pergunta.id);
       setOpcoesEliminadas(resp.opcoes_eliminadas);
     } catch (err) {
@@ -361,6 +416,7 @@ const JogoCuriosidades = () => {
       return;
     }
     try {
+      await inicioPartida.current;
       const resp = await jogoApi.opiniaoPublico(pergunta.id);
       setOpiniaoPublico(resp.percentagens);
       setMostrarModalPublico(true);
@@ -395,6 +451,8 @@ const JogoCuriosidades = () => {
     setJogoTerminado(false);
     setRecompensaEnviada(false);
     setRecompensaLocal(null);
+    setOfertaVidaExtra(null);
+    if (profile?.id) iniciarPartidaNoServidor();
     // Limpa já a pergunta e o patamar anteriores -- não basta confiar só no
     // que `carregarPergunta` faz lá dentro: isto garante que o ecrã nunca
     // mostra a pergunta da partida anterior, mesmo por um instante, e que o
@@ -683,9 +741,14 @@ const JogoCuriosidades = () => {
                 <p className="text-xs font-medium uppercase tracking-wide text-green mb-1">
                   {tr("JogoCuriosidades.respostaCorrecta")}
                 </p>
-                <p className="text-sm font-semibold text-foreground">
-                  {resultado.resposta_correta}) {textoDaOpcao(resultado.resposta_correta)}
-                </p>
+                {resultado.resposta_correta ? (
+                  <p className="text-sm font-semibold text-foreground">
+                    {resultado.resposta_correta}) {textoDaOpcao(resultado.resposta_correta)}
+                  </p>
+                ) : (
+                  // Com sessão, a resposta chega com `terminarPartida`.
+                  <Loader2 className="w-4 h-4 animate-spin text-green" aria-label={tr("JogoCuriosidades.aRevelar")} />
+                )}
               </div>
               {resultado.explicacao && (
                 <p className="text-sm text-muted-foreground leading-relaxed">{resultado.explicacao}</p>
@@ -705,6 +768,13 @@ const JogoCuriosidades = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <VidaExtraModal
+        oferta={ofertaVidaExtra}
+        tempoEsgotado={!!resultado?.tempoEsgotado}
+        onVidaUsada={aoUsarVidaExtra}
+        onEncerrar={aoRecusarVidaExtra}
+      />
 
       {pergunta && !emModoOffline && (
         <MercadoModal

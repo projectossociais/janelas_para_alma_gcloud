@@ -18,7 +18,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from app.repositories.orm_models import BloqueioVendedorJogo, PerfilJogador
-from app.repositories.perfil_jogador_repository import PerfilJogadorRegisto, _para_registo
+from app.repositories.perfil_jogador_repository import PerfilJogadorRegisto, para_registo
 
 
 @dataclass(frozen=True)
@@ -97,4 +97,4 @@ class SQLAlchemyMercadoJogoRepository:
 
         perfil = self._sessao.scalars(select(PerfilJogador).where(PerfilJogador.utilizador_id == uid)).one()
         self._sessao.refresh(perfil)
-        return ResultadoDebito(estado="ok", perfil=_para_registo(perfil))
+        return ResultadoDebito(estado="ok", perfil=para_registo(perfil))

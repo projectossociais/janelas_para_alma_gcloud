@@ -33,7 +33,6 @@ def test_comprar_em_modo_simulado_credita_o_total_do_catalogo() -> None:
     assert perfil.diamantes == medio.total_diamantes == medio.diamantes + medio.bonus
     # Comprar diamantes não conta como partida nem mexe no progresso.
     assert perfil.partidas_jogadas == 0
-    assert perfil.patamar_em_curso == 0
 
 
 def test_compras_sucessivas_acumulam() -> None:

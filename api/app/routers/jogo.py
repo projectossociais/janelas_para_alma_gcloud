@@ -1,16 +1,17 @@
-"""Jogo "Você Sabia Que..." -- quiz estilo Quem Quer Ser Milionário.
+"""Jogo "Inclusivamente" (quiz "Você Sabia Que...", estilo Quem Quer Ser
+Milionário).
 
-A resposta correta nunca sai da API antes da validação: `GET
+A resposta correcta nunca sai da API antes da validação: `GET
 /jogo/pergunta-aleatoria` devolve `PerguntaPublica` (sem `resposta_correta`
-nem `explicacao`) e só `POST /jogo/validar` -- que compara no servidor --
-é que revela qual era a certa.
+nem `explicacao`). Com sessão, nem a validação a revela se o jogador errou --
+a partida fica à espera da decisão sobre a vida extra, e a resposta só se
+revela em `POST /jogo/partidas/atual/terminar`.
 
-Mesma fronteira de confiança na economia virtual: `POST /jogo/recompensas`
-não recebe nenhum patamar do cliente -- lê sempre o progresso que o próprio
-servidor rastreou (`JogoService`, a partir de respostas certas confirmadas
-em `/jogo/validar`). `/jogo/validar` aceita sessão opcional (quem joga sem
-conta continua a ver as respostas, só não acumula progresso nenhum -- sem
-sessão nunca chega a `/jogo/recompensas`, que exige sessão).
+Mesma fronteira de confiança na economia virtual: nenhum endpoint recebe um
+patamar, preço ou quantidade do cliente. O progresso, as vidas extra, as
+ajudas usadas e o prémio vivem numa partida controlada pelo servidor
+(`JogoService` + `partidas_jogo`). Sem sessão joga-se na mesma, sem partida,
+progresso nem prémio.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -28,31 +29,47 @@ from app.repositories.jogo_repository import (
     SQLAlchemyPerguntaJogoRepository,
     nivel_dificuldade_do_patamar,
 )
+from app.repositories.mercado_jogo_repository import SQLAlchemyMercadoJogoRepository
+from app.repositories.partida_jogo_repository import SQLAlchemyPartidaJogoRepository
 from app.repositories.perfil_jogador_repository import (
     PerfilJogadorRegisto,
     SQLAlchemyPerfilJogadorRepository,
 )
 from app.repositories.utilizadores_repository import UtilizadorRegisto
-from app.repositories.mercado_jogo_repository import SQLAlchemyMercadoJogoRepository
 from app.schemas.jogo import (
     AjudaMercadoResponse,
     AjudaPerguntaRequest,
     CinquentaCinquentaResponse,
     ComprarAjudaMercadoRequest,
-    MercadoPublico,
-    OpiniaoPublicoResponse,
-    VendedorMercadoPublico,
     ComprarPacoteRequest,
     LojaDiamantesPublica,
+    MercadoPublico,
+    OpiniaoPublicoResponse,
     PacoteDiamantesPublico,
+    PartidaPublica,
+    PartidaTerminadaResponse,
     PerfilJogadorPublico,
     PerguntaAdmin,
     PerguntaCriar,
     PerguntaPublica,
     ValidarRespostaRequest,
     ValidarRespostaResponse,
+    VendedorMercadoPublico,
+    VidaExtraResponse,
 )
-from app.services.jogo_service import JogoService, PerguntaNaoEncontradaError, ResultadoResposta
+from app.services.jogo_service import (
+    AjudaJaUsadaError,
+    JogoService,
+    PartidaADecidirError,
+    PartidaTerminada,
+    PerguntaNaoEncontradaError,
+    ResultadoResposta,
+    VidaExtraIndisponivelError,
+    VidaExtraUsada,
+)
+from app.services.jogo_service import (
+    DiamantesInsuficientesError as DiamantesInsuficientesVidaExtraError,
+)
 from app.services.loja_jogo_service import (
     LojaJogoService,
     PacoteInexistenteError,
@@ -81,11 +98,24 @@ def obter_perfil_jogador_repository(
     return SQLAlchemyPerfilJogadorRepository(sessao)
 
 
+def obter_partida_jogo_repository(
+    sessao: Session = Depends(obter_sessao),
+) -> SQLAlchemyPartidaJogoRepository:
+    return SQLAlchemyPartidaJogoRepository(sessao)
+
+
 def obter_jogo_service(
     perguntas: SQLAlchemyPerguntaJogoRepository = Depends(obter_pergunta_jogo_repository),
     perfis: SQLAlchemyPerfilJogadorRepository = Depends(obter_perfil_jogador_repository),
+    partidas: SQLAlchemyPartidaJogoRepository = Depends(obter_partida_jogo_repository),
 ) -> JogoService:
-    return JogoService(perguntas, perfis)
+    return JogoService(perguntas, perfis, partidas)
+
+
+def _erro_a_decidir() -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_409_CONFLICT, detail="a partida está à espera da decisão sobre a vida extra"
+    )
 
 
 def obter_loja_jogo_service(
@@ -131,6 +161,8 @@ def validar_resposta(
         )
     except PerguntaNaoEncontradaError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="pergunta não encontrada")
+    except PartidaADecidirError:
+        raise _erro_a_decidir()
 
 
 @router.post("/jogo/tempo-esgotado", response_model=ValidarRespostaResponse)
@@ -143,31 +175,77 @@ def tempo_esgotado(
         return servico.esgotar_tempo(utilizador.id if utilizador else None, dados.pergunta_id)
     except PerguntaNaoEncontradaError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="pergunta não encontrada")
+    except PartidaADecidirError:
+        raise _erro_a_decidir()
 
 
-# --- Ajudas grátis (sem sessão; nunca mexem no progresso) -------------------
+# --- Ajudas grátis (nunca mexem no progresso; uma vez por partida) ----------
+
+
+def _erro_ajuda(err: Exception) -> HTTPException:
+    if isinstance(err, PerguntaNaoEncontradaError):
+        return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="pergunta não encontrada")
+    if isinstance(err, AjudaJaUsadaError):
+        return HTTPException(status_code=status.HTTP_409_CONFLICT, detail="esta ajuda já foi usada nesta partida")
+    return _erro_a_decidir()
 
 
 @router.post("/jogo/ajudas/cinquenta-cinquenta", response_model=CinquentaCinquentaResponse)
 def ajuda_cinquenta_cinquenta(
     dados: AjudaPerguntaRequest,
+    utilizador: UtilizadorRegisto | None = Depends(obter_utilizador_atual_opcional),
     servico: JogoService = Depends(obter_jogo_service),
 ) -> CinquentaCinquentaResponse:
     try:
-        return CinquentaCinquentaResponse(opcoes_eliminadas=servico.cinquenta_cinquenta(dados.pergunta_id))
-    except PerguntaNaoEncontradaError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="pergunta não encontrada")
+        eliminadas = servico.cinquenta_cinquenta(utilizador.id if utilizador else None, dados.pergunta_id)
+    except (PerguntaNaoEncontradaError, AjudaJaUsadaError, PartidaADecidirError) as err:
+        raise _erro_ajuda(err)
+    return CinquentaCinquentaResponse(opcoes_eliminadas=eliminadas)
 
 
 @router.post("/jogo/ajudas/opiniao-publico", response_model=OpiniaoPublicoResponse)
 def ajuda_opiniao_publico(
     dados: AjudaPerguntaRequest,
+    utilizador: UtilizadorRegisto | None = Depends(obter_utilizador_atual_opcional),
     servico: JogoService = Depends(obter_jogo_service),
 ) -> OpiniaoPublicoResponse:
     try:
-        return OpiniaoPublicoResponse(percentagens=servico.opiniao_publico(dados.pergunta_id))
-    except PerguntaNaoEncontradaError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="pergunta não encontrada")
+        percentagens = servico.opiniao_publico(utilizador.id if utilizador else None, dados.pergunta_id)
+    except (PerguntaNaoEncontradaError, AjudaJaUsadaError, PartidaADecidirError) as err:
+        raise _erro_ajuda(err)
+    return OpiniaoPublicoResponse(percentagens=percentagens)
+
+
+# --- Partida (exige sessão) --------------------------------------------------
+
+
+@router.post("/jogo/partidas", response_model=PartidaPublica, status_code=status.HTTP_201_CREATED)
+def iniciar_partida(
+    utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
+    servico: JogoService = Depends(obter_jogo_service),
+):
+    return servico.iniciar_partida(utilizador.id)
+
+
+@router.post("/jogo/partidas/atual/vida-extra", response_model=VidaExtraResponse)
+def usar_vida_extra(
+    utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
+    servico: JogoService = Depends(obter_jogo_service),
+) -> VidaExtraUsada:
+    try:
+        return servico.usar_vida_extra(utilizador.id)
+    except VidaExtraIndisponivelError:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="vida extra indisponível")
+    except DiamantesInsuficientesVidaExtraError:
+        raise HTTPException(status_code=status.HTTP_402_PAYMENT_REQUIRED, detail="diamantes insuficientes")
+
+
+@router.post("/jogo/partidas/atual/terminar", response_model=PartidaTerminadaResponse)
+def terminar_partida(
+    utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
+    servico: JogoService = Depends(obter_jogo_service),
+) -> PartidaTerminada:
+    return servico.terminar_partida(utilizador.id)
 
 
 # --- Mercado (ajuda paga, exige sessão) -------------------------------------
@@ -226,7 +304,9 @@ def registar_recompensa(
     utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
     servico: JogoService = Depends(obter_jogo_service),
 ) -> PerfilJogadorRegisto:
-    return servico.reclamar_recompensa(utilizador.id)
+    # Compatibilidade com clientes anteriores às partidas (2026-09-24) --
+    # o frontend (Vercel) e a API (Cloud Run) fazem deploy em separado.
+    return servico.terminar_partida(utilizador.id).perfil
 
 
 # --- Loja de diamantes ------------------------------------------------------

@@ -46,10 +46,23 @@ class ValidarRespostaRequest(BaseModel):
     resposta_usuario: RespostaOpcao
 
 
+class OfertaVidaExtraPublica(BaseModel):
+    custo: int
+    # Vidas extra que ainda se podem usar nesta partida (0 = acabou-se).
+    restantes: int
+
+    model_config = {"from_attributes": True}
+
+
 class ValidarRespostaResponse(BaseModel):
     correta: bool
-    resposta_correta: RespostaOpcao
+    # `None` quando a partida fica à espera da decisão sobre a vida extra:
+    # a resposta certa só se revela ao terminar (`/jogo/partidas/atual/terminar`).
+    resposta_correta: RespostaOpcao | None
     explicacao: str | None
+    vida_extra: OfertaVidaExtraPublica | None = None
+
+    model_config = {"from_attributes": True}
 
 
 class PerfilJogadorPublico(BaseModel):
@@ -126,3 +139,33 @@ class AjudaMercadoResponse(BaseModel):
     resposta_sugerida: RespostaOpcao
     disponivel_em: datetime
     perfil: PerfilJogadorPublico
+
+
+# --- Partida -----------------------------------------------------------------
+
+
+class PartidaPublica(BaseModel):
+    estado: Literal["em_curso", "a_aguardar_decisao", "terminada"]
+    patamar_superado: int
+    vidas_extra_usadas: int
+    cinquenta_cinquenta_usada: bool
+    opiniao_publico_usada: bool
+
+    model_config = {"from_attributes": True}
+
+
+class VidaExtraResponse(BaseModel):
+    perfil: PerfilJogadorPublico
+    pergunta_id: str
+    # Opção a esconder na nova tentativa (`None` se o tempo tinha esgotado).
+    opcao_falhada: RespostaOpcao | None
+    vidas_restantes: int
+
+
+class PartidaTerminadaResponse(BaseModel):
+    perfil: PerfilJogadorPublico
+    patamar_superado: int
+    moedas_ganhas: int
+    diamantes_ganhos: int
+    resposta_correta: RespostaOpcao | None
+    explicacao: str | None

@@ -847,7 +847,8 @@
     "voltarAoMenu": "Back to menu",
     "tempoEsgotado": "Time's up!",
     "essaNaoEraA": "That wasn't the right answer",
-    "segundosRestantes": "{{tempoRestante}} seconds remaining"
+    "segundosRestantes": "{{tempoRestante}} seconds remaining",
+    "aRevelar": "Revealing the right answer"
   },
   "KambaHeroCarousel": {
     "programaMeuKambaEstrabico": "Meu Kamba Estrábico Program",
@@ -1952,5 +1953,20 @@
         "resposta": "No doubt at all: it's {{opcao}}. All good!"
       }
     }
+  },
+  "VidaExtra": {
+    "titulo": "Extra Life",
+    "errou": "Oh no! That wasn't the right answer.",
+    "tempoEsgotou": "Oh no! Time's up.",
+    "explicacao": "Use an Extra Life to keep your level and try the same question again, without the option you picked and with the full time.",
+    "restantes": "Extra lives left in this game: {{restantes}}",
+    "custo": "Cost",
+    "oSeuSaldo": "Your balance",
+    "usar": "Use Extra Life ({{custo}} diamonds)",
+    "encerrar": "End game",
+    "saldoInsuficienteAviso": "You don't have enough diamonds. Earn more by playing or visit the Shop from the game menu.",
+    "diamantesInsuficientesBotao": "Not enough diamonds",
+    "diamantesInsuficientes": "You don't have enough diamonds for an Extra Life.",
+    "naoFoiPossivelUsar": "We couldn't use the Extra Life. No diamonds were spent."
   }
 }

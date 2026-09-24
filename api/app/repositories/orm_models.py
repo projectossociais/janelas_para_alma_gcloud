@@ -28,11 +28,13 @@ from sqlalchemy import (
     DateTime,
     Enum,
     ForeignKey,
+    Index,
     Numeric,
     String,
     Text,
     UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -536,11 +538,57 @@ class PerfilJogador(Base):
     diamantes: Mapped[int] = mapped_column(nullable=False, server_default="0")
     partidas_jogadas: Mapped[int] = mapped_column(nullable=False, server_default="0")
     patamar_maximo_alcancado: Mapped[int] = mapped_column(nullable=False, server_default="0")
-    # Progresso da partida em curso, controlado só pelo servidor (nunca pelo
-    # corpo do pedido) -- ver JogoService.responder / reclamar_recompensa.
-    patamar_em_curso: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    # O progresso da partida em curso vive em `PartidaJogo` desde 2026-09-24
+    # (antes era a coluna `patamar_em_curso`, aqui).
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class PartidaJogo(Base):
+    """Uma partida do jogo "Inclusivamente", do primeiro patamar até terminar
+    (vitória, derrota, desistência ou nova partida). Todo o estado que o
+    jogador podia querer inventar vive aqui, controlado só pelo servidor
+    (`JogoService`): patamares superados, vidas extra usadas, ajudas grátis
+    usadas e a pergunta falhada à espera de decisão.
+
+    Estados: `em_curso` -> (erra ou esgota o tempo) -> `a_aguardar_decisao`
+    -> (vida extra) -> `em_curso`, ou -> (encerra) -> `terminada`. No máximo
+    uma partida não terminada por utilizador (índice único parcial).
+    A recompensa é paga uma única vez, ao passar a `terminada`."""
+
+    __tablename__ = "partidas_jogo"
+    __table_args__ = (
+        CheckConstraint(
+            "estado IN ('em_curso', 'a_aguardar_decisao', 'terminada')", name="ck_partidas_jogo_estado"
+        ),
+        CheckConstraint("patamar_superado BETWEEN 0 AND 15", name="ck_partidas_jogo_patamar_superado"),
+        Index(
+            "uq_partidas_jogo_uma_ativa_por_utilizador",
+            "utilizador_id",
+            unique=True,
+            postgresql_where=text("estado <> 'terminada'"),
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    utilizador_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    estado: Mapped[str] = mapped_column(Text, nullable=False, server_default="em_curso")
+    patamar_superado: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    vidas_extra_usadas: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    cinquenta_cinquenta_usada: Mapped[bool] = mapped_column(nullable=False, server_default=text("false"))
+    opiniao_publico_usada: Mapped[bool] = mapped_column(nullable=False, server_default=text("false"))
+    # Preenchidas enquanto `a_aguardar_decisao`: a pergunta falhada e a opção
+    # escolhida (`None` se o tempo esgotou). Mantêm-se depois de uma vida
+    # extra, para o jogador voltar a tentar a mesma pergunta sem essa opção.
+    pergunta_falhada_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    opcao_falhada: Mapped[str | None] = mapped_column(Text)
+    moedas_ganhas: Mapped[int | None] = mapped_column()
+    diamantes_ganhos: Mapped[int | None] = mapped_column()
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    terminada_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class BloqueioVendedorJogo(Base):
