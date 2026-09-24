@@ -21,6 +21,12 @@ vi.mock("@/lib/apiClient", () => ({
 vi.mock("@/components/Navbar", () => ({ default: () => null }));
 vi.mock("@/components/Footer", () => ({ default: () => null }));
 vi.mock("@/components/BackButton", () => ({ default: () => null }));
+vi.mock("@/components/jogo/CarteiraJogo", () => ({ default: () => null }));
+
+const definirPerfil = vi.fn();
+vi.mock("@/contexts/CarteiraJogoContext", () => ({
+  useCarteiraJogo: () => ({ definirPerfil: (...a: unknown[]) => definirPerfil(...a) }),
+}));
 
 let mockProfile: { id: string } | null = null;
 vi.mock("@/contexts/ProfileContext", () => ({
@@ -61,6 +67,7 @@ describe("JogoCuriosidades", () => {
     obterPerguntaAleatoria.mockReset();
     validarResposta.mockReset();
     registarRecompensa.mockReset();
+    definirPerfil.mockReset();
     registarRecompensa.mockResolvedValue({ moedas: 0, diamantes: 0, partidas_jogadas: 1, patamar_maximo_alcancado: 0 });
     toastError.mockReset();
     toastSuccess.mockReset();
@@ -209,6 +216,10 @@ describe("JogoCuriosidades", () => {
     // progresso que rastreou (ver JogoService), nunca de um patamar
     // mandado pelo cliente.
     await waitFor(() => expect(registarRecompensa).toHaveBeenCalledWith());
+    // O saldo devolvido pelo servidor actualiza logo a barra da carteira.
+    await waitFor(() =>
+      expect(definirPerfil).toHaveBeenCalledWith(expect.objectContaining({ partidas_jogadas: 1 }))
+    );
     expect(await screen.findByText("Prémio ganho")).toBeInTheDocument();
   });
 

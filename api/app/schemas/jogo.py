@@ -58,3 +58,24 @@ class PerfilJogadorPublico(BaseModel):
     patamar_maximo_alcancado: int
 
     model_config = {"from_attributes": True}
+
+
+class PacoteDiamantesPublico(BaseModel):
+    id: str
+    diamantes: int
+    bonus: int
+    total_diamantes: int
+    preco_kz: int
+
+    model_config = {"from_attributes": True}
+
+
+class LojaDiamantesPublica(BaseModel):
+    pacotes: list[PacoteDiamantesPublico]
+    # `True` enquanto a compra só credita diamantes em modo simulado
+    # (desenvolvimento); `False` quando comprar ainda não está disponível.
+    pagamento_simulado: bool
+
+
+class ComprarPacoteRequest(BaseModel):
+    pacote_id: str = Field(min_length=1, max_length=40)

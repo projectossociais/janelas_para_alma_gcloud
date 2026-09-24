@@ -16,6 +16,7 @@ sessão nunca chega a `/jogo/recompensas`, que exige sessão).
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from app.core.config import obter_settings
 from app.core.dependencies import (
     obter_utilizador_admin,
     obter_utilizador_atual,
@@ -33,6 +34,9 @@ from app.repositories.perfil_jogador_repository import (
 )
 from app.repositories.utilizadores_repository import UtilizadorRegisto
 from app.schemas.jogo import (
+    ComprarPacoteRequest,
+    LojaDiamantesPublica,
+    PacoteDiamantesPublico,
     PerfilJogadorPublico,
     PerguntaAdmin,
     PerguntaCriar,
@@ -41,6 +45,11 @@ from app.schemas.jogo import (
     ValidarRespostaResponse,
 )
 from app.services.jogo_service import JogoService, PerguntaNaoEncontradaError, ResultadoResposta
+from app.services.loja_jogo_service import (
+    LojaJogoService,
+    PacoteInexistenteError,
+    PagamentosIndisponiveisError,
+)
 
 router = APIRouter(tags=["jogo"])
 
@@ -62,6 +71,12 @@ def obter_jogo_service(
     perfis: SQLAlchemyPerfilJogadorRepository = Depends(obter_perfil_jogador_repository),
 ) -> JogoService:
     return JogoService(perguntas, perfis)
+
+
+def obter_loja_jogo_service(
+    perfis: SQLAlchemyPerfilJogadorRepository = Depends(obter_perfil_jogador_repository),
+) -> LojaJogoService:
+    return LojaJogoService(perfis, pagamentos_simulados=obter_settings().jogo_pagamentos_simulados)
 
 
 @router.get("/jogo/pergunta-aleatoria", response_model=PerguntaPublica)
@@ -107,6 +122,45 @@ def registar_recompensa(
     servico: JogoService = Depends(obter_jogo_service),
 ) -> PerfilJogadorRegisto:
     return servico.reclamar_recompensa(utilizador.id)
+
+
+# --- Loja de diamantes ------------------------------------------------------
+
+
+@router.get("/jogo/loja/pacotes", response_model=LojaDiamantesPublica)
+def listar_pacotes_diamantes(
+    servico: LojaJogoService = Depends(obter_loja_jogo_service),
+) -> LojaDiamantesPublica:
+    return LojaDiamantesPublica(
+        pacotes=[
+            PacoteDiamantesPublico(
+                id=p.id,
+                diamantes=p.diamantes,
+                bonus=p.bonus,
+                total_diamantes=p.total_diamantes,
+                preco_kz=p.preco_kz,
+            )
+            for p in servico.listar_pacotes()
+        ],
+        pagamento_simulado=servico.pagamentos_simulados,
+    )
+
+
+@router.post("/jogo/loja/compras", response_model=PerfilJogadorPublico)
+def comprar_pacote_diamantes(
+    dados: ComprarPacoteRequest,
+    utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
+    servico: LojaJogoService = Depends(obter_loja_jogo_service),
+) -> PerfilJogadorRegisto:
+    try:
+        return servico.comprar(utilizador.id, dados.pacote_id)
+    except PacoteInexistenteError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="pacote de diamantes inexistente")
+    except PagamentosIndisponiveisError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="a compra de diamantes ainda não está disponível",
+        )
 
 
 # --- Gestão (só admin) ------------------------------------------------------

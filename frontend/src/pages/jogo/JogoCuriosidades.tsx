@@ -29,6 +29,8 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useCarteiraJogo } from "@/contexts/CarteiraJogoContext";
+import CarteiraJogo from "@/components/jogo/CarteiraJogo";
 import {
   jogoApi,
   mensagemDeErroApi,
@@ -81,6 +83,7 @@ const gerarOpiniaoPublico = (correta: RespostaOpcaoJogo): Record<RespostaOpcaoJo
 const JogoCuriosidades = () => {
   const { t: tr } = useTranslation();
   const { profile } = useProfile();
+  const { definirPerfil } = useCarteiraJogo();
   // As perguntas da API (base de dados) só existem em português: no site
   // inglês o jogo usa sempre a reserva local, traduzida em
   // perguntasOffline.en-US.ts. Não é "modo offline" -- o aviso não aparece.
@@ -251,9 +254,12 @@ const JogoCuriosidades = () => {
     setRecompensaEnviada(true);
     setRecompensaLocal(calcularRecompensaCliente(patamarAlcancado));
     if (!profile?.id) return;
-    jogoApi.registarRecompensa().catch((err: unknown) => {
-      console.error("Falha ao sincronizar a recompensa do jogo:", err);
-    });
+    jogoApi
+      .registarRecompensa()
+      .then(definirPerfil)
+      .catch((err: unknown) => {
+        console.error("Falha ao sincronizar a recompensa do jogo:", err);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jogoTerminado, mostrarModalErrado, recompensaEnviada]);
 
@@ -450,6 +456,9 @@ const JogoCuriosidades = () => {
             </div>
           ) : (
             <>
+              <div className="max-w-5xl mx-auto flex justify-center sm:justify-end mb-4">
+                <CarteiraJogo />
+              </div>
               <header className="max-w-2xl mx-auto text-center space-y-3 mb-8">
                 <span className="text-sm font-medium tracking-widest uppercase text-teal">
                   {tr("JogoCuriosidades.inclusivamente")}

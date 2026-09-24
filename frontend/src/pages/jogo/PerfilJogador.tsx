@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Coins, Gem, Loader2, Play, Swords, Trophy } from "lucide-react";
+import { Loader2, Play, Swords, Trophy } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
-import { jogoApi, mensagemDeErroApi, type PerfilJogadorPublico } from "@/lib/apiClient";
+import CarteiraJogo from "@/components/jogo/CarteiraJogo";
+import { useCarteiraJogo } from "@/contexts/CarteiraJogoContext";
 import { toast } from "sonner";
 import { TOTAL_PATAMARES, formatarKz, valorDoPatamar } from "./jogoConfig";
 import { useTranslation } from "react-i18next";
@@ -19,25 +20,18 @@ const PerfilJogador = () => {
   const navigate = useNavigate();
   const { isLoggedIn, loading: authLoading } = useAuth();
   const { profile } = useProfile();
-  const [perfilJogo, setPerfilJogo] = useState<PerfilJogadorPublico | null>(null);
-  const [aCarregar, setACarregar] = useState(true);
+  const { perfil: perfilJogo, aCarregar: aCarregarCarteira, erro } = useCarteiraJogo();
+  // Antes do primeiro pedido, o contexto ainda não está "a carregar" -- sem
+  // isto a página mostraria zeros por um instante.
+  const aCarregar = aCarregarCarteira || (!perfilJogo && !erro);
 
   useEffect(() => {
     if (!authLoading && !isLoggedIn) navigate(localizar("/auth"));
   }, [authLoading, isLoggedIn, navigate]);
 
   useEffect(() => {
-    if (!isLoggedIn) return;
-    (async () => {
-      try {
-        setPerfilJogo(await jogoApi.obterPerfil());
-      } catch (err) {
-        toast.error(mensagemDeErroApi(err, t("PerfilJogador.naoFoiPossivelCarregar")));
-      } finally {
-        setACarregar(false);
-      }
-    })();
-  }, [isLoggedIn, t]);
+    if (erro) toast.error(t("PerfilJogador.naoFoiPossivelCarregar"));
+  }, [erro, t]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -52,6 +46,10 @@ const PerfilJogador = () => {
             </span>
             <h1 className="text-3xl md:text-4xl font-bold text-foreground">{t("PerfilJogador.oMeuPerfil")}</h1>
           </header>
+
+          <div className="flex justify-center mb-6">
+            <CarteiraJogo />
+          </div>
 
           {profile && (
             <div className="flex flex-col items-center gap-3 mb-8">
@@ -72,16 +70,6 @@ const PerfilJogador = () => {
           ) : (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="rounded-2xl bg-card border border-border/60 shadow-card p-5 text-center space-y-2">
-                  <Coins className="w-6 h-6 text-gold mx-auto" />
-                  <p className="text-2xl font-bold text-gold">{perfilJogo?.moedas ?? 0}</p>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide">{t("PerfilJogador.moedas")}</p>
-                </div>
-                <div className="rounded-2xl bg-card border border-border/60 shadow-card p-5 text-center space-y-2">
-                  <Gem className="w-6 h-6 text-teal mx-auto" />
-                  <p className="text-2xl font-bold text-teal">{perfilJogo?.diamantes ?? 0}</p>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide">{t("PerfilJogador.diamantes")}</p>
-                </div>
                 <div className="rounded-2xl bg-card border border-border/60 shadow-card p-5 text-center space-y-2">
                   <Swords className="w-6 h-6 text-navy mx-auto" />
                   <p className="text-2xl font-bold text-foreground">{perfilJogo?.partidas_jogadas ?? 0}</p>

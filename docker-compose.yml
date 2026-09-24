@@ -29,6 +29,9 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://jpa:jpa@db:5432/jpa
       JWT_SECRET_KEY: chave-de-desenvolvimento-nao-usar-em-producao
+      # Loja de diamantes do jogo: compra simulada credita diamantes -- só
+      # em desenvolvimento, nunca em produção (ver loja_jogo_service.py).
+      JOGO_PAGAMENTOS_SIMULADOS: "true"
     volumes:
       - ./api/app:/app/app
       - ./api/alembic:/app/alembic

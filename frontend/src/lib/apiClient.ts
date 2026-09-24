@@ -1077,6 +1077,21 @@ export interface PerfilJogadorPublico {
   patamar_maximo_alcancado: number;
 }
 
+export interface PacoteDiamantes {
+  id: string;
+  diamantes: number;
+  bonus: number;
+  total_diamantes: number;
+  preco_kz: number;
+}
+
+export interface LojaDiamantes {
+  pacotes: PacoteDiamantes[];
+  // `true` enquanto não há pagamento real: a compra credita diamantes sem
+  // cobrar nada (só em desenvolvimento). `false` -- comprar ainda não existe.
+  pagamento_simulado: boolean;
+}
+
 export const jogoApi = {
   // `patamar` (1-15) é só do jogo -- o backend mapeia-o para um dos 3 níveis
   // de dificuldade da reserva de perguntas (ver nivel_dificuldade_do_patamar).
@@ -1100,4 +1115,14 @@ export const jogoApi = {
   // diga ter alcançado. Corrigido 2026-09-23: antes disto o patamar vinha
   // do corpo do pedido, e dava para "inventar" prémios com um pedido forjado.
   registarRecompensa: () => pedido<PerfilJogadorPublico>("/jogo/recompensas", { method: "POST" }),
+
+  // O catálogo (quantidades e preços) vive só no servidor -- a compra envia
+  // apenas o id do pacote, nunca quantos diamantes quer receber.
+  obterLojaDiamantes: () => pedido<LojaDiamantes>("/jogo/loja/pacotes"),
+
+  comprarPacoteDiamantes: (pacoteId: string) =>
+    pedido<PerfilJogadorPublico>("/jogo/loja/compras", {
+      method: "POST",
+      body: JSON.stringify({ pacote_id: pacoteId }),
+    }),
 };

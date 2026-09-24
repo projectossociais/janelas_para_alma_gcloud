@@ -32,6 +32,14 @@ const toastError = vi.fn();
 vi.mock("sonner", () => ({ toast: { error: (...a: unknown[]) => toastError(...a) } }));
 
 import PerfilJogador from "./PerfilJogador";
+import { CarteiraJogoProvider } from "@/contexts/CarteiraJogoContext";
+import type { ReactNode } from "react";
+
+const Envoltorio = ({ children }: { children: ReactNode }) => (
+  <MemoryRouter>
+    <CarteiraJogoProvider>{children}</CarteiraJogoProvider>
+  </MemoryRouter>
+);
 
 describe("PerfilJogador", () => {
   beforeEach(() => {
@@ -42,14 +50,14 @@ describe("PerfilJogador", () => {
 
   it("redireciona para /auth quando não há sessão", async () => {
     mockUseAuth.mockReturnValue({ isLoggedIn: false, loading: false });
-    render(<PerfilJogador />, { wrapper: MemoryRouter });
+    render(<PerfilJogador />, { wrapper: Envoltorio });
 
     await waitFor(() => expect(navigateMock).toHaveBeenCalledWith("/auth"));
   });
 
   it("não redireciona enquanto o AuthContext ainda está a carregar", async () => {
     mockUseAuth.mockReturnValue({ isLoggedIn: false, loading: true });
-    render(<PerfilJogador />, { wrapper: MemoryRouter });
+    render(<PerfilJogador />, { wrapper: Envoltorio });
 
     await new Promise((r) => setTimeout(r, 50));
     expect(navigateMock).not.toHaveBeenCalled();
@@ -58,10 +66,10 @@ describe("PerfilJogador", () => {
   it("mostra as estatísticas do perfil de jogo", async () => {
     mockUseAuth.mockReturnValue({ isLoggedIn: true, loading: false });
     obterPerfil.mockResolvedValue({ moedas: 500, diamantes: 7, partidas_jogadas: 12, patamar_maximo_alcancado: 10 });
-    render(<PerfilJogador />, { wrapper: MemoryRouter });
+    render(<PerfilJogador />, { wrapper: Envoltorio });
 
-    expect(await screen.findByText("500")).toBeInTheDocument();
-    expect(screen.getByText("7")).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /^Moedas/ })).toHaveTextContent("500");
+    expect(screen.getByRole("link", { name: /^Diamantes/ })).toHaveTextContent("7");
     expect(screen.getByText("12")).toBeInTheDocument();
     expect(screen.getByText("10")).toBeInTheDocument();
     expect(screen.getByText("Kz 50.000")).toBeInTheDocument(); // valor do patamar 10
@@ -70,9 +78,9 @@ describe("PerfilJogador", () => {
   it("mostra um erro amigável quando a API falha, sem rebentar a página", async () => {
     mockUseAuth.mockReturnValue({ isLoggedIn: true, loading: false });
     obterPerfil.mockRejectedValue(Object.assign(new Error("falhou"), { status: 500 }));
-    render(<PerfilJogador />, { wrapper: MemoryRouter });
+    render(<PerfilJogador />, { wrapper: Envoltorio });
 
-    await waitFor(() => expect(toastError).toHaveBeenCalledWith("falhou"));
+    await waitFor(() => expect(toastError).toHaveBeenCalledWith("Não foi possível carregar o seu perfil de jogo."));
     expect(await screen.findByRole("link", { name: /Jogar agora/i })).toBeInTheDocument();
   });
 });

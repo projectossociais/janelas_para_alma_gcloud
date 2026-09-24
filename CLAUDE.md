@@ -74,6 +74,14 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   O frontend (`AcessoExerciciosContext`) só espelha `GET /exercicios/acesso`. Os vídeos vivem
   num bucket R2 **privado** à parte (`r2_bucket_videos`), nunca no bucket público
 - **Rede de clínicas parceiras**, doações, programa de voluntariado, painel administrativo
+- **Jogo "Inclusivamente"** (`frontend/src/pages/jogo/`, API `routers/jogo.py`) — quiz com
+  economia virtual: moedas (ganhas a jogar) e diamantes. Saldo sempre decidido pela API
+  (`JogoService`, `LojaJogoService`); o frontend só espelha em `CarteiraJogoContext`. A Loja
+  de Diamantes (`/jogo-curiosidades/loja`) ainda **não tem pagamento real**: a compra só
+  credita diamantes com `JOGO_PAGAMENTOS_SIMULADOS=true` (ligado só no `docker-compose.yml`
+  de desenvolvimento; **nunca** em produção, seriam diamantes grátis). O catálogo e os
+  preços em Kz vivem só em `services/loja_jogo_service.py` e são uma proposta à espera de
+  confirmação (§10)
 
 Público-alvo inclui **crianças**. Todo o tratamento de dados deve assumir isso.
 

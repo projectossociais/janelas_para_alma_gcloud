@@ -54,6 +54,7 @@ class PerfilJogadorRepository(Protocol):
     def registar_recompensa(
         self, utilizador_id: str, moedas_ganhas: int, diamantes_ganhos: int, patamar_alcancado: int
     ) -> PerfilJogadorRegisto: ...
+    def creditar_diamantes(self, utilizador_id: str, quantidade: int) -> PerfilJogadorRegisto: ...
 
 
 def _para_registo(row: PerfilJogador) -> PerfilJogadorRegisto:
@@ -132,6 +133,27 @@ class SQLAlchemyPerfilJogadorRepository:
         # A partida termina ao reclamar a recompensa -- o progresso não pode
         # continuar a "existir" para ser reclamado outra vez.
         row.patamar_em_curso = 0
+        row.updated_at = datetime.now(UTC)
+        self._sessao.commit()
+        self._sessao.refresh(row)
+        return _para_registo(row)
+
+    def creditar_diamantes(self, utilizador_id: str, quantidade: int) -> PerfilJogadorRegisto:
+        """Soma `quantidade` ao saldo de diamantes -- sem tocar em partidas
+        nem patamares. Quem decide *quanto* e *porquê* é sempre um service
+        (ex.: `LojaJogoService`), nunca o corpo de um pedido."""
+        row = self._obter_row(utilizador_id)
+        if row is None:
+            row = PerfilJogador(
+                utilizador_id=uuid.UUID(utilizador_id),
+                moedas=0,
+                diamantes=0,
+                partidas_jogadas=0,
+                patamar_maximo_alcancado=0,
+                patamar_em_curso=0,
+            )
+            self._sessao.add(row)
+        row.diamantes += quantidade
         row.updated_at = datetime.now(UTC)
         self._sessao.commit()
         self._sessao.refresh(row)

@@ -75,6 +75,12 @@ class RepositorioPerfisFalso:
         self._perfis[utilizador_id] = novo
         return novo
 
+    def creditar_diamantes(self, utilizador_id: str, quantidade: int) -> PerfilJogadorRegisto:
+        atual = self.obter_ou_criar(utilizador_id)
+        novo = PerfilJogadorRegisto(**{**atual.__dict__, "diamantes": atual.diamantes + quantidade})
+        self._perfis[utilizador_id] = novo
+        return novo
+
 
 @pytest.fixture
 def perguntas() -> RepositorioPerguntasFalso:

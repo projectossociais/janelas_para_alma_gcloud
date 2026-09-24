@@ -11,6 +11,7 @@ from app.repositories.perfil_jogador_repository import PerfilJogadorRegisto
 from app.repositories.utilizadores_repository import UtilizadorRegisto
 from app.routers import jogo as jogo_router
 from app.services.auth_service import AuthService
+from app.services.loja_jogo_service import PACOTES_DIAMANTES, LojaJogoService
 from tests.services.test_auth_service import RepositorioFalso as RepositorioAuthFalso
 
 
@@ -95,6 +96,12 @@ class RepositorioPerfilJogadorFalso:
             patamar_maximo_alcancado=max(atual.patamar_maximo_alcancado, patamar_alcancado),
             patamar_em_curso=0,
         )
+        self._perfis[utilizador_id] = atualizado
+        return atualizado
+
+    def creditar_diamantes(self, utilizador_id: str, quantidade: int) -> PerfilJogadorRegisto:
+        atual = self.obter_ou_criar(utilizador_id)
+        atualizado = PerfilJogadorRegisto(**{**atual.__dict__, "diamantes": atual.diamantes + quantidade})
         self._perfis[utilizador_id] = atualizado
         return atualizado
 
@@ -392,3 +399,78 @@ def test_validar_sem_sessao_funciona_mas_nao_faz_ninguem_ganhar_nada(ambiente) -
     assert resposta.status_code == 200
     assert resposta.json()["correta"] is True
     assert repo_perfil._perfis == {}
+
+
+# --- Loja de diamantes -------------------------------------------------------
+
+
+@pytest.fixture
+def loja_simulada(ambiente):
+    c, _repo, _admin, token_comum, repo_perfil = ambiente
+    app.dependency_overrides[jogo_router.obter_loja_jogo_service] = lambda: LojaJogoService(
+        repo_perfil, pagamentos_simulados=True
+    )
+    return c, token_comum, repo_perfil
+
+
+@pytest.fixture
+def loja_sem_pagamentos(ambiente):
+    c, _repo, _admin, token_comum, repo_perfil = ambiente
+    app.dependency_overrides[jogo_router.obter_loja_jogo_service] = lambda: LojaJogoService(
+        repo_perfil, pagamentos_simulados=False
+    )
+    return c, token_comum, repo_perfil
+
+
+def test_listar_pacotes_e_publico_e_vem_do_catalogo_do_servidor(loja_sem_pagamentos) -> None:
+    c, *_ = loja_sem_pagamentos
+    resposta = c.get("/jogo/loja/pacotes")
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["pagamento_simulado"] is False
+    assert [p["id"] for p in corpo["pacotes"]] == [p.id for p in PACOTES_DIAMANTES]
+    assert all(p["total_diamantes"] == p["diamantes"] + p["bonus"] for p in corpo["pacotes"])
+
+
+def test_comprar_sem_sessao_devolve_401(loja_simulada) -> None:
+    c, *_ = loja_simulada
+    assert c.post("/jogo/loja/compras", json={"pacote_id": "pequeno"}).status_code == 401
+
+
+def test_comprar_em_modo_simulado_credita_diamantes(loja_simulada) -> None:
+    c, token, repo_perfil = loja_simulada
+    c.cookies.set("access_token", token)
+    resposta = c.post(
+        "/jogo/loja/compras", json={"pacote_id": "pequeno"}
+    )
+    assert resposta.status_code == 200
+    assert resposta.json()["diamantes"] == PACOTES_DIAMANTES[0].total_diamantes
+    assert repo_perfil.obter_ou_criar("id-comum").diamantes == PACOTES_DIAMANTES[0].total_diamantes
+
+
+def test_comprar_ignora_quantidade_enviada_pelo_cliente(loja_simulada) -> None:
+    # Um pedido forjado a mandar "diamantes" no corpo não muda nada -- o
+    # servidor só lê o pacote_id e credita o que está no catálogo.
+    c, token, _ = loja_simulada
+    c.cookies.set("access_token", token)
+    resposta = c.post(
+        "/jogo/loja/compras",
+        json={"pacote_id": "pequeno", "diamantes": 999999},
+    )
+    assert resposta.status_code == 200
+    assert resposta.json()["diamantes"] == PACOTES_DIAMANTES[0].total_diamantes
+
+
+def test_comprar_pacote_inexistente_devolve_404(loja_simulada) -> None:
+    c, token, _ = loja_simulada
+    c.cookies.set("access_token", token)
+    resposta = c.post("/jogo/loja/compras", json={"pacote_id": "nao-existe"})
+    assert resposta.status_code == 404
+
+
+def test_comprar_sem_pagamentos_simulados_devolve_503_sem_creditar(loja_sem_pagamentos) -> None:
+    c, token, repo_perfil = loja_sem_pagamentos
+    c.cookies.set("access_token", token)
+    resposta = c.post("/jogo/loja/compras", json={"pacote_id": "grande"})
+    assert resposta.status_code == 503
+    assert repo_perfil.obter_ou_criar("id-comum").diamantes == 0

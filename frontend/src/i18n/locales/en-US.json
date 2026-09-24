@@ -89,7 +89,9 @@
     "jogoJogarTitulo": "Play: Inclusivamente",
     "jogoJogarDescricao": "Answer questions about eye health and climb the ladder to level 15.",
     "jogoPerfilTitulo": "Player Profile: Inclusivamente",
-    "jogoPerfilDescricao": "Your coins, diamonds, games played and best level in the Inclusivamente game."
+    "jogoPerfilDescricao": "Your coins, diamonds, games played and best level in the Inclusivamente game.",
+    "jogoLojaTitulo": "Diamond Shop: Inclusivamente",
+    "jogoLojaDescricao": "Buy diamond packs to use in the Inclusivamente game."
   },
   "AboutSection": {
     "conhecaNos": "Get to Know Us",
@@ -1864,5 +1866,38 @@
   "AcessoExercicios": {
     "testeIniciado": "Free trial started. Happy training!",
     "naoFoiPossivelIniciar": "Couldn't start the free trial."
+  },
+  "CarteiraJogo": {
+    "moedas": "Coins",
+    "moedasSaldo": "Coins: {{valor}}",
+    "diamantesSaldo": "Diamonds: {{valor}} -- open the shop",
+    "comoGanharMoedas": "You earn coins by playing: each level you clear in a game is worth 50 coins.",
+    "inicieSessaoParaGuardar": "Sign in to keep your coins"
+  },
+  "LojaDiamantes": {
+    "inclusivamente": "Inclusivamente",
+    "titulo": "Diamond Shop",
+    "descricao": "Use diamonds to get help at the Market or buy an extra life when you get a question wrong.",
+    "voltarAoMenu": "Back to menu",
+    "naoFoiPossivelCarregar": "We couldn't load the shop.",
+    "tentarNovamente": "Try again",
+    "avisoPagamentoSimulado": "Simulated payment: in this version you are not charged and the diamonds are added right away.",
+    "avisoEmBreve": "Buying diamonds will be available soon. Until then, earn diamonds by playing.",
+    "popular": "Most popular",
+    "melhorValor": "Best value",
+    "pacotes": {
+      "pequeno": "Small pack",
+      "medio": "Medium pack",
+      "grande": "Large pack"
+    },
+    "bonus": "Includes +{{quantidade}} bonus",
+    "comprarPacote": "Buy {{quantidade}} diamonds for {{preco}}",
+    "entrarParaComprar": "Sign in to buy",
+    "confirmarCompra": "Confirm purchase",
+    "confirmarCompraDescricao": "You'll get {{quantidade}} diamonds for {{preco}}.",
+    "cancelar": "Cancel",
+    "pagarSimulado": "Pay (simulated)",
+    "compraConcluida": "Purchase complete! +{{quantidade}} diamonds.",
+    "naoFoiPossivelComprar": "We couldn't complete the purchase. You were not charged."
   }
 }

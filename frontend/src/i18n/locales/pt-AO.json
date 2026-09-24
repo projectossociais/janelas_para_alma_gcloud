@@ -89,7 +89,9 @@
     "jogoJogarTitulo": "Jogar: Inclusivamente",
     "jogoJogarDescricao": "Responda às perguntas sobre saúde ocular e suba a escada até ao 15.º patamar.",
     "jogoPerfilTitulo": "Perfil do Jogador: Inclusivamente",
-    "jogoPerfilDescricao": "As suas moedas, diamantes, partidas jogadas e melhor patamar no jogo Inclusivamente."
+    "jogoPerfilDescricao": "As suas moedas, diamantes, partidas jogadas e melhor patamar no jogo Inclusivamente.",
+    "jogoLojaTitulo": "Loja de Diamantes: Inclusivamente",
+    "jogoLojaDescricao": "Compre pacotes de diamantes para usar no jogo Inclusivamente."
   },
   "AboutSection": {
     "conhecaNos": "Conheça-nos",
@@ -1864,5 +1866,38 @@
   "AcessoExercicios": {
     "testeIniciado": "Teste gratuito iniciado. Bom treino!",
     "naoFoiPossivelIniciar": "Não foi possível iniciar o teste gratuito."
+  },
+  "CarteiraJogo": {
+    "moedas": "Moedas",
+    "moedasSaldo": "Moedas: {{valor}}",
+    "diamantesSaldo": "Diamantes: {{valor}} -- abrir a loja",
+    "comoGanharMoedas": "As moedas ganham-se a jogar: cada patamar superado numa partida vale 50 moedas.",
+    "inicieSessaoParaGuardar": "Inicie sessão para guardar as suas moedas"
+  },
+  "LojaDiamantes": {
+    "inclusivamente": "Inclusivamente",
+    "titulo": "Loja de Diamantes",
+    "descricao": "Use diamantes para pedir ajuda no Mercado ou ganhar uma vida extra quando errar.",
+    "voltarAoMenu": "Voltar ao menu",
+    "naoFoiPossivelCarregar": "Não foi possível carregar a loja.",
+    "tentarNovamente": "Tentar novamente",
+    "avisoPagamentoSimulado": "Pagamento simulado: nesta versão nenhum valor é cobrado e os diamantes são creditados de imediato.",
+    "avisoEmBreve": "A compra de diamantes estará disponível em breve. Até lá, ganhe diamantes a jogar.",
+    "popular": "Mais popular",
+    "melhorValor": "Melhor valor",
+    "pacotes": {
+      "pequeno": "Pacote pequeno",
+      "medio": "Pacote médio",
+      "grande": "Pacote grande"
+    },
+    "bonus": "Inclui +{{quantidade}} de bónus",
+    "comprarPacote": "Comprar {{quantidade}} diamantes por {{preco}}",
+    "entrarParaComprar": "Entrar para comprar",
+    "confirmarCompra": "Confirmar compra",
+    "confirmarCompraDescricao": "Vai receber {{quantidade}} diamantes por {{preco}}.",
+    "cancelar": "Cancelar",
+    "pagarSimulado": "Pagar (simulado)",
+    "compraConcluida": "Compra concluída! +{{quantidade}} diamantes.",
+    "naoFoiPossivelComprar": "Não foi possível concluir a compra. Nenhum valor foi cobrado."
   }
 }

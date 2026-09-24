@@ -72,6 +72,12 @@ class Settings(BaseSettings):
     # ambiente, nunca hardcoded, para poder mudar sem alterar código.
     google_client_id: str = ""
 
+    # Loja de diamantes do jogo -- enquanto não houver integração real de
+    # pagamento, `POST /jogo/loja/compras` só credita diamantes com isto
+    # ligado. Ligado em docker-compose (desenvolvimento); **nunca** em
+    # produção, onde seriam diamantes grátis. Ver services/loja_jogo_service.py.
+    jogo_pagamentos_simulados: bool = False
+
     @property
     def cookie_seguro(self) -> bool:
         """Cookies com `Secure` fora de desenvolvimento — exige HTTPS, que só

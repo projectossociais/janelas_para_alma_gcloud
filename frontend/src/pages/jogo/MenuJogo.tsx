@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Coins, Gem, Globe, Loader2, User, Users, UserRound } from "lucide-react";
+import { Globe, User, Users, UserRound } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useProfile } from "@/contexts/ProfileContext";
-import { jogoApi, type PerfilJogadorPublico } from "@/lib/apiClient";
+import CarteiraJogo from "@/components/jogo/CarteiraJogo";
 import { useTranslation } from "react-i18next";
 import { localizar } from "@/i18n/rotas";
 
@@ -17,34 +17,7 @@ type ModoEmBreve = "local" | "online" | null;
 const MenuJogo = () => {
   const { t } = useTranslation();
   const { profile } = useProfile();
-  const [perfilJogo, setPerfilJogo] = useState<PerfilJogadorPublico | null>(null);
-  const [aCarregarPerfilJogo, setACarregarPerfilJogo] = useState(false);
   const [modoEmBreve, setModoEmBreve] = useState<ModoEmBreve>(null);
-
-  useEffect(() => {
-    if (!profile?.id) {
-      setPerfilJogo(null);
-      return;
-    }
-    let cancelado = false;
-    setACarregarPerfilJogo(true);
-    jogoApi
-      .obterPerfil()
-      .then((p) => {
-        if (!cancelado) setPerfilJogo(p);
-      })
-      .catch((err: unknown) => {
-        // Sem bloquear o Lobby -- se falhar, os saldos ficam a "0" e o
-        // jogador continua a conseguir jogar normalmente.
-        console.error("Falha ao carregar o perfil do jogo:", err);
-      })
-      .finally(() => {
-        if (!cancelado) setACarregarPerfilJogo(false);
-      });
-    return () => {
-      cancelado = true;
-    };
-  }, [profile?.id]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -92,16 +65,7 @@ const MenuJogo = () => {
               </div>
             )}
 
-            <div className="flex items-center gap-4 shrink-0">
-              <span className="inline-flex items-center gap-1.5 font-bold text-gold" aria-label={t("MenuJogo.moedas")}>
-                <Coins className="w-5 h-5" />
-                {aCarregarPerfilJogo ? <Loader2 className="w-4 h-4 animate-spin" /> : (perfilJogo?.moedas ?? 0)}
-              </span>
-              <span className="inline-flex items-center gap-1.5 font-bold text-teal" aria-label={t("MenuJogo.diamantes")}>
-                <Gem className="w-5 h-5" />
-                {aCarregarPerfilJogo ? <Loader2 className="w-4 h-4 animate-spin" /> : (perfilJogo?.diamantes ?? 0)}
-              </span>
-            </div>
+            <CarteiraJogo className="shrink-0" />
           </div>
 
           {/* Modos de jogo */}
