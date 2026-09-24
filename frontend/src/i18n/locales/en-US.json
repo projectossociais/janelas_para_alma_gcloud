@@ -1147,7 +1147,10 @@
     "acessoIlimitadoAExercicios": "Unlimited access to interactive exercises and videos hosted on the platform.",
     "acompanhamentoDeMetricasKpis": "Tracking of progress metrics (KPIs).",
     "redirecionamentoExclusivoETeleconsulta": "Exclusive referrals and teleconsultations with partner clinics.",
-    "videosExplicativosComMedicos": "Explainer videos with partner ophthalmologists."
+    "videosExplicativosComMedicos": "Explainer videos with partner ophthalmologists.",
+    "precos": "Premium plan pricing",
+    "porMes": "per month",
+    "porAnoPoupe2Meses": "per year · save 2 months"
   },
   "ProgramModal": {
     "programaMeuKambaEstrabico": "Meu Kamba Estrábico Program",

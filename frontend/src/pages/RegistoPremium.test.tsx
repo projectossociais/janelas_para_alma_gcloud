@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 
 // CROSS-02: o comprovativo do pagamento Premium passa a ir directo ao R2 em
 // 3 passos (mesmo padrão do avatar), em vez de uma Edge Function do
@@ -141,3 +141,51 @@ describe("RegistoPremium — comprovativo via R2 (CROSS-02)", () => {
     });
   }, 15000);
 });
+
+const OndeEstou = () => <p data-testid="onde">{useLocation().pathname}</p>;
+
+// Simula chegar a /registo-premium a partir de outra página do site.
+const Navegar = () => {
+  const navigate = useNavigate();
+  return (
+    <>
+      <OndeEstou />
+      <button onClick={() => navigate("/registo-premium")}>ir</button>
+    </>
+  );
+};
+
+describe("RegistoPremium — botão Voltar do topo", () => {
+  const renderEm = (entradas: string[]) =>
+    render(
+      <MemoryRouter initialEntries={entradas} initialIndex={entradas.length - 1}>
+        <Routes>
+          <Route path="/registo-premium" element={<RegistoPremium />} />
+          <Route path="*" element={<OndeEstou />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+  it("regressa à página de onde veio (ex.: /exercicios), não à página inicial", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/exercicios"]}>
+        <Routes>
+          <Route path="/registo-premium" element={<RegistoPremium />} />
+          <Route path="*" element={<Navegar />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await user.click(screen.getByRole("button", { name: "ir" }));
+    await user.click(screen.getAllByRole("button", { name: /^Voltar$/ })[0]);
+    expect(await screen.findByTestId("onde")).toHaveTextContent("/exercicios");
+  });
+
+  it("aberto directamente (sem histórico no site), vai para /exercicios", async () => {
+    const user = userEvent.setup();
+    renderEm(["/registo-premium"]);
+    await user.click(screen.getAllByRole("button", { name: /^Voltar$/ })[0]);
+    expect(await screen.findByTestId("onde")).toHaveTextContent("/exercicios");
+  });
+});
+
