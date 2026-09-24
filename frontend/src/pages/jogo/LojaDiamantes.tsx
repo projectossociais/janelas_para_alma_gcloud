@@ -6,9 +6,9 @@ import { useTranslation } from "react-i18next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
-import CopyRow from "@/components/CopyRow";
-import FileDropzone from "@/components/FileDropzone";
 import CarteiraJogo from "@/components/jogo/CarteiraJogo";
+import CheckoutTransferencia from "@/components/jogo/CheckoutTransferencia";
+import PedidosLojaLista from "@/components/jogo/PedidosLojaLista";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,17 +21,15 @@ import {
 import { useCarteiraJogo } from "@/contexts/CarteiraJogoContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import {
-  comprovativosApi,
   jogoApi,
   mensagemDeErroApi,
-  TIPOS_DE_COMPROVATIVO_ACEITES,
   type LojaDiamantes as Loja,
   type MetodoPagamentoDiamantes,
   type PacoteDiamantes,
-  type PedidoDiamantes,
+  type PedidoLoja,
 } from "@/lib/apiClient";
-import { DEFAULT_BANK_DATA, ofuscarValor } from "@/lib/pagamento";
 import { localizar } from "@/i18n/rotas";
+import { comprovativoValido, pagarComTransferencia } from "@/lib/pagamentoLoja";
 import { cn } from "@/lib/utils";
 import { formatarKz } from "./jogoConfig";
 
@@ -45,12 +43,6 @@ const DESTAQUE: Record<string, "popular" | "melhorValor" | undefined> = {
 const TAMANHO_ICONE = ["w-10 h-10", "w-14 h-14", "w-16 h-16"];
 
 const formatarMoedas = (valor: number) => valor.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-
-const COR_ESTADO: Record<PedidoDiamantes["estado"], string> = {
-  pendente: "bg-gold/15 text-gold",
-  aprovado: "bg-green/15 text-green",
-  rejeitado: "bg-destructive/15 text-destructive",
-};
 
 interface CompraEscolhida {
   pacote: PacoteDiamantes;
@@ -67,7 +59,7 @@ const LojaDiamantes = () => {
   const [compra, setCompra] = useState<CompraEscolhida | null>(null);
   const [aComprar, setAComprar] = useState(false);
   const [comprovativo, setComprovativo] = useState<File | null>(null);
-  const [pedidos, setPedidos] = useState<PedidoDiamantes[]>([]);
+  const [pedidos, setPedidos] = useState<PedidoLoja[]>([]);
 
   const carregar = useCallback(async () => {
     setACarregar(true);
@@ -84,7 +76,7 @@ const LojaDiamantes = () => {
 
   const carregarPedidos = useCallback(async () => {
     try {
-      setPedidos(await jogoApi.listarMeusPedidosDiamantes());
+      setPedidos(await jogoApi.listarMeusPedidosLoja());
     } catch (err) {
       // Só informativo -- a loja funciona na mesma sem a lista.
       console.error("Falha ao carregar os pedidos de diamantes:", err);
@@ -117,9 +109,7 @@ const LojaDiamantes = () => {
   };
 
   const enviarPedidoTransferencia = async (pacote: PacoteDiamantes, ficheiro: File) => {
-    const preparado = await comprovativosApi.preparar(ficheiro.type);
-    await comprovativosApi.enviarParaStorage(preparado.url_de_upload, ficheiro);
-    await jogoApi.pedirDiamantesKwanzas(pacote.id, preparado.chave);
+    await pagarComTransferencia(pacote.id, ficheiro, "diamantes");
     toast.success(t("LojaDiamantes.pedidoEnviado", { quantidade: pacote.total_diamantes }));
     void carregarPedidos();
   };
@@ -131,7 +121,7 @@ const LojaDiamantes = () => {
         toast.error(t("LojaDiamantes.anexeOComprovativo"));
         return;
       }
-      if (!TIPOS_DE_COMPROVATIVO_ACEITES.includes(comprovativo.type as never)) {
+      if (!comprovativoValido(comprovativo)) {
         toast.error(t("LojaDiamantes.tipoDeComprovativoInvalido"));
         return;
       }
@@ -291,29 +281,7 @@ const LojaDiamantes = () => {
                 })}
               </div>
 
-              {profile && pedidos.length > 0 && (
-                <section className="mt-10 space-y-3" aria-labelledby="meus-pedidos">
-                  <h2 id="meus-pedidos" className="text-lg font-bold text-foreground">
-                    {t("LojaDiamantes.osMeusPedidos")}
-                  </h2>
-                  <ul className="rounded-2xl bg-card border border-border/60 divide-y divide-border/60">
-                    {pedidos.map((pedido) => (
-                      <li key={pedido.id} className="flex items-center justify-between gap-3 p-4 text-sm">
-                        <span className="flex items-center gap-2 text-foreground">
-                          <Gem className="w-4 h-4 text-teal" />
-                          {pedido.diamantes} · {formatarKz(pedido.preco_kz)}
-                          <span className="text-muted-foreground">
-                            {new Date(pedido.created_at).toLocaleDateString()}
-                          </span>
-                        </span>
-                        <span className={cn("rounded-full px-2.5 py-0.5 text-xs font-semibold", COR_ESTADO[pedido.estado])}>
-                          {t(`LojaDiamantes.estados.${pedido.estado}`)}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              )}
+              {profile && <PedidosLojaLista pedidos={pedidos} />}
             </>
           )}
         </div>
@@ -344,33 +312,7 @@ const LojaDiamantes = () => {
           )}
 
           {checkoutTransferencia && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                  {t("LojaDiamantes.n1Transfira")}
-                </p>
-                <div className="rounded-lg border border-navy/20 bg-navy/5 p-4 space-y-1 divide-y divide-navy/10">
-                  <CopyRow label={t("LojaDiamantes.beneficiario")} value={DEFAULT_BANK_DATA.beneficiario} />
-                  <CopyRow
-                    label={DEFAULT_BANK_DATA.pagamento_rapido.metodo}
-                    value={DEFAULT_BANK_DATA.pagamento_rapido.telefone}
-                    displayValue={ofuscarValor(DEFAULT_BANK_DATA.pagamento_rapido.telefone)}
-                  />
-                  <CopyRow
-                    label={`IBAN ${DEFAULT_BANK_DATA.transferencia_nacional.banco}`}
-                    value={DEFAULT_BANK_DATA.transferencia_nacional.iban}
-                    displayValue={ofuscarValor(DEFAULT_BANK_DATA.transferencia_nacional.iban)}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                  {t("LojaDiamantes.n2AnexeOComprovativo")}
-                </p>
-                <FileDropzone file={comprovativo} onFileChange={setComprovativo} />
-              </div>
-              <p className="text-xs text-muted-foreground">{t("LojaDiamantes.creditadoAposConfirmacao")}</p>
-            </div>
+            <CheckoutTransferencia comprovativo={comprovativo} onComprovativo={setComprovativo} />
           )}
 
           <DialogFooter className="gap-2">

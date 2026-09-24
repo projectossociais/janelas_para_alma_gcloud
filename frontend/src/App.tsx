@@ -42,6 +42,7 @@ import MenuJogo from "./pages/jogo/MenuJogo";
 import JogoCuriosidades from "./pages/jogo/JogoCuriosidades";
 import PerfilJogador from "./pages/jogo/PerfilJogador";
 import LojaDiamantes from "./pages/jogo/LojaDiamantes";
+import LojaMoedas from "./pages/jogo/LojaMoedas";
 
 import ConvergenciaExercise from "./pages/exercises/ConvergenciaExercise";
 import CerebroExercise from "./pages/exercises/CerebroExercise";
@@ -120,6 +121,7 @@ const PAGINAS: Record<ChaveRota, ReactElement> = {
   jogoJogar: <JogoCuriosidades />,
   jogoPerfil: <PerfilJogador />,
   jogoLoja: <LojaDiamantes />,
+  jogoLojaMoedas: <LojaMoedas />,
 };
 
 const queryClient = new QueryClient();

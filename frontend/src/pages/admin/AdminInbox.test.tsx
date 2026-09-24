@@ -18,9 +18,9 @@ vi.mock("@/lib/apiClient", () => ({
     marcarLida: (...a: unknown[]) => marcarLida(...a),
   },
   jogoApi: {
-    listarPedidosDiamantes: (...a: unknown[]) => diamantesListar(...a),
-    aprovarPedidoDiamantes: (...a: unknown[]) => diamantesAprovar(...a),
-    rejeitarPedidoDiamantes: (...a: unknown[]) => diamantesRejeitar(...a),
+    listarPedidosLoja: (...a: unknown[]) => diamantesListar(...a),
+    aprovarPedidoLoja: (...a: unknown[]) => diamantesAprovar(...a),
+    rejeitarPedidoLoja: (...a: unknown[]) => diamantesRejeitar(...a),
   },
   premiumApi: {
     listar: (...a: unknown[]) => premiumListar(...a),
@@ -183,8 +183,9 @@ describe("AdminInbox — mensagens de contacto", () => {
 const umPedidoDiamantes = {
   id: "dia-1",
   utilizador_id: "user-7",
+  tipo_item: "diamantes",
   pacote_id: "medio",
-  diamantes: 165,
+  quantidade: 165,
   preco_kz: 1250,
   comprovativo_url: "https://r2.example/comprovativos/x.png",
   estado: "pendente",
@@ -193,7 +194,7 @@ const umPedidoDiamantes = {
   created_at: "2026-09-24T10:00:00.000Z",
 };
 
-describe("AdminInbox — pedidos de diamantes (Kwanzas por transferência)", () => {
+describe("AdminInbox — pedidos da loja do jogo (Kwanzas por transferência)", () => {
   beforeEach(() => {
     listar.mockReset().mockResolvedValue([]);
     premiumListar.mockReset().mockResolvedValue([]);
@@ -206,7 +207,7 @@ describe("AdminInbox — pedidos de diamantes (Kwanzas por transferência)", () 
 
   async function abrir(user: ReturnType<typeof userEvent.setup>) {
     render(<AdminInbox />, { wrapper: MemoryRouter });
-    await user.click(await screen.findByRole("tab", { name: /Pedidos de diamantes \(1\)/ }));
+    await user.click(await screen.findByRole("tab", { name: /Loja do jogo \(1\)/ }));
   }
 
   it("mostra o comprovativo e confirma o pagamento pela API, recarregando a lista", async () => {
@@ -245,14 +246,39 @@ describe("AdminInbox — pedidos de diamantes (Kwanzas por transferência)", () 
 
     await waitFor(() => expect(diamantesRejeitar).toHaveBeenCalledWith("dia-1"));
     expect(diamantesAprovar).not.toHaveBeenCalled();
-    expect(toastSuccess).toHaveBeenCalledWith("Pedido rejeitado. Nenhum diamante foi creditado.");
+    expect(toastSuccess).toHaveBeenCalledWith("Pedido rejeitado. Nada foi creditado.");
+  });
+
+  it("pedido de moedas: mostra o tipo e a quantidade, e confirmar credita moedas", async () => {
+    const user = userEvent.setup();
+    const pedidoMoedas = { ...umPedidoDiamantes, id: "moe-1", tipo_item: "moedas", pacote_id: "bau", quantidade: 9000, preco_kz: 2500 };
+    diamantesListar.mockResolvedValue([pedidoMoedas]);
+    diamantesAprovar.mockResolvedValue({ ...pedidoMoedas, estado: "aprovado" });
+    await abrir(user);
+
+    const cartao = await screen.findByTestId("pedido-loja-moe-1");
+    expect(cartao).toHaveTextContent("9000 moedas"); // pt-PT só agrupa a partir de 5 dígitos
+    expect(cartao).toHaveTextContent("2500 Kz");
+    await user.click(screen.getByRole("button", { name: /Confirmar pagamento/ }));
+
+    await waitFor(() => expect(diamantesAprovar).toHaveBeenCalledWith("moe-1"));
+    expect(toastSuccess).toHaveBeenCalledWith("Pagamento confirmado. 9000 moedas creditados.");
+  });
+
+  it("o link antigo ?tab=diamantes abre o separador da loja do jogo", async () => {
+    render(
+      <MemoryRouter initialEntries={["/admin/mensagens?tab=diamantes"]}>
+        <AdminInbox />
+      </MemoryRouter>
+    );
+    expect(await screen.findByTestId("pedido-loja-dia-1")).toBeInTheDocument();
   });
 
   it("pedido já decidido não tem botões de decisão", async () => {
     const user = userEvent.setup();
     diamantesListar.mockResolvedValue([{ ...umPedidoDiamantes, estado: "aprovado" }]);
     render(<AdminInbox />, { wrapper: MemoryRouter });
-    await user.click(await screen.findByRole("tab", { name: /Pedidos de diamantes \(0\)/ }));
+    await user.click(await screen.findByRole("tab", { name: /Loja do jogo \(0\)/ }));
 
     expect(await screen.findByText("aprovado")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Confirmar pagamento/ })).not.toBeInTheDocument();

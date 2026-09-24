@@ -12,7 +12,7 @@ from app.routers import jogo as jogo_router
 from app.services.auth_service import AuthService
 from app.services.comprovativo_upload_service import ChaveDeComprovativoInvalidaError
 from app.services.estatisticas_jogador_service import EstatisticasJogadorService
-from app.services.loja_jogo_service import PACOTES_DIAMANTES, LojaJogoService
+from app.services.loja_jogo_service import PACOTES_DIAMANTES, PACOTES_MOEDAS, LojaJogoService
 from app.services.mercado_jogo_service import VENDEDORES, MercadoJogoService
 from tests.services.test_auth_service import RepositorioFalso as RepositorioAuthFalso
 from tests.services.test_jogo_service import (
@@ -21,7 +21,7 @@ from tests.services.test_jogo_service import (
 from tests.services.test_jogo_service import (
     RepositorioPerfisFalso as RepositorioPerfilJogadorFalso,
 )
-from tests.services.test_loja_jogo_service import RepositorioPedidosDiamantesFalso
+from tests.services.test_loja_jogo_service import RepositorioPedidosLojaFalso
 from tests.services.test_mercado_jogo_service import RepositorioMercadoFalso
 
 
@@ -201,7 +201,7 @@ def test_obter_perfil_cria_um_perfil_zerado_na_primeira_vez(ambiente) -> None:
 @pytest.fixture
 def loja_simulada(ambiente):
     c, _repo, _admin, token_comum, repo_perfil = ambiente
-    pedidos = RepositorioPedidosDiamantesFalso(repo_perfil)
+    pedidos = RepositorioPedidosLojaFalso(repo_perfil)
     app.dependency_overrides[jogo_router.obter_loja_jogo_service] = lambda: LojaJogoService(
         repo_perfil, pedidos, pagamentos_simulados=True
     )
@@ -211,7 +211,7 @@ def loja_simulada(ambiente):
 @pytest.fixture
 def loja_sem_pagamentos(ambiente):
     c, _repo, _admin, token_comum, repo_perfil = ambiente
-    pedidos = RepositorioPedidosDiamantesFalso(repo_perfil)
+    pedidos = RepositorioPedidosLojaFalso(repo_perfil)
     app.dependency_overrides[jogo_router.obter_loja_jogo_service] = lambda: LojaJogoService(
         repo_perfil, pedidos, pagamentos_simulados=False
     )
@@ -228,7 +228,7 @@ def loja_producao(ambiente, monkeypatch):
         else f"https://r2/{chave}",
     )
     c, _repo, token_admin, token_comum, repo_perfil = ambiente
-    pedidos = RepositorioPedidosDiamantesFalso(repo_perfil)
+    pedidos = RepositorioPedidosLojaFalso(repo_perfil)
     app.dependency_overrides[jogo_router.obter_loja_jogo_service] = lambda: LojaJogoService(
         repo_perfil, pedidos, pagamentos_simulados=False
     )
@@ -347,7 +347,12 @@ def test_pedido_kwanzas_fica_pendente_e_nao_credita(loja_producao) -> None:
 
     assert resposta.status_code == 201
     corpo = resposta.json()
-    assert (corpo["estado"], corpo["diamantes"], corpo["preco_kz"]) == ("pendente", 480, 3_000)
+    assert (corpo["estado"], corpo["tipo_item"], corpo["quantidade"], corpo["preco_kz"]) == (
+        "pendente",
+        "diamantes",
+        480,
+        3_000,
+    )
     assert "comprovativo_url" not in corpo  # só o admin vê o comprovativo
     assert repo_perfil.obter_ou_criar("id-comum").diamantes == 0
     assert [p["id"] for p in c.get("/jogo/loja/pedidos").json()] == [corpo["id"]]
@@ -366,11 +371,11 @@ def test_so_um_admin_lista_e_decide_pedidos(loja_producao) -> None:
     pedido = c.post("/jogo/loja/pedidos", json={"pacote_id": "pequeno", "comprovativo_chave": "comprovativos/x.png"})
     pedido_id = pedido.json()["id"]
 
-    assert c.get("/admin/jogo/pedidos-diamantes").status_code == 403
-    assert c.post(f"/admin/jogo/pedidos-diamantes/{pedido_id}/aprovar").status_code == 403
-    assert c.post(f"/admin/jogo/pedidos-diamantes/{pedido_id}/rejeitar").status_code == 403
+    assert c.get("/admin/jogo/pedidos-loja").status_code == 403
+    assert c.post(f"/admin/jogo/pedidos-loja/{pedido_id}/aprovar").status_code == 403
+    assert c.post(f"/admin/jogo/pedidos-loja/{pedido_id}/rejeitar").status_code == 403
     c.cookies.clear()
-    assert c.post(f"/admin/jogo/pedidos-diamantes/{pedido_id}/aprovar").status_code == 401
+    assert c.post(f"/admin/jogo/pedidos-loja/{pedido_id}/aprovar").status_code == 401
 
 
 def test_admin_aprova_uma_vez_e_os_diamantes_sao_creditados_uma_vez(loja_producao) -> None:
@@ -381,15 +386,15 @@ def test_admin_aprova_uma_vez_e_os_diamantes_sao_creditados_uma_vez(loja_produca
     ).json()["id"]
 
     c.cookies.set("access_token", token_admin)
-    lista = c.get("/admin/jogo/pedidos-diamantes").json()
+    lista = c.get("/admin/jogo/pedidos-loja").json()
     assert lista[0]["comprovativo_url"] == "https://r2/comprovativos/x.png"
-    aprovado = c.post(f"/admin/jogo/pedidos-diamantes/{pedido_id}/aprovar")
+    aprovado = c.post(f"/admin/jogo/pedidos-loja/{pedido_id}/aprovar")
     assert aprovado.status_code == 200
     assert (aprovado.json()["estado"], aprovado.json()["decidido_por"]) == ("aprovado", "id-admin")
     assert repo_perfil.obter_ou_criar("id-comum").diamantes == 165
 
-    assert c.post(f"/admin/jogo/pedidos-diamantes/{pedido_id}/aprovar").status_code == 409
-    assert c.post(f"/admin/jogo/pedidos-diamantes/{pedido_id}/rejeitar").status_code == 409
+    assert c.post(f"/admin/jogo/pedidos-loja/{pedido_id}/aprovar").status_code == 409
+    assert c.post(f"/admin/jogo/pedidos-loja/{pedido_id}/rejeitar").status_code == 409
     assert repo_perfil.obter_ou_criar("id-comum").diamantes == 165
 
 
@@ -400,9 +405,87 @@ def test_admin_rejeita_e_nada_e_creditado(loja_producao) -> None:
         "/jogo/loja/pedidos", json={"pacote_id": "pequeno", "comprovativo_chave": "comprovativos/x.png"}
     ).json()["id"]
     c.cookies.set("access_token", token_admin)
-    assert c.post(f"/admin/jogo/pedidos-diamantes/{pedido_id}/rejeitar").json()["estado"] == "rejeitado"
+    assert c.post(f"/admin/jogo/pedidos-loja/{pedido_id}/rejeitar").json()["estado"] == "rejeitado"
     assert repo_perfil.obter_ou_criar("id-comum").diamantes == 0
-    assert c.post("/admin/jogo/pedidos-diamantes/nao-existe/aprovar").status_code == 404
+    assert c.post("/admin/jogo/pedidos-loja/nao-existe/aprovar").status_code == 404
+
+
+# --- Loja de moedas -------------------------------------------------------
+
+
+def test_catalogo_de_moedas_e_publico(loja_sem_pagamentos) -> None:
+    c, *_ = loja_sem_pagamentos
+    resposta = c.get("/jogo/loja/moedas/pacotes")
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["pagamento_simulado"] is False
+    assert [(p["id"], p["total_moedas"], p["preco_kz"]) for p in corpo["pacotes"]] == [
+        (p.id, p.total_moedas, p.preco_kz) for p in PACOTES_MOEDAS
+    ]
+
+
+def test_comprar_moedas_de_imediato_exige_sessao_e_so_em_modo_simulado(loja_sem_pagamentos) -> None:
+    c, token, repo_perfil = loja_sem_pagamentos
+    assert c.post("/jogo/loja/moedas/compras", json={"pacote_id": "pilha"}).status_code == 401
+    c.cookies.set("access_token", token)
+    resposta = c.post("/jogo/loja/moedas/compras", json={"pacote_id": "pilha"})
+    assert resposta.status_code == 501
+    assert repo_perfil.obter_ou_criar("id-comum").moedas == 0
+
+
+def test_comprar_moedas_em_modo_simulado_credita(loja_simulada) -> None:
+    c, token, _ = loja_simulada
+    c.cookies.set("access_token", token)
+    resposta = c.post("/jogo/loja/moedas/compras", json={"pacote_id": "saco", "moedas": 999_999})
+    assert resposta.status_code == 200
+    assert resposta.json()["moedas"] == 3_300
+    assert c.post("/jogo/loja/moedas/compras", json={"pacote_id": "nao-existe"}).status_code == 404
+
+
+def test_pedido_de_moedas_fica_pendente_e_o_admin_credita_moedas_uma_vez(loja_producao) -> None:
+    c, token_admin, token, repo_perfil, _ = loja_producao
+    c.cookies.set("access_token", token)
+    resposta = c.post(
+        "/jogo/loja/pedidos",
+        json={"pacote_id": "bau", "comprovativo_chave": "comprovativos/x.png", "tipo_item": "moedas"},
+    )
+    assert resposta.status_code == 201
+    corpo = resposta.json()
+    assert (corpo["tipo_item"], corpo["quantidade"], corpo["preco_kz"], corpo["estado"]) == (
+        "moedas",
+        9_000,
+        2_500,
+        "pendente",
+    )
+    assert repo_perfil.obter_ou_criar("id-comum").moedas == 0
+
+    c.cookies.set("access_token", token_admin)
+    lista = c.get("/admin/jogo/pedidos-loja").json()
+    assert [(p["tipo_item"], p["comprovativo_url"]) for p in lista] == [("moedas", "https://r2/comprovativos/x.png")]
+    assert c.post(f"/admin/jogo/pedidos-loja/{corpo['id']}/aprovar").status_code == 200
+    assert c.post(f"/admin/jogo/pedidos-loja/{corpo['id']}/aprovar").status_code == 409
+    perfil = repo_perfil.obter_ou_criar("id-comum")
+    assert (perfil.moedas, perfil.diamantes) == (9_000, 0)
+
+
+def test_pedido_de_moedas_com_pacote_de_diamantes_devolve_404(loja_producao) -> None:
+    c, _admin, token, *_ = loja_producao
+    c.cookies.set("access_token", token)
+    resposta = c.post(
+        "/jogo/loja/pedidos",
+        json={"pacote_id": "grande", "comprovativo_chave": "comprovativos/x.png", "tipo_item": "moedas"},
+    )
+    assert resposta.status_code == 404
+
+
+def test_tipo_item_invalido_devolve_422(loja_producao) -> None:
+    c, _admin, token, *_ = loja_producao
+    c.cookies.set("access_token", token)
+    resposta = c.post(
+        "/jogo/loja/pedidos",
+        json={"pacote_id": "pilha", "comprovativo_chave": "comprovativos/x.png", "tipo_item": "vidas"},
+    )
+    assert resposta.status_code == 422
 
 
 def test_catalogo_abre_com_sessao_mesmo_sem_pagamentos(loja_sem_pagamentos) -> None:
@@ -781,7 +864,7 @@ def mercado(ambiente, banco, repo_partidas):
 def test_mercado_exige_sessao(ambiente) -> None:
     c, *_ = ambiente
     assert c.get("/jogo/mercado").status_code == 401
-    assert c.post("/jogo/mercado/comprar", json={"vendedor_id": "tio-ze", "pergunta_id": "x"}).status_code == 401
+    assert c.post("/jogo/mercado/comprar", json={"vendedor_id": "estudante-medicina", "pergunta_id": "x"}).status_code == 401
 
 
 def test_listar_mercado_devolve_catalogo_do_servidor(mercado) -> None:
@@ -810,14 +893,14 @@ def test_comprar_debita_bloqueia_e_devolve_sugestao(mercado) -> None:
     c, _token, repo_perfil, _, pergunta = mercado
     repo_perfil.creditar_diamantes("id-comum", 50)
 
-    resposta = c.post("/jogo/mercado/comprar", json={"vendedor_id": "mana-fefa", "pergunta_id": pergunta["id"]})
+    resposta = c.post("/jogo/mercado/comprar", json={"vendedor_id": "enfermeira-oftalmica", "pergunta_id": pergunta["id"]})
 
     assert resposta.status_code == 200
     corpo = resposta.json()
     assert corpo["resposta_sugerida"] in {"A", "B", "C", "D"}
     assert corpo["perfil"]["diamantes"] == 50 - 12
     listado = {v["id"]: v["disponivel_em"] for v in c.get("/jogo/mercado").json()["vendedores"]}
-    assert listado["mana-fefa"] is not None
+    assert listado["enfermeira-oftalmica"] is not None
 
 
 def test_comprar_ignora_custo_enviado_pelo_cliente(mercado) -> None:
@@ -825,7 +908,7 @@ def test_comprar_ignora_custo_enviado_pelo_cliente(mercado) -> None:
     repo_perfil.creditar_diamantes("id-comum", 50)
     resposta = c.post(
         "/jogo/mercado/comprar",
-        json={"vendedor_id": "kota-beto", "pergunta_id": pergunta["id"], "custo_diamantes": 0, "precisao": 1},
+        json={"vendedor_id": "oftalmologista", "pergunta_id": pergunta["id"], "custo_diamantes": 0, "precisao": 1},
     )
     assert resposta.status_code == 200
     assert resposta.json()["perfil"]["diamantes"] == 50 - 45
@@ -834,15 +917,15 @@ def test_comprar_ignora_custo_enviado_pelo_cliente(mercado) -> None:
 def test_comprar_duas_vezes_ao_mesmo_vendedor_devolve_409_sem_debitar(mercado) -> None:
     c, _token, repo_perfil, _, pergunta = mercado
     repo_perfil.creditar_diamantes("id-comum", 50)
-    c.post("/jogo/mercado/comprar", json={"vendedor_id": "tio-ze", "pergunta_id": pergunta["id"]})
-    resposta = c.post("/jogo/mercado/comprar", json={"vendedor_id": "tio-ze", "pergunta_id": pergunta["id"]})
+    c.post("/jogo/mercado/comprar", json={"vendedor_id": "estudante-medicina", "pergunta_id": pergunta["id"]})
+    resposta = c.post("/jogo/mercado/comprar", json={"vendedor_id": "estudante-medicina", "pergunta_id": pergunta["id"]})
     assert resposta.status_code == 409
     assert repo_perfil.obter_ou_criar("id-comum").diamantes == 45
 
 
 def test_comprar_sem_diamantes_devolve_402(mercado) -> None:
     c, _token, _, repo_mercado, pergunta = mercado
-    resposta = c.post("/jogo/mercado/comprar", json={"vendedor_id": "tio-ze", "pergunta_id": pergunta["id"]})
+    resposta = c.post("/jogo/mercado/comprar", json={"vendedor_id": "estudante-medicina", "pergunta_id": pergunta["id"]})
     assert resposta.status_code == 402
     assert repo_mercado.bloqueios == {}
 
@@ -851,7 +934,7 @@ def test_comprar_vendedor_inexistente_404_e_pergunta_fora_da_partida_409(mercado
     c, _token, repo_perfil, _, pergunta = mercado
     repo_perfil.creditar_diamantes("id-comum", 50)
     assert c.post("/jogo/mercado/comprar", json={"vendedor_id": "x", "pergunta_id": pergunta["id"]}).status_code == 404
-    assert c.post("/jogo/mercado/comprar", json={"vendedor_id": "tio-ze", "pergunta_id": "x"}).status_code == 409
+    assert c.post("/jogo/mercado/comprar", json={"vendedor_id": "estudante-medicina", "pergunta_id": "x"}).status_code == 409
     assert repo_perfil.obter_ou_criar("id-comum").diamantes == 50
 
 
@@ -859,7 +942,7 @@ def test_comprar_com_opcoes_excluidas_invalidas_devolve_422(mercado) -> None:
     c, _token, _, _, pergunta = mercado
     resposta = c.post(
         "/jogo/mercado/comprar",
-        json={"vendedor_id": "tio-ze", "pergunta_id": pergunta["id"], "opcoes_excluidas": ["Z"]},
+        json={"vendedor_id": "estudante-medicina", "pergunta_id": pergunta["id"], "opcoes_excluidas": ["Z"]},
     )
     assert resposta.status_code == 422
 

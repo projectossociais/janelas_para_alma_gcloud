@@ -10,13 +10,14 @@ import {
   premiumApi,
   mensagemDeErroApi,
   type ContactMessageAdmin,
-  type PedidoDiamantesAdmin,
+  type PedidoLojaAdmin,
   type PedidoPremiumAdmin,
 } from "@/lib/apiClient";
 import { toast } from "sonner";
-import { Check, FileText, Gem, Mail, Phone, X } from "lucide-react";
+import { Check, Coins, FileText, Gem, Mail, Phone, X } from "lucide-react";
 
-const TABS_VALIDAS = ["messages", "premium", "diamantes"] as const;
+// "diamantes" mantém-se como alias antigo do separador da loja do jogo.
+const TABS_VALIDAS = ["messages", "premium", "loja", "diamantes"] as const;
 type Tab = (typeof TABS_VALIDAS)[number];
 
 const AdminInbox = () => {
@@ -24,10 +25,11 @@ const AdminInbox = () => {
   // separador certo -- ex.: /admin/mensagens?tab=premium.
   const [searchParams] = useSearchParams();
   const pedida = searchParams.get("tab");
-  const tabInicial: Tab = TABS_VALIDAS.includes(pedida as Tab) ? (pedida as Tab) : "messages";
+  const tabPedida: Tab = TABS_VALIDAS.includes(pedida as Tab) ? (pedida as Tab) : "messages";
+  const tabInicial = tabPedida === "diamantes" ? "loja" : tabPedida;
   const [msgs, setMsgs] = useState<ContactMessageAdmin[]>([]);
   const [premium, setPremium] = useState<PedidoPremiumAdmin[]>([]);
-  const [diamantes, setDiamantes] = useState<PedidoDiamantesAdmin[]>([]);
+  const [pedidosLoja, setPedidosLoja] = useState<PedidoLojaAdmin[]>([]);
   const [ocupado, setOcupado] = useState<string | null>(null);
 
   const carregarMensagens = async () => {
@@ -46,33 +48,33 @@ const AdminInbox = () => {
     }
   };
 
-  const carregarDiamantes = async () => {
+  const carregarPedidosLoja = async () => {
     try {
-      setDiamantes(await jogoApi.listarPedidosDiamantes());
+      setPedidosLoja(await jogoApi.listarPedidosLoja());
     } catch (err) {
-      toast.error(mensagemDeErroApi(err, "Não foi possível carregar os pedidos de diamantes."));
+      toast.error(mensagemDeErroApi(err, "Não foi possível carregar os pedidos da loja do jogo."));
     }
   };
 
   useEffect(() => {
     carregarMensagens();
     carregarPremium();
-    carregarDiamantes();
+    carregarPedidosLoja();
   }, []);
 
-  // Aprovar = pagamento confirmado: a API credita os diamantes uma única vez
-  // (um segundo clique ou outro admin recebe 409, sem crédito repetido).
-  const decidirDiamantes = async (id: string, decisao: "aprovar" | "rejeitar") => {
+  // Aprovar = pagamento confirmado: a API credita os diamantes ou as moedas
+  // do pedido uma única vez (um segundo clique ou outro admin recebe 409).
+  const decidirPedidoLoja = async (id: string, decisao: "aprovar" | "rejeitar") => {
     setOcupado(id);
     try {
       if (decisao === "aprovar") {
-        const pedido = await jogoApi.aprovarPedidoDiamantes(id);
-        toast.success(`Pagamento confirmado. ${pedido.diamantes} diamantes creditados.`);
+        const pedido = await jogoApi.aprovarPedidoLoja(id);
+        toast.success(`Pagamento confirmado. ${pedido.quantidade} ${pedido.tipo_item} creditados.`);
       } else {
-        await jogoApi.rejeitarPedidoDiamantes(id);
-        toast.success("Pedido rejeitado. Nenhum diamante foi creditado.");
+        await jogoApi.rejeitarPedidoLoja(id);
+        toast.success("Pedido rejeitado. Nada foi creditado.");
       }
-      await carregarDiamantes();
+      await carregarPedidosLoja();
     } catch (err) {
       toast.error(mensagemDeErroApi(err, "Não foi possível decidir o pedido."));
     } finally {
@@ -126,8 +128,8 @@ const AdminInbox = () => {
           <TabsList>
             <TabsTrigger value="messages">Mensagens ({msgs.length})</TabsTrigger>
             <TabsTrigger value="premium">Pedidos Premium ({premium.length})</TabsTrigger>
-            <TabsTrigger value="diamantes">
-              Pedidos de diamantes ({diamantes.filter((d) => d.estado === "pendente").length})
+            <TabsTrigger value="loja">
+              Loja do jogo ({pedidosLoja.filter((d) => d.estado === "pendente").length})
             </TabsTrigger>
           </TabsList>
 
@@ -256,15 +258,16 @@ const AdminInbox = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="diamantes" className="space-y-3 mt-4">
-            {diamantes.map((d) => (
-              <Card key={d.id} data-testid={`pedido-diamantes-${d.id}`}>
+          <TabsContent value="loja" className="space-y-3 mt-4">
+            {pedidosLoja.map((d) => (
+              <Card key={d.id} data-testid={`pedido-loja-${d.id}`}>
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-3 flex-wrap">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-semibold inline-flex items-center gap-1">
-                          <Gem className="w-4 h-4" /> {d.diamantes} diamantes · {d.preco_kz.toLocaleString("pt-PT")} Kz
+                          {d.tipo_item === "moedas" ? <Coins className="w-4 h-4" /> : <Gem className="w-4 h-4" />}{" "}
+                          {d.quantidade.toLocaleString("pt-PT")} {d.tipo_item} · {d.preco_kz.toLocaleString("pt-PT")} Kz
                         </span>
                         <Badge
                           variant={
@@ -296,7 +299,7 @@ const AdminInbox = () => {
                         <>
                           <Button
                             size="sm"
-                            onClick={() => decidirDiamantes(d.id, "aprovar")}
+                            onClick={() => decidirPedidoLoja(d.id, "aprovar")}
                             disabled={ocupado === d.id || !d.utilizador_id}
                           >
                             <Check className="w-3 h-3" /> Confirmar pagamento
@@ -304,7 +307,7 @@ const AdminInbox = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => decidirDiamantes(d.id, "rejeitar")}
+                            onClick={() => decidirPedidoLoja(d.id, "rejeitar")}
                             disabled={ocupado === d.id}
                           >
                             <X className="w-3 h-3" /> Rejeitar
@@ -316,8 +319,8 @@ const AdminInbox = () => {
                 </CardContent>
               </Card>
             ))}
-            {!diamantes.length && (
-              <p className="text-center text-muted-foreground py-6">Sem pedidos de diamantes.</p>
+            {!pedidosLoja.length && (
+              <p className="text-center text-muted-foreground py-6">Sem pedidos da loja do jogo.</p>
             )}
           </TabsContent>
         </Tabs>

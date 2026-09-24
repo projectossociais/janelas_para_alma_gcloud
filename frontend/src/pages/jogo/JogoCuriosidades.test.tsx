@@ -86,7 +86,7 @@ vi.mock("@/components/jogo/MercadoModal", () => ({
         type="button"
         onClick={() =>
           props.onAjudaComprada({
-            vendedor_id: "kota-beto",
+            vendedor_id: "oftalmologista",
             resposta_sugerida: "B",
             disponivel_em: "2026-09-24T16:00:00Z",
             perfil: { moedas: 0, diamantes: 5, partidas_jogadas: 0, patamar_maximo_alcancado: 0 },
@@ -348,7 +348,7 @@ describe("JogoCuriosidades", () => {
     await screen.findByText(PERGUNTA_1.texto_pergunta);
 
     await userEvent.click(screen.getByRole("button", { name: "50:50" }));
-    await userEvent.click(screen.getByRole("button", { name: /Mercado/ }));
+    await userEvent.click(screen.getByRole("button", { name: /Consultório/ }));
     // O Mercado recebe as opções já escondidas, para não sugerir uma delas.
     await waitFor(() =>
       expect(mercadoProps).toHaveBeenLastCalledWith(
@@ -357,7 +357,7 @@ describe("JogoCuriosidades", () => {
     );
     await userEvent.click(screen.getByRole("button", { name: "simular compra" }));
 
-    expect(screen.getByText("Certa B").closest("button")).toHaveTextContent("Kota Beto");
+    expect(screen.getByText("Certa B").closest("button")).toHaveTextContent("Dra. Helena");
   });
 
   it("com sessão, inicia a partida no servidor ao abrir o jogo; sem sessão, não", async () => {
@@ -497,7 +497,7 @@ describe("JogoCuriosidades", () => {
       // Não é "modo offline" -- é o modo normal de quem não tem conta.
       expect(screen.queryByText("Modo offline")).not.toBeInTheDocument();
       // Sem Mercado (é pago em diamantes, e sem conta não há diamantes).
-      expect(screen.queryByRole("button", { name: /Mercado/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /Consultório/ })).not.toBeInTheDocument();
 
       await userEvent.click(screen.getByText("Um desalinhamento dos eixos visuais dos olhos"));
       expect(obterPerguntaDaPartida).not.toHaveBeenCalled();

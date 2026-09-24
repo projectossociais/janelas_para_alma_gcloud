@@ -50,6 +50,7 @@ class PerfilJogadorRegisto:
 class PerfilJogadorRepository(Protocol):
     def obter_ou_criar(self, utilizador_id: str) -> PerfilJogadorRegisto: ...
     def creditar_diamantes(self, utilizador_id: str, quantidade: int) -> PerfilJogadorRegisto: ...
+    def creditar_moedas(self, utilizador_id: str, quantidade: int) -> PerfilJogadorRegisto: ...
     def trocar_moedas_por_diamantes(
         self, utilizador_id: str, custo_moedas: int, diamantes: int
     ) -> PerfilJogadorRegisto | None: ...
@@ -108,6 +109,17 @@ class SQLAlchemyPerfilJogadorRepository:
             )
             self._sessao.add(row)
         row.diamantes += quantidade
+        row.updated_at = datetime.now(UTC)
+        self._sessao.commit()
+        self._sessao.refresh(row)
+        return para_registo(row)
+
+    def creditar_moedas(self, utilizador_id: str, quantidade: int) -> PerfilJogadorRegisto:
+        """Soma moedas *compradas* (Loja de Moedas em modo simulado) -- não
+        conta para `moedas_ganhas_total`, que mede o que se ganhou a jogar."""
+        self.obter_ou_criar(utilizador_id)
+        row = self._obter_row(utilizador_id)
+        row.moedas += quantidade
         row.updated_at = datetime.now(UTC)
         self._sessao.commit()
         self._sessao.refresh(row)

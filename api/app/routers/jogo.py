@@ -26,9 +26,9 @@ from app.repositories.estatisticas_jogo_repository import SQLAlchemyEstatisticas
 from app.repositories.jogo_repository import PerguntaJogoRegisto, SQLAlchemyPerguntaJogoRepository
 from app.repositories.mercado_jogo_repository import SQLAlchemyMercadoJogoRepository
 from app.repositories.partida_jogo_repository import SQLAlchemyPartidaJogoRepository
-from app.repositories.pedido_diamantes_repository import (
-    PedidoDiamantesRegisto,
-    SQLAlchemyPedidoDiamantesRepository,
+from app.repositories.pedido_loja_repository import (
+    PedidoLojaRegisto,
+    SQLAlchemyPedidoLojaRepository,
 )
 from app.repositories.perfil_jogador_repository import (
     PerfilJogadorRegisto,
@@ -40,20 +40,23 @@ from app.schemas.jogo import (
     AjudaPerguntaRequest,
     CinquentaCinquentaResponse,
     ComprarAjudaMercadoRequest,
+    ComprarPacoteMoedasRequest,
     ComprarPacoteRequest,
     EstatisticaCategoriaPublica,
     EstatisticasJogadorPublicas,
     LojaDiamantesPublica,
+    LojaMoedasPublica,
     MercadoPublico,
     NivelJogadorPublico,
     NovaPerguntaRequest,
     OpiniaoPublicoResponse,
     PacoteDiamantesPublico,
+    PacoteMoedasPublico,
     PartidaPublica,
     PartidaTerminadaResponse,
-    PedidoDiamantesAdmin,
-    PedidoDiamantesPublico,
-    PedirDiamantesKwanzasRequest,
+    PedidoLojaAdmin,
+    PedidoLojaPublico,
+    PedirKwanzasRequest,
     PerfilJogadorPublico,
     PerguntaAdmin,
     PerguntaCriar,
@@ -86,9 +89,9 @@ from app.services.loja_jogo_service import (
     MoedasInsuficientesError,
     PacoteInexistenteError,
     PagamentosIndisponiveisError,
-    PedidoDiamantesJaDecididoError,
-    PedidoDiamantesNaoEncontradoError,
-    PedidoDiamantesSemContaError,
+    PedidoLojaJaDecididoError,
+    PedidoLojaNaoEncontradoError,
+    PedidoLojaSemContaError,
 )
 from app.services.mercado_jogo_service import (
     AjudaVendida,
@@ -164,7 +167,7 @@ def obter_loja_jogo_service(
 ) -> LojaJogoService:
     return LojaJogoService(
         perfis,
-        SQLAlchemyPedidoDiamantesRepository(sessao),
+        SQLAlchemyPedidoLojaRepository(sessao),
         pagamentos_simulados=obter_settings().jogo_pagamentos_simulados,
     )
 
@@ -444,29 +447,69 @@ def comprar_pacote_diamantes(
         )
 
 
-@router.post(
-    "/jogo/loja/pedidos", response_model=PedidoDiamantesPublico, status_code=status.HTTP_201_CREATED
-)
-def pedir_diamantes_kwanzas(
-    dados: PedirDiamantesKwanzasRequest,
+# --- Loja de moedas ----------------------------------------------------------
+
+
+@router.get("/jogo/loja/moedas/pacotes", response_model=LojaMoedasPublica)
+def listar_pacotes_moedas(
+    servico: LojaJogoService = Depends(obter_loja_jogo_service),
+) -> LojaMoedasPublica:
+    return LojaMoedasPublica(
+        pacotes=[
+            PacoteMoedasPublico(
+                id=p.id, moedas=p.moedas, bonus=p.bonus, total_moedas=p.total_moedas, preco_kz=p.preco_kz
+            )
+            for p in servico.listar_pacotes_moedas()
+        ],
+        pagamento_simulado=servico.pagamentos_simulados,
+    )
+
+
+@router.post("/jogo/loja/moedas/compras", response_model=PerfilJogadorPublico)
+def comprar_pacote_moedas(
+    dados: ComprarPacoteMoedasRequest,
     utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
     servico: LojaJogoService = Depends(obter_loja_jogo_service),
-) -> PedidoDiamantesRegisto:
+) -> PerfilJogadorRegisto:
+    """Crédito imediato -- só em desenvolvimento (pagamentos simulados). Em
+    produção as moedas compram-se por `POST /jogo/loja/pedidos`."""
+    try:
+        return servico.comprar_moedas(utilizador.id, dados.pacote_id)
+    except PacoteInexistenteError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="pacote de moedas inexistente")
+    except PagamentosIndisponiveisError:
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="pagamentos reais disponíveis em breve",
+        )
+
+
+# --- Pedidos pagos em Kwanzas (diamantes ou moedas) --------------------------
+
+
+@router.post("/jogo/loja/pedidos", response_model=PedidoLojaPublico, status_code=status.HTTP_201_CREATED)
+def pedir_com_kwanzas(
+    dados: PedirKwanzasRequest,
+    utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
+    servico: LojaJogoService = Depends(obter_loja_jogo_service),
+) -> PedidoLojaRegisto:
     """Kwanzas por transferência: grava o pedido com o comprovativo. Não
     credita nada -- só quando um admin confirmar o pagamento."""
     try:
-        return servico.pedir_com_kwanzas(utilizador.id, dados.pacote_id, dados.comprovativo_chave)
+        return servico.pedir_com_kwanzas(
+            utilizador.id, dados.pacote_id, dados.comprovativo_chave, tipo_item=dados.tipo_item
+        )
     except PacoteInexistenteError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="pacote de diamantes inexistente")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="pacote inexistente")
     except ChaveDeComprovativoInvalidaError:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="essa chave não é um comprovativo válido")
 
 
-@router.get("/jogo/loja/pedidos", response_model=list[PedidoDiamantesPublico])
-def listar_meus_pedidos_diamantes(
+@router.get("/jogo/loja/pedidos", response_model=list[PedidoLojaPublico])
+def listar_meus_pedidos_loja(
     utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
     servico: LojaJogoService = Depends(obter_loja_jogo_service),
-) -> list[PedidoDiamantesRegisto]:
+) -> list[PedidoLojaRegisto]:
     return servico.listar_pedidos_do_utilizador(utilizador.id)
 
 
@@ -497,45 +540,46 @@ def criar_pergunta(
 
 
 @router.get(
-    "/admin/jogo/pedidos-diamantes",
-    response_model=list[PedidoDiamantesAdmin],
+    "/admin/jogo/pedidos-loja",
+    response_model=list[PedidoLojaAdmin],
     dependencies=[Depends(obter_utilizador_admin)],
 )
-def listar_pedidos_diamantes(
+def listar_pedidos_loja(
     servico: LojaJogoService = Depends(obter_loja_jogo_service),
-) -> list[PedidoDiamantesRegisto]:
+) -> list[PedidoLojaRegisto]:
     return servico.listar_pedidos()
 
 
-@router.post("/admin/jogo/pedidos-diamantes/{pedido_id}/aprovar", response_model=PedidoDiamantesAdmin)
-def aprovar_pedido_diamantes(
+@router.post("/admin/jogo/pedidos-loja/{pedido_id}/aprovar", response_model=PedidoLojaAdmin)
+def aprovar_pedido_loja(
     pedido_id: str,
     admin: UtilizadorRegisto = Depends(obter_utilizador_admin),
     servico: LojaJogoService = Depends(obter_loja_jogo_service),
-) -> PedidoDiamantesRegisto:
-    """Pagamento confirmado pelo admin: credita os diamantes, uma única vez."""
+) -> PedidoLojaRegisto:
+    """Pagamento confirmado pelo admin: credita os diamantes ou as moedas do
+    pedido, uma única vez."""
     try:
         return servico.aprovar_pedido(pedido_id, admin.id).pedido
-    except PedidoDiamantesNaoEncontradoError:
+    except PedidoLojaNaoEncontradoError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="pedido não encontrado")
-    except PedidoDiamantesJaDecididoError:
+    except PedidoLojaJaDecididoError:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="este pedido já foi decidido")
-    except PedidoDiamantesSemContaError:
+    except PedidoLojaSemContaError:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="o pedido não está ligado a uma conta — não há a quem creditar",
         )
 
 
-@router.post("/admin/jogo/pedidos-diamantes/{pedido_id}/rejeitar", response_model=PedidoDiamantesAdmin)
-def rejeitar_pedido_diamantes(
+@router.post("/admin/jogo/pedidos-loja/{pedido_id}/rejeitar", response_model=PedidoLojaAdmin)
+def rejeitar_pedido_loja(
     pedido_id: str,
     admin: UtilizadorRegisto = Depends(obter_utilizador_admin),
     servico: LojaJogoService = Depends(obter_loja_jogo_service),
-) -> PedidoDiamantesRegisto:
+) -> PedidoLojaRegisto:
     try:
         return servico.rejeitar_pedido(pedido_id, admin.id)
-    except PedidoDiamantesNaoEncontradoError:
+    except PedidoLojaNaoEncontradoError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="pedido não encontrado")
-    except PedidoDiamantesJaDecididoError:
+    except PedidoLojaJaDecididoError:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="este pedido já foi decidido")

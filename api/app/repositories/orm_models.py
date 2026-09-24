@@ -583,27 +583,31 @@ class PerfilJogador(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
-ESTADOS_PEDIDO_DIAMANTES = ("pendente", "aprovado", "rejeitado")
+ESTADOS_PEDIDO_LOJA = ("pendente", "aprovado", "rejeitado")
+TIPOS_ITEM_LOJA = ("diamantes", "moedas")
 
 
-class PedidoDiamantes(Base):
-    """Compra de diamantes paga em Kwanzas -- mesmo fluxo do Premium
-    (`PremiumRequest`): transferência bancária, comprovativo enviado ao R2,
-    e só quando um admin confirma o pagamento é que os diamantes são
-    creditados (`LojaJogoService.aprovar_pedido`, na mesma transacção que
-    marca o pedido como aprovado -- nunca duas vezes).
+class PedidoLojaJogo(Base):
+    """Compra na loja do jogo paga em Kwanzas -- diamantes ou moedas
+    (`tipo_item`). Mesmo fluxo do Premium (`PremiumRequest`): transferência
+    bancária, comprovativo enviado ao R2, e só quando um admin confirma o
+    pagamento é que a `quantidade` é creditada no saldo do `tipo_item`
+    (`LojaJogoService.aprovar_pedido`, na mesma transacção que marca o
+    pedido como aprovado -- nunca duas vezes).
 
-    Quantidade e preço são copiados do catálogo (`PACOTES_DIAMANTES`) no
-    momento do pedido: o admin aprova o que o jogador viu e pagou, mesmo que
-    o catálogo mude depois."""
+    Quantidade e preço são copiados do catálogo (`PACOTES_DIAMANTES` /
+    `PACOTES_MOEDAS`) no momento do pedido: o admin aprova o que o jogador
+    viu e pagou, mesmo que o catálogo mude depois. Até 2026-09-24 chamava-se
+    `pedidos_diamantes` e só vendia diamantes (migração `a4d7e2c9f1b6`)."""
 
-    __tablename__ = "pedidos_diamantes"
+    __tablename__ = "pedidos_loja_jogo"
     __table_args__ = (
         CheckConstraint(
-            "estado IN ('pendente', 'aprovado', 'rejeitado')", name="ck_pedidos_diamantes_estado"
+            "estado IN ('pendente', 'aprovado', 'rejeitado')", name="ck_pedidos_loja_jogo_estado"
         ),
-        CheckConstraint("diamantes > 0", name="ck_pedidos_diamantes_diamantes_positivos"),
-        CheckConstraint("preco_kz > 0", name="ck_pedidos_diamantes_preco_positivo"),
+        CheckConstraint("tipo_item IN ('diamantes', 'moedas')", name="ck_pedidos_loja_jogo_tipo_item"),
+        CheckConstraint("quantidade > 0", name="ck_pedidos_loja_jogo_quantidade_positiva"),
+        CheckConstraint("preco_kz > 0", name="ck_pedidos_loja_jogo_preco_positivo"),
     )
 
     id: Mapped[uuid.UUID] = _uuid_pk()
@@ -611,8 +615,9 @@ class PedidoDiamantes(Base):
     utilizador_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("utilizadores.id", ondelete="SET NULL"), index=True
     )
+    tipo_item: Mapped[str] = mapped_column(Text, nullable=False, server_default="diamantes")
     pacote_id: Mapped[str] = mapped_column(Text, nullable=False)
-    diamantes: Mapped[int] = mapped_column(nullable=False)
+    quantidade: Mapped[int] = mapped_column(nullable=False)
     preco_kz: Mapped[int] = mapped_column(nullable=False)
     comprovativo_url: Mapped[str] = mapped_column(Text, nullable=False)
     estado: Mapped[str] = mapped_column(Text, nullable=False, server_default="pendente")
