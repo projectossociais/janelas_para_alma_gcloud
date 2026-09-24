@@ -87,6 +87,36 @@ describe("MercadoModal", () => {
     expect(within(screen.getByTestId("vendedor-tio-ze")).getByText(/Baixa · 50%/)).toBeInTheDocument();
   });
 
+  it("mostra o tema da pergunta, 'Especialista em' / 'Pouco à vontade' e a variação face à certeza base", async () => {
+    obterMercado.mockResolvedValue({
+      agora: AGORA_SERVIDOR,
+      categoria: "ciencia_ocular",
+      vendedores: [
+        { id: "tio-ze", custo_diamantes: 5, precisao: 0.35, precisao_base: 0.5, afinidade: "fraco", disponivel_em: null },
+        { id: "mana-fefa", custo_diamantes: 12, precisao: 0.5, precisao_base: 0.7, afinidade: "fraco", disponivel_em: null },
+        { id: "dona-maria", custo_diamantes: 25, precisao: 0.75, precisao_base: 0.85, afinidade: "fraco", disponivel_em: null },
+        { id: "kota-beto", custo_diamantes: 45, precisao: 0.98, precisao_base: 0.9, afinidade: "especialista", disponivel_em: null },
+      ],
+    });
+    abrir();
+
+    expect(await screen.findByText("Tema desta pergunta: Ciência Ocular")).toBeInTheDocument();
+    const kota = screen.getByTestId("vendedor-kota-beto");
+    expect(within(kota).getByText("Especialista em Ciência Ocular")).toBeInTheDocument();
+    expect(within(kota).getByText(/98%/)).toBeInTheDocument();
+    expect(within(kota).getByLabelText("certeza base 90%")).toHaveTextContent("(+8)");
+    const tio = screen.getByTestId("vendedor-tio-ze");
+    expect(within(tio).getByText("Pouco à vontade com Ciência Ocular")).toBeInTheDocument();
+    expect(within(tio).getByLabelText("certeza base 50%")).toHaveTextContent("(-15)");
+  });
+
+  it("sem afinidade (categoria neutra ou API antiga) não mostra selo nem variação", async () => {
+    abrir();
+    const kota = await screen.findByTestId("vendedor-kota-beto");
+    expect(within(kota).queryByText(/Especialista em/)).not.toBeInTheDocument();
+    expect(within(kota).queryByLabelText(/certeza base/)).not.toBeInTheDocument();
+  });
+
   it("vendedor mais caro do que o saldo fica com o botão desactivado", async () => {
     abrir();
     await waitFor(() => expect(screen.getByTestId("saldo")).toHaveTextContent("30"));

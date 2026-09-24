@@ -112,19 +112,48 @@ class PacoteDiamantesPublico(BaseModel):
     bonus: int
     total_diamantes: int
     preco_kz: int
+    preco_moedas: int
 
     model_config = {"from_attributes": True}
 
 
 class LojaDiamantesPublica(BaseModel):
     pacotes: list[PacoteDiamantesPublico]
-    # `True` enquanto a compra só credita diamantes em modo simulado
-    # (desenvolvimento); `False` quando comprar ainda não está disponível.
+    # `True` em desenvolvimento: os Kwanzas creditam logo, sem comprovativo.
+    # `False` em produção: Kwanzas por transferência + comprovativo
+    # (`POST /jogo/loja/pedidos`), creditados quando um admin confirmar.
     pagamento_simulado: bool
 
 
 class ComprarPacoteRequest(BaseModel):
     pacote_id: str = Field(min_length=1, max_length=40)
+    # "moedas": débito atómico do saldo de moedas. "kwanzas": só credita
+    # logo em modo simulado; em produção usa-se `POST /jogo/loja/pedidos`.
+    metodo_pagamento: Literal["moedas", "kwanzas"] = "kwanzas"
+
+
+class PedirDiamantesKwanzasRequest(BaseModel):
+    pacote_id: str = Field(min_length=1, max_length=40)
+    # Chave devolvida por `POST /uploads/comprovativo`, depois do PUT ao R2.
+    comprovativo_chave: str = Field(min_length=1, max_length=300)
+
+
+class PedidoDiamantesPublico(BaseModel):
+    id: str
+    pacote_id: str
+    diamantes: int
+    preco_kz: int
+    estado: Literal["pendente", "aprovado", "rejeitado"]
+    created_at: datetime
+    decidido_em: datetime | None
+
+    model_config = {"from_attributes": True}
+
+
+class PedidoDiamantesAdmin(PedidoDiamantesPublico):
+    utilizador_id: str | None
+    comprovativo_url: str
+    decidido_por: str | None
 
 
 # --- Ajudas ------------------------------------------------------------------
@@ -132,6 +161,12 @@ class ComprarPacoteRequest(BaseModel):
 
 class AjudaPerguntaRequest(BaseModel):
     pergunta_id: str
+
+
+class NovaPerguntaRequest(BaseModel):
+    # Só `true` gasta a ajuda "trocar pergunta"; sem corpo (ou `false`), o
+    # pedido é idempotente e devolve a pergunta ainda por responder.
+    trocar: bool = False
 
 
 class CinquentaCinquentaResponse(BaseModel):
@@ -148,7 +183,11 @@ class OpiniaoPublicoResponse(BaseModel):
 class VendedorMercadoPublico(BaseModel):
     id: str
     custo_diamantes: int
+    # Certeza para a pergunta em curso (depende da categoria dela).
     precisao: float
+    # Certeza numa categoria neutra -- para o cliente mostrar a variação.
+    precisao_base: float
+    afinidade: Literal["especialista", "neutro", "fraco"]
     # `None` = disponível agora; senão, até quando está bloqueado (UTC).
     disponivel_em: datetime | None
 
@@ -157,6 +196,8 @@ class MercadoPublico(BaseModel):
     # Hora do servidor -- o cliente usa-a para acertar o cronómetro do
     # bloqueio mesmo que o relógio do dispositivo esteja errado.
     agora: datetime
+    # Categoria da pergunta em curso (`None` sem pergunta por responder).
+    categoria: str | None = None
     vendedores: list[VendedorMercadoPublico]
 
 

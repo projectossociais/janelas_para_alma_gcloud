@@ -77,25 +77,36 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
 - **Jogo "Inclusivamente"** (`frontend/src/pages/jogo/`, API `routers/jogo.py`) — quiz com
   economia virtual: moedas (ganhas a jogar) e diamantes. Saldo sempre decidido pela API
   (`JogoService`, `LojaJogoService`); o frontend só espelha em `CarteiraJogoContext`. A Loja
-  de Diamantes (`/jogo-curiosidades/loja`) ainda **não tem pagamento real**: a compra só
-  credita diamantes com `JOGO_PAGAMENTOS_SIMULADOS=true` (ligado só no `docker-compose.yml`
-  de desenvolvimento; **nunca** em produção, seriam diamantes grátis). Sem essa flag,
-  `GET /jogo/loja/pacotes` devolve o catálogo na mesma (a vitrine abre sempre) e só
-  `POST /jogo/loja/compras` recusa, com **501** — o frontend mostra "Pagamentos reais
-  disponíveis em breve.", não um erro. O catálogo e os
-  preços em Kz vivem só em `services/loja_jogo_service.py` (aprovados pelo dono do projecto
-  em 2026-09-24: 500 / 1.250 / 3.000 Kz). **Tudo o que é do servidor exige sessão**
+  de Diamantes (`/jogo-curiosidades/loja`) vende cada pacote de **duas formas**: por
+  **moedas** (`POST /jogo/loja/compras` com `metodo_pagamento: "moedas"` — débito das
+  moedas e crédito dos diamantes numa só instrução atómica, só com saldo; 402 sem ele) ou
+  por **Kwanzas**, com o mesmo fluxo do Premium (não há gateway nem webhook no projecto):
+  transferência + comprovativo no R2 → `POST /jogo/loja/pedidos` grava um pedido pendente
+  em `pedidos_diamantes` (quantidade e preço copiados do catálogo) → um admin confirma o
+  pagamento em `/admin/mensagens?tab=diamantes` (`POST /admin/jogo/pedidos-diamantes/{id}/aprovar`)
+  e só aí os diamantes são creditados, na mesma transacção, uma única vez (409 à segunda).
+  `JOGO_PAGAMENTOS_SIMULADOS=true` (só `docker-compose.yml` de desenvolvimento; **nunca** em
+  produção) faz os Kwanzas creditarem logo, sem comprovativo; sem a flag, esse crédito
+  imediato em Kwanzas recusa com 501. O catálogo e os preços vivem só em
+  `services/loja_jogo_service.py` (Kz aprovados pelo dono do projecto em 2026-09-24: 500 /
+  1.250 / 3.000; moedas pedidas por ele no mesmo dia: 2.000 / 5.500 / 14.000). **Tudo o que é do servidor exige sessão**
   (desde 2026-09-24): sem sessão, `/jogo/validar` revelava a resposta de qualquer pergunta
   e servia de oráculo. Convidados (e o site inglês) jogam só com a reserva local do
   frontend (`perguntasOffline*.ts`), **sem prémio**. Com sessão, a pergunta é entregue
   pela partida (`POST /jogo/partidas/atual/pergunta`, fica em `partidas_jogo.pergunta_atual_id`)
-  e **só essa** se pode validar, ajudar ou comprar no Mercado; pedir outra antes de responder
-  gasta o "trocar pergunta". **Ajudas:** 50:50, Opinião do Público e tempo esgotado têm
+  e **só essa** se pode validar, ajudar ou comprar no Mercado. Pedir a pergunta é
+  **idempotente**: sem corpo, devolve a que está por responder (um "Tentar novamente" nunca
+  gasta nada — até 2026-09-24 o 2.º pedido trocava e o 3.º dava 409, bug real em produção);
+  só `{"trocar": true}` gasta o "trocar pergunta". Nível vazio → seed em runtime, depois
+  qualquer nível; 503 só sem pergunta nenhuma. **Ajudas:** 50:50, Opinião do Público e tempo esgotado têm
   endpoints próprios (`/jogo/ajudas/*`, `/jogo/tempo-esgotado`) que nunca avançam o progresso
   — nunca usar `/jogo/validar` com uma letra qualquer para descobrir a resposta (bug real
   corrigido em 2026-09-24).
   **Mercado** (ajuda paga): vendedores ambulantes com custo em diamantes e precisão
-  crescente, bloqueados 4h por jogador após cada venda — catálogo em
+  base crescente, que muda com a **categoria da pergunta** (`VendedorAmbulante.precisao_para`:
+  Kota Beto especialista em ciência/anatomia, Tio Zé e Mana Fefa em prevenção/estilo de
+  vida, Dona Maria em doenças/curiosidades; determinista — reabrir não "sorteia" melhor),
+  bloqueados 4h por jogador após cada venda — catálogo em
   `services/mercado_jogo_service.py`, bloqueio na tabela `bloqueios_vendedores_jogo`;
   débito e bloqueio gravados atomicamente (`MercadoJogoRepository.debitar_e_bloquear`).
   **Partidas** (tabela `partidas_jogo`, desde 2026-09-24; substitui a antiga coluna

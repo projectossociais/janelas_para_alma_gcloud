@@ -121,6 +121,9 @@ const JogoCuriosidades = () => {
   // sem perguntas, 5xx) -- mostra-se o erro com "Tentar novamente" em vez de
   // cair calado na reserva local, onde os acertos não contam para o prémio.
   const [erroPerguntaServidor, setErroPerguntaServidor] = useState(false);
+  // O motivo que a API deu (ex.: "sem perguntas disponíveis") -- mostrado
+  // por baixo, para um erro em produção ser diagnosticável sem consola.
+  const [detalheErroPergunta, setDetalheErroPergunta] = useState("");
 
   const [opcaoSelecionada, setOpcaoSelecionada] = useState<RespostaOpcaoJogo | null>(null);
   const [aValidar, setAValidar] = useState(false);
@@ -209,7 +212,7 @@ const JogoCuriosidades = () => {
   // pedido falhar (sem internet, backend em baixo), serve silenciosamente a
   // pergunta estática de contingência para este patamar (perguntasOffline.ts)
   // e o jogo continua -- só o pequeno aviso "Modo offline" no ecrã denuncia.
-  const carregarPergunta = useCallback(async (novoPatamar: number) => {
+  const carregarPergunta = useCallback(async (novoPatamar: number, trocar = false) => {
     setACarregarPergunta(true);
     setPergunta(null);
     setOpcaoSelecionada(null);
@@ -231,7 +234,7 @@ const JogoCuriosidades = () => {
       await inicioPartida.current;
       // O servidor decide o patamar (o da partida) -- o do cliente é só o
       // que se esperava; se divergirem, manda o servidor.
-      const nova = await jogoApi.obterPerguntaDaPartida();
+      const nova = await jogoApi.obterPerguntaDaPartida(trocar);
       setPergunta(nova);
       setPatamar(nova.patamar);
       setEmModoOffline(false);
@@ -243,6 +246,7 @@ const JogoCuriosidades = () => {
         console.error("A API do jogo respondeu com erro ao pedir a pergunta:", err);
         setPatamar(novoPatamar);
         setErroPerguntaServidor(true);
+        setDetalheErroPergunta(mensagemDeErroApi(err, ""));
         return;
       }
       console.error("Falha ao contactar a API do jogo, a usar o modo offline:", err);
@@ -493,7 +497,7 @@ const JogoCuriosidades = () => {
       setTempoRestante(TEMPO_POR_PERGUNTA);
       return;
     }
-    void carregarPergunta(patamar);
+    void carregarPergunta(patamar, true);
   };
 
   const reiniciarJogo = () => {
@@ -667,6 +671,7 @@ const JogoCuriosidades = () => {
                   {!aCarregarPergunta && !jogoTerminado && !pergunta && erroPerguntaServidor && (
                     <div className="rounded-2xl bg-card border border-border/60 shadow-card p-8 text-center space-y-4">
                       <p className="text-muted-foreground">{tr("JogoCuriosidades.naoFoiPossivelCarregarPergunta")}</p>
+                      {detalheErroPergunta && <p className="text-xs text-muted-foreground/80">{detalheErroPergunta}</p>}
                       <Button variant="outline" onClick={() => void carregarPergunta(patamar)}>
                         <RefreshCw className="w-4 h-4" />
                         {tr("JogoCuriosidades.tentarNovamente")}

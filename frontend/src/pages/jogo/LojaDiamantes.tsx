@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Gem, Info, Loader2, RefreshCw, Sparkles } from "lucide-react";
+import { Banknote, Coins, Gem, Info, Loader2, RefreshCw, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
+import CopyRow from "@/components/CopyRow";
+import FileDropzone from "@/components/FileDropzone";
 import CarteiraJogo from "@/components/jogo/CarteiraJogo";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,7 +20,17 @@ import {
 } from "@/components/ui/dialog";
 import { useCarteiraJogo } from "@/contexts/CarteiraJogoContext";
 import { useProfile } from "@/contexts/ProfileContext";
-import { jogoApi, mensagemDeErroApi, type LojaDiamantes as Loja, type PacoteDiamantes } from "@/lib/apiClient";
+import {
+  comprovativosApi,
+  jogoApi,
+  mensagemDeErroApi,
+  TIPOS_DE_COMPROVATIVO_ACEITES,
+  type LojaDiamantes as Loja,
+  type MetodoPagamentoDiamantes,
+  type PacoteDiamantes,
+  type PedidoDiamantes,
+} from "@/lib/apiClient";
+import { DEFAULT_BANK_DATA, ofuscarValor } from "@/lib/pagamento";
 import { localizar } from "@/i18n/rotas";
 import { cn } from "@/lib/utils";
 import { formatarKz } from "./jogoConfig";
@@ -32,15 +44,30 @@ const DESTAQUE: Record<string, "popular" | "melhorValor" | undefined> = {
 
 const TAMANHO_ICONE = ["w-10 h-10", "w-14 h-14", "w-16 h-16"];
 
+const formatarMoedas = (valor: number) => valor.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+const COR_ESTADO: Record<PedidoDiamantes["estado"], string> = {
+  pendente: "bg-gold/15 text-gold",
+  aprovado: "bg-green/15 text-green",
+  rejeitado: "bg-destructive/15 text-destructive",
+};
+
+interface CompraEscolhida {
+  pacote: PacoteDiamantes;
+  metodo: MetodoPagamentoDiamantes;
+}
+
 const LojaDiamantes = () => {
   const { t } = useTranslation();
   const { profile } = useProfile();
-  const { definirPerfil } = useCarteiraJogo();
+  const { perfil, definirPerfil } = useCarteiraJogo();
   const [loja, setLoja] = useState<Loja | null>(null);
   const [aCarregar, setACarregar] = useState(true);
   const [erro, setErro] = useState(false);
-  const [pacoteEscolhido, setPacoteEscolhido] = useState<PacoteDiamantes | null>(null);
+  const [compra, setCompra] = useState<CompraEscolhida | null>(null);
   const [aComprar, setAComprar] = useState(false);
+  const [comprovativo, setComprovativo] = useState<File | null>(null);
+  const [pedidos, setPedidos] = useState<PedidoDiamantes[]>([]);
 
   const carregar = useCallback(async () => {
     setACarregar(true);
@@ -55,26 +82,78 @@ const LojaDiamantes = () => {
     }
   }, []);
 
+  const carregarPedidos = useCallback(async () => {
+    try {
+      setPedidos(await jogoApi.listarMeusPedidosDiamantes());
+    } catch (err) {
+      // Só informativo -- a loja funciona na mesma sem a lista.
+      console.error("Falha ao carregar os pedidos de diamantes:", err);
+    }
+  }, []);
+
   useEffect(() => {
     void carregar();
   }, [carregar]);
 
+  useEffect(() => {
+    if (profile) void carregarPedidos();
+  }, [profile, carregarPedidos]);
+
+  const simulado = !!loja?.pagamento_simulado;
+  // Kwanzas reais: transferência + comprovativo, como o Premium.
+  const checkoutTransferencia = compra?.metodo === "kwanzas" && !simulado;
+  const moedas = perfil?.moedas ?? 0;
+
+  const fecharCompra = () => {
+    if (aComprar) return;
+    setCompra(null);
+    setComprovativo(null);
+  };
+
+  const comprarDeImediato = async ({ pacote, metodo }: CompraEscolhida) => {
+    const novoPerfil = await jogoApi.comprarPacoteDiamantes(pacote.id, metodo);
+    definirPerfil(novoPerfil);
+    toast.success(t("LojaDiamantes.compraConcluida", { quantidade: pacote.total_diamantes }));
+  };
+
+  const enviarPedidoTransferencia = async (pacote: PacoteDiamantes, ficheiro: File) => {
+    const preparado = await comprovativosApi.preparar(ficheiro.type);
+    await comprovativosApi.enviarParaStorage(preparado.url_de_upload, ficheiro);
+    await jogoApi.pedirDiamantesKwanzas(pacote.id, preparado.chave);
+    toast.success(t("LojaDiamantes.pedidoEnviado", { quantidade: pacote.total_diamantes }));
+    void carregarPedidos();
+  };
+
   const confirmarCompra = async () => {
-    if (!pacoteEscolhido) return;
+    if (!compra) return;
+    if (checkoutTransferencia) {
+      if (!comprovativo) {
+        toast.error(t("LojaDiamantes.anexeOComprovativo"));
+        return;
+      }
+      if (!TIPOS_DE_COMPROVATIVO_ACEITES.includes(comprovativo.type as never)) {
+        toast.error(t("LojaDiamantes.tipoDeComprovativoInvalido"));
+        return;
+      }
+    }
     setAComprar(true);
     try {
-      const perfil = await jogoApi.comprarPacoteDiamantes(pacoteEscolhido.id);
-      definirPerfil(perfil);
-      toast.success(t("LojaDiamantes.compraConcluida", { quantidade: pacoteEscolhido.total_diamantes }));
-      setPacoteEscolhido(null);
+      if (checkoutTransferencia && comprovativo) {
+        await enviarPedidoTransferencia(compra.pacote, comprovativo);
+      } else {
+        await comprarDeImediato(compra);
+      }
+      setCompra(null);
+      setComprovativo(null);
     } catch (err) {
       // Nunca mostrar sucesso a partir daqui (CLAUDE.md secção 6) -- o
-      // saldo só muda com a resposta da API, acima.
-      // 501: pagamentos reais ainda não existem (produção) -- não é uma
-      // avaria, é "em breve". Duck-typing no `status` (CLAUDE.md secção 6).
-      if ((err as { status?: unknown } | null)?.status === 501) {
+      // saldo só muda com a resposta da API, acima. Duck-typing no `status`.
+      const status = (err as { status?: unknown } | null)?.status;
+      if (status === 501) {
         toast.info(t("LojaDiamantes.pagamentosEmBreve"));
-        setPacoteEscolhido(null);
+        setCompra(null);
+      } else if (status === 402) {
+        toast.error(t("LojaDiamantes.moedasInsuficientes"));
       } else {
         toast.error(mensagemDeErroApi(err, t("LojaDiamantes.naoFoiPossivelComprar")));
       }
@@ -82,8 +161,6 @@ const LojaDiamantes = () => {
       setAComprar(false);
     }
   };
-
-  const compraDisponivel = !!loja?.pagamento_simulado;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -125,18 +202,20 @@ const LojaDiamantes = () => {
               <div
                 className={cn(
                   "rounded-xl border p-4 mb-6 flex gap-3 text-sm",
-                  compraDisponivel ? "bg-gold/10 border-gold/40" : "bg-muted border-border"
+                  simulado ? "bg-gold/10 border-gold/40" : "bg-muted border-border"
                 )}
               >
                 <Info className="w-5 h-5 shrink-0 text-gold" />
                 <p className="text-muted-foreground">
-                  {compraDisponivel ? t("LojaDiamantes.avisoPagamentoSimulado") : t("LojaDiamantes.avisoEmBreve")}
+                  {simulado ? t("LojaDiamantes.avisoPagamentoSimulado") : t("LojaDiamantes.avisoDuasFormas")}
                 </p>
               </div>
 
               <div className="grid grid-cols-1 min-[420px]:grid-cols-2 md:grid-cols-3 gap-4">
                 {loja.pacotes.map((pacote, i) => {
                   const destaque = DESTAQUE[pacote.id];
+                  const precoMoedas = pacote.preco_moedas;
+                  const faltamMoedas = precoMoedas !== undefined && moedas < precoMoedas;
                   return (
                     <div
                       key={pacote.id}
@@ -161,19 +240,47 @@ const LojaDiamantes = () => {
                         {t("LojaDiamantes.bonus", { quantidade: pacote.bonus })}
                       </p>
                       {profile ? (
-                        <Button
-                          className="w-full mt-auto bg-teal text-teal-foreground hover:bg-teal/90"
-                          onClick={() => setPacoteEscolhido(pacote)}
-                          aria-label={t("LojaDiamantes.comprarPacote", {
-                            quantidade: pacote.total_diamantes,
-                            preco: formatarKz(pacote.preco_kz),
-                          })}
-                        >
-                          {formatarKz(pacote.preco_kz)}
-                        </Button>
+                        <div className="w-full mt-auto space-y-2">
+                          <Button
+                            className="w-full bg-teal text-teal-foreground hover:bg-teal/90"
+                            onClick={() => setCompra({ pacote, metodo: "kwanzas" })}
+                            aria-label={t("LojaDiamantes.comprarPacote", {
+                              quantidade: pacote.total_diamantes,
+                              preco: formatarKz(pacote.preco_kz),
+                            })}
+                          >
+                            <Banknote className="w-4 h-4" />
+                            {formatarKz(pacote.preco_kz)}
+                          </Button>
+                          {precoMoedas !== undefined && (
+                            <Button
+                              variant="outline"
+                              className="w-full border-gold/60 text-gold hover:bg-gold/10"
+                              disabled={faltamMoedas}
+                              onClick={() => setCompra({ pacote, metodo: "moedas" })}
+                              aria-label={t("LojaDiamantes.comprarPacoteMoedas", {
+                                quantidade: pacote.total_diamantes,
+                                moedas: formatarMoedas(precoMoedas),
+                              })}
+                            >
+                              <Coins className="w-4 h-4" />
+                              {t("LojaDiamantes.precoMoedas", { moedas: formatarMoedas(precoMoedas) })}
+                            </Button>
+                          )}
+                          {faltamMoedas && precoMoedas !== undefined && (
+                            <p className="text-[11px] text-muted-foreground">
+                              {t("LojaDiamantes.faltamMoedas", { moedas: formatarMoedas(precoMoedas - moedas) })}
+                            </p>
+                          )}
+                        </div>
                       ) : (
                         <div className="w-full mt-auto space-y-2">
                           <p className="font-bold text-foreground">{formatarKz(pacote.preco_kz)}</p>
+                          {precoMoedas !== undefined && (
+                            <p className="text-sm font-semibold text-gold">
+                              {t("LojaDiamantes.ouPrecoMoedas", { moedas: formatarMoedas(precoMoedas) })}
+                            </p>
+                          )}
                           <Button asChild variant="outline" className="w-full">
                             <Link to={localizar("/auth")}>{t("LojaDiamantes.entrarParaComprar")}</Link>
                           </Button>
@@ -183,37 +290,104 @@ const LojaDiamantes = () => {
                   );
                 })}
               </div>
+
+              {profile && pedidos.length > 0 && (
+                <section className="mt-10 space-y-3" aria-labelledby="meus-pedidos">
+                  <h2 id="meus-pedidos" className="text-lg font-bold text-foreground">
+                    {t("LojaDiamantes.osMeusPedidos")}
+                  </h2>
+                  <ul className="rounded-2xl bg-card border border-border/60 divide-y divide-border/60">
+                    {pedidos.map((pedido) => (
+                      <li key={pedido.id} className="flex items-center justify-between gap-3 p-4 text-sm">
+                        <span className="flex items-center gap-2 text-foreground">
+                          <Gem className="w-4 h-4 text-teal" />
+                          {pedido.diamantes} · {formatarKz(pedido.preco_kz)}
+                          <span className="text-muted-foreground">
+                            {new Date(pedido.created_at).toLocaleDateString()}
+                          </span>
+                        </span>
+                        <span className={cn("rounded-full px-2.5 py-0.5 text-xs font-semibold", COR_ESTADO[pedido.estado])}>
+                          {t(`LojaDiamantes.estados.${pedido.estado}`)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
             </>
           )}
         </div>
       </main>
 
-      <Dialog open={pacoteEscolhido !== null} onOpenChange={(open) => !open && !aComprar && setPacoteEscolhido(null)}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog open={compra !== null} onOpenChange={(open) => !open && fecharCompra()}>
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{t("LojaDiamantes.confirmarCompra")}</DialogTitle>
+            <DialogTitle>
+              {checkoutTransferencia ? t("LojaDiamantes.pagarPorTransferencia") : t("LojaDiamantes.confirmarCompra")}
+            </DialogTitle>
             <DialogDescription>
-              {pacoteEscolhido &&
+              {compra?.metodo === "moedas" &&
+                t("LojaDiamantes.confirmarCompraMoedas", {
+                  quantidade: compra.pacote.total_diamantes,
+                  moedas: formatarMoedas(compra.pacote.preco_moedas ?? 0),
+                })}
+              {compra?.metodo === "kwanzas" &&
                 t("LojaDiamantes.confirmarCompraDescricao", {
-                  quantidade: pacoteEscolhido.total_diamantes,
-                  preco: formatarKz(pacoteEscolhido.preco_kz),
+                  quantidade: compra.pacote.total_diamantes,
+                  preco: formatarKz(compra.pacote.preco_kz),
                 })}
             </DialogDescription>
           </DialogHeader>
-          {compraDisponivel && (
+
+          {compra?.metodo === "kwanzas" && simulado && (
             <p className="text-xs text-muted-foreground">{t("LojaDiamantes.avisoPagamentoSimulado")}</p>
           )}
+
+          {checkoutTransferencia && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                  {t("LojaDiamantes.n1Transfira")}
+                </p>
+                <div className="rounded-lg border border-navy/20 bg-navy/5 p-4 space-y-1 divide-y divide-navy/10">
+                  <CopyRow label={t("LojaDiamantes.beneficiario")} value={DEFAULT_BANK_DATA.beneficiario} />
+                  <CopyRow
+                    label={DEFAULT_BANK_DATA.pagamento_rapido.metodo}
+                    value={DEFAULT_BANK_DATA.pagamento_rapido.telefone}
+                    displayValue={ofuscarValor(DEFAULT_BANK_DATA.pagamento_rapido.telefone)}
+                  />
+                  <CopyRow
+                    label={`IBAN ${DEFAULT_BANK_DATA.transferencia_nacional.banco}`}
+                    value={DEFAULT_BANK_DATA.transferencia_nacional.iban}
+                    displayValue={ofuscarValor(DEFAULT_BANK_DATA.transferencia_nacional.iban)}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                  {t("LojaDiamantes.n2AnexeOComprovativo")}
+                </p>
+                <FileDropzone file={comprovativo} onFileChange={setComprovativo} />
+              </div>
+              <p className="text-xs text-muted-foreground">{t("LojaDiamantes.creditadoAposConfirmacao")}</p>
+            </div>
+          )}
+
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setPacoteEscolhido(null)} disabled={aComprar}>
+            <Button variant="outline" onClick={fecharCompra} disabled={aComprar}>
               {t("LojaDiamantes.cancelar")}
             </Button>
             <Button
               onClick={() => void confirmarCompra()}
-              disabled={aComprar}
+              disabled={aComprar || (checkoutTransferencia && !comprovativo)}
               className="bg-teal text-teal-foreground hover:bg-teal/90"
             >
               {aComprar && <Loader2 className="w-4 h-4 animate-spin" />}
-              {compraDisponivel ? t("LojaDiamantes.pagarSimulado") : t("LojaDiamantes.pagar")}
+              {compra?.metodo === "moedas"
+                ? t("LojaDiamantes.trocarMoedas")
+                : checkoutTransferencia
+                  ? t("LojaDiamantes.enviarComprovativo")
+                  : t("LojaDiamantes.pagarSimulado")}
             </Button>
           </DialogFooter>
         </DialogContent>

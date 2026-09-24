@@ -26,6 +26,10 @@ from app.repositories.estatisticas_jogo_repository import SQLAlchemyEstatisticas
 from app.repositories.jogo_repository import PerguntaJogoRegisto, SQLAlchemyPerguntaJogoRepository
 from app.repositories.mercado_jogo_repository import SQLAlchemyMercadoJogoRepository
 from app.repositories.partida_jogo_repository import SQLAlchemyPartidaJogoRepository
+from app.repositories.pedido_diamantes_repository import (
+    PedidoDiamantesRegisto,
+    SQLAlchemyPedidoDiamantesRepository,
+)
 from app.repositories.perfil_jogador_repository import (
     PerfilJogadorRegisto,
     SQLAlchemyPerfilJogadorRepository,
@@ -42,10 +46,14 @@ from app.schemas.jogo import (
     LojaDiamantesPublica,
     MercadoPublico,
     NivelJogadorPublico,
+    NovaPerguntaRequest,
     OpiniaoPublicoResponse,
     PacoteDiamantesPublico,
     PartidaPublica,
     PartidaTerminadaResponse,
+    PedidoDiamantesAdmin,
+    PedidoDiamantesPublico,
+    PedirDiamantesKwanzasRequest,
     PerfilJogadorPublico,
     PerguntaAdmin,
     PerguntaCriar,
@@ -55,6 +63,7 @@ from app.schemas.jogo import (
     VendedorMercadoPublico,
     VidaExtraResponse,
 )
+from app.services.comprovativo_upload_service import ChaveDeComprovativoInvalidaError
 from app.services.estatisticas_jogador_service import EstatisticasJogadorService
 from app.services.jogo_service import (
     AjudaJaUsadaError,
@@ -74,8 +83,12 @@ from app.services.jogo_service import (
 )
 from app.services.loja_jogo_service import (
     LojaJogoService,
+    MoedasInsuficientesError,
     PacoteInexistenteError,
     PagamentosIndisponiveisError,
+    PedidoDiamantesJaDecididoError,
+    PedidoDiamantesNaoEncontradoError,
+    PedidoDiamantesSemContaError,
 )
 from app.services.mercado_jogo_service import (
     AjudaVendida,
@@ -119,7 +132,9 @@ def _erro_de_jogo(err: Exception) -> HTTPException:
     if isinstance(err, PerguntaNaoEncontradaError):
         return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="pergunta não encontrada")
     if isinstance(err, SemPerguntasError):
-        return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="sem perguntas disponíveis")
+        # 503, não 404: não há pergunta nenhuma nem depois do seed em runtime
+        # -- é o servidor que não está pronto, não um recurso inexistente.
+        return HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="sem perguntas disponíveis")
     if isinstance(err, PerguntaForaDaPartidaError):
         return HTTPException(status_code=status.HTTP_409_CONFLICT, detail="esta pergunta não é a da partida em curso")
     if isinstance(err, PartidaADecidirError):
@@ -145,8 +160,13 @@ _ERROS_DE_JOGO = (
 
 def obter_loja_jogo_service(
     perfis: SQLAlchemyPerfilJogadorRepository = Depends(obter_perfil_jogador_repository),
+    sessao: Session = Depends(obter_sessao),
 ) -> LojaJogoService:
-    return LojaJogoService(perfis, pagamentos_simulados=obter_settings().jogo_pagamentos_simulados)
+    return LojaJogoService(
+        perfis,
+        SQLAlchemyPedidoDiamantesRepository(sessao),
+        pagamentos_simulados=obter_settings().jogo_pagamentos_simulados,
+    )
 
 
 def obter_mercado_jogo_repository(
@@ -168,13 +188,14 @@ def obter_mercado_jogo_service(
 
 @router.post("/jogo/partidas/atual/pergunta", response_model=PerguntaDaPartidaPublica)
 def nova_pergunta(
+    dados: NovaPerguntaRequest | None = None,
     utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
     servico: JogoService = Depends(obter_jogo_service),
 ) -> PerguntaDaPartidaPublica:
-    """Sorteia e prende à partida a pergunta do próximo patamar. Pedir outra
-    antes de responder gasta a ajuda "trocar pergunta"."""
+    """A pergunta do próximo patamar, presa à partida. Idempotente sem
+    corpo; `{"trocar": true}` gasta a ajuda "trocar pergunta"."""
     try:
-        resultado = servico.nova_pergunta(utilizador.id)
+        resultado = servico.nova_pergunta(utilizador.id, trocar=bool(dados and dados.trocar))
     except _ERROS_DE_JOGO as err:
         raise _erro_de_jogo(err)
     p = resultado.pergunta
@@ -282,16 +303,20 @@ def listar_mercado(
     utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
     servico: MercadoJogoService = Depends(obter_mercado_jogo_service),
 ) -> MercadoPublico:
+    mercado = servico.listar(utilizador.id)
     return MercadoPublico(
         agora=servico.agora(),
+        categoria=mercado.categoria,
         vendedores=[
             VendedorMercadoPublico(
                 id=e.vendedor.id,
                 custo_diamantes=e.vendedor.custo_diamantes,
-                precisao=e.vendedor.precisao,
+                precisao=e.precisao,
+                precisao_base=e.vendedor.precisao,
+                afinidade=e.afinidade,
                 disponivel_em=e.disponivel_em,
             )
-            for e in servico.listar(utilizador.id)
+            for e in mercado.vendedores
         ],
     )
 
@@ -390,6 +415,7 @@ def listar_pacotes_diamantes(
                 bonus=p.bonus,
                 total_diamantes=p.total_diamantes,
                 preco_kz=p.preco_kz,
+                preco_moedas=p.preco_moedas,
             )
             for p in servico.listar_pacotes()
         ],
@@ -404,9 +430,11 @@ def comprar_pacote_diamantes(
     servico: LojaJogoService = Depends(obter_loja_jogo_service),
 ) -> PerfilJogadorRegisto:
     try:
-        return servico.comprar(utilizador.id, dados.pacote_id)
+        return servico.comprar(utilizador.id, dados.pacote_id, dados.metodo_pagamento)
     except PacoteInexistenteError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="pacote de diamantes inexistente")
+    except MoedasInsuficientesError:
+        raise HTTPException(status_code=status.HTTP_402_PAYMENT_REQUIRED, detail="moedas insuficientes")
     except PagamentosIndisponiveisError:
         # 501 e não 503: não é uma avaria passageira, é uma funcionalidade
         # que ainda não existe -- o frontend mostra "disponíveis em breve".
@@ -414,6 +442,32 @@ def comprar_pacote_diamantes(
             status_code=status.HTTP_501_NOT_IMPLEMENTED,
             detail="pagamentos reais disponíveis em breve",
         )
+
+
+@router.post(
+    "/jogo/loja/pedidos", response_model=PedidoDiamantesPublico, status_code=status.HTTP_201_CREATED
+)
+def pedir_diamantes_kwanzas(
+    dados: PedirDiamantesKwanzasRequest,
+    utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
+    servico: LojaJogoService = Depends(obter_loja_jogo_service),
+) -> PedidoDiamantesRegisto:
+    """Kwanzas por transferência: grava o pedido com o comprovativo. Não
+    credita nada -- só quando um admin confirmar o pagamento."""
+    try:
+        return servico.pedir_com_kwanzas(utilizador.id, dados.pacote_id, dados.comprovativo_chave)
+    except PacoteInexistenteError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="pacote de diamantes inexistente")
+    except ChaveDeComprovativoInvalidaError:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="essa chave não é um comprovativo válido")
+
+
+@router.get("/jogo/loja/pedidos", response_model=list[PedidoDiamantesPublico])
+def listar_meus_pedidos_diamantes(
+    utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
+    servico: LojaJogoService = Depends(obter_loja_jogo_service),
+) -> list[PedidoDiamantesRegisto]:
+    return servico.listar_pedidos_do_utilizador(utilizador.id)
 
 
 # --- Gestão (só admin) ------------------------------------------------------
@@ -440,3 +494,48 @@ def criar_pergunta(
         explicacao=dados.explicacao,
         categoria=dados.categoria,
     )
+
+
+@router.get(
+    "/admin/jogo/pedidos-diamantes",
+    response_model=list[PedidoDiamantesAdmin],
+    dependencies=[Depends(obter_utilizador_admin)],
+)
+def listar_pedidos_diamantes(
+    servico: LojaJogoService = Depends(obter_loja_jogo_service),
+) -> list[PedidoDiamantesRegisto]:
+    return servico.listar_pedidos()
+
+
+@router.post("/admin/jogo/pedidos-diamantes/{pedido_id}/aprovar", response_model=PedidoDiamantesAdmin)
+def aprovar_pedido_diamantes(
+    pedido_id: str,
+    admin: UtilizadorRegisto = Depends(obter_utilizador_admin),
+    servico: LojaJogoService = Depends(obter_loja_jogo_service),
+) -> PedidoDiamantesRegisto:
+    """Pagamento confirmado pelo admin: credita os diamantes, uma única vez."""
+    try:
+        return servico.aprovar_pedido(pedido_id, admin.id).pedido
+    except PedidoDiamantesNaoEncontradoError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="pedido não encontrado")
+    except PedidoDiamantesJaDecididoError:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="este pedido já foi decidido")
+    except PedidoDiamantesSemContaError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="o pedido não está ligado a uma conta — não há a quem creditar",
+        )
+
+
+@router.post("/admin/jogo/pedidos-diamantes/{pedido_id}/rejeitar", response_model=PedidoDiamantesAdmin)
+def rejeitar_pedido_diamantes(
+    pedido_id: str,
+    admin: UtilizadorRegisto = Depends(obter_utilizador_admin),
+    servico: LojaJogoService = Depends(obter_loja_jogo_service),
+) -> PedidoDiamantesRegisto:
+    try:
+        return servico.rejeitar_pedido(pedido_id, admin.id)
+    except PedidoDiamantesNaoEncontradoError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="pedido não encontrado")
+    except PedidoDiamantesJaDecididoError:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="este pedido já foi decidido")

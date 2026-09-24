@@ -9,6 +9,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 from app.repositories.mercado_jogo_repository import ResultadoDebito
+from app.repositories.orm_models import CATEGORIAS_PERGUNTA_JOGO
 from app.services.jogo_service import PerguntaForaDaPartidaError, PerguntaNaoEncontradaError
 from app.services.mercado_jogo_service import (
     DURACAO_BLOQUEIO,
@@ -252,9 +253,88 @@ def test_listar_mostra_bloqueio_so_enquanto_dura(ambiente) -> None:
     servico = _servico(ambiente)
     servico.comprar("u1", "dona-maria", "p1")
 
-    estados = {e.vendedor.id: e.disponivel_em for e in servico.listar("u1")}
+    estados = {e.vendedor.id: e.disponivel_em for e in servico.listar("u1").vendedores}
     assert estados["dona-maria"] == relogio.agora + timedelta(hours=4)
     assert estados["tio-ze"] is None
 
     relogio.agora += timedelta(hours=4, seconds=1)
-    assert all(e.disponivel_em is None for e in servico.listar("u1"))
+    assert all(e.disponivel_em is None for e in servico.listar("u1").vendedores)
+
+
+# --- Certeza por categoria (afinidades) --------------------------------------
+
+_POR_ID = {v.id: v for v in VENDEDORES}
+
+
+@pytest.mark.parametrize(
+    ("vendedor_id", "categoria", "afinidade", "precisao"),
+    [
+        # Kota Beto, o professor: 90-100% em ciência e anatomia, menos no dia a dia.
+        ("kota-beto", "ciencia_ocular", "especialista", 0.98),
+        ("kota-beto", "anatomia_ocular", "especialista", 0.98),
+        ("kota-beto", "doencas_estrabismo", "neutro", 0.90),
+        ("kota-beto", "estilo_vida_visao", "fraco", 0.75),
+        ("kota-beto", "prevencao_cuidados", "fraco", 0.75),
+        # Tio Zé e Mana Fefa: vida prática sim (75-85%), ciência pura não.
+        ("tio-ze", "estilo_vida_visao", "especialista", 0.75),
+        ("tio-ze", "prevencao_cuidados", "especialista", 0.75),
+        ("tio-ze", "ciencia_ocular", "fraco", 0.35),
+        ("mana-fefa", "prevencao_cuidados", "especialista", 0.85),
+        ("mana-fefa", "anatomia_ocular", "fraco", 0.50),
+        ("mana-fefa", "curiosidades_visuais", "neutro", 0.70),
+        ("dona-maria", "doencas_estrabismo", "especialista", 0.92),
+        ("dona-maria", "ciencia_ocular", "fraco", 0.75),
+        # Sem pergunta em curso: a certeza base.
+        ("kota-beto", None, "neutro", 0.90),
+    ],
+)
+def test_certeza_depende_da_categoria(vendedor_id, categoria, afinidade, precisao) -> None:
+    vendedor = _POR_ID[vendedor_id]
+    assert vendedor.afinidade(categoria) == afinidade
+    assert vendedor.precisao_para(categoria) == precisao
+
+
+def test_afinidades_so_usam_categorias_oficiais_e_nunca_pior_que_adivinhar() -> None:
+    for v in VENDEDORES:
+        assert (v.especialidades | v.pontos_fracos) <= set(CATEGORIAS_PERGUNTA_JOGO)
+        assert not (v.especialidades & v.pontos_fracos)
+        if v.especialidades:
+            assert v.precisao_especialidade > v.precisao
+        if v.pontos_fracos:
+            assert 0.25 < v.precisao_fraca < v.precisao
+
+
+def test_listar_devolve_a_certeza_para_a_categoria_da_pergunta_em_curso(ambiente) -> None:
+    _, perguntas, _, _, partidas = ambiente
+    perguntas.adicionar("p-ciencia", "C", nivel_dificuldade=1, categoria="ciencia_ocular")
+    _na_pergunta(partidas, "u1", "p-ciencia")
+
+    mercado = _servico(ambiente).listar("u1")
+
+    assert mercado.categoria == "ciencia_ocular"
+    por_id = {e.vendedor.id: e for e in mercado.vendedores}
+    assert (por_id["kota-beto"].afinidade, por_id["kota-beto"].precisao) == ("especialista", 0.98)
+    assert (por_id["tio-ze"].afinidade, por_id["tio-ze"].precisao) == ("fraco", 0.35)
+
+
+def test_listar_sem_partida_mostra_a_certeza_base(ambiente) -> None:
+    mercado = _servico(ambiente).listar("sem-partida")
+    assert mercado.categoria is None
+    assert [e.precisao for e in mercado.vendedores] == [v.precisao for v in VENDEDORES]
+
+
+def test_comprar_usa_a_certeza_da_categoria(ambiente) -> None:
+    # 0.60: acima da base do Tio Zé (0.50), abaixo da especialidade (0.75)
+    # -- acerta numa pergunta de prevenção, erra numa de ciência.
+    perfis, perguntas, _, _, partidas = ambiente
+    perfis.creditar_diamantes("u1", 100)
+    perfis.creditar_diamantes("u2", 100)
+    perguntas.adicionar("p-prev", "C", nivel_dificuldade=1, categoria="prevencao_cuidados")
+    perguntas.adicionar("p-ciencia", "C", nivel_dificuldade=1, categoria="ciencia_ocular")
+    _na_pergunta(partidas, "u1", "p-prev")
+    _na_pergunta(partidas, "u2", "p-ciencia")
+
+    servico = _servico(ambiente, AleatorioFixo(0.60))
+
+    assert servico.comprar("u1", "tio-ze", "p-prev").resposta_sugerida == "C"
+    assert servico.comprar("u2", "tio-ze", "p-ciencia").resposta_sugerida != "C"

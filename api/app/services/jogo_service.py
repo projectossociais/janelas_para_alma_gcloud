@@ -25,6 +25,7 @@ prémio. Por isso tudo isso vive numa partida guardada no servidor
   desistência ou início de outra partida), pelos patamares superados.
 """
 
+import logging
 import random
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -45,6 +46,8 @@ from app.repositories.perfil_jogador_repository import (
     PerfilJogadorRepository,
     calcular_recompensa,
 )
+
+logger = logging.getLogger(__name__)
 
 OPCOES = ("A", "B", "C", "D")
 
@@ -247,32 +250,59 @@ class JogoService:
 
     # --- Perguntas -----------------------------------------------------------
 
-    def nova_pergunta(self, utilizador_id: str) -> PerguntaDaPartida:
-        """Sorteia a pergunta do próximo patamar e prende-a à partida. Pedir
-        outra antes de responder à actual é "trocar pergunta" -- uma vez por
+    def nova_pergunta(self, utilizador_id: str, trocar: bool = False) -> PerguntaDaPartida:
+        """A pergunta do próximo patamar, presa à partida.
+
+        Idempotente: pedir outra vez sem `trocar` enquanto a pergunta actual
+        está por responder devolve a mesma (um "Tentar novamente", um pedido
+        repetido pela rede ou um segundo separador não gastam nada). Até
+        2026-09-24, qualquer segundo pedido contava como "trocar pergunta" e
+        o terceiro dava 409 -- o que o frontend mostrava como "Não foi
+        possível carregar a pergunta". Só `trocar=True` troca -- uma vez por
         partida, gasta de forma atómica."""
         partida = self._partida_em_curso(utilizador_id)
         patamar = partida.patamar_superado + 1
         if patamar > TOTAL_PATAMARES:
             raise PartidaCompletaError()
-        troca = partida.pergunta_atual_id is not None
+
+        if partida.pergunta_atual_id is not None and not trocar:
+            atual = self._perguntas.obter_por_id(partida.pergunta_atual_id)
+            if atual is not None:
+                return PerguntaDaPartida(pergunta=atual, patamar=patamar)
+            # A pergunta foi apagada entretanto -- sorteia outra, sem gastar a troca.
+
+        troca = trocar and partida.pergunta_atual_id is not None
         if troca and partida.trocar_pergunta_usada:
             raise AjudaJaUsadaError("trocar_pergunta")
 
-        nivel = nivel_dificuldade_do_patamar(patamar)
-        pergunta = self._perguntas.obter_aleatoria(nivel, excluir_id=partida.pergunta_atual_id)
-        if pergunta is None and self._perguntas.semear_reserva() > 0:
-            # Rede de segurança: a migração `e5b1c8d2a4f7` já semeia no deploy,
-            # mas se o nível estiver vazio (base de dados nova, perguntas
-            # apagadas), semeia-se aqui em vez de a partida com conta cair na
-            # reserva local do frontend, onde os acertos não contam para o prémio.
-            pergunta = self._perguntas.obter_aleatoria(nivel, excluir_id=partida.pergunta_atual_id)
-        if pergunta is None:
-            raise SemPerguntasError()
+        pergunta = self._sortear(nivel_dificuldade_do_patamar(patamar), partida.pergunta_atual_id)
         if self._partidas.definir_pergunta(partida.id, pergunta.id, troca) is None:
             # Outro pedido mexeu na partida entretanto (trocou ou errou).
             raise AjudaJaUsadaError("trocar_pergunta") if troca else PartidaADecidirError()
         return PerguntaDaPartida(pergunta=pergunta, patamar=patamar)
+
+    def _sortear(self, nivel: int, excluir_id: str | None) -> PerguntaJogoRegisto:
+        """Pergunta do nível pedido. Rede de segurança se o nível estiver
+        vazio (base de dados nova, migração de seed atrasada ou falhada):
+        1. semeia a reserva (`reserva_perguntas_jogo.py`) e volta a tentar;
+        2. se o seed falhar, fica registado e o jogo segue na mesma;
+        3. sem nada no nível, qualquer pergunta da base de dados;
+        só sem pergunta nenhuma é `SemPerguntasError` -- nunca a partida com
+        conta a cair na reserva local do frontend, onde nada conta."""
+        pergunta = self._perguntas.obter_aleatoria(nivel, excluir_id=excluir_id)
+        if pergunta is not None:
+            return pergunta
+        try:
+            inseridas = self._perguntas.semear_reserva()
+            logger.warning("perguntas_jogo sem perguntas de nível %s: seed em runtime inseriu %s", nivel, inseridas)
+        except Exception:
+            logger.exception("perguntas_jogo sem perguntas de nível %s e o seed em runtime falhou", nivel)
+        pergunta = self._perguntas.obter_aleatoria(nivel, excluir_id=excluir_id) or self._perguntas.obter_aleatoria(
+            None, excluir_id=excluir_id
+        )
+        if pergunta is None:
+            raise SemPerguntasError()
+        return pergunta
 
     # --- Responder -----------------------------------------------------------
 

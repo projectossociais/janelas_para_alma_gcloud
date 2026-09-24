@@ -1221,20 +1221,48 @@ export interface PacoteDiamantes {
   bonus: number;
   total_diamantes: number;
   preco_kz: number;
+  // Opcional: uma API anterior a 2026-09-24 não o envia (deploys separados).
+  preco_moedas?: number;
 }
 
 export interface LojaDiamantes {
   pacotes: PacoteDiamantes[];
-  // `true` enquanto não há pagamento real: a compra credita diamantes sem
-  // cobrar nada (só em desenvolvimento). `false` -- comprar ainda não existe.
+  // `true` em desenvolvimento: os Kwanzas creditam logo, sem cobrar nada.
+  // `false` em produção: Kwanzas por transferência + comprovativo, creditados
+  // quando um admin confirmar o pagamento (como o Premium).
   pagamento_simulado: boolean;
 }
+
+export type MetodoPagamentoDiamantes = "moedas" | "kwanzas";
+
+export interface PedidoDiamantes {
+  id: string;
+  pacote_id: string;
+  diamantes: number;
+  preco_kz: number;
+  estado: "pendente" | "aprovado" | "rejeitado";
+  created_at: string;
+  decidido_em: string | null;
+}
+
+export interface PedidoDiamantesAdmin extends PedidoDiamantes {
+  utilizador_id: string | null;
+  comprovativo_url: string;
+  decidido_por: string | null;
+}
+
+export type AfinidadeVendedor = "especialista" | "neutro" | "fraco";
 
 export interface VendedorMercado {
   id: string;
   custo_diamantes: number;
-  // Probabilidade (0-1) de a sugestão estar certa.
+  // Probabilidade (0-1) de a sugestão estar certa -- para a pergunta em
+  // curso, pela categoria dela.
   precisao: number;
+  // Certeza numa categoria neutra, e a afinidade com a da pergunta.
+  // Opcionais: uma API anterior a 2026-09-24 não os envia (deploys separados).
+  precisao_base?: number;
+  afinidade?: AfinidadeVendedor;
   // `null` = disponível; senão, até quando está bloqueado (ISO, UTC).
   disponivel_em: string | null;
 }
@@ -1242,6 +1270,8 @@ export interface VendedorMercado {
 export interface MercadoJogo {
   // Hora do servidor -- acerta o cronómetro mesmo com o relógio do dispositivo errado.
   agora: string;
+  // Categoria da pergunta em curso (`null` sem pergunta por responder).
+  categoria?: string | null;
   vendedores: VendedorMercado[];
 }
 
@@ -1259,8 +1289,14 @@ export const jogoApi = {
   // partida e prende-a à partida -- só essa se pode validar, ajudar ou comprar
   // no Mercado. Pedir outra antes de responder gasta o "trocar pergunta".
   // Sem sessão não há perguntas do servidor: o jogo usa a reserva local.
-  obterPerguntaDaPartida: () =>
-    pedido<PerguntaJogoPublica & { patamar: number }>("/jogo/partidas/atual/pergunta", { method: "POST" }),
+  /** Idempotente: sem `trocar`, devolve a pergunta ainda por responder (um
+   *  "Tentar novamente" não gasta nada). `trocar: true` gasta a ajuda
+   *  "trocar pergunta" -- uma vez por partida. */
+  obterPerguntaDaPartida: (trocar = false) =>
+    pedido<PerguntaJogoPublica & { patamar: number }>("/jogo/partidas/atual/pergunta", {
+      method: "POST",
+      ...(trocar ? { body: JSON.stringify({ trocar: true }) } : {}),
+    }),
 
   // A resposta certa nunca chega em `obterPerguntaDaPartida` -- só esta
   // chamada, depois de o jogador já ter escolhido, é que a revela.
@@ -1324,9 +1360,28 @@ export const jogoApi = {
   // apenas o id do pacote, nunca quantos diamantes quer receber.
   obterLojaDiamantes: () => pedido<LojaDiamantes>("/jogo/loja/pacotes"),
 
-  comprarPacoteDiamantes: (pacoteId: string) =>
+  /** Crédito imediato: por moedas (sempre) ou Kwanzas simulados (só dev). */
+  comprarPacoteDiamantes: (pacoteId: string, metodo: MetodoPagamentoDiamantes = "kwanzas") =>
     pedido<PerfilJogadorPublico>("/jogo/loja/compras", {
       method: "POST",
-      body: JSON.stringify({ pacote_id: pacoteId }),
+      body: JSON.stringify({ pacote_id: pacoteId, metodo_pagamento: metodo }),
     }),
+
+  /** Kwanzas por transferência: `comprovativoChave` vem de
+   *  `comprovativosApi.preparar` + upload já feito. Não credita nada -- os
+   *  diamantes chegam quando um admin confirmar o pagamento. */
+  pedirDiamantesKwanzas: (pacoteId: string, comprovativoChave: string) =>
+    pedido<PedidoDiamantes>("/jogo/loja/pedidos", {
+      method: "POST",
+      body: JSON.stringify({ pacote_id: pacoteId, comprovativo_chave: comprovativoChave }),
+    }),
+
+  listarMeusPedidosDiamantes: () => pedido<PedidoDiamantes[]>("/jogo/loja/pedidos"),
+
+  /** Só admin. */
+  listarPedidosDiamantes: () => pedido<PedidoDiamantesAdmin[]>("/admin/jogo/pedidos-diamantes"),
+  aprovarPedidoDiamantes: (id: string) =>
+    pedido<PedidoDiamantesAdmin>(`/admin/jogo/pedidos-diamantes/${id}/aprovar`, { method: "POST" }),
+  rejeitarPedidoDiamantes: (id: string) =>
+    pedido<PedidoDiamantesAdmin>(`/admin/jogo/pedidos-diamantes/${id}/rejeitar`, { method: "POST" }),
 };

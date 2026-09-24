@@ -8,11 +8,19 @@ const marcarLida = vi.fn();
 const premiumListar = vi.fn();
 const premiumAprovar = vi.fn();
 const premiumRevogar = vi.fn();
+const diamantesListar = vi.fn();
+const diamantesAprovar = vi.fn();
+const diamantesRejeitar = vi.fn();
 
 vi.mock("@/lib/apiClient", () => ({
   contactMessagesApi: {
     listar: (...a: unknown[]) => listar(...a),
     marcarLida: (...a: unknown[]) => marcarLida(...a),
+  },
+  jogoApi: {
+    listarPedidosDiamantes: (...a: unknown[]) => diamantesListar(...a),
+    aprovarPedidoDiamantes: (...a: unknown[]) => diamantesAprovar(...a),
+    rejeitarPedidoDiamantes: (...a: unknown[]) => diamantesRejeitar(...a),
   },
   premiumApi: {
     listar: (...a: unknown[]) => premiumListar(...a),
@@ -71,6 +79,7 @@ describe("AdminInbox — mensagens de contacto", () => {
     premiumListar.mockReset().mockResolvedValue([]);
     premiumAprovar.mockReset();
     premiumRevogar.mockReset();
+    diamantesListar.mockReset().mockResolvedValue([]);
     toastSuccess.mockReset();
     toastError.mockReset();
   });
@@ -168,5 +177,84 @@ describe("AdminInbox — mensagens de contacto", () => {
     await abrirSeparadorPremium(user);
     await screen.findByText(umPedido.nome);
     expect(screen.queryByRole("link", { name: /Ver comprovativo/i })).not.toBeInTheDocument();
+  });
+});
+
+const umPedidoDiamantes = {
+  id: "dia-1",
+  utilizador_id: "user-7",
+  pacote_id: "medio",
+  diamantes: 165,
+  preco_kz: 1250,
+  comprovativo_url: "https://r2.example/comprovativos/x.png",
+  estado: "pendente",
+  decidido_por: null,
+  decidido_em: null,
+  created_at: "2026-09-24T10:00:00.000Z",
+};
+
+describe("AdminInbox — pedidos de diamantes (Kwanzas por transferência)", () => {
+  beforeEach(() => {
+    listar.mockReset().mockResolvedValue([]);
+    premiumListar.mockReset().mockResolvedValue([]);
+    diamantesListar.mockReset().mockResolvedValue([umPedidoDiamantes]);
+    diamantesAprovar.mockReset();
+    diamantesRejeitar.mockReset();
+    toastSuccess.mockReset();
+    toastError.mockReset();
+  });
+
+  async function abrir(user: ReturnType<typeof userEvent.setup>) {
+    render(<AdminInbox />, { wrapper: MemoryRouter });
+    await user.click(await screen.findByRole("tab", { name: /Pedidos de diamantes \(1\)/ }));
+  }
+
+  it("mostra o comprovativo e confirma o pagamento pela API, recarregando a lista", async () => {
+    const user = userEvent.setup();
+    diamantesAprovar.mockResolvedValue({ ...umPedidoDiamantes, estado: "aprovado" });
+    await abrir(user);
+
+    expect(await screen.findByRole("link", { name: /Ver comprovativo/ })).toHaveAttribute(
+      "href",
+      umPedidoDiamantes.comprovativo_url
+    );
+    await user.click(screen.getByRole("button", { name: /Confirmar pagamento/ }));
+
+    await waitFor(() => expect(diamantesAprovar).toHaveBeenCalledWith("dia-1"));
+    expect(toastSuccess).toHaveBeenCalledWith("Pagamento confirmado. 165 diamantes creditados.");
+    expect(diamantesListar).toHaveBeenCalledTimes(2);
+  });
+
+  it("se a confirmação falhar (ex.: 409 já decidido), mostra erro e nunca sucesso", async () => {
+    const user = userEvent.setup();
+    diamantesAprovar.mockRejectedValue(Object.assign(new Error("este pedido já foi decidido"), { status: 409 }));
+    await abrir(user);
+
+    await user.click(await screen.findByRole("button", { name: /Confirmar pagamento/ }));
+
+    await waitFor(() => expect(toastError).toHaveBeenCalledWith("este pedido já foi decidido"));
+    expect(toastSuccess).not.toHaveBeenCalled();
+  });
+
+  it("rejeitar não credita e avisa", async () => {
+    const user = userEvent.setup();
+    diamantesRejeitar.mockResolvedValue({ ...umPedidoDiamantes, estado: "rejeitado" });
+    await abrir(user);
+
+    await user.click(await screen.findByRole("button", { name: /Rejeitar/ }));
+
+    await waitFor(() => expect(diamantesRejeitar).toHaveBeenCalledWith("dia-1"));
+    expect(diamantesAprovar).not.toHaveBeenCalled();
+    expect(toastSuccess).toHaveBeenCalledWith("Pedido rejeitado. Nenhum diamante foi creditado.");
+  });
+
+  it("pedido já decidido não tem botões de decisão", async () => {
+    const user = userEvent.setup();
+    diamantesListar.mockResolvedValue([{ ...umPedidoDiamantes, estado: "aprovado" }]);
+    render(<AdminInbox />, { wrapper: MemoryRouter });
+    await user.click(await screen.findByRole("tab", { name: /Pedidos de diamantes \(0\)/ }));
+
+    expect(await screen.findByText("aprovado")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Confirmar pagamento/ })).not.toBeInTheDocument();
   });
 });

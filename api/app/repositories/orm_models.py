@@ -583,6 +583,44 @@ class PerfilJogador(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+ESTADOS_PEDIDO_DIAMANTES = ("pendente", "aprovado", "rejeitado")
+
+
+class PedidoDiamantes(Base):
+    """Compra de diamantes paga em Kwanzas -- mesmo fluxo do Premium
+    (`PremiumRequest`): transferência bancária, comprovativo enviado ao R2,
+    e só quando um admin confirma o pagamento é que os diamantes são
+    creditados (`LojaJogoService.aprovar_pedido`, na mesma transacção que
+    marca o pedido como aprovado -- nunca duas vezes).
+
+    Quantidade e preço são copiados do catálogo (`PACOTES_DIAMANTES`) no
+    momento do pedido: o admin aprova o que o jogador viu e pagou, mesmo que
+    o catálogo mude depois."""
+
+    __tablename__ = "pedidos_diamantes"
+    __table_args__ = (
+        CheckConstraint(
+            "estado IN ('pendente', 'aprovado', 'rejeitado')", name="ck_pedidos_diamantes_estado"
+        ),
+        CheckConstraint("diamantes > 0", name="ck_pedidos_diamantes_diamantes_positivos"),
+        CheckConstraint("preco_kz > 0", name="ck_pedidos_diamantes_preco_positivo"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    # SET NULL e não CASCADE: é um registo financeiro -- sobrevive à conta.
+    utilizador_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="SET NULL"), index=True
+    )
+    pacote_id: Mapped[str] = mapped_column(Text, nullable=False)
+    diamantes: Mapped[int] = mapped_column(nullable=False)
+    preco_kz: Mapped[int] = mapped_column(nullable=False)
+    comprovativo_url: Mapped[str] = mapped_column(Text, nullable=False)
+    estado: Mapped[str] = mapped_column(Text, nullable=False, server_default="pendente")
+    decidido_por: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("utilizadores.id", ondelete="SET NULL"))
+    decidido_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class PartidaJogo(Base):
     """Uma partida do jogo "Inclusivamente", do primeiro patamar até terminar
     (vitória, derrota, desistência ou nova partida). Todo o estado que o

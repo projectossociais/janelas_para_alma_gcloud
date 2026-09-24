@@ -1940,7 +1940,30 @@
     "pagar": "Pay",
     "pagamentosEmBreve": "Real payments available soon.",
     "compraConcluida": "Purchase complete! +{{quantidade}} diamonds.",
-    "naoFoiPossivelComprar": "We couldn't complete the purchase. You were not charged."
+    "naoFoiPossivelComprar": "We couldn't complete the purchase. You were not charged.",
+    "avisoDuasFormas": "Each pack can be paid in two ways: in Kwanzas, by bank transfer (the diamonds arrive once we confirm the payment), or with the coins you earn by playing.",
+    "comprarPacoteMoedas": "Trade {{moedas}} coins for {{quantidade}} diamonds",
+    "precoMoedas": "{{moedas}} coins",
+    "ouPrecoMoedas": "or {{moedas}} coins",
+    "faltamMoedas": "{{moedas}} coins short",
+    "confirmarCompraMoedas": "You'll trade {{moedas}} coins for {{quantidade}} diamonds.",
+    "trocarMoedas": "Trade coins",
+    "moedasInsuficientes": "You don't have enough coins for this pack.",
+    "pagarPorTransferencia": "Pay by bank transfer",
+    "n1Transfira": "1. Transfer the amount to",
+    "n2AnexeOComprovativo": "2. Attach the proof of payment",
+    "beneficiario": "Beneficiary",
+    "creditadoAposConfirmacao": "The diamonds are added to your account as soon as we confirm the payment.",
+    "enviarComprovativo": "Send proof of payment",
+    "anexeOComprovativo": "Please attach the proof of transfer.",
+    "tipoDeComprovativoInvalido": "The proof must be an image (PNG, JPG, WEBP) or a PDF.",
+    "pedidoEnviado": "Request sent! Your {{quantidade}} diamonds will arrive as soon as we confirm the payment.",
+    "osMeusPedidos": "My requests",
+    "estados": {
+      "pendente": "Awaiting confirmation",
+      "aprovado": "Credited",
+      "rejeitado": "Rejected"
+    }
   },
   "Mercado": {
     "titulo": "Market",
@@ -1967,6 +1990,10 @@
     "avisoSugestao": "It's just an opinion: cheaper vendors get it wrong more often. The final call is yours.",
     "voltarAPergunta": "Back to the question",
     "precisaDeMaisDiamantes": "Out of diamonds? Earn more by playing or visit the Shop from the game menu.",
+    "especialistaEm": "Expert in {{categoria}}",
+    "poucoAVontadeCom": "Not at ease with {{categoria}}",
+    "variacaoBase": "base certainty {{base}}%",
+    "temaDaPergunta": "This question's topic: {{categoria}}",
     "indisponivelOffline": "The Market needs a connection to the server.",
     "vendedores": {
       "tio-ze": {
