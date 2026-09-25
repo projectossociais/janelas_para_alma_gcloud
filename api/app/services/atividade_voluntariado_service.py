@@ -55,6 +55,12 @@ class InscricaoNaoEncontradaError(Exception):
     pass
 
 
+class AtividadeComInscricoesError(Exception):
+    """Recusa apagar uma actividade com alguma inscrição, mesmo cancelada --
+    é o rasto real de uma pessoa. Arquivar em vez de apagar."""
+
+
+
 class AtividadeVoluntariadoService:
     def __init__(self, repositorio: AtividadeVoluntariadoRepository, email_sender: EmailSender) -> None:
         self._repo = repositorio
@@ -88,6 +94,18 @@ class AtividadeVoluntariadoService:
         if self._repo.obter_atividade(atividade_id) is None:
             raise AtividadeNaoEncontradaError(atividade_id)
         return self._repo.cancelar_atividade(atividade_id)
+
+    def arquivar(self, atividade_id: str) -> AtividadeVoluntariadoRegisto:
+        if self._repo.obter_atividade(atividade_id) is None:
+            raise AtividadeNaoEncontradaError(atividade_id)
+        return self._repo.arquivar_atividade(atividade_id)
+
+    def apagar(self, atividade_id: str) -> None:
+        if self._repo.obter_atividade(atividade_id) is None:
+            raise AtividadeNaoEncontradaError(atividade_id)
+        if self._repo.tem_alguma_inscricao(atividade_id):
+            raise AtividadeComInscricoesError(atividade_id)
+        self._repo.apagar_atividade(atividade_id)
 
     def listar_publicadas(self) -> list[AtividadeVoluntariadoRegisto]:
         return self._repo.listar_publicadas()

@@ -901,6 +901,11 @@ export const voluntariadoApi = {
   cancelarAtividade: (id: string) =>
     pedido<AtividadeVoluntariadoAdmin>(`/voluntariado/atividades/${id}/cancelar`, { method: "POST" }),
 
+  arquivarAtividade: (id: string) =>
+    pedido<AtividadeVoluntariadoAdmin>(`/voluntariado/atividades/${id}/arquivar`, { method: "POST" }),
+
+  apagarAtividade: (id: string) => pedido<void>(`/voluntariado/atividades/${id}`, { method: "DELETE" }),
+
   listarInscritos: (atividadeId: string) =>
     pedido<InscricaoAtividadeAdmin[]>(`/voluntariado/atividades/${atividadeId}/inscritos`),
 };

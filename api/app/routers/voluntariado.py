@@ -34,6 +34,7 @@ from app.schemas.voluntariado import (
     InscricaoAtividadePublica,
 )
 from app.services.atividade_voluntariado_service import (
+    AtividadeComInscricoesError,
     AtividadeNaoEncontradaError,
     AtividadeNaoPublicadaError,
     AtividadeVoluntariadoService,
@@ -207,6 +208,39 @@ def cancelar_atividade(
     except AtividadeNaoEncontradaError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="actividade não encontrada"
+        ) from exc
+
+
+@router.post("/atividades/{atividade_id}/arquivar", response_model=AtividadeVoluntariadoAdmin)
+def arquivar_atividade(
+    atividade_id: str,
+    admin: UtilizadorRegisto = Depends(obter_utilizador_admin),
+    servico: AtividadeVoluntariadoService = Depends(obter_atividade_service),
+) -> AtividadeVoluntariadoRegisto:
+    try:
+        return servico.arquivar(atividade_id)
+    except AtividadeNaoEncontradaError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="actividade não encontrada"
+        ) from exc
+
+
+@router.delete("/atividades/{atividade_id}", status_code=status.HTTP_204_NO_CONTENT)
+def apagar_atividade(
+    atividade_id: str,
+    admin: UtilizadorRegisto = Depends(obter_utilizador_admin),
+    servico: AtividadeVoluntariadoService = Depends(obter_atividade_service),
+) -> None:
+    try:
+        servico.apagar(atividade_id)
+    except AtividadeNaoEncontradaError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="actividade não encontrada"
+        ) from exc
+    except AtividadeComInscricoesError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="esta actividade tem inscrições -- arquive em vez de apagar",
         ) from exc
 
 

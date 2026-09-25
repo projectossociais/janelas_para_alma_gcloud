@@ -23,7 +23,18 @@ import {
   type InscricaoAtividadeAdmin,
 } from "@/lib/apiClient";
 import { toast } from "sonner";
-import { Check, X, Plus, Users, Ban, Mail, Phone } from "lucide-react";
+import { Check, X, Plus, Users, Ban, Mail, Phone, Archive, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const estadoBadge = (estado: string) => {
   const variantes: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
@@ -52,7 +63,7 @@ const AdminVoluntariado = () => {
   // Filtros só do lado do cliente -- a lista já vem inteira da API
   // (gestão de admin, volume baixo); não há razão para um endpoint novo
   // só para isto. "Este mês" e "Futuras/Passadas" olham a `data_inicio`.
-  const [filtroEstado, setFiltroEstado] = useState<"todas" | "publicada" | "cancelada">("todas");
+  const [filtroEstado, setFiltroEstado] = useState<"todas" | "publicada" | "cancelada" | "arquivada">("todas");
   const [filtroPeriodo, setFiltroPeriodo] = useState<"todas" | "mes" | "futuras" | "passadas">("todas");
 
   const carregarCandidaturas = async () => {
@@ -126,6 +137,28 @@ const AdminVoluntariado = () => {
     }
   };
 
+  const arquivarAtividade = async (id: string) => {
+    try {
+      await voluntariadoApi.arquivarAtividade(id);
+      toast.success("Actividade arquivada.");
+      await carregarAtividades();
+    } catch (err) {
+      toast.error(mensagemDeErroApi(err, "Não foi possível arquivar a actividade."));
+    }
+  };
+
+  const apagarAtividade = async (id: string) => {
+    try {
+      await voluntariadoApi.apagarAtividade(id);
+      toast.success("Actividade apagada.");
+      await carregarAtividades();
+    } catch (err) {
+      toast.error(
+        mensagemDeErroApi(err, "Não foi possível apagar a actividade. Se já tiver inscrições, arquive em vez de apagar."),
+      );
+    }
+  };
+
   const verInscritos = async (atividade: AtividadeVoluntariadoAdmin) => {
     setInscritosDe(atividade);
     try {
@@ -146,7 +179,10 @@ const AdminVoluntariado = () => {
   fimDoMes.setMonth(fimDoMes.getMonth() + 1);
 
   const atividadesFiltradas = atividades
-    .filter((a) => filtroEstado === "todas" || a.estado === filtroEstado)
+    // "Todos os estados" esconde as arquivadas de propósito -- é o próprio
+    // objectivo de arquivar (a lista não cresce sem fim); "Arquivadas" no
+    // filtro continua a poder consultá-las quando precisar.
+    .filter((a) => (filtroEstado === "todas" ? a.estado !== "arquivada" : a.estado === filtroEstado))
     .filter((a) => {
       const inicio = new Date(a.data_inicio).getTime();
       if (filtroPeriodo === "mes") return inicio >= inicioDoMes.getTime() && inicio < fimDoMes.getTime();
@@ -270,6 +306,7 @@ const AdminVoluntariado = () => {
                     <SelectItem value="todas">Todos os estados</SelectItem>
                     <SelectItem value="publicada">Publicadas</SelectItem>
                     <SelectItem value="cancelada">Canceladas</SelectItem>
+                    <SelectItem value="arquivada">Arquivadas</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select value={filtroPeriodo} onValueChange={(v) => setFiltroPeriodo(v as typeof filtroPeriodo)}>
@@ -301,10 +338,35 @@ const AdminVoluntariado = () => {
                       <Users className="w-3 h-3" /> Inscritos
                     </Button>
                     {a.estado === "publicada" && (
-                      <Button size="sm" variant="ghost" onClick={() => cancelarAtividade(a.id)}>
+                      <Button size="sm" variant="ghost" onClick={() => cancelarAtividade(a.id)} title="Cancelar">
                         <Ban className="w-3 h-3 text-destructive" />
                       </Button>
                     )}
+                    {a.estado !== "arquivada" && (
+                      <Button size="sm" variant="ghost" onClick={() => arquivarAtividade(a.id)} title="Arquivar">
+                        <Archive className="w-3 h-3" />
+                      </Button>
+                    )}
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button size="sm" variant="ghost" title="Apagar">
+                          <Trash2 className="w-3 h-3 text-destructive" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Apagar "{a.titulo}"?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Esta acção não se pode desfazer. Se a actividade já tiver alguma inscrição, a API recusa
+                            apagar -- use "Arquivar" nesse caso, para não perder o histórico de quem se inscreveu.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => apagarAtividade(a.id)}>Apagar</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
               ))}

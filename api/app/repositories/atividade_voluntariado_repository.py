@@ -68,6 +68,9 @@ class AtividadeVoluntariadoRepository(Protocol):
     def listar_publicadas(self) -> list[AtividadeVoluntariadoRegisto]: ...
     def listar_todas(self) -> list[AtividadeVoluntariadoRegisto]: ...
     def cancelar_atividade(self, atividade_id: str) -> AtividadeVoluntariadoRegisto: ...
+    def arquivar_atividade(self, atividade_id: str) -> AtividadeVoluntariadoRegisto: ...
+    def tem_alguma_inscricao(self, atividade_id: str) -> bool: ...
+    def apagar_atividade(self, atividade_id: str) -> None: ...
     def utilizador_e_voluntario_ativo(self, utilizador_id: str) -> bool: ...
     def criar_inscricao(self, atividade_id: str, utilizador_id: str) -> InscricaoAtividadeRegisto: ...
     def obter_inscricao(
@@ -173,6 +176,27 @@ class SQLAlchemyAtividadeVoluntariadoRepository:
         self._sessao.commit()
         self._sessao.refresh(row)
         return self._atividade_para_registo(row)
+
+    def arquivar_atividade(self, atividade_id: str) -> AtividadeVoluntariadoRegisto:
+        row = self._sessao.get(AtividadeVoluntariado, uuid.UUID(atividade_id))
+        row.estado = "arquivada"
+        self._sessao.commit()
+        self._sessao.refresh(row)
+        return self._atividade_para_registo(row)
+
+    def tem_alguma_inscricao(self, atividade_id: str) -> bool:
+        return (
+            self._sessao.scalar(
+                select(InscricaoAtividade.id).where(InscricaoAtividade.atividade_id == uuid.UUID(atividade_id))
+            )
+            is not None
+        )
+
+    def apagar_atividade(self, atividade_id: str) -> None:
+        row = self._sessao.get(AtividadeVoluntariado, uuid.UUID(atividade_id))
+        if row is not None:
+            self._sessao.delete(row)
+            self._sessao.commit()
 
     def utilizador_e_voluntario_ativo(self, utilizador_id: str) -> bool:
         utilizador = self._sessao.get(Utilizador, uuid.UUID(utilizador_id))
