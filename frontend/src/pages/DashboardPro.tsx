@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Stethoscope, Users, Calendar, FileText, Mail, Phone, Trash2, Video } from "lucide-react";
+import { Stethoscope, Users, Calendar, FileText, Mail, Phone, Trash2, Video, Crown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import RequireClinica from "@/components/admin/RequireClinica";
 import {
@@ -220,6 +220,11 @@ const ConteudoDashboardPro = ({ clinica }: { clinica: ClinicaParceiraAdmin }) =>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold">{a.nome}</span>
                     {estadoBadge(a.estado)}
+                    {a.premium && (
+                      <Badge className="bg-gold text-navy hover:bg-gold gap-1">
+                        <Crown className="w-3 h-3" /> {t("DashboardPro.premium")}
+                      </Badge>
+                    )}
                   </div>
                   <div className="text-xs text-muted-foreground flex gap-3 mt-1 flex-wrap">
                     <span className="inline-flex items-center gap-1"><Mail className="w-3 h-3" />{a.email}</span>

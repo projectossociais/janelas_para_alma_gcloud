@@ -8,7 +8,7 @@ import {
   type AgendamentoClinicoAdmin,
 } from "@/lib/apiClient";
 import { toast } from "sonner";
-import { Check, X, Mail, Phone, MapPinned, Video } from "lucide-react";
+import { Check, X, Mail, Phone, MapPinned, Video, Crown } from "lucide-react";
 
 const estadoBadge = (estado: string) => {
   const variantes: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
@@ -70,6 +70,11 @@ const AdminAgendamentos = () => {
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold">{a.nome}</span>
                     {estadoBadge(a.estado)}
+                    {a.premium && (
+                      <Badge className="bg-gold text-navy hover:bg-gold gap-1">
+                        <Crown className="w-3 h-3" /> Premium
+                      </Badge>
+                    )}
                     <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                       {a.modalidade === "online" ? <Video className="w-3 h-3" /> : <MapPinned className="w-3 h-3" />}
                       {a.modalidade}

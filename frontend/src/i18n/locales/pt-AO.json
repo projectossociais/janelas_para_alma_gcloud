@@ -611,6 +611,7 @@
     "sexta": "Sexta-feira",
     "sabado": "Sábado",
     "domingo": "Domingo",
+    "premium": "Premium",
     "naoFoiPossivelCarregarTeleconsulta": "Não foi possível carregar a teleconsulta.",
     "naoFoiPossivelIniciarTeleconsulta": "Não foi possível iniciar a teleconsulta.",
     "naoFoiPossivelConcluirTeleconsulta": "Não foi possível concluir a teleconsulta.",

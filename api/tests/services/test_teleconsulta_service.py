@@ -31,6 +31,7 @@ def _agendamento(**over) -> AgendamentoClinicoRegisto:
         "horario_inicio": datetime(2027, 1, 4, 9, 0, tzinfo=UTC),
         "motivo": None,
         "estado": "confirmada",
+        "premium": False,
         "decidido_por": "admin-1",
         "decidido_em": datetime.now(UTC),
         "created_at": datetime.now(UTC),

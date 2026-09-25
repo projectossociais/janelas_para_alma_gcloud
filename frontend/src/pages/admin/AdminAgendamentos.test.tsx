@@ -41,6 +41,7 @@ const PEDIDO_PENDENTE = {
   horario_inicio: "2027-01-04T09:00:00.000Z",
   motivo: "Visão turva",
   estado: "pendente",
+  premium: false,
   decidido_por: null,
   decidido_em: null,
   created_at: "2026-01-01T00:00:00.000Z",
@@ -107,5 +108,20 @@ describe("AdminAgendamentos", () => {
 
     await waitFor(() => expect(toastError).toHaveBeenCalledWith("falha"));
     expect(toastSuccess).not.toHaveBeenCalled();
+  });
+
+  it("mostra o selo Premium para quem paga a subscrição", async () => {
+    listarAgendamentos.mockResolvedValue([{ ...PEDIDO_PENDENTE, premium: true }]);
+    render(<AdminAgendamentos />);
+
+    expect(await screen.findByText("Premium")).toBeInTheDocument();
+  });
+
+  it("não mostra o selo Premium para um pedido comum", async () => {
+    listarAgendamentos.mockResolvedValue([PEDIDO_PENDENTE]);
+    render(<AdminAgendamentos />);
+
+    await screen.findByText("Ana Silva");
+    expect(screen.queryByText("Premium")).not.toBeInTheDocument();
   });
 });

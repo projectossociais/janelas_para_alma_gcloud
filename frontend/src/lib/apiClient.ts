@@ -951,6 +951,9 @@ export interface AgendamentoClinicoPublico {
 export interface AgendamentoClinicoAdmin extends AgendamentoClinicoPublico {
   utilizador_id: string | null;
   screening_id: string | null;
+  // Sprint 4, Fase 4: quem paga Premium tem prioridade de marcação -- vem
+  // sempre calculado pela API (nunca escolhido pelo browser).
+  premium: boolean;
   decidido_por: string | null;
   decidido_em: string | null;
 }

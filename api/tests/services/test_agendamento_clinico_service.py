@@ -40,6 +40,7 @@ def _agendamento(**over) -> AgendamentoClinicoRegisto:
         "horario_inicio": HORARIO_VALIDO,
         "motivo": "Visão turva",
         "estado": "pendente",
+        "premium": False,
         "decidido_por": None,
         "decidido_em": None,
         "created_at": datetime.now(UTC),

@@ -86,6 +86,7 @@ class RepositorioAgendamentosFalso:
             "horario_inicio": None,
             "motivo": None,
             "estado": "pendente",
+            "premium": False,
             "decidido_por": None,
             "decidido_em": None,
             "created_at": datetime.now(UTC),

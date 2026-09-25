@@ -611,6 +611,7 @@
     "sexta": "Friday",
     "sabado": "Saturday",
     "domingo": "Sunday",
+    "premium": "Premium",
     "naoFoiPossivelCarregarTeleconsulta": "Could not load the teleconsultation.",
     "naoFoiPossivelIniciarTeleconsulta": "Could not start the teleconsultation.",
     "naoFoiPossivelConcluirTeleconsulta": "Could not complete the teleconsultation.",
