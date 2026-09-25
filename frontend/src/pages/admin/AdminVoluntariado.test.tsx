@@ -9,6 +9,8 @@ const rejeitarCandidatura = vi.fn();
 const listarTodasAsAtividades = vi.fn();
 const publicarAtividade = vi.fn();
 const cancelarAtividade = vi.fn();
+const arquivarAtividade = vi.fn();
+const apagarAtividade = vi.fn();
 const listarInscritos = vi.fn();
 
 vi.mock("@/lib/apiClient", () => ({
@@ -19,6 +21,8 @@ vi.mock("@/lib/apiClient", () => ({
     listarTodasAsAtividades: (...a: unknown[]) => listarTodasAsAtividades(...a),
     publicarAtividade: (...a: unknown[]) => publicarAtividade(...a),
     cancelarAtividade: (...a: unknown[]) => cancelarAtividade(...a),
+    arquivarAtividade: (...a: unknown[]) => arquivarAtividade(...a),
+    apagarAtividade: (...a: unknown[]) => apagarAtividade(...a),
     listarInscritos: (...a: unknown[]) => listarInscritos(...a),
   },
   mensagemDeErroApi: (err: unknown, fallback: string) => {
@@ -75,6 +79,8 @@ describe("AdminVoluntariado", () => {
     listarTodasAsAtividades.mockReset().mockResolvedValue([]);
     publicarAtividade.mockReset();
     cancelarAtividade.mockReset();
+    arquivarAtividade.mockReset();
+    apagarAtividade.mockReset();
     listarInscritos.mockReset().mockResolvedValue([]);
     toastSuccess.mockReset();
     toastError.mockReset();
@@ -212,6 +218,76 @@ describe("AdminVoluntariado", () => {
 
       expect(screen.getByText("Nenhuma actividade corresponde aos filtros.")).toBeInTheDocument();
       expect(screen.queryByText("Nenhuma actividade ainda.")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("arquivar e apagar (a lista não pode crescer sem fim)", () => {
+    it("arquivar esconde a actividade do filtro 'Todos os estados' por omissão", async () => {
+      arquivarAtividade.mockResolvedValue({ ...ATIVIDADE, estado: "arquivada" });
+      listarTodasAsAtividades.mockResolvedValueOnce([ATIVIDADE]).mockResolvedValueOnce([
+        { ...ATIVIDADE, estado: "arquivada" },
+      ]);
+      const user = userEvent.setup();
+      renderPage();
+
+      await user.click(await screen.findByRole("tab", { name: /Actividades/i }));
+      await screen.findByText("Rastreio comunitário");
+
+      await user.click(screen.getByRole("button", { name: /Arquivar/i }));
+
+      await waitFor(() => expect(arquivarAtividade).toHaveBeenCalledWith("ativ-1"));
+      await waitFor(() => expect(screen.queryByText("Rastreio comunitário")).not.toBeInTheDocument());
+    });
+
+    it("o filtro 'Arquivadas' continua a mostrar a actividade arquivada", async () => {
+      listarTodasAsAtividades.mockResolvedValue([{ ...ATIVIDADE, estado: "arquivada" }]);
+      const user = userEvent.setup();
+      renderPage();
+
+      await user.click(await screen.findByRole("tab", { name: /Actividades/i }));
+      expect(screen.queryByText("Rastreio comunitário")).not.toBeInTheDocument();
+
+      await user.click(screen.getAllByRole("combobox")[0]);
+      await user.click(await screen.findByRole("option", { name: "Arquivadas" }));
+
+      expect(await screen.findByText("Rastreio comunitário")).toBeInTheDocument();
+    });
+
+    it("apagar pede confirmação antes de chamar a API", async () => {
+      apagarAtividade.mockResolvedValue(undefined);
+      listarTodasAsAtividades.mockResolvedValue([ATIVIDADE]);
+      const user = userEvent.setup();
+      renderPage();
+
+      await user.click(await screen.findByRole("tab", { name: /Actividades/i }));
+      await screen.findByText("Rastreio comunitário");
+
+      await user.click(screen.getByRole("button", { name: /Apagar/i }));
+      expect(apagarAtividade).not.toHaveBeenCalled();
+
+      await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Apagar" }));
+
+      await waitFor(() => expect(apagarAtividade).toHaveBeenCalledWith("ativ-1"));
+    });
+
+    it("uma actividade com inscrições nunca é apagada em silêncio -- mostra o erro da API", async () => {
+      apagarAtividade.mockRejectedValue(
+        Object.assign(new Error("esta actividade tem inscrições -- arquive em vez de apagar"), { status: 409 }),
+      );
+      listarTodasAsAtividades.mockResolvedValue([ATIVIDADE]);
+      const user = userEvent.setup();
+      renderPage();
+
+      await user.click(await screen.findByRole("tab", { name: /Actividades/i }));
+      await screen.findByText("Rastreio comunitário");
+
+      await user.click(screen.getByRole("button", { name: /Apagar/i }));
+      await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Apagar" }));
+
+      await waitFor(() =>
+        expect(toastError).toHaveBeenCalledWith("esta actividade tem inscrições -- arquive em vez de apagar"),
+      );
+      expect(screen.getByText("Rastreio comunitário")).toBeInTheDocument();
     });
   });
 });

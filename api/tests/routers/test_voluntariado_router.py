@@ -124,6 +124,18 @@ class RepositorioAtividadeFalso:
         self._atividades[atividade_id] = novo
         return novo
 
+    def arquivar_atividade(self, atividade_id) -> AtividadeVoluntariadoRegisto:
+        a = self._atividades[atividade_id]
+        novo = AtividadeVoluntariadoRegisto(**{**a.__dict__, "estado": "arquivada"})
+        self._atividades[atividade_id] = novo
+        return novo
+
+    def tem_alguma_inscricao(self, atividade_id) -> bool:
+        return any(i.atividade_id == atividade_id for i in self._inscricoes.values())
+
+    def apagar_atividade(self, atividade_id) -> None:
+        self._atividades.pop(atividade_id, None)
+
     def utilizador_e_voluntario_ativo(self, utilizador_id) -> bool:
         return utilizador_id in self._voluntarios_ativos
 
@@ -431,3 +443,68 @@ def test_listar_inscritos_exige_admin(ambiente) -> None:
     r = c.get(f"/voluntariado/atividades/{atividade_id}/inscritos")
     assert r.status_code == 200
     assert len(r.json()) == 1
+
+
+# --- arquivar / apagar -------------------------------------------------------
+
+
+def test_arquivar_atividade(ambiente) -> None:
+    c, *_, token_admin, _, _ = ambiente
+    atividade_id = _publicar_atividade(c, token_admin)
+
+    r = c.post(f"/voluntariado/atividades/{atividade_id}/arquivar")
+
+    assert r.status_code == 200
+    assert r.json()["estado"] == "arquivada"
+
+
+def test_arquivar_atividade_exige_admin(ambiente) -> None:
+    c, *_, token_admin, token_comum, _ = ambiente
+    atividade_id = _publicar_atividade(c, token_admin)
+    c.cookies.set("access_token", token_comum)
+
+    assert c.post(f"/voluntariado/atividades/{atividade_id}/arquivar").status_code == 403
+
+
+def test_arquivar_atividade_inexistente_404(ambiente) -> None:
+    c, *_, token_admin, _, _ = ambiente
+    c.cookies.set("access_token", token_admin)
+
+    assert c.post("/voluntariado/atividades/nao-existe/arquivar").status_code == 404
+
+
+def test_apagar_atividade_sem_inscricoes(ambiente) -> None:
+    c, *_, token_admin, _, _ = ambiente
+    atividade_id = _publicar_atividade(c, token_admin)
+
+    r = c.delete(f"/voluntariado/atividades/{atividade_id}")
+
+    assert r.status_code == 204
+    assert atividade_id not in [a["id"] for a in c.get("/voluntariado/atividades/todas").json()]
+
+
+def test_apagar_atividade_com_inscricoes_409(ambiente) -> None:
+    c, *_, token_admin, _, token_voluntario = ambiente
+    atividade_id = _publicar_atividade(c, token_admin)
+    c.cookies.set("access_token", token_voluntario)
+    c.post(f"/voluntariado/atividades/{atividade_id}/inscrever")
+
+    c.cookies.set("access_token", token_admin)
+    r = c.delete(f"/voluntariado/atividades/{atividade_id}")
+
+    assert r.status_code == 409
+
+
+def test_apagar_atividade_exige_admin(ambiente) -> None:
+    c, *_, token_admin, token_comum, _ = ambiente
+    atividade_id = _publicar_atividade(c, token_admin)
+    c.cookies.set("access_token", token_comum)
+
+    assert c.delete(f"/voluntariado/atividades/{atividade_id}").status_code == 403
+
+
+def test_apagar_atividade_inexistente_404(ambiente) -> None:
+    c, *_, token_admin, _, _ = ambiente
+    c.cookies.set("access_token", token_admin)
+
+    assert c.delete("/voluntariado/atividades/nao-existe").status_code == 404

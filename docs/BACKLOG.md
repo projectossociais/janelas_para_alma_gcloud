@@ -1960,6 +1960,28 @@ exercício (`AmbliopiaExercise.tsx:459`) é o feed da câmara para eye-tracking,
 propositadamente `sr-only`/oculto — não um vídeo demonstrativo. Não abrir tarefa de
 correcção sem antes confirmar com o avaliador o que exactamente esperava ver.
 
+### UX-10 — Texto técnico interno vazava para páginas admin; voluntariado sem arquivar/apagar · ✅ **FEITO 2026-09-25**
+
+Dois problemas apontados pelo dono do projecto ao usar o painel a sério:
+
+- **Jargão interno visível no ecrã**: `AdminClinicas.tsx` e `AdminAgendamentos.tsx`
+  mostravam referências como "(Sprint 4, Fase 1 do matchmaker clínico)" directamente
+  na interface — linguagem de planeamento interno, não texto para quem gere o produto
+  no dia a dia. Removido; o resto do frontend foi varrido à procura do mesmo padrão
+  (`Sprint N`, `Fase N do`, `matchmaker`, `docs/BACKLOG`, `PR #N`) e as únicas outras
+  ocorrências eram comentários de código (`//`), invisíveis ao utilizador — não exigiam
+  correcção.
+- **Lista de actividades de voluntariado sem fim**: `AdminVoluntariado.tsx` só sabia
+  cancelar uma actividade — cancelada ou não, ficava para sempre na lista "Todas".
+  Adicionado:
+  - **Arquivar** (`POST /voluntariado/atividades/{id}/arquivar`, qualquer estado):
+    esconde da vista "Todos os estados" por omissão, sem apagar nada — reversível,
+    consultável pelo filtro "Arquivadas".
+  - **Apagar a sério** (`DELETE /voluntariado/atividades/{id}`): só permitido se a
+    actividade não tiver **nenhuma** inscrição, mesmo cancelada — recusa com 409 e
+    sugere arquivar, para nunca apagar o rasto real de um voluntário que se inscreveu.
+    Confirmação obrigatória no ecrã (`AlertDialog`) antes do pedido.
+
 ### Kamba Social — proposta, não tarefa ainda
 
 Levantado à parte da auditoria técnica: "Meu Kamba Estrábico" tem hoje só um

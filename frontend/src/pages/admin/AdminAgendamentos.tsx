@@ -57,7 +57,7 @@ const AdminAgendamentos = () => {
       <div>
         <h2 className="text-2xl font-bold">Agendamentos clínicos</h2>
         <p className="text-sm text-muted-foreground">
-          Pedidos de consulta recebidos pelas clínicas parceiras (Sprint 4, Fase 0 do matchmaker clínico).
+          Pedidos de consulta recebidos pelas clínicas parceiras.
         </p>
       </div>
 

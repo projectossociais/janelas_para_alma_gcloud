@@ -16,6 +16,7 @@ from app.repositories.atividade_voluntariado_repository import (
     VoluntarioParaNotificar,
 )
 from app.services.atividade_voluntariado_service import (
+    AtividadeComInscricoesError,
     AtividadeNaoEncontradaError,
     AtividadeNaoPublicadaError,
     AtividadeVoluntariadoService,
@@ -70,14 +71,18 @@ class RepositorioFalso:
         voluntario_ativo: bool = True,
         inscricao_existente: InscricaoAtividadeRegisto | None = None,
         voluntarios_para_notificar: list[VoluntarioParaNotificar] | None = None,
+        tem_alguma_inscricao: bool = False,
     ) -> None:
         self._atividade = atividade
         self._voluntario_ativo = voluntario_ativo
         self._inscricao_existente = inscricao_existente
         self._voluntarios = voluntarios_para_notificar or []
+        self._tem_alguma_inscricao = tem_alguma_inscricao
         self.atividade_criada: dict | None = None
         self.inscricao_criada: dict | None = None
         self.cancelada: str | None = None
+        self.arquivada: str | None = None
+        self.apagada: str | None = None
 
     def criar_atividade(self, titulo, descricao, local, data_inicio, data_fim, vagas, criado_por):
         self.atividade_criada = {"titulo": titulo, "criado_por": criado_por, "vagas": vagas}
@@ -95,6 +100,16 @@ class RepositorioFalso:
     def cancelar_atividade(self, atividade_id: str) -> AtividadeVoluntariadoRegisto:
         self.cancelada = atividade_id
         return _atividade(id=atividade_id, estado="cancelada")
+
+    def arquivar_atividade(self, atividade_id: str) -> AtividadeVoluntariadoRegisto:
+        self.arquivada = atividade_id
+        return _atividade(id=atividade_id, estado="arquivada")
+
+    def tem_alguma_inscricao(self, atividade_id: str) -> bool:
+        return self._tem_alguma_inscricao
+
+    def apagar_atividade(self, atividade_id: str) -> None:
+        self.apagada = atividade_id
 
     def utilizador_e_voluntario_ativo(self, utilizador_id: str) -> bool:
         return self._voluntario_ativo
@@ -179,6 +194,37 @@ class TestCancelar:
         repo = RepositorioFalso(atividade=None)
         with pytest.raises(AtividadeNaoEncontradaError):
             AtividadeVoluntariadoService(repo, EmailSenderFalso()).cancelar("ativ-1")
+
+
+class TestArquivar:
+    def test_arquiva(self) -> None:
+        repo = RepositorioFalso(atividade=_atividade())
+        resultado = AtividadeVoluntariadoService(repo, EmailSenderFalso()).arquivar("ativ-1")
+        assert resultado.estado == "arquivada"
+        assert repo.arquivada == "ativ-1"
+
+    def test_inexistente(self) -> None:
+        repo = RepositorioFalso(atividade=None)
+        with pytest.raises(AtividadeNaoEncontradaError):
+            AtividadeVoluntariadoService(repo, EmailSenderFalso()).arquivar("ativ-1")
+
+
+class TestApagar:
+    def test_apaga_sem_inscricoes(self) -> None:
+        repo = RepositorioFalso(atividade=_atividade(), tem_alguma_inscricao=False)
+        AtividadeVoluntariadoService(repo, EmailSenderFalso()).apagar("ativ-1")
+        assert repo.apagada == "ativ-1"
+
+    def test_recusa_apagar_com_inscricoes(self) -> None:
+        repo = RepositorioFalso(atividade=_atividade(), tem_alguma_inscricao=True)
+        with pytest.raises(AtividadeComInscricoesError):
+            AtividadeVoluntariadoService(repo, EmailSenderFalso()).apagar("ativ-1")
+        assert repo.apagada is None
+
+    def test_inexistente(self) -> None:
+        repo = RepositorioFalso(atividade=None)
+        with pytest.raises(AtividadeNaoEncontradaError):
+            AtividadeVoluntariadoService(repo, EmailSenderFalso()).apagar("ativ-1")
 
 
 class TestInscrever:

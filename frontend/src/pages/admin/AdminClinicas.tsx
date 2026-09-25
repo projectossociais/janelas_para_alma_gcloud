@@ -109,7 +109,7 @@ const AdminClinicas = () => {
       <div>
         <h2 className="text-2xl font-bold">Clínicas parceiras</h2>
         <p className="text-sm text-muted-foreground">
-          Perfil de cada clínica e quem tem acesso ao portal próprio (Sprint 4, Fase 1 do matchmaker clínico).
+          Perfil de cada clínica parceira e quem tem acesso ao portal próprio.
         </p>
       </div>
 
