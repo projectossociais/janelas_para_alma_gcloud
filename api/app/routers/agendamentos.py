@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.core.dependencies import (
     obter_disponibilidade_clinica_repository,
     obter_email_sender,
+    obter_teleconsulta_repository,
     obter_utilizador_admin,
     obter_utilizador_atual_opcional,
 )
@@ -28,6 +29,7 @@ from app.repositories.clinica_parceira_repository import (
 from app.repositories.disponibilidade_clinica_repository import (
     SQLAlchemyDisponibilidadeClinicaRepository,
 )
+from app.repositories.teleconsulta_repository import SQLAlchemyTeleconsultaRepository
 from app.repositories.utilizadores_repository import UtilizadorRegisto
 from app.schemas.agendamento import (
     AgendamentoClinicoAdmin,
@@ -66,9 +68,10 @@ def obter_agendamento_clinico_service(
     disponibilidades: SQLAlchemyDisponibilidadeClinicaRepository = Depends(
         obter_disponibilidade_clinica_repository
     ),
+    teleconsultas: SQLAlchemyTeleconsultaRepository = Depends(obter_teleconsulta_repository),
     email_sender: EmailSender = Depends(obter_email_sender),
 ) -> AgendamentoClinicoService:
-    return AgendamentoClinicoService(agendamentos, clinicas, disponibilidades, email_sender)
+    return AgendamentoClinicoService(agendamentos, clinicas, disponibilidades, teleconsultas, email_sender)
 
 
 @router.get("/clinicas", response_model=list[ClinicaParceiraPublica])

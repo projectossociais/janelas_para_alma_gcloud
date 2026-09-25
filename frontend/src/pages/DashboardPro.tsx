@@ -7,15 +7,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Stethoscope, Users, Calendar, FileText, Mail, Phone, Trash2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Stethoscope, Users, Calendar, FileText, Mail, Phone, Trash2, Video } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import RequireClinica from "@/components/admin/RequireClinica";
 import {
   clinicasApi,
   mensagemDeErroApi,
+  linkDaSalaVideo,
   type AgendamentoClinicoAdmin,
   type ClinicaParceiraAdmin,
   type DisponibilidadeClinicaPublica,
+  type TeleconsultaPublica,
 } from "@/lib/apiClient";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
@@ -37,6 +40,87 @@ const estadoBadge = (estado: string) => {
     recusada: "destructive",
   };
   return <Badge variant={variantes[estado] ?? "outline"}>{estado}</Badge>;
+};
+
+const ControloTeleconsulta = ({ agendamentoId }: { agendamentoId: string }) => {
+  const { t } = useTranslation();
+  const [teleconsulta, setTeleconsulta] = useState<TeleconsultaPublica | null>(null);
+  const [recomendacao, setRecomendacao] = useState("");
+  const [aProcessar, setAProcessar] = useState(false);
+
+  useEffect(() => {
+    clinicasApi
+      .obterTeleconsulta(agendamentoId)
+      .then(setTeleconsulta)
+      .catch((err) => toast.error(mensagemDeErroApi(err, t("DashboardPro.naoFoiPossivelCarregarTeleconsulta"))));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [agendamentoId]);
+
+  const iniciar = async () => {
+    setAProcessar(true);
+    try {
+      setTeleconsulta(await clinicasApi.iniciarTeleconsulta(agendamentoId));
+    } catch (err) {
+      toast.error(mensagemDeErroApi(err, t("DashboardPro.naoFoiPossivelIniciarTeleconsulta")));
+    } finally {
+      setAProcessar(false);
+    }
+  };
+
+  const concluir = async () => {
+    if (!recomendacao.trim()) {
+      toast.error(t("DashboardPro.indiqueUmaRecomendacao"));
+      return;
+    }
+    setAProcessar(true);
+    try {
+      setTeleconsulta(await clinicasApi.concluirTeleconsulta(agendamentoId, recomendacao.trim()));
+      toast.success(t("DashboardPro.teleconsultaConcluida"));
+    } catch (err) {
+      toast.error(mensagemDeErroApi(err, t("DashboardPro.naoFoiPossivelConcluirTeleconsulta")));
+    } finally {
+      setAProcessar(false);
+    }
+  };
+
+  if (!teleconsulta) return null;
+
+  return (
+    <div className="mt-2 pt-2 border-t space-y-2 w-full">
+      <div className="flex items-center gap-2 flex-wrap">
+        <a
+          href={linkDaSalaVideo(teleconsulta.sala_video)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-sm text-primary underline"
+        >
+          <Video className="w-3.5 h-3.5" />{t("DashboardPro.entrarNaSala")}
+        </a>
+        <Badge variant="outline">{t(`DashboardPro.teleconsultaEstado.${teleconsulta.estado}`)}</Badge>
+      </div>
+      {teleconsulta.estado === "agendada" && (
+        <Button size="sm" onClick={iniciar} disabled={aProcessar}>{t("DashboardPro.iniciarConsulta")}</Button>
+      )}
+      {teleconsulta.estado === "em_curso" && (
+        <div className="space-y-2">
+          <Textarea
+            value={recomendacao}
+            onChange={(e) => setRecomendacao(e.target.value)}
+            placeholder={t("DashboardPro.recomendacaoClinicaPlaceholder")}
+            rows={3}
+          />
+          <Button size="sm" onClick={concluir} disabled={aProcessar}>
+            {t("DashboardPro.concluirEEnviarRecomendacao")}
+          </Button>
+        </div>
+      )}
+      {teleconsulta.estado === "concluida" && teleconsulta.recomendacao_clinica && (
+        <p className="text-sm text-muted-foreground">
+          <strong>{t("DashboardPro.recomendacao")}:</strong> {teleconsulta.recomendacao_clinica}
+        </p>
+      )}
+    </div>
+  );
 };
 
 interface NovaJanela {
@@ -141,6 +225,9 @@ const ConteudoDashboardPro = ({ clinica }: { clinica: ClinicaParceiraAdmin }) =>
                     <span className="inline-flex items-center gap-1"><Mail className="w-3 h-3" />{a.email}</span>
                     <span className="inline-flex items-center gap-1"><Phone className="w-3 h-3" />{a.telefone}</span>
                   </div>
+                  {a.modalidade === "online" && a.estado === "confirmada" && (
+                    <ControloTeleconsulta agendamentoId={a.id} />
+                  )}
                 </div>
               </div>
             ))}
@@ -226,8 +313,6 @@ const ConteudoDashboardPro = ({ clinica }: { clinica: ClinicaParceiraAdmin }) =>
           <CardContent className="text-sm text-muted-foreground space-y-2">
             <p>{t("DashboardPro.listaDePacientesQue")}</p>
             <p>{t("DashboardPro.visualizacaoDeRelatoriosDo")}</p>
-            <p>{t("DashboardPro.agendaIntegradaDeTeleconsultas")}</p>
-            <p>{t("DashboardPro.emissaoDeRecomendacoesClinicas")}</p>
           </CardContent>
         </Card>
       </main>

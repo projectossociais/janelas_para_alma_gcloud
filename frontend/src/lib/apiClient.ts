@@ -1030,6 +1030,26 @@ export interface DisponibilidadeClinicaPublica extends DisponibilidadeClinicaInp
   created_at: string;
 }
 
+// --- Teleconsultas (Sprint 4, Fase 2 do matchmaker -- ver docs/BACKLOG.md) ---
+// Jitsi Meet (meet.jit.si), servidor público gratuito da 8x8 -- decisão do
+// dono do projecto (2026-09-25): sem orçamento para Daily.co/100ms. Um link
+// normal aberto numa aba nova, nunca embutido via IFrame API (limite de 5
+// minutos no modo embutido).
+export const JITSI_BASE_URL = "https://meet.jit.si";
+
+export interface TeleconsultaPublica {
+  id: string;
+  agendamento_id: string;
+  sala_video: string;
+  estado: "agendada" | "em_curso" | "concluida";
+  iniciada_em: string | null;
+  concluida_em: string | null;
+  recomendacao_clinica: string | null;
+  created_at: string;
+}
+
+export const linkDaSalaVideo = (salaVideo: string) => `${JITSI_BASE_URL}/${salaVideo}`;
+
 export const clinicasApi = {
   // Portal da própria clínica ----------------------------------------------
   aMinhaClinica: () => pedido<ClinicaParceiraAdmin | null>("/clinica/eu"),
@@ -1045,6 +1065,18 @@ export const clinicasApi = {
 
   removerDisponibilidade: (disponibilidadeId: string) =>
     pedido<void>(`/clinica/disponibilidade/${disponibilidadeId}`, { method: "DELETE" }),
+
+  obterTeleconsulta: (agendamentoId: string) =>
+    pedido<TeleconsultaPublica>(`/clinica/teleconsultas/${agendamentoId}`),
+
+  iniciarTeleconsulta: (agendamentoId: string) =>
+    pedido<TeleconsultaPublica>(`/clinica/teleconsultas/${agendamentoId}/iniciar`, { method: "POST" }),
+
+  concluirTeleconsulta: (agendamentoId: string, recomendacaoClinica: string) =>
+    pedido<TeleconsultaPublica>(`/clinica/teleconsultas/${agendamentoId}/concluir`, {
+      method: "POST",
+      body: JSON.stringify({ recomendacao_clinica: recomendacaoClinica }),
+    }),
 
   // Administração ------------------------------------------------------------
   listarAdmin: () => pedido<ClinicaParceiraAdmin[]>("/admin/clinicas"),
