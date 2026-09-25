@@ -9,10 +9,12 @@ import userEvent from "@testing-library/user-event";
 // (CLAUDE.md, "nunca mostrar sucesso antes de verificar erro").
 
 const listarClinicas = vi.fn();
+const horariosDisponiveis = vi.fn();
 const pedir = vi.fn();
 vi.mock("@/lib/apiClient", () => ({
   agendamentosApi: {
     listarClinicas: (...a: unknown[]) => listarClinicas(...a),
+    horariosDisponiveis: (...a: unknown[]) => horariosDisponiveis(...a),
     pedir: (...a: unknown[]) => pedir(...a),
   },
   mensagemDeErroApi: (err: unknown, fallback: string) => {
@@ -30,23 +32,26 @@ vi.mock("sonner", () => ({
 
 import OptioptikaBookingDialog from "./OptioptikaBookingDialog";
 
+const HORARIO_VALIDO = "2027-01-04T09:00:00.000Z";
+
 async function preencherFormulario(user: ReturnType<typeof userEvent.setup>) {
   await user.type(await screen.findByLabelText(/Nome completo/i), "Ana Silva");
   await user.type(screen.getByLabelText(/^Email$/i), "ana@example.com");
   await user.type(screen.getByLabelText(/Telefone/i), "+244900000000");
-  await user.type(screen.getByLabelText(/Data preferida/i), "2026-10-01");
-  await user.click(screen.getByRole("combobox"));
-  await user.click(await screen.findByRole("option", { name: /Manhã/i }));
+  await user.click(await screen.findByRole("combobox"));
+  await user.click(await screen.findByRole("option"));
   await user.click(screen.getByRole("button", { name: /Solicitar Consulta/i }));
 }
 
 describe("OptioptikaBookingDialog", () => {
   beforeEach(() => {
     listarClinicas.mockReset();
+    horariosDisponiveis.mockReset();
     pedir.mockReset();
     toastSuccess.mockReset();
     toastError.mockReset();
     listarClinicas.mockResolvedValue([{ id: "clinica-1", nome: "Óptica Optioptika" }]);
+    horariosDisponiveis.mockResolvedValue([{ inicio: HORARIO_VALIDO, fim: "2027-01-04T09:30:00.000Z" }]);
   });
 
   it("nunca mostra o recibo antes de a API confirmar a gravação", async () => {
@@ -66,8 +71,9 @@ describe("OptioptikaBookingDialog", () => {
       email: "ana@example.com",
       telefone: "+244900000000",
       modalidade: "presencial",
-      data_preferida: "2026-10-01",
-      periodo_preferido: "manha",
+      data_preferida: null,
+      periodo_preferido: null,
+      horario_inicio: HORARIO_VALIDO,
       motivo: null,
       estado: "pendente",
       created_at: "2026-01-01T00:00:00.000Z",

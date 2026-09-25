@@ -918,8 +918,10 @@ export interface AgendamentoClinicoInput {
   email: string;
   telefone: string;
   modalidade: "presencial" | "online";
-  data_preferida?: string | null;
-  periodo_preferido?: string | null;
+  // Instante exacto escolhido de entre os devolvidos por
+  // `agendamentosApi.horariosDisponiveis` -- nunca texto livre (Fase 1,
+  // parte 3 do matchmaker, ver docs/BACKLOG.md, Sprint 4).
+  horario_inicio: string;
   motivo?: string | null;
   screening_id?: string | null;
 }
@@ -931,8 +933,11 @@ export interface AgendamentoClinicoPublico {
   email: string;
   telefone: string;
   modalidade: string;
+  // Só preenchidos em pedidos antigos, de antes da Fase 1 parte 3 -- pedidos
+  // novos usam sempre `horario_inicio`.
   data_preferida: string | null;
   periodo_preferido: string | null;
+  horario_inicio: string | null;
   motivo: string | null;
   estado: string;
   created_at: string;
@@ -945,10 +950,20 @@ export interface AgendamentoClinicoAdmin extends AgendamentoClinicoPublico {
   decidido_em: string | null;
 }
 
+export interface HorarioDisponivel {
+  inicio: string;
+  fim: string;
+}
+
 export const agendamentosApi = {
   // Público -- não exige sessão (pedir uma consulta é pontual, não uma
   // relação contínua como o voluntariado). Ver CLAUDE.md/docs/BACKLOG.md.
   listarClinicas: () => pedido<ClinicaParceiraPublica[]>("/clinicas"),
+
+  horariosDisponiveis: (clinicaId: string, modalidade: "presencial" | "online") =>
+    pedido<HorarioDisponivel[]>(
+      `/clinicas/${clinicaId}/horarios?${new URLSearchParams({ modalidade }).toString()}`,
+    ),
 
   pedir: (dados: AgendamentoClinicoInput) =>
     pedido<AgendamentoClinicoPublico>("/agendamentos", {
@@ -1000,10 +1015,36 @@ export interface MembroEquipaPublico {
   created_at: string;
 }
 
+export interface DisponibilidadeClinicaInput {
+  // 0 = segunda, 6 = domingo (date.weekday() do Python -- ver
+  // orm_models.DisponibilidadeClinica).
+  dia_semana: number;
+  hora_inicio: string;
+  hora_fim: string;
+  modalidade: "presencial" | "online";
+}
+
+export interface DisponibilidadeClinicaPublica extends DisponibilidadeClinicaInput {
+  id: string;
+  clinica_id: string;
+  created_at: string;
+}
+
 export const clinicasApi = {
   // Portal da própria clínica ----------------------------------------------
   aMinhaClinica: () => pedido<ClinicaParceiraAdmin | null>("/clinica/eu"),
   meusAgendamentos: () => pedido<AgendamentoClinicoAdmin[]>("/clinica/agendamentos"),
+
+  minhaDisponibilidade: () => pedido<DisponibilidadeClinicaPublica[]>("/clinica/disponibilidade"),
+
+  adicionarDisponibilidade: (dados: DisponibilidadeClinicaInput) =>
+    pedido<DisponibilidadeClinicaPublica>("/clinica/disponibilidade", {
+      method: "POST",
+      body: JSON.stringify(dados),
+    }),
+
+  removerDisponibilidade: (disponibilidadeId: string) =>
+    pedido<void>(`/clinica/disponibilidade/${disponibilidadeId}`, { method: "DELETE" }),
 
   // Administração ------------------------------------------------------------
   listarAdmin: () => pedido<ClinicaParceiraAdmin[]>("/admin/clinicas"),

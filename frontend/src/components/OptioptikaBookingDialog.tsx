@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { optioptika, OPTIOPTIKA_YELLOW } from "@/data/optioptika";
-import { agendamentosApi, mensagemDeErroApi } from "@/lib/apiClient";
+import { agendamentosApi, mensagemDeErroApi, type HorarioDisponivel } from "@/lib/apiClient";
 import { Trans, useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { formatarDataHora } from "@/i18n/formatar";
@@ -44,8 +44,7 @@ const appointmentSchema = () => z.object({
     .trim()
     .min(6, i18n.t("OptioptikaBookingDialog.telefoneInvalido"))
     .max(30, i18n.t("OptioptikaBookingDialog.maximo30Caracteres")),
-  date: z.string().min(1, i18n.t("OptioptikaBookingDialog.escolhaUmaData")),
-  period: z.string().min(1, i18n.t("OptioptikaBookingDialog.escolhaUmPeriodo")),
+  horario: z.string().min(1, i18n.t("OptioptikaBookingDialog.escolhaUmHorario")),
   notes: z.string().trim().max(500, i18n.t("OptioptikaBookingDialog.maximo500Caracteres")).optional(),
 });
 
@@ -58,12 +57,11 @@ interface BookingReceipt {
   name: string;
   email: string;
   phone: string;
-  date: string;
-  period: string;
+  horario: string;
   notes?: string;
 }
 
-const emptyForm = { name: "", email: "", phone: "", date: "", period: "", notes: "" };
+const emptyForm = { name: "", email: "", phone: "", horario: "", notes: "" };
 
 interface OptioptikaBookingDialogProps {
   open: boolean;
@@ -81,6 +79,11 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
   // ficar fixo no código, para não ter de mudar isto quando houver mais
   // parceiros.
   const [clinicaId, setClinicaId] = useState<string | null>(null);
+  const [horarios, setHorarios] = useState<HorarioDisponivel[]>([]);
+  const [aCarregarHorarios, setACarregarHorarios] = useState(false);
+
+  const update = (k: keyof typeof form, v: string) =>
+    setForm((prev) => ({ ...prev, [k]: v }));
 
   useEffect(() => {
     if (!open) return;
@@ -90,8 +93,17 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
       .catch(() => setClinicaId(null));
   }, [open]);
 
-  const update = (k: keyof typeof form, v: string) =>
-    setForm((prev) => ({ ...prev, [k]: v }));
+  useEffect(() => {
+    if (!open || !clinicaId) return;
+    setACarregarHorarios(true);
+    update("horario", "");
+    agendamentosApi
+      .horariosDisponiveis(clinicaId, mode)
+      .then(setHorarios)
+      .catch(() => setHorarios([]))
+      .finally(() => setACarregarHorarios(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, clinicaId, mode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,8 +125,7 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
         email: result.data.email,
         telefone: result.data.phone,
         modalidade: mode,
-        data_preferida: result.data.date,
-        periodo_preferido: result.data.period,
+        horario_inicio: result.data.horario,
         motivo: result.data.notes || null,
       });
       // Só mostra o "recibo" depois da API confirmar a gravação -- nunca
@@ -130,7 +141,13 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
       );
       setForm(emptyForm);
     } catch (err) {
-      toast.error(mensagemDeErroApi(err, t("OptioptikaBookingDialog.verifiqueOsCamposDo")));
+      toast.error(mensagemDeErroApi(err, t("OptioptikaBookingDialog.esteHorarioJaNao")));
+      // Um horário pode ter sido ocupado por outro pedido entretanto --
+      // a lista tem de ser recarregada, nunca deixar o utilizador tentar o
+      // mesmo horário forjado outra vez.
+      if (clinicaId) {
+        agendamentosApi.horariosDisponiveis(clinicaId, mode).then(setHorarios).catch(() => setHorarios([]));
+      }
     } finally {
       setEnviando(false);
     }
@@ -180,8 +197,8 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
                 <span className="text-right">{receipt.email}<br/>{receipt.phone}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">{t("OptioptikaBookingDialog.dataPeriodo")}</span>
-                <span>{receipt.date}, {receipt.period}</span>
+                <span className="text-muted-foreground">{t("OptioptikaBookingDialog.horario")}</span>
+                <span>{formatarDataHora(new Date(receipt.horario))}</span>
               </div>
             </div>
             <DialogFooter>
@@ -272,29 +289,30 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
                     placeholder="+244 900 000 000"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="ap-date">{t("OptioptikaBookingDialog.dataPreferida")}</Label>
-                  <Input
-                    id="ap-date"
-                    type="date"
-                    value={form.date}
-                    onChange={(e) => update("date", e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="ap-period">{t("OptioptikaBookingDialog.periodo")}</Label>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label htmlFor="ap-horario">{t("OptioptikaBookingDialog.horario")}</Label>
                   <Select
-                    value={form.period}
-                    onValueChange={(v) => update("period", v)}
+                    value={form.horario}
+                    onValueChange={(v) => update("horario", v)}
+                    disabled={aCarregarHorarios || horarios.length === 0}
                   >
-                    <SelectTrigger id="ap-period">
-                      <SelectValue placeholder={t("OptioptikaBookingDialog.escolherPeriodo")} />
+                    <SelectTrigger id="ap-horario">
+                      <SelectValue
+                        placeholder={
+                          aCarregarHorarios
+                            ? t("OptioptikaBookingDialog.aCarregarHorarios")
+                            : horarios.length === 0
+                              ? t("OptioptikaBookingDialog.semHorariosDisponiveis")
+                              : t("OptioptikaBookingDialog.escolherHorario")
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="manha">{t("OptioptikaBookingDialog.manha08h30As12h00")}</SelectItem>
-                      <SelectItem value="tarde">{t("OptioptikaBookingDialog.tarde14h00As18h00")}</SelectItem>
-                      <SelectItem value="sabado">{t("OptioptikaBookingDialog.sabado09h00As13h00")}</SelectItem>
+                      {horarios.map((h) => (
+                        <SelectItem key={h.inicio} value={h.inicio}>
+                          {formatarDataHora(new Date(h.inicio))}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

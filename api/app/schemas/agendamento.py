@@ -8,6 +8,15 @@ from pydantic import BaseModel, EmailStr, Field
 Modalidade = Literal["presencial", "online"]
 
 
+class HorarioDisponivel(BaseModel):
+    """Um horário concreto e livre, calculado a partir da disponibilidade
+    semanal da clínica -- nunca aceite como texto livre do browser (ver
+    AgendamentoClinicoService.horarios_disponiveis)."""
+
+    inicio: datetime
+    fim: datetime
+
+
 class ClinicaParceiraPublica(BaseModel):
     id: str
     nome: str
@@ -25,8 +34,11 @@ class AgendamentoClinicoCriar(BaseModel):
     email: EmailStr
     telefone: str = Field(min_length=6, max_length=30)
     modalidade: Modalidade
-    data_preferida: date | None = None
-    periodo_preferido: str | None = Field(default=None, max_length=20)
+    # Instante exacto escolhido de entre os devolvidos por
+    # GET /clinicas/{id}/horarios -- nunca texto livre (Fase 1, parte 3 do
+    # matchmaker). Datas soltas ("data_preferida"/"periodo_preferido") só
+    # existem em pedidos antigos, já gravados antes desta fase.
+    horario_inicio: datetime
     motivo: str | None = Field(default=None, max_length=500)
     # Quando o pedido parte do ecrã de resultados de um rastreio -- liga o
     # pedido ao screening que o motivou. Sem verificação de posse aqui: é só
@@ -45,6 +57,7 @@ class AgendamentoClinicoPublico(BaseModel):
     modalidade: str
     data_preferida: date | None
     periodo_preferido: str | None
+    horario_inicio: datetime | None
     motivo: str | None
     estado: str
     created_at: datetime

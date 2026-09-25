@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
 const useAuthMock = vi.fn();
@@ -9,10 +10,16 @@ vi.mock("@/contexts/AuthContext", () => ({
 
 const aMinhaClinica = vi.fn();
 const meusAgendamentos = vi.fn();
+const minhaDisponibilidade = vi.fn();
+const adicionarDisponibilidade = vi.fn();
+const removerDisponibilidade = vi.fn();
 vi.mock("@/lib/apiClient", () => ({
   clinicasApi: {
     aMinhaClinica: (...a: unknown[]) => aMinhaClinica(...a),
     meusAgendamentos: (...a: unknown[]) => meusAgendamentos(...a),
+    minhaDisponibilidade: (...a: unknown[]) => minhaDisponibilidade(...a),
+    adicionarDisponibilidade: (...a: unknown[]) => adicionarDisponibilidade(...a),
+    removerDisponibilidade: (...a: unknown[]) => removerDisponibilidade(...a),
   },
   mensagemDeErroApi: (_err: unknown, fallback: string) => fallback,
 }));
@@ -30,7 +37,11 @@ describe("DashboardPro", () => {
     useAuthMock.mockReturnValue({ loading: false, isLoggedIn: true, user: { name: "Ana" } });
     aMinhaClinica.mockReset();
     meusAgendamentos.mockReset();
+    minhaDisponibilidade.mockReset();
+    adicionarDisponibilidade.mockReset();
+    removerDisponibilidade.mockReset();
     toastError.mockReset();
+    minhaDisponibilidade.mockResolvedValue([]);
   });
 
   it("sem clínica associada, nunca mostra o painel", async () => {
@@ -66,5 +77,30 @@ describe("DashboardPro", () => {
 
     expect(await screen.findByText("Óptica Optioptika", { exact: false })).toBeInTheDocument();
     expect(toastError).toHaveBeenCalled();
+  });
+
+  it("mostra a disponibilidade já guardada e permite adicionar um novo horário", async () => {
+    aMinhaClinica.mockResolvedValue({ id: "clinica-1", nome: "Óptica Optioptika" });
+    meusAgendamentos.mockResolvedValue([]);
+    minhaDisponibilidade.mockResolvedValue([
+      { id: "disp-1", clinica_id: "clinica-1", dia_semana: 0, hora_inicio: "08:00:00", hora_fim: "12:00:00", modalidade: "presencial" },
+    ]);
+    adicionarDisponibilidade.mockResolvedValue({
+      id: "disp-2",
+      clinica_id: "clinica-1",
+      dia_semana: 0,
+      hora_inicio: "08:00:00",
+      hora_fim: "12:00:00",
+      modalidade: "presencial",
+    });
+    const user = userEvent.setup();
+
+    render(<DashboardPro />, { wrapper: MemoryRouter });
+
+    expect(await screen.findByText("08:00 — 12:00")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /Adicionar horário/i }));
+
+    await waitFor(() => expect(adicionarDisponibilidade).toHaveBeenCalled());
   });
 });

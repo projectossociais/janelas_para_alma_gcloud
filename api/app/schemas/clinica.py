@@ -1,9 +1,10 @@
-"""Formas dos dados do perfil de clínica e da equipa que a gere."""
+"""Formas dos dados do perfil de clínica, da equipa que a gere e da sua
+disponibilidade semanal."""
 
-from datetime import datetime
+from datetime import datetime, time
 from typing import Literal
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 Modalidade = Literal["presencial", "online"]
 
@@ -48,6 +49,36 @@ class MembroEquipaPublico(BaseModel):
     utilizador_email: str
     utilizador_nome: str | None
     clinica_id: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class DisponibilidadeClinicaCriar(BaseModel):
+    """`dia_semana` segue `date.weekday()` do Python: 0 = segunda,
+    6 = domingo (mesma convenção do modelo ORM e do serviço de agendamento)."""
+
+    dia_semana: int = Field(ge=0, le=6)
+    hora_inicio: time
+    hora_fim: time
+    modalidade: Modalidade
+
+    @field_validator("hora_fim")
+    @classmethod
+    def _hora_fim_apos_inicio(cls, valor: time, info) -> time:
+        inicio = info.data.get("hora_inicio")
+        if inicio is not None and valor <= inicio:
+            raise ValueError("hora_fim tem de ser depois de hora_inicio")
+        return valor
+
+
+class DisponibilidadeClinicaPublica(BaseModel):
+    id: str
+    clinica_id: str
+    dia_semana: int
+    hora_inicio: time
+    hora_fim: time
+    modalidade: str
     created_at: datetime
 
     model_config = {"from_attributes": True}

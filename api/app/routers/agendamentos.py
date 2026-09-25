@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import (
+    obter_disponibilidade_clinica_repository,
     obter_email_sender,
     obter_utilizador_admin,
     obter_utilizador_atual_opcional,
@@ -24,18 +25,24 @@ from app.repositories.clinica_parceira_repository import (
     ClinicaParceiraRegisto,
     SQLAlchemyClinicaParceiraRepository,
 )
+from app.repositories.disponibilidade_clinica_repository import (
+    SQLAlchemyDisponibilidadeClinicaRepository,
+)
 from app.repositories.utilizadores_repository import UtilizadorRegisto
 from app.schemas.agendamento import (
     AgendamentoClinicoAdmin,
     AgendamentoClinicoCriar,
     AgendamentoClinicoPublico,
     ClinicaParceiraPublica,
+    HorarioDisponivel,
+    Modalidade,
 )
 from app.services.agendamento_clinico_service import (
     AgendamentoClinicoService,
     AgendamentoJaDecididoError,
     AgendamentoNaoEncontradoError,
     ClinicaNaoEncontradaError,
+    HorarioIndisponivelError,
 )
 
 router = APIRouter(tags=["agendamentos"])
@@ -56,9 +63,12 @@ def obter_agendamento_clinico_repository(
 def obter_agendamento_clinico_service(
     agendamentos: SQLAlchemyAgendamentoClinicoRepository = Depends(obter_agendamento_clinico_repository),
     clinicas: SQLAlchemyClinicaParceiraRepository = Depends(obter_clinica_parceira_repository),
+    disponibilidades: SQLAlchemyDisponibilidadeClinicaRepository = Depends(
+        obter_disponibilidade_clinica_repository
+    ),
     email_sender: EmailSender = Depends(obter_email_sender),
 ) -> AgendamentoClinicoService:
-    return AgendamentoClinicoService(agendamentos, clinicas, email_sender)
+    return AgendamentoClinicoService(agendamentos, clinicas, disponibilidades, email_sender)
 
 
 @router.get("/clinicas", response_model=list[ClinicaParceiraPublica])
@@ -66,6 +76,18 @@ def listar_clinicas(
     repo: SQLAlchemyClinicaParceiraRepository = Depends(obter_clinica_parceira_repository),
 ) -> list[ClinicaParceiraRegisto]:
     return repo.listar_ativas()
+
+
+@router.get("/clinicas/{clinica_id}/horarios", response_model=list[HorarioDisponivel])
+def listar_horarios_disponiveis(
+    clinica_id: str,
+    modalidade: Modalidade,
+    servico: AgendamentoClinicoService = Depends(obter_agendamento_clinico_service),
+) -> list[HorarioDisponivel]:
+    try:
+        return servico.horarios_disponiveis(clinica_id, modalidade)
+    except ClinicaNaoEncontradaError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="clínica não encontrada") from exc
 
 
 @router.post("/agendamentos", response_model=AgendamentoClinicoPublico, status_code=status.HTTP_201_CREATED)
@@ -81,14 +103,17 @@ def pedir_agendamento(
             email=dados.email,
             telefone=dados.telefone,
             modalidade=dados.modalidade,
-            data_preferida=dados.data_preferida,
-            periodo_preferido=dados.periodo_preferido,
+            horario_inicio=dados.horario_inicio,
             motivo=dados.motivo,
             utilizador_id=utilizador.id if utilizador else None,
             screening_id=dados.screening_id,
         )
     except ClinicaNaoEncontradaError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="clínica não encontrada") from exc
+    except HorarioIndisponivelError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="este horário deixou de estar disponível"
+        ) from exc
 
 
 @router.get(

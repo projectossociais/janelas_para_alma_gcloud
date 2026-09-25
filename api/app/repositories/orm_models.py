@@ -18,7 +18,7 @@ Todas as outras tabelas mantêm nome, colunas e tipos tal como estavam.
 
 import enum
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, time
 
 from sqlalchemy import (
     ARRAY,
@@ -30,8 +30,10 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Numeric,
+    SmallInteger,
     String,
     Text,
+    Time,
     UniqueConstraint,
     func,
     text,
@@ -803,8 +805,33 @@ class AgendamentoClinico(Base):
     modalidade: Mapped[str] = mapped_column(Text, nullable=False)
     data_preferida: Mapped[date | None] = mapped_column(Date)
     periodo_preferido: Mapped[str | None] = mapped_column(Text)
+    # Instante exacto escolhido pelo paciente, calculado a partir de
+    # `DisponibilidadeClinica` (Fase 1, parte 3) -- nulo só em pedidos
+    # antigos que ainda usavam `data_preferida`/`periodo_preferido` livres.
+    horario_inicio: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     motivo: Mapped[str | None] = mapped_column(Text)
     estado: Mapped[str] = mapped_column(Text, nullable=False, server_default="pendente")
     decidido_por: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("utilizadores.id", ondelete="SET NULL"))
     decidido_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class DisponibilidadeClinica(Base):
+    """Horário semanal recorrente de uma clínica -- não um calendário
+    completo (ver docs/BACKLOG.md, Sprint 4, "Riscos a não ignorar"). Gerido
+    pela própria clínica no seu portal. `dia_semana` segue `date.weekday()`
+    do Python: 0 = segunda, 6 = domingo."""
+
+    __tablename__ = "disponibilidade_clinica"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    clinica_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("clinicas_parceiras.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    dia_semana: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    hora_inicio: Mapped[time] = mapped_column(Time, nullable=False)
+    hora_fim: Mapped[time] = mapped_column(Time, nullable=False)
+    modalidade: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (CheckConstraint("dia_semana >= 0 AND dia_semana <= 6", name="ck_disponibilidade_clinica_dia_semana"),)

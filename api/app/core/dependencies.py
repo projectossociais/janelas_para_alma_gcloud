@@ -17,6 +17,9 @@ from app.repositories.clinica_parceira_repository import (
     ClinicaParceiraRegisto,
     SQLAlchemyClinicaParceiraRepository,
 )
+from app.repositories.disponibilidade_clinica_repository import (
+    SQLAlchemyDisponibilidadeClinicaRepository,
+)
 from app.repositories.equipa_clinica_repository import SQLAlchemyEquipaClinicaRepository
 from app.repositories.tokens_confirmacao_repository import SQLAlchemyTokensConfirmacaoRepository
 from app.repositories.tokens_recuperacao_repository import SQLAlchemyTokensRecuperacaoRepository
@@ -118,6 +121,12 @@ def obter_equipa_clinica_repository(
     sessao: Session = Depends(obter_sessao),
 ) -> SQLAlchemyEquipaClinicaRepository:
     return SQLAlchemyEquipaClinicaRepository(sessao)
+
+
+def obter_disponibilidade_clinica_repository(
+    sessao: Session = Depends(obter_sessao),
+) -> SQLAlchemyDisponibilidadeClinicaRepository:
+    return SQLAlchemyDisponibilidadeClinicaRepository(sessao)
 
 
 def obter_clinica_do_utilizador(

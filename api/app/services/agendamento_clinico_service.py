@@ -12,7 +12,7 @@ causa de um envio de email seria pior para quem precisa de ser visto.
 """
 
 import logging
-from datetime import UTC, date, datetime
+from datetime import UTC, datetime, timedelta
 
 from app.core.email import EmailEnvioFalhouError, EmailSender
 from app.repositories.agendamento_clinico_repository import (
@@ -20,8 +20,23 @@ from app.repositories.agendamento_clinico_repository import (
     AgendamentoClinicoRepository,
 )
 from app.repositories.clinica_parceira_repository import ClinicaParceiraRepository
+from app.repositories.disponibilidade_clinica_repository import DisponibilidadeClinicaRepository
+from app.schemas.agendamento import HorarioDisponivel
 
 logger = logging.getLogger(__name__)
+
+# Consultas de rastreio ocular não precisam de mais do que isto -- um
+# calendário com duração configurável por clínica seria over-engineering
+# nesta fase (ver docs/BACKLOG.md, Sprint 4, "Riscos a não ignorar").
+DURACAO_SLOT_MINUTOS = 30
+
+# Nenhum horário a menos deste aviso mínimo -- evita marcar uma consulta
+# daqui a 2 minutos que a clínica nunca vai conseguir honrar.
+ANTECEDENCIA_MINIMA = timedelta(hours=2)
+
+# Não gerar uma lista infinita de horários -- 14 dias é suficiente para
+# reservar sem forçar a clínica a planear meses à frente.
+DIAS_A_GERAR = 14
 
 
 class ClinicaNaoEncontradaError(Exception):
@@ -36,16 +51,66 @@ class AgendamentoJaDecididoError(Exception):
     pass
 
 
+class HorarioIndisponivelError(Exception):
+    """O horário pedido já não está livre, é no passado, ou não corresponde
+    a nenhuma janela de disponibilidade real da clínica -- nunca se confia
+    num horário vindo do browser sem o revalidar aqui."""
+
+
+
 class AgendamentoClinicoService:
     def __init__(
         self,
         agendamentos: AgendamentoClinicoRepository,
         clinicas: ClinicaParceiraRepository,
+        disponibilidades: DisponibilidadeClinicaRepository,
         email_sender: EmailSender,
     ) -> None:
         self._agendamentos = agendamentos
         self._clinicas = clinicas
+        self._disponibilidades = disponibilidades
         self._email = email_sender
+
+    def horarios_disponiveis(self, clinica_id: str, modalidade: str) -> list[HorarioDisponivel]:
+        clinica = self._clinicas.obter(clinica_id)
+        if clinica is None or not clinica.ativa:
+            raise ClinicaNaoEncontradaError(clinica_id)
+
+        janelas = [j for j in self._disponibilidades.listar_por_clinica(clinica_id) if j.modalidade == modalidade]
+        agora = datetime.now(UTC)
+        limite_inferior = agora + ANTECEDENCIA_MINIMA
+        duracao = timedelta(minutes=DURACAO_SLOT_MINUTOS)
+        resultado: list[HorarioDisponivel] = []
+
+        for i in range(DIAS_A_GERAR):
+            dia = (agora + timedelta(days=i)).date()
+            for janela in janelas:
+                if janela.dia_semana != dia.weekday():
+                    continue
+                cursor = datetime.combine(dia, janela.hora_inicio, tzinfo=UTC)
+                fim_janela = datetime.combine(dia, janela.hora_fim, tzinfo=UTC)
+                while cursor + duracao <= fim_janela:
+                    if cursor >= limite_inferior and not self._agendamentos.existe_conflito(clinica_id, cursor):
+                        resultado.append(HorarioDisponivel(inicio=cursor, fim=cursor + duracao))
+                    cursor += duracao
+
+        resultado.sort(key=lambda h: h.inicio)
+        return resultado
+
+    def _horario_e_valido(self, clinica_id: str, modalidade: str, horario_inicio: datetime) -> bool:
+        janelas = [j for j in self._disponibilidades.listar_por_clinica(clinica_id) if j.modalidade == modalidade]
+        for janela in janelas:
+            if janela.dia_semana != horario_inicio.weekday():
+                continue
+            inicio_janela = horario_inicio.replace(
+                hour=janela.hora_inicio.hour, minute=janela.hora_inicio.minute, second=0, microsecond=0
+            )
+            fim_janela = horario_inicio.replace(
+                hour=janela.hora_fim.hour, minute=janela.hora_fim.minute, second=0, microsecond=0
+            )
+            if inicio_janela <= horario_inicio < fim_janela:
+                return True
+        return False
 
     def pedir(
         self,
@@ -54,8 +119,7 @@ class AgendamentoClinicoService:
         email: str,
         telefone: str,
         modalidade: str,
-        data_preferida: date | None,
-        periodo_preferido: str | None,
+        horario_inicio: datetime,
         motivo: str | None,
         utilizador_id: str | None,
         screening_id: str | None,
@@ -63,6 +127,14 @@ class AgendamentoClinicoService:
         clinica = self._clinicas.obter(clinica_id)
         if clinica is None or not clinica.ativa:
             raise ClinicaNaoEncontradaError(clinica_id)
+
+        agora = datetime.now(UTC)
+        if horario_inicio < agora + ANTECEDENCIA_MINIMA:
+            raise HorarioIndisponivelError(horario_inicio)
+        if self._agendamentos.existe_conflito(clinica_id, horario_inicio):
+            raise HorarioIndisponivelError(horario_inicio)
+        if not self._horario_e_valido(clinica_id, modalidade, horario_inicio):
+            raise HorarioIndisponivelError(horario_inicio)
 
         agendamento = self._agendamentos.criar(
             clinica_id=clinica_id,
@@ -72,8 +144,7 @@ class AgendamentoClinicoService:
             email=email,
             telefone=telefone,
             modalidade=modalidade,
-            data_preferida=data_preferida,
-            periodo_preferido=periodo_preferido,
+            horario_inicio=horario_inicio,
             motivo=motivo,
         )
 

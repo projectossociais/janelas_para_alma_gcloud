@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.core.dependencies import (
     obter_clinica_do_utilizador,
     obter_clinica_parceira_repository,
+    obter_disponibilidade_clinica_repository,
     obter_equipa_clinica_repository,
     obter_utilizador_admin,
     obter_utilizador_atual,
@@ -23,6 +24,10 @@ from app.repositories.clinica_parceira_repository import (
     ClinicaParceiraRegisto,
     SQLAlchemyClinicaParceiraRepository,
 )
+from app.repositories.disponibilidade_clinica_repository import (
+    DisponibilidadeRegisto,
+    SQLAlchemyDisponibilidadeClinicaRepository,
+)
 from app.repositories.equipa_clinica_repository import (
     MembroEquipaRegisto,
     SQLAlchemyEquipaClinicaRepository,
@@ -35,6 +40,8 @@ from app.schemas.agendamento import AgendamentoClinicoAdmin
 from app.schemas.clinica import (
     ClinicaParceiraAdmin,
     ClinicaPerfilAtualizar,
+    DisponibilidadeClinicaCriar,
+    DisponibilidadeClinicaPublica,
     EquipaClinicaAdicionar,
     MembroEquipaPublico,
 )
@@ -86,6 +93,43 @@ def meus_agendamentos(
     repo: SQLAlchemyAgendamentoClinicoRepository = Depends(obter_agendamento_clinico_repository),
 ) -> list[AgendamentoClinicoRegisto]:
     return [a for a in repo.listar() if a.clinica_id == clinica.id]
+
+
+@router.get("/clinica/disponibilidade", response_model=list[DisponibilidadeClinicaPublica])
+def a_minha_disponibilidade(
+    clinica: ClinicaParceiraRegisto = Depends(obter_clinica_do_utilizador),
+    repo: SQLAlchemyDisponibilidadeClinicaRepository = Depends(obter_disponibilidade_clinica_repository),
+) -> list[DisponibilidadeRegisto]:
+    return repo.listar_por_clinica(clinica.id)
+
+
+@router.post(
+    "/clinica/disponibilidade",
+    response_model=DisponibilidadeClinicaPublica,
+    status_code=status.HTTP_201_CREATED,
+)
+def adicionar_disponibilidade(
+    dados: DisponibilidadeClinicaCriar,
+    clinica: ClinicaParceiraRegisto = Depends(obter_clinica_do_utilizador),
+    repo: SQLAlchemyDisponibilidadeClinicaRepository = Depends(obter_disponibilidade_clinica_repository),
+) -> DisponibilidadeRegisto:
+    return repo.criar(
+        clinica_id=clinica.id,
+        dia_semana=dados.dia_semana,
+        hora_inicio=dados.hora_inicio,
+        hora_fim=dados.hora_fim,
+        modalidade=dados.modalidade,
+    )
+
+
+@router.delete("/clinica/disponibilidade/{disponibilidade_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remover_disponibilidade(
+    disponibilidade_id: str,
+    clinica: ClinicaParceiraRegisto = Depends(obter_clinica_do_utilizador),
+    repo: SQLAlchemyDisponibilidadeClinicaRepository = Depends(obter_disponibilidade_clinica_repository),
+) -> None:
+    if not repo.remover(disponibilidade_id, clinica.id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="disponibilidade não encontrada")
 
 
 # --- Administração -----------------------------------------------------------
