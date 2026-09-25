@@ -78,11 +78,15 @@ const AdminAgendamentos = () => {
                   <div className="text-xs text-muted-foreground flex gap-3 mt-1 flex-wrap">
                     <span className="inline-flex items-center gap-1"><Mail className="w-3 h-3" />{a.email}</span>
                     <span className="inline-flex items-center gap-1"><Phone className="w-3 h-3" />{a.telefone}</span>
-                    {a.data_preferida && (
-                      <span>
-                        {a.data_preferida}
-                        {a.periodo_preferido && ` · ${a.periodo_preferido}`}
-                      </span>
+                    {a.horario_inicio ? (
+                      <span>{new Date(a.horario_inicio).toLocaleString("pt-AO")}</span>
+                    ) : (
+                      a.data_preferida && (
+                        <span>
+                          {a.data_preferida}
+                          {a.periodo_preferido && ` · ${a.periodo_preferido}`}
+                        </span>
+                      )
                     )}
                   </div>
                   {a.motivo && <p className="text-sm text-muted-foreground mt-2 whitespace-pre-wrap">{a.motivo}</p>}

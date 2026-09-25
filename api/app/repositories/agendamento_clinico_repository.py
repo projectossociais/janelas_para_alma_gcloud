@@ -28,6 +28,7 @@ class AgendamentoClinicoRegisto:
     modalidade: str
     data_preferida: date | None
     periodo_preferido: str | None
+    horario_inicio: datetime | None
     motivo: str | None
     estado: str
     decidido_por: str | None
@@ -45,14 +46,14 @@ class AgendamentoClinicoRepository(Protocol):
         email: str,
         telefone: str,
         modalidade: str,
-        data_preferida: date | None,
-        periodo_preferido: str | None,
+        horario_inicio: datetime | None,
         motivo: str | None,
     ) -> AgendamentoClinicoRegisto: ...
     def obter(self, agendamento_id: str) -> AgendamentoClinicoRegisto | None: ...
     def listar(self) -> list[AgendamentoClinicoRegisto]: ...
     def confirmar(self, agendamento_id: str, admin_id: str, quando: datetime) -> AgendamentoClinicoRegisto: ...
     def recusar(self, agendamento_id: str, admin_id: str, quando: datetime) -> AgendamentoClinicoRegisto: ...
+    def existe_conflito(self, clinica_id: str, horario_inicio: datetime) -> bool: ...
 
 
 def _para_registo(row: AgendamentoClinico) -> AgendamentoClinicoRegisto:
@@ -67,6 +68,7 @@ def _para_registo(row: AgendamentoClinico) -> AgendamentoClinicoRegisto:
         modalidade=row.modalidade,
         data_preferida=row.data_preferida,
         periodo_preferido=row.periodo_preferido,
+        horario_inicio=row.horario_inicio,
         motivo=row.motivo,
         estado=row.estado,
         decidido_por=str(row.decidido_por) if row.decidido_por else None,
@@ -88,8 +90,7 @@ class SQLAlchemyAgendamentoClinicoRepository:
         email: str,
         telefone: str,
         modalidade: str,
-        data_preferida: date | None,
-        periodo_preferido: str | None,
+        horario_inicio: datetime | None,
         motivo: str | None,
     ) -> AgendamentoClinicoRegisto:
         row = AgendamentoClinico(
@@ -100,8 +101,7 @@ class SQLAlchemyAgendamentoClinicoRepository:
             email=email,
             telefone=telefone,
             modalidade=modalidade,
-            data_preferida=data_preferida,
-            periodo_preferido=periodo_preferido,
+            horario_inicio=horario_inicio,
             motivo=motivo,
             estado="pendente",
         )
@@ -109,6 +109,18 @@ class SQLAlchemyAgendamentoClinicoRepository:
         self._sessao.commit()
         self._sessao.refresh(row)
         return _para_registo(row)
+
+    def existe_conflito(self, clinica_id: str, horario_inicio: datetime) -> bool:
+        return (
+            self._sessao.scalar(
+                select(AgendamentoClinico.id).where(
+                    AgendamentoClinico.clinica_id == uuid.UUID(clinica_id),
+                    AgendamentoClinico.horario_inicio == horario_inicio,
+                    AgendamentoClinico.estado.in_(["pendente", "confirmada"]),
+                )
+            )
+            is not None
+        )
 
     def obter(self, agendamento_id: str) -> AgendamentoClinicoRegisto | None:
         row = self._sessao.get(AgendamentoClinico, uuid.UUID(agendamento_id))

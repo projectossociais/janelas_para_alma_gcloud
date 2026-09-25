@@ -1,3 +1,4 @@
+import uuid
 from datetime import UTC, datetime
 
 import pytest
@@ -6,6 +7,7 @@ from fastapi.testclient import TestClient
 from app.core.dependencies import (
     obter_auth_service,
     obter_clinica_parceira_repository,
+    obter_disponibilidade_clinica_repository,
     obter_equipa_clinica_repository,
 )
 from app.core.security import criar_access_token, hash_password
@@ -80,6 +82,7 @@ class RepositorioAgendamentosFalso:
             "modalidade": "presencial",
             "data_preferida": None,
             "periodo_preferido": None,
+            "horario_inicio": None,
             "motivo": None,
             "estado": "pendente",
             "decidido_por": None,
@@ -105,6 +108,40 @@ class RepositorioAgendamentosFalso:
         raise NotImplementedError
 
 
+class RepositorioDisponibilidadeFalso:
+    def __init__(self) -> None:
+        self._janelas: dict[str, dict] = {}
+
+    def criar(self, clinica_id, dia_semana, hora_inicio, hora_fim, modalidade):
+        disponibilidade_id = str(uuid.uuid4())
+        registo = {
+            "id": disponibilidade_id,
+            "clinica_id": clinica_id,
+            "dia_semana": dia_semana,
+            "hora_inicio": hora_inicio,
+            "hora_fim": hora_fim,
+            "modalidade": modalidade,
+            "created_at": datetime.now(UTC),
+        }
+        self._janelas[disponibilidade_id] = registo
+        return _RegistoSimples(**registo)
+
+    def listar_por_clinica(self, clinica_id):
+        return [_RegistoSimples(**r) for r in self._janelas.values() if r["clinica_id"] == clinica_id]
+
+    def remover(self, disponibilidade_id, clinica_id) -> bool:
+        atual = self._janelas.get(disponibilidade_id)
+        if atual is None or atual["clinica_id"] != clinica_id:
+            return False
+        del self._janelas[disponibilidade_id]
+        return True
+
+
+class _RegistoSimples:
+    def __init__(self, **kwargs) -> None:
+        self.__dict__.update(kwargs)
+
+
 def _seed_utilizador(repo_auth: RepositorioAuthFalso, id_: str, email: str, papel: str) -> str:
     repo_auth._utilizadores[email] = UtilizadorRegisto(
         id=id_,
@@ -125,6 +162,7 @@ def ambiente():
     repo_clinicas = RepositorioClinicasFalso()
     repo_equipa = RepositorioEquipaFalso()
     repo_agendamentos = RepositorioAgendamentosFalso()
+    repo_disponibilidade = RepositorioDisponibilidadeFalso()
 
     token_admin = _seed_utilizador(repo_auth, "id-admin", "admin@example.com", "admin")
     token_medico = _seed_utilizador(repo_auth, "id-medico", "dr.ana@optioptika.com", "profissional")
@@ -133,6 +171,7 @@ def ambiente():
     app.dependency_overrides[obter_auth_service] = lambda: AuthService(repo_auth)
     app.dependency_overrides[obter_clinica_parceira_repository] = lambda: repo_clinicas
     app.dependency_overrides[obter_equipa_clinica_repository] = lambda: repo_equipa
+    app.dependency_overrides[obter_disponibilidade_clinica_repository] = lambda: repo_disponibilidade
     app.dependency_overrides[clinicas_router.obter_agendamento_clinico_repository] = lambda: repo_agendamentos
     app.dependency_overrides[agendamentos_router.obter_clinica_parceira_repository] = lambda: repo_clinicas
     app.dependency_overrides[clinicas_router.obter_equipa_clinica_service] = (
@@ -261,4 +300,86 @@ def test_remover_membro_inexistente_404(ambiente) -> None:
     c, _, _, token_admin, *_ = ambiente
     c.cookies.set("access_token", token_admin)
     resposta = c.delete("/admin/clinicas/clinica-1/equipa/nao-ligado")
+    assert resposta.status_code == 404
+
+
+# --- /clinica/disponibilidade --------------------------------------------------
+
+_JANELA_VALIDA = {
+    "dia_semana": 0,
+    "hora_inicio": "08:00:00",
+    "hora_fim": "12:00:00",
+    "modalidade": "presencial",
+}
+
+
+def test_listar_disponibilidade_sem_ligacao_devolve_403(ambiente) -> None:
+    c, _, _, _, _, token_comum = ambiente
+    c.cookies.set("access_token", token_comum)
+    assert c.get("/clinica/disponibilidade").status_code == 403
+
+
+def test_adicionar_disponibilidade_liga_a_propria_clinica(ambiente) -> None:
+    c, repo_equipa, *_ , token_medico, _ = ambiente
+    repo_equipa.criar("id-medico", "clinica-1")
+    c.cookies.set("access_token", token_medico)
+
+    resposta = c.post("/clinica/disponibilidade", json=_JANELA_VALIDA)
+
+    assert resposta.status_code == 201
+    corpo = resposta.json()
+    assert corpo["clinica_id"] == "clinica-1"
+    assert corpo["dia_semana"] == 0
+
+
+def test_adicionar_disponibilidade_sem_ligacao_devolve_403(ambiente) -> None:
+    c, _, _, _, _, token_comum = ambiente
+    c.cookies.set("access_token", token_comum)
+    resposta = c.post("/clinica/disponibilidade", json=_JANELA_VALIDA)
+    assert resposta.status_code == 403
+
+
+def test_adicionar_disponibilidade_hora_fim_antes_de_inicio_422(ambiente) -> None:
+    c, repo_equipa, *_ , token_medico, _ = ambiente
+    repo_equipa.criar("id-medico", "clinica-1")
+    c.cookies.set("access_token", token_medico)
+
+    resposta = c.post(
+        "/clinica/disponibilidade", json={**_JANELA_VALIDA, "hora_inicio": "12:00:00", "hora_fim": "08:00:00"}
+    )
+
+    assert resposta.status_code == 422
+
+
+def test_listar_disponibilidade_devolve_as_da_propria_clinica(ambiente) -> None:
+    c, repo_equipa, *_ , token_medico, _ = ambiente
+    repo_equipa.criar("id-medico", "clinica-1")
+    c.cookies.set("access_token", token_medico)
+    c.post("/clinica/disponibilidade", json=_JANELA_VALIDA)
+
+    resposta = c.get("/clinica/disponibilidade")
+
+    assert resposta.status_code == 200
+    assert len(resposta.json()) == 1
+
+
+def test_remover_disponibilidade_da_propria_clinica(ambiente) -> None:
+    c, repo_equipa, *_ , token_medico, _ = ambiente
+    repo_equipa.criar("id-medico", "clinica-1")
+    c.cookies.set("access_token", token_medico)
+    criada = c.post("/clinica/disponibilidade", json=_JANELA_VALIDA).json()
+
+    resposta = c.delete(f"/clinica/disponibilidade/{criada['id']}")
+
+    assert resposta.status_code == 204
+    assert c.get("/clinica/disponibilidade").json() == []
+
+
+def test_remover_disponibilidade_inexistente_404(ambiente) -> None:
+    c, repo_equipa, *_ , token_medico, _ = ambiente
+    repo_equipa.criar("id-medico", "clinica-1")
+    c.cookies.set("access_token", token_medico)
+
+    resposta = c.delete("/clinica/disponibilidade/nao-existe")
+
     assert resposta.status_code == 404

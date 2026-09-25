@@ -946,7 +946,7 @@ algo a dar. Faseado para que cada fase seja entregável e útil sozinha:
   decidir, e a Optioptika (ou quem for) recebe um email real — nunca mais um recibo
   fabricado no browser
 
-### Fase 1 — Matchmaking real
+### Fase 1 — Matchmaking real — ✅ **concluída 2026-09-25** (excepto `sugerir_clinicas`, ver nota do PR C abaixo)
 - Perfil de clínica/profissional: especialidades, cidade, modalidade, preço
 - Correspondência por regras (não ML — seria over-engineering nesta fase): tipo de
   diagnóstico do scanner + localização + modalidade + prioridade para quem tem Premium
@@ -975,11 +975,25 @@ algo a dar. Faseado para que cada fase seja entregável e útil sozinha:
   deixa de ser "Em breve" — mostra os agendamentos reais da própria clínica via
   `RequireClinica.tsx` (mirror de `RequireAdmin.tsx`). Nova página admin
   `AdminClinicas.tsx` gere perfil e equipa de cada clínica.
-- ⬜ **PR C** (a seguir): tabela `disponibilidade_clinica` (horário semanal
-  recorrente, gerido pela própria clínica no portal, não pelo admin),
-  `POST /agendamentos` a trocar `periodo_preferido` livre por um horário real sem
-  double-booking, e `AgendamentoClinicoService.sugerir_clinicas` para correspondência
-  por regras (modalidade + prioridade Premium).
+- ✅ **PR C** (branch `feat/matchmaker-disponibilidade-fase1c`): tabela
+  `disponibilidade_clinica` (horário semanal recorrente por `dia_semana`/
+  `hora_inicio`/`hora_fim`/`modalidade`, `date.weekday()` do Python: 0 =
+  segunda), gerida pela própria clínica em `DashboardPro.tsx` — nunca pelo
+  admin. `POST /agendamentos` deixa de aceitar `periodo_preferido` livre —
+  passa a exigir `horario_inicio`, um instante real devolvido por
+  `GET /clinicas/{id}/horarios` (`AgendamentoClinicoService.horarios_disponiveis`,
+  30 min por slot, 14 dias à frente, nunca menos de 2h de antecedência). Sem
+  double-booking: `AgendamentoClinicoRepository.existe_conflito` e o próprio
+  `pedir()` revalidam o horário contra a disponibilidade real e contra
+  pedidos já existentes antes de gravar (409 se já não estiver livre) —
+  nunca se confia no horário vindo do browser. `OptioptikaBookingDialog.tsx`
+  passa a escolher um horário real de uma lista, não "manhã/tarde/sábado".
+  **Decisão consciente de âmbito:** `sugerir_clinicas` (correspondência por
+  regras com prioridade Premium) fica por implementar — com uma única
+  clínica activa (Optioptika) não há nada para "escolher entre", seria
+  código morto sem consumidor real. Fica para quando houver uma segunda
+  clínica parceira; o desenho (filtrar por modalidade + ordenar por
+  prioridade Premium) mantém-se válido, só a implementação foi adiada.
 
 ### Fase 2 — A teleconsulta em si
 - **Não construir infra de videochamada própria.** Usar um fornecedor alojado (Daily.co

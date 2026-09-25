@@ -12,7 +12,11 @@ from app.repositories.utilizadores_repository import UtilizadorRegisto
 from app.routers import agendamentos as agendamentos_router
 from app.services.agendamento_clinico_service import AgendamentoClinicoService
 from app.services.auth_service import AuthService
-from tests.services.test_agendamento_clinico_service import EmailSenderFalso
+from tests.services.test_agendamento_clinico_service import (
+    HORARIO_VALIDO,
+    EmailSenderFalso,
+    RepositorioDisponibilidadesFalso,
+)
 from tests.services.test_auth_service import RepositorioFalso as RepositorioAuthFalso
 
 
@@ -33,6 +37,7 @@ class RepositorioAgendamentosFalso:
             "modalidade": "presencial",
             "data_preferida": None,
             "periodo_preferido": None,
+            "horario_inicio": None,
             "motivo": None,
             "estado": "pendente",
             "decidido_por": None,
@@ -54,6 +59,12 @@ class RepositorioAgendamentosFalso:
 
     def listar(self) -> list[AgendamentoClinicoRegisto]:
         return list(self._agendamentos.values())
+
+    def existe_conflito(self, clinica_id: str, horario_inicio) -> bool:
+        return any(
+            a.clinica_id == clinica_id and a.horario_inicio == horario_inicio and a.estado in ("pendente", "confirmada")
+            for a in self._agendamentos.values()
+        )
 
     def confirmar(self, agendamento_id: str, admin_id: str, quando) -> AgendamentoClinicoRegisto:
         atual = self._agendamentos[agendamento_id]
@@ -111,6 +122,7 @@ def ambiente():
     repo_auth = RepositorioAuthFalso()
     repo_ag = RepositorioAgendamentosFalso()
     repo_clin = RepositorioClinicasFalso()
+    repo_disp = RepositorioDisponibilidadesFalso()
     email_sender = EmailSenderFalso()
     token_admin = _seed(repo_auth, "id-admin", "admin")
     token_comum = _seed(repo_auth, "id-comum", "comum")
@@ -118,8 +130,9 @@ def ambiente():
     app.dependency_overrides[obter_auth_service] = lambda: AuthService(repo_auth)
     app.dependency_overrides[agendamentos_router.obter_agendamento_clinico_repository] = lambda: repo_ag
     app.dependency_overrides[agendamentos_router.obter_clinica_parceira_repository] = lambda: repo_clin
+    app.dependency_overrides[agendamentos_router.obter_disponibilidade_clinica_repository] = lambda: repo_disp
     app.dependency_overrides[agendamentos_router.obter_agendamento_clinico_service] = (
-        lambda: AgendamentoClinicoService(repo_ag, repo_clin, email_sender)
+        lambda: AgendamentoClinicoService(repo_ag, repo_clin, repo_disp, email_sender)
     )
     with TestClient(app) as c:
         yield c, repo_ag, token_admin, token_comum, email_sender
@@ -132,7 +145,7 @@ _PEDIDO_VALIDO = {
     "email": "ana@example.com",
     "telefone": "+244900000000",
     "modalidade": "presencial",
-    "periodo_preferido": "manha",
+    "horario_inicio": HORARIO_VALIDO.isoformat(),
     "motivo": "Visão turva",
 }
 
@@ -166,6 +179,38 @@ def test_pedir_agendamento_com_sessao_liga_ao_utilizador(ambiente) -> None:
 def test_pedir_agendamento_com_clinica_forjada_404(ambiente) -> None:
     c, *_ = ambiente
     resposta = c.post("/agendamentos", json={**_PEDIDO_VALIDO, "clinica_id": "nao-existe"})
+    assert resposta.status_code == 404
+
+
+def test_pedir_agendamento_horario_fora_da_disponibilidade_409(ambiente) -> None:
+    c, *_ = ambiente
+    # 1999 nunca cai dentro de nenhuma disponibilidade -- e já passou.
+    dados = {**_PEDIDO_VALIDO, "horario_inicio": "1999-01-01T09:00:00+00:00"}
+    resposta = c.post("/agendamentos", json=dados)
+    assert resposta.status_code == 409
+
+
+def test_pedir_agendamento_horario_ja_ocupado_409(ambiente) -> None:
+    c, *_ = ambiente
+    primeiro = c.post("/agendamentos", json=_PEDIDO_VALIDO)
+    assert primeiro.status_code == 201
+
+    segundo = c.post("/agendamentos", json=_PEDIDO_VALIDO)
+    assert segundo.status_code == 409
+
+
+def test_listar_horarios_disponiveis_e_publico(ambiente) -> None:
+    c, *_ = ambiente
+    resposta = c.get("/clinicas/clinica-1/horarios", params={"modalidade": "presencial"})
+    assert resposta.status_code == 200
+    horarios = resposta.json()
+    assert len(horarios) > 0
+    assert "inicio" in horarios[0] and "fim" in horarios[0]
+
+
+def test_listar_horarios_disponiveis_clinica_forjada_404(ambiente) -> None:
+    c, *_ = ambiente
+    resposta = c.get("/clinicas/nao-existe/horarios", params={"modalidade": "presencial"})
     assert resposta.status_code == 404
 
 
