@@ -1003,10 +1003,17 @@ algo a dar. Faseado para que cada fase seja entregável e útil sozinha:
   a clínicas novas
 
 ### Riscos a não ignorar
-- **Verificação de profissionais:** hoje qualquer conta pode registar-se como
+- **Verificação de profissionais — elevado a tarefa activa (relatório semanal do
+  Lukeny, 21-27/09/2026: "processo de verificação de profissionais de saúde antes de
+  ligar pacientes a médicos na plataforma").** Hoje qualquer conta pode registar-se como
   `profissional` sem nenhuma credenciação. Antes de ligar pacientes a "médicos" a sério,
   precisa de existir um passo de verificação (documentos, ordem profissional) — risco
-  legal e de confiança real sem isto
+  legal e de confiança real sem isto. Nota importante: isto é ortogonal ao que o PR B da
+  Fase 1 já fechou — `equipa_clinica` já impede que um `profissional` auto-registado
+  ganhe acesso a uma clínica sem intervenção de um admin (ver Fase 1 acima); o que falta
+  aqui é o admin ter, no momento de ligar a conta, alguma evidência de credenciação real
+  a verificar — hoje essa decisão do admin não tem nenhum suporte documental. Âmbito de
+  implementação ainda por decidir com o dono do projecto
 - **Dados de saúde de crianças:** o mesmo cuidado já aplicado ao scanner (CLAUDE.md §4)
   estende-se a relatórios clínicos e notas do médico
 - **Sequenciar a sério.** A tentação de construir o matchmaker completo de uma vez é o
@@ -1037,6 +1044,15 @@ acrescentado antes disto agrava o problema.
   as páginas/rotas continuam a existir. **Antes de os reintroduzir**, a prioridade é
   melhorar significativamente os 4 que ficaram — não expandir a lista outra vez até
   isso estar feito
+- **W-18 · Melhorar significativamente os 4 exercícios do catálogo pago — tarefa activa
+  (confirmada no relatório semanal do Lukeny, 21-27/09/2026, secção "Prioridades para os
+  Próximos Dias"), âmbito ainda por definir em detalhe.** Duas frentes já identificadas:
+  (1) qualidade/profundidade dos 4 exercícios em si (`figure8`, `convergence`, `cerebro`,
+  `relax` — os do trial de 7 dias) e dos 4 do catálogo Premium acima; (2) carregar os
+  vídeos dos exercícios para o armazenamento privado (Cloudflare R2), item técnico
+  distinto apontado no mesmo relatório. Falta decidir com o dono do projecto o que
+  concretamente muda em cada exercício antes de abrir qualquer branch — este item é só
+  o registo de que a tarefa existe e está activa, não um plano de implementação
 - Loja de óculos com carrinho e pagamento (**W+L**)
 - Conteúdo editável pelo administrador (**W+L**)
 
