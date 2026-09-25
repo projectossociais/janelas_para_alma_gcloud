@@ -127,7 +127,11 @@ def pedir_agendamento(
 def listar_agendamentos(
     repo: SQLAlchemyAgendamentoClinicoRepository = Depends(obter_agendamento_clinico_repository),
 ) -> list[AgendamentoClinicoRegisto]:
-    return repo.listar()
+    # Prioridade de marcação para quem paga Premium (Sprint 4, Fase 4) --
+    # só reordena, `repo.listar()` já vem por criado_em decrescente, e o
+    # sort é estável: dentro de cada grupo (premium / não premium) mantém-se
+    # essa ordem.
+    return sorted(repo.listar(), key=lambda a: not a.premium)
 
 
 @router.post("/admin/agendamentos/{agendamento_id}/confirmar", response_model=AgendamentoClinicoAdmin)

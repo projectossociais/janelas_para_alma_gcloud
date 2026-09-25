@@ -66,9 +66,13 @@ class AgendamentoClinicoPublico(BaseModel):
 
 
 class AgendamentoClinicoAdmin(AgendamentoClinicoPublico):
-    """Visto no painel de administração."""
+    """Visto no painel de administração e no portal da clínica."""
 
     utilizador_id: str | None
     screening_id: str | None
+    # Sprint 4, Fase 4: quem paga Premium tem prioridade de marcação --
+    # calculado sempre na leitura (AgendamentoClinicoRepository), nunca
+    # confiar numa flag guardada no próprio pedido.
+    premium: bool
     decidido_por: str | None
     decidido_em: datetime | None

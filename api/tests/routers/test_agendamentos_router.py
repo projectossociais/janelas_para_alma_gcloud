@@ -41,6 +41,7 @@ class RepositorioAgendamentosFalso:
             "horario_inicio": None,
             "motivo": None,
             "estado": "pendente",
+            "premium": False,
             "decidido_por": None,
             "decidido_em": None,
             "created_at": datetime.now(UTC),
@@ -240,6 +241,32 @@ def test_listar_agendamentos_exige_admin(ambiente) -> None:
 def test_listar_agendamentos_sem_sessao_401(ambiente) -> None:
     c, *_ = ambiente
     assert c.get("/admin/agendamentos").status_code == 401
+
+
+def test_listar_agendamentos_prioriza_premium(ambiente) -> None:
+    from datetime import timedelta
+
+    c, repo_ag, token_admin, _, _ = ambiente
+    comum = c.post("/agendamentos", json={**_PEDIDO_VALIDO, "nome": "Comum"}).json()
+    premium = c.post(
+        "/agendamentos",
+        json={
+            **_PEDIDO_VALIDO,
+            "nome": "Premium",
+            "horario_inicio": (HORARIO_VALIDO + timedelta(minutes=30)).isoformat(),
+        },
+    ).json()
+    # A API nunca aceita "premium" no corpo do pedido -- simula-se aqui o
+    # que só a base de dados decide de facto (ver AgendamentoClinicoRepository).
+    import dataclasses
+
+    repo_ag._agendamentos[premium["id"]] = dataclasses.replace(repo_ag._agendamentos[premium["id"]], premium=True)
+    c.cookies.set("access_token", token_admin)
+
+    resposta = c.get("/admin/agendamentos")
+
+    ids_por_ordem = [a["id"] for a in resposta.json()]
+    assert ids_por_ordem.index(premium["id"]) < ids_por_ordem.index(comum["id"])
 
 
 def test_admin_confirma_agendamento(ambiente) -> None:

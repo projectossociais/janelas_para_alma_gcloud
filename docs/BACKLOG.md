@@ -1051,6 +1051,24 @@ própria" — o Jitsi é que serve a infra, tal como o Daily/100ms serviriam.
   negociar isto depois de a Fase 0 dar números reais de leads gerados para mostrar
   a clínicas novas
 
+**Progresso (2026-09-25) — dividida em duas partes por decisão do dono do projecto:**
+
+- ✅ **Parte A — prioridade de marcação (feita):** `AgendamentoClinicoRepository`
+  calcula `premium` sempre na leitura, a partir de `Utilizador.premium_ativo` +
+  `premium_expira_em` (mesmo padrão de `acesso_exercicios_service` — nunca só a flag,
+  sempre com a validade; pedidos anónimos nunca são Premium). `GET /admin/agendamentos`
+  ordena os pedidos Premium primeiro (`sorted(..., key=lambda a: not a.premium)`,
+  estável — dentro de cada grupo mantém-se a ordem por `created_at`). Selo "Premium"
+  visível em `AdminAgendamentos.tsx` e em `DashboardPro.tsx` (portal da própria
+  clínica). Sem esquema novo (`premium_ativo`/`premium_expira_em` já existiam),
+  sem decisão de preço.
+- ⬜ **Parte B — créditos incluídos vs. pagamento avulso (por fazer):** exige o dono do
+  projecto decidir um preço por consulta avulsa antes de haver código para escrever —
+  o fluxo em si seguiria o mesmo padrão já usado em toda a parte (transferência +
+  comprovativo + aprovação de um admin, como o Premium e a Loja do jogo).
+- ⬜ **Selo de clínica verificada (por fazer):** depende de negociação comercial com
+  números reais de leads da Fase 0 — não é trabalho técnico ainda.
+
 ### Riscos a não ignorar
 - **Verificação de profissionais — elevado a tarefa activa (relatório semanal do
   Lukeny, 21-27/09/2026: "processo de verificação de profissionais de saúde antes de
