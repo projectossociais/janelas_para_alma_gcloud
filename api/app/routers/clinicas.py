@@ -11,10 +11,13 @@ from app.core.dependencies import (
     obter_clinica_do_utilizador,
     obter_clinica_parceira_repository,
     obter_disponibilidade_clinica_repository,
+    obter_email_sender,
     obter_equipa_clinica_repository,
+    obter_teleconsulta_repository,
     obter_utilizador_admin,
     obter_utilizador_atual,
 )
+from app.core.email import EmailSender
 from app.db import obter_sessao
 from app.repositories.agendamento_clinico_repository import (
     AgendamentoClinicoRegisto,
@@ -32,6 +35,10 @@ from app.repositories.equipa_clinica_repository import (
     MembroEquipaRegisto,
     SQLAlchemyEquipaClinicaRepository,
 )
+from app.repositories.teleconsulta_repository import (
+    SQLAlchemyTeleconsultaRepository,
+    TeleconsultaRegisto,
+)
 from app.repositories.utilizadores_repository import (
     SQLAlchemyUtilizadoresRepository,
     UtilizadorRegisto,
@@ -45,11 +52,19 @@ from app.schemas.clinica import (
     EquipaClinicaAdicionar,
     MembroEquipaPublico,
 )
+from app.schemas.teleconsulta import TeleconsultaConcluir, TeleconsultaPublica
 from app.services.equipa_clinica_service import (
     ClinicaNaoEncontradaError,
     EquipaClinicaService,
     JaLigadoAOutraClinicaError,
     UtilizadorNaoEncontradoError,
+)
+from app.services.teleconsulta_service import (
+    AcessoNegadoError,
+    AgendamentoNaoEncontradoError,
+    TeleconsultaEstadoInvalidoError,
+    TeleconsultaNaoEncontradaError,
+    TeleconsultaService,
 )
 
 router = APIRouter(tags=["clinicas"])
@@ -67,6 +82,14 @@ def obter_equipa_clinica_service(
     sessao: Session = Depends(obter_sessao),
 ) -> EquipaClinicaService:
     return EquipaClinicaService(equipa, clinicas, SQLAlchemyUtilizadoresRepository(sessao))
+
+
+def obter_teleconsulta_service(
+    teleconsultas: SQLAlchemyTeleconsultaRepository = Depends(obter_teleconsulta_repository),
+    agendamentos: SQLAlchemyAgendamentoClinicoRepository = Depends(obter_agendamento_clinico_repository),
+    email_sender: EmailSender = Depends(obter_email_sender),
+) -> TeleconsultaService:
+    return TeleconsultaService(teleconsultas, agendamentos, email_sender)
 
 
 # --- Portal da própria clínica ----------------------------------------------
@@ -93,6 +116,57 @@ def meus_agendamentos(
     repo: SQLAlchemyAgendamentoClinicoRepository = Depends(obter_agendamento_clinico_repository),
 ) -> list[AgendamentoClinicoRegisto]:
     return [a for a in repo.listar() if a.clinica_id == clinica.id]
+
+
+@router.get("/clinica/teleconsultas/{agendamento_id}", response_model=TeleconsultaPublica)
+def obter_teleconsulta(
+    agendamento_id: str,
+    clinica: ClinicaParceiraRegisto = Depends(obter_clinica_do_utilizador),
+    servico: TeleconsultaService = Depends(obter_teleconsulta_service),
+) -> TeleconsultaRegisto:
+    try:
+        return servico.obter(agendamento_id, clinica.id)
+    except (AgendamentoNaoEncontradoError, TeleconsultaNaoEncontradaError) as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="teleconsulta não encontrada") from exc
+    except AcessoNegadoError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="este pedido não é desta clínica") from exc
+
+
+@router.post("/clinica/teleconsultas/{agendamento_id}/iniciar", response_model=TeleconsultaPublica)
+def iniciar_teleconsulta(
+    agendamento_id: str,
+    clinica: ClinicaParceiraRegisto = Depends(obter_clinica_do_utilizador),
+    servico: TeleconsultaService = Depends(obter_teleconsulta_service),
+) -> TeleconsultaRegisto:
+    try:
+        return servico.iniciar(agendamento_id, clinica.id)
+    except (AgendamentoNaoEncontradoError, TeleconsultaNaoEncontradaError) as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="teleconsulta não encontrada") from exc
+    except AcessoNegadoError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="este pedido não é desta clínica") from exc
+    except TeleconsultaEstadoInvalidoError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="esta teleconsulta já não está agendada"
+        ) from exc
+
+
+@router.post("/clinica/teleconsultas/{agendamento_id}/concluir", response_model=TeleconsultaPublica)
+def concluir_teleconsulta(
+    agendamento_id: str,
+    dados: TeleconsultaConcluir,
+    clinica: ClinicaParceiraRegisto = Depends(obter_clinica_do_utilizador),
+    servico: TeleconsultaService = Depends(obter_teleconsulta_service),
+) -> TeleconsultaRegisto:
+    try:
+        return servico.concluir(agendamento_id, clinica.id, dados.recomendacao_clinica)
+    except (AgendamentoNaoEncontradoError, TeleconsultaNaoEncontradaError) as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="teleconsulta não encontrada") from exc
+    except AcessoNegadoError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="este pedido não é desta clínica") from exc
+    except TeleconsultaEstadoInvalidoError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="esta teleconsulta não está em curso"
+        ) from exc
 
 
 @router.get("/clinica/disponibilidade", response_model=list[DisponibilidadeClinicaPublica])

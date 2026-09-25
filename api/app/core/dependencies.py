@@ -21,6 +21,7 @@ from app.repositories.disponibilidade_clinica_repository import (
     SQLAlchemyDisponibilidadeClinicaRepository,
 )
 from app.repositories.equipa_clinica_repository import SQLAlchemyEquipaClinicaRepository
+from app.repositories.teleconsulta_repository import SQLAlchemyTeleconsultaRepository
 from app.repositories.tokens_confirmacao_repository import SQLAlchemyTokensConfirmacaoRepository
 from app.repositories.tokens_recuperacao_repository import SQLAlchemyTokensRecuperacaoRepository
 from app.repositories.utilizadores_repository import (
@@ -127,6 +128,12 @@ def obter_disponibilidade_clinica_repository(
     sessao: Session = Depends(obter_sessao),
 ) -> SQLAlchemyDisponibilidadeClinicaRepository:
     return SQLAlchemyDisponibilidadeClinicaRepository(sessao)
+
+
+def obter_teleconsulta_repository(
+    sessao: Session = Depends(obter_sessao),
+) -> SQLAlchemyTeleconsultaRepository:
+    return SQLAlchemyTeleconsultaRepository(sessao)
 
 
 def obter_clinica_do_utilizador(

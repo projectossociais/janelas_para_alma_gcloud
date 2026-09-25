@@ -13,6 +13,9 @@ const meusAgendamentos = vi.fn();
 const minhaDisponibilidade = vi.fn();
 const adicionarDisponibilidade = vi.fn();
 const removerDisponibilidade = vi.fn();
+const obterTeleconsulta = vi.fn();
+const iniciarTeleconsulta = vi.fn();
+const concluirTeleconsulta = vi.fn();
 vi.mock("@/lib/apiClient", () => ({
   clinicasApi: {
     aMinhaClinica: (...a: unknown[]) => aMinhaClinica(...a),
@@ -20,7 +23,11 @@ vi.mock("@/lib/apiClient", () => ({
     minhaDisponibilidade: (...a: unknown[]) => minhaDisponibilidade(...a),
     adicionarDisponibilidade: (...a: unknown[]) => adicionarDisponibilidade(...a),
     removerDisponibilidade: (...a: unknown[]) => removerDisponibilidade(...a),
+    obterTeleconsulta: (...a: unknown[]) => obterTeleconsulta(...a),
+    iniciarTeleconsulta: (...a: unknown[]) => iniciarTeleconsulta(...a),
+    concluirTeleconsulta: (...a: unknown[]) => concluirTeleconsulta(...a),
   },
+  linkDaSalaVideo: (sala: string) => `https://meet.jit.si/${sala}`,
   mensagemDeErroApi: (_err: unknown, fallback: string) => fallback,
 }));
 
@@ -40,6 +47,9 @@ describe("DashboardPro", () => {
     minhaDisponibilidade.mockReset();
     adicionarDisponibilidade.mockReset();
     removerDisponibilidade.mockReset();
+    obterTeleconsulta.mockReset();
+    iniciarTeleconsulta.mockReset();
+    concluirTeleconsulta.mockReset();
     toastError.mockReset();
     minhaDisponibilidade.mockResolvedValue([]);
   });
@@ -102,5 +112,55 @@ describe("DashboardPro", () => {
     await user.click(screen.getByRole("button", { name: /Adicionar horário/i }));
 
     await waitFor(() => expect(adicionarDisponibilidade).toHaveBeenCalled());
+  });
+
+  it("consulta online confirmada mostra o link da sala e permite iniciar/concluir", async () => {
+    aMinhaClinica.mockResolvedValue({ id: "clinica-1", nome: "Óptica Optioptika" });
+    meusAgendamentos.mockResolvedValue([
+      { id: "ag-1", estado: "confirmada", modalidade: "online", nome: "Ana Silva", email: "ana@example.com", telefone: "+244900000000" },
+    ]);
+    obterTeleconsulta.mockResolvedValue({
+      id: "tele-1",
+      agendamento_id: "ag-1",
+      sala_video: "janelas-para-alma-abc123",
+      estado: "agendada",
+      iniciada_em: null,
+      concluida_em: null,
+      recomendacao_clinica: null,
+    });
+    iniciarTeleconsulta.mockResolvedValue({
+      id: "tele-1",
+      agendamento_id: "ag-1",
+      sala_video: "janelas-para-alma-abc123",
+      estado: "em_curso",
+      iniciada_em: "2027-01-04T09:00:00.000Z",
+      concluida_em: null,
+      recomendacao_clinica: null,
+    });
+    concluirTeleconsulta.mockResolvedValue({
+      id: "tele-1",
+      agendamento_id: "ag-1",
+      sala_video: "janelas-para-alma-abc123",
+      estado: "concluida",
+      iniciada_em: "2027-01-04T09:00:00.000Z",
+      concluida_em: "2027-01-04T09:20:00.000Z",
+      recomendacao_clinica: "Usar óculos com grau X.",
+    });
+    const user = userEvent.setup();
+
+    render(<DashboardPro />, { wrapper: MemoryRouter });
+
+    const linkSala = await screen.findByRole("link", { name: /Entrar na sala/i });
+    expect(linkSala).toHaveAttribute("href", "https://meet.jit.si/janelas-para-alma-abc123");
+
+    await user.click(screen.getByRole("button", { name: /Iniciar consulta/i }));
+    await waitFor(() => expect(iniciarTeleconsulta).toHaveBeenCalledWith("ag-1"));
+
+    const textarea = await screen.findByPlaceholderText(/Escreva a recomendação clínica/i);
+    await user.type(textarea, "Usar óculos com grau X.");
+    await user.click(screen.getByRole("button", { name: /Concluir e enviar recomendação/i }));
+
+    await waitFor(() => expect(concluirTeleconsulta).toHaveBeenCalledWith("ag-1", "Usar óculos com grau X."));
+    expect(await screen.findByText(/Usar óculos com grau X\./)).toBeInTheDocument();
   });
 });

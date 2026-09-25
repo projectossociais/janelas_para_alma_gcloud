@@ -995,13 +995,48 @@ algo a dar. Faseado para que cada fase seja entregável e útil sozinha:
   clínica parceira; o desenho (filtrar por modalidade + ordenar por
   prioridade Premium) mantém-se válido, só a implementação foi adiada.
 
-### Fase 2 — A teleconsulta em si
+### Fase 2 — A teleconsulta em si — ✅ **concluída 2026-09-25**
 - **Não construir infra de videochamada própria.** Usar um fornecedor alojado (Daily.co
   ou 100ms, SDK simples, custo por minuto) — montar sinalização WebRTC de raiz não se
   justifica para o volume inicial
 - Ciclo de vida da sessão: agendada → em curso → concluída → relatório
 - O médico emite uma recomendação clínica no fim — fecha o que `DashboardPro.tsx` já
   promete
+
+**Decisão de fornecedor (2026-09-25):** confirmados os planos gratuitos de Daily.co e
+100ms (10.000 minutos-participante grátis/mês cada, depois pago) — mas o dono do
+projecto não tem orçamento nem cartão para nenhum dos dois. Optou-se por **Jitsi Meet**
+(`meet.jit.si`), servidor público mantido pela 8x8, gratuito para sempre, sem conta nem
+cartão, até 100 participantes por sala. Único cuidado: o modo *embutido* (IFrame API)
+tem um limite de 5 minutos antes de pedir para abrir numa aba própria — por isso a
+integração usa sempre um **link normal aberto numa aba nova**, nunca a IFrame API, onde
+esse limite não se aplica. Continua a respeitar "não construir infra de videochamada
+própria" — o Jitsi é que serve a infra, tal como o Daily/100ms serviriam.
+
+**Implementação:**
+- Nova tabela `teleconsultas` (`agendamento_id` FK único, `sala_video`, `estado`
+  agendada/em_curso/concluida, `iniciada_em`, `concluida_em`, `recomendacao_clinica`).
+  Nasce automaticamente quando `AgendamentoClinicoService.confirmar()` confirma um
+  pedido com `modalidade == "online"` — nunca antes, nunca para presencial.
+- O email de confirmação ao paciente passa a incluir o link da sala Jitsi quando a
+  consulta é online.
+- `TeleconsultaService` (novo): `iniciar`/`concluir`, ambos verificando que a clínica
+  autenticada é a dona do pedido (nunca por id adivinhado) e que o estado avança em
+  ordem (nunca concluir sem iniciar, nunca iniciar duas vezes). `concluir` exige a
+  recomendação clínica e envia-a ao paciente por email (best-effort, mesmo padrão do
+  resto do projecto).
+- Endpoints (`/clinica/teleconsultas/{agendamento_id}`, `.../iniciar`, `.../concluir`),
+  todos atrás de `obter_clinica_do_utilizador`.
+- `DashboardPro.tsx`: cada pedido online confirmado mostra o link da sala, o estado, e
+  os controlos de iniciar/concluir com o campo de recomendação — fecha as duas
+  promessas do card "Em breve" sobre agenda de teleconsultas e emissão de
+  recomendações clínicas.
+- **Por fazer, fora do âmbito desta entrega:** o paciente só recebe o link por email —
+  `DashboardUser.tsx` ("Próxima teleconsulta") continua a mostrar "Em breve" estático,
+  não a teleconsulta real do próprio utilizador. Não implementado agora para não
+  alargar o âmbito: exigiria decidir como um paciente sem sessão obrigatória (pedidos
+  anónimos são válidos, ver `AgendamentoClinico`) e um paciente com sessão veem o mesmo
+  dado de forma consistente.
 
 ### Fase 3 — Notificações a sério
 - Email já é o padrão do projecto; para Angola, **WhatsApp Business API** é a alternativa

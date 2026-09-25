@@ -610,7 +610,22 @@
     "quinta": "Thursday",
     "sexta": "Friday",
     "sabado": "Saturday",
-    "domingo": "Sunday"
+    "domingo": "Sunday",
+    "naoFoiPossivelCarregarTeleconsulta": "Could not load the teleconsultation.",
+    "naoFoiPossivelIniciarTeleconsulta": "Could not start the teleconsultation.",
+    "naoFoiPossivelConcluirTeleconsulta": "Could not complete the teleconsultation.",
+    "indiqueUmaRecomendacao": "Please enter a recommendation before completing.",
+    "teleconsultaConcluida": "Teleconsultation completed. The recommendation was sent to the patient.",
+    "entrarNaSala": "Join the video call",
+    "iniciarConsulta": "Start consultation",
+    "recomendacaoClinicaPlaceholder": "Write the clinical recommendation for the patient...",
+    "concluirEEnviarRecomendacao": "Complete and send recommendation",
+    "recomendacao": "Recommendation",
+    "teleconsultaEstado": {
+      "agendada": "Scheduled",
+      "em_curso": "In progress",
+      "concluida": "Completed"
+    }
   },
   "DashboardUser": {
     "saudacao": "Hello, {{nome}}",

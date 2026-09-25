@@ -16,6 +16,7 @@ from tests.services.test_agendamento_clinico_service import (
     HORARIO_VALIDO,
     EmailSenderFalso,
     RepositorioDisponibilidadesFalso,
+    RepositorioTeleconsultasFalso,
 )
 from tests.services.test_auth_service import RepositorioFalso as RepositorioAuthFalso
 
@@ -123,6 +124,7 @@ def ambiente():
     repo_ag = RepositorioAgendamentosFalso()
     repo_clin = RepositorioClinicasFalso()
     repo_disp = RepositorioDisponibilidadesFalso()
+    repo_tele = RepositorioTeleconsultasFalso()
     email_sender = EmailSenderFalso()
     token_admin = _seed(repo_auth, "id-admin", "admin")
     token_comum = _seed(repo_auth, "id-comum", "comum")
@@ -131,8 +133,9 @@ def ambiente():
     app.dependency_overrides[agendamentos_router.obter_agendamento_clinico_repository] = lambda: repo_ag
     app.dependency_overrides[agendamentos_router.obter_clinica_parceira_repository] = lambda: repo_clin
     app.dependency_overrides[agendamentos_router.obter_disponibilidade_clinica_repository] = lambda: repo_disp
+    app.dependency_overrides[agendamentos_router.obter_teleconsulta_repository] = lambda: repo_tele
     app.dependency_overrides[agendamentos_router.obter_agendamento_clinico_service] = (
-        lambda: AgendamentoClinicoService(repo_ag, repo_clin, repo_disp, email_sender)
+        lambda: AgendamentoClinicoService(repo_ag, repo_clin, repo_disp, repo_tele, email_sender)
     )
     with TestClient(app) as c:
         yield c, repo_ag, token_admin, token_comum, email_sender

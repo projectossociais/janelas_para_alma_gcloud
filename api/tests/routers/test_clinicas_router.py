@@ -9,6 +9,7 @@ from app.core.dependencies import (
     obter_clinica_parceira_repository,
     obter_disponibilidade_clinica_repository,
     obter_equipa_clinica_repository,
+    obter_teleconsulta_repository,
 )
 from app.core.security import criar_access_token, hash_password
 from app.main import app
@@ -90,13 +91,15 @@ class RepositorioAgendamentosFalso:
             "created_at": datetime.now(UTC),
         }
         base.update(over)
-        self._agendamentos.append(AgendamentoClinicoRegisto(**base))
+        registo = AgendamentoClinicoRegisto(**base)
+        self._agendamentos.append(registo)
+        return registo
 
     def criar(self, **kwargs):  # pragma: no cover
         raise NotImplementedError
 
-    def obter(self, agendamento_id: str):  # pragma: no cover
-        raise NotImplementedError
+    def obter(self, agendamento_id: str):
+        return next((a for a in self._agendamentos if a.id == agendamento_id), None)
 
     def listar(self) -> list[AgendamentoClinicoRegisto]:
         return list(self._agendamentos)
@@ -142,6 +145,49 @@ class _RegistoSimples:
         self.__dict__.update(kwargs)
 
 
+class RepositorioTeleconsultaFalso:
+    def __init__(self) -> None:
+        self._por_agendamento: dict[str, dict] = {}
+
+    def seed(self, agendamento_id: str, **over):
+        base = {
+            "id": f"tele-{agendamento_id}",
+            "agendamento_id": agendamento_id,
+            "sala_video": "janelas-para-alma-teste",
+            "estado": "agendada",
+            "iniciada_em": None,
+            "concluida_em": None,
+            "recomendacao_clinica": None,
+            "created_at": datetime.now(UTC),
+        }
+        base.update(over)
+        self._por_agendamento[agendamento_id] = base
+
+    def criar(self, agendamento_id: str, sala_video: str):  # pragma: no cover
+        raise NotImplementedError
+
+    def obter_por_agendamento(self, agendamento_id: str):
+        registo = self._por_agendamento.get(agendamento_id)
+        return _RegistoSimples(**registo) if registo else None
+
+    def iniciar(self, teleconsulta_id: str, quando):
+        for registo in self._por_agendamento.values():
+            if registo["id"] == teleconsulta_id:
+                registo["estado"] = "em_curso"
+                registo["iniciada_em"] = quando
+                return _RegistoSimples(**registo)
+        raise KeyError(teleconsulta_id)  # pragma: no cover
+
+    def concluir(self, teleconsulta_id: str, quando, recomendacao_clinica: str):
+        for registo in self._por_agendamento.values():
+            if registo["id"] == teleconsulta_id:
+                registo["estado"] = "concluida"
+                registo["concluida_em"] = quando
+                registo["recomendacao_clinica"] = recomendacao_clinica
+                return _RegistoSimples(**registo)
+        raise KeyError(teleconsulta_id)  # pragma: no cover
+
+
 def _seed_utilizador(repo_auth: RepositorioAuthFalso, id_: str, email: str, papel: str) -> str:
     repo_auth._utilizadores[email] = UtilizadorRegisto(
         id=id_,
@@ -163,6 +209,7 @@ def ambiente():
     repo_equipa = RepositorioEquipaFalso()
     repo_agendamentos = RepositorioAgendamentosFalso()
     repo_disponibilidade = RepositorioDisponibilidadeFalso()
+    repo_teleconsulta = RepositorioTeleconsultaFalso()
 
     token_admin = _seed_utilizador(repo_auth, "id-admin", "admin@example.com", "admin")
     token_medico = _seed_utilizador(repo_auth, "id-medico", "dr.ana@optioptika.com", "profissional")
@@ -172,13 +219,14 @@ def ambiente():
     app.dependency_overrides[obter_clinica_parceira_repository] = lambda: repo_clinicas
     app.dependency_overrides[obter_equipa_clinica_repository] = lambda: repo_equipa
     app.dependency_overrides[obter_disponibilidade_clinica_repository] = lambda: repo_disponibilidade
+    app.dependency_overrides[obter_teleconsulta_repository] = lambda: repo_teleconsulta
     app.dependency_overrides[clinicas_router.obter_agendamento_clinico_repository] = lambda: repo_agendamentos
     app.dependency_overrides[agendamentos_router.obter_clinica_parceira_repository] = lambda: repo_clinicas
     app.dependency_overrides[clinicas_router.obter_equipa_clinica_service] = (
         lambda: EquipaClinicaService(repo_equipa, repo_clinicas, repo_auth)
     )
     with TestClient(app) as c:
-        yield c, repo_equipa, repo_agendamentos, token_admin, token_medico, token_comum
+        yield c, repo_equipa, repo_agendamentos, repo_teleconsulta, token_admin, token_medico, token_comum
     app.dependency_overrides.clear()
 
 
@@ -186,7 +234,7 @@ def ambiente():
 
 
 def test_a_minha_clinica_sem_ligacao_devolve_null(ambiente) -> None:
-    c, _, _, _, _, token_comum = ambiente
+    c, _, _, _, _, _, token_comum = ambiente
     c.cookies.set("access_token", token_comum)
     resposta = c.get("/clinica/eu")
     assert resposta.status_code == 200
@@ -194,7 +242,7 @@ def test_a_minha_clinica_sem_ligacao_devolve_null(ambiente) -> None:
 
 
 def test_a_minha_clinica_com_ligacao(ambiente) -> None:
-    c, repo_equipa, _, _, token_medico, _ = ambiente
+    c, repo_equipa, _, _, _, token_medico, _ = ambiente
     repo_equipa.criar("id-medico", "clinica-1")
     c.cookies.set("access_token", token_medico)
 
@@ -213,13 +261,13 @@ def test_a_minha_clinica_sem_sessao_401(ambiente) -> None:
 
 
 def test_meus_agendamentos_sem_ligacao_devolve_403(ambiente) -> None:
-    c, _, _, _, _, token_comum = ambiente
+    c, _, _, _, _, _, token_comum = ambiente
     c.cookies.set("access_token", token_comum)
     assert c.get("/clinica/agendamentos").status_code == 403
 
 
 def test_meus_agendamentos_filtra_pela_propria_clinica(ambiente) -> None:
-    c, repo_equipa, repo_agendamentos, _, token_medico, _ = ambiente
+    c, repo_equipa, repo_agendamentos, _, _, token_medico, _ = ambiente
     repo_equipa.criar("id-medico", "clinica-1")
     repo_agendamentos.seed(clinica_id="clinica-1", nome="Paciente da minha clínica")
     repo_agendamentos.seed(clinica_id="outra-clinica", nome="Paciente de outra clínica")
@@ -236,7 +284,7 @@ def test_meus_agendamentos_filtra_pela_propria_clinica(ambiente) -> None:
 
 
 def test_listar_clinicas_admin_exige_admin(ambiente) -> None:
-    c, _, _, _, _, token_comum = ambiente
+    c, _, _, _, _, _, token_comum = ambiente
     c.cookies.set("access_token", token_comum)
     assert c.get("/admin/clinicas").status_code == 403
 
@@ -260,7 +308,7 @@ def test_atualizar_perfil_da_clinica(ambiente) -> None:
 
 
 def test_adicionar_membro_por_email(ambiente) -> None:
-    c, repo_equipa, _, token_admin, *_ = ambiente
+    c, repo_equipa, _, _, token_admin, *_ = ambiente
     c.cookies.set("access_token", token_admin)
 
     resposta = c.post("/admin/clinicas/clinica-1/equipa", json={"email": "dr.ana@optioptika.com"})
@@ -270,7 +318,7 @@ def test_adicionar_membro_por_email(ambiente) -> None:
 
 
 def test_adicionar_membro_com_email_inexistente_404(ambiente) -> None:
-    c, _, _, token_admin, *_ = ambiente
+    c, _, _, _, token_admin, *_ = ambiente
     c.cookies.set("access_token", token_admin)
 
     resposta = c.post("/admin/clinicas/clinica-1/equipa", json={"email": "ninguem@example.com"})
@@ -279,14 +327,14 @@ def test_adicionar_membro_com_email_inexistente_404(ambiente) -> None:
 
 
 def test_adicionar_membro_exige_admin(ambiente) -> None:
-    c, _, _, _, _, token_comum = ambiente
+    c, _, _, _, _, _, token_comum = ambiente
     c.cookies.set("access_token", token_comum)
     resposta = c.post("/admin/clinicas/clinica-1/equipa", json={"email": "dr.ana@optioptika.com"})
     assert resposta.status_code == 403
 
 
 def test_remover_membro(ambiente) -> None:
-    c, repo_equipa, _, token_admin, *_ = ambiente
+    c, repo_equipa, _, _, token_admin, *_ = ambiente
     repo_equipa.criar("id-medico", "clinica-1")
     c.cookies.set("access_token", token_admin)
 
@@ -297,7 +345,7 @@ def test_remover_membro(ambiente) -> None:
 
 
 def test_remover_membro_inexistente_404(ambiente) -> None:
-    c, _, _, token_admin, *_ = ambiente
+    c, _, _, _, token_admin, *_ = ambiente
     c.cookies.set("access_token", token_admin)
     resposta = c.delete("/admin/clinicas/clinica-1/equipa/nao-ligado")
     assert resposta.status_code == 404
@@ -314,7 +362,7 @@ _JANELA_VALIDA = {
 
 
 def test_listar_disponibilidade_sem_ligacao_devolve_403(ambiente) -> None:
-    c, _, _, _, _, token_comum = ambiente
+    c, _, _, _, _, _, token_comum = ambiente
     c.cookies.set("access_token", token_comum)
     assert c.get("/clinica/disponibilidade").status_code == 403
 
@@ -333,7 +381,7 @@ def test_adicionar_disponibilidade_liga_a_propria_clinica(ambiente) -> None:
 
 
 def test_adicionar_disponibilidade_sem_ligacao_devolve_403(ambiente) -> None:
-    c, _, _, _, _, token_comum = ambiente
+    c, _, _, _, _, _, token_comum = ambiente
     c.cookies.set("access_token", token_comum)
     resposta = c.post("/clinica/disponibilidade", json=_JANELA_VALIDA)
     assert resposta.status_code == 403
@@ -383,3 +431,131 @@ def test_remover_disponibilidade_inexistente_404(ambiente) -> None:
     resposta = c.delete("/clinica/disponibilidade/nao-existe")
 
     assert resposta.status_code == 404
+
+
+# --- /clinica/teleconsultas ---------------------------------------------------
+
+
+def test_obter_teleconsulta_da_propria_clinica(ambiente) -> None:
+    c, repo_equipa, repo_agendamentos, repo_teleconsulta, _, token_medico, _ = ambiente
+    repo_equipa.criar("id-medico", "clinica-1")
+    ag = repo_agendamentos.seed(clinica_id="clinica-1", modalidade="online")
+    repo_teleconsulta.seed(ag.id)
+    c.cookies.set("access_token", token_medico)
+
+    resposta = c.get(f"/clinica/teleconsultas/{ag.id}")
+
+    assert resposta.status_code == 200
+    assert resposta.json()["estado"] == "agendada"
+
+
+def test_obter_teleconsulta_de_outra_clinica_403(ambiente) -> None:
+    c, repo_equipa, repo_agendamentos, repo_teleconsulta, _, token_medico, _ = ambiente
+    repo_equipa.criar("id-medico", "clinica-1")
+    ag = repo_agendamentos.seed(clinica_id="outra-clinica", modalidade="online")
+    repo_teleconsulta.seed(ag.id)
+    c.cookies.set("access_token", token_medico)
+
+    resposta = c.get(f"/clinica/teleconsultas/{ag.id}")
+
+    assert resposta.status_code == 403
+
+
+def test_obter_teleconsulta_de_agendamento_presencial_404(ambiente) -> None:
+    c, repo_equipa, repo_agendamentos, _, _, token_medico, _ = ambiente
+    repo_equipa.criar("id-medico", "clinica-1")
+    ag = repo_agendamentos.seed(clinica_id="clinica-1", modalidade="presencial")
+    c.cookies.set("access_token", token_medico)
+
+    resposta = c.get(f"/clinica/teleconsultas/{ag.id}")
+
+    assert resposta.status_code == 404
+
+
+def test_iniciar_teleconsulta(ambiente) -> None:
+    c, repo_equipa, repo_agendamentos, repo_teleconsulta, _, token_medico, _ = ambiente
+    repo_equipa.criar("id-medico", "clinica-1")
+    ag = repo_agendamentos.seed(clinica_id="clinica-1", modalidade="online")
+    repo_teleconsulta.seed(ag.id)
+    c.cookies.set("access_token", token_medico)
+
+    resposta = c.post(f"/clinica/teleconsultas/{ag.id}/iniciar")
+
+    assert resposta.status_code == 200
+    assert resposta.json()["estado"] == "em_curso"
+
+
+def test_iniciar_teleconsulta_ja_iniciada_409(ambiente) -> None:
+    c, repo_equipa, repo_agendamentos, repo_teleconsulta, _, token_medico, _ = ambiente
+    repo_equipa.criar("id-medico", "clinica-1")
+    ag = repo_agendamentos.seed(clinica_id="clinica-1", modalidade="online")
+    repo_teleconsulta.seed(ag.id, estado="em_curso")
+    c.cookies.set("access_token", token_medico)
+
+    resposta = c.post(f"/clinica/teleconsultas/{ag.id}/iniciar")
+
+    assert resposta.status_code == 409
+
+
+def test_iniciar_teleconsulta_de_outra_clinica_403(ambiente) -> None:
+    c, repo_equipa, repo_agendamentos, repo_teleconsulta, _, token_medico, _ = ambiente
+    repo_equipa.criar("id-medico", "clinica-1")
+    ag = repo_agendamentos.seed(clinica_id="outra-clinica", modalidade="online")
+    repo_teleconsulta.seed(ag.id)
+    c.cookies.set("access_token", token_medico)
+
+    resposta = c.post(f"/clinica/teleconsultas/{ag.id}/iniciar")
+
+    assert resposta.status_code == 403
+
+
+def test_concluir_teleconsulta_grava_recomendacao(ambiente) -> None:
+    c, repo_equipa, repo_agendamentos, repo_teleconsulta, _, token_medico, _ = ambiente
+    repo_equipa.criar("id-medico", "clinica-1")
+    ag = repo_agendamentos.seed(clinica_id="clinica-1", modalidade="online")
+    repo_teleconsulta.seed(ag.id, estado="em_curso")
+    c.cookies.set("access_token", token_medico)
+
+    resposta = c.post(
+        f"/clinica/teleconsultas/{ag.id}/concluir", json={"recomendacao_clinica": "Usar óculos com grau X."}
+    )
+
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["estado"] == "concluida"
+    assert corpo["recomendacao_clinica"] == "Usar óculos com grau X."
+
+
+def test_concluir_teleconsulta_sem_ter_iniciado_409(ambiente) -> None:
+    c, repo_equipa, repo_agendamentos, repo_teleconsulta, _, token_medico, _ = ambiente
+    repo_equipa.criar("id-medico", "clinica-1")
+    ag = repo_agendamentos.seed(clinica_id="clinica-1", modalidade="online")
+    repo_teleconsulta.seed(ag.id, estado="agendada")
+    c.cookies.set("access_token", token_medico)
+
+    resposta = c.post(f"/clinica/teleconsultas/{ag.id}/concluir", json={"recomendacao_clinica": "Usar óculos."})
+
+    assert resposta.status_code == 409
+
+
+def test_concluir_teleconsulta_sem_recomendacao_422(ambiente) -> None:
+    c, repo_equipa, repo_agendamentos, repo_teleconsulta, _, token_medico, _ = ambiente
+    repo_equipa.criar("id-medico", "clinica-1")
+    ag = repo_agendamentos.seed(clinica_id="clinica-1", modalidade="online")
+    repo_teleconsulta.seed(ag.id, estado="em_curso")
+    c.cookies.set("access_token", token_medico)
+
+    resposta = c.post(f"/clinica/teleconsultas/{ag.id}/concluir", json={"recomendacao_clinica": ""})
+
+    assert resposta.status_code == 422
+
+
+def test_teleconsulta_sem_ligacao_a_clinica_403(ambiente) -> None:
+    c, _, repo_agendamentos, repo_teleconsulta, _, _, token_comum = ambiente
+    ag = repo_agendamentos.seed(clinica_id="clinica-1", modalidade="online")
+    repo_teleconsulta.seed(ag.id)
+    c.cookies.set("access_token", token_comum)
+
+    resposta = c.get(f"/clinica/teleconsultas/{ag.id}")
+
+    assert resposta.status_code == 403

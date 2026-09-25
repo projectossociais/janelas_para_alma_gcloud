@@ -134,6 +134,25 @@ class RepositorioDisponibilidadesFalso:
         raise NotImplementedError
 
 
+class RepositorioTeleconsultasFalso:
+    def __init__(self) -> None:
+        self.criadas: list[dict] = []
+
+    def criar(self, agendamento_id: str, sala_video: str):
+        registo = {"agendamento_id": agendamento_id, "sala_video": sala_video}
+        self.criadas.append(registo)
+        return registo
+
+    def obter_por_agendamento(self, agendamento_id: str):  # pragma: no cover
+        raise NotImplementedError
+
+    def iniciar(self, teleconsulta_id: str, quando):  # pragma: no cover
+        raise NotImplementedError
+
+    def concluir(self, teleconsulta_id: str, quando, recomendacao_clinica: str):  # pragma: no cover
+        raise NotImplementedError
+
+
 class EmailSenderFalso:
     def __init__(self, falha: bool = False) -> None:
         self.enviados: list[dict] = []
@@ -149,12 +168,14 @@ def _servico(
     agendamentos: RepositorioAgendamentosFalso | None = None,
     clinicas: RepositorioClinicasFalso | None = None,
     disponibilidades: RepositorioDisponibilidadesFalso | None = None,
+    teleconsultas: RepositorioTeleconsultasFalso | None = None,
     email_sender: EmailSenderFalso | None = None,
 ) -> AgendamentoClinicoService:
     return AgendamentoClinicoService(
         agendamentos or RepositorioAgendamentosFalso(),
         clinicas or RepositorioClinicasFalso(_clinica()),
         disponibilidades or RepositorioDisponibilidadesFalso(),
+        teleconsultas or RepositorioTeleconsultasFalso(),
         email_sender or EmailSenderFalso(),
     )
 
@@ -269,6 +290,25 @@ class TestConfirmarERecusar:
         assert agendamentos.confirmado["admin_id"] == "admin-9"
         assert len(email_sender.enviados) == 1
         assert email_sender.enviados[0]["destinatario"] == "ana@example.com"
+
+    def test_confirmar_consulta_online_cria_teleconsulta_e_inclui_o_link_no_email(self) -> None:
+        agendamentos = RepositorioAgendamentosFalso(existente=_agendamento(modalidade="online"))
+        teleconsultas = RepositorioTeleconsultasFalso()
+        email_sender = EmailSenderFalso()
+        _servico(agendamentos=agendamentos, teleconsultas=teleconsultas, email_sender=email_sender).confirmar(
+            "ag-1", "admin-9"
+        )
+
+        assert len(teleconsultas.criadas) == 1
+        assert teleconsultas.criadas[0]["agendamento_id"] == "ag-1"
+        assert "meet.jit.si" in email_sender.enviados[0]["corpo_html"]
+
+    def test_confirmar_consulta_presencial_nunca_cria_teleconsulta(self) -> None:
+        agendamentos = RepositorioAgendamentosFalso(existente=_agendamento(modalidade="presencial"))
+        teleconsultas = RepositorioTeleconsultasFalso()
+        _servico(agendamentos=agendamentos, teleconsultas=teleconsultas).confirmar("ag-1", "admin-9")
+
+        assert teleconsultas.criadas == []
 
     def test_recusa_e_notifica_o_paciente(self) -> None:
         agendamentos = RepositorioAgendamentosFalso(existente=_agendamento())

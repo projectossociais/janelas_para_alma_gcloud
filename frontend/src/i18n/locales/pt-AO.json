@@ -610,7 +610,22 @@
     "quinta": "Quinta-feira",
     "sexta": "Sexta-feira",
     "sabado": "Sábado",
-    "domingo": "Domingo"
+    "domingo": "Domingo",
+    "naoFoiPossivelCarregarTeleconsulta": "Não foi possível carregar a teleconsulta.",
+    "naoFoiPossivelIniciarTeleconsulta": "Não foi possível iniciar a teleconsulta.",
+    "naoFoiPossivelConcluirTeleconsulta": "Não foi possível concluir a teleconsulta.",
+    "indiqueUmaRecomendacao": "Indique uma recomendação antes de concluir.",
+    "teleconsultaConcluida": "Teleconsulta concluída. A recomendação foi enviada ao paciente.",
+    "entrarNaSala": "Entrar na sala de videochamada",
+    "iniciarConsulta": "Iniciar consulta",
+    "recomendacaoClinicaPlaceholder": "Escreva a recomendação clínica para o paciente...",
+    "concluirEEnviarRecomendacao": "Concluir e enviar recomendação",
+    "recomendacao": "Recomendação",
+    "teleconsultaEstado": {
+      "agendada": "Agendada",
+      "em_curso": "Em curso",
+      "concluida": "Concluída"
+    }
   },
   "DashboardUser": {
     "saudacao": "Olá, {{nome}}",

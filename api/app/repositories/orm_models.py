@@ -835,3 +835,25 @@ class DisponibilidadeClinica(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (CheckConstraint("dia_semana >= 0 AND dia_semana <= 6", name="ck_disponibilidade_clinica_dia_semana"),)
+
+
+class Teleconsulta(Base):
+    """Ciclo de vida da consulta online (Fase 2 do matchmaker, docs/BACKLOG.md
+    Sprint 4): agendada -> em_curso -> concluida. Nasce quando um
+    `AgendamentoClinico` com `modalidade == "online"` é confirmado, nunca
+    antes. `sala_video` é só o nome da sala no Jitsi Meet (`meet.jit.si`) --
+    sem infra de videochamada própria, ver CLAUDE.md/docs/BACKLOG.md sobre a
+    decisão de não pagar um fornecedor com o orçamento actual."""
+
+    __tablename__ = "teleconsultas"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    agendamento_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("agendamentos_clinicos.id", ondelete="CASCADE"), nullable=False, unique=True
+    )
+    sala_video: Mapped[str] = mapped_column(Text, nullable=False)
+    estado: Mapped[str] = mapped_column(Text, nullable=False, server_default="agendada")
+    iniciada_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    concluida_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    recomendacao_clinica: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

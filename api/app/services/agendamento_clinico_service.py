@@ -12,6 +12,7 @@ causa de um envio de email seria pior para quem precisa de ser visto.
 """
 
 import logging
+import secrets
 from datetime import UTC, datetime, timedelta
 
 from app.core.email import EmailEnvioFalhouError, EmailSender
@@ -21,9 +22,19 @@ from app.repositories.agendamento_clinico_repository import (
 )
 from app.repositories.clinica_parceira_repository import ClinicaParceiraRepository
 from app.repositories.disponibilidade_clinica_repository import DisponibilidadeClinicaRepository
+from app.repositories.teleconsulta_repository import TeleconsultaRepository
 from app.schemas.agendamento import HorarioDisponivel
 
 logger = logging.getLogger(__name__)
+
+# Uma consulta "online" confirmada ganha sempre uma sala Jitsi Meet
+# (meet.jit.si, servidor público gratuito da 8x8) -- decisão do dono do
+# projecto (2026-09-25): sem orçamento para Daily.co/100ms. Um link normal
+# aberto numa aba nova, nunca embutido via IFrame API (que tem um limite de
+# 5 minutos no modo embutido). Só o nome da sala é guardado, nunca o URL
+# completo, para o domínio do fornecedor poder mudar sem migração de dados.
+PREFIXO_SALA_VIDEO = "janelas-para-alma"
+JITSI_BASE_URL = "https://meet.jit.si"
 
 # Consultas de rastreio ocular não precisam de mais do que isto -- um
 # calendário com duração configurável por clínica seria over-engineering
@@ -64,11 +75,13 @@ class AgendamentoClinicoService:
         agendamentos: AgendamentoClinicoRepository,
         clinicas: ClinicaParceiraRepository,
         disponibilidades: DisponibilidadeClinicaRepository,
+        teleconsultas: TeleconsultaRepository,
         email_sender: EmailSender,
     ) -> None:
         self._agendamentos = agendamentos
         self._clinicas = clinicas
         self._disponibilidades = disponibilidades
+        self._teleconsultas = teleconsultas
         self._email = email_sender
 
     def horarios_disponiveis(self, clinica_id: str, modalidade: str) -> list[HorarioDisponivel]:
@@ -167,12 +180,20 @@ class AgendamentoClinicoService:
         agendamento = self._obter_pendente(agendamento_id)
         resultado = self._agendamentos.confirmar(agendamento_id, admin_id, datetime.now(UTC))
 
-        self._enviar_email_best_effort(
-            agendamento.email,
-            "A sua consulta foi confirmada — Janelas Para a Alma",
+        corpo = (
             "<p>A sua consulta foi confirmada. A clínica vai entrar em contacto consigo "
-            "para combinar os detalhes finais.</p>",
+            "para combinar os detalhes finais.</p>"
         )
+        if agendamento.modalidade == "online":
+            sala = f"{PREFIXO_SALA_VIDEO}-{secrets.token_hex(12)}"
+            self._teleconsultas.criar(agendamento_id, sala)
+            corpo += (
+                f'<p>A sua consulta é por videochamada. Entre pela sala: '
+                f'<a href="{JITSI_BASE_URL}/{sala}">{JITSI_BASE_URL}/{sala}</a> '
+                "à hora combinada -- não precisa de instalar nada nem de criar conta.</p>"
+            )
+
+        self._enviar_email_best_effort(agendamento.email, "A sua consulta foi confirmada — Janelas Para a Alma", corpo)
         return resultado
 
     def recusar(self, agendamento_id: str, admin_id: str) -> AgendamentoClinicoRegisto:
