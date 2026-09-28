@@ -44,6 +44,8 @@ export const ROTAS = [
   { chave: "exercicioContrasteBlocos", pt: "/exercicios/contraste-em-blocos", en: "/en/exercises/contrast-blocks" },
   { chave: "exercicioConvergencia", pt: "/exercicios/convergencia", en: "/en/exercises/convergence" },
   { chave: "exercicioPertoLonge", pt: "/exercicios/perto-e-longe", en: "/en/exercises/near-and-far" },
+  { chave: "exerciciosProgresso", pt: "/exercicios/progresso", en: "/en/exercises/progress", foraDoSitemap: true },
+  { chave: "exerciciosRelatorio", pt: "/exercicios/relatorio", en: "/en/exercises/report", foraDoSitemap: true },
   { chave: "scanner", pt: "/scanner", en: "/en/scanner" },
   { chave: "scannerResultados", pt: "/scanner/resultados", en: "/en/scanner/results", foraDoSitemap: true },
   { chave: "entrar", pt: "/login", en: "/en/sign-in", foraDoSitemap: true },

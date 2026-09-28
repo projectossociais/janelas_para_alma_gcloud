@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Camera, Loader2, User as UserIcon, Mail, Phone, MapPin, Cake } from "lucide-react";
+import { Camera, Loader2, User as UserIcon, Mail, Phone, MapPin, Cake, Eye } from "lucide-react";
 import { useAuth, PROVINCES } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import {
@@ -25,6 +25,8 @@ import {
   uploadsApi,
   mensagemDeErroApi,
   TIPOS_DE_AVATAR_ACEITES,
+  type FaixaEtaria,
+  type OlhoMaisFraco,
 } from "@/lib/apiClient";
 import { useTranslation } from "react-i18next";
 import { localizar } from "@/i18n/rotas";
@@ -41,6 +43,10 @@ const EditarPerfil = () => {
   const [gender, setGender] = useState("");
   const [phone, setPhone] = useState("");
   const [province, setProvince] = useState("");
+  // Perfil visual dos exercícios (opcional): olho a treinar, óculos, faixa etária.
+  const [olhoMaisFraco, setOlhoMaisFraco] = useState("");
+  const [usaOculos, setUsaOculos] = useState("");
+  const [faixaEtaria, setFaixaEtaria] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -73,6 +79,9 @@ const EditarPerfil = () => {
       setGender(profile.genero ?? "");
       setPhone(profile.telefone ?? "");
       setProvince(profile.provincia ?? "");
+      setOlhoMaisFraco(profile.olho_mais_fraco ?? "");
+      setUsaOculos(profile.usa_oculos == null ? "" : profile.usa_oculos ? "sim" : "nao");
+      setFaixaEtaria(profile.faixa_etaria ?? "");
       setAvatarUrl(profile.avatar_url ?? user?.avatarUrl);
     }
   }, [profile, user?.avatarUrl]);
@@ -133,9 +142,21 @@ const EditarPerfil = () => {
         genero: gender || null,
         telefone: phone || null,
         provincia: province || null,
+        // Vazio = "não mudar" (a API não limpa estes campos por PATCH).
+        ...(olhoMaisFraco ? { olho_mais_fraco: olhoMaisFraco as OlhoMaisFraco } : {}),
+        ...(usaOculos ? { usa_oculos: usaOculos === "sim" } : {}),
+        ...(faixaEtaria ? { faixa_etaria: faixaEtaria as FaixaEtaria } : {}),
       });
 
-      setProfile({ ...profile, ...data, nome_completo: data.nome_completo ?? "" });
+      setProfile({
+        ...profile,
+        ...data,
+        nome_completo: data.nome_completo ?? "",
+        px_por_mm: data.px_por_mm ?? null,
+        olho_mais_fraco: data.olho_mais_fraco ?? null,
+        usa_oculos: data.usa_oculos ?? null,
+        faixa_etaria: data.faixa_etaria ?? null,
+      });
       // Ponte para a UI legada que ainda lê o AuthContext directamente
       // (ex.: consumidores fora do que este pedido cobriu explicitamente).
       updateUserProfile({
@@ -347,6 +368,66 @@ const EditarPerfil = () => {
                     </SelectContent>
                   </Select>
                 </div>
+              </CardContent>
+
+              <CardContent className="space-y-5 border-t border-border/60 pt-6">
+                <div>
+                  <h2 className="flex items-center gap-2 font-semibold text-foreground">
+                    <Eye className="w-4 h-4 text-muted-foreground" /> {t("Visao.perfilVisualTitulo")}
+                  </h2>
+                  <p className="mt-1 text-sm text-muted-foreground">{t("Visao.perfilVisualTexto")}</p>
+                </div>
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label>{t("Visao.olhoMaisFraco")}</Label>
+                    <Select value={olhoMaisFraco} onValueChange={setOlhoMaisFraco}>
+                      <SelectTrigger aria-label={t("Visao.olhoMaisFraco")}>
+                        <SelectValue placeholder={t("EditarPerfil.seleccione")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="direito">{t("Visao.olhoDireito")}</SelectItem>
+                        <SelectItem value="esquerdo">{t("Visao.olhoEsquerdo")}</SelectItem>
+                        <SelectItem value="nao_sei">{t("Visao.naoSei")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t("Visao.usaOculosPergunta")}</Label>
+                    <Select value={usaOculos} onValueChange={setUsaOculos}>
+                      <SelectTrigger aria-label={t("Visao.usaOculosPergunta")}>
+                        <SelectValue placeholder={t("EditarPerfil.seleccione")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="sim">{t("Visao.sim")}</SelectItem>
+                        <SelectItem value="nao">{t("Visao.nao")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t("Visao.faixaEtaria")}</Label>
+                    <Select value={faixaEtaria} onValueChange={setFaixaEtaria}>
+                      <SelectTrigger aria-label={t("Visao.faixaEtaria")}>
+                        <SelectValue placeholder={t("EditarPerfil.seleccione")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ate_5">{t("Visao.faixaAte5")}</SelectItem>
+                        <SelectItem value="6_12">{t("Visao.faixa6a12")}</SelectItem>
+                        <SelectItem value="13_17">{t("Visao.faixa13a17")}</SelectItem>
+                        <SelectItem value="18_39">{t("Visao.faixa18a39")}</SelectItem>
+                        <SelectItem value="40_59">{t("Visao.faixa40a59")}</SelectItem>
+                        <SelectItem value="60_mais">{t("Visao.faixa60Mais")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                {olhoMaisFraco === "nao_sei" && (
+                  <p className="rounded-lg bg-gold/10 px-3 py-2 text-sm text-foreground">
+                    {t("Visao.naoSeiOlhoTexto")}{" "}
+                    <Link to={localizar("/exercicios/acuidade")} className="font-medium text-teal underline">
+                      {t("Visao.fazerTesteAcuidade")}
+                    </Link>
+                  </p>
+                )}
               </CardContent>
 
               <CardContent className="border-t border-border/60 pt-6 flex flex-col sm:flex-row gap-3 sm:justify-end">
