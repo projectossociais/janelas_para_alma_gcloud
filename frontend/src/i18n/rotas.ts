@@ -35,14 +35,15 @@ export const ROTAS = [
   { chave: "circular", pt: "/circular", en: "/en/circular-economy" },
   { chave: "suporte", pt: "/suporte", en: "/en/support" },
   { chave: "exercicios", pt: "/exercicios", en: "/en/exercises" },
-  { chave: "exercicioConvergencia", pt: "/exercicios/convergencia", en: "/en/exercises/convergence" },
-  { chave: "exercicioCerebro", pt: "/exercicios/cerebro", en: "/en/exercises/brain" },
-  { chave: "exercicioTracking", pt: "/exercicios/tracking", en: "/en/exercises/tracking" },
-  { chave: "exercicioRelaxamento", pt: "/exercicios/relaxamento", en: "/en/exercises/relaxation" },
-  { chave: "exercicioAmbliopia", pt: "/exercicios/ambliopia", en: "/en/exercises/amblyopia" },
-  { chave: "exercicioSacadasConvergencia", pt: "/exercicios/sacadas-convergencia", en: "/en/exercises/convergence-saccades" },
-  { chave: "exercicioFlexibilidadeAcomodativa", pt: "/exercicios/flexibilidade-acomodativa", en: "/en/exercises/accommodative-flexibility" },
+  // Testes (triagem) e treinos sem webcam, desde 2026-09-28.
+  { chave: "exercicioAcuidade", pt: "/exercicios/acuidade", en: "/en/exercises/visual-acuity" },
+  { chave: "exercicioContraste", pt: "/exercicios/contraste", en: "/en/exercises/contrast-sensitivity" },
+  { chave: "exercicioAstigmatismo", pt: "/exercicios/astigmatismo", en: "/en/exercises/astigmatism" },
   { chave: "exercicioEstereopsia", pt: "/exercicios/estereopsia", en: "/en/exercises/stereopsis" },
+  { chave: "exercicioAneis", pt: "/exercicios/aneis", en: "/en/exercises/rings" },
+  { chave: "exercicioContrasteBlocos", pt: "/exercicios/contraste-em-blocos", en: "/en/exercises/contrast-blocks" },
+  { chave: "exercicioConvergencia", pt: "/exercicios/convergencia", en: "/en/exercises/convergence" },
+  { chave: "exercicioPertoLonge", pt: "/exercicios/perto-e-longe", en: "/en/exercises/near-and-far" },
   { chave: "scanner", pt: "/scanner", en: "/en/scanner" },
   { chave: "scannerResultados", pt: "/scanner/resultados", en: "/en/scanner/results", foraDoSitemap: true },
   { chave: "entrar", pt: "/login", en: "/en/sign-in", foraDoSitemap: true },
@@ -86,6 +87,14 @@ export const ALIASES_PT: readonly { pt: string; chave: ChaveRota }[] = [
   { pt: "/auth", chave: "entrar" },
   { pt: "/registo", chave: "entrar" },
   { pt: "/update-password", chave: "atualizarPassword" },
+  // Exercícios antigos (com webcam), retirados em 2026-09-28: os links
+  // guardados levam à lista de exercícios em vez de dar 404.
+  { pt: "/exercicios/tracking", chave: "exercicios" },
+  { pt: "/exercicios/cerebro", chave: "exercicios" },
+  { pt: "/exercicios/relaxamento", chave: "exercicios" },
+  { pt: "/exercicios/ambliopia", chave: "exercicios" },
+  { pt: "/exercicios/sacadas-convergencia", chave: "exercicios" },
+  { pt: "/exercicios/flexibilidade-acomodativa", chave: "exercicios" },
 ];
 
 type Entrada = { chave: ChaveRota; pt: string; en?: string };

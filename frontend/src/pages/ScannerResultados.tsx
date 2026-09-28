@@ -367,34 +367,35 @@ const CLINIC_RECOMMENDATIONS = (): Record<DiagnosisKey, ClinicRec[]> => ({
   ],
 });
 
+// Exercícios sem webcam (2026-09-28): testes de triagem e o treino do teste de 7 dias.
 const exercises = [
   { get title() {
-    return i18n.t("ScannerResultados.convergencia");
+    return i18n.t("Visao.acuidadeTitulo");
+  }, get to() {
+    return localizar("/exercicios/acuidade");
+  }, get desc() {
+    return i18n.t("Visao.acuidadeCartao");
+  } },
+  { get title() {
+    return i18n.t("Visao.contrasteTitulo");
+  }, get to() {
+    return localizar("/exercicios/contraste");
+  }, get desc() {
+    return i18n.t("Visao.contrasteCartao");
+  } },
+  { get title() {
+    return i18n.t("Visao.astigmatismoTitulo");
+  }, get to() {
+    return localizar("/exercicios/astigmatismo");
+  }, get desc() {
+    return i18n.t("Visao.astigmatismoCartao");
+  } },
+  { get title() {
+    return i18n.t("Visao.convergenciaTitulo");
   }, get to() {
     return localizar("/exercicios/convergencia");
   }, get desc() {
-    return i18n.t("ScannerResultados.treinaACoordenacaoBinocular");
-  } },
-  { get title() {
-    return i18n.t("ScannerResultados.cerebroVisao");
-  }, get to() {
-    return localizar("/exercicios/cerebro");
-  }, get desc() {
-    return i18n.t("ScannerResultados.estimulosCognitivosVisuais");
-  } },
-  { get title() {
-    return i18n.t("ScannerResultados.trackingOcular");
-  }, get to() {
-    return localizar("/exercicios/tracking");
-  }, get desc() {
-    return i18n.t("ScannerResultados.movimentosSuavesDeSeguimento");
-  } },
-  { get title() {
-    return i18n.t("ScannerResultados.relaxamento");
-  }, get to() {
-    return localizar("/exercicios/relaxamento");
-  }, get desc() {
-    return i18n.t("ScannerResultados.aliviaFadigaOcular");
+    return i18n.t("Visao.convergenciaCartao");
   } },
 ];
 

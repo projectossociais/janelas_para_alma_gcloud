@@ -6,18 +6,19 @@ import {
   Lock,
   Clock,
   CheckCircle2,
+  Contrast,
+  Eye,
   UserPlus,
   Glasses,
-  Zap,
+  LineChart,
   RefreshCw,
   Layers,
-  Infinity as InfinityIcon,
   Minimize2,
+  Sun,
   Target,
-  Wind,
   type LucideIcon,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
@@ -38,6 +39,8 @@ import { cn } from "@/lib/utils";
 interface Exercicio {
   /** Id tal como a API o conhece (`sessoes_exercicio.exercicio_id`). */
   id: string;
+  /** Teste de triagem ou treino de apoio. */
+  tipo: "teste" | "treino";
   title: string;
   description: string;
   icon: LucideIcon;
@@ -46,112 +49,122 @@ interface Exercicio {
   thumbnail?: string;
 }
 
+// Os ids são os históricos (acesso trial/Premium inalterado); o conteúdo
+// mudou em 2026-09-28 -- ver api/app/services/acesso_exercicios_service.py.
 const exerciciosTrial: Exercicio[] = [
   {
     id: "figure8",
+    tipo: "teste",
     get title() {
-      return i18n.t("Exercicios.acompanhamentoOcularEmOito");
+      return i18n.t("Visao.acuidadeTitulo");
     },
     get description() {
-      return i18n.t("Exercicios.sigaOPontoCom");
+      return i18n.t("Visao.acuidadeCartao");
     },
-    icon: InfinityIcon,
+    icon: Eye,
     get route() {
-      return localizar("/exercicios/tracking");
+      return localizar("/exercicios/acuidade");
+    },
+  },
+  {
+    id: "cerebro",
+    tipo: "teste",
+    get title() {
+      return i18n.t("Visao.contrasteTitulo");
+    },
+    get description() {
+      return i18n.t("Visao.contrasteCartao");
+    },
+    icon: Contrast,
+    get route() {
+      return localizar("/exercicios/contraste");
+    },
+  },
+  {
+    id: "relax",
+    tipo: "teste",
+    get title() {
+      return i18n.t("Visao.astigmatismoTitulo");
+    },
+    get description() {
+      return i18n.t("Visao.astigmatismoCartao");
+    },
+    icon: Sun,
+    get route() {
+      return localizar("/exercicios/astigmatismo");
     },
   },
   {
     id: "convergence",
+    tipo: "treino",
     get title() {
-      return i18n.t("Exercicios.treinoDeConvergencia");
+      return i18n.t("Visao.convergenciaTitulo");
     },
     get description() {
-      return i18n.t("Exercicios.foqueNosPontosEnquanto");
+      return i18n.t("Visao.convergenciaCartao");
     },
     icon: Minimize2,
     get route() {
       return localizar("/exercicios/convergencia");
     },
   },
-  {
-    id: "cerebro",
-    get title() {
-      return i18n.t("Exercicios.focoDinamico");
-    },
-    get description() {
-      return i18n.t("Exercicios.encontreEFixeO");
-    },
-    icon: Target,
-    get route() {
-      return localizar("/exercicios/cerebro");
-    },
-  },
-  {
-    id: "relax",
-    get title() {
-      return i18n.t("Exercicios.relaxamentoERespiracao");
-    },
-    get description() {
-      return i18n.t("Exercicios.sincronizeASuaRespiracao");
-    },
-    icon: Wind,
-    get route() {
-      return localizar("/exercicios/relaxamento");
-    },
-  },
 ];
 
 const exerciciosPremium: Exercicio[] = [
   {
-    id: "ambliopia",
-    get title() {
-      return i18n.t("Exercicios.antiSupressaoAmbliopia");
-    },
-    get description() {
-      return i18n.t("Exercicios.encontreOAlvoEntre");
-    },
-    icon: Glasses,
-    get route() {
-      return localizar("/exercicios/ambliopia");
-    },
-  },
-  {
-    id: "sacadas-convergencia",
-    get title() {
-      return i18n.t("Exercicios.convergenciaComSaltosSacadas");
-    },
-    get description() {
-      return i18n.t("Exercicios.alternaRapidamenteOFoco");
-    },
-    icon: Zap,
-    get route() {
-      return localizar("/exercicios/sacadas-convergencia");
-    },
-  },
-  {
-    id: "flexibilidade-acomodativa",
-    get title() {
-      return i18n.t("Exercicios.flexibilidadeAcomodativa");
-    },
-    get description() {
-      return i18n.t("Exercicios.mudaDeFocoEntre");
-    },
-    icon: RefreshCw,
-    get route() {
-      return localizar("/exercicios/flexibilidade-acomodativa");
-    },
-  },
-  {
     id: "estereopsia",
+    tipo: "teste",
     get title() {
-      return i18n.t("Exercicios.estereopsiaVisao3d");
+      return i18n.t("Visao.estereoTitulo");
     },
     get description() {
-      return i18n.t("Exercicios.padroesEstereoscopicosAvaliamE");
+      return i18n.t("Visao.estereoCartao");
     },
     icon: Layers,
     get route() {
       return localizar("/exercicios/estereopsia");
+    },
+  },
+  {
+    id: "ambliopia",
+    tipo: "treino",
+    get title() {
+      return i18n.t("Visao.aneisTitulo");
+    },
+    get description() {
+      return i18n.t("Visao.aneisCartao");
+    },
+    icon: Glasses,
+    get route() {
+      return localizar("/exercicios/aneis");
+    },
+  },
+  {
+    id: "sacadas-convergencia",
+    tipo: "treino",
+    get title() {
+      return i18n.t("Visao.contrasteBlocosTitulo");
+    },
+    get description() {
+      return i18n.t("Visao.contrasteBlocosCartao");
+    },
+    icon: Target,
+    get route() {
+      return localizar("/exercicios/contraste-em-blocos");
+    },
+  },
+  {
+    id: "flexibilidade-acomodativa",
+    tipo: "treino",
+    get title() {
+      return i18n.t("Visao.pertoLongeTitulo");
+    },
+    get description() {
+      return i18n.t("Visao.pertoLongeCartao");
+    },
+    icon: RefreshCw,
+    get route() {
+      return localizar("/exercicios/perto-e-longe");
     },
   },
 ];
@@ -300,6 +313,14 @@ const CartaoExercicio = ({ ex, grupo }: { ex: Exercicio; grupo: GrupoExercicio }
       </div>
 
       <div className="flex flex-1 flex-col p-5">
+        <span
+          className={cn(
+            "mb-2 self-start rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide",
+            ex.tipo === "teste" ? "bg-navy/10 text-navy dark:bg-foreground/10 dark:text-foreground" : "bg-teal/10 text-teal",
+          )}
+        >
+          {ex.tipo === "teste" ? t("Visao.etiquetaTeste") : t("Visao.etiquetaTreino")}
+        </span>
         <h3 className="mb-2 text-base font-semibold text-foreground">{ex.title}</h3>
         <p className={cn("flex-1 text-sm text-muted-foreground", !semBotao && "mb-5")}>{ex.description}</p>
         {desbloqueado ? (
@@ -339,8 +360,17 @@ const Exercicios = () => {
               {t("Exercicios.exerciciosVisuaisPraticos")}
             </h1>
             <p className="text-muted-foreground text-base md:text-lg">
-              {t("Exercicios.aprendeTecnicasSimplesE")}
+              {t("Visao.listaIntro")}
             </p>
+            <p className="mt-3 text-xs text-muted-foreground">{t("Visao.listaAviso")}</p>
+            {acesso.estado !== "sem_sessao" && (
+              <Button asChild variant="outline" size="sm" className="mt-5 gap-2 border-navy/25 text-navy hover:bg-navy/5 dark:text-foreground">
+                <Link to={localizar("/exercicios/progresso")}>
+                  <LineChart className="h-4 w-4" />
+                  {t("Visao.verProgresso")}
+                </Link>
+              </Button>
+            )}
           </div>
         </section>
 

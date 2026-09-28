@@ -47,7 +47,7 @@ export interface EstadoEscadaTeste {
 }
 
 export function iniciarEscadaTeste(total: number, indiceInicial: number): EstadoEscadaTeste {
-  if (total < 1) throw new Error("escada sem níveis");
+  if (total < 1) throw new Error("escada sem niveis") // erro interno, nunca chega ao ecrã;
   return {
     total,
     indice: Math.min(Math.max(indiceInicial, 0), total - 1),
@@ -129,7 +129,7 @@ export interface EstadoEscadaTreino {
 }
 
 export function iniciarEscadaTreino(total: number, indiceInicial: number): EstadoEscadaTreino {
-  if (total < 1) throw new Error("escada sem níveis");
+  if (total < 1) throw new Error("escada sem niveis") // erro interno, nunca chega ao ecrã;
   const indice = Math.min(Math.max(indiceInicial, 0), total - 1);
   return {
     total,

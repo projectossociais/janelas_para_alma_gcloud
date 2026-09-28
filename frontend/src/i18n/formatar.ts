@@ -26,3 +26,22 @@ export function formatarDataHora(data: Data): string {
     ? d.toLocaleString("en-US", { month: "long", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })
     : d.toLocaleString("pt-PT");
 }
+
+/** Número decimal com `casas` casas, vírgula em português, ponto em inglês. */
+export function formatarDecimal(n: number, casas: number): string {
+  return n.toLocaleString(emIngles() ? "en-US" : "pt-PT", {
+    minimumFractionDigits: casas,
+    maximumFractionDigits: casas,
+  });
+}
+
+/** Separador decimal do idioma activo. */
+export const separadorDecimal = (): string => (emIngles() ? "." : ",");
+
+/** Dia e mês curtos ("23/09" em português, "Sep 23" em inglês). */
+export function formatarDiaCurto(data: Data): string {
+  const d = new Date(data);
+  return emIngles()
+    ? d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    : d.toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" });
+}

@@ -44,14 +44,14 @@ import PerfilJogador from "./pages/jogo/PerfilJogador";
 import LojaDiamantes from "./pages/jogo/LojaDiamantes";
 import LojaMoedas from "./pages/jogo/LojaMoedas";
 
-import ConvergenciaExercise from "./pages/exercises/ConvergenciaExercise";
-import CerebroExercise from "./pages/exercises/CerebroExercise";
-import TrackingExercise from "./pages/exercises/TrackingExercise";
-import RelaxamentoExercise from "./pages/exercises/RelaxamentoExercise";
-import AmbliopiaExercise from "./pages/exercises/AmbliopiaExercise";
-import SacadasConvergenciaExercise from "./pages/exercises/SacadasConvergenciaExercise";
-import FlexibilidadeAcomodativaExercise from "./pages/exercises/FlexibilidadeAcomodativaExercise";
-import EstereopsiaExercise from "./pages/exercises/EstereopsiaExercise";
+import TesteAcuidade from "./pages/exercises/TesteAcuidade";
+import TesteContraste from "./pages/exercises/TesteContraste";
+import TesteAstigmatismo from "./pages/exercises/TesteAstigmatismo";
+import TesteEstereopsia from "./pages/exercises/TesteEstereopsia";
+import TreinoAneis from "./pages/exercises/TreinoAneis";
+import TreinoContrasteBlocos from "./pages/exercises/TreinoContrasteBlocos";
+import TreinoConvergencia from "./pages/exercises/TreinoConvergencia";
+import TreinoPertoLonge from "./pages/exercises/TreinoPertoLonge";
 import DashboardUser from "./pages/DashboardUser";
 import DashboardPro from "./pages/DashboardPro";
 import AdminLayout from "./pages/admin/AdminLayout";
@@ -93,14 +93,14 @@ const PAGINAS: Record<ChaveRota, ReactElement> = {
   circular: <Circular />,
   suporte: <Suporte />,
   exercicios: <Exercicios />,
-  exercicioConvergencia: <ConvergenciaExercise />,
-  exercicioCerebro: <CerebroExercise />,
-  exercicioTracking: <TrackingExercise />,
-  exercicioRelaxamento: <RelaxamentoExercise />,
-  exercicioAmbliopia: <AmbliopiaExercise />,
-  exercicioSacadasConvergencia: <SacadasConvergenciaExercise />,
-  exercicioFlexibilidadeAcomodativa: <FlexibilidadeAcomodativaExercise />,
-  exercicioEstereopsia: <EstereopsiaExercise />,
+  exercicioAcuidade: <TesteAcuidade />,
+  exercicioContraste: <TesteContraste />,
+  exercicioAstigmatismo: <TesteAstigmatismo />,
+  exercicioEstereopsia: <TesteEstereopsia />,
+  exercicioAneis: <TreinoAneis />,
+  exercicioContrasteBlocos: <TreinoContrasteBlocos />,
+  exercicioConvergencia: <TreinoConvergencia />,
+  exercicioPertoLonge: <TreinoPertoLonge />,
   scanner: <Scanner />,
   scannerResultados: <ScannerResultados />,
   entrar: <Auth />,

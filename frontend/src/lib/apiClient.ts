@@ -256,7 +256,15 @@ export interface PerfilPublico {
   notificacoes_lembretes: boolean;
   notificacoes_comunidade: boolean;
   criado_em: string;
+  /** Perfil visual dos exercícios (todos opcionais). */
+  px_por_mm?: number | null;
+  olho_mais_fraco?: OlhoMaisFraco | null;
+  usa_oculos?: boolean | null;
+  faixa_etaria?: FaixaEtaria | null;
 }
+
+export type OlhoMaisFraco = "direito" | "esquerdo" | "nao_sei";
+export type FaixaEtaria = "ate_5" | "6_12" | "13_17" | "18_39" | "40_59" | "60_mais";
 
 export interface PerfilAtualizarInput {
   nome_completo?: string;
@@ -268,6 +276,10 @@ export interface PerfilAtualizarInput {
   notificacoes_projetos?: boolean;
   notificacoes_lembretes?: boolean;
   notificacoes_comunidade?: boolean;
+  px_por_mm?: number;
+  olho_mais_fraco?: OlhoMaisFraco;
+  usa_oculos?: boolean;
+  faixa_etaria?: FaixaEtaria;
 }
 
 export const perfilApi = {
@@ -476,12 +488,25 @@ export const comprovativosApi = {
   enviarParaStorage: uploadsApi.enviarParaStorage,
 };
 
+/** Unidade do `limiar` de uma sessão de exercício (versão 2). */
+export type UnidadeLimiar = "logmar" | "log_cs" | "arcsec" | "segundos";
+
 export interface SessaoExercicioInput {
   exercicio_id: string;
   duracao_segundos: number;
   pontuacao?: number;
   precisao_percentual?: number;
   detalhes?: Record<string, unknown> | null;
+  /** Exercícios sem webcam gravam sempre 2 (1 = sessões antigas). */
+  versao?: 1 | 2;
+  olho?: "direito" | "esquerdo" | "ambos";
+  segundos_activos?: number;
+  limiar?: number | null;
+  unidade?: UnidadeLimiar;
+  distancia_mm?: number;
+  px_por_mm?: number;
+  calibrado?: boolean;
+  sinais?: Record<string, unknown> | null;
 }
 
 export interface SessaoExercicioPublica {
@@ -493,6 +518,15 @@ export interface SessaoExercicioPublica {
   precisao_percentual: number;
   detalhes: Record<string, unknown> | null;
   created_at: string;
+  versao: number;
+  olho: string | null;
+  segundos_activos: number | null;
+  limiar: number | null;
+  unidade: string | null;
+  distancia_mm: number | null;
+  px_por_mm: number | null;
+  calibrado: boolean | null;
+  sinais: Record<string, unknown> | null;
 }
 
 export const sessoesExercicioApi = {
@@ -504,6 +538,12 @@ export const sessoesExercicioApi = {
       method: "POST",
       body: JSON.stringify(dados),
     }),
+
+  /** As minhas sessões (só versão 2), mais recentes primeiro. */
+  minhas: (desde?: string) =>
+    pedido<SessaoExercicioPublica[]>(
+      `/sessoes-exercicio${desde ? `?desde=${encodeURIComponent(desde)}` : ""}`,
+    ),
 };
 
 export type EstadoAcessoExercicios =

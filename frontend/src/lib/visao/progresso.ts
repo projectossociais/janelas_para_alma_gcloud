@@ -70,8 +70,8 @@ export function ultimosDias(hoje: Date, n: number): string[] {
 }
 
 /** Último resultado de cada teste por olho (sessões mais recentes primeiro). */
-export function ultimosResultados(sessoes: readonly SessaoResumo[]): Map<string, SessaoResumo> {
-  const out = new Map<string, SessaoResumo>();
+export function ultimosResultados<T extends SessaoResumo>(sessoes: readonly T[]): Map<string, T> {
+  const out = new Map<string, T>();
   const ordenadas = [...sessoes].sort((a, b) => b.created_at.localeCompare(a.created_at));
   for (const s of ordenadas) {
     if (!IDS_TESTES.includes(s.exercicio_id)) continue;
