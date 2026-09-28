@@ -131,7 +131,7 @@ teleconsulta já existir (Sprint 4, Fase 2).
    - os 64 testes actuais ficam como estão — garantem que o comportamento não muda.
 7. **Mantém-se:** React + Vite + TypeScript + Tailwind + Radix, i18n pt-AO/en-US
    (`src/i18n/`, com `codigo-fonte.test.ts` e `locales.test.ts`), todas as regras do
-   CLAUDE.md §6 (hidratar uma vez, nunca sucesso antes do erro, motor dos exercícios).
+   CLAUDE.md §6 (hidratar uma vez, nunca sucesso antes do erro, exercícios sem câmara).
 
 ---
 
@@ -179,8 +179,10 @@ Cada fase é entregável sozinha. A "acuidade" marca quão nítido fica o produt
 
 ### Fase 4 · A app do dia a dia — 6/9 · ≈ 4 semanas
 - Dashboard do utilizador com a próxima teleconsulta real.
-- Os 8 exercícios, em conjunto com a melhoria dos exercícios (W-18, relatório do Lukeny).
-  O motor (`BaseExercise` + um só `requestAnimationFrame`) mantém-se; muda a moldura.
+- Os 8 exercícios. **Mudança de direcção (2026-09-28):** deixaram de usar webcam — são
+  testes de triagem e treinos com resposta do utilizador (ver CLAUDE.md §1 e §6, W-18). O
+  que o redesenho muda é só a moldura: a lógica em `lib/visao/`, os assistentes em
+  `components/visao/` e o palco branco (medição) mantêm-se.
 - Jogo Inclusivamente — decompor `JogoCuriosidades.tsx` antes de redesenhar.
 - **Pronto quando:** uma criança começa e termina um exercício e uma partida sem ajuda.
 
@@ -218,7 +220,7 @@ depois de a 2 fechar.
 | Reescrever tudo de uma vez e nunca terminar | Alta | Estrangulamento; cada fase vai para produção sozinha |
 | Partir comportamento que funciona | Alta | 64 testes intactos; regressão visual e axe no CI |
 | Identidade genérica outra vez | Alta | Fotografia/ilustração locais; designer angolano na Fase 1; rever cada proposta contra os princípios |
-| Estragar os exercícios | Média | Motor não muda, só a moldura; CLAUDE.md §6 (animação) |
+| Estragar os exercícios | Média | Lógica em `lib/visao/` com testes; só a moldura muda; palco sempre branco; CLAUDE.md §6 |
 | Textos EN maiores que PT | Média | Desenhar com as duas línguas; regressão visual nos dois idiomas |
 | Âmbito a crescer a meio | Média | Funcionalidades novas ficam fora, salvo decisão explícita |
 
