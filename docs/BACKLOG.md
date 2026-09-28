@@ -63,12 +63,13 @@ Fase 3) quando a conta Meta estiver pronta.
 
 | Item | O que fazer | Quem |
 |---|---|---|
-| UX-02 / L-10 | Corrigir "Três **tiers**, três formas de transformar" (`pt-AO.json`, `tresTiersTresFormas`) | L |
 | UX-03 | Pedir a província na doação de materiais (schema `DoacaoMateriaisCriar` + formulário em `Apoiar.tsx`) | W+L |
 | UX-05 | Mostrar as actividades de voluntariado numa página pública (`/kamba`) com `listarAtividades` | L |
-| L-04 | `ContactSection.tsx:227` usa `target="_top"` no Maps — mudar para `_blank` | L |
-| L-01 | Apagar os 9 `src/assets/*.asset.json` órfãos do Lovable | L |
 | CROSS-07 | Confirmar que a produção envia email do domínio do projecto e não de `onboarding@resend.dev` | L (DNS) |
+
+**✅ Feitos 2026-09-28:** UX-02/L-10 (gralha "Três tiers" → "Três níveis"), L-04 (Maps do
+`ContactSection.tsx` a abrir em separador novo), L-01 (9 ficheiros `.asset.json` órfãos
+do Lovable apagados).
 
 ### ⚪ Decisões e tarefas administrativas
 
@@ -779,8 +780,9 @@ colisão de numeração pré-existente na Sprint 3, não corrigida aqui para nã
 **Objectivo:** um visitante (ou uma clínica a avaliar a parceria) não encontra nada
 visivelmente avariado. Nenhuma destas tarefas toca base de dados, RLS ou paywall.
 
-### L-01 · Repor as 8 imagens perdidas no export da Lovable — ✅ **funcional; falta limpeza** (auditoria de 2026-09-28)
-- **Estado verificado:** nenhum ficheiro `.tsx`/`.ts` referencia os `.asset.json`, por isso nenhuma imagem fica em branco por causa deles. Mas o critério abaixo ainda falha: `grep -rl "__l5e" frontend/src` devolve **9 ficheiros órfãos** em `src/assets/*.asset.json` (`consequencias-estrabismo`, `estrabismo-intro-boy`, `eye-comparison`, `ocularis-home1`, `pillar-educacao-kids`, `populares-boy`, `registo-premium-doctor`, `tipos-estrabismo`, `tratamento-exam`). Apagá-los fecha o item — incluído na Fase 2 do Sprint 7
+### L-01 · Repor as 8 imagens perdidas no export da Lovable — ✅ **FEITO 2026-09-28**
+- **Feito:** os 9 ficheiros órfãos `src/assets/*.asset.json` foram apagados — `grep -rl "__l5e" frontend/src` já não devolve nada. Três deles (`estrabismo-intro-boy`, `pillar-educacao-kids`, `registo-premium-doctor`) já tinham equivalente real em `public/`, usado directamente por `StrabismusIntroCard.tsx`/`PillarsSection.tsx`/`RegistoPremium.tsx` — confirmado antes de apagar. Os restantes seis não eram referenciados em lado nenhum
+- **Nota à parte, não bloqueia o fecho deste item:** `public/eye-comparison.webp` existe mas nenhum `.tsx` o referencia — pode ser uma imagem morta, não confirmado; investigar se sobrar tempo, sem urgência
 - **Onde:** ficheiros `src/assets/*.asset.json` que apontam para `/__l5e/assets-v1/...`
 - **Causa:** ao exportar da Lovable, as imagens ficaram no CDN deles e nunca vieram para o repositório
 - **Quatro têm equivalente local** já em `public/`: `estrabismo-intro-boy`, `eye-comparison`, `registo-premium-doctor`, `pillar-educacao-kids` → basta apontar para o ficheiro local
@@ -798,8 +800,9 @@ visivelmente avariado. Nenhuma destas tarefas toca base de dados, RLS ou paywall
 - **Fazer:** altura máxima com `overflow-y: auto` no corpo do modal
 - **Pronto quando:** a última referência da lista é alcançável em telemóvel
 
-### L-04 · Correcções de navegação — ⚠️ **parcial** (auditoria de 2026-09-28)
-- **Estado verificado:** o link do Maps no rodapé (`Footer.tsx`) já abre em separador novo (`target="_blank"`). O cartão de localização em `ContactSection.tsx:227` **ainda usa `target="_top"`** e abre no mesmo separador. Os outros dois pontos (scroll no destino, terceiro link) estão no UX-08
+### L-04 · Correcções de navegação — ⚠️ **parcial** (Maps corrigido 2026-09-28)
+- **Feito:** `ContactSection.tsx:227` passou a `target="_blank"` — os dois links do Maps (rodapé e cartão de contacto) já abrem em separador novo
+- Os outros dois pontos (scroll no destino, terceiro link) continuam abertos, absorvidos pelo UX-08 / Sprint 7
 - Links rápidos não levam ao topo da página de destino → repor scroll no destino
 - O terceiro link rápido não funciona → identificar e corrigir
 - Link do Google Maps abre no mesmo separador → `target="_blank" rel="noopener noreferrer"`
@@ -909,7 +912,7 @@ para ele distinguir Esotropia/Exotropia/Hipertropia/Hipotropia (as 4 subcategori
 - Hoje os exercícios aparecem misturados com os planos. Apresentar os planos como grupos com lista, distintos dos exercícios
 - ⚠️ **Depende de W-01** (paywall) estar fechado — mesma página. Wilson primeiro, é uma linha
 
-#### L-10 · Linguagem — ⬜ **aberto** (auditoria de 2026-09-28: a gralha continua em `pt-AO.json`, chave `tresTiersTresFormas`; mesmo item que UX-02)
+#### L-10 · Linguagem — ✅ **FEITO 2026-09-28** (mesma correcção do UX-02: `tresTiersTresFormas` já não mistura inglês)
 - "Três tiers, três formas de transformar" mistura inglês com português
 - **Pronto quando:** não há termos em inglês no texto visível ao utilizador
 
@@ -2057,7 +2060,7 @@ Antes de tocar em qualquer item desta secção: `git log -1 main` vs. o commit r
 em Cloud Run/Vercel. Se divergir, disparar deploy e voltar a testar os 5 pontos "já
 corrigidos" abaixo em produção antes de os tratar como bug.
 
-### UX-02 — Gralha "Três tiers, três formas de transformar" · L — ⬜ **aberto** (confirmado 2026-09-28: `pt-AO.json`, chave `tresTiersTresFormas`)
+### UX-02 — Gralha "Três tiers, três formas de transformar" · L — ✅ **FEITO 2026-09-28** (`pt-AO.json`, chave `tresTiersTresFormas` → "Três níveis, três formas de transformar")
 
 `frontend/src/pages/Apoiar.tsx:422`. Mistura inglês ("tiers") com português — corrigir
 para "Três formas de transformar" ou "três níveis".
