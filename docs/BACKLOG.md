@@ -1125,6 +1125,38 @@ acrescentado antes disto agrava o problema.
 
 ---
 
+## SPRINT 7 — Redesenho total do frontend (UX/UI) · planeado 2026-09-28, não iniciado
+
+> **Documento completo e fonte única:** [`docs/REDESENHO_FRONTEND.md`](REDESENHO_FRONTEND.md).
+> Quando o dono do projecto falar do "sprint de redesenho", "reengenharia do frontend" ou
+> "novo visual", ler esse ficheiro primeiro — diagnóstico medido, princípios,
+> arquitectura, fases, métricas, riscos, decisões pendentes e registo de discussões.
+> Versão visual (privada): https://claude.ai/artifact/Udd7vt7MAXnspeJ7ufcbtB
+
+**Porquê (pedido do dono do projecto, 2026-09-28):** o frontend está "muito artificial,
+genérico e perceptível de que foi feito com um Lovable"; tem de ficar único, com impressão
+própria. Somam-se problemas de usabilidade, inconsistência entre páginas e "falta de
+suco". **Âmbito: tudo** — site público, área do utilizador, jogo, portal da clínica e
+painel admin.
+
+**Em resumo:** identidade própria assente em legibilidade (um produto de saúde visual tem
+de ser o site mais fácil de ler), design system em tokens, Radix mantido com pele nova,
+três layouts partilhados (Site · App · Consola), `React.lazy` por rota, migração página a
+página por jornada (nunca um lançamento "big bang"), regressão visual + axe + orçamento de
+performance no CI. Seis fases (Descoberta → Identidade → Fundações → Jornadas críticas →
+App → Consola), 17-19 semanas indicativas.
+
+**Estado:** nada implementado. Seis decisões do dono do projecto por responder antes da
+Fase 0 (marca, orçamento para gente local, quem desenha, jornada prioritária, tema
+escuro, Figma) — ver secção 8 do documento. Discussão detalhada marcada para mais tarde
+em 2026-09-28; o que for decidido regista-se na secção 9 do documento, não aqui.
+
+**Relação com outras tarefas:** absorve UX-08 (polimentos de UI), a correcção das 6
+categorias de `ScannerResultados` (Fase 3) e a "Próxima teleconsulta" real no
+`DashboardUser` (Fase 4); anda em conjunto com W-18 (melhorar os exercícios, Fase 4).
+
+---
+
 ## Sprint planeado — Identidade externa e email (decidido 2026-09-10, não iniciado)
 
 Discussão tida a 2026-09-10 (ver também [[gcloud-trial-google-auth-platform]] na memória).
