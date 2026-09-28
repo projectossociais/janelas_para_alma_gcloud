@@ -45,6 +45,7 @@ class PremiumRepository(Protocol):
         comprovativo_url: str | None = None,
     ) -> PedidoPremiumRegisto: ...
     def obter(self, pedido_id: str) -> PedidoPremiumRegisto | None: ...
+    def obter_mais_recente_por_utilizador(self, user_id: str) -> PedidoPremiumRegisto | None: ...
     def listar(self) -> list[PedidoPremiumRegisto]: ...
     def aprovar_pagamento(
         self, pedido_id: str, admin_id: str, quando: datetime, expira_em: datetime
@@ -97,6 +98,15 @@ class SQLAlchemyPremiumRepository:
 
     def obter(self, pedido_id: str) -> PedidoPremiumRegisto | None:
         row = self._sessao.get(PremiumRequest, uuid.UUID(pedido_id))
+        return _para_registo(row) if row else None
+
+    def obter_mais_recente_por_utilizador(self, user_id: str) -> PedidoPremiumRegisto | None:
+        row = self._sessao.scalars(
+            select(PremiumRequest)
+            .where(PremiumRequest.user_id == uuid.UUID(user_id))
+            .order_by(PremiumRequest.created_at.desc())
+            .limit(1)
+        ).first()
         return _para_registo(row) if row else None
 
     def listar(self) -> list[PedidoPremiumRegisto]:

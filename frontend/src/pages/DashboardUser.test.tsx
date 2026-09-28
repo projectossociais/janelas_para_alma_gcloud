@@ -14,6 +14,7 @@ vi.mock("@/lib/apiClient", () => ({
 
 vi.mock("@/components/Navbar", () => ({ default: () => null }));
 vi.mock("@/components/Footer", () => ({ default: () => null }));
+vi.mock("@/components/PremiumRequestBanner", () => ({ default: () => null }));
 
 let mockUser: { id: string; name: string } | null = { id: "u-1", name: "Ana" };
 vi.mock("@/contexts/AuthContext", () => ({
