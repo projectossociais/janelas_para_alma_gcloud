@@ -161,6 +161,12 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   Conhecedor, 91-150 Especialista, 151+ Mestre da Visão (`estatisticas_jogador_service.py`,
   exposto em `GET /jogo/perfil/estatisticas`)
 
+**Redesenho total do frontend planeado (Sprint 7, 2026-09-28, não iniciado):** o visual
+actual é considerado genérico/herdado do Lovable e vai ser redesenhado por inteiro. Antes
+de qualquer trabalho visual ou de UX no frontend, ler `docs/REDESENHO_FRONTEND.md` —
+princípios, arquitectura (tokens, layouts partilhados, migração por jornada) e decisões já
+tomadas. Não introduzir padrões visuais novos fora desse plano.
+
 Público-alvo inclui **crianças**. Todo o tratamento de dados deve assumir isso.
 
 Idioma do produto e do código: **português (pt-PT)**. Nomes de colunas, rotas e variáveis
