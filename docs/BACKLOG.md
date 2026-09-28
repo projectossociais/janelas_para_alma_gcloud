@@ -17,6 +17,86 @@
 
 **Legenda de responsável:** `W` = Wilson (Dev A) · `L` = Lukeny (Dev B) · `W+L` = par
 
+**Legenda de estado:** ✅ feito · ⚠️ parcial · ⬜ aberto · ⚪ obsoleto/substituído · ⏳ bloqueado
+
+---
+
+## 📍 Comece aqui — o que falta, verificado no código (auditoria de 2026-09-28)
+
+> Este ficheiro cresceu durante 3 semanas e muitos títulos ficaram sem marca de "feito"
+> mesmo depois de feitos. A 2026-09-28 cada item em aberto foi **confrontado com o código**
+> (não com a memória de ninguém) e marcado no próprio item. Esta secção é o resumo, por
+> prioridade. **Quem fechar um item, actualiza-o aqui e no sítio dele.**
+
+### 🔴 Urgente — risco legal ou de confiança
+
+| Item | O que se passa | Onde | Quem |
+|---|---|---|---|
+| **W-03 · Eliminação de conta** | `POST /conta/eliminar` só agenda a eliminação a 30 dias; **nada apaga a conta quando o prazo termina** (não há nenhum job agendado). A Política de Privacidade promete a eliminação | Sprint 0, W-03 | W |
+| **Consentimento parental** | Público inclui crianças e não existe fluxo de consentimento dos pais — só `consentimento_imagem` no rastreio | Bloqueio nº 5 | W + jurídico |
+| **Verificação de profissionais** | Qualquer pessoa se regista como `profissional`. O portal da clínica já está protegido (só um admin liga uma conta), mas o admin não tem nenhuma prova de credenciação para verificar | Sprint 4, "Riscos a não ignorar" | W |
+
+**Decisão de infra que desbloqueia dois itens:** um **Cloud Scheduler** (job diário a
+chamar um endpoint interno protegido) resolve a eliminação de contas (W-03) e os
+lembretes de consulta (Sprint 4, Fase 3). O projecto não tem hoje nenhum processo em
+segundo plano.
+
+### 🟠 Produto por fazer
+
+| Área | O que falta | Onde | Bloqueado por |
+|---|---|---|---|
+| Matchmaker | Fase 3 — lembretes por WhatsApp | Sprint 4 | Conta Meta Business (Wilson, em casa) + Cloud Scheduler |
+| Matchmaker | Fase 4B — consulta incluída no Premium vs. paga à parte | Sprint 4 | Preço por consulta (decisão do dono) |
+| Matchmaker | Selo de clínica verificada | Sprint 4 | Negociação comercial com números reais |
+| Matchmaker | `sugerir_clinicas` (correspondência por regras) | Sprint 4, PR C | Existir uma 2.ª clínica |
+| Matchmaker | "Próxima teleconsulta" real no `DashboardUser` (hoje o paciente só recebe o link por email) | Sprint 4, Fase 2 | — |
+| Exercícios | W-18 — melhorar os 4+4 exercícios e carregar os vídeos no R2 privado | Sprint 6 | Definir o que muda em cada exercício |
+| Exercícios | **Vídeos: backend pronto, frontend nunca os mostra** — `GET /exercicios/{id}/video` e `exerciciosApi.video()` existem, nenhum ecrã chama | L-02 | Fechar com W-18 |
+| Premium | L-12 — ecrã "a aguardar aprovação" para quem enviou comprovativo | Sprint 2 | — |
+| Scanner | W-13/W-14/W-16/L-14 — método, calibração, validação clínica, ecrã de resultados | Sprint 3 | Parceiro clínico (bloqueio nº 8) |
+| Scanner | Ecrã de resultados mostra 6 categorias, o cálculo só produz 2 | CLAUDE.md §11, W-09 | Localizar o repositório `janelas-scanner-api` |
+| Produto | Histórico de exames com evolução · loja de óculos · conteúdo editável pelo admin | Sprint 6 | — |
+| Frontend | Redesenho total UX/UI | **Sprint 7**, `docs/REDESENHO_FRONTEND.md` | 6 decisões do dono (secção 8 do plano) |
+
+### 🟡 Correcções rápidas (menos de uma hora cada)
+
+| Item | O que fazer | Quem |
+|---|---|---|
+| UX-02 / L-10 | Corrigir "Três **tiers**, três formas de transformar" (`pt-AO.json`, `tresTiersTresFormas`) | L |
+| UX-03 | Pedir a província na doação de materiais (schema `DoacaoMateriaisCriar` + formulário em `Apoiar.tsx`) | W+L |
+| UX-05 | Mostrar as actividades de voluntariado numa página pública (`/kamba`) com `listarAtividades` | L |
+| L-04 | `ContactSection.tsx:227` usa `target="_top"` no Maps — mudar para `_blank` | L |
+| L-01 | Apagar os 9 `src/assets/*.asset.json` órfãos do Lovable | L |
+| CROSS-07 | Confirmar que a produção envia email do domínio do projecto e não de `onboarding@resend.dev` | L (DNS) |
+
+### ⚪ Decisões e tarefas administrativas
+
+- **i18n:** 296 textos marcados para revisão humana (os de saúde com um clínico, os legais com apoio jurídico) e data de lançamento do site em inglês (`VITE_ENABLE_EN`)
+- **Jogo:** confirmar na base de dados as 4 correcções factuais às perguntas; aprovar os preços dos pacotes de moedas (350 / 1.000 / 2.500 Kz, "a confirmar" no CLAUDE.md §1)
+- **Google Cloud:** anotar a data de expiração do crédito do trial (bloqueio nº 7)
+- **Kamba Social:** proposta registada no fim deste ficheiro, à espera de decisão
+- **Tabela órfã `scanner_analyses`:** decidir apagar ou manter (CLAUDE.md §10 exige confirmação)
+- **UX-08, L-03, L-05, L-06, L-08** (polimentos visuais e levantamento de links) passam para o Sprint 7
+
+### ✅ Fechados nesta auditoria (o backlog dizia "aberto", o código diz "feito")
+
+W-02 (mudar palavra-passe) · W-05 (`.env` fora do git) · W-06 (API no Cloud Run) ·
+W-08 (CI) · W-12 + L-13 (candidaturas) · W-17 (não guardar imagens) · L-07 (Termos de
+Utilização) · L-09 (planos de exercícios separados) · L-11 (aprovar pagamento no admin) ·
+UX-04 (candidatura do Kamba) · UX-07 (painel com dados reais) · sprint "Identidade
+externa e email" (falta só o domínio) · bloqueio nº 4 (cartão no Cloud Run).
+**Obsoletos:** W-07 (assumia Supabase/RLS), W-15 (substituído pelo `janelas-scanner-api`),
+Sprint 5 (papéis já nasceram numa coluna única), UX-01 (deploy automático).
+
+### Notas para quem corre os testes localmente
+
+Duas falhas aparecem em máquinas Windows e **não afectam o produto** (no CI passam):
+`test_doacoes_router.py::test_rejeita_sem_materiais` (versão antiga do starlette
+instalada localmente, sem `HTTP_422_UNPROCESSABLE_CONTENT`) e `codigo-fonte.test.ts`
+(apanha "Fácil" num comentário de `AmbliopiaExercise.tsx:217`; a causa provável, não
+confirmada, são as quebras de linha CRLF do Windows). Actualizar o ambiente local ou
+reescrever o comentário resolve.
+
 ---
 
 ## Sprint 0 — Fundação da infraestrutura nova (2026-09-09)
@@ -629,14 +709,17 @@ Não depende de infraestrutura nova. Dias, não semanas.
 > Verificar primeiro: existe alguma linha em `premium_requests` com pagamento confirmado,
 > ou algum `profiles.papel = 'premium'`? A resposta escolhe a saída.
 
-### W-02 · Mudar palavra-passe passa a mudar mesmo a palavra-passe
+### W-02 · Mudar palavra-passe passa a mudar mesmo a palavra-passe — ✅ **FEITO** (confirmado na auditoria de 2026-09-28)
+- **Estado verificado:** `POST /conta/mudar-password` (`api/app/routers/conta.py`) → `ContaService.mudar_password`, que exige a palavra-passe actual. O texto abaixo descreve o problema original (era Supabase), fica como histórico
 - **Onde:** `src/pages/Configuracoes.tsx` → `handlePasswordSubmit`
 - **Hoje:** valida que os campos não estão vazios, mostra "Palavra-passe atualizada com sucesso" e **nunca chama o Supabase**
 - **Fazer:** reautenticar com a palavra-passe actual, depois `supabase.auth.updateUser({ password })`. Nunca mostrar sucesso sem verificar `error`
 - **Pronto quando:** palavra-passe actual errada é recusada com mensagem clara; a nova palavra-passe funciona no login seguinte e a antiga deixa de funcionar
 - **Testes:** integração — caminho de erro (palavra-passe actual errada) **e** caminho de sucesso
 
-### W-03 · Eliminar conta passa a eliminar mesmo a conta
+### W-03 · Eliminar conta passa a eliminar mesmo a conta — ⚠️ **PARCIAL, e é urgente** (auditoria de 2026-09-28)
+- **Estado verificado:** `POST /conta/eliminar` só **agenda** a eliminação para daqui a 30 dias (`ContaService.agendar_eliminacao`), e um login nesse intervalo cancela-a. **Nada apaga a conta quando o prazo termina** — o projecto não tem nenhum job agendado (no Supabase antigo havia `supabase/migrations/20260831120000_eliminacao_agendada_contas.sql`; na reescrita ficou só a metade que agenda). Resultado: os dados ficam para sempre, apesar de a Política de Privacidade prometer a eliminação
+- **Para fechar:** um processo diário (Cloud Scheduler → endpoint interno protegido) que apaga/anonimiza as contas com prazo vencido, com testes. É a mesma infra que os lembretes por WhatsApp (Sprint 4, Fase 3) precisam — ver a auditoria no topo deste ficheiro
 - **Onde:** `src/pages/Configuracoes.tsx` → `handleDelete`
 - **Hoje:** faz logout, mostra "Conta eliminada", navega para a home. Não apaga nada
 - **Porquê é urgente:** a Política de Privacidade publicada invoca GDPR/LGPD e aponta as Configurações como o mecanismo de eliminação. É um compromisso já assumido publicamente
@@ -674,7 +757,8 @@ colisão de numeração pré-existente na Sprint 3, não corrigida aqui para nã
 - **Testes:** integração — caminho de erro (API recusa/falha) e caminho de sucesso, mesmo
   padrão dos outros formulários já migrados (`ContactSection.tsx` → `contactMessagesApi`)
 
-### W-05 · Tirar o `.env` do controlo de versões
+### W-05 · Tirar o `.env` do controlo de versões — ✅ **FEITO** (confirmado na auditoria de 2026-09-28)
+- **Estado verificado:** `git ls-files` não devolve nenhum `.env`; `.env.example` existe em `frontend/`
 - **Onde:** `.gitignore` (já actualizado), falta `git rm --cached .env`
 - **Nota honesta:** as três variáveis actuais são `VITE_*`, públicas por natureza — vão no bundle do browser de qualquer forma. **Não é uma fuga de segredos hoje.** É uma armadilha para amanhã: a API vai precisar de `service_role`, credenciais SMTP e tokens de pagamento, e com o `.env` versionado isso é commitado sem ninguém dar por ela
 - **Pronto quando:** `git ls-files .env` não devolve nada e `.env.example` está commitado
@@ -686,7 +770,8 @@ colisão de numeração pré-existente na Sprint 3, não corrigida aqui para nã
 **Objectivo:** um visitante (ou uma clínica a avaliar a parceria) não encontra nada
 visivelmente avariado. Nenhuma destas tarefas toca base de dados, RLS ou paywall.
 
-### L-01 · Repor as 8 imagens perdidas no export da Lovable
+### L-01 · Repor as 8 imagens perdidas no export da Lovable — ✅ **funcional; falta limpeza** (auditoria de 2026-09-28)
+- **Estado verificado:** nenhum ficheiro `.tsx`/`.ts` referencia os `.asset.json`, por isso nenhuma imagem fica em branco por causa deles. Mas o critério abaixo ainda falha: `grep -rl "__l5e" frontend/src` devolve **9 ficheiros órfãos** em `src/assets/*.asset.json` (`consequencias-estrabismo`, `estrabismo-intro-boy`, `eye-comparison`, `ocularis-home1`, `pillar-educacao-kids`, `populares-boy`, `registo-premium-doctor`, `tipos-estrabismo`, `tratamento-exam`). Apagá-los fecha o item — incluído na Fase 2 do Sprint 7
 - **Onde:** ficheiros `src/assets/*.asset.json` que apontam para `/__l5e/assets-v1/...`
 - **Causa:** ao exportar da Lovable, as imagens ficaram no CDN deles e nunca vieram para o repositório
 - **Quatro têm equivalente local** já em `public/`: `estrabismo-intro-boy`, `eye-comparison`, `registo-premium-doctor`, `pillar-educacao-kids` → basta apontar para o ficheiro local
@@ -694,26 +779,28 @@ visivelmente avariado. Nenhuma destas tarefas toca base de dados, RLS ou paywall
 - **Aproveitar para resolver o outro problema:** o relatório UX pede fotografias reais de pessoas negras angolanas em vez de imagens genéricas. Como estas têm de ser substituídas de qualquer forma, substituir por imagens representativas resolve os dois pontos de uma vez
 - **Pronto quando:** nenhuma imagem do site fica em branco, e `grep -r "__l5e" src/` não devolve nada
 
-### L-02 · Vídeos dos exercícios
+### L-02 · Vídeos dos exercícios — ⚠️ **metade feita** (auditoria de 2026-09-28)
+- **Estado verificado:** o player antigo (`/videos/exercicio-*.mp4`) já não existe no frontend, por isso o critério "ou o player não aparece" está cumprido. Entretanto foi construído o caminho novo: vídeos num bucket R2 **privado** servidos por `GET /exercicios/{id}/video` com link temporário, e `exerciciosApi.video()` em `apiClient.ts`. **Mas nenhum ecrã chama `exerciciosApi.video()`** — o backend está pronto e o frontend nunca mostra os vídeos. Falta também carregar os ficheiros no bucket (W-18). Fechar junto com W-18
 - **Onde:** `src/pages/Exercicios.tsx` referencia `/videos/exercicio-*.mp4`; a pasta `public/videos` **não existe**
 - **Decisão de produto primeiro:** ou se produzem os 4 vídeos, ou se remove o player até existirem. Um player vazio é pior do que nenhum player
 - **Pronto quando:** ou os vídeos tocam, ou o player não aparece
 
-### L-03 · Modal "Últimas Referências" não faz scroll até ao fim
+### L-03 · Modal "Últimas Referências" não faz scroll até ao fim — ⬜ aberto, absorvido pelo UX-08 / Sprint 7
 - **Fazer:** altura máxima com `overflow-y: auto` no corpo do modal
 - **Pronto quando:** a última referência da lista é alcançável em telemóvel
 
-### L-04 · Correcções de navegação
+### L-04 · Correcções de navegação — ⚠️ **parcial** (auditoria de 2026-09-28)
+- **Estado verificado:** o link do Maps no rodapé (`Footer.tsx`) já abre em separador novo (`target="_blank"`). O cartão de localização em `ContactSection.tsx:227` **ainda usa `target="_top"`** e abre no mesmo separador. Os outros dois pontos (scroll no destino, terceiro link) estão no UX-08
 - Links rápidos não levam ao topo da página de destino → repor scroll no destino
 - O terceiro link rápido não funciona → identificar e corrigir
 - Link do Google Maps abre no mesmo separador → `target="_blank" rel="noopener noreferrer"`
 - **Pronto quando:** cada link do rodapé foi clicado e leva onde promete
 
-### L-05 · Dois ajustes visuais apontados na avaliação
+### L-05 · Dois ajustes visuais apontados na avaliação — ⬜ aberto, absorvido pelo UX-08 / Sprint 7
 - Botão "Voltar" pouco visível → contraste, posição ou tamanho
 - Botão de perfil colado ao logótipo depois do login → espaçamento
 
-### L-06 · Levantamento completo de botões e links
+### L-06 · Levantamento completo de botões e links — ⬜ aberto (passa a ser parte da auditoria da Fase 0 do Sprint 7)
 - O relatório diz que há mais elementos partidos além dos identificados
 - **Fazer:** percorrer o site elemento a elemento e registar o que não responde, numa lista neste ficheiro
 - **Pronto quando:** existe uma lista fechada — não é preciso corrigir tudo, é preciso saber o tamanho do problema
@@ -724,16 +811,17 @@ visivelmente avariado. Nenhuma destas tarefas toca base de dados, RLS ou paywall
 
 ### Wilson — a API
 
-#### W-06 · Serviço FastAPI publicado no Cloud Run
+#### W-06 · Serviço FastAPI publicado no Cloud Run — ✅ **FEITO** (ver DEP-02, 2026-09-15)
 - Estrutura em camadas (`routers` / `services` / `repositories` / `schemas` / `core`)
-- **Pronto quando:** um endpoint de healthcheck responde em produção
+- **Pronto quando:** um endpoint de healthcheck responde em produção — ✅ `/api/saude`
 
-#### W-07 · Validação de JWT e reencaminhamento do login
+#### W-07 · Validação de JWT e reencaminhamento do login — ⚪ **OBSOLETO** (auditoria de 2026-09-28)
+- **Porquê:** assumia que o Supabase e o RLS continuavam por baixo. A reescrita tirou-os por completo (CLAUDE.md §0): a autenticação é própria (JWT em cookie `httpOnly`, `auth_service.py`) e toda a autorização vive na API. O objectivo (401 sem sessão, cada um só lê os seus dados) está coberto por `obter_utilizador_atual` e pelos testes de router
 - A API fala com o Postgres **em nome do utilizador**, para o RLS continuar a proteger por baixo
 - `service_role` fica reservada a operações elevadas identificadas
 - **Pronto quando:** um pedido sem token devolve 401; um pedido com token lê apenas os dados desse utilizador
 
-#### W-08 · CI
+#### W-08 · CI — ✅ **FEITO** (`.github/workflows/ci.yml`: jobs `api`, `frontend`, `imagem-api`, `deploy-api`)
 - `pytest` + build da imagem Docker na API; `lint` + `test` + `build` no frontend
 - **Pronto quando:** um PR com teste a falhar é bloqueado automaticamente
 
@@ -797,20 +885,22 @@ para ele distinguir Esotropia/Exotropia/Hipertropia/Hipotropia (as 4 subcategori
 
 ### Lukeny — conteúdo e estrutura
 
-#### L-07 · Termos de Uso
+#### L-07 · Termos de Uso — ✅ **FEITO** (confirmado na auditoria de 2026-09-28)
+- **Estado verificado:** os Termos têm página própria, `TermosUtilizacao.tsx`, separada de `PoliticaPrivacidade.tsx`
 - `Politicas.tsx` intitula-se "Políticas de Privacidade **e Termos de Uso**" mas as 5 secções são todas de privacidade. Os Termos não existem
 - **Fazer:** escrever os Termos de Uso (condições de utilização, limitações de responsabilidade — sobretudo o aviso de que o rastreio **não substitui diagnóstico médico** —, condições do Plano Premium)
 - **Pronto quando:** o título da página corresponde ao conteúdo
 
-#### L-08 · Ordem da informação segue o menu
+#### L-08 · Ordem da informação segue o menu — ⬜ aberto, absorvido pelo UX-08 / Sprint 7
 - "Serviços" abre com "A Nossa Visão" em vez dos serviços; o mesmo em "Produtos"
 - **Pronto quando:** cada página começa por aquilo que o menu promete
 
-#### L-09 · Separar planos de exercícios
+#### L-09 · Separar planos de exercícios — ✅ **FEITO** (relatório semanal do Lukeny, 21-27/09/2026)
+- **Estado verificado:** `Exercicios.tsx` organiza os cartões em dois grupos (teste de 7 dias / Premium), com estados e preço visíveis
 - Hoje os exercícios aparecem misturados com os planos. Apresentar os planos como grupos com lista, distintos dos exercícios
 - ⚠️ **Depende de W-01** (paywall) estar fechado — mesma página. Wilson primeiro, é uma linha
 
-#### L-10 · Linguagem
+#### L-10 · Linguagem — ⬜ **aberto** (auditoria de 2026-09-28: a gralha continua em `pt-AO.json`, chave `tresTiersTresFormas`; mesmo item que UX-02)
 - "Três tiers, três formas de transformar" mistura inglês com português
 - **Pronto quando:** não há termos em inglês no texto visível ao utilizador
 
@@ -825,14 +915,16 @@ autorização é a dependency `obter_utilizador_admin`. O Premium é `utilizador
 não `papel → premium` (ver `CLAUDE.md` §0). A transacção `status → aprovado` +
 activação do utilizador + auditoria está no `PremiumService`, com testes.
 
-### L-11 · Botão "Aprovar pagamento" no painel
+### L-11 · Botão "Aprovar pagamento" no painel — ✅ **FEITO** (confirmado na auditoria de 2026-09-28)
+- **Estado verificado:** `AdminInbox.tsx` → `aprovarPagamento` → `premiumApi.aprovar(id)`
 - Em `AdminInbox.tsx`, distinto do "Contactado" já existente
 - Consome o endpoint de W-11 — **depende dele**
 
-### L-12 · Ecrã "a aguardar aprovação"
+### L-12 · Ecrã "a aguardar aprovação" — ⬜ **aberto** (auditoria de 2026-09-28)
+- **Estado verificado:** nenhuma página do utilizador mostra que o seu pedido de Premium está pendente. Quem envia o comprovativo fica sem saber o que se passa até o admin aprovar
 - Para quem tem pedido pendente, reutilizando `LockedVideoOverlay` / `PremiumPaywallModal`
 
-### W-12 + L-13 · Sistema de candidaturas
+### W-12 + L-13 · Sistema de candidaturas — ✅ **FEITO** (ver "W-12 — voluntariado", 2026-09-15, e "W-16 (candidaturas)", 2026-09-23)
 - Voluntários e clínicas parceiras chegam hoje só por email
 - Seguir as **10 boas práticas do [`README.md`](../README.md#10-gestão-de-candidaturas--boas-práticas)**: máquina de estados, transições auditadas, notificação em cada mudança, RLS de submissão pública com leitura restrita
 - **Wilson:** tabela, RLS e service com a máquina de estados
@@ -841,6 +933,12 @@ activação do utilizador + auditoria está no `PremiumService`, com testes.
 ---
 
 ## SPRINT 3 — Scanner clínico · Wilson
+
+> **Estado verificado na auditoria de 2026-09-28:** o cálculo vive no microserviço
+> `janelas-scanner-api` (repositório à parte, URL ainda por confirmar — ver W-09), não
+> nesta API, por isso **W-15 foi substituído** por esse serviço. **W-17 está feito**:
+> `screenings` guarda só medições, nunca a fotografia (CLAUDE.md §4.4). **W-13, W-14,
+> W-16 e L-14 continuam abertos**, todos à espera do parceiro clínico (bloqueio nº 8).
 
 > **Este é o sprint mais difícil do projecto, e o menos parecido com programação.**
 > Vale a pena ser directo: extrair pontos faciais é a parte fácil, e já está feita.
@@ -871,7 +969,7 @@ casos reais com diagnóstico conhecido, o número produzido **não é melhor do 
   captura (o `Scanner.tsx` já guia 3 poses — é a base para isto)
 - **Pronto quando:** duas capturas da mesma pessoa em condições diferentes dão resultados próximos
 
-### W-15 · Serviço de análise na API
+### W-15 · Serviço de análise na API — ⚪ **SUBSTITUÍDO** pelo `janelas-scanner-api` (microserviço à parte)
 - `services/` recebe coordenadas → calcula → devolve medição + grau de confiança **real**
 - **Testes obrigatórios** com casos de referência conhecidos: é lógica de resultado clínico
 
@@ -884,7 +982,7 @@ casos reais com diagnóstico conhecido, o número produzido **não é melhor do 
 - **Pronto quando:** há uma taxa de acerto medida, escrita, e um profissional de saúde
   disposto a assinar por baixo dela
 
-### W-17 · Política de não guardar imagens
+### W-17 · Política de não guardar imagens — ✅ **FEITO** (`screenings` só guarda medições; ver W-09)
 - Processar → extrair medições → descartar. Balde de 1 GB do Supabase esgota aos ~1.500
   exames, e são imagens faciais de crianças
 
@@ -1088,7 +1186,14 @@ própria" — o Jitsi é que serve a infra, tal como o Daily/100ms serviriam.
 
 ---
 
-## SPRINT 5 — Unificação de papéis · Wilson
+## SPRINT 5 — Unificação de papéis · Wilson — ⚪ **OBSOLETO** (auditoria de 2026-09-28)
+
+**Porquê:** a reescrita resolveu isto ao nascer. `utilizadores.papel` é uma única coluna
+enum (`AppRole` em `orm_models.py`) e não existe `user_roles` (CLAUDE.md §0, ponto 2);
+a lista de papéis está fechada (`admin`, `comum`, `voluntario`, `oftalmologista`,
+`profissional`, `estrabico`). O que ainda falta nesta área está noutro sítio: a
+verificação de credenciais de profissionais (Sprint 4, "Riscos a não ignorar"). Texto
+original abaixo, como histórico.
 
 `profiles.papel` e `user_roles` são duas fontes de verdade paralelas. Cada papel novo
 acrescentado antes disto agrava o problema.
@@ -1157,7 +1262,14 @@ categorias de `ScannerResultados` (Fase 3) e a "Próxima teleconsulta" real no
 
 ---
 
-## Sprint planeado — Identidade externa e email (decidido 2026-09-10, não iniciado)
+## Sprint planeado — Identidade externa e email (decidido 2026-09-10) — ✅ **FEITO**, excepto o domínio de email
+
+> **Estado verificado na auditoria de 2026-09-28:** as três peças estão feitas —
+> login com Google (AUTH-03, 2026-09-15), recuperação de palavra-passe e confirmação de
+> conta por email (ambas 2026-09-14, via Resend). **Falta só** o domínio verificado no
+> Resend (CROSS-07, DNS do Lukeny): em `api/app/core/config.py` o remetente por omissão
+> ainda é `onboarding@resend.dev`. Confirmar se a produção já tem `EMAIL_REMETENTE`
+> configurado com o domínio do projecto.
 
 Discussão tida a 2026-09-10 (ver também [[gcloud-trial-google-auth-platform]] na memória).
 Decisão do dono do projecto: **fazer**, num sprint próprio, mais para a frente. Não é
@@ -1827,7 +1939,7 @@ e nas fotos de publicações (`ADMIN-03`).
 | 2 | Bypass do Premium é teste interno? | ✅ **Resolvido** — não é. Fica como tarefa atribuída (W-01), não se remove fora do sprint | — |
 | 3 | Existe algum utilizador com Premium pago? | ✅ **Resolvido 2026-09-17** — confirmado que não, nessa data. O bypass do paywall já tinha saído do código antes disto ser perguntado (ver W-01) | Wilson |
 | 8 | Parceiro clínico disposto a validar o scanner com casos reais | ⏳ **Aberto** — bloqueia W-16, e sem ele não há produto clínico defensável | Wilson (parcerias) |
-| 4 | Cloud Run exige cartão registado, mesmo sem cobrar | ⏳ Aberto | Wilson (administrativo) |
+| 4 | Cloud Run exige cartão registado, mesmo sem cobrar | ✅ **Resolvido** (auditoria de 2026-09-28) — a API corre em produção no Cloud Run com deploy automático desde 2026-09-15, logo a conta de facturação já existe | — |
 | 5 | Consentimento parental para menores — nunca abordado, nem no código nem nos documentos | ⏳ Aberto | Wilson + apoio jurídico |
 | 6 | Recuperação de palavra-passe | ✅ **Resolvido 2026-09-14** — `POST /auth/recuperar-password` + `/auth/redefinir-password`, token de uso único hasheado (30 min), ligado no frontend. Ver secção dedicada abaixo | — |
 | 9 | Fornecedor de email transacional (Resend / SendGrid / SES) | ✅ **Resolvido 2026-09-14** — Resend. Falta só o domínio verificado no Resend (CROSS-07, Lukeny) para sair do remetente sandbox `onboarding@resend.dev` | Lukeny (DNS) |
@@ -1928,18 +2040,20 @@ qualquer um destes como tarefa nova, confirmar a data do último deploy da API (
 e do frontend (Vercel) contra o commit de `main` — se estiver atrasado, um deploy resolve
 sozinho, sem código novo.
 
-### UX-01 — Confirmar deploy de produção contra `main` · W
+### UX-01 — Confirmar deploy de produção contra `main` · W — ⚪ **OBSOLETO** (auditoria de 2026-09-28)
+
+**Porquê:** desde DEP-06 (2026-09-15) o deploy da API e do frontend é automático a cada merge em `main`, e cada merge desta sessão foi seguido da confirmação do job `deploy-api`. Produção deixou de poder ficar atrás de `main` sem ninguém dar por isso.
 
 Antes de tocar em qualquer item desta secção: `git log -1 main` vs. o commit realmente
 em Cloud Run/Vercel. Se divergir, disparar deploy e voltar a testar os 5 pontos "já
 corrigidos" abaixo em produção antes de os tratar como bug.
 
-### UX-02 — Gralha "Três tiers, três formas de transformar" · L
+### UX-02 — Gralha "Três tiers, três formas de transformar" · L — ⬜ **aberto** (confirmado 2026-09-28: `pt-AO.json`, chave `tresTiersTresFormas`)
 
 `frontend/src/pages/Apoiar.tsx:422`. Mistura inglês ("tiers") com português — corrigir
 para "Três formas de transformar" ou "três níveis".
 
-### UX-03 — Falta campo de localização/província na doação de materiais · L
+### UX-03 — Falta campo de localização/província na doação de materiais · L — ⬜ **aberto** (confirmado 2026-09-28: `DoacaoMateriaisCriar` continua sem o campo)
 
 `api/app/schemas/doacao.py` (`DoacaoMateriaisCriar`) não tem campo de
 localização/província do doador, nem o formulário em `Apoiar.tsx` o pede — sem isto a
@@ -1947,7 +2061,7 @@ equipa não sabe onde recolher o que foi doado. Adicionar ao schema Pydantic e a
 formulário; validação simples (campo obrigatório), sem lógica de service — é dado, não
 regra de negócio.
 
-### UX-04 — Candidatura pública do Kamba não grava em BD · L
+### UX-04 — Candidatura pública do Kamba não grava em BD · L — ✅ **FEITO 2026-09-23** (ver "W-16 (candidaturas)" no Sprint 0: os dois formulários chamam `voluntariadoApi.candidatar`)
 
 `VolunteerSection.tsx` (em `/kamba`) envia a candidatura por email via edge function do
 Supabase. Já existe `voluntariadoApi.candidatar` (`apiClient.ts:729`), ligado a
@@ -1956,7 +2070,7 @@ Supabase. Já existe `voluntariadoApi.candidatar` (`apiClient.ts:729`), ligado a
 candidaturas do admin nunca recebe nada pela via pública actual. Trocar o envio por
 email pela chamada real à API.
 
-### UX-05 — Actividades de voluntariado sem vitrine pública · L
+### UX-05 — Actividades de voluntariado sem vitrine pública · L — ⬜ **aberto** (confirmado 2026-09-28: nenhuma página pública chama `listarAtividades`)
 
 `voluntariadoApi.listarAtividades()` (`apiClient.ts:737`) está definida e nunca é
 chamada em nenhuma página pública — confirmado por grep a todo o `frontend/src`. O
@@ -1980,7 +2094,7 @@ ligado a uma clínica também não tinha forma de lá chegar. O destino é decid
 já redirecciona para `/` sozinho, via `RequireClinica`, se a conta não estiver
 efectivamente ligada a nenhuma clínica). Testado em `Navbar.test.tsx` (novo).
 
-### UX-07 — `DashboardUser.tsx` mostra dados fixos · W+L
+### UX-07 — `DashboardUser.tsx` mostra dados fixos · W+L — ✅ **FEITO 2026-09-23** (PR #72: "Exercícios disponíveis" reflecte o acesso real). Resta só a "Próxima teleconsulta" real — ver Sprint 4, Fase 2
 
 Linha 46: "Exercícios disponíveis" é sempre `"4"`, hardcoded. Linha 53: "Próxima
 teleconsulta" é sempre `"—"`. Coincide com "Painel pessoal com dados reais" já marcado

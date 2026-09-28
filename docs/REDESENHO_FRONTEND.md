@@ -56,7 +56,7 @@ nenhum.
 | Monólitos | `Navbar.tsx` 798 · `JogoCuriosidades.tsx` 1.092 · `ScannerResultados.tsx` 946 linhas | Têm de ser decompostos antes de redesenhados |
 | Cores escritas à mão | `#FFD500`, `#B89600` (Optioptika) | Fora dos tokens |
 | Tema escuro | 1 bloco `.dark` | Praticamente inexistente |
-| Restos do Lovable | 7 ficheiros `src/assets/*.asset.json` | Apontam para o CDN interno do Lovable (`/__l5e/...`); nada os usa — apagar |
+| Restos do Lovable | 9 ficheiros `src/assets/*.asset.json` | Apontam para o CDN interno do Lovable (`/__l5e/...`); nada os usa — apagar |
 | Rede de segurança | 64 ficheiros de teste · i18n pt-AO/en-US (~2.100 linhas) | Ponto forte: os testes procuram por papel/texto e sobrevivem a um redesenho |
 
 **Dívidas de UX já registadas no backlog:** UX-08 (ordem de secções, scroll em falta num
