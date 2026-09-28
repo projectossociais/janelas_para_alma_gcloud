@@ -224,7 +224,7 @@ const ContactSection = () => {
             {/* Localização card */}
             <a
               href="https://www.google.com/maps/place/Luanda,+Angola"
-              target="_top"
+              target="_blank"
               rel="noopener noreferrer"
               className="p-6 rounded-2xl bg-card shadow-card border border-border/50 space-y-3 transition-all hover:shadow-elevated hover:scale-[1.03] text-center cursor-pointer block focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
             >
