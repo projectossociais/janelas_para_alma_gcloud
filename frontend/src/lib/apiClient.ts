@@ -696,6 +696,10 @@ export const premiumApi = {
       body: JSON.stringify(dados),
     }),
 
+  /** L-12 — o pedido mais recente do próprio utilizador (`null` se nunca
+   *  submeteu nenhum). Exige sessão; nunca aceita um id do chamador. */
+  meuPedido: () => pedido<PedidoPremiumPublico | null>("/premium-requests/meu"),
+
   /** Só admin. */
   listar: () => pedido<PedidoPremiumAdmin[]>("/premium-requests"),
 

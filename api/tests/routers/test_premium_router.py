@@ -40,6 +40,12 @@ class RepositorioPremiumFalso:
     def obter(self, pedido_id) -> PedidoPremiumRegisto | None:
         return self._pedidos.get(pedido_id)
 
+    def obter_mais_recente_por_utilizador(self, user_id) -> PedidoPremiumRegisto | None:
+        # Ordem de inserção como critério de desempate -- em testes rápidos
+        # dois pedidos podem ter o mesmo `created_at` até ao microssegundo.
+        do_utilizador = [p for p in self._pedidos.values() if p.user_id == user_id]
+        return do_utilizador[-1] if do_utilizador else None
+
     def listar(self) -> list[PedidoPremiumRegisto]:
         return list(self._pedidos.values())
 
@@ -199,3 +205,55 @@ def test_revogar_inexistente_404(ambiente) -> None:
     c, _, token_admin, _ = ambiente
     c.cookies.set("access_token", token_admin)
     assert c.post("/premium-requests/ped-999/revogar").status_code == 404
+
+
+# --- L-12: o próprio utilizador consulta o estado do seu pedido ----------
+
+
+def test_meu_pedido_sem_sessao_401(ambiente) -> None:
+    c, *_ = ambiente
+    assert c.get("/premium-requests/meu").status_code == 401
+
+
+def test_meu_pedido_sem_nenhum_pedido_devolve_null(ambiente) -> None:
+    c, _, _, token_comum = ambiente
+    c.cookies.set("access_token", token_comum)
+    r = c.get("/premium-requests/meu")
+    assert r.status_code == 200
+    assert r.json() is None
+
+
+def test_meu_pedido_devolve_pendente(ambiente) -> None:
+    c, repo, _, token_comum = ambiente
+    repo.criar("Rui", "rui@example.com", None, "mensal", "id-comum")
+    c.cookies.set("access_token", token_comum)
+
+    r = c.get("/premium-requests/meu")
+
+    assert r.status_code == 200
+    assert r.json()["status"] == "pendente"
+
+
+def test_meu_pedido_devolve_o_mais_recente(ambiente) -> None:
+    c, repo, token_admin, token_comum = ambiente
+    primeiro = repo.criar("Rui", "rui@example.com", None, "mensal", "id-comum")
+    c.cookies.set("access_token", token_admin)
+    c.post(f"/premium-requests/{primeiro.id}/revogar")
+    repo.criar("Rui", "rui@example.com", None, "mensal", "id-comum")
+
+    c.cookies.set("access_token", token_comum)
+    r = c.get("/premium-requests/meu")
+
+    assert r.status_code == 200
+    assert r.json()["status"] == "pendente"
+
+
+def test_meu_pedido_nunca_devolve_o_de_outro_utilizador(ambiente) -> None:
+    c, repo, _, token_comum = ambiente
+    repo.criar("Ana", "ana@example.com", None, "mensal", "id-outro")
+    c.cookies.set("access_token", token_comum)
+
+    r = c.get("/premium-requests/meu")
+
+    assert r.status_code == 200
+    assert r.json() is None

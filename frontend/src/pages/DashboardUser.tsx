@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import PremiumRequestBanner from "@/components/PremiumRequestBanner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Eye, Activity, Sparkles, Calendar, Play } from "lucide-react";
@@ -39,6 +40,8 @@ const DashboardUser = () => {
           <h1 className="text-3xl font-bold">{primeiroNome ? t("DashboardUser.saudacao", { nome: primeiroNome }) : t("DashboardUser.saudacaoSemNome")} 👋</h1>
           <p className="text-muted-foreground">{t("DashboardUser.oSeuEspacoDe")}</p>
         </div>
+
+        <PremiumRequestBanner />
 
         <div className="grid md:grid-cols-3 gap-4">
           <Card>

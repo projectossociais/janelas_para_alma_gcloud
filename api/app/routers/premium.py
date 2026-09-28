@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.core.dependencies import (
     obter_utilizador_admin,
+    obter_utilizador_atual,
     obter_utilizador_atual_opcional,
 )
 from app.db import obter_sessao
@@ -60,6 +61,17 @@ def criar_pedido(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="essa chave não é um comprovativo válido",
         ) from exc
+
+
+@router.get("/meu", response_model=PedidoPremiumPublico | None)
+def obter_meu_pedido(
+    utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
+    repo: SQLAlchemyPremiumRepository = Depends(obter_premium_repository),
+) -> PedidoPremiumRegisto | None:
+    """O mais recente pedido do próprio utilizador — a L-12 (ecrã "a aguardar
+    aprovação"). Nunca aceita um id vindo do pedido: é sempre o utilizador
+    do cookie de sessão a decidir de quem é o pedido devolvido."""
+    return repo.obter_mais_recente_por_utilizador(utilizador.id)
 
 
 @router.get(
