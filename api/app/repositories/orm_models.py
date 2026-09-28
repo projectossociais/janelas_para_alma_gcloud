@@ -116,6 +116,10 @@ class Utilizador(Base):
 
     # Ver antigo supabase/migrations/20260831120000_eliminacao_agendada_contas.sql
     eliminar_agendado_para: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Marca que `EliminacaoContaService` já processou esta conta -- nunca se
+    # reprocessa. Ver docs/BACKLOG.md, W-03: anonimizar, não apagar a linha
+    # (apagar em cascata destruiria histórico clínico real).
+    anonimizado_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     # AUTH-02: conta nasce por confirmar; /auth/entrar recusa login enquanto
     # isto for false (bloqueio total, decisão do dono do projecto). Nunca há

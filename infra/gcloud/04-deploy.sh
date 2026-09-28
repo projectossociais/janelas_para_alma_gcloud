@@ -56,6 +56,11 @@ if gcloud secrets describe jpa-resend-api-key >/dev/null 2>&1; then
 else
   echo "    Resend sem chave (03-secrets.sh) — recuperação de password fica por activar."
 fi
+if gcloud secrets describe jpa-cron-secret >/dev/null 2>&1; then
+  API_SECRETS="${API_SECRETS},CRON_SECRET=jpa-cron-secret:latest"
+else
+  echo "    Sem jpa-cron-secret (03-secrets.sh) — eliminação real de contas (W-03) fica desligada."
+fi
 # Não é secreto (corre no browser, dentro do próprio id_token que o Google
 # Identity Services emite) -- ver core/google_auth.py. Vazio até o dono do
 # projecto criar o cliente OAuth na consola do GCP; sem isto, o botão de

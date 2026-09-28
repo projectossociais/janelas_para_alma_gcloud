@@ -285,6 +285,18 @@ activa; verificar e testar isso explicitamente.**
    `.env` no `.gitignore` desde o primeiro commit — não repetir esse erro.
 6. **Nunca correr `docker compose` de produção com os segredos de desenvolvimento.** Os
    valores em `docker-compose.yml` e `.env.example` são só para local.
+7. **Eliminação de conta é anonimização, nunca `DELETE` da linha (W-03, 2026-09-28).**
+   `utilizadores` tem `ON DELETE CASCADE` de tabelas com histórico clínico/sessão real
+   (`screenings`, `sessoes_exercicio`, etc.) — apagar a linha destruiria esse histórico
+   junto com a identidade. `EliminacaoContaService` (corrido por um job diário do Cloud
+   Scheduler, nunca por um utilizador) limpa email/password/dados pessoais em
+   `utilizadores` e nas tabelas que copiam nome/email/telefone directamente
+   (`premium_requests`, `agendamentos_clinicos`, `contact_messages`,
+   `candidaturas_voluntariado`), mantendo o `id` e tudo o resto intacto.
+8. **Endpoints internos (Cloud Scheduler, nunca um browser) usam um segredo partilhado
+   em cabeçalho, nunca sessão.** `obter_cron_valido` (`core/dependencies.py`) compara
+   `X-Cron-Secret` com `CRON_SECRET` via `hmac.compare_digest`; sem o segredo configurado,
+   recusa sempre — nunca fica "aberto por engano" em produção por falta de configuração.
 
 ---
 

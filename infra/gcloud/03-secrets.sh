@@ -8,6 +8,7 @@
 #   jpa-r2-access-key-id      Cloudflare R2 (só se R2_ACCESS_KEY_ID estiver definida)
 #   jpa-r2-secret-access-key  Cloudflare R2 (idem)
 #   jpa-resend-api-key        Resend (só se RESEND_API_KEY estiver definida)
+#   jpa-cron-secret           chamadas internas do Cloud Scheduler (W-03; gerado se não for fornecido)
 set -euo pipefail
 cd "$(dirname "$0")"
 [ -f ./00-config.sh ] && source ./00-config.sh
@@ -45,10 +46,13 @@ else
   echo "    Resend sem chave — a saltar (recuperação de password fica por activar)."
 fi
 
+CRON_SECRET="${CRON_SECRET:-$(python -c 'import secrets; print(secrets.token_urlsafe(32))')}"
+upsert_secret jpa-cron-secret "$CRON_SECRET"
+
 echo "==> Acesso do service account de runtime aos segredos"
 PROJECT_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
 RUNTIME_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
-for s in jpa-database-url jpa-jwt-secret-key jpa-r2-access-key-id jpa-r2-secret-access-key jpa-resend-api-key; do
+for s in jpa-database-url jpa-jwt-secret-key jpa-r2-access-key-id jpa-r2-secret-access-key jpa-resend-api-key jpa-cron-secret; do
   gcloud secrets describe "$s" >/dev/null 2>&1 || continue
   gcloud secrets add-iam-policy-binding "$s" \
     --member="serviceAccount:${RUNTIME_SA}" \

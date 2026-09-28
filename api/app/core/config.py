@@ -78,6 +78,13 @@ class Settings(BaseSettings):
     # produção, onde seriam diamantes grátis. Ver services/loja_jogo_service.py.
     jogo_pagamentos_simulados: bool = False
 
+    # Segredo partilhado com o Cloud Scheduler para chamar endpoints internos
+    # (hoje só a eliminação real de contas, W-03) sem sessão de utilizador --
+    # ver core/dependencies.py `obter_cron_valido` e routers/interno.py.
+    # Vazio por omissão de propósito: sem valor definido, o endpoint recusa
+    # sempre (nunca "aberto por engano" em produção por falta de configuração).
+    cron_secret: str = ""
+
     @property
     def cookie_seguro(self) -> bool:
         """Cookies com `Secure` fora de desenvolvimento — exige HTTPS, que só
