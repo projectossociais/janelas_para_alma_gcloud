@@ -15,7 +15,16 @@ const CHAVES_FASE: Record<FaseRespiracao, string> = {
  * os olhos. Um só `requestAnimationFrame`; a escala da orbe só é escrita
  * aqui, nunca com uma `transition` CSS por cima (CLAUDE.md §6).
  */
-const PausaRespiracao = ({ segundos, aoTerminar }: { segundos: number; aoTerminar: () => void }) => {
+const PausaRespiracao = ({
+  segundos,
+  aoTerminar,
+  comTapaOlho = true,
+}: {
+  segundos: number;
+  aoTerminar: () => void;
+  /** Treinos com os dois olhos (convergência) não mandam destapar o olho. */
+  comTapaOlho?: boolean;
+}) => {
   const { t } = useTranslation();
   const orbe = useRef<HTMLDivElement>(null);
   const [fase, setFase] = useState<FaseRespiracao>("inspire");
@@ -48,7 +57,7 @@ const PausaRespiracao = ({ segundos, aoTerminar }: { segundos: number; aoTermina
   return (
     <section className="mx-auto flex max-w-md flex-col items-center gap-5 text-center" aria-live="polite">
       <h2 className="text-xl font-bold text-foreground">{t("Visao.pausaTitulo")}</h2>
-      <p className="text-sm text-muted-foreground">{t("Visao.pausaTexto")}</p>
+      <p className="text-sm text-muted-foreground">{comTapaOlho ? t("Visao.pausaTexto") : t("Visao.pausaTextoDoisOlhos")}</p>
       <div className="relative h-44 w-44">
         <div
           ref={orbe}

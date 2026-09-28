@@ -14,6 +14,7 @@ import SeletorDireccao from "@/components/visao/SeletorDireccao";
 import { formatarDecimal } from "@/i18n/formatar";
 import { direccaoAleatoria, iniciarEscadaTreino, responderTreino, type Direccao } from "@/lib/visao/escada";
 import { aberturaPx } from "@/lib/visao/geometria";
+import { criarAgendaControlo } from "@/lib/visao/treino";
 import { ID_PERTO_LONGE } from "@/lib/visao/ids";
 
 const EXERCICIO_ID = ID_PERTO_LONGE;
@@ -58,6 +59,10 @@ const TarefaPertoLonge = ({
   const inicioFase = useRef(performance.now());
   const tempos = useRef<number[]>([]);
   const ciclos = useRef(0);
+  // A vez do controlo (10.ª, 20.ª... tentativa) pode calhar num toque de
+  // "perto" ou de "longe"; fica pendente até à próxima fase "perto".
+  const agendaControlo = useRef(criarAgendaControlo());
+  const tentativas = useRef(0);
   const escadaRef = useRef(escada);
   escadaRef.current = escada;
 
@@ -96,15 +101,17 @@ const TarefaPertoLonge = ({
     const s = (performance.now() - inicioFase.current) / 1000;
     tempos.current.push(s);
     api.registar({ controlo: false, acertou: true });
+    tentativas.current += 1;
     setEscada((e) => responderTreino(e, s <= alvo));
-    // O controlo aparece no lugar de uma fase "perto".
-    if (fase === "longe" && api.proximaEControlo()) setControlo(true);
+    // O controlo aparece no lugar de uma fase "perto" (a seguir a um "longe").
+    if (agendaControlo.current.aposResposta(tentativas.current, fase === "longe")) setControlo(true);
     proximaFase();
   };
 
   const responderControlo = (d: Direccao | null) => {
     if (!api.activo) return;
     api.registar({ controlo: true, acertou: d === direccao });
+    tentativas.current += 1;
     setControlo(false);
     setDireccao((x) => direccaoAleatoria(x));
     inicioFase.current = performance.now();

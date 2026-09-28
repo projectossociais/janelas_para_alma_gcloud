@@ -102,7 +102,8 @@ const TarefaConvergencia = ({
     if (!api.activo) return;
     const id = window.setInterval(() => {
       const em = ultima.current?.em;
-      setLembrar(em === undefined || performance.now() - em > LEMBRETE_MS);
+      // Só depois da primeira resposta: antes disso, a instrução já diz o que fazer.
+      setLembrar(em !== undefined && performance.now() - em > LEMBRETE_MS);
     }, 1000);
     return () => window.clearInterval(id);
   }, [api.activo]);

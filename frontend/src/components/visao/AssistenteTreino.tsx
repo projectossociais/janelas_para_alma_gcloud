@@ -406,6 +406,7 @@ const AssistenteTreino = ({
             {etapa === "pausa" && (
               <PausaRespiracao
                 segundos={PAUSA_SEGUNDOS}
+                comTapaOlho={monocular}
                 aoTerminar={() => {
                   setBloco((b) => b + 1);
                   inicioBloco.current = tempo.lerSegundos();

@@ -1,6 +1,6 @@
 import { ContadorTempoActivo, PAUSA_AUTOMATICA_MS } from "./tempoActivo";
 import { diferencaContraste, sinaisAcuidade } from "./resultados";
-import { eTentativaDeControlo, sinaisDeControlo } from "./treino";
+import { criarAgendaControlo, eTentativaDeControlo, sinaisDeControlo } from "./treino";
 import { minutosPorDia, sequenciaDeDias, ultimosResultados, type SessaoResumo } from "./progresso";
 
 describe("tempo activo", () => {
@@ -70,6 +70,25 @@ describe("controlo de atenção", () => {
   it("a 10.ª, 20.ª... tentativa é de controlo, nunca a primeira", () => {
     const controlo = Array.from({ length: 30 }, (_, i) => i).filter(eTentativaDeControlo);
     expect(controlo).toEqual([9, 19, 29]);
+  });
+
+  it("Perto e longe: o controlo aparece mesmo quando a 10.ª tentativa calha num toque de \"perto\"", () => {
+    // Bug real: a vez do controlo (depois de 9, 19, 29 respostas) cai sempre
+    // num toque de "perto" (toques ímpares) e o controlo só pode aparecer
+    // depois de um "longe" (toques pares) -- sem a agenda, nunca aparecia.
+    const agenda = criarAgendaControlo();
+    const mostrados: number[] = [];
+    for (let n = 1; n <= 30; n++) {
+      const tocouLonge = n % 2 === 0;
+      if (agenda.aposResposta(n, tocouLonge)) mostrados.push(n);
+    }
+    expect(mostrados).toEqual([10, 20, 30]);
+  });
+
+  it("a agenda mostra logo o controlo quando o momento é permitido", () => {
+    const agenda = criarAgendaControlo();
+    const mostrados = Array.from({ length: 20 }, (_, i) => i + 1).filter((n) => agenda.aposResposta(n, true));
+    expect(mostrados).toEqual([9, 19]);
   });
 
   it("um controlo errado marca baixa atenção", () => {

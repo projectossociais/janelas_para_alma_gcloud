@@ -18,6 +18,32 @@ export const INTERVALO_CONTROLO = 10;
  */
 export const eTentativaDeControlo = (n: number): boolean => n > 0 && (n + 1) % INTERVALO_CONTROLO === 0;
 
+/**
+ * Agenda do estímulo de controlo para tarefas em que ele só pode aparecer em
+ * certos momentos (ex.: Perto e longe, só no lugar de uma fase "perto"). A vez
+ * do controlo fica pendente até haver um momento em que possa aparecer --
+ * sem isto, se a 10.ª tentativa calhasse sempre num momento proibido, o
+ * controlo nunca aparecia (bug real, 2026-09-28).
+ */
+export function criarAgendaControlo() {
+  let pendente = false;
+  return {
+    /**
+     * Depois de registar `n` tentativas (a mesma regra de `proximaEControlo`:
+     * o próximo estímulo é de controlo quando `eTentativaDeControlo(n)`);
+     * devolve se o controlo aparece agora.
+     */
+    aposResposta(n: number, podeMostrarAgora: boolean): boolean {
+      if (eTentativaDeControlo(n)) pendente = true;
+      if (pendente && podeMostrarAgora) {
+        pendente = false;
+        return true;
+      }
+      return false;
+    },
+  };
+}
+
 export interface SinaisTreino {
   /** Errou pelo menos um estímulo de controlo: não conta para a dose. */
   baixa_atencao: boolean;
