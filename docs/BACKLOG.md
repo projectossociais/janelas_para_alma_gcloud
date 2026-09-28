@@ -53,7 +53,6 @@ Fase 3) quando a conta Meta estiver pronta.
 | Matchmaker | "Próxima teleconsulta" real no `DashboardUser` (hoje o paciente só recebe o link por email) | Sprint 4, Fase 2 | — |
 | Exercícios | W-18 — melhorar os 4+4 exercícios e carregar os vídeos no R2 privado | Sprint 6 | Definir o que muda em cada exercício |
 | Exercícios | **Vídeos: backend pronto, frontend nunca os mostra** — `GET /exercicios/{id}/video` e `exerciciosApi.video()` existem, nenhum ecrã chama | L-02 | Fechar com W-18 |
-| Premium | L-12 — ecrã "a aguardar aprovação" para quem enviou comprovativo | Sprint 2 | — |
 | Scanner | W-13/W-14/W-16/L-14 — método, calibração, validação clínica, ecrã de resultados | Sprint 3 | Parceiro clínico (bloqueio nº 8) |
 | Scanner | Ecrã de resultados mostra 6 categorias, o cálculo só produz 2 | CLAUDE.md §11, W-09 | Localizar o repositório `janelas-scanner-api` |
 | Produto | Histórico de exames com evolução · loja de óculos · conteúdo editável pelo admin | Sprint 6 | — |
@@ -70,6 +69,13 @@ Fase 3) quando a conta Meta estiver pronta.
 **✅ Feitos 2026-09-28:** UX-02/L-10 (gralha "Três tiers" → "Três níveis"), L-04 (Maps do
 `ContactSection.tsx` a abrir em separador novo), L-01 (9 ficheiros `.asset.json` órfãos
 do Lovable apagados).
+
+**✅ Fechado 2026-09-28: L-12.** Quem envia o comprovativo já não fica sem saber o que
+aconteceu — novo `GET /premium-requests/meu` (sessão própria, nunca um id vindo do
+pedido) devolve o pedido mais recente, e `PremiumRequestBanner` no `DashboardUser` mostra
+"a aguardar aprovação" (pendente) ou "acesso revogado" com atalho para um novo pedido
+(revogado); quem já tem `premium_ativo=true` nunca o vê. PR #111, testes dos dois lados,
+CI verde, deploy confirmado.
 
 ### ⚪ Decisões e tarefas administrativas
 
