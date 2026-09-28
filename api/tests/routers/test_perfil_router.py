@@ -118,3 +118,30 @@ def test_atualizar_perfil_sem_sessao_devolve_401(client: tuple[TestClient, Repos
     resposta = c.patch("/perfil", json={"biografia": "x"})
 
     assert resposta.status_code == 401
+
+
+def test_atualizar_perfil_visual_dos_exercicios(client: tuple[TestClient, RepositorioPerfilFalso]) -> None:
+    c, _ = _registar_e_ligar_perfil(client)
+
+    resposta = c.patch(
+        "/perfil",
+        json={"olho_mais_fraco": "esquerdo", "usa_oculos": True, "faixa_etaria": "6_12", "px_por_mm": 6.25},
+    )
+
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["olho_mais_fraco"] == "esquerdo"
+    assert corpo["usa_oculos"] is True
+    assert corpo["faixa_etaria"] == "6_12"
+    assert corpo["px_por_mm"] == 6.25
+
+
+@pytest.mark.parametrize(
+    "campo,valor",
+    [("olho_mais_fraco", "ambos"), ("faixa_etaria", "7"), ("px_por_mm", 0), ("px_por_mm", 500)],
+)
+def test_perfil_visual_invalido_devolve_422(
+    client: tuple[TestClient, RepositorioPerfilFalso], campo: str, valor: object
+) -> None:
+    c, _ = _registar_e_ligar_perfil(client)
+    assert c.patch("/perfil", json={campo: valor}).status_code == 422

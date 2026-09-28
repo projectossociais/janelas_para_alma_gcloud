@@ -35,6 +35,10 @@ class PerfilRegisto:
     notificacoes_lembretes: bool
     notificacoes_comunidade: bool
     criado_em: datetime
+    px_por_mm: float | None = None
+    olho_mais_fraco: str | None = None
+    usa_oculos: bool | None = None
+    faixa_etaria: str | None = None
 
 
 @dataclass(frozen=True)
@@ -53,6 +57,10 @@ class PerfilPatch:
     notificacoes_projetos: bool | None = None
     notificacoes_lembretes: bool | None = None
     notificacoes_comunidade: bool | None = None
+    px_por_mm: float | None = None
+    olho_mais_fraco: str | None = None
+    usa_oculos: bool | None = None
+    faixa_etaria: str | None = None
 
 
 class PerfilRepository(Protocol):
@@ -86,6 +94,10 @@ class SQLAlchemyPerfilRepository:
             notificacoes_lembretes=row.notificacoes_lembretes,
             notificacoes_comunidade=row.notificacoes_comunidade,
             criado_em=row.created_at,
+            px_por_mm=float(row.px_por_mm) if row.px_por_mm is not None else None,
+            olho_mais_fraco=row.olho_mais_fraco,
+            usa_oculos=row.usa_oculos,
+            faixa_etaria=row.faixa_etaria,
         )
 
     def obter(self, utilizador_id: str) -> PerfilRegisto | None:

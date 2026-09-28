@@ -80,6 +80,10 @@ class SQLAlchemyEliminacaoContaRepository:
         utilizador.genero = None
         utilizador.provincia = None
         utilizador.telefone = None
+        utilizador.px_por_mm = None
+        utilizador.olho_mais_fraco = None
+        utilizador.usa_oculos = None
+        utilizador.faixa_etaria = None
         utilizador.notificacoes_projetos = False
         utilizador.notificacoes_lembretes = False
         utilizador.notificacoes_comunidade = False

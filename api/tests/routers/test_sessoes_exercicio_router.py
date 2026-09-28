@@ -9,7 +9,7 @@ from app.core.dependencies import (
     obter_conta_service,
 )
 from app.main import app
-from app.repositories.sessoes_exercicio_repository import SessaoExercicioRegisto
+from app.repositories.sessoes_exercicio_repository import DadosVisao, SessaoExercicioRegisto
 from app.routers.exercicios import obter_acesso_exercicios_service
 from app.routers.sessoes_exercicio import obter_sessoes_exercicio_repository
 from app.services.acesso_exercicios_service import AcessoExerciciosService
@@ -33,6 +33,7 @@ def _acesso_premium() -> AcessoExerciciosService:
 class RepositorioSessoesFalso:
     def __init__(self) -> None:
         self.gravadas: list[dict] = []
+        self.pedidos_listagem: list[dict] = []
         self.a_falhar = False
 
     def criar(
@@ -43,6 +44,7 @@ class RepositorioSessoesFalso:
         pontuacao: int,
         precisao_percentual: float,
         detalhes: dict | None,
+        visao: DadosVisao | None = None,
     ) -> SessaoExercicioRegisto:
         if self.a_falhar:
             raise RuntimeError("falha simulada na gravação")
@@ -53,11 +55,22 @@ class RepositorioSessoesFalso:
             "pontuacao": pontuacao,
             "precisao_percentual": precisao_percentual,
             "detalhes": detalhes,
+            **(visao or DadosVisao()).__dict__,
         }
         self.gravadas.append(registo)
         return SessaoExercicioRegisto(
             id=f"sessao-{len(self.gravadas)}", created_at=datetime.now(UTC), **registo
         )
+
+    def listar_do_utilizador(
+        self, user_id: str, versao: int, desde: datetime | None, limite: int
+    ) -> list[SessaoExercicioRegisto]:
+        self.pedidos_listagem.append({"user_id": user_id, "versao": versao, "limite": limite})
+        return [
+            SessaoExercicioRegisto(id=f"sessao-{i}", created_at=datetime.now(UTC), **g)
+            for i, g in enumerate(self.gravadas)
+            if g["user_id"] == user_id and g["versao"] == versao
+        ][:limite]
 
 
 @pytest.fixture
@@ -203,3 +216,104 @@ def test_exercicio_eliminado_devolve_403_mesmo_para_premium(ambiente) -> None:
     resposta = c.post("/sessoes-exercicio", json={"exercicio_id": "programa-ia", "duracao_segundos": 60})
     assert resposta.status_code == 403
     assert repo.gravadas == []
+
+
+# --- Exercícios sem webcam (versão 2, 2026-09-28) ----------------------------
+
+
+def test_sessao_sem_campos_novos_fica_versao_1(ambiente) -> None:
+    """Um bundle antigo em cache continua a gravar -- e fica marcado como antigo."""
+    c, repo = ambiente
+    _registar(c)
+    assert c.post("/sessoes-exercicio", json={"exercicio_id": "figure8", "duracao_segundos": 60}).status_code == 201
+    assert repo.gravadas[0]["versao"] == 1
+    assert repo.gravadas[0]["olho"] is None
+
+
+def test_grava_resultado_por_olho_da_versao_2(ambiente) -> None:
+    c, repo = ambiente
+    _registar(c)
+    resposta = c.post(
+        "/sessoes-exercicio",
+        json={
+            "exercicio_id": "figure8",
+            "duracao_segundos": 95,
+            "versao": 2,
+            "olho": "esquerdo",
+            "segundos_activos": 80,
+            "limiar": 0.2,
+            "unidade": "logmar",
+            "distancia_mm": 600,
+            "px_por_mm": 6.3,
+            "calibrado": True,
+            "sinais": {"limite_ecra": False},
+        },
+    )
+    assert resposta.status_code == 201
+    corpo = resposta.json()
+    assert corpo["versao"] == 2
+    assert corpo["olho"] == "esquerdo"
+    assert corpo["limiar"] == 0.2
+    assert repo.gravadas[0]["unidade"] == "logmar"
+
+
+@pytest.mark.parametrize(
+    "campo,valor",
+    [
+        ("olho", "os_dois"),
+        ("unidade", "polegadas"),
+        ("versao", 3),
+        ("distancia_mm", 5),
+        ("px_por_mm", 0),
+        ("segundos_activos", -1),
+        ("sinais", {"x": "a" * 3000}),
+    ],
+)
+def test_campos_da_versao_2_invalidos_devolvem_422(ambiente, campo, valor) -> None:
+    c, repo = ambiente
+    _registar(c)
+    corpo = {"exercicio_id": "figure8", "duracao_segundos": 60, "versao": 2, campo: valor}
+    assert c.post("/sessoes-exercicio", json=corpo).status_code == 422
+    assert repo.gravadas == []
+
+
+def test_listar_sem_sessao_devolve_401(ambiente) -> None:
+    c, _ = ambiente
+    assert c.get("/sessoes-exercicio").status_code == 401
+
+
+def test_listar_devolve_so_as_minhas_e_so_versao_2_por_omissao(ambiente) -> None:
+    c, repo = ambiente
+    utilizador_id = _registar(c)
+    repo.gravadas.append(
+        {
+            "user_id": "outra-pessoa",
+            "exercicio_id": "figure8",
+            "duracao_segundos": 60,
+            "pontuacao": 0,
+            "precisao_percentual": 0,
+            "detalhes": None,
+            **DadosVisao(versao=2).__dict__,
+        }
+    )
+    c.post("/sessoes-exercicio", json={"exercicio_id": "figure8", "duracao_segundos": 60})
+    c.post("/sessoes-exercicio", json={"exercicio_id": "cerebro", "duracao_segundos": 60, "versao": 2})
+
+    resposta = c.get("/sessoes-exercicio")
+
+    assert resposta.status_code == 200
+    assert [s["exercicio_id"] for s in resposta.json()] == ["cerebro"]
+    assert repo.pedidos_listagem[-1]["user_id"] == utilizador_id
+
+
+def test_listar_ignora_user_id_na_query(ambiente) -> None:
+    c, repo = ambiente
+    utilizador_id = _registar(c)
+    c.get("/sessoes-exercicio", params={"user_id": "outra-pessoa"})
+    assert repo.pedidos_listagem[-1]["user_id"] == utilizador_id
+
+
+def test_listar_limite_fora_do_intervalo_devolve_422(ambiente) -> None:
+    c, _ = ambiente
+    _registar(c)
+    assert c.get("/sessoes-exercicio", params={"limite": 5000}).status_code == 422

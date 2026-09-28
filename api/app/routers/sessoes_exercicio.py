@@ -1,9 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from datetime import datetime
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import obter_utilizador_atual
 from app.db import obter_sessao
 from app.repositories.sessoes_exercicio_repository import (
+    DadosVisao,
     SessaoExercicioRegisto,
     SQLAlchemySessoesExercicioRepository,
 )
@@ -49,4 +52,31 @@ def registar_sessao(
         pontuacao=dados.pontuacao,
         precisao_percentual=dados.precisao_percentual,
         detalhes=dados.detalhes,
+        visao=DadosVisao(
+            versao=dados.versao,
+            olho=dados.olho,
+            segundos_activos=dados.segundos_activos,
+            limiar=dados.limiar,
+            unidade=dados.unidade,
+            distancia_mm=dados.distancia_mm,
+            px_por_mm=dados.px_por_mm,
+            calibrado=dados.calibrado,
+            sinais=dados.sinais,
+        ),
     )
+
+
+@router.get("", response_model=list[SessaoExercicioPublica])
+def listar_minhas_sessoes(
+    versao: int = Query(default=2, ge=1, le=2),
+    desde: datetime | None = None,
+    limite: int = Query(default=500, ge=1, le=1000),
+    utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
+    repo: SQLAlchemySessoesExercicioRepository = Depends(obter_sessoes_exercicio_repository),
+) -> list[SessaoExercicioRegisto]:
+    """O meu histórico (progresso e relatório semanal). Só leitura das
+    próprias sessões -- router fino, directo ao repository (CLAUDE.md §3).
+    Não passa pelo controlo de acesso: ver os próprios resultados não é
+    fazer um exercício. Por omissão só `versao` 2 -- as sessões antigas têm
+    ids com outro significado."""
+    return repo.listar_do_utilizador(utilizador.id, versao=versao, desde=desde, limite=limite)
