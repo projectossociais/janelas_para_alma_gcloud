@@ -6,7 +6,9 @@ deixou de ser só do router de autenticação a partir do momento em que um
 segundo router (perfil, e os que se seguirem) também precisa dela.
 """
 
-from fastapi import Cookie, Depends, HTTPException, status
+import hmac
+
+from fastapi import Cookie, Depends, Header, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.config import obter_settings
@@ -110,6 +112,18 @@ def obter_utilizador_admin(
             detail="requer papel de administrador",
         )
     return utilizador
+
+
+def obter_cron_valido(x_cron_secret: str | None = Header(default=None)) -> None:
+    """Protege endpoints internos chamados pelo Cloud Scheduler
+    (`routers/interno.py`), nunca por um utilizador -- não há cookie de
+    sessão nesse contexto, por isso o segredo vai num cabeçalho próprio.
+    `hmac.compare_digest` em vez de `==` para não vazar o segredo por
+    temporização. Sem `CRON_SECRET` configurado (vazio por omissão), recusa
+    sempre -- nunca "aberto por engano" em produção por falta de configuração."""
+    settings = obter_settings()
+    if not settings.cron_secret or not x_cron_secret or not hmac.compare_digest(x_cron_secret, settings.cron_secret):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="segredo inválido")
 
 
 def obter_clinica_parceira_repository(

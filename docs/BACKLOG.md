@@ -32,14 +32,15 @@
 
 | Item | O que se passa | Onde | Quem |
 |---|---|---|---|
-| **W-03 · Eliminação de conta** | `POST /conta/eliminar` só agenda a eliminação a 30 dias; **nada apaga a conta quando o prazo termina** (não há nenhum job agendado). A Política de Privacidade promete a eliminação | Sprint 0, W-03 | W |
 | **Consentimento parental** | Público inclui crianças e não existe fluxo de consentimento dos pais — só `consentimento_imagem` no rastreio | Bloqueio nº 5 | W + jurídico |
 | **Verificação de profissionais** | Qualquer pessoa se regista como `profissional`. O portal da clínica já está protegido (só um admin liga uma conta), mas o admin não tem nenhuma prova de credenciação para verificar | Sprint 4, "Riscos a não ignorar" | W |
 
-**Decisão de infra que desbloqueia dois itens:** um **Cloud Scheduler** (job diário a
-chamar um endpoint interno protegido) resolve a eliminação de contas (W-03) e os
-lembretes de consulta (Sprint 4, Fase 3). O projecto não tem hoje nenhum processo em
-segundo plano.
+**✅ Fechado 2026-09-28: W-03, eliminação de conta.** Decisão do dono do projecto:
+anonimizar, não apagar a linha (evita destruir em cascata histórico clínico real). Código
+e testes feitos; falta só o dono do projecto correr `03-secrets.sh`/`04-deploy.sh` de
+novo e criar o `gcloud scheduler jobs create` (comando exacto no item W-03). **Essa mesma
+infra de Cloud Scheduler** vai servir também para os lembretes de consulta (Sprint 4,
+Fase 3) quando a conta Meta estiver pronta.
 
 ### 🟠 Produto por fazer
 
@@ -84,7 +85,9 @@ W-02 (mudar palavra-passe) · W-05 (`.env` fora do git) · W-06 (API no Cloud Ru
 W-08 (CI) · W-12 + L-13 (candidaturas) · W-17 (não guardar imagens) · L-07 (Termos de
 Utilização) · L-09 (planos de exercícios separados) · L-11 (aprovar pagamento no admin) ·
 UX-04 (candidatura do Kamba) · UX-07 (painel com dados reais) · sprint "Identidade
-externa e email" (falta só o domínio) · bloqueio nº 4 (cartão no Cloud Run).
+externa e email" (falta só o domínio) · bloqueio nº 4 (cartão no Cloud Run) · **W-03
+(eliminação real de contas, por anonimização — código e testes feitos 2026-09-28, falta
+só o dono do projecto correr a infra do Cloud Scheduler)**.
 **Obsoletos:** W-07 (assumia Supabase/RLS), W-15 (substituído pelo `janelas-scanner-api`),
 Sprint 5 (papéis já nasceram numa coluna única), UX-01 (deploy automático).
 
@@ -717,15 +720,21 @@ Não depende de infraestrutura nova. Dias, não semanas.
 - **Pronto quando:** palavra-passe actual errada é recusada com mensagem clara; a nova palavra-passe funciona no login seguinte e a antiga deixa de funcionar
 - **Testes:** integração — caminho de erro (palavra-passe actual errada) **e** caminho de sucesso
 
-### W-03 · Eliminar conta passa a eliminar mesmo a conta — ⚠️ **PARCIAL, e é urgente** (auditoria de 2026-09-28)
-- **Estado verificado:** `POST /conta/eliminar` só **agenda** a eliminação para daqui a 30 dias (`ContaService.agendar_eliminacao`), e um login nesse intervalo cancela-a. **Nada apaga a conta quando o prazo termina** — o projecto não tem nenhum job agendado (no Supabase antigo havia `supabase/migrations/20260831120000_eliminacao_agendada_contas.sql`; na reescrita ficou só a metade que agenda). Resultado: os dados ficam para sempre, apesar de a Política de Privacidade prometer a eliminação
-- **Para fechar:** um processo diário (Cloud Scheduler → endpoint interno protegido) que apaga/anonimiza as contas com prazo vencido, com testes. É a mesma infra que os lembretes por WhatsApp (Sprint 4, Fase 3) precisam — ver a auditoria no topo deste ficheiro
-- **Onde:** `src/pages/Configuracoes.tsx` → `handleDelete`
-- **Hoje:** faz logout, mostra "Conta eliminada", navega para a home. Não apaga nada
-- **Porquê é urgente:** a Política de Privacidade publicada invoca GDPR/LGPD e aponta as Configurações como o mecanismo de eliminação. É um compromisso já assumido publicamente
-- **Fazer:** fluxo real de eliminação/anonimização, com confirmação explícita. Decidir e documentar o que é apagado e o que é anonimizado (sessões de exercício e doações podem ter de sobreviver anonimizadas)
-- **Pronto quando:** após eliminar, o login deixa de funcionar e os dados pessoais desapareceram da base de dados
-- **Testes:** integração, incluindo o caminho de erro
+### W-03 · Eliminar conta passa a eliminar mesmo a conta — ✅ **FEITO 2026-09-28** (anonimização, não apagar a linha)
+- **Decisão do dono do projecto (2026-09-28):** anonimizar em vez de apagar. Apagar `utilizadores` em cascata destruiria histórico clínico real (`screenings`, `sessoes_exercicio`, etc., todos `ON DELETE CASCADE`) que não tem de desaparecer só porque a identidade da pessoa desaparece
+- **Feito:** `utilizadores` ganha `anonimizado_em` (migração `f3c8a1e6b9d4`). Novo `EliminacaoContaService.processar_pendentes()` lê as contas com `eliminar_agendado_para` vencido e ainda não processadas, e por cada uma: apaga email/password (email passa a `conta-eliminada+<id>@anonimo.janelasparaalma.com`, password para um hash aleatório impossível de usar), limpa nome/avatar/biografia/data de nascimento/género/província/telefone/preferências de notificação, desliga o Premium, e faz o mesmo à cópia directa de nome/email/telefone que existe em `premium_requests`, `agendamentos_clinicos`, `contact_messages` e ao telefone em `candidaturas_voluntariado` (essas tabelas guardam os dados directamente, sem depender de um join — mesmo padrão de `Doacao.email`, ver CLAUDE.md). `Doacao` não tem `utilizador_id` nenhum, por isso não há como ligá-la a uma conta para anonimizar — limitação conhecida, aceitável porque doar nunca exigiu sessão
+- **Endpoint interno:** `POST /interno/eliminar-contas-pendentes`, protegido por um segredo partilhado no cabeçalho `X-Cron-Secret` (`obter_cron_valido`, `hmac.compare_digest`) — nunca por sessão de utilizador. Sem `CRON_SECRET` configurado, recusa sempre (nunca "aberto por engano" em produção)
+- **Infra por fazer (Wilson, uma vez):** correr `infra/gcloud/03-secrets.sh` de novo (cria `jpa-cron-secret`) e `04-deploy.sh` (liga-o ao Cloud Run), depois criar o agendamento:
+  ```bash
+  API_URL="$(gcloud run services describe jpa-api --region=$REGION --format='value(status.url)')"
+  CRON_SECRET="$(gcloud secrets versions access latest --secret=jpa-cron-secret)"
+  gcloud scheduler jobs create http eliminar-contas-pendentes \
+    --location="$REGION" --schedule="0 4 * * *" --uri="${API_URL}/interno/eliminar-contas-pendentes" \
+    --http-method=POST --headers="X-Cron-Secret=${CRON_SECRET}"
+  ```
+  Mesma infra que os lembretes por WhatsApp (Sprint 4, Fase 3) vão precisar
+- **Onde:** `src/pages/Configuracoes.tsx` → `handleDelete` (frontend inalterado — já mostra "Conta eliminada" depois de `POST /conta/eliminar`, que continua só a agendar; a anonimização em si acontece 30 dias depois, em segundo plano)
+- **Testes:** `test_eliminacao_conta_service.py` (nunca reprocessa, gera email/hash únicos por conta) + `test_interno_router.py` (403 sem segredo/com segredo errado, 200 com o segredo certo)
 
 ### W-04 · Scanner deixa de inventar diagnósticos — ✅ feito 2026-09-17
 - **Onde:** `src/pages/Scanner.tsx` (`DIAGNOSES[Math.floor(Math.random() * ...)]`)
