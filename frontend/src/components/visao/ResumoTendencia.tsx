@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { TrendingDown, TrendingUp, Minus, Clock } from "lucide-react";
-import type { SessaoExercicioPublica } from "@/lib/apiClient";
+import type { SessaoResumo } from "@/lib/visao/progresso";
 import { nomeDoOlho } from "@/components/visao/rotulos";
 import { tendencia, type Tendencia } from "@/lib/visao/tendencia";
 import type { Olho } from "@/lib/visao/resultados";
@@ -43,13 +43,27 @@ const ResumoTendencia = ({
   sessoes,
   exercicioId,
   olhos,
+  simples = false,
 }: {
-  sessoes: readonly SessaoExercicioPublica[];
+  sessoes: readonly (SessaoResumo & { calibrado?: boolean | null })[];
   exercicioId: string;
   olhos: readonly Olho[];
+  /** Em relatórios: só as frases, sem ícones, caixa nem cor. */
+  simples?: boolean;
 }) => {
   const { t } = useTranslation();
   const linhas = olhos.map((o) => ({ olho: o, r: tendencia(sessoes, exercicioId, o) }));
+  if (simples)
+    return (
+      <ul className="list-none space-y-1 pl-0">
+        {linhas.map(({ olho, r }) => (
+          <li key={olho}>
+            {fraseDeTendencia(t, olho, r)}
+            {r.tipo !== "poucos_dados" && r.aproximado && ` ${t("Visao.tendenciaAproximada")}`}
+          </li>
+        ))}
+      </ul>
+    );
   return (
     <section aria-label={t("Visao.tendenciaTitulo")} className="w-full rounded-xl border border-border bg-muted/30 p-4 text-left">
       <h3 className="mb-2 text-sm font-semibold text-foreground">{t("Visao.tendenciaTitulo")}</h3>

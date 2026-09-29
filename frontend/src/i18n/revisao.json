@@ -290,5 +290,7 @@
   "Visao.tendenciaContrastePiorou": "health",
   "Visao.tendenciaEstavel": "health",
   "Visao.autoAvaliacaoNota": "health",
-  "Visao.relatorioAutoAvaliacaoNota": "health"
+  "Visao.relatorioAutoAvaliacaoNota": "health",
+  "Visao.partilhaTexto": "legal",
+  "Visao.partilhadoAviso": "legal"
 }

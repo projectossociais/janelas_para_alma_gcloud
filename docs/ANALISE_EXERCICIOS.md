@@ -71,7 +71,7 @@ a cada 7 dias seguidos; modo criança **não** agora (fica para o Sprint 7); rel
 o médico por **link temporário partilhado pelo pai** (nunca envio automático).
 - [x] Fim do trial com a evolução medida da própria pessoa; Premium sem promessas falsas (#124)
 - [x] Bónus de assiduidade no Inclusivamente (PR à espera de revisão: tabela nova)
-- [ ] Relatório para o médico por link temporário, revogável (PR à espera de revisão: tabela nova)
+- [x] Relatório para o médico por link temporário, revogável (PR à espera de revisão: tabela nova)
 - Modo pais/criança: adiado para o Sprint 7
 
 ### Fase C — diferenciação clínica (precisa de parceiro clínico)

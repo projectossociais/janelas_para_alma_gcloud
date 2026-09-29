@@ -97,7 +97,9 @@
     "exerciciosProgressoTitulo": "My progress",
     "exerciciosProgressoDescricao": "Test results and training minutes, by eye.",
     "exerciciosRelatorioTitulo": "Weekly report",
-    "exerciciosRelatorioDescricao": "A printable weekly report of tests and training to take to your appointment."
+    "exerciciosRelatorioDescricao": "A printable weekly report of tests and training to take to your appointment.",
+    "relatorioPartilhadoTitulo": "Shared report",
+    "relatorioPartilhadoDescricao": "Exercise report shared by the family with the doctor."
   },
   "AboutSection": {
     "conhecaNos": "Get to Know Us",
@@ -2224,6 +2226,23 @@
     "relatorioAutoAvaliacaoNota": "Results marked as self-assessment (Convergence, Near and far) depend only on the user’s answers and are not measurements.",
     "bonusMoedas": "+{{moedas}} coins in the Inclusivamente game for today’s training.",
     "bonusMarco": "{{dias}} days in a row: +{{diamantes}} diamonds!",
-    "bonusIrAoJogo": "Go to the game"
+    "bonusIrAoJogo": "Go to the game",
+    "relatorioEvolucao": "Progress of each eye",
+    "partilhaTitulo": "Share with the doctor",
+    "partilhaTexto": "Create a read-only link and send it to your ophthalmologist (for example, on WhatsApp). Anyone with the link sees the first name, the weaker eye and the exercise results from the last 90 days, without email or contact details. It is valid for 30 days and you can revoke it at any time. Send it only to your doctor.",
+    "partilhaCriar": "Create a link for the doctor",
+    "partilhaCriado": "Link created. Copy it or send it now: for security, it is only shown once.",
+    "partilhaCopiar": "Copy link",
+    "partilhaCopiado": "Copied",
+    "partilhaEnviar": "Send",
+    "partilhaActivos": "Active links",
+    "partilhaNenhum": "No active links.",
+    "partilhaValidoAte": "Created on {{criado}} · valid until {{expira}}",
+    "partilhaRevogar": "Revoke",
+    "partilhaErro": "The link could not be created. Please try again.",
+    "partilhaErroRevogar": "The link could not be revoked. Please try again.",
+    "partilhadoAviso": "Report shared by the family through the Janelas Para a Alma platform. Link valid until {{expira}}.",
+    "partilhadoInvalidoTitulo": "This link is no longer valid",
+    "partilhadoInvalidoTexto": "The link has expired or was revoked. Ask the family for a new one."
   }
 }
