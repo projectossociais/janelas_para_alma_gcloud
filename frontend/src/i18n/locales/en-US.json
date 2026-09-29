@@ -2198,6 +2198,23 @@
     "rapidoDistancia": "Distance: {{distancia}}",
     "rapidoComecar": "Start training",
     "rapidoAlterar": "Change settings",
-    "passoPreparacao": "Setup"
+    "passoPreparacao": "Setup",
+    "tendenciaTitulo": "In short",
+    "tendenciaPoucosDados": "{{olho}}: do at least one more session on another day to see how it changes.",
+    "tendenciaEstavel": "{{olho}}: no clear change in {{periodo}} (less than one line of difference).",
+    "tendenciaAcuidadeMelhorouUma": "{{olho}}: now reads one line smaller than {{referencia}}.",
+    "tendenciaAcuidadeMelhorou": "{{olho}}: now reads {{n}} lines smaller than {{referencia}}.",
+    "tendenciaAcuidadePiorouUma": "{{olho}}: needs rings one line bigger than {{referencia}}. If this continues, talk to the ophthalmologist.",
+    "tendenciaAcuidadePiorou": "{{olho}}: needs rings {{n}} lines bigger than {{referencia}}. If this continues, talk to the ophthalmologist.",
+    "tendenciaContrasteMelhorou": "{{olho}}: now sees lighter rings than {{referencia}}.",
+    "tendenciaContrastePiorou": "{{olho}}: needs darker rings than {{referencia}}. If this continues, talk to the ophthalmologist.",
+    "tendenciaAproximada": "(approximate: screen not calibrated with a card)",
+    "quandoOntem": "yesterday",
+    "quandoHaDias": "{{dias}} days ago",
+    "periodoUmDia": "1 day",
+    "periodoDias": "{{dias}} days",
+    "autoAvaliacaoNota": "Self-assessed result: it depends on your answers and is not a measurement of your vision.",
+    "autoAvaliacaoCurto": "self-assessment",
+    "relatorioAutoAvaliacaoNota": "Results marked as self-assessment (Convergence, Near and far) depend only on the user’s answers and are not measurements."
   }
 }

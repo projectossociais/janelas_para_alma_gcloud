@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import PaginaExercicio from "@/components/visao/PaginaExercicio";
 import { useHistoricoVisao } from "@/components/visao/hooks";
 import { nomeDoExercicio } from "@/components/visao/rotulos";
+import ResumoTendencia from "@/components/visao/ResumoTendencia";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatarData, formatarDecimal } from "@/i18n/formatar";
 import { localizar } from "@/i18n/rotas";
@@ -100,6 +101,9 @@ const ProgressoVisao = () => {
                 {nomeDoExercicio(id)}
               </button>
             ))}
+          </div>
+          <div className="mb-4">
+            <ResumoTendencia sessoes={sessoes} exercicioId={exercicio} olhos={["direito", "esquerdo"]} />
           </div>
           {dados.length === 0 ? (
             <p className="py-10 text-center text-sm text-muted-foreground">{t("Visao.semDadosAinda")}</p>
