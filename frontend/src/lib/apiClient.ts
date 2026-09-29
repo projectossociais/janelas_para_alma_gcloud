@@ -557,6 +557,51 @@ export const sessoesExercicioApi = {
     ),
 };
 
+// --- Relatório para o médico por link temporário (Fase B) -----------------
+
+export interface PartilhaRelatorio {
+  id: string;
+  criado_em: string;
+  expira_em: string;
+  revogado_em: string | null;
+  activa: boolean;
+}
+
+/** Só na criação: o token em claro vem uma única vez. */
+export interface PartilhaRelatorioCriada extends PartilhaRelatorio {
+  token: string;
+}
+
+export interface SessaoRelatorioPartilhado {
+  exercicio_id: string;
+  created_at: string;
+  olho: string | null;
+  segundos_activos: number | null;
+  limiar: number | null;
+  unidade: string | null;
+  calibrado: boolean | null;
+  sinais: Record<string, unknown> | null;
+}
+
+export interface RelatorioPartilhado {
+  nome: string | null;
+  olho_mais_fraco: string | null;
+  usa_oculos: boolean | null;
+  expira_em: string;
+  gerado_em: string;
+  sessoes: SessaoRelatorioPartilhado[];
+}
+
+export const relatoriosApi = {
+  criarPartilha: () => pedido<PartilhaRelatorioCriada>("/relatorios/partilhas", { method: "POST" }),
+  listarPartilhas: () => pedido<PartilhaRelatorio[]>("/relatorios/partilhas"),
+  revogarPartilha: (id: string) =>
+    pedido<void>(`/relatorios/partilhas/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  /** Público: é o médico que abre o link, sem sessão. */
+  lerPartilhado: (token: string) =>
+    pedido<RelatorioPartilhado>(`/relatorios/partilhados/${encodeURIComponent(token)}`),
+};
+
 export type EstadoAcessoExercicios =
   | "sem_sessao"
   | "premium"

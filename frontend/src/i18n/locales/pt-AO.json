@@ -97,7 +97,9 @@
     "exerciciosProgressoTitulo": "O meu progresso",
     "exerciciosProgressoDescricao": "Resultados dos testes e minutos de treino, por olho.",
     "exerciciosRelatorioTitulo": "Relatório semanal",
-    "exerciciosRelatorioDescricao": "Relatório semanal imprimível de testes e treinos, para levar à consulta."
+    "exerciciosRelatorioDescricao": "Relatório semanal imprimível de testes e treinos, para levar à consulta.",
+    "relatorioPartilhadoTitulo": "Relatório partilhado",
+    "relatorioPartilhadoDescricao": "Relatório dos exercícios partilhado pela família com o médico."
   },
   "AboutSection": {
     "conhecaNos": "Conheça-nos",
@@ -2222,6 +2224,23 @@
     "relatorioAutoAvaliacaoNota": "Os resultados marcados como auto-avaliação (Convergência, Perto e longe) dependem só das respostas do utilizador e não são medições.",
     "bonusMoedas": "+{{moedas}} moedas no jogo Inclusivamente pelo treino de hoje.",
     "bonusMarco": "{{dias}} dias seguidos: +{{diamantes}} diamantes!",
-    "bonusIrAoJogo": "Ir ao jogo"
+    "bonusIrAoJogo": "Ir ao jogo",
+    "relatorioEvolucao": "Evolução de cada olho",
+    "partilhaTitulo": "Partilhar com o médico",
+    "partilhaTexto": "Crie um link só de leitura e envie-o ao seu oftalmologista (por exemplo, por WhatsApp). Quem tiver o link vê o primeiro nome, o olho mais fraco e os resultados dos exercícios dos últimos 90 dias, sem email nem contactos. Vale 30 dias e pode revogá-lo quando quiser. Envie-o só ao seu médico.",
+    "partilhaCriar": "Criar link para o médico",
+    "partilhaCriado": "Link criado. Copie-o ou envie-o agora: por segurança, só é mostrado uma vez.",
+    "partilhaCopiar": "Copiar link",
+    "partilhaCopiado": "Copiado",
+    "partilhaEnviar": "Enviar",
+    "partilhaActivos": "Links activos",
+    "partilhaNenhum": "Nenhum link activo.",
+    "partilhaValidoAte": "Criado a {{criado}} · válido até {{expira}}",
+    "partilhaRevogar": "Revogar",
+    "partilhaErro": "Não foi possível criar o link. Tente de novo.",
+    "partilhaErroRevogar": "Não foi possível revogar o link. Tente de novo.",
+    "partilhadoAviso": "Relatório partilhado pela família através da plataforma Janelas Para a Alma. Link válido até {{expira}}.",
+    "partilhadoInvalidoTitulo": "Este link já não é válido",
+    "partilhadoInvalidoTexto": "O link expirou ou foi revogado. Peça um novo à família."
   }
 }

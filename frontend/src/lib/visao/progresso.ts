@@ -85,3 +85,9 @@ export function ultimosResultados<T extends SessaoResumo>(sessoes: readonly T[])
   }
   return out;
 }
+
+/** Dias cobertos pelo relatório semanal (ecrã do pai e link do médico). */
+export const DIAS_RELATORIO = 7;
+
+/** O que o relatório precisa de cada sessão -- sem ids nem dados da conta. */
+export type SessaoParaRelatorio = SessaoResumo & { calibrado: boolean | null };

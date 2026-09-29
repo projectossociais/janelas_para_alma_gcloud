@@ -54,6 +54,7 @@ import TreinoConvergencia from "./pages/exercises/TreinoConvergencia";
 import TreinoPertoLonge from "./pages/exercises/TreinoPertoLonge";
 import ProgressoVisao from "./pages/exercises/ProgressoVisao";
 import RelatorioSemanal from "./pages/exercises/RelatorioSemanal";
+import RelatorioPartilhado from "./pages/exercises/RelatorioPartilhado";
 import DashboardUser from "./pages/DashboardUser";
 import DashboardPro from "./pages/DashboardPro";
 import AdminLayout from "./pages/admin/AdminLayout";
@@ -105,6 +106,7 @@ const PAGINAS: Record<ChaveRota, ReactElement> = {
   exercicioPertoLonge: <TreinoPertoLonge />,
   exerciciosProgresso: <ProgressoVisao />,
   exerciciosRelatorio: <RelatorioSemanal />,
+  relatorioPartilhado: <RelatorioPartilhado />,
   scanner: <Scanner />,
   scannerResultados: <ScannerResultados />,
   entrar: <Auth />,

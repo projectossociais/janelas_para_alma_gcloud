@@ -20,6 +20,7 @@ from app.routers import (
     perfil,
     premium,
     publicacoes,
+    relatorios,
     screenings,
     sessoes_exercicio,
     uploads,
@@ -64,6 +65,7 @@ app.include_router(jogo.router)
 app.include_router(agendamentos.router)
 app.include_router(clinicas.router)
 app.include_router(interno.router)
+app.include_router(relatorios.router)
 
 
 @app.get("/saude")

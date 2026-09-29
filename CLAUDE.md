@@ -80,7 +80,15 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   `frontend/src/lib/visao/` (TypeScript puro, com testes) e `components/visao/`; ver §6.
   Perfil visual opcional em `utilizadores` (`px_por_mm`, `olho_mais_fraco`, `usa_oculos`,
   `faixa_etaria`); progresso e relatório semanal imprimível em `/exercicios/progresso` e
-  `/exercicios/relatorio`
+  `/exercicios/relatorio`. **Relatório para o médico por link temporário** (Fase B,
+  2026-09-29, decisão do dono do projecto: nunca envio automático): o pai cria em
+  `/exercicios/relatorio` um link só de leitura (`POST /relatorios/partilhas`) e envia-o
+  ele próprio; o médico abre `/relatorio-partilhado/:token` sem sessão
+  (`GET /relatorios/partilhados/{token}`, `Cache-Control: no-store`, `noindex`). Tabela
+  `partilhas_relatorio` guarda só o hash SHA-256 do token; vale 30 dias, é revogável, no
+  máximo 5 activos por conta, e é revogada na anonimização (W-03). Mostra só o primeiro
+  nome, olho mais fraco, óculos e os resultados dos últimos 90 dias — nunca email nem
+  contactos (`PartilhaRelatorioService`)
 - **Modelo de acesso** — Premium a 15.000 Kz/mês (pagamento por transferência + comprovativo)
   dá os 8; o teste de 7 dias (`utilizadores.trial_iniciado_em`/`trial_termina_em`, UTC) é
   iniciado pelo próprio utilizador, uma única vez por conta, e dá só os 4 do teste. Regra

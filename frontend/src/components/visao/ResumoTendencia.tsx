@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { TrendingDown, TrendingUp, Minus, Clock } from "lucide-react";
-import type { SessaoExercicioPublica } from "@/lib/apiClient";
+import type { SessaoResumo } from "@/lib/visao/progresso";
 import { nomeDoOlho } from "@/components/visao/rotulos";
 import { tendencia, type Tendencia } from "@/lib/visao/tendencia";
 import type { Olho } from "@/lib/visao/resultados";
@@ -44,7 +44,7 @@ const ResumoTendencia = ({
   exercicioId,
   olhos,
 }: {
-  sessoes: readonly SessaoExercicioPublica[];
+  sessoes: readonly (SessaoResumo & { calibrado?: boolean | null })[];
   exercicioId: string;
   olhos: readonly Olho[];
 }) => {

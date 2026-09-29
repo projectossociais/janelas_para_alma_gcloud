@@ -18,13 +18,14 @@ import uuid
 from datetime import datetime
 from typing import Protocol
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from app.repositories.orm_models import (
     AgendamentoClinico,
     CandidaturaVoluntariado,
     ContactMessage,
+    PartilhaRelatorio,
     PremiumRequest,
     Utilizador,
 )
@@ -112,5 +113,13 @@ class SQLAlchemyEliminacaoContaRepository:
             select(CandidaturaVoluntariado).where(CandidaturaVoluntariado.utilizador_id == id_)
         ):
             row.telefone = None
+
+        # Links do relatório para o médico (Fase B): nenhum pode continuar a
+        # abrir depois de a conta ser anonimizada.
+        self._sessao.execute(
+            update(PartilhaRelatorio)
+            .where(PartilhaRelatorio.utilizador_id == id_, PartilhaRelatorio.revogado_em.is_(None))
+            .values(revogado_em=agora)
+        )
 
         self._sessao.commit()
