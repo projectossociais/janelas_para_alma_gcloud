@@ -2184,6 +2184,12 @@
     "faixa18a39": "18 to 39 years",
     "faixa40a59": "40 to 59 years",
     "faixa60Mais": "60 years or older",
-    "pausaTextoDoisOlhos": "Look into the distance, blink slowly, and breathe with the circle."
+    "pausaTextoDoisOlhos": "Look into the distance, blink slowly, and breathe with the circle.",
+    "sugestaoOlhoTitulo": "The Visual Acuity Test points to your {{olho}}",
+    "sugestaoOlhoTexto": "In your last Visual Acuity Test, this eye had the weaker result. This is a screening suggestion, not a diagnosis: check with your ophthalmologist which eye to train.",
+    "treinarOlho": "Train my {{olho}}",
+    "escolherOutroOlho": "Choose another eye",
+    "repetirTesteAcuidade": "Repeat the Visual Acuity Test",
+    "acuidadeSemDiferencaOlhos": "In your last Visual Acuity Test, both eyes had the same result, so the test cannot tell which eye is weaker. Book an appointment: the ophthalmologist confirms which eye to train."
   }
 }

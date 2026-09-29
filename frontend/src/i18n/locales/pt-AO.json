@@ -2184,6 +2184,12 @@
     "faixa18a39": "18 a 39 anos",
     "faixa40a59": "40 a 59 anos",
     "faixa60Mais": "60 anos ou mais",
-    "pausaTextoDoisOlhos": "Olhe para longe, pisque devagar e respire com o círculo."
+    "pausaTextoDoisOlhos": "Olhe para longe, pisque devagar e respire com o círculo.",
+    "sugestaoOlhoTitulo": "O Teste de Acuidade indica o {{olho}}",
+    "sugestaoOlhoTexto": "No seu último Teste de Acuidade, este olho teve o resultado mais fraco. É uma sugestão da triagem, não um diagnóstico: confirme com o oftalmologista qual é o olho a treinar.",
+    "treinarOlho": "Treinar o {{olho}}",
+    "escolherOutroOlho": "Escolher outro olho",
+    "repetirTesteAcuidade": "Repetir o Teste de Acuidade",
+    "acuidadeSemDiferencaOlhos": "No seu último Teste de Acuidade, os dois olhos tiveram o mesmo resultado, por isso o teste não identifica o olho mais fraco. Marque uma consulta: o oftalmologista confirma qual é o olho a treinar."
   }
 }

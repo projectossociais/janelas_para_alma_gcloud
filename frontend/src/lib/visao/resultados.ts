@@ -38,6 +38,24 @@ export function sinaisAcuidade(res: Partial<Record<Olho, number | null>>): Sinai
 }
 
 /**
+ * Olho com o pior resultado no Teste de Acuidade, para sugerir (nunca decidir
+ * sozinho) qual treinar a quem respondeu "não sei". `null` num olho = não leu
+ * nem o maior tamanho, que conta como o pior resultado possível. Devolve
+ * `null` quando falta um dos olhos ou quando os dois ficaram no mesmo nível
+ * -- aí o teste não identifica o olho e só a consulta o pode fazer.
+ */
+export function olhoMaisFracoPelaAcuidade(res: Partial<Record<Olho, number | null>>): Olho | null {
+  const d = res.direito;
+  const e = res.esquerdo;
+  if (d === undefined || e === undefined) return null;
+  if (d === null && e === null) return null;
+  if (d === null) return "direito";
+  if (e === null) return "esquerdo";
+  if (Math.abs(d - e) < 0.1 - EPS) return null;
+  return d > e ? "direito" : "esquerdo";
+}
+
+/**
  * Diferença de sensibilidade ao contraste entre olhos que merece atenção
  * (0,3 log = o dobro do contraste). Não há norma clínica aqui: só comparar
  * os olhos entre si e a evolução no tempo.

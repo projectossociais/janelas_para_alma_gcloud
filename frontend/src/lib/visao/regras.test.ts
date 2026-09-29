@@ -1,5 +1,5 @@
 import { ContadorTempoActivo, PAUSA_AUTOMATICA_MS } from "./tempoActivo";
-import { diferencaContraste, sinaisAcuidade } from "./resultados";
+import { diferencaContraste, olhoMaisFracoPelaAcuidade, sinaisAcuidade } from "./resultados";
 import { criarAgendaControlo, eTentativaDeControlo, sinaisDeControlo } from "./treino";
 import { minutosPorDia, sequenciaDeDias, ultimosResultados, type SessaoResumo } from "./progresso";
 
@@ -58,6 +58,23 @@ describe("sinais de acuidade", () => {
     expect(sinaisAcuidade({ direito: 0, esquerdo: 0.2 }).diferencaEntreOlhos).toBe(true);
     expect(sinaisAcuidade({ direito: 0, esquerdo: 0.1 }).diferencaEntreOlhos).toBe(false);
     expect(sinaisAcuidade({ direito: 0 }).diferencaEntreOlhos).toBe(false);
+  });
+
+  it("olho mais fraco pela acuidade: o de logMAR mais alto (pior)", () => {
+    expect(olhoMaisFracoPelaAcuidade({ direito: 0.1, esquerdo: 0.4 })).toBe("esquerdo");
+    expect(olhoMaisFracoPelaAcuidade({ direito: 0.5, esquerdo: 0 })).toBe("direito");
+  });
+
+  it("não ler nem o maior tamanho conta como o pior resultado", () => {
+    expect(olhoMaisFracoPelaAcuidade({ direito: null, esquerdo: 0.9 })).toBe("direito");
+    expect(olhoMaisFracoPelaAcuidade({ direito: 0.2, esquerdo: null })).toBe("esquerdo");
+  });
+
+  it("sem diferença (ou sem os dois olhos) não sugere nenhum olho", () => {
+    expect(olhoMaisFracoPelaAcuidade({ direito: 0.2, esquerdo: 0.2 })).toBeNull();
+    expect(olhoMaisFracoPelaAcuidade({ direito: null, esquerdo: null })).toBeNull();
+    expect(olhoMaisFracoPelaAcuidade({ direito: 0.2 })).toBeNull();
+    expect(olhoMaisFracoPelaAcuidade({})).toBeNull();
   });
 
   it("contraste: diferença de 0,3 log entre olhos", () => {

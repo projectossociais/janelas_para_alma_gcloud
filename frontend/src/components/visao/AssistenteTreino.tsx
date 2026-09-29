@@ -30,7 +30,8 @@ import { localizar } from "@/i18n/rotas";
 import { PX_POR_MM_NOMINAL } from "@/lib/visao/calibracao";
 import { DISTANCIA_OMISSAO_MM } from "@/lib/visao/geometria";
 import { diaLocal, minutosPorDia, sequenciaDeDias } from "@/lib/visao/progresso";
-import type { Olho, OlhoSessao } from "@/lib/visao/resultados";
+import { olhoMaisFracoPelaAcuidade, type Olho, type OlhoSessao } from "@/lib/visao/resultados";
+import { ID_ACUIDADE } from "@/lib/visao/ids";
 import {
   BLOCOS_POR_SESSAO,
   BLOCO_SEGUNDOS,
@@ -96,8 +97,18 @@ type Etapa =
   | "pausa"
   | "resumo";
 
-/** Escolha do olho mais fraco, gravada no perfil. */
-const EscolherOlho = ({ aoEscolher }: { aoEscolher: (o: Olho) => void }) => {
+/**
+ * Escolha do olho mais fraco, gravada no perfil. Com "não sei", recomenda
+ * primeiro o Teste de Acuidade; depois de o fazer, sugere o olho com o pior
+ * resultado -- mas é sempre o utilizador que confirma.
+ */
+export const EscolherOlho = ({
+  aoEscolher,
+  historico,
+}: {
+  aoEscolher: (o: Olho) => void;
+  historico: SessaoExercicioPublica[] | null;
+}) => {
   const { t } = useTranslation();
   const { profile, setProfile } = useProfile();
   const [naoSei, setNaoSei] = useState(profile?.olho_mais_fraco === "nao_sei");
@@ -119,6 +130,44 @@ const EscolherOlho = ({ aoEscolher }: { aoEscolher: (o: Olho) => void }) => {
     }
   };
 
+  // Último Teste de Acuidade de cada olho (histórico: mais recentes primeiro).
+  const ultimaAcuidade = (o: Olho) => historico?.find((s) => s.exercicio_id === ID_ACUIDADE && s.olho === o);
+  const acuidadeD = ultimaAcuidade("direito");
+  const acuidadeE = ultimaAcuidade("esquerdo");
+  const temAcuidade = !!acuidadeD && !!acuidadeE;
+  const sugerido = temAcuidade
+    ? olhoMaisFracoPelaAcuidade({ direito: acuidadeD.limiar, esquerdo: acuidadeE.limiar })
+    : null;
+  const nomeOlho = (o: Olho) => (o === "direito" ? t("Visao.olhoDireito") : t("Visao.olhoEsquerdo")).toLowerCase();
+
+  if (naoSei && sugerido)
+    return (
+      <EcraPasso
+        icone={<Eye className="h-7 w-7" />}
+        titulo={t("Visao.sugestaoOlhoTitulo", { olho: nomeOlho(sugerido) })}
+        accao={
+          <>
+            <BotaoContinuar aoClicar={() => void escolher(sugerido)} desactivado={aGravar}>
+              {t("Visao.treinarOlho", { olho: nomeOlho(sugerido) })}
+            </BotaoContinuar>
+            <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
+              <Link to={localizar("/parceiros?agendar=optiotica")}>{t("Visao.marcarConsulta")}</Link>
+            </Button>
+            <Button variant="ghost" onClick={() => setNaoSei(false)}>
+              {t("Visao.escolherOutroOlho")}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-muted-foreground">{t("Visao.sugestaoOlhoTexto")}</p>
+        {erro && (
+          <p className="text-sm text-destructive" role="alert">
+            {t("Visao.erroAGuardarPerfil")}
+          </p>
+        )}
+      </EcraPasso>
+    );
+
   if (naoSei)
     return (
       <EcraPasso
@@ -127,7 +176,9 @@ const EscolherOlho = ({ aoEscolher }: { aoEscolher: (o: Olho) => void }) => {
         accao={
           <>
             <Button asChild size="lg" className="w-full bg-teal text-teal-foreground hover:bg-teal/90 sm:w-auto">
-              <Link to={localizar("/exercicios/acuidade")}>{t("Visao.fazerTesteAcuidade")}</Link>
+              <Link to={localizar("/exercicios/acuidade")}>
+                {temAcuidade ? t("Visao.repetirTesteAcuidade") : t("Visao.fazerTesteAcuidade")}
+              </Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
               <Link to={localizar("/parceiros?agendar=optiotica")}>{t("Visao.marcarConsulta")}</Link>
@@ -138,7 +189,9 @@ const EscolherOlho = ({ aoEscolher }: { aoEscolher: (o: Olho) => void }) => {
           </>
         }
       >
-        <p className="text-sm text-muted-foreground">{t("Visao.naoSeiOlhoTexto")}</p>
+        <p className="text-sm text-muted-foreground">
+          {temAcuidade ? t("Visao.acuidadeSemDiferencaOlhos") : t("Visao.naoSeiOlhoTexto")}
+        </p>
       </EcraPasso>
     );
 
@@ -337,7 +390,7 @@ const AssistenteTreino = ({
 
   let conteudo: ReactNode;
   if (aCarregar) conteudo = <div className="h-40" aria-busy />;
-  else if (etapa === "olho") conteudo = <EscolherOlho aoEscolher={(o) => setOlho(o)} />;
+  else if (etapa === "olho") conteudo = <EscolherOlho aoEscolher={(o) => setOlho(o)} historico={historico} />;
   else if (bloqueio && etapa !== "resumo") conteudo = bloqueio;
   else
     conteudo = (
