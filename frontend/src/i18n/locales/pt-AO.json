@@ -132,6 +132,12 @@
     "verGaleriaDaAccao": "Ver Galeria da Acção",
     "equipaDoJanelasPara": "Equipa do Janelas Para a Alma reunida na campanha da Gamek"
   },
+  "UpcomingActivities": {
+    "proximasAccoes": "Próximas Acções",
+    "junteSeANos": "Junte-se a nós",
+    "vagasRestantes": "{{count}} vagas disponíveis",
+    "semVagas": "Sem vagas"
+  },
   "AmbliopiaExercise": {
     "pts": "{{pontosNoNivel}}/{{pontosParaSubir}} pts",
     "rostoNaoDetectado": "Rosto não detectado",
