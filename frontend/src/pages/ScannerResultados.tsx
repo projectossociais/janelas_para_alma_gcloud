@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
+import { RelatorioPdf } from "@/lib/relatorio/pdfRelatorio";
 import {
   CheckCircle2,
   Info,
@@ -457,179 +458,53 @@ const Resultados = () => {
     const formatted = formatarDataHora(date);
     const logo = await obterLogo().catch(() => null);
 
+    // Estilo único de relatório (lib/relatorio/pdfRelatorio.ts): preto sobre
+    // branco, secções numeradas, tabelas simples -- sem cores decorativas.
     const doc = new jsPDF({ unit: "pt", format: "a4" });
-    const W = doc.internal.pageSize.getWidth();
-    const H = doc.internal.pageSize.getHeight();
-    const M = 48;
-
-    const navy: [number, number, number] = [11, 27, 59];
-    const teal: [number, number, number] = [31, 178, 158];
-    const gold: [number, number, number] = [217, 175, 84];
-    const green: [number, number, number] = [38, 115, 89];
-    const blue: [number, number, number] = [37, 99, 235];
-    const red: [number, number, number] = [220, 38, 38];
-    const ink: [number, number, number] = [30, 41, 59];
-    const muted: [number, number, number] = [100, 116, 139];
-    const soft: [number, number, number] = [241, 245, 249];
-    const corDiagnostico = isNormal ? green : red;
-
-    // Header — logótipo oficial, centrado, seguido de uma barra divisória.
-    let y = 24;
-    if (logo) {
-      const boxW = 180, boxH = 60;
-      const ratio = logo.width / logo.height;
-      const logoW = ratio > boxW / boxH ? boxW : boxH * ratio;
-      const logoH = ratio > boxW / boxH ? boxW / ratio : boxH;
-      doc.addImage(logo.dataUrl, "PNG", (W - logoW) / 2, y, logoW, logoH);
-      y += boxH + 14;
-    } else {
-      y += 20;
-    }
-    doc.setFillColor(...navy);
-    doc.rect(0, y, W, 4, "F");
-    y += 26;
-
-    // Introdução institucional (texto centrado, como no modelo oficial)
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.setTextColor(...teal);
-    doc.text(tr("ScannerResultados.pdfSobreAPlataforma"), W / 2, y, { align: "center" });
-    y += 18;
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9.5);
-    doc.setTextColor(...ink);
-    const introP1 = doc.splitTextToSize(
-      tr("ScannerResultados.pdfIntroPlataforma"),
-      W - M * 2
+    const r = new RelatorioPdf(doc);
+    r.cabecalho(
+      {
+        organizacao: "Janelas Para a Alma",
+        titulo: tr("ScannerResultados.pdfRelatorioTitulo"),
+        subtitulo: tr("ScannerResultados.pdfEmitidoEm", { formatted }),
+      },
+      logo ? { dataUrl: logo.dataUrl, largura: logo.width, altura: logo.height } : null,
     );
-    doc.text(introP1, W / 2, y, { align: "center" });
-    y += introP1.length * 13 + 10;
+    r.paragrafo(tr("ScannerResultados.pdfIntroRelatorio"), { cinzento: true });
 
-    const introP2 = doc.splitTextToSize(
-      tr("ScannerResultados.pdfIntroRelatorio"),
-      W - M * 2
-    );
-    doc.text(introP2, W / 2, y, { align: "center" });
-    y += introP2.length * 13 + 22;
-
-    // Bloco "Relatório de Triagem..." / "Emitido em...", alinhado à direita
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9.5);
-    doc.setTextColor(...navy);
-    doc.text(tr("ScannerResultados.pdfRelatorioTitulo"), W - M, y, { align: "right" });
-    y += 13;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.setTextColor(...muted);
-    doc.text(tr("ScannerResultados.pdfEmitidoEm", { formatted }), W - M, y, { align: "right" });
-    y += 24;
-
-    // Cartão de diagnóstico — compacto, sem glifo do olho.
-    const cardH = 92;
-    if (y > H - cardH - 40) { doc.addPage(); y = M; }
-    doc.setFillColor(...soft);
-    doc.roundedRect(M, y, W - M * 2, cardH, 12, 12, "F");
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.setTextColor(...teal);
-    doc.text(tr("ScannerResultados.pdfDiagnosticoOrientador"), M + 18, y + 24);
-
-    doc.setFontSize(16);
-    doc.setTextColor(...corDiagnostico);
-    doc.text(rotuloDiagnostico(result.diagnosis), M + 18, y + 46);
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.setTextColor(...ink);
-    const shortLines = doc.splitTextToSize(info.short, W - M * 2 - 140);
-    doc.text(shortLines, M + 18, y + 66);
-
-    // Badge de confiança, discreto, alinhado à direita
-    const badgeW = 74, badgeH = 34, badgeX = W - M - 18 - badgeW, badgeY = y + 14;
-    doc.setFillColor(...green);
-    doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 8, 8, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
-    doc.text(tr("ScannerResultados.pdfConfianca"), badgeX + badgeW / 2, badgeY + 13, { align: "center" });
-    doc.setFontSize(12);
-    doc.text(`${result.confidence}%`, badgeX + badgeW / 2, badgeY + 27, { align: "center" });
-
-    y += cardH + 24;
-
-    const heading = (title: string, color: [number, number, number]) => {
-      if (y > H - 120) { doc.addPage(); y = M; }
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(13);
-      doc.setTextColor(...color);
-      doc.text(title, M, y);
-      y += 18;
-    };
-
-    const bullets = (items: readonly string[]) => {
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.setTextColor(...ink);
-      items.forEach((t) => {
-        if (y > H - 80) { doc.addPage(); y = M; }
-        const wrapped = doc.splitTextToSize(t, W - M * 2 - 18);
-        doc.setFillColor(...ink);
-        doc.circle(M + 6, y + 4, 1.6, "F");
-        doc.text(wrapped, M + 16, y + 6);
-        y += wrapped.length * 13 + 4;
-      });
-      y += 6;
-    };
-
-    heading(tr("ScannerResultados.resultado"), red);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.setTextColor(...ink);
-    const desc = doc.splitTextToSize(info.description, W - M * 2);
-    doc.text(desc, M, y);
-    y += desc.length * 13 + 16;
+    r.seccao(tr("ScannerResultados.resultado"));
+    r.campos([
+      [tr("ScannerResultados.pdfCampoResultado"), rotuloDiagnostico(result.diagnosis)],
+      [tr("ScannerResultados.pdfCampoConfianca"), `${result.confidence}%`],
+      [tr("ScannerResultados.pdfCampoData"), formatted],
+    ]);
+    r.paragrafo(info.short);
+    r.paragrafo(info.description);
 
     if (!isNormal) {
-      heading(tr("ScannerResultados.sinaisFrequentesDeEstrabismo"), gold);
-      bullets(info.symptoms);
+      r.seccao(tr("ScannerResultados.sinaisFrequentesDeEstrabismo"));
+      r.lista(info.symptoms);
     }
 
-    heading(tr("ScannerResultados.recomendacoes"), green);
-    bullets(info.treatments);
+    r.seccao(tr("ScannerResultados.recomendacoes"));
+    r.lista(info.treatments);
 
-    if (!isNormal) {
-      heading(tr("ScannerResultados.clinicasRecomendadasEmAngola"), ink);
-      recommendedClinics.forEach((c) => {
-        if (y > H - 110) { doc.addPage(); y = M; }
-        doc.setFillColor(...soft);
-        doc.roundedRect(M, y, W - M * 2, 78, 10, 10, "F");
-        doc.setFillColor(...teal);
-        doc.rect(M, y, 4, 78, "F");
-        doc.setTextColor(...navy);
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(11);
-        doc.text(c.name, M + 14, y + 18);
-        doc.setFont("helvetica", "italic");
-        doc.setFontSize(9);
-        doc.setTextColor(...teal);
-        doc.text(c.subtitle, M + 14, y + 32);
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(9);
-        doc.setTextColor(...ink);
-        doc.text(`${c.city}  ·  ${c.specialty}`, M + 14, y + 48);
-        doc.setTextColor(...muted);
-        doc.text(tr("ScannerResultados.pdfContacto", { phoneDisplay: c.phoneDisplay }), M + 14, y + 62);
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(...gold);
-        doc.text(c.price, W - M - 14, y + 18, { align: "right" });
-        y += 88;
-      });
+    if (!isNormal && recommendedClinics.length) {
+      r.seccao(tr("ScannerResultados.clinicasRecomendadasEmAngola"));
+      r.tabela(
+        [
+          { titulo: tr("ScannerResultados.pdfColClinica"), largura: 0.3 },
+          { titulo: tr("ScannerResultados.pdfColCidade"), largura: 0.12 },
+          { titulo: tr("ScannerResultados.pdfColEspecialidade"), largura: 0.22 },
+          { titulo: tr("ScannerResultados.pdfColContacto"), largura: 0.2 },
+          { titulo: tr("ScannerResultados.pdfColPreco"), largura: 0.16 },
+        ],
+        recommendedClinics.map((c) => [c.name, c.city, c.specialty, c.phoneDisplay, c.price]),
+      );
     }
 
-    heading(tr("ScannerResultados.recomendacoesGerais"), blue);
-    bullets(
+    r.seccao(tr("ScannerResultados.recomendacoesGerais"));
+    r.lista(
       isNormal
         ? [
             tr("ScannerResultados.utilizeOculosDeSol"),
@@ -643,67 +518,16 @@ const Resultados = () => {
             tr("ScannerResultados.mantenhaPausasVisuaisRegulares"),
             tr("ScannerResultados.inicieExerciciosVisuaisTerapeuticos"),
             tr("ScannerResultados.junteSeAComunidade3"),
-          ]
+          ],
     );
 
-    // "AVISO IMPORTANTE" como badge centrado, com a caixa de texto por baixo
-    if (y > H - 160) { doc.addPage(); y = M; }
-    y += 10;
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    const avisoLabel = tr("ScannerResultados.pdfAvisoImportante");
-    const avisoW = doc.getTextWidth(avisoLabel) + 32;
-    const avisoH = 26;
-    doc.setFillColor(...soft);
-    doc.roundedRect(W / 2 - avisoW / 2, y, avisoW, avisoH, avisoH / 2, avisoH / 2, "F");
-    doc.setTextColor(...red);
-    doc.text(avisoLabel, W / 2, y + avisoH / 2 + 4, { align: "center" });
-    y += avisoH + 16;
+    r.seccao(tr("ScannerResultados.pdfAviso"));
+    r.paragrafo(tr("ScannerResultados.pdfAvisoTexto"));
 
-    const discTexto =
-      tr("ScannerResultados.pdfAvisoTexto");
-    const disc = doc.splitTextToSize(discTexto, W - M * 2 - 48);
-    const discBoxH = 32 + disc.length * 15;
-    if (y > H - discBoxH - 20) { doc.addPage(); y = M; }
-    doc.setFillColor(...soft);
-    doc.roundedRect(M, y, W - M * 2, discBoxH, 10, 10, "F");
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.setTextColor(...ink);
-    doc.text(disc, M + 24, y + 24, { lineHeightFactor: 1.35 });
-    y += discBoxH + 20;
-
-    // Rodapé — logótipo pequeno à esquerda, contactos ao centro, paginação à direita.
-    const footerH = 64;
-    const pageCount = doc.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFillColor(...navy);
-      doc.rect(0, H - footerH, W, footerH, "F");
-
-      if (logo) {
-        const fLogoH = 30;
-        const fLogoW = (logo.width / logo.height) * fLogoH;
-        doc.addImage(logo.dataUrl, "PNG", M, H - footerH + (footerH - fLogoH) / 2, fLogoW, fLogoH);
-      }
-
-      const contatoX = M + 130;
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(9);
-      doc.setTextColor(255, 255, 255);
-      doc.text(tr("ScannerResultados.pdfContactos"), contatoX, H - footerH + 18);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8);
-      doc.setTextColor(200, 220, 235);
-      doc.text("•  Luanda, Angola", contatoX, H - footerH + 31);
-      doc.text("•  +244 926 969 819", contatoX, H - footerH + 42);
-      doc.text("•  janelasparaalma18@gmail.com", contatoX, H - footerH + 53);
-
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8);
-      doc.text(tr("ScannerResultados.pdfPagina", { i, pageCount }), W - M, H - footerH / 2 + 3, { align: "right" });
-    }
+    r.rodape(
+      "Janelas Para a Alma · Luanda, Angola · +244 926 969 819 · janelasparaalma18@gmail.com",
+      (i, pageCount) => tr("ScannerResultados.pdfPagina", { i, pageCount }),
+    );
 
     doc.save(`${tr("ScannerResultados.pdfNomeFicheiro")}-${rotuloDiagnostico(result.diagnosis).toLowerCase()}-${date.toISOString().slice(0, 10)}.pdf`);
   };
