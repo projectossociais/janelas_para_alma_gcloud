@@ -26,6 +26,11 @@ import { Button } from "@/components/ui/button";
 import PremiumPaywallModal from "@/components/PremiumPaywallModal";
 import FeedbackWidget from "@/components/FeedbackWidget";
 import { useAcessoExercicios } from "@/contexts/AcessoExerciciosContext";
+import { useProfile } from "@/contexts/ProfileContext";
+import { useHistoricoVisao } from "@/components/visao/hooks";
+import { nomeDoOlho } from "@/components/visao/rotulos";
+import { evolucaoDestacada } from "@/lib/visao/tendencia";
+import { ID_ACUIDADE, ID_ANEIS } from "@/lib/visao/ids";
 import {
   useAcaoDesbloqueio,
   type GrupoExercicio,
@@ -177,6 +182,36 @@ const BOTAO_CARTAO: Record<TipoDesbloqueio, { chave: string; icon: LucideIcon }>
 };
 
 /** Banner de estado no topo da página: um por cada estado de acesso. */
+/** A partir destes dias restantes, o banner do trial mostra a evolução medida. */
+const DIAS_FINAIS_TRIAL = 3;
+
+/**
+ * Fim do trial (Fase B, docs/ANALISE_EXERCICIOS.md): o melhor argumento para
+ * continuar é a evolução medida da própria pessoa. Uma piora nunca se usa para
+ * vender -- só para recomendar a consulta.
+ */
+const EvolucaoFimTrial = () => {
+  const { t } = useTranslation();
+  const { profile } = useProfile();
+  const { sessoes } = useHistoricoVisao();
+  const olhoFraco =
+    profile?.olho_mais_fraco === "direito" || profile?.olho_mais_fraco === "esquerdo" ? profile.olho_mais_fraco : null;
+  const e = sessoes ? evolucaoDestacada(sessoes, [ID_ANEIS, ID_ACUIDADE], olhoFraco) : null;
+  if (!e) return null;
+  const olho = nomeDoOlho(e.olho).toLocaleLowerCase();
+  const { dias, passos } = e.tendencia;
+  if (e.tendencia.tipo === "piorou")
+    return <p className="mt-2 text-sm font-medium text-foreground">{t("Exercicios.evolucaoPiorou", { olho, dias })}</p>;
+  return (
+    <p className="mt-2 text-sm text-foreground">
+      <span className="font-semibold">
+        {passos === 1 ? t("Exercicios.evolucaoMelhorouUma", { olho, dias }) : t("Exercicios.evolucaoMelhorou", { olho, dias, n: passos })}
+      </span>{" "}
+      {t("Exercicios.evolucaoContinuar")}
+    </p>
+  );
+};
+
 const BannerEstado = ({ aoVerPremium }: { aoVerPremium: () => void }) => {
   const { t } = useTranslation();
   const { acesso, loading } = useAcessoExercicios();
@@ -201,15 +236,18 @@ const BannerEstado = ({ aoVerPremium }: { aoVerPremium: () => void }) => {
     const dias = acesso.trial_dias_restantes ?? 0;
     return (
       <div className="flex flex-col gap-3 rounded-xl border border-teal/30 bg-teal/5 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <Clock className="h-5 w-5 shrink-0 text-teal" />
-          <p className="text-sm text-foreground">
-            <span className="font-semibold">{t("Exercicios.estadoTrialAtivo")}</span>
-            {" · "}
-            {dias === 1
-              ? t("Exercicios.bannerTrialAtivoUmDia")
-              : t("Exercicios.bannerTrialAtivoDias", { dias })}
-          </p>
+        <div className="flex items-start gap-3">
+          <Clock className="mt-0.5 h-5 w-5 shrink-0 text-teal" />
+          <div>
+            <p className="text-sm text-foreground">
+              <span className="font-semibold">{t("Exercicios.estadoTrialAtivo")}</span>
+              {" · "}
+              {dias === 1
+                ? t("Exercicios.bannerTrialAtivoUmDia")
+                : t("Exercicios.bannerTrialAtivoDias", { dias })}
+            </p>
+            {dias <= DIAS_FINAIS_TRIAL && <EvolucaoFimTrial />}
+          </div>
         </div>
         <Button size="sm" variant="ghost" className="self-start text-navy sm:self-auto" onClick={aoVerPremium}>
           {t("Exercicios.verPlanosPremium")}
@@ -249,6 +287,7 @@ const BannerEstado = ({ aoVerPremium }: { aoVerPremium: () => void }) => {
       <div>
         <p className="font-semibold text-foreground">{config.titulo}</p>
         <p className="mt-1 text-sm text-muted-foreground">{config.texto}</p>
+        {acesso.estado === "trial_terminado" && <EvolucaoFimTrial />}
       </div>
       <Button
         onClick={config.acao}

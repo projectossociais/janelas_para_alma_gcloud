@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { tendencia } from "./tendencia";
+import { evolucaoDestacada, tendencia } from "./tendencia";
 
 type S = Parameters<typeof tendencia>[0][number];
 
@@ -69,5 +69,33 @@ describe("tendencia (evolução em linguagem simples)", () => {
   it("só com sessões sem cartão, o resultado sai marcado como aproximado", () => {
     const s = [sessao(1, 0.5, { calibrado: false }), sessao(8, 0.3, { calibrado: false })];
     expect(tendencia(s, "figure8", "esquerdo")).toMatchObject({ tipo: "melhorou", aproximado: true });
+  });
+});
+
+describe("evolucaoDestacada (argumento do fim do trial)", () => {
+  const aneis = (dia: number, limiar: number, extra: Partial<S> = {}) => sessao(dia, limiar, { exercicio_id: "ambliopia", ...extra });
+
+  it("escolhe a maior melhoria entre exercícios e olhos", () => {
+    const s = [
+      aneis(1, 0.5), aneis(7, 0.4), // 1 linha, esquerdo
+      sessao(1, 0.6, { olho: "direito" }), sessao(7, 0.3, { olho: "direito" }), // 3 linhas, direito, teste
+    ];
+    const r = evolucaoDestacada(s, ["ambliopia", "figure8"], null);
+    expect(r).toMatchObject({ exercicioId: "figure8", olho: "direito", tendencia: { tipo: "melhorou", passos: 3 } });
+  });
+
+  it("com o olho mais fraco conhecido, só olha para esse olho", () => {
+    const s = [sessao(1, 0.6, { olho: "direito" }), sessao(7, 0.3, { olho: "direito" }), aneis(1, 0.5), aneis(7, 0.4)];
+    expect(evolucaoDestacada(s, ["ambliopia", "figure8"], "esquerdo")).toMatchObject({ olho: "esquerdo", exercicioId: "ambliopia" });
+  });
+
+  it("sem melhoria mas com piora, devolve a piora (para recomendar a consulta)", () => {
+    const s = [aneis(1, 0.2), aneis(7, 0.4)];
+    expect(evolucaoDestacada(s, ["ambliopia"], "esquerdo")).toMatchObject({ tendencia: { tipo: "piorou" } });
+  });
+
+  it("estável ou sem dados: nada a destacar", () => {
+    expect(evolucaoDestacada([aneis(1, 0.4), aneis(7, 0.4)], ["ambliopia"], "esquerdo")).toBeNull();
+    expect(evolucaoDestacada([], ["ambliopia", "figure8"], null)).toBeNull();
   });
 });

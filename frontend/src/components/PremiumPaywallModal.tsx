@@ -18,11 +18,13 @@ interface PremiumPaywallModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
+// Só o que existe de facto na plataforma (Fase B, docs/ANALISE_EXERCICIOS.md):
+// o Premium vende acompanhamento do tratamento, não "mais exercícios".
 const benefits = () => [
-  i18n.t("PremiumPaywallModal.acessoIlimitadoAExercicios"),
-  i18n.t("PremiumPaywallModal.acompanhamentoDeMetricasKpis"),
-  i18n.t("PremiumPaywallModal.redirecionamentoExclusivoETeleconsulta"),
-  i18n.t("PremiumPaywallModal.videosExplicativosComMedicos"),
+  i18n.t("PremiumPaywallModal.beneficioTodosOsExercicios"),
+  i18n.t("PremiumPaywallModal.beneficioEvolucao"),
+  i18n.t("PremiumPaywallModal.beneficioRelatorio"),
+  i18n.t("PremiumPaywallModal.beneficioClinicas"),
 ];
 
 const PremiumPaywallModal = ({ open, onOpenChange }: PremiumPaywallModalProps) => {
@@ -41,10 +43,10 @@ const PremiumPaywallModal = ({ open, onOpenChange }: PremiumPaywallModalProps) =
             <Lock className="w-6 h-6" />
           </div>
           <DialogTitle className="text-2xl md:text-3xl font-bold text-center">
-            {t("PremiumPaywallModal.desbloqueieOSeuPotencial")}
+            {t("PremiumPaywallModal.tituloAcompanhamento")}
           </DialogTitle>
           <DialogDescription className="text-center text-base">
-            {t("PremiumPaywallModal.facaUpgradeParaAceder")}
+            {t("PremiumPaywallModal.subtituloAcompanhamento")}
           </DialogDescription>
         </DialogHeader>
 
