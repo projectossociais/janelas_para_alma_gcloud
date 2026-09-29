@@ -50,7 +50,6 @@ Fase 3) quando a conta Meta estiver pronta.
 | Matchmaker | Fase 4B — consulta incluída no Premium vs. paga à parte | Sprint 4 | Preço por consulta (decisão do dono) |
 | Matchmaker | Selo de clínica verificada | Sprint 4 | Negociação comercial com números reais |
 | Matchmaker | `sugerir_clinicas` (correspondência por regras) | Sprint 4, PR C | Existir uma 2.ª clínica |
-| Matchmaker | "Próxima teleconsulta" real no `DashboardUser` (hoje o paciente só recebe o link por email) | Sprint 4, Fase 2 | — |
 | Exercícios | W-18 — melhorar os 4+4 exercícios e carregar os vídeos no R2 privado | Sprint 6 | Definir o que muda em cada exercício |
 | Exercícios | **Vídeos: backend pronto, frontend nunca os mostra** — `GET /exercicios/{id}/video` e `exerciciosApi.video()` existem, nenhum ecrã chama | L-02 | Fechar com W-18 |
 | Scanner | W-13/W-14/W-16/L-14 — método, calibração, validação clínica, ecrã de resultados | Sprint 3 | Parceiro clínico (bloqueio nº 8) |
@@ -62,13 +61,16 @@ Fase 3) quando a conta Meta estiver pronta.
 
 | Item | O que fazer | Quem |
 |---|---|---|
-| UX-03 | Pedir a província na doação de materiais (schema `DoacaoMateriaisCriar` + formulário em `Apoiar.tsx`) | W+L |
-| UX-05 | Mostrar as actividades de voluntariado numa página pública (`/kamba`) com `listarAtividades` | L |
-| CROSS-07 | Confirmar que a produção envia email do domínio do projecto e não de `onboarding@resend.dev` | L (DNS) |
+| UX-03 | Pedir a província na doação de materiais — **código pronto, PR #113 à espera da tua revisão** (mexe no esquema de dados) | W+L |
+| CROSS-07 | Confirmar que a produção envia email do domínio do projecto e não de `onboarding@resend.dev` — infra pura, sem código a mudar aqui: `04-deploy.sh` já lê `EMAIL_REMETENTE` do ambiente, só falta confirmar o valor que está mesmo configurado no Cloud Run de produção hoje | L (DNS/gcloud) |
 
 **✅ Feitos 2026-09-28:** UX-02/L-10 (gralha "Três tiers" → "Três níveis"), L-04 (Maps do
 `ContactSection.tsx` a abrir em separador novo), L-01 (9 ficheiros `.asset.json` órfãos
 do Lovable apagados).
+
+**✅ Feito 2026-09-29: UX-05** (vitrine pública das actividades de voluntariado, PR #114).
+Também fechados hoje: L-12 (Premium pendente) e "Próxima teleconsulta real no
+DashboardUser" — ver entradas próprias abaixo.
 
 **✅ Fechado 2026-09-28: L-12.** Quem envia o comprovativo já não fica sem saber o que
 aconteceu — novo `GET /premium-requests/meu` (sessão própria, nunca um id vindo do
@@ -76,6 +78,12 @@ pedido) devolve o pedido mais recente, e `PremiumRequestBanner` no `DashboardUse
 "a aguardar aprovação" (pendente) ou "acesso revogado" com atalho para um novo pedido
 (revogado); quem já tem `premium_ativo=true` nunca o vê. PR #111, testes dos dois lados,
 CI verde, deploy confirmado.
+
+**✅ Fechado 2026-09-29: "Próxima teleconsulta" real no `DashboardUser`.** Novo
+`GET /agendamentos/minha-proxima-teleconsulta` (sessão própria, só a mais próxima
+confirmada e online) — o card deixa de mostrar sempre "Em breve" e passa a mostrar
+data/hora, clínica e um atalho para a sala do Jitsi quando há uma marcada. PR #112, 9
+testes novos entre API e frontend, CI verde, deploy confirmado. Sem alteração de esquema.
 
 ### ⚪ Decisões e tarefas administrativas
 
@@ -2088,13 +2096,15 @@ Supabase. Já existe `voluntariadoApi.candidatar` (`apiClient.ts:729`), ligado a
 candidaturas do admin nunca recebe nada pela via pública actual. Trocar o envio por
 email pela chamada real à API.
 
-### UX-05 — Actividades de voluntariado sem vitrine pública · L — ⬜ **aberto** (confirmado 2026-09-28: nenhuma página pública chama `listarAtividades`)
+### UX-05 — Actividades de voluntariado sem vitrine pública · L — ✅ **FEITO 2026-09-29**
 
-`voluntariadoApi.listarAtividades()` (`apiClient.ts:737`) está definida e nunca é
-chamada em nenhuma página pública — confirmado por grep a todo o `frontend/src`. O
-admin já filtra actividades por estado/período (`AdminVoluntariado.tsx`), mas esse
-trabalho fica invisível ao utilizador comum. Consumir a listagem numa secção pública de
-`/kamba`.
+Novo `UpcomingActivities` em `/kamba`, consumindo `voluntariadoApi.listarAtividades()`
+(já existia, nunca era chamado por nenhuma página pública). Esconde, por cima do
+`estado == "publicada"` que a API já filtra, as actividades cuja `data_fim` (ou
+`data_inicio`, sem data de fim) já passou. PR #114, 5 testes novos, CI verde, deploy
+confirmado. **Fora de âmbito, registado à parte:** inscrição a partir desta página
+(`voluntariadoApi.inscrever` continua sem nenhum consumidor no frontend, nem sequer
+numa área de membro) — UX-05 só pedia mostrar as actividades.
 
 ### UX-06 — Sem link permanente para o dashboard na Navbar · L — ✅ **FEITO 2026-09-24**
 
