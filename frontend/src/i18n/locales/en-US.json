@@ -207,7 +207,9 @@
     "oSeuEmailPara": "Your contact email",
     "insiraOSeuEmail": "Enter your email to receive your receipt and a thank-you note",
     "confirmarDoacao": "Confirm Donation",
-    "nivelObrigado": "{{nome}}: {{intervalo}}. Thank you for supporting our mission."
+    "nivelObrigado": "{{nome}}: {{intervalo}}. Thank you for supporting our mission.",
+    "provinciaParaRecolha": "Province for pick-up",
+    "seleccioneASuaProvincia": "Select your province"
   },
   "AtualizarPassword": {
     "definirNovaPalavraPasse": "Set a New Password",

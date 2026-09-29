@@ -32,7 +32,7 @@ def registar_doacao_materiais(
     # nunca um 201 fabricado. Ver DoacaoService e CLAUDE.md, "Nunca mostrar
     # sucesso antes de verificar error/excepção".
     try:
-        doacao = service.registar_doacao_materiais(dados.email, dados.materiais, dados.detalhes)
+        doacao = service.registar_doacao_materiais(dados.email, dados.materiais, dados.provincia, dados.detalhes)
     except MateriaisNaoSelecionadosError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)) from exc
 

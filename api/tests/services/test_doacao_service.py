@@ -31,7 +31,15 @@ class RepositorioFalso:
         self.chamadas: list[dict] = []
 
     def criar(
-        self, recibo_id, tipo, email, status, materiais=None, detalhes=None, comprovativo_url=None
+        self,
+        recibo_id,
+        tipo,
+        email,
+        status,
+        materiais=None,
+        detalhes=None,
+        provincia=None,
+        comprovativo_url=None,
     ) -> DoacaoRegisto:
         self.chamadas.append(
             {
@@ -40,6 +48,7 @@ class RepositorioFalso:
                 "email": email,
                 "status": status,
                 "materiais": materiais,
+                "provincia": provincia,
                 "comprovativo_url": comprovativo_url,
             }
         )
@@ -50,6 +59,7 @@ class RepositorioFalso:
             email=email,
             materiais=materiais,
             detalhes=detalhes,
+            provincia=provincia,
             status=status,
             comprovativo_url=comprovativo_url,
             created_at=datetime.now(UTC),
@@ -79,7 +89,7 @@ class TestRegistarDoacaoMateriais:
     def test_regista_com_um_recibo_gerado_pelo_servidor(self) -> None:
         service = DoacaoService(RepositorioFalso(), EmailSenderFalso())
 
-        doacao = service.registar_doacao_materiais("ana@example.com", ["livros", "brinquedos"])
+        doacao = service.registar_doacao_materiais("ana@example.com", ["livros", "brinquedos"], "Luanda")
 
         assert doacao.recibo_id.startswith("JPA-")
         assert doacao.status == "pendente"
@@ -89,7 +99,7 @@ class TestRegistarDoacaoMateriais:
         service = DoacaoService(RepositorioFalso(), EmailSenderFalso())
 
         with pytest.raises(MateriaisNaoSelecionadosError):
-            service.registar_doacao_materiais("ana@example.com", [])
+            service.registar_doacao_materiais("ana@example.com", [], "Luanda")
 
     def test_nunca_engole_uma_falha_de_gravacao(self) -> None:
         # A regra que mais importa neste ficheiro inteiro: se a gravação
@@ -97,14 +107,14 @@ class TestRegistarDoacaoMateriais:
         service = DoacaoService(RepositorioQueFalha(), EmailSenderFalso())
 
         with pytest.raises(RuntimeError):
-            service.registar_doacao_materiais("ana@example.com", ["livros"])
+            service.registar_doacao_materiais("ana@example.com", ["livros"], "Luanda")
 
     def test_cada_doacao_recebe_um_recibo_diferente(self) -> None:
         repo = RepositorioFalso()
         service = DoacaoService(repo, EmailSenderFalso())
 
-        d1 = service.registar_doacao_materiais("ana@example.com", ["livros"])
-        d2 = service.registar_doacao_materiais("ana@example.com", ["livros"])
+        d1 = service.registar_doacao_materiais("ana@example.com", ["livros"], "Luanda")
+        d2 = service.registar_doacao_materiais("ana@example.com", ["livros"], "Luanda")
 
         assert d1.recibo_id != d2.recibo_id
 
@@ -112,7 +122,7 @@ class TestRegistarDoacaoMateriais:
         email_sender = EmailSenderFalso()
         service = DoacaoService(RepositorioFalso(), email_sender)
 
-        doacao = service.registar_doacao_materiais("ana@example.com", ["livros"], "só livros infantis")
+        doacao = service.registar_doacao_materiais("ana@example.com", ["livros"], "Luanda", "só livros infantis")
 
         assert len(email_sender.enviados) == 1
         enviado = email_sender.enviados[0]
@@ -128,7 +138,7 @@ class TestRegistarDoacaoMateriais:
         service = DoacaoService(repo, EmailSenderFalso(falha=True))
 
         with pytest.raises(EmailEnvioFalhouError):
-            service.registar_doacao_materiais("ana@example.com", ["livros"])
+            service.registar_doacao_materiais("ana@example.com", ["livros"], "Luanda")
 
         assert len(repo.chamadas) == 1
 

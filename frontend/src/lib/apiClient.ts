@@ -624,16 +624,18 @@ export interface DoacaoPublica {
   email: string;
   materiais: string[] | null;
   detalhes: string | null;
+  provincia: string | null;
   status: string;
   comprovativo_url: string | null;
   created_at: string;
 }
 
 export const doacoesApi = {
-  registarMateriais: (email: string, materiais: string[], detalhes?: string | null) =>
+  /** `provincia` (UX-03) -- onde a equipa vai recolher o que foi doado. */
+  registarMateriais: (email: string, materiais: string[], provincia: string, detalhes?: string | null) =>
     pedido<DoacaoPublica>("/doacoes/materiais", {
       method: "POST",
-      body: JSON.stringify({ email, materiais, detalhes: detalhes || null }),
+      body: JSON.stringify({ email, materiais, provincia, detalhes: detalhes || null }),
     }),
 
   /** `comprovativoChave` vem de `comprovativosApi.preparar` + upload já

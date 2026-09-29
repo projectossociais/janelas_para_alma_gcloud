@@ -43,6 +43,7 @@ vi.mock("@/lib/apiClient", () => ({
 
 vi.mock("@/contexts/AuthContext", () => ({
   useAuth: () => ({ isLoggedIn: false, user: null, logout: vi.fn(), isAdmin: false }),
+  PROVINCES: ["Luanda", "Benguela"],
 }));
 
 vi.mock("@/contexts/ProfileContext", () => ({
@@ -60,6 +61,8 @@ import Apoiar from "./Apoiar";
 async function abrirDialogoDeMateriais(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole("button", { name: /Armações/i }));
   await user.click(screen.getByRole("button", { name: /^Confirmar Doação de Materiais$/ }));
+  await user.click(screen.getByRole("combobox"));
+  await user.click(await screen.findByRole("option", { name: "Luanda" }));
   const email = await screen.findByLabelText(/O seu email para contacto/i);
   await user.type(email, "doador@example.com");
   return screen.getByRole("button", { name: /Confirmar Doação|A enviar/ });
@@ -115,6 +118,7 @@ describe("Apoiar — doação de materiais", () => {
       email: "doador@example.com",
       materiais: ["armacoes"],
       detalhes: null,
+      provincia: "Luanda",
       status: "pendente",
       created_at: "2026-01-01T00:00:00.000Z",
     });
@@ -126,7 +130,21 @@ describe("Apoiar — doação de materiais", () => {
 
     await waitFor(() => expect(toastSuccess).toHaveBeenCalled());
     expect(toastError).not.toHaveBeenCalled();
-    expect(registarMateriais).toHaveBeenCalledWith("doador@example.com", ["armacoes"], null);
+    expect(registarMateriais).toHaveBeenCalledWith("doador@example.com", ["armacoes"], "Luanda", null);
+  });
+
+  it("sem escolher a província, não regista nem chama a API (UX-03)", async () => {
+    const user = userEvent.setup();
+    render(<Apoiar />, { wrapper: MemoryRouter });
+
+    await user.click(screen.getByRole("button", { name: /Armações/i }));
+    await user.click(screen.getByRole("button", { name: /^Confirmar Doação de Materiais$/ }));
+    const email = await screen.findByLabelText(/O seu email para contacto/i);
+    await user.type(email, "doador@example.com");
+    await user.click(screen.getByRole("button", { name: /Confirmar Doação|A enviar/ }));
+
+    expect(registarMateriais).not.toHaveBeenCalled();
+    expect(toastError).toHaveBeenCalledWith("Seleccione a sua província");
   });
 });
 

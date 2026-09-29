@@ -6,6 +6,9 @@ from pydantic import BaseModel, EmailStr, Field
 class DoacaoMateriaisCriar(BaseModel):
     email: EmailStr
     materiais: list[str]
+    # UX-03 -- onde a equipa vai recolher o que foi doado. Só faz sentido
+    # aqui (doação financeira não tem nada para ir buscar).
+    provincia: str = Field(min_length=1, max_length=60)
     detalhes: str | None = None
 
 
@@ -24,6 +27,7 @@ class DoacaoPublica(BaseModel):
     email: str
     materiais: list[str] | None
     detalhes: str | None
+    provincia: str | None
     status: str
     comprovativo_url: str | None
     created_at: datetime

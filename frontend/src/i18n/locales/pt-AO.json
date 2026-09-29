@@ -207,7 +207,9 @@
     "oSeuEmailPara": "O seu email para contacto",
     "insiraOSeuEmail": "Insira o seu email para receber o comprovativo e agradecimento",
     "confirmarDoacao": "Confirmar Doação",
-    "nivelObrigado": "{{nome}}: {{intervalo}}. Obrigado por apoiar a nossa missão."
+    "nivelObrigado": "{{nome}}: {{intervalo}}. Obrigado por apoiar a nossa missão.",
+    "provinciaParaRecolha": "Província para a recolha",
+    "seleccioneASuaProvincia": "Seleccione a sua província"
   },
   "AtualizarPassword": {
     "definirNovaPalavraPasse": "Definir Nova Palavra-passe",

@@ -46,24 +46,36 @@ def client_com_falha_de_email():
 
 def test_regista_doacao_de_materiais(client_ok: TestClient) -> None:
     resposta = client_ok.post(
-        "/doacoes/materiais", json={"email": "ana@example.com", "materiais": ["livros", "brinquedos"]}
+        "/doacoes/materiais",
+        json={"email": "ana@example.com", "materiais": ["livros", "brinquedos"], "provincia": "Luanda"},
     )
 
     assert resposta.status_code == 201
     corpo = resposta.json()
     assert corpo["recibo_id"].startswith("JPA-")
     assert corpo["status"] == "pendente"
+    assert corpo["provincia"] == "Luanda"
 
 
 def test_rejeita_sem_materiais(client_ok: TestClient) -> None:
-    resposta = client_ok.post("/doacoes/materiais", json={"email": "ana@example.com", "materiais": []})
+    resposta = client_ok.post(
+        "/doacoes/materiais", json={"email": "ana@example.com", "materiais": [], "provincia": "Luanda"}
+    )
+
+    assert resposta.status_code == 422
+
+
+def test_rejeita_sem_provincia(client_ok: TestClient) -> None:
+    resposta = client_ok.post(
+        "/doacoes/materiais", json={"email": "ana@example.com", "materiais": ["livros"]}
+    )
 
     assert resposta.status_code == 422
 
 
 def test_nunca_devolve_201_quando_a_gravacao_falha(client_com_falha_de_gravacao: TestClient) -> None:
     resposta = client_com_falha_de_gravacao.post(
-        "/doacoes/materiais", json={"email": "ana@example.com", "materiais": ["livros"]}
+        "/doacoes/materiais", json={"email": "ana@example.com", "materiais": ["livros"], "provincia": "Luanda"}
     )
 
     assert resposta.status_code != 201
@@ -72,7 +84,7 @@ def test_nunca_devolve_201_quando_a_gravacao_falha(client_com_falha_de_gravacao:
 
 def test_nunca_devolve_201_quando_o_envio_do_email_falha(client_com_falha_de_email: TestClient) -> None:
     resposta = client_com_falha_de_email.post(
-        "/doacoes/materiais", json={"email": "ana@example.com", "materiais": ["livros"]}
+        "/doacoes/materiais", json={"email": "ana@example.com", "materiais": ["livros"], "provincia": "Luanda"}
     )
 
     assert resposta.status_code != 201

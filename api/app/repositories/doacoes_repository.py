@@ -20,6 +20,7 @@ class DoacaoRegisto:
     email: str
     materiais: list[str] | None
     detalhes: str | None
+    provincia: str | None
     status: str
     comprovativo_url: str | None
     created_at: datetime
@@ -34,6 +35,7 @@ class DoacoesRepository(Protocol):
         status: str,
         materiais: list[str] | None = None,
         detalhes: str | None = None,
+        provincia: str | None = None,
         comprovativo_url: str | None = None,
     ) -> DoacaoRegisto: ...
 
@@ -50,6 +52,7 @@ class SQLAlchemyDoacoesRepository:
         status: str,
         materiais: list[str] | None = None,
         detalhes: str | None = None,
+        provincia: str | None = None,
         comprovativo_url: str | None = None,
     ) -> DoacaoRegisto:
         row = Doacao(
@@ -58,6 +61,7 @@ class SQLAlchemyDoacoesRepository:
             email=email,
             materiais=materiais,
             detalhes=detalhes,
+            provincia=provincia,
             status=status,
             comprovativo_url=comprovativo_url,
         )
@@ -74,6 +78,7 @@ class SQLAlchemyDoacoesRepository:
             email=row.email,
             materiais=row.materiais,
             detalhes=row.detalhes,
+            provincia=row.provincia,
             status=row.status,
             comprovativo_url=row.comprovativo_url,
             created_at=row.created_at,

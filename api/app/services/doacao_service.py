@@ -39,7 +39,7 @@ class DoacaoService:
         self._email = email_sender
 
     def registar_doacao_materiais(
-        self, email: str, materiais: list[str], detalhes: str | None = None
+        self, email: str, materiais: list[str], provincia: str, detalhes: str | None = None
     ) -> DoacaoRegisto:
         if not materiais:
             raise MateriaisNaoSelecionadosError("selecione pelo menos um tipo de material")
@@ -51,6 +51,7 @@ class DoacaoService:
             status="pendente",
             materiais=materiais,
             detalhes=detalhes,
+            provincia=provincia,
         )
 
         # Doação já gravada -- uma falha daqui para a frente propaga (ver

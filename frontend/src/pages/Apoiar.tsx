@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
@@ -44,6 +45,7 @@ import {
 import { DEFAULT_BANK_DATA, ofuscarValor } from "@/lib/pagamento";
 import { Trans, useTranslation } from "react-i18next";
 import i18n, { tPt } from "@/i18n";
+import { PROVINCES } from "@/contexts/AuthContext";
 
 type Mode = "materiais" | "financeiro";
 
@@ -210,6 +212,9 @@ const Apoiar = () => {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<DialogStep>("form");
   const [email, setEmail] = useState("");
+  // UX-03 -- onde a equipa vai recolher o que foi doado. Só a doação de
+  // materiais precisa disto (uma financeira não tem nada a ir buscar).
+  const [provincia, setProvincia] = useState("");
   const [receipt, setReceipt] = useState<MaterialDonationReceipt | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [comprovativo, setComprovativo] = useState<File | null>(null);
@@ -248,6 +253,10 @@ const Apoiar = () => {
     if (!email) return;
 
     if (mode === "materiais") {
+      if (!provincia) {
+        toast.error(tr("Apoiar.seleccioneASuaProvincia"));
+        return;
+      }
       setSubmitting(true);
       try {
         const detalhesDoacao = materialNotes.trim() || null;
@@ -258,7 +267,7 @@ const Apoiar = () => {
         // falha em qualquer um dos dois passos (gravar ou enviar o email)
         // devolve erro, nunca um 201 fabricado (ver CLAUDE.md, "nunca
         // mostrar sucesso antes de verificar erro").
-        const doacao = await doacoesApi.registarMateriais(email, selectedMaterials, detalhesDoacao);
+        const doacao = await doacoesApi.registarMateriais(email, selectedMaterials, provincia, detalhesDoacao);
 
         setReceipt({
           id: doacao.recibo_id,
@@ -270,6 +279,7 @@ const Apoiar = () => {
         toast.success(tr("Apoiar.doacaoRegistadaEnviamosUm"));
         setSelectedMaterials([]);
         setMaterialNotes("");
+        setProvincia("");
       } catch (err) {
         console.error("Falha ao registar doação de materiais:", err);
         toast.error(mensagemDeErroApi(err, tr("Apoiar.naoFoiPossivelRegistar")));
@@ -666,6 +676,24 @@ const Apoiar = () => {
                         );
                       })}
                     </ul>
+                  </div>
+                )}
+
+                {mode === "materiais" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="donor-provincia">{tr("Apoiar.provinciaParaRecolha")}</Label>
+                    <Select value={provincia} onValueChange={setProvincia}>
+                      <SelectTrigger id="donor-provincia">
+                        <SelectValue placeholder={tr("Apoiar.seleccioneASuaProvincia")} />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-72">
+                        {PROVINCES.map((p) => (
+                          <SelectItem key={p} value={p}>
+                            {p}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 )}
 
