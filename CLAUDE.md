@@ -313,6 +313,11 @@ activa; verificar e testar isso explicitamente.**
    em cabeçalho, nunca sessão.** `obter_cron_valido` (`core/dependencies.py`) compara
    `X-Cron-Secret` com `CRON_SECRET` via `hmac.compare_digest`; sem o segredo configurado,
    recusa sempre — nunca fica "aberto por engano" em produção por falta de configuração.
+   Hoje há dois: `/interno/eliminar-contas-pendentes` (W-03) e
+   `/interno/lembretes-exercicios` (lembrete diário de treino por email, só a quem activou
+   "Lembretes de Exercícios Visuais", tem acesso, treinou nos últimos 14 dias e ainda não
+   treinou hoje em Luanda — `LembreteExerciciosService`). Os jobs do Cloud Scheduler correm
+   sem novas tentativas automáticas: repetir reenviaria a quem já recebeu.
 
 ---
 

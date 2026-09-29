@@ -58,11 +58,11 @@ oftalmologista e prioridade de marcação na clínica parceira.
 
 ### Fase A — correcções sem decisões clínicas novas (em curso)
 - [x] Treino de Anéis no trial, Convergência no Premium
-- [ ] Sessão rápida: da 2.ª vez em diante, um só ecrã de confirmação em vez de 5-6
-- [ ] Resultados em linguagem simples e com tendência ("leu 2 linhas mais pequenas do que
+- [x] Sessão rápida (#121): da 2.ª vez em diante, um só ecrã de confirmação em vez de 5-6
+- [x] Resultados em linguagem simples (#122) e com tendência ("leu 2 linhas mais pequenas do que
       há 3 semanas"); o jargão fica só no relatório para o médico
-- [ ] Convergência e Perto e longe marcados como "auto-avaliação" no progresso e no relatório
-- [ ] Lembrete diário por email (usa `notificacoes_lembretes`, que já existe; job no
+- [x] Convergência e Perto e longe marcados (#122) como "auto-avaliação" no progresso e no relatório
+- [x] Lembrete diário por email (falta criar o job no Cloud Scheduler — comando no backlog) (usa `notificacoes_lembretes`, que já existe; job no
       Cloud Scheduler, como o W-03)
 
 ### Fase B — conversão

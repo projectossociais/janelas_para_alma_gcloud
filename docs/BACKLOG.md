@@ -52,12 +52,21 @@ Fase 3) quando a conta Meta estiver pronta.
 | Matchmaker | Fase 4B — consulta incluída no Premium vs. paga à parte | Sprint 4 | Preço por consulta (decisão do dono) |
 | Matchmaker | Selo de clínica verificada | Sprint 4 | Negociação comercial com números reais |
 | Matchmaker | `sugerir_clinicas` (correspondência por regras) | Sprint 4, PR C | Existir uma 2.ª clínica |
-| Exercícios | **W-18 — Fase A da [análise crítica](ANALISE_EXERCICIOS.md) (em curso, 2026-09-29):** sessão rápida, resultados em linguagem simples com tendência, auto-avaliação separada das medições, lembrete diário por email. A reescrita sem webcam já está em `main` (#118/#119, mesclada sem revisão; mantida por decisão do dono do projecto a 2026-09-29) e o Treino de Anéis já trocou de lugar com a Convergência no trial | Sprint 6 | — (Fases B e C: ver análise) |
+| Exercícios | **W-18 — Fase A da [análise crítica](ANALISE_EXERCICIOS.md) feita em código (2026-09-29):** Treino de Anéis no trial (#120), sessão rápida (#121), evolução em linguagem simples e auto-avaliação separada (#122), lembrete diário por email. **Falta só criar o job do Cloud Scheduler** (comando abaixo). A reescrita sem webcam (#118/#119, mesclada sem revisão) foi mantida por decisão do dono do projecto | Sprint 6 | Wilson: criar o job; depois, Fases B e C (ver análise) |
 | Exercícios | **LEG-01 — ⛔ BLOQUEIA O LANÇAMENTO PÚBLICO (não o merge):** Termos e Política de Privacidade ainda descrevem os exercícios como "terapia visual" e "baseados em biometria facial" — **dossiê para o jurista: [`docs/DOSSIE_JURISTA_LEG01.md`](DOSSIE_JURISTA_LEG01.md)** (resumo em [`docs/PENDENTE_REVISAO_LEGAL.md`](PENDENTE_REVISAO_LEGAL.md)) | W-18 | Validação do jurista; decisão do dono do projecto sobre o consentimento (pergunta 5.1 do dossiê) |
 | Scanner | W-13/W-14/W-16/L-14 — método, calibração, validação clínica, ecrã de resultados | Sprint 3 | Parceiro clínico (bloqueio nº 8) |
 | Scanner | Ecrã de resultados mostra 6 categorias, o cálculo só produz 2 | CLAUDE.md §11, W-09 | Localizar o repositório `janelas-scanner-api` |
 | Produto | Histórico de exames com evolução · loja de óculos · conteúdo editável pelo admin | Sprint 6 | — |
 | Frontend | Redesenho total UX/UI | **Sprint 7**, `docs/REDESENHO_FRONTEND.md` | 6 decisões do dono (secção 8 do plano) |
+
+**Lembrete diário de treino — criar o job uma vez** (usa o mesmo `jpa-cron-secret` do W-03;
+18:00 em Luanda, sem novas tentativas para nunca reenviar):
+
+```bash
+API_URL="$(gcloud run services describe jpa-api --region=$REGION --format='value(status.url)')"
+CRON_SECRET="$(gcloud secrets versions access latest --secret=jpa-cron-secret)"
+gcloud scheduler jobs create http lembretes-exercicios   --location="$REGION" --schedule="0 18 * * *" --time-zone="Africa/Luanda"   --uri="${API_URL}/interno/lembretes-exercicios" --http-method=POST   --headers="X-Cron-Secret=${CRON_SECRET}" --max-retry-attempts=0
+```
 
 ### 🟡 Correcções rápidas (menos de uma hora cada)
 
