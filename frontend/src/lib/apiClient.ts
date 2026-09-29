@@ -967,6 +967,13 @@ export interface HorarioDisponivel {
   fim: string;
 }
 
+export interface ProximaTeleconsulta {
+  agendamento_id: string;
+  clinica_nome: string;
+  horario_inicio: string;
+  sala_video: string;
+}
+
 export const agendamentosApi = {
   // Público -- não exige sessão (pedir uma consulta é pontual, não uma
   // relação contínua como o voluntariado). Ver CLAUDE.md/docs/BACKLOG.md.
@@ -976,6 +983,12 @@ export const agendamentosApi = {
     pedido<HorarioDisponivel[]>(
       `/clinicas/${clinicaId}/horarios?${new URLSearchParams({ modalidade }).toString()}`,
     ),
+
+  /** DashboardUser.tsx -- a próxima teleconsulta online confirmada do
+   *  próprio utilizador, com a sala do Jitsi já pronta (`null` se não
+   *  houver nenhuma). Exige sessão; nunca aceita um id do chamador. */
+  minhaProximaTeleconsulta: () =>
+    pedido<ProximaTeleconsulta | null>("/agendamentos/minha-proxima-teleconsulta"),
 
   pedir: (dados: AgendamentoClinicoInput) =>
     pedido<AgendamentoClinicoPublico>("/agendamentos", {

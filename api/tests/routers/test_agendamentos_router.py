@@ -17,6 +17,7 @@ from tests.services.test_agendamento_clinico_service import (
     EmailSenderFalso,
     RepositorioDisponibilidadesFalso,
     RepositorioTeleconsultasFalso,
+    _disponibilidade,
 )
 from tests.services.test_auth_service import RepositorioFalso as RepositorioAuthFalso
 
@@ -61,6 +62,18 @@ class RepositorioAgendamentosFalso:
 
     def listar(self) -> list[AgendamentoClinicoRegisto]:
         return list(self._agendamentos.values())
+
+    def proxima_confirmada_por_utilizador(self, utilizador_id: str, agora) -> AgendamentoClinicoRegisto | None:
+        candidatos = [
+            a
+            for a in self._agendamentos.values()
+            if a.utilizador_id == utilizador_id
+            and a.estado == "confirmada"
+            and a.modalidade == "online"
+            and a.horario_inicio is not None
+            and a.horario_inicio >= agora
+        ]
+        return min(candidatos, key=lambda a: a.horario_inicio) if candidatos else None
 
     def existe_conflito(self, clinica_id: str, horario_inicio) -> bool:
         return any(
@@ -124,7 +137,9 @@ def ambiente():
     repo_auth = RepositorioAuthFalso()
     repo_ag = RepositorioAgendamentosFalso()
     repo_clin = RepositorioClinicasFalso()
-    repo_disp = RepositorioDisponibilidadesFalso()
+    repo_disp = RepositorioDisponibilidadesFalso(
+        [_disponibilidade(), _disponibilidade(id="disp-online", modalidade="online")]
+    )
     repo_tele = RepositorioTeleconsultasFalso()
     email_sender = EmailSenderFalso()
     token_admin = _seed(repo_auth, "id-admin", "admin")
@@ -308,3 +323,74 @@ def test_confirmar_agendamento_ja_decidido_409(ambiente) -> None:
     resposta = c.post(f"/admin/agendamentos/{pedido['id']}/recusar")
 
     assert resposta.status_code == 409
+
+
+# --- "Próxima teleconsulta" real no DashboardUser -------------------------
+
+
+def test_minha_proxima_teleconsulta_sem_sessao_401(ambiente) -> None:
+    c, *_ = ambiente
+    assert c.get("/agendamentos/minha-proxima-teleconsulta").status_code == 401
+
+
+def test_minha_proxima_teleconsulta_sem_nenhuma_devolve_null(ambiente) -> None:
+    c, _, _, token_comum, _ = ambiente
+    c.cookies.set("access_token", token_comum)
+    resposta = c.get("/agendamentos/minha-proxima-teleconsulta")
+    assert resposta.status_code == 200
+    assert resposta.json() is None
+
+
+def test_minha_proxima_teleconsulta_pendente_nao_conta(ambiente) -> None:
+    c, _, _, token_comum, _ = ambiente
+    c.cookies.set("access_token", token_comum)
+    c.post("/agendamentos", json={**_PEDIDO_VALIDO, "modalidade": "online"})
+
+    resposta = c.get("/agendamentos/minha-proxima-teleconsulta")
+
+    assert resposta.status_code == 200
+    assert resposta.json() is None
+
+
+def test_minha_proxima_teleconsulta_presencial_nao_conta(ambiente) -> None:
+    c, _, token_admin, token_comum, _ = ambiente
+    c.cookies.set("access_token", token_comum)
+    pedido = c.post("/agendamentos", json=_PEDIDO_VALIDO).json()
+    c.cookies.set("access_token", token_admin)
+    c.post(f"/admin/agendamentos/{pedido['id']}/confirmar")
+
+    c.cookies.set("access_token", token_comum)
+    resposta = c.get("/agendamentos/minha-proxima-teleconsulta")
+
+    assert resposta.status_code == 200
+    assert resposta.json() is None
+
+
+def test_minha_proxima_teleconsulta_online_confirmada(ambiente) -> None:
+    c, _, token_admin, token_comum, _ = ambiente
+    c.cookies.set("access_token", token_comum)
+    pedido = c.post("/agendamentos", json={**_PEDIDO_VALIDO, "modalidade": "online"}).json()
+    c.cookies.set("access_token", token_admin)
+    c.post(f"/admin/agendamentos/{pedido['id']}/confirmar")
+
+    c.cookies.set("access_token", token_comum)
+    resposta = c.get("/agendamentos/minha-proxima-teleconsulta")
+
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["agendamento_id"] == pedido["id"]
+    assert corpo["clinica_nome"] == "Óptica Optioptika"
+    assert corpo["sala_video"]
+
+
+def test_minha_proxima_teleconsulta_nunca_devolve_a_de_outro_utilizador(ambiente) -> None:
+    c, _, token_admin, token_comum, _ = ambiente
+    pedido = c.post("/agendamentos", json={**_PEDIDO_VALIDO, "modalidade": "online"}).json()
+    c.cookies.set("access_token", token_admin)
+    c.post(f"/admin/agendamentos/{pedido['id']}/confirmar")
+
+    c.cookies.set("access_token", token_comum)
+    resposta = c.get("/agendamentos/minha-proxima-teleconsulta")
+
+    assert resposta.status_code == 200
+    assert resposta.json() is None

@@ -5,12 +5,13 @@ import Footer from "@/components/Footer";
 import PremiumRequestBanner from "@/components/PremiumRequestBanner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Eye, Activity, Sparkles, Calendar, Play } from "lucide-react";
-import { screeningsApi } from "@/lib/apiClient";
+import { Eye, Activity, Sparkles, Calendar, Play, Video } from "lucide-react";
+import { screeningsApi, agendamentosApi, linkDaSalaVideo, type ProximaTeleconsulta } from "@/lib/apiClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAcessoExercicios } from "@/contexts/AcessoExerciciosContext";
 import { useTranslation } from "react-i18next";
 import { localizar } from "@/i18n/rotas";
+import { formatarDataHora } from "@/i18n/formatar";
 
 const DashboardUser = () => {
   const { t } = useTranslation();
@@ -20,6 +21,7 @@ const DashboardUser = () => {
   // Premium (ou admin), 0 sem nenhum dos dois -- o número vem da API.
   const { acesso } = useAcessoExercicios();
   const [scanCount, setScanCount] = useState(0);
+  const [proximaTeleconsulta, setProximaTeleconsulta] = useState<ProximaTeleconsulta | null>(null);
   const primeiroNome = user?.name?.split(" ")[0];
 
   const exerciciosDisponiveis = acesso.exercicios_desbloqueados.length;
@@ -30,6 +32,10 @@ const DashboardUser = () => {
       .listarMinhas()
       .then((screenings) => setScanCount(screenings.length))
       .catch(() => setScanCount(0));
+    agendamentosApi
+      .minhaProximaTeleconsulta()
+      .then(setProximaTeleconsulta)
+      .catch(() => setProximaTeleconsulta(null));
   }, [user]);
 
   return (
@@ -61,11 +67,23 @@ const DashboardUser = () => {
           <Card>
             <CardContent className="p-6">
               <Calendar className="w-6 h-6 text-gold mb-2" />
-              {/* A teleconsulta ainda não é uma funcionalidade real da
-                  plataforma -- um "—" ao lado de números verdadeiros
-                  parecia uma métrica vazia, não uma que ainda não existe. */}
-              <div className="text-2xl font-bold text-muted-foreground">{t("DashboardUser.emBreve")}</div>
-              <div className="text-sm text-muted-foreground">{t("DashboardUser.proximaTeleconsulta")}</div>
+              {proximaTeleconsulta ? (
+                <>
+                  <div className="text-lg font-bold">{formatarDataHora(proximaTeleconsulta.horario_inicio)}</div>
+                  <div className="text-sm text-muted-foreground mb-2">{proximaTeleconsulta.clinica_nome}</div>
+                  <a href={linkDaSalaVideo(proximaTeleconsulta.sala_video)} target="_blank" rel="noreferrer">
+                    <Button size="sm" variant="outline"><Video className="w-4 h-4" />{" "}{t("DashboardUser.entrarNaSala")}</Button>
+                  </a>
+                </>
+              ) : (
+                <>
+                  {/* Sem teleconsulta marcada -- um "—" ao lado de números
+                      verdadeiros parecia uma métrica vazia, não uma que
+                      ainda não existe. */}
+                  <div className="text-2xl font-bold text-muted-foreground">{t("DashboardUser.emBreve")}</div>
+                  <div className="text-sm text-muted-foreground">{t("DashboardUser.proximaTeleconsulta")}</div>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>

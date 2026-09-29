@@ -8,8 +8,11 @@ import { MemoryRouter } from "react-router-dom";
 // falha na chamada não rebenta o dashboard nem inventa um número.
 
 const listarMinhas = vi.fn();
+const minhaProximaTeleconsulta = vi.fn();
 vi.mock("@/lib/apiClient", () => ({
   screeningsApi: { listarMinhas: (...a: unknown[]) => listarMinhas(...a) },
+  agendamentosApi: { minhaProximaTeleconsulta: (...a: unknown[]) => minhaProximaTeleconsulta(...a) },
+  linkDaSalaVideo: (sala: string) => `https://meet.jit.si/${sala}`,
 }));
 
 vi.mock("@/components/Navbar", () => ({ default: () => null }));
@@ -31,6 +34,8 @@ import DashboardUser from "./DashboardUser";
 describe("DashboardUser — Análises realizadas", () => {
   beforeEach(() => {
     listarMinhas.mockReset();
+    minhaProximaTeleconsulta.mockReset();
+    minhaProximaTeleconsulta.mockResolvedValue(null);
     mockUser = { id: "u-1", name: "Ana" };
     mockDesbloqueados = [];
   });
@@ -76,6 +81,8 @@ describe("DashboardUser — Exercícios disponíveis", () => {
   beforeEach(() => {
     listarMinhas.mockReset();
     listarMinhas.mockResolvedValue([]);
+    minhaProximaTeleconsulta.mockReset();
+    minhaProximaTeleconsulta.mockResolvedValue(null);
     mockUser = { id: "u-1", name: "Ana" };
     mockDesbloqueados = [];
   });
@@ -123,14 +130,52 @@ describe("DashboardUser — Exercícios disponíveis", () => {
 });
 
 describe("DashboardUser — Próxima teleconsulta", () => {
-  it("mostra 'Em breve' em vez de um valor fabricado, já que a funcionalidade não existe", () => {
+  beforeEach(() => {
+    listarMinhas.mockReset();
     listarMinhas.mockResolvedValue([]);
+    minhaProximaTeleconsulta.mockReset();
+    mockUser = { id: "u-1", name: "Ana" };
+    mockDesbloqueados = [];
+  });
+
+  it("sem nenhuma marcada, mostra 'Em breve' em vez de um valor fabricado", async () => {
+    minhaProximaTeleconsulta.mockResolvedValue(null);
     render(
       <MemoryRouter>
         <DashboardUser />
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("Em breve")).toBeInTheDocument();
+    expect(await screen.findByText("Em breve")).toBeInTheDocument();
+  });
+
+  it("uma falha ao carregar não rebenta o ecrã -- cai no mesmo 'Em breve'", async () => {
+    minhaProximaTeleconsulta.mockRejectedValue(new Error("falha de rede"));
+    render(
+      <MemoryRouter>
+        <DashboardUser />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText("Em breve")).toBeInTheDocument();
+  });
+
+  it("com uma teleconsulta confirmada, mostra a data e um atalho para a sala", async () => {
+    minhaProximaTeleconsulta.mockResolvedValue({
+      agendamento_id: "ag-1",
+      clinica_nome: "Óptica Optioptika",
+      horario_inicio: "2027-01-04T09:00:00+00:00",
+      sala_video: "janelas-para-alma-abc123",
+    });
+    render(
+      <MemoryRouter>
+        <DashboardUser />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText("Óptica Optioptika");
+    const link = screen.getByRole("link", { name: /Entrar na sala/i });
+    expect(link).toHaveAttribute("href", "https://meet.jit.si/janelas-para-alma-abc123");
+    expect(link).toHaveAttribute("target", "_blank");
   });
 });
