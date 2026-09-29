@@ -17,6 +17,7 @@ import {
 import { Clock, Lock, LogOut, Pause, Play, Trophy, UserPlus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { localizar } from "@/i18n/rotas";
+import ExercicioVideo from "@/components/exercises/ExercicioVideo";
 
 const DURACAO_PADRAO_SEGUNDOS = 5 * 60; // 5 minutos
 
@@ -223,6 +224,7 @@ const BaseExercise = ({
         <div className="min-w-0">
           <h2 className="truncate text-lg font-bold text-foreground">{title}</h2>
           <p className="truncate text-sm text-muted-foreground">{description}</p>
+          {!locked && <ExercicioVideo exercicioId={exercicioId} />}
         </div>
         <Button variant="ghost" size="sm" asChild className="shrink-0 gap-2">
           <Link to={localizar("/exercicios")} aria-label={t("BaseExercise.sairDoExercicio")}>

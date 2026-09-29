@@ -338,6 +338,10 @@
     "textoPremium": "Activate the Premium plan for unlimited access to every exercise.",
     "botaoPremium": "See Premium plans"
   },
+  "ExercicioVideo": {
+    "verVideoExplicativo": "Watch explainer video",
+    "aCarregar": "Loading..."
+  },
   "CampanhaGamek": {
     "n12DeSetembro": "September 12",
     "campanhaDeConsciencializacaoSobre": "Strabismus Awareness Campaign in Gamek",
