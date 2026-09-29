@@ -2,7 +2,10 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import ConteudoRelatorio, { CabecalhoRelatorio } from "@/components/visao/ConteudoRelatorio";
+import ConteudoRelatorio, {
+  CabecalhoRelatorio,
+  FolhaRelatorio,
+} from "@/components/visao/ConteudoRelatorio";
 import PartilharComMedico from "@/components/visao/PartilharComMedico";
 import { useHistoricoVisao } from "@/components/visao/hooks";
 import { useAuth } from "@/contexts/AuthContext";
@@ -34,7 +37,11 @@ const RelatorioSemanal = () => {
               {t("Visao.voltarAoProgresso")}
             </Link>
           </Button>
-          <Button onClick={() => window.print()} className="gap-2 bg-navy text-navy-foreground hover:bg-navy/90" disabled={!sessoes}>
+          <Button
+            onClick={() => window.print()}
+            className="gap-2 bg-navy text-navy-foreground hover:bg-navy/90"
+            disabled={!sessoes}
+          >
             <Printer className="h-4 w-4" />
             {t("Visao.imprimir")}
           </Button>
@@ -42,27 +49,36 @@ const RelatorioSemanal = () => {
 
         {isLoggedIn && <PartilharComMedico />}
 
-        <CabecalhoRelatorio
-          hoje={hoje}
-          nome={profile ? profile.nome_completo || profile.email : null}
-          olhoMaisFraco={profile?.olho_mais_fraco ?? null}
-          usaOculos={profile?.usa_oculos ?? null}
-        />
+        <FolhaRelatorio>
+          <CabecalhoRelatorio
+            hoje={hoje}
+            nome={profile ? profile.nome_completo || profile.email : null}
+            olhoMaisFraco={profile?.olho_mais_fraco ?? null}
+            usaOculos={profile?.usa_oculos ?? null}
+          />
 
-        {!isLoggedIn ? (
-          <p className="text-sm text-muted-foreground">{t("Visao.progressoSemSessao")}</p>
-        ) : erro ? (
-          <div className="text-sm text-destructive" role="alert">
-            <p>{t("Visao.erroACarregar")}</p>
-            <Button variant="outline" size="sm" className="mt-3 print:hidden" onClick={() => void recarregar()}>
-              {t("Visao.tentarDeNovo")}
-            </Button>
-          </div>
-        ) : sessoes === null ? (
-          <div className="h-40" aria-busy />
-        ) : (
-          <ConteudoRelatorio sessoes={sessoes} hoje={hoje} />
-        )}
+          {!isLoggedIn ? (
+            <p className="text-[13px] text-neutral-600">
+              {t("Visao.progressoSemSessao")}
+            </p>
+          ) : erro ? (
+            <div className="text-sm text-destructive" role="alert">
+              <p>{t("Visao.erroACarregar")}</p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-3 print:hidden"
+                onClick={() => void recarregar()}
+              >
+                {t("Visao.tentarDeNovo")}
+              </Button>
+            </div>
+          ) : sessoes === null ? (
+            <div className="h-40" aria-busy />
+          ) : (
+            <ConteudoRelatorio sessoes={sessoes} hoje={hoje} />
+          )}
+        </FolhaRelatorio>
       </div>
     </div>
   );
