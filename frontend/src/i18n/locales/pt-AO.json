@@ -2189,6 +2189,15 @@
     "escolherOutroOlho": "Escolher outro olho",
     "repetirTesteAcuidade": "Repetir o Teste de Acuidade",
     "acuidadeSemDiferencaOlhos": "No seu último Teste de Acuidade, os dois olhos tiveram o mesmo resultado, por isso o teste não identifica o olho mais fraco. Marque uma consulta: o oftalmologista confirma qual é o olho a treinar.",
-    "contrasteLimiteEcra": "Chegou ao contraste mais fraco que este ecrã consegue mostrar (o sinal \"≥\"): a sua sensibilidade pode ser ainda maior. Num ecrã melhor, ou com mais brilho, o teste pode ir mais longe."
+    "contrasteLimiteEcra": "Chegou ao contraste mais fraco que este ecrã consegue mostrar (o sinal \"≥\"): a sua sensibilidade pode ser ainda maior. Num ecrã melhor, ou com mais brilho, o teste pode ir mais longe.",
+    "rapidoTitulo": "Pronto para treinar?",
+    "rapidoBrilho": "Brilho do ecrã no máximo",
+    "rapidoComOculos": "Com os seus óculos ou lentes postos",
+    "rapidoSemOculos": "Sem óculos nem lentes",
+    "rapidoTapaOlho": "Tapa-olho no {{olho}}",
+    "rapidoDistancia": "Distância: {{distancia}}",
+    "rapidoComecar": "Começar treino",
+    "rapidoAlterar": "Alterar definições",
+    "passoPreparacao": "Preparação"
   }
 }

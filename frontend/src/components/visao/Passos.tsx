@@ -260,6 +260,14 @@ export const PassoTaparOlho = ({
   );
 };
 
+/** Rótulo de uma distância ("Braço esticado (60 cm)", "1 metro", "45 cm"). */
+export const rotuloDistancia = (t: (chave: string, opcoes?: Record<string, unknown>) => string, mm: number): string =>
+  mm === DISTANCIA_OMISSAO_MM
+    ? t("Visao.distanciaBraco")
+    : mm === DISTANCIA_LONGE_MM
+      ? t("Visao.distanciaUmMetro")
+      : t("Visao.distanciaCm", { cm: Math.round(mm / 10) });
+
 export const PassoDistancia = ({
   distanciaMm,
   aoEscolher,
@@ -271,12 +279,7 @@ export const PassoDistancia = ({
 }) => {
   const { t } = useTranslation();
   const [escolha, setEscolha] = useState(distanciaMm);
-  const rotulo = (mm: number) =>
-    mm === DISTANCIA_OMISSAO_MM
-      ? t("Visao.distanciaBraco")
-      : mm === DISTANCIA_LONGE_MM
-        ? t("Visao.distanciaUmMetro")
-        : t("Visao.distanciaCm", { cm: Math.round(mm / 10) });
+  const rotulo = (mm: number) => rotuloDistancia(t, mm);
   return (
     <EcraPasso
       icone={<Ruler className="h-7 w-7" />}
@@ -301,6 +304,66 @@ export const PassoDistancia = ({
           </button>
         ))}
       </div>
+    </EcraPasso>
+  );
+};
+
+/**
+ * Sessão rápida: da segunda vez em diante, um só ecrã com as escolhas da
+ * última vez em vez dos 5-6 passos de preparação. O aviso de segurança do
+ * treino (se houver) aparece sempre -- não é uma escolha que se lembre.
+ */
+export const PassoRapido = ({
+  calibrado,
+  distanciaMm,
+  comDistancia,
+  usaCorreccao,
+  olhoATapar,
+  aviso,
+  aoComecar,
+  aoAlterar,
+}: {
+  calibrado: boolean;
+  distanciaMm: number;
+  comDistancia: boolean;
+  usaCorreccao: boolean;
+  /** Olho a tapar com o tapa-olho; `null` nos treinos com os dois olhos. */
+  olhoATapar: Olho | null;
+  aviso?: ReactNode;
+  aoComecar: () => void;
+  aoAlterar: () => void;
+}) => {
+  const { t } = useTranslation();
+  const itens = [
+    t("Visao.rapidoBrilho"),
+    usaCorreccao ? t("Visao.rapidoComOculos") : t("Visao.rapidoSemOculos"),
+    ...(olhoATapar
+      ? [t("Visao.rapidoTapaOlho", { olho: (olhoATapar === "direito" ? t("Visao.olhoDireito") : t("Visao.olhoEsquerdo")).toLocaleLowerCase() })]
+      : []),
+    ...(comDistancia ? [t("Visao.rapidoDistancia", { distancia: rotuloDistancia(t, distanciaMm) })] : []),
+  ];
+  return (
+    <EcraPasso
+      titulo={t("Visao.rapidoTitulo")}
+      accao={
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          <BotaoContinuar aoClicar={aoComecar}>{t("Visao.rapidoComecar")}</BotaoContinuar>
+          <Button size="lg" variant="outline" onClick={aoAlterar}>
+            {t("Visao.rapidoAlterar")}
+          </Button>
+        </div>
+      }
+    >
+      <ul className="w-full space-y-2 text-left text-sm text-foreground">
+        {itens.map((item) => (
+          <li key={item} className="flex items-start gap-2 rounded-lg bg-muted/40 px-3 py-2">
+            <span aria-hidden className="text-teal">✓</span>
+            {item}
+          </li>
+        ))}
+      </ul>
+      {!calibrado && <p className="text-sm text-muted-foreground">{t("Visao.semCartaoAviso")}</p>}
+      {aviso}
     </EcraPasso>
   );
 };
