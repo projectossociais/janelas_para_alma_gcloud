@@ -439,6 +439,27 @@ class BonusAssiduidadeTreino(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class PartilhaRelatorio(Base):
+    """Link temporário, só de leitura, para o pai mostrar o relatório dos
+    exercícios ao médico (Fase B, docs/ANALISE_EXERCICIOS.md; decisão do dono
+    do projecto 2026-09-29: nada sai da plataforma sem acção do pai, nunca envio
+    automático). Guarda-se só o hash SHA-256 do token -- o valor em claro vai
+    uma única vez na resposta de quem o cria. Válido 30 dias, revogável a
+    qualquer momento; revogado também quando a conta é anonimizada (W-03)."""
+
+    __tablename__ = "partilhas_relatorio"
+    __table_args__ = (UniqueConstraint("token_hash", name="uq_partilhas_relatorio_token_hash"),)
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    utilizador_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    token_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    expira_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    revogado_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class SiteContent(Base):
     __tablename__ = "site_content"
 

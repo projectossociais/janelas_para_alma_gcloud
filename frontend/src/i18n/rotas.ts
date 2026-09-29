@@ -46,6 +46,8 @@ export const ROTAS = [
   { chave: "exercicioPertoLonge", pt: "/exercicios/perto-e-longe", en: "/en/exercises/near-and-far" },
   { chave: "exerciciosProgresso", pt: "/exercicios/progresso", en: "/en/exercises/progress", foraDoSitemap: true },
   { chave: "exerciciosRelatorio", pt: "/exercicios/relatorio", en: "/en/exercises/report", foraDoSitemap: true },
+  // Link temporário que a família envia ao médico (Fase B): público, fora do sitemap, noindex.
+  { chave: "relatorioPartilhado", pt: "/relatorio-partilhado/:token", en: "/en/shared-report/:token", foraDoSitemap: true },
   { chave: "scanner", pt: "/scanner", en: "/en/scanner" },
   { chave: "scannerResultados", pt: "/scanner/resultados", en: "/en/scanner/results", foraDoSitemap: true },
   { chave: "entrar", pt: "/login", en: "/en/sign-in", foraDoSitemap: true },
