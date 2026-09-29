@@ -34,6 +34,7 @@
 |---|---|---|---|
 | **Consentimento parental** | Público inclui crianças e não existe fluxo de consentimento dos pais — só `consentimento_imagem` no rastreio | Bloqueio nº 5 | W + jurídico |
 | **Verificação de profissionais** | Qualquer pessoa se regista como `profissional`. O portal da clínica já está protegido (só um admin liga uma conta), mas o admin não tem nenhuma prova de credenciação para verificar | Sprint 4, "Riscos a não ignorar" | W |
+| **3 dos 4 exercícios Premium exclusivos não têm mecânica nenhuma** | `estereopsia`, `flexibilidade-acomodativa`, `sacadas-convergencia` (`frontend/src/pages/exercises/*.tsx`) são só `PremiumExercicioEsqueleto` — mostram literalmente "Este exercício ainda está em construção" a quem paga 15.000 Kz/mês por eles. Só `ambliopia` (748 linhas) tem uma implementação real. Confirmado 2026-09-29 ao investigar o L-02 (nunca tinha sido registado no backlog antes) | W-18 | W (decisão de mecânica) + W+L (construir) |
 
 **✅ Fechado 2026-09-28: W-03, eliminação de conta.** Decisão do dono do projecto:
 anonimizar, não apagar a linha (evita destruir em cascata histórico clínico real). Código
@@ -50,8 +51,8 @@ Fase 3) quando a conta Meta estiver pronta.
 | Matchmaker | Fase 4B — consulta incluída no Premium vs. paga à parte | Sprint 4 | Preço por consulta (decisão do dono) |
 | Matchmaker | Selo de clínica verificada | Sprint 4 | Negociação comercial com números reais |
 | Matchmaker | `sugerir_clinicas` (correspondência por regras) | Sprint 4, PR C | Existir uma 2.ª clínica |
-| Exercícios | W-18 — melhorar os 4+4 exercícios e carregar os vídeos no R2 privado | Sprint 6 | Definir o que muda em cada exercício |
-| Exercícios | **Vídeos: backend pronto, frontend nunca os mostra** — `GET /exercicios/{id}/video` e `exerciciosApi.video()` existem, nenhum ecrã chama | L-02 | Fechar com W-18 |
+| Exercícios | **🔴 3 dos 4 exercícios Premium exclusivos são só um esqueleto** (`estereopsia`, `flexibilidade-acomodativa`, `sacadas-convergencia` mostram literalmente "ainda está em construção") — ver nota abaixo | W-18 | Decisão clínica/de produto sobre a mecânica de cada um |
+| Exercícios | W-18 — melhorar significativamente os 4+4 exercícios | Sprint 6 | Definir o que muda em cada exercício |
 | Scanner | W-13/W-14/W-16/L-14 — método, calibração, validação clínica, ecrã de resultados | Sprint 3 | Parceiro clínico (bloqueio nº 8) |
 | Scanner | Ecrã de resultados mostra 6 categorias, o cálculo só produz 2 | CLAUDE.md §11, W-09 | Localizar o repositório `janelas-scanner-api` |
 | Produto | Histórico de exames com evolução · loja de óculos · conteúdo editável pelo admin | Sprint 6 | — |
@@ -107,12 +108,14 @@ Sprint 5 (papéis já nasceram numa coluna única), UX-01 (deploy automático).
 
 ### Notas para quem corre os testes localmente
 
-Duas falhas aparecem em máquinas Windows e **não afectam o produto** (no CI passam):
-`test_doacoes_router.py::test_rejeita_sem_materiais` (versão antiga do starlette
-instalada localmente, sem `HTTP_422_UNPROCESSABLE_CONTENT`) e `codigo-fonte.test.ts`
-(apanha "Fácil" num comentário de `AmbliopiaExercise.tsx:217`; a causa provável, não
-confirmada, são as quebras de linha CRLF do Windows). Actualizar o ambiente local ou
-reescrever o comentário resolve.
+**Resolvido 2026-09-29** (era: "duas falhas só em Windows, não afectam o produto,
+causa não confirmada"). As duas causas foram confirmadas e corrigidas:
+`test_doacoes_router.py::test_rejeita_sem_materiais` era um ambiente local com um
+Starlette antigo em cache (`pyproject.toml` não fixa tecto — CI/produção já corriam
+a versão nova); `codigo-fonte.test.ts` apanhava "Fácil" num comentário de
+`AmbliopiaExercise.tsx:217` porque a quebra de linha `\r\n` desse ficheiro impedia a
+regex de cortar o comentário (confirmado isoladamente, não só suspeita). As duas
+suites completas correm 100% verdes agora, em qualquer máquina.
 
 ---
 
@@ -803,11 +806,14 @@ visivelmente avariado. Nenhuma destas tarefas toca base de dados, RLS ou paywall
 - **Aproveitar para resolver o outro problema:** o relatório UX pede fotografias reais de pessoas negras angolanas em vez de imagens genéricas. Como estas têm de ser substituídas de qualquer forma, substituir por imagens representativas resolve os dois pontos de uma vez
 - **Pronto quando:** nenhuma imagem do site fica em branco, e `grep -r "__l5e" src/` não devolve nada
 
-### L-02 · Vídeos dos exercícios — ⚠️ **metade feita** (auditoria de 2026-09-28)
-- **Estado verificado:** o player antigo (`/videos/exercicio-*.mp4`) já não existe no frontend, por isso o critério "ou o player não aparece" está cumprido. Entretanto foi construído o caminho novo: vídeos num bucket R2 **privado** servidos por `GET /exercicios/{id}/video` com link temporário, e `exerciciosApi.video()` em `apiClient.ts`. **Mas nenhum ecrã chama `exerciciosApi.video()`** — o backend está pronto e o frontend nunca mostra os vídeos. Falta também carregar os ficheiros no bucket (W-18). Fechar junto com W-18
-- **Onde:** `src/pages/Exercicios.tsx` referencia `/videos/exercicio-*.mp4`; a pasta `public/videos` **não existe**
-- **Decisão de produto primeiro:** ou se produzem os 4 vídeos, ou se remove o player até existirem. Um player vazio é pior do que nenhum player
-- **Pronto quando:** ou os vídeos tocam, ou o player não aparece
+### L-02 · Vídeos dos exercícios — ✅ **FEITO 2026-09-29**
+Novo `ExercicioVideo`, ligado a `BaseExercise` (só visível com o acesso confirmado):
+botão "Ver vídeo explicativo" que só pede o URL assinado (`exerciciosApi.video`) quando
+clicado — nunca ao abrir o exercício. Esconde-se por completo em qualquer falha, da API
+(403/404/503) ou do próprio `<video>` (ficheiro ainda por carregar no bucket R2 — isso
+continua a ser W-18, carregar os ficheiros não é código). PR #116, 4 testes novos, CI
+verde, deploy confirmado. **Nunca fica um leitor partido visível, mesmo sem nenhum
+vídeo ainda no bucket.**
 
 ### L-03 · Modal "Últimas Referências" não faz scroll até ao fim — ⬜ aberto, absorvido pelo UX-08 / Sprint 7
 - **Fazer:** altura máxima com `overflow-y: auto` no corpo do modal
@@ -1247,9 +1253,23 @@ acrescentado antes disto agrava o problema.
   (1) qualidade/profundidade dos 4 exercícios em si (`figure8`, `convergence`, `cerebro`,
   `relax` — os do trial de 7 dias) e dos 4 do catálogo Premium acima; (2) carregar os
   vídeos dos exercícios para o armazenamento privado (Cloudflare R2), item técnico
-  distinto apontado no mesmo relatório. Falta decidir com o dono do projecto o que
-  concretamente muda em cada exercício antes de abrir qualquer branch — este item é só
-  o registo de que a tarefa existe e está activa, não um plano de implementação
+  distinto apontado no mesmo relatório (**a parte do código está feita — L-02, PR #116**;
+  falta só carregar os ficheiros de vídeo em si, que não é código). Falta decidir com o
+  dono do projecto o que concretamente muda em cada exercício antes de abrir qualquer
+  branch — este item é só o registo de que a tarefa existe e está activa, não um plano
+  de implementação
+  - **🔴 Achado 2026-09-29, ao investigar o L-02, nunca antes registado neste ficheiro:**
+    3 dos 4 exercícios do catálogo Premium (`estereopsia`, `flexibilidade-acomodativa`,
+    `sacadas-convergencia`) são só `PremiumExercicioEsqueleto` — sem mecânica nenhuma,
+    mostram "Este exercício ainda está em construção" a quem já está a pagar por eles.
+    Só `ambliopia` (`AmbliopiaExercise.tsx`, 748 linhas) tem uma implementação real e
+    completa (mecânica de rastreio ocular + pontuação + dificuldade). Não construí
+    mecânica nova para os outros 3 -- é território clínico/de produto que exige a
+    decisão do dono referida acima, não algo para inventar sozinho a meio da noite.
+    Auditados os 5 exercícios reais (`ambliopia`, `figure8`, `convergence`, `cerebro`,
+    `relax`) contra as armadilhas do CLAUDE.md §6 (CSS a lutar com `requestAnimationFrame`,
+    ângulos periódicos descontínuos, amplificar antes de suavizar) -- todas já são
+    correctamente evitadas, nada a corrigir aí.
 - Loja de óculos com carrinho e pagamento (**W+L**)
 - Conteúdo editável pelo administrador (**W+L**)
 
