@@ -417,6 +417,28 @@ class SessaoExercicio(Base):
     sinais: Mapped[dict | None] = mapped_column(JSONB)
 
 
+class BonusAssiduidadeTreino(Base):
+    """Bónus de assiduidade dos treinos no jogo Inclusivamente (Fase B,
+    docs/ANALISE_EXERCICIOS.md; decisão do dono do projecto 2026-09-29): um
+    registo por utilizador e por dia de Luanda em que houve um treino que
+    conta. A chave única (utilizador, dia) é o que garante um só crédito por
+    dia, mesmo com dois pedidos em simultâneo -- o registo e o crédito no saldo
+    gravam-se na mesma transacção (`BonusAssiduidadeRepository`). A sequência
+    de dias (marco semanal de diamantes) conta-se a partir destes registos."""
+
+    __tablename__ = "bonus_assiduidade_treino"
+    __table_args__ = (UniqueConstraint("utilizador_id", "dia", name="uq_bonus_assiduidade_utilizador_dia"),)
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    utilizador_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    dia: Mapped[date] = mapped_column(Date, nullable=False)
+    moedas: Mapped[int] = mapped_column(nullable=False)
+    diamantes: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class SiteContent(Base):
     __tablename__ = "site_content"
 
