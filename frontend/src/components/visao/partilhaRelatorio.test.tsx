@@ -108,6 +108,19 @@ describe("RelatorioPartilhado (o que o médico abre)", () => {
     expect(document.querySelector('meta[name="robots"]')).toHaveAttribute("content", "noindex, nofollow");
   });
 
+  it("layout de relatório: secções numeradas e nenhuma cor do site dentro da folha", async () => {
+    lerPartilhado.mockResolvedValue({
+      nome: "Ana", olho_mais_fraco: "esquerdo", usa_oculos: null,
+      expira_em: "2026-10-29T10:00:00Z", gerado_em: "2026-09-29T10:00:00Z", sessoes: [],
+    });
+    abrir("tok-abc");
+    await screen.findByText(/Ana · Olho mais fraco/);
+    const folha = document.querySelector("article")!.parentElement!;
+    expect(folha.textContent).toMatch(/1. .*2. .*3. .*4. /s);
+    const classes = [...folha.querySelectorAll("*")].map((e) => e.getAttribute("class") ?? "").join(" ");
+    expect(classes).not.toMatch(/teal|gold|navy|muted|foreground|rounded|shadow/);
+  });
+
   it("link inválido, expirado ou revogado: mensagem clara, sem dados", async () => {
     lerPartilhado.mockRejectedValue(Object.assign(new Error("link inválido ou expirado"), { status: 404 }));
     abrir("inventado");
