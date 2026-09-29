@@ -13,7 +13,22 @@ const PARES = [
   ["sobreAcento", "acento"],
   ["primaria", "superficie"],
   ["sucesso", "superficie"],
+  ["erro", "superficie"],
+  ["erro", "fundo"],
 ] as const;
+
+// O destaque só pinta títulos grandes (≥ 24 px): basta o limite AA de texto
+// grande, 3:1.
+describe("tokens das direcções: destaque legível nos títulos grandes", () => {
+  for (const d of Object.values(DIRECCOES)) {
+    for (const tema of ["claro", "escuro"] as Tema[]) {
+      it(`${d.nome} · ${tema}`, () => {
+        const c = d.cores[tema];
+        expect(contraste(c.destaque, c.fundo)).toBeGreaterThanOrEqual(3);
+      });
+    }
+  }
+});
 
 describe("tokens das direcções: contraste AA em todos os pares de texto", () => {
   for (const d of Object.values(DIRECCOES)) {

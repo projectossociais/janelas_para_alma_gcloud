@@ -160,6 +160,10 @@ ponto a olhar no rastreio).
 
 ## 5. O que isto muda no laboratório (`/_laboratorio`)
 
+> **Actualização 2026-09-29:** chegou o manual de marca. Cor, logótipo e letra seguem
+> agora `docs/MARCA.md` (Ubuntu em vez de Atkinson Hyperlegible; paleta oficial com
+> regras de contraste testadas). Os padrões de UX deste documento mantêm-se todos.
+
 1. A mola das três direcções passa a amortecida (sem ressalto) nos ecrãs de tarefa;
    a mola mais viva fica só para celebrações.
 2. O ecrã do rastreio ganha o passo de **explicar a câmara** antes da captação.

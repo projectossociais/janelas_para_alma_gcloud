@@ -49,7 +49,7 @@ nenhum.
 | Cantos `rounded-2xl/3xl` | 99 | Tudo arredondado ao máximo e igual — a hierarquia desaparece |
 | Animações `animate-*` e `hover:scale-*` | 117 | Movimento espalhado sem vocabulário comum; cansa, sobretudo crianças |
 | Sombras `shadow-lg/xl/2xl` | 27 | Profundidade como enfeite, não para separar camadas |
-| Tipografia | 1 família (Ubuntu, `src/index.css`) | Sem par tipográfico nem escala; não é escolha de legibilidade |
+| Tipografia | 1 família (Ubuntu, `src/index.css`) | A Ubuntu é a letra do manual da marca (`docs/MARCA.md`) e fica; o que falta é escala e pesos definidos |
 | Tokens | estrutura shadcn por omissão + `--navy`, `--teal`, `--gold`, `--radius: 0.75rem` | Paleta existe mas não há sistema semântico |
 | Layout partilhado | 38 páginas importam Navbar/Footer à mão | Só `AdminLayout.tsx` usa `<Outlet>`; mudança global = 38 edições |
 | Carregamento das rotas | 56 imports estáticos em `App.tsx`, 0 `React.lazy` | O site inteiro desce num só bundle — em dados móveis angolanos é UX |
@@ -155,7 +155,9 @@ Cada fase é entregável sozinha. A "acuidade" marca quão nítido fica o produt
 
 ### Fase 1 · Identidade e design system — 6/36 · ≈ 3 a 4 semanas
 - Duas ou três direcções de identidade em moodboard; o dono do projecto escolhe uma.
-- Par tipográfico com foco em legibilidade, escala de tipo, paleta com contraste
+  **Desde 2026-09-29 as direcções partem do manual de marca** (`docs/MARCA.md`): mudam
+  a forma de usar a marca, não a marca.
+- Escala de tipo em Ubuntu (a letra da marca), papéis das cores da paleta e contraste
   verificado nos dois temas.
 - Direcção de fotografia e ilustração, iconografia própria, vocabulário de movimento,
   voz e microcopy.
@@ -240,7 +242,7 @@ Por responder antes da Fase 0. Registar a resposta e a data aqui quando decidido
 
 | # | Decisão | Resposta |
 |---|---|---|
-| 1 | A marca muda ou fica? (logótipo e nome, ou rever também na Fase 1) | *pendente* |
+| 1 | A marca muda ou fica? (logótipo e nome, ou rever também na Fase 1) | **Fica** (2026-09-29). Existe um manual de marca ("Um Olhar Alinhado", XANUS PRO, 2025): logótipo, paleta e Ubuntu são fixos. Especificação para o site em `docs/MARCA.md` |
 | 2 | Há orçamento para designer, ilustrador ou fotógrafo angolano? | *pendente* |
 | 3 | Quem desenha? (designer dedicado, Lukeny, ou design proposto pelo Claude com aprovação a cada passo) | *pendente* |
 | 4 | Qual jornada vem primeiro? (proposta: rastreio e marcação; alternativa: conversão Premium) | *pendente* |
@@ -254,6 +256,14 @@ Por responder antes da Fase 0. Registar a resposta e a data aqui quando decidido
 Acrescentar abaixo, com data, o que for decidido ou detalhado em cada conversa sobre o
 redesenho (referências visuais, páginas a priorizar, gostos e recusas do dono do
 projecto, feedback do Lukeny). Mais recente em cima.
+
+- **2026-09-29** — O dono do projecto entregou o manual de marca "Identidade Visual Um
+  Olhar Alinhado" (XANUS PRO, 2025) e pediu para o respeitar. Consequências: a marca
+  fica (decisão 1); as três direcções do laboratório (`/_laboratorio`, só local no ramo
+  `redesenho/frontend`) passaram a usar o logótipo, a paleta e a Ubuntu do manual e
+  diferem só no uso (A Clínica, B Viva, C Humana); a Atkinson Hyperlegible saiu. Pesquisa
+  de UX em `docs/PESQUISA_UX.md`; especificação da marca, lacunas do manual e perguntas
+  para o designer em `docs/MARCA.md`.
 
 - **2026-09-28** — Plano criado. Discussão detalhada sobre o frontend marcada para mais
   tarde no mesmo dia.

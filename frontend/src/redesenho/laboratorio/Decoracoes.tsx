@@ -1,120 +1,101 @@
 import { motion, useReducedMotion } from "motion/react";
-import type { IdDireccao } from "./direcoes";
+import { MARCA, SIMBOLO } from "../marca/marca";
+import { Simbolo } from "../marca/Simbolo";
+import type { IdDireccao, Tema } from "./direcoes";
 
 /**
- * A: anéis concêntricos que "respiram" como uma íris a focar.
- * Só usa as cores do tema (variáveis CSS), nunca cores soltas.
+ * Decoração da abertura de cada direcção. Todas nascem do manual da marca
+ * (docs/MARCA.md): o símbolo, a lente do olho e a janela. Nada de formas
+ * inventadas que não pertençam à marca.
  */
-const AneisIris = () => {
-  const reduzido = useReducedMotion();
-  // Do exterior para o interior: anéis na cor primária, cada vez mais densos
-  // até à pupila. As superfícies do tema eram quase iguais ao fundo e os
-  // anéis desapareciam.
-  const aneis = [
-    { r: 188, fill: "var(--r-prim)", opacity: 0.07 },
-    { r: 150, fill: "var(--r-prim)", opacity: 0.12 },
-    { r: 118, fill: "var(--r-prim)", opacity: 0.2 },
-    { r: 88, fill: "var(--r-prim)", opacity: 0.35 },
-  ];
-  return (
-    <svg viewBox="0 0 400 400" className="h-full w-full" aria-hidden>
-      {aneis.map((a, i) => (
-        <motion.circle
-          key={a.r}
-          cx="200"
-          cy="200"
-          r={a.r}
-          fill={a.fill}
-          fillOpacity={a.opacity ?? 1}
-          stroke="var(--r-prim)"
-          strokeOpacity={0.25}
-          strokeWidth={1.5}
-          animate={reduzido ? undefined : { scale: [1, 1.025, 1] }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: i * 0.3 }}
-          style={{ transformOrigin: "200px 200px" }}
-        />
-      ))}
-      <motion.circle
-        cx="200"
-        cy="200"
-        r="58"
-        fill="var(--r-prim)"
-        animate={reduzido ? undefined : { r: [58, 42, 58] }}
-        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <circle cx="224" cy="176" r="13" fill="var(--r-sup)" />
-      <circle cx="182" cy="222" r="5" fill="var(--r-sup)" opacity="0.7" />
-      <motion.circle
-        cx="200"
-        cy="200"
-        r="168"
-        fill="none"
-        stroke="var(--r-acento)"
-        strokeWidth="5"
-        strokeLinecap="round"
-        strokeDasharray="90 966"
-        animate={reduzido ? undefined : { rotate: 360 }}
-        transition={{ duration: 16, repeat: Infinity, ease: "linear" }}
-        style={{ transformOrigin: "200px 200px" }}
-      />
-    </svg>
-  );
-};
 
-/** B: mosaico de losangos e ziguezagues inspirado no samakaka, a deslizar devagar. */
-const PadraoSamakaka = () => {
+/** A: o símbolo grande, que entra desalinhado e se alinha uma vez. */
+const SimboloAlinhado = ({ tema }: { tema: Tema }) => (
+  <div className="flex h-full w-full items-center justify-center bg-[var(--r-sup-alt)]">
+    <Simbolo fundo={tema} alinhar className="w-[78%]" />
+  </div>
+);
+
+// Lente do olho do logótipo, reduzida a um losango de pontas curvas.
+const LENTE = "M4 40 C24 14 72 14 92 40 C72 66 24 66 4 40 Z";
+
+/** B: padrão de lentes nas cores da marca, sobre marinho, a deslizar devagar. */
+const PadraoLentes = () => {
   const reduzido = useReducedMotion();
   return (
-    <div className="relative h-full w-full overflow-hidden" aria-hidden>
+    <div className="relative h-full w-full overflow-hidden" style={{ background: MARCA.marinho }} aria-hidden>
       <motion.svg
         viewBox="0 0 480 480"
         className="absolute inset-0 h-[140%] w-[140%]"
-        animate={reduzido ? undefined : { x: [0, -60, 0], y: [0, -40, 0] }}
-        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+        animate={reduzido ? undefined : { x: [0, -48, 0], y: [0, -32, 0] }}
+        transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
       >
         <defs>
-          <pattern id="samakaka" width="96" height="96" patternUnits="userSpaceOnUse">
-            <rect width="96" height="96" fill="var(--r-sup-alt)" />
-            <path d="M48 6 L90 48 L48 90 L6 48 Z" fill="var(--r-prim)" />
-            <path d="M48 26 L70 48 L48 70 L26 48 Z" fill="var(--r-fundo)" />
-            <circle cx="48" cy="48" r="8" fill="var(--r-acento)" />
-            <path d="M0 0 L12 12 L0 24 M96 0 L84 12 L96 24 M0 72 L12 84 L0 96 M96 72 L84 84 L96 96" stroke="var(--r-acento)" strokeWidth="4" fill="none" />
+          <pattern id="lentes" width="96" height="80" patternUnits="userSpaceOnUse">
+            <path d={LENTE} fill="none" stroke={MARCA.turquesa} strokeWidth="5" />
+            <circle cx="48" cy="40" r="11" fill={MARCA.azul} />
+            <circle cx="48" cy="40" r="5" fill={SIMBOLO.pupila} />
+          </pattern>
+          <pattern id="lentes-alt" width="96" height="80" patternUnits="userSpaceOnUse" x="48" y="40">
+            <circle cx="48" cy="40" r="4" fill={MARCA.dourado} />
           </pattern>
         </defs>
-        <rect width="480" height="480" fill="url(#samakaka)" />
+        <rect width="480" height="480" fill="url(#lentes)" />
+        <rect width="480" height="480" fill="url(#lentes-alt)" />
       </motion.svg>
-      <div className="absolute inset-0 bg-gradient-to-t from-[var(--r-fundo)] via-transparent to-transparent" />
+      <div
+        className="absolute inset-x-0 bottom-0 h-1/2"
+        style={{ background: `linear-gradient(to top, ${MARCA.marinho}, transparent)` }}
+      />
+      <p className="absolute bottom-6 left-6 right-6 text-2xl font-bold leading-tight" style={{ color: MARCA.lima }}>
+        Treinar todos os dias,
+        <br />
+        <span style={{ color: MARCA.creme }}>a brincar.</span>
+      </p>
     </div>
   );
 };
 
-/** C: forma orgânica que muda devagar, a enquadrar uma fotografia (reservada). */
-const FormaOrganica = () => {
+/**
+ * C: fotografia real a preto e branco (como na pág. 2 do manual) dentro da
+ * moldura da janela do símbolo. Aqui ainda sem fotografia: é um lugar marcado.
+ */
+const JanelaFotografia = ({ tema }: { tema: Tema }) => {
   const reduzido = useReducedMotion();
-  const formas = [
-    "58% 42% 38% 62% / 52% 44% 56% 48%",
-    "42% 58% 62% 38% / 46% 58% 42% 54%",
-    "52% 48% 44% 56% / 60% 40% 60% 40%",
-  ];
   return (
     <div className="relative flex h-full w-full items-center justify-center" aria-hidden>
-      <motion.div
-        className="absolute h-[88%] w-[88%] bg-[var(--r-sup-alt)]"
-        animate={reduzido ? { borderRadius: formas[0] } : { borderRadius: [...formas, formas[0]] }}
-        transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="relative flex h-[70%] w-[70%] items-end justify-center overflow-hidden bg-[var(--r-prim)]"
-        animate={reduzido ? { borderRadius: formas[1] } : { borderRadius: [formas[1], formas[2], formas[0], formas[1]] }}
-        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-      >
-        <span className="mb-[18%] max-w-[70%] text-center text-sm text-[var(--r-sobre-prim)] opacity-80">
-          Fotografia real de uma família angolana
-        </span>
-      </motion.div>
+      <div className="relative aspect-square w-[82%]">
+        {/* A fotografia fica dentro da janela, com folga igual à do olho no símbolo. */}
+        <div className="absolute inset-[8%] overflow-hidden">
+          <motion.div
+            className="h-full w-full"
+            style={{ background: "linear-gradient(135deg, #6a6a6a, #1c1c1c)", filter: "grayscale(1)" }}
+            initial={reduzido ? false : { scale: 1.08 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 1.6, ease: "easeOut" }}
+          />
+          <span className="absolute inset-x-5 top-5 text-sm text-white/70">
+            Fotografia real, a preto e branco: uma família angolana
+          </span>
+          <p className="absolute bottom-5 left-5 right-5 text-2xl font-light leading-snug text-white">
+            Um olhar alinhado,
+            <br />
+            <span style={{ color: MARCA.lima }}>uma vida transformada.</span>
+          </p>
+        </div>
+        {/* A moldura da janela, com a espessura relativa e a opacidade do símbolo. */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            border: "clamp(10px, 2.2vw, 22px) solid",
+            borderColor: tema === "claro" ? SIMBOLO.moldura.claro : SIMBOLO.moldura.escuro,
+            opacity: SIMBOLO.molduraOpacidade,
+          }}
+        />
+      </div>
     </div>
   );
 };
 
-export const Decoracao = ({ id }: { id: IdDireccao }) =>
-  id === "clara" ? <AneisIris /> : id === "viva" ? <PadraoSamakaka /> : <FormaOrganica />;
+export const Decoracao = ({ id, tema }: { id: IdDireccao; tema: Tema }) =>
+  id === "clara" ? <SimboloAlinhado tema={tema} /> : id === "viva" ? <PadraoLentes /> : <JanelaFotografia tema={tema} />;

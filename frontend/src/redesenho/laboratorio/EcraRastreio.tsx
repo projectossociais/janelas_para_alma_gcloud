@@ -64,7 +64,7 @@ export const EcraRastreio = ({ d }: { d: Direccao }) => {
             {passo === "preparar" && (
               <>
                 <p className="text-xs font-semibold uppercase tracking-wider text-[var(--r-prim)]">Passo 1 de 4</p>
-                <h3 className="mt-1 font-[family-name:var(--r-letra-titulo)] text-2xl leading-tight" style={{ fontWeight: d.pesoTitulo }}>
+                <h3 className="mt-1 font-[family-name:var(--r-letra-titulo)] text-2xl leading-tight" style={{ fontWeight: Math.max(d.pesoTitulo, 500) }}>
                   Antes de começar
                 </h3>
                 <ul className="mt-5 space-y-3">
@@ -107,7 +107,7 @@ export const EcraRastreio = ({ d }: { d: Direccao }) => {
               // de a pessoa saber porquê e o que acontece à imagem.
               <>
                 <p className="text-xs font-semibold uppercase tracking-wider text-[var(--r-prim)]">Passo 2 de 4</p>
-                <h3 className="mt-1 font-[family-name:var(--r-letra-titulo)] text-2xl leading-tight" style={{ fontWeight: d.pesoTitulo }}>
+                <h3 className="mt-1 font-[family-name:var(--r-letra-titulo)] text-2xl leading-tight" style={{ fontWeight: Math.max(d.pesoTitulo, 500) }}>
                   Vamos usar a câmara
                 </h3>
                 <div className="mt-5 flex h-24 w-24 items-center justify-center self-center rounded-full bg-[var(--r-sup-alt)] text-[var(--r-prim)]">
@@ -138,7 +138,7 @@ export const EcraRastreio = ({ d }: { d: Direccao }) => {
             {passo === "captar" && (
               <div className="flex h-full flex-col items-center">
                 <p className="self-start text-xs font-semibold uppercase tracking-wider text-[var(--r-prim)]">Passo 3 de 4</p>
-                <h3 className="mt-1 self-start font-[family-name:var(--r-letra-titulo)] text-2xl leading-tight" style={{ fontWeight: d.pesoTitulo }}>
+                <h3 className="mt-1 self-start font-[family-name:var(--r-letra-titulo)] text-2xl leading-tight" style={{ fontWeight: Math.max(d.pesoTitulo, 500) }}>
                   Olhe para o ponto
                 </h3>
                 <div className="relative mt-6 flex h-64 w-48 items-center justify-center">
@@ -168,7 +168,7 @@ export const EcraRastreio = ({ d }: { d: Direccao }) => {
             {passo === "resultado" && (
               <>
                 <p className="text-xs font-semibold uppercase tracking-wider text-[var(--r-prim)]">Passo 4 de 4</p>
-                <h3 className="mt-1 font-[family-name:var(--r-letra-titulo)] text-2xl leading-tight" style={{ fontWeight: d.pesoTitulo }}>
+                <h3 className="mt-1 font-[family-name:var(--r-letra-titulo)] text-2xl leading-tight" style={{ fontWeight: Math.max(d.pesoTitulo, 500) }}>
                   Vale a pena ir ao oftalmologista
                 </h3>
                 <p className="mt-3 text-sm leading-relaxed text-[var(--r-suave)]">

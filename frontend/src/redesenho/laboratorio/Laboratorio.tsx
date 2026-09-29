@@ -1,6 +1,21 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion, type Variants } from "motion/react";
-import { ArrowRight, Eye, Flame, HeartPulse, Moon, ScanFace, ShieldCheck, Stethoscope, Sun, Timer } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowRight,
+  Eye,
+  Flame,
+  HeartPulse,
+  Moon,
+  ScanFace,
+  ShieldCheck,
+  Stethoscope,
+  Sun,
+  Timer,
+} from "lucide-react";
+// Na navegação o logótipo é pequeno: versão sem assinatura (docs/MARCA.md §2).
+import logotipo from "../marca/logotipo-horizontal-sem-assinatura.svg";
+import logotipoNegativo from "../marca/logotipo-horizontal-negativo-sem-assinatura.svg";
 import { DIRECCOES, FONTES_GOOGLE, variaveis, type Direccao, type IdDireccao, type Tema } from "./direcoes";
 import { Decoracao } from "./Decoracoes";
 import { EcraRastreio } from "./EcraRastreio";
@@ -56,25 +71,41 @@ const Botao = ({
   );
 };
 
-const PreVisualizacao = ({ d }: { d: Direccao }) => {
+/** Título com uma palavra na cor de destaque, como "Visual" na capa do manual. */
+const ComDestaque = ({ d }: { d: Direccao }) => {
+  const i = d.titulo.indexOf(d.palavraDestaque);
+  if (i < 0) return <>{d.titulo}</>;
+  return (
+    <>
+      {d.titulo.slice(0, i)}
+      <span className="text-[var(--r-destaque)]">{d.palavraDestaque}</span>
+      {d.titulo.slice(i + d.palavraDestaque.length)}
+    </>
+  );
+};
+
+const PreVisualizacao = ({ d, tema }: { d: Direccao; tema: Tema }) => {
   const reduzido = useReducedMotion();
   const entrada: Variants = {
     oculto: { opacity: 0, y: reduzido ? 0 : 24 },
     visivel: (i: number) => ({ opacity: 1, y: 0, transition: { type: "spring", ...d.mola, delay: i * 0.08 } }),
   };
+  // A direcção B abre sempre em marinho, como a capa do manual.
+  const temaAbertura: Tema = d.aberturaEscura ? "escuro" : tema;
 
   return (
     <div className="font-[family-name:var(--r-letra-texto)] text-[17px] leading-relaxed text-[var(--r-tinta)]">
+      <div
+        className="text-[var(--r-tinta)]"
+        style={{ ...(variaveis(d, temaAbertura) as CSSProperties), background: "var(--r-fundo)" }}
+      >
       {/* Navegação */}
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-        <span className="flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--r-prim)] text-[var(--r-sobre-prim)]">
-            <Eye className="h-5 w-5" />
-          </span>
-          <span className="font-[family-name:var(--r-letra-titulo)] text-lg" style={{ fontWeight: d.pesoTitulo }}>
-            Janelas para a Alma
-          </span>
-        </span>
+        <img
+          src={temaAbertura === "claro" ? logotipo : logotipoNegativo}
+          alt="Janelas Para Alma"
+          className="h-12 w-auto"
+        />
         <span className="hidden gap-8 text-[15px] font-medium text-[var(--r-suave)] md:flex">
           <a>Rastreio</a>
           <a>Treinos</a>
@@ -103,10 +134,10 @@ const PreVisualizacao = ({ d }: { d: Direccao }) => {
             variants={entrada}
             initial="oculto"
             animate="visivel"
-            className="mt-6 font-[family-name:var(--r-letra-titulo)] text-5xl leading-[1.02] md:text-7xl"
+            className={`mt-6 font-[family-name:var(--r-letra-titulo)] text-5xl leading-[1.04] ${d.titulo.length > 32 ? "md:text-6xl" : "md:text-7xl"}`}
             style={{ fontWeight: d.pesoTitulo, letterSpacing: d.espacamentoTitulo }}
           >
-            {d.titulo}
+            <ComDestaque d={d} />
           </motion.h1>
           <motion.p custom={2} variants={entrada} initial="oculto" animate="visivel" className="mt-6 max-w-xl text-xl text-[var(--r-suave)]">
             {d.subtitulo}
@@ -143,9 +174,10 @@ const PreVisualizacao = ({ d }: { d: Direccao }) => {
           transition={{ type: "spring", ...d.mola, delay: 0.2 }}
           className="aspect-square w-full overflow-hidden rounded-[var(--r-raio)]"
         >
-          <Decoracao id={d.id} />
+          <Decoracao id={d.id} tema={temaAbertura} />
         </motion.div>
       </section>
+      </div>
 
       {/* Como funciona */}
       <section className="bg-[var(--r-sup)] py-20">
@@ -167,7 +199,7 @@ const PreVisualizacao = ({ d }: { d: Direccao }) => {
                 transition={{ type: "spring", ...d.mola, delay: i * 0.1 }}
                 className="rounded-[var(--r-raio)] border border-[var(--r-linha)] bg-[var(--r-fundo)] p-7"
               >
-                <span className="font-[family-name:var(--r-letra-titulo)] text-5xl text-[var(--r-acento)]" style={{ fontWeight: d.pesoTitulo }}>
+                <span className="font-[family-name:var(--r-letra-titulo)] text-5xl text-[var(--r-destaque)]" style={{ fontWeight: d.pesoTitulo }}>
                   {i + 1}
                 </span>
                 <Icone className="mt-4 h-7 w-7 text-[var(--r-prim)]" />
@@ -192,7 +224,7 @@ const PreVisualizacao = ({ d }: { d: Direccao }) => {
           <div className="mt-10 max-w-md rounded-[var(--r-raio)] bg-[var(--r-sup)] p-6 shadow-[0_20px_50px_-30px_rgba(0,0,0,0.35)]">
             <div className="flex items-center justify-between">
               <p className="font-semibold">Treino de hoje</p>
-              <span className="flex items-center gap-1 rounded-full bg-[var(--r-sup-alt)] px-3 py-1 text-sm font-semibold text-[var(--r-acento)]">
+              <span className="flex items-center gap-1 rounded-full bg-[var(--r-acento)] px-3 py-1 text-sm font-semibold text-[var(--r-sobre-acento)]">
                 <Flame className="h-4 w-4" /> 5 dias seguidos
               </span>
             </div>
@@ -239,12 +271,22 @@ const PreVisualizacao = ({ d }: { d: Direccao }) => {
             </label>
             <label className="block">
               <span className="text-sm font-semibold">Telefone</span>
+              <span id="ajuda-telefone" className="mt-1 block text-sm text-[var(--r-suave)]">
+                9 números, começa por 9
+              </span>
+              {/* Erro: cor funcional + ícone + texto, nunca só a cor (PESQUISA_UX §3). */}
+              <span id="erro-telefone" className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-[var(--r-erro)]">
+                <AlertCircle className="h-4 w-4 shrink-0" /> Faltam números: um telemóvel angolano tem 9.
+              </span>
               <input
-                className="mt-2 h-14 w-full rounded-[var(--r-raio-botao)] border-2 border-[var(--r-acento)] bg-[var(--r-fundo)] px-4 text-base outline-none"
+                type="tel"
+                inputMode="numeric"
+                autoComplete="tel-national"
+                className="mt-2 h-14 w-full rounded-[var(--r-raio-botao)] border-2 border-[var(--r-erro)] bg-[var(--r-fundo)] px-4 text-base outline-none"
                 defaultValue="92"
                 aria-invalid
+                aria-describedby="ajuda-telefone erro-telefone"
               />
-              <span className="mt-1 block text-sm text-[var(--r-acento)]">Faltam números: um telemóvel angolano tem 9.</span>
             </label>
           </div>
         </div>
@@ -314,7 +356,7 @@ const Laboratorio = () => {
           transition={{ duration: 0.25 }}
           style={{ ...(variaveis(d, tema) as CSSProperties), background: "var(--r-fundo)" }}
         >
-          <PreVisualizacao d={d} />
+          <PreVisualizacao d={d} tema={tema} />
         </motion.div>
       </AnimatePresence>
     </div>
