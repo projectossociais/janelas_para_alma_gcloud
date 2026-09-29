@@ -14,6 +14,7 @@ import {
   PassoCalibracao,
   PassoDistancia,
   PassoOculos,
+  PassoRapido,
   PassoTaparOlho,
 } from "@/components/visao/Passos";
 import {
@@ -30,6 +31,7 @@ import { localizar } from "@/i18n/rotas";
 import { PX_POR_MM_NOMINAL } from "@/lib/visao/calibracao";
 import { DISTANCIA_OMISSAO_MM } from "@/lib/visao/geometria";
 import { diaLocal, minutosPorDia, sequenciaDeDias } from "@/lib/visao/progresso";
+import { guardarEscolhas, lerEscolhas, podeUsarSessaoRapida } from "@/lib/visao/preparacao";
 import { olhoMaisFracoPelaAcuidade, type Olho, type OlhoSessao } from "@/lib/visao/resultados";
 import { ID_ACUIDADE } from "@/lib/visao/ids";
 import {
@@ -87,6 +89,7 @@ interface AssistenteTreinoProps {
 
 type Etapa =
   | "olho"
+  | "rapida"
   | "brilho"
   | "aviso"
   | "calibracao"
@@ -270,11 +273,17 @@ const AssistenteTreino = ({
     if (olhoPerfil && !olho) setOlho(olhoPerfil);
   }, [olho, olhoPerfil]);
 
-  const [etapa, setEtapa] = useState<Etapa>(monocular ? "olho" : "brilho");
+  // Sessão rápida: com as escolhas da última vez neste aparelho, um só ecrã
+  // de confirmação em vez dos 5-6 passos de preparação.
+  const [escolhas] = useState(() => lerEscolhas(exercicioId));
+  const rapidaDisponivel = podeUsarSessaoRapida({ escolhas, calibracao, monocular, olhoActual: olho });
+  const [modoRapido, setModoRapido] = useState(false);
+
+  const [etapa, setEtapa] = useState<Etapa>(() => (monocular ? "olho" : rapidaDisponivel ? "rapida" : "brilho"));
   // Perfil ainda a carregar mostra a escolha por instantes; salta-a quando chega.
   useEffect(() => {
-    if (etapa === "olho" && olho) setEtapa("brilho");
-  }, [etapa, olho]);
+    if (etapa === "olho" && olho) setEtapa(rapidaDisponivel ? "rapida" : "brilho");
+  }, [etapa, olho, rapidaDisponivel]);
 
   const [distanciaMm, setDistanciaMm] = useState(distanciaFixaMm);
   const [usaCorreccao, setUsaCorreccao] = useState(false);
@@ -336,6 +345,15 @@ const AssistenteTreino = ({
     }
   }, [bloco, etapa, tempo, terminar]);
 
+  // Guarda as escolhas quando o primeiro bloco arranca (estado já assente),
+  // para a sessão rápida da próxima vez.
+  const escolhasGuardadas = useRef(false);
+  useEffect(() => {
+    if (etapa !== "bloco" || escolhasGuardadas.current) return;
+    escolhasGuardadas.current = true;
+    guardarEscolhas(exercicioId, { distanciaMm, usaCorreccao, olho: monocular ? olho : null });
+  }, [distanciaMm, etapa, exercicioId, monocular, olho, usaCorreccao]);
+
   const comecarBlocos = () => {
     inicioSessao.current = Date.now();
     inicioBloco.current = 0;
@@ -356,7 +374,15 @@ const AssistenteTreino = ({
     activo: etapa === "bloco",
   };
 
-  const passos = [
+  const usarOrdemRapida = etapa === "rapida" || modoRapido;
+  const passosRapidos = [
+    ...(monocular ? [t("Visao.passoOlhoMaisFraco")] : []),
+    t("Visao.passoPreparacao"),
+    t("Visao.passoTreino"),
+    t("Visao.passoResumo"),
+  ];
+  const ordemRapida: Etapa[] = [...(monocular ? (["olho"] as Etapa[]) : []), "rapida", "bloco", "resumo"];
+  const passosCompletos = [
     ...(monocular ? [t("Visao.passoOlhoMaisFraco")] : []),
     t("Visao.passoEcra"),
     ...(aviso ? [t("Visao.passoAviso")] : []),
@@ -367,7 +393,7 @@ const AssistenteTreino = ({
     t("Visao.passoTreino"),
     t("Visao.passoResumo"),
   ];
-  const ordem: Etapa[] = [
+  const ordemCompleta: Etapa[] = [
     ...(monocular ? (["olho"] as Etapa[]) : []),
     "brilho",
     ...(aviso ? (["aviso"] as Etapa[]) : []),
@@ -378,6 +404,8 @@ const AssistenteTreino = ({
     "bloco",
     "resumo",
   ];
+  const passos = usarOrdemRapida ? passosRapidos : passosCompletos;
+  const ordem = usarOrdemRapida ? ordemRapida : ordemCompleta;
   const passoActual = ordem.indexOf(etapa === "pausa" ? "bloco" : etapa);
   const seguinte = (de: Etapa) => {
     const proxima = ordem[ordem.indexOf(de) + 1];
@@ -395,6 +423,26 @@ const AssistenteTreino = ({
   else
     conteudo = (
       <>
+        {etapa === "rapida" && escolhas && (
+          <div className="flex flex-col gap-4">
+            <PassoRapido
+              calibrado={ctx.calibrado}
+              distanciaMm={escolhas.distanciaMm}
+              comDistancia={comDistancia}
+              usaCorreccao={escolhas.usaCorreccao}
+              olhoATapar={monocular && olho ? (olho === "direito" ? "esquerdo" : "direito") : null}
+              aviso={aviso}
+              aoComecar={() => {
+                if (comDistancia) setDistanciaMm(escolhas.distanciaMm);
+                setUsaCorreccao(escolhas.usaCorreccao);
+                setModoRapido(true);
+                comecarBlocos();
+              }}
+              aoAlterar={() => setEtapa("brilho")}
+            />
+            {historico && <ContadorDiario historico={historico} />}
+          </div>
+        )}
         {etapa === "brilho" && (
           <div className="flex flex-col gap-4">
             <PassoBrilho aoContinuar={() => seguinte("brilho")} />

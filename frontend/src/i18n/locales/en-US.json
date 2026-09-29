@@ -2189,6 +2189,15 @@
     "escolherOutroOlho": "Choose another eye",
     "repetirTesteAcuidade": "Repeat the Visual Acuity Test",
     "acuidadeSemDiferencaOlhos": "In your last Visual Acuity Test, both eyes had the same result, so the test cannot tell which eye is weaker. Book an appointment: the ophthalmologist confirms which eye to train.",
-    "contrasteLimiteEcra": "You reached the faintest contrast this screen can show (the \"≥\" sign): your sensitivity may be even higher. On a better screen, or with more brightness, the test could go further."
+    "contrasteLimiteEcra": "You reached the faintest contrast this screen can show (the \"≥\" sign): your sensitivity may be even higher. On a better screen, or with more brightness, the test could go further.",
+    "rapidoTitulo": "Ready to train?",
+    "rapidoBrilho": "Screen brightness at maximum",
+    "rapidoComOculos": "Wearing your glasses or contact lenses",
+    "rapidoSemOculos": "No glasses or contact lenses",
+    "rapidoTapaOlho": "Eye patch over the {{olho}}",
+    "rapidoDistancia": "Distance: {{distancia}}",
+    "rapidoComecar": "Start training",
+    "rapidoAlterar": "Change settings",
+    "passoPreparacao": "Setup"
   }
 }
