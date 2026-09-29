@@ -359,10 +359,7 @@ const Exercicios = () => {
             <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               {t("Exercicios.exerciciosVisuaisPraticos")}
             </h1>
-            <p className="text-muted-foreground text-base md:text-lg">
-              {t("Visao.listaIntro")}
-            </p>
-            <p className="mt-3 text-xs text-muted-foreground">{t("Visao.listaAviso")}</p>
+            <p className="text-xs text-muted-foreground">{t("Visao.listaAviso")}</p>
             {acesso.estado !== "sem_sessao" && (
               <Button asChild variant="outline" size="sm" className="mt-5 gap-2 border-navy/25 text-navy hover:bg-navy/5 dark:text-foreground">
                 <Link to={localizar("/exercicios/progresso")}>

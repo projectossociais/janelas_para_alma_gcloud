@@ -1934,7 +1934,6 @@
   "Visao": {
     "avisoTeste": "Teste de triagem. Não é um exame médico, não diagnostica doenças e não substitui a consulta com um oftalmologista.",
     "avisoTreino": "Complementa o tratamento prescrito; não o substitui.",
-    "listaIntro": "Testes de triagem simples e treinos de apoio, feitos só com toques no ecrã. Sem câmara: nada é filmado nem gravado em vídeo.",
     "listaAviso": "Os testes são triagem e os treinos complementam o tratamento prescrito pelo oftalmologista; nenhum deles diagnostica nem substitui a consulta.",
     "etiquetaTeste": "Teste de triagem",
     "etiquetaTreino": "Treino",

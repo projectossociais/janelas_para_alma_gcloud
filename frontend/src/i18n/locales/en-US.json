@@ -1934,7 +1934,6 @@
   "Visao": {
     "avisoTeste": "Screening test. It is not a medical exam, does not diagnose disease, and does not replace a visit to an ophthalmologist.",
     "avisoTreino": "Complements the prescribed treatment; it does not replace it.",
-    "listaIntro": "Simple screening tests and supporting training, done with taps on the screen. No camera: nothing is filmed or recorded.",
     "listaAviso": "The tests are screening and the training complements the treatment prescribed by an ophthalmologist; none of them diagnoses anything or replaces a visit.",
     "etiquetaTeste": "Screening test",
     "etiquetaTreino": "Training",
