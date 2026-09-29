@@ -6,6 +6,8 @@ Quando parte de uma sessão activa, liga-se ao utilizador via sessão opcional
 (mesmo padrão de POST /jogo/validar).
 """
 
+from datetime import UTC, datetime
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -14,6 +16,7 @@ from app.core.dependencies import (
     obter_email_sender,
     obter_teleconsulta_repository,
     obter_utilizador_admin,
+    obter_utilizador_atual,
     obter_utilizador_atual_opcional,
 )
 from app.core.email import EmailSender
@@ -38,6 +41,7 @@ from app.schemas.agendamento import (
     ClinicaParceiraPublica,
     HorarioDisponivel,
     Modalidade,
+    ProximaTeleconsulta,
 )
 from app.services.agendamento_clinico_service import (
     AgendamentoClinicoService,
@@ -117,6 +121,29 @@ def pedir_agendamento(
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="este horário deixou de estar disponível"
         ) from exc
+
+
+@router.get("/agendamentos/minha-proxima-teleconsulta", response_model=ProximaTeleconsulta | None)
+def obter_minha_proxima_teleconsulta(
+    utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
+    agendamentos: SQLAlchemyAgendamentoClinicoRepository = Depends(obter_agendamento_clinico_repository),
+    clinicas: SQLAlchemyClinicaParceiraRepository = Depends(obter_clinica_parceira_repository),
+    teleconsultas: SQLAlchemyTeleconsultaRepository = Depends(obter_teleconsulta_repository),
+) -> ProximaTeleconsulta | None:
+    """Sempre o próprio utilizador da sessão -- nunca um id vindo do pedido."""
+    agendamento = agendamentos.proxima_confirmada_por_utilizador(utilizador.id, datetime.now(UTC))
+    if agendamento is None or agendamento.modalidade != "online":
+        return None
+    teleconsulta = teleconsultas.obter_por_agendamento(agendamento.id)
+    if teleconsulta is None or agendamento.horario_inicio is None:
+        return None
+    clinica = clinicas.obter(agendamento.clinica_id)
+    return ProximaTeleconsulta(
+        agendamento_id=agendamento.id,
+        clinica_nome=clinica.nome if clinica else "",
+        horario_inicio=agendamento.horario_inicio,
+        sala_video=teleconsulta.sala_video,
+    )
 
 
 @router.get(

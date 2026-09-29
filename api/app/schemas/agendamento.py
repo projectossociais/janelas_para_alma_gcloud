@@ -65,6 +65,16 @@ class AgendamentoClinicoPublico(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class ProximaTeleconsulta(BaseModel):
+    """DashboardUser.tsx -- a próxima consulta online confirmada do próprio
+    utilizador, com a sala do Jitsi já pronta. `null` quando não há nenhuma."""
+
+    agendamento_id: str
+    clinica_nome: str
+    horario_inicio: datetime
+    sala_video: str
+
+
 class AgendamentoClinicoAdmin(AgendamentoClinicoPublico):
     """Visto no painel de administração e no portal da clínica."""
 

@@ -58,6 +58,9 @@ class AgendamentoClinicoRepository(Protocol):
     ) -> AgendamentoClinicoRegisto: ...
     def obter(self, agendamento_id: str) -> AgendamentoClinicoRegisto | None: ...
     def listar(self) -> list[AgendamentoClinicoRegisto]: ...
+    def proxima_confirmada_por_utilizador(
+        self, utilizador_id: str, agora: datetime
+    ) -> AgendamentoClinicoRegisto | None: ...
     def confirmar(self, agendamento_id: str, admin_id: str, quando: datetime) -> AgendamentoClinicoRegisto: ...
     def recusar(self, agendamento_id: str, admin_id: str, quando: datetime) -> AgendamentoClinicoRegisto: ...
     def existe_conflito(self, clinica_id: str, horario_inicio: datetime) -> bool: ...
@@ -141,6 +144,25 @@ class SQLAlchemyAgendamentoClinicoRepository:
 
     def obter(self, agendamento_id: str) -> AgendamentoClinicoRegisto | None:
         row = self._sessao.get(AgendamentoClinico, uuid.UUID(agendamento_id))
+        return _para_registo(row, self._obter_utilizador(row.utilizador_id)) if row is not None else None
+
+    def proxima_confirmada_por_utilizador(
+        self, utilizador_id: str, agora: datetime
+    ) -> AgendamentoClinicoRegisto | None:
+        # Só online -- é só disto que a "próxima teleconsulta" precisa, e
+        # filtrar aqui (não depois de ler) evita que uma presencial mais
+        # cedo esconda uma online mais tarde.
+        row = self._sessao.scalar(
+            select(AgendamentoClinico)
+            .where(
+                AgendamentoClinico.utilizador_id == uuid.UUID(utilizador_id),
+                AgendamentoClinico.estado == "confirmada",
+                AgendamentoClinico.modalidade == "online",
+                AgendamentoClinico.horario_inicio >= agora,
+            )
+            .order_by(AgendamentoClinico.horario_inicio.asc())
+            .limit(1)
+        )
         return _para_registo(row, self._obter_utilizador(row.utilizador_id)) if row is not None else None
 
     def listar(self) -> list[AgendamentoClinicoRegisto]:

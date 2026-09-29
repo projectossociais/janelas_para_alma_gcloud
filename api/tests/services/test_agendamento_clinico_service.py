@@ -12,6 +12,7 @@ from app.core.email import EmailEnvioFalhouError
 from app.repositories.agendamento_clinico_repository import AgendamentoClinicoRegisto
 from app.repositories.clinica_parceira_repository import ClinicaParceiraRegisto
 from app.repositories.disponibilidade_clinica_repository import DisponibilidadeRegisto
+from app.repositories.teleconsulta_repository import TeleconsultaRegisto
 from app.services.agendamento_clinico_service import (
     AgendamentoClinicoService,
     AgendamentoJaDecididoError,
@@ -138,14 +139,25 @@ class RepositorioDisponibilidadesFalso:
 class RepositorioTeleconsultasFalso:
     def __init__(self) -> None:
         self.criadas: list[dict] = []
+        self._por_agendamento: dict[str, TeleconsultaRegisto] = {}
 
     def criar(self, agendamento_id: str, sala_video: str):
         registo = {"agendamento_id": agendamento_id, "sala_video": sala_video}
         self.criadas.append(registo)
+        self._por_agendamento[agendamento_id] = TeleconsultaRegisto(
+            id=f"tele-{len(self.criadas)}",
+            agendamento_id=agendamento_id,
+            sala_video=sala_video,
+            estado="agendada",
+            iniciada_em=None,
+            concluida_em=None,
+            recomendacao_clinica=None,
+            created_at=datetime.now(UTC),
+        )
         return registo
 
-    def obter_por_agendamento(self, agendamento_id: str):  # pragma: no cover
-        raise NotImplementedError
+    def obter_por_agendamento(self, agendamento_id: str):
+        return self._por_agendamento.get(agendamento_id)
 
     def iniciar(self, teleconsulta_id: str, quando):  # pragma: no cover
         raise NotImplementedError

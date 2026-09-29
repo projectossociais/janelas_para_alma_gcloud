@@ -646,7 +646,8 @@
     "premiumPendenteDescricao": "Recebemos o seu comprovativo. A nossa equipa confirma o pagamento e activa o Premium — normalmente dentro de 1 dia útil.",
     "premiumRevogadoTitulo": "O seu acesso Premium foi revogado",
     "premiumRevogadoDescricao": "Se acha que isto é um engano, ou quer voltar a assinar, contacte-nos ou submeta um novo pedido.",
-    "premiumSubmeterNovoPedido": "Submeter novo pedido"
+    "premiumSubmeterNovoPedido": "Submeter novo pedido",
+    "entrarNaSala": "Entrar na sala"
   },
   "EditarPerfil": {
     "editarPerfil": "Editar Perfil",
