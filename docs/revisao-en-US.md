@@ -6,7 +6,7 @@ Gerado por `frontend/scripts/gerar-revisao-en.mjs` a partir de `src/i18n/revisao
 |---|---|
 | Saúde (AMA) | 176 |
 | Legal | 82 |
-| Dúvidas | 38 |
+| Dúvidas | 37 |
 
 ## Saúde (AMA) (176)
 
@@ -175,7 +175,7 @@ Afirmações médicas ou de saúde. Validar com um profissional antes de publica
 
 | Chave | Português | Inglês | Nota |
 |---|---|---|---|
-| `descricao` | Projeto angolano dedicado à inclusão visual, oferecendo exercícios terapêuticos interativos, apoio para o estrabismo (ambliopia) e sensibilização escolar. | An Angolan initiative dedicated to visual inclusion, offering interactive therapeutic exercises, support for people with strabismus (amblyopia) and awareness in schools. | O PT diz 'apoio para o estrabismo (ambliopia)': estrabismo e ambliopia são condições diferentes. Traduzido como está; rever a formulação no PT. |
+| `descricao` | Plataforma angolana de saúde ocular: rastreio de estrabismo pela webcam, exercícios de terapia visual para ambliopia e rede de clínicas parceiras em Angola. | Angolan eye health platform: webcam strabismus screening, vision therapy exercises for amblyopia and a network of partner clinics in Angola. | O PT diz 'apoio para o estrabismo (ambliopia)': estrabismo e ambliopia são condições diferentes. Traduzido como está; rever a formulação no PT. |
 
 ### Navbar
 
@@ -514,7 +514,7 @@ Política de Privacidade, Termos e textos com efeito jurídico. Rascunho: não �
 | `todosOsConteudosDisponibilizados` | Todos os conteúdos disponibilizados no website (textos, imagens, logótipos, código, metodologia dos exercícios de terapia visual e demais materiais) são propriedade do Janelas Para a Alma ou dos seus licenciadores. Nos termos do princípio da <strong>liberdade contratual</strong> (artigo 405.º, n.º 1, do Código Civil), é concedida ao utilizador uma licença limitada, pessoal, não exclusiva e não transferível de utilização destes conteúdos, sendo proibida a sua reprodução, modificação, distribuição ou exploração comercial sem autorização prévia e expressa. Esta licença, tal como os demais termos aqui fixados, tem força obrigatória entre as partes e só pode ser alterada nos termos previstos nestes Termos de Utilização ou por mútuo consentimento, nos termos do <strong>artigo 406.º, n.º 1, do Código Civil</strong>. | All content made available on the website (text, images, logos, code, the methodology of the vision therapy exercises and other materials) is the property of Janelas para a Alma or its licensors. Under the principle of <strong>freedom of contract</strong> (Article 405(1) of the Civil Code), you are granted a limited, personal, nonexclusive and nontransferable license to use this content; its reproduction, modification, distribution or commercial exploitation without prior express authorization is prohibited. This license, like the other terms set out here, is binding on the parties and may be changed only as provided for in these Terms of Use or by mutual consent, under <strong>Article 406(1) of the Civil Code</strong>. |  |
 | `ultimaActualizacaoSetembroDe` | Última actualização: Setembro de 2026. Para dúvidas legais, contacte <a>janelasparaalma18@gmail.com</a>. | Last updated: September 2026. For legal questions, contact <a>janelasparaalma18@gmail.com</a>. |  |
 
-## Dúvidas (38)
+## Dúvidas (37)
 
 Escolhas de tradução ambíguas ou problemas já existentes no português.
 
@@ -622,7 +622,7 @@ Escolhas de tradução ambíguas ou problemas já existentes no português.
 
 | Chave | Português | Inglês | Nota |
 |---|---|---|---|
-| `titulo` | Janelas Para a Alma \| Inclusão Visual e Combate ao Estrabismo | Janelas para a Alma \| Visual Inclusion and the Fight Against Strabismus | Descritor em inglês da marca: 'Visual Inclusion and the Fight Against Strabismus' — usar o mesmo em todo o lado se for aprovado. |
+| `titulo` | Janelas Para a Alma \| Saúde Ocular e Estrabismo em Angola | Janelas para a Alma \| Eye Health and Strabismus in Angola | Título optimizado para SEO (saúde ocular + estrabismo + Angola), 2026-09-29. |
 
 ### Navbar
 
@@ -671,7 +671,6 @@ Escolhas de tradução ambíguas ou problemas já existentes no português.
 
 | Chave | Português | Inglês | Nota |
 |---|---|---|---|
-| `aEnviarImagensPara` | A enviar imagens para o Supabase… Não feche a página | Uploading images… Please don't close this page | O PT diz 'A enviar imagens para o Supabase', que já não é verdade (a infra-estrutura saiu do Supabase) e é um detalhe técnico para o utilizador. Em inglês ficou só 'Uploading images'. Corrigir também o PT. |
 | `areaDeDiagnosticoInteligente` | Área de Diagnóstico Inteligente | Smart Screening Area | 'Diagnóstico' → 'screening'/'result' em toda a área do scanner (AMA: uma triagem automática não é um diagnóstico, e o próprio site o diz). Confirmar a escolha; se quiserem fidelidade literal, 'Smart Diagnosis Area'. |
 
 ### ScannerResultados
