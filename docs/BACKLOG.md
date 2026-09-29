@@ -951,9 +951,12 @@ activação do utilizador + auditoria está no `PremiumService`, com testes.
 - Em `AdminInbox.tsx`, distinto do "Contactado" já existente
 - Consome o endpoint de W-11 — **depende dele**
 
-### L-12 · Ecrã "a aguardar aprovação" — ⬜ **aberto** (auditoria de 2026-09-28)
-- **Estado verificado:** nenhuma página do utilizador mostra que o seu pedido de Premium está pendente. Quem envia o comprovativo fica sem saber o que se passa até o admin aprovar
-- Para quem tem pedido pendente, reutilizando `LockedVideoOverlay` / `PremiumPaywallModal`
+### L-12 · Ecrã "a aguardar aprovação" — ✅ **FEITO 2026-09-28**
+Novo `GET /premium-requests/meu` (sessão própria, nunca um id vindo do pedido) devolve
+o pedido mais recente, e `PremiumRequestBanner` no `DashboardUser` mostra "a aguardar
+aprovação" (pendente) ou "acesso revogado" com atalho para um novo pedido (revogado);
+quem já tem `premium_ativo=true` nunca o vê. PR #111, testes dos dois lados, CI verde,
+deploy confirmado.
 
 ### W-12 + L-13 · Sistema de candidaturas — ✅ **FEITO** (ver "W-12 — voluntariado", 2026-09-15, e "W-16 (candidaturas)", 2026-09-23)
 - Voluntários e clínicas parceiras chegam hoje só por email
