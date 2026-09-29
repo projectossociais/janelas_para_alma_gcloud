@@ -246,6 +246,10 @@ class Doacao(Base):
     valor: Mapped[float | None] = mapped_column(Numeric)
     materiais: Mapped[list[str] | None] = mapped_column(ARRAY(Text))
     detalhes: Mapped[str | None] = mapped_column(Text)
+    # Só doações de materiais (UX-03) -- onde a equipa vai recolher o que foi
+    # doado. Nullable porque doações financeiras não precisam de recolha e
+    # linhas antigas nunca tiveram este campo.
+    provincia: Mapped[str | None] = mapped_column(Text)
     recibo_id: Mapped[str | None] = mapped_column(Text)
     status: Mapped[str | None] = mapped_column(Text, server_default="pendente")
     # Comprovativo de transferência (doação financeira) -- upload directo ao
