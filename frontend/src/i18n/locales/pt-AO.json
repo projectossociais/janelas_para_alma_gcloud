@@ -619,8 +619,12 @@
     "bannerTrialDisponivelBotao": "Começar teste gratuito de 7 dias",
     "bannerTrialAtivoUmDia": "Falta 1 dia do seu teste gratuito.",
     "bannerTrialAtivoDias": "Faltam {{dias}} dias do seu teste gratuito.",
-    "bannerTrialTerminadoTexto": "O seu teste gratuito de 7 dias terminou. Para continuar a treinar, active o plano Premium.",
-    "bannerPremiumTexto": "Tem acesso aos 8 exercícios, sem limite."
+    "bannerTrialTerminadoTexto": "O seu teste gratuito terminou. Com o Premium continua a treinar todos os dias, vê a evolução de cada olho e leva o relatório à consulta.",
+    "bannerPremiumTexto": "Tem acesso aos 8 exercícios, sem limite.",
+    "evolucaoMelhorouUma": "Em {{dias}} dias de treino, o {{olho}} já lê uma linha mais pequena.",
+    "evolucaoMelhorou": "Em {{dias}} dias de treino, o {{olho}} já lê {{n}} linhas mais pequenas.",
+    "evolucaoContinuar": "Continue com o Premium para manter o ritmo e leve o relatório à próxima consulta.",
+    "evolucaoPiorou": "Os resultados do {{olho}} pioraram nos últimos {{dias}} dias. Fale com o oftalmologista."
   },
   "ExercisesSection": {
     "exerciciosVisuais": "Exercícios Visuais",
@@ -1191,16 +1195,16 @@
     "codigosQrParaDescarregar": "Códigos QR para descarregar a aplicação Optioptika na Google Play e App Store"
   },
   "PremiumPaywallModal": {
-    "desbloqueieOSeuPotencial": "Desbloqueie o Seu Potencial Visual",
-    "facaUpgradeParaAceder": "Faça upgrade para aceder a todos os testes e treinos visuais.",
     "registarParaAcessoPremium": "Registar para Acesso Premium",
-    "acessoIlimitadoAExercicios": "Acesso ilimitado a exercícios interactivos e vídeos alojados na plataforma.",
-    "acompanhamentoDeMetricasKpis": "Acompanhamento de métricas (KPIs) de evolução.",
-    "redirecionamentoExclusivoETeleconsulta": "Redirecionamento exclusivo e teleconsulta com clínicas parceiras.",
-    "videosExplicativosComMedicos": "Vídeos explicativos com médicos oftalmologistas parceiros.",
     "precos": "Preços do plano Premium",
     "porMes": "por mês",
-    "porAnoPoupe2Meses": "por ano · poupe 2 meses"
+    "porAnoPoupe2Meses": "por ano · poupe 2 meses",
+    "tituloAcompanhamento": "Acompanhe o tratamento em casa",
+    "subtituloAcompanhamento": "Um treino curto por dia, a evolução de cada olho medida todas as semanas e um relatório para levar ao oftalmologista.",
+    "beneficioTodosOsExercicios": "Os 8 testes e treinos, sem limite, incluindo os treinos com tapa-olho.",
+    "beneficioEvolucao": "Evolução de cada olho explicada em linguagem simples.",
+    "beneficioRelatorio": "Relatório semanal para mostrar ao oftalmologista.",
+    "beneficioClinicas": "Prioridade na marcação de consultas e teleconsulta com as clínicas parceiras."
   },
   "ProgramModal": {
     "programaMeuKambaEstrabico": "Programa Meu Kamba Estrábico",

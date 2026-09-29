@@ -21,6 +21,12 @@ vi.mock("@/contexts/ProfileContext", () => ({
   useProfile: () => ({ profile: null }),
 }));
 
+// Histórico de sessões para a evolução no fim do trial (Fase B).
+let mockHistorico: unknown[] | null = [];
+vi.mock("@/components/visao/hooks", () => ({
+  useHistoricoVisao: () => ({ sessoes: mockHistorico, erro: false, recarregar: () => undefined }),
+}));
+
 const acesso = vi.fn();
 const iniciarTrial = vi.fn();
 vi.mock("@/lib/apiClient", () => ({
@@ -217,5 +223,63 @@ describe("Exercicios — 8 exercícios em dois grupos", () => {
 
     await waitFor(() => expect(iniciarTrial).toHaveBeenCalled());
     expect(contarDisponiveis(grupo("Incluídos no teste de 7 dias"))).toBe(0);
+  });
+});
+
+describe("Exercicios — fim do trial mostra a evolução medida (Fase B)", () => {
+  const hoje = new Date();
+  const haDias = (n: number) => new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - n, 10).toISOString();
+  const aneis = (dias: number, limiar: number) => ({
+    exercicio_id: "ambliopia",
+    created_at: haDias(dias),
+    segundos_activos: 360,
+    olho: "esquerdo",
+    limiar,
+    unidade: "logmar",
+    sinais: null,
+    calibrado: true,
+  });
+
+  beforeEach(() => {
+    mockLoggedIn = true;
+    acesso.mockReset();
+    mockHistorico = [];
+  });
+
+  it("trial terminado com melhoria: mostra a evolução da própria pessoa e o CTA para Premium", async () => {
+    mockHistorico = [aneis(6, 0.5), aneis(0, 0.3)];
+    acesso.mockResolvedValue(estado({ estado: "trial_terminado" }));
+    renderPagina();
+    expect(await screen.findByText("Em 6 dias de treino, o olho esquerdo já lê 2 linhas mais pequenas.")).toBeInTheDocument();
+    expect(screen.getByText(/Continue com o Premium para manter o ritmo/)).toBeInTheDocument();
+  });
+
+  it("últimos dias do trial: mostra a evolução; com mais dias pela frente, ainda não", async () => {
+    mockHistorico = [aneis(4, 0.5), aneis(0, 0.4)];
+    acesso.mockResolvedValue(estado({ estado: "trial_ativo", exercicios_desbloqueados: TRIAL, trial_dias_restantes: 2 }));
+    const { unmount } = renderPagina();
+    expect(await screen.findByText("Em 4 dias de treino, o olho esquerdo já lê uma linha mais pequena.")).toBeInTheDocument();
+    unmount();
+
+    acesso.mockResolvedValue(estado({ estado: "trial_ativo", exercicios_desbloqueados: TRIAL, trial_dias_restantes: 5 }));
+    renderPagina();
+    await screen.findByText(/Faltam 5 dias/);
+    expect(screen.queryByText(/dias de treino, o olho/)).not.toBeInTheDocument();
+  });
+
+  it("a piorar: nunca usa isso para vender -- recomenda a consulta", async () => {
+    mockHistorico = [aneis(6, 0.2), aneis(0, 0.4)];
+    acesso.mockResolvedValue(estado({ estado: "trial_terminado" }));
+    renderPagina();
+    expect(await screen.findByText(/pioraram nos últimos 6 dias. Fale com o oftalmologista./)).toBeInTheDocument();
+    expect(screen.queryByText(/Continue com o Premium para manter o ritmo/)).not.toBeInTheDocument();
+  });
+
+  it("sem evolução medida, não inventa nada", async () => {
+    mockHistorico = [aneis(0, 0.4)];
+    acesso.mockResolvedValue(estado({ estado: "trial_terminado" }));
+    renderPagina();
+    await screen.findByText(/O seu teste gratuito terminou/);
+    expect(screen.queryByText(/dias de treino, o olho/)).not.toBeInTheDocument();
   });
 });

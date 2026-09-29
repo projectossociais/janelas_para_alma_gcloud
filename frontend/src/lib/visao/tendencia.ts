@@ -93,3 +93,39 @@ export function tendencia<T extends SessaoResumo & { calibrado?: boolean | null 
     aproximado: calibradas.length < 2,
   };
 }
+
+export type EvolucaoDestacada = {
+  exercicioId: string;
+  olho: Olho;
+  /** Sempre "melhorou" ou "piorou" -- "estável" e "poucos dados" não se destacam. */
+  tendencia: Exclude<Tendencia, { tipo: "poucos_dados" }>;
+};
+
+/**
+ * O que mostrar no fim do trial (Fase B, docs/ANALISE_EXERCICIOS.md): a maior
+ * melhoria medida da própria pessoa, nos exercícios de acuidade (Treino de
+ * Anéis primeiro, depois o Teste de Acuidade), no olho mais fraco se for
+ * conhecido. Se não houver melhoria mas houver piora, devolve a piora -- que
+ * nunca se usa para vender, só para recomendar a consulta. Sem nenhuma das
+ * duas, `null`.
+ */
+export function evolucaoDestacada<T extends SessaoResumo & { calibrado?: boolean | null }>(
+  sessoes: readonly T[],
+  exercicios: readonly string[],
+  olhoMaisFraco: Olho | null,
+): EvolucaoDestacada | null {
+  const olhos: Olho[] = olhoMaisFraco ? [olhoMaisFraco] : ["direito", "esquerdo"];
+  let melhoria: EvolucaoDestacada | null = null;
+  let piora: EvolucaoDestacada | null = null;
+  for (const exercicioId of exercicios) {
+    for (const olho of olhos) {
+      const t = tendencia(sessoes, exercicioId, olho);
+      if (t.tipo === "melhorou" && (!melhoria || t.passos > melhoria.tendencia.passos)) {
+        melhoria = { exercicioId, olho, tendencia: t };
+      } else if (t.tipo === "piorou" && !piora) {
+        piora = { exercicioId, olho, tendencia: t };
+      }
+    }
+  }
+  return melhoria ?? piora;
+}

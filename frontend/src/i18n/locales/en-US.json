@@ -619,8 +619,12 @@
     "bannerTrialDisponivelBotao": "Start free 7-day trial",
     "bannerTrialAtivoUmDia": "1 day left in your free trial.",
     "bannerTrialAtivoDias": "{{dias}} days left in your free trial.",
-    "bannerTrialTerminadoTexto": "Your free 7-day trial has ended. To keep training, activate the Premium plan.",
-    "bannerPremiumTexto": "You have unlimited access to all 8 exercises."
+    "bannerTrialTerminadoTexto": "Your free trial has ended. With Premium you keep training every day, see each eye’s progress and take the report to your appointment.",
+    "bannerPremiumTexto": "You have unlimited access to all 8 exercises.",
+    "evolucaoMelhorouUma": "In {{dias}} days of training, the {{olho}} now reads one line smaller.",
+    "evolucaoMelhorou": "In {{dias}} days of training, the {{olho}} now reads {{n}} lines smaller.",
+    "evolucaoContinuar": "Continue with Premium to keep the pace and take the report to your next appointment.",
+    "evolucaoPiorou": "The results for the {{olho}} got worse in the last {{dias}} days. Talk to the ophthalmologist."
   },
   "ExercisesSection": {
     "exerciciosVisuais": "Vision Exercises",
@@ -1191,16 +1195,16 @@
     "codigosQrParaDescarregar": "QR codes to download the Optioptika app on Google Play and the App Store"
   },
   "PremiumPaywallModal": {
-    "desbloqueieOSeuPotencial": "Unlock Your Visual Potential",
-    "facaUpgradeParaAceder": "Upgrade to access every vision test and training exercise.",
     "registarParaAcessoPremium": "Sign Up for Premium Access",
-    "acessoIlimitadoAExercicios": "Unlimited access to interactive exercises and videos hosted on the platform.",
-    "acompanhamentoDeMetricasKpis": "Tracking of progress metrics (KPIs).",
-    "redirecionamentoExclusivoETeleconsulta": "Exclusive referrals and teleconsultations with partner clinics.",
-    "videosExplicativosComMedicos": "Explainer videos with partner ophthalmologists.",
     "precos": "Premium plan pricing",
     "porMes": "per month",
-    "porAnoPoupe2Meses": "per year · save 2 months"
+    "porAnoPoupe2Meses": "per year · save 2 months",
+    "tituloAcompanhamento": "Follow the treatment at home",
+    "subtituloAcompanhamento": "A short training session every day, each eye’s progress measured every week, and a report to take to the ophthalmologist.",
+    "beneficioTodosOsExercicios": "All 8 tests and trainings, without limits, including the eye-patch trainings.",
+    "beneficioEvolucao": "Each eye’s progress explained in plain language.",
+    "beneficioRelatorio": "Weekly report to show the ophthalmologist.",
+    "beneficioClinicas": "Priority booking and teleconsultation with partner clinics."
   },
   "ProgramModal": {
     "programaMeuKambaEstrabico": "Meu Kamba Estrábico Program",
