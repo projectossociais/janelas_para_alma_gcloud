@@ -255,13 +255,14 @@ export function variaveis(d: Direccao, tema: Tema): Record<string, string> {
 
 /** Luminância relativa (WCAG 2.x) de uma cor #RRGGBB. */
 export function luminancia(hex: string): number {
-  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+  const canal = (i: number) => parseInt(hex.slice(i, i + 2), 16) / 255;
   const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
-  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  return 0.2126 * lin(canal(1)) + 0.7152 * lin(canal(3)) + 0.0722 * lin(canal(5));
 }
 
 /** Contraste WCAG entre duas cores (1 a 21). */
 export function contraste(a: string, b: string): number {
-  const [l1, l2] = [luminancia(a), luminancia(b)].sort((x, y) => y - x);
-  return (l1 + 0.05) / (l2 + 0.05);
+  const la = luminancia(a);
+  const lb = luminancia(b);
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
 }

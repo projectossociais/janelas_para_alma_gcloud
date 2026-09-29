@@ -100,7 +100,7 @@ marinho ou com texto marinho por cima. Está provado em `marca.test.ts`.
 | Letra | Onde | Estado |
 |---|---|---|
 | **Ubuntu** | Todo o texto do site (títulos e corpo) | Livre (Ubuntu Font Licence), no Google Fonts. Auto-alojar só os pesos usados, subconjunto latino |
-| **LT Renovate** | Palavra do logótipo | **Licença por confirmar:** os sites de fontes contradizem-se ("uso pessoal" vs. "uso comercial permitido"). Até haver confirmação por escrito da LyonsType ou do designer, só entra como traçado dentro do SVG do logótipo, que não precisa da letra |
+| **LT Renovate** | Palavra do logótipo | **Licença por confirmar:** os sites de fontes contradizem-se ("uso pessoal" vs. "uso comercial permitido"). Até haver confirmação por escrito da LyonsType ou do estúdio do manual (XANUS PRO), só entra como traçado dentro do SVG do logótipo, que não precisa da letra |
 
 **Pesos:** 400 para texto corrido; 500 para etiquetas, botões e títulos pequenos; 700
 para títulos com força (direcção B); **300 (Light) só em títulos ≥ 32 px**, como na
@@ -110,11 +110,13 @@ pequeno é fino demais para baixa visão.
 **Nota honesta:** a pesquisa de UX tinha proposto a Atkinson Hyperlegible, desenhada para
 baixa visão. Com um manual de marca a definir a Ubuntu, fica a Ubuntu: é humanista, com
 boa distinção entre letras, e a coerência com a marca vale mais nesta fase. A legibilidade
-garante-se pelo tamanho (texto corrido ≥ 17 px), pelo peso mínimo e pelo contraste.
+garante-se pelo tamanho (texto corrido ≥ 17 px), pelo peso mínimo e pelo contraste. Como
+nenhuma letra é a melhor para toda a gente, a Atkinson Hyperlegible Next fica disponível
+como opção "Letra de leitura fácil" nas Definições (PESQUISA_UX §3, Letra).
 
 ---
 
-## 5. Elementos gráficos derivados (propostos, a validar com o designer)
+## 5. Elementos gráficos derivados (propostos no laboratório, aprovados pelo dono do projecto)
 
 Nascidos do manual, sem inventar formas novas:
 1. **Palavra em destaque** nos títulos grandes (pág. 1).
@@ -126,9 +128,14 @@ Nascidos do manual, sem inventar formas novas:
 
 ---
 
-## 6. O que o manual não define (pedir ao designer, XANUS PRO)
+## 6. O que o manual não define (decidimos nós)
 
-| Falta | Porque importa no site | Proposta provisória |
+**Não há designer no projecto** (2026-09-29). Estas lacunas fecham-se aqui, com propostas
+testadas no laboratório e aprovadas pelo dono do projecto, e passam a regra quando
+aprovadas. Ao estúdio que fez o manual (XANUS PRO), se for possível contactá-lo, fica
+só uma pergunta: a licença da LT Renovate.
+
+| Falta | Porque importa no site | Proposta |
 |---|---|---|
 | Área de protecção e tamanho mínimo | Navegação e ícones pequenos | §2 |
 | Usos proibidos | Evitar logótipos esticados ou recoloridos | §2 |

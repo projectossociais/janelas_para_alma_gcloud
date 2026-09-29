@@ -60,6 +60,23 @@ contínua nos ecrãs de tarefa, carrosséis na página inicial.
 - Botões dizem o que acontece: "Marcar consulta", não "Continuar" quando há algo mais
   específico a dizer.
 
+### Letra (Ubuntu, com opção de leitura fácil)
+- A letra é a **Ubuntu**, a do manual da marca (`docs/MARCA.md` §4). É humanista, com
+  aberturas largas e letras que não se confundem (o `l` tem cauda, o `1` tem bandeira,
+  o `I` é uma barra).
+- A investigação diz que **nenhuma letra é a melhor para toda a gente**: no mesmo
+  leitor, a velocidade de leitura varia até 35% entre a letra mais rápida e a mais lenta,
+  sem perder compreensão, e a letra mais rápida muda de pessoa para pessoa (Wallace et
+  al., 2022). A Atkinson Hyperlegible foi desenhada com pessoas com baixa visão, mas
+  não há estudos independentes que a mostrem melhor para toda a gente.
+- Por isso: **Ubuntu para todos, e uma opção "Letra de leitura fácil" (Atkinson
+  Hyperlegible Next) nas Definições**, carregada só por quem a escolhe. Serve quem
+  precisa, sem pôr a marca de lado nem pesar no site de toda a gente.
+- A legibilidade garante-se sobretudo por: texto corrido ≥ 17 px, peso ≥ 400 (Light só
+  em títulos ≥ 32 px), linhas de 45 a 75 caracteres, entrelinha ≥ 1,5 e contraste AA.
+- O palco dos testes visuais não usa a letra do site: usa optótipos calculados em ângulo
+  visual (CLAUDE.md §6), por isso esta escolha não mexe na medição.
+
 ### Formulários
 - Etiqueta por cima, texto de ajuda entre a etiqueta e o campo, nunca placeholder como
   etiqueta.
@@ -158,7 +175,76 @@ ponto a olhar no rastreio).
 
 ---
 
-## 5. O que isto muda no laboratório (`/_laboratorio`)
+## 5. Navegação e menu
+
+A NN/g mediu que **esconder a navegação principal atrás de um ícone (☰) reduz para quase
+metade a probabilidade de ser encontrada**, e as pessoas usam-na mais tarde e com mais
+dificuldade, tanto no telemóvel como no computador. Barras de separadores visíveis
+funcionam melhor quando há poucos destinos. Daí, uma navegação por modo:
+
+| Modo | Telemóvel | Computador |
+|---|---|---|
+| **Site** (visitante) | Logótipo + botão "Fazer rastreio" sempre visível + botão **"Menu"** com a palavra, não só o ícone. O menu abre em ecrã inteiro, com os destinos agrupados (Rastreio e treinos · Clínicas · Sobre nós · Apoiar) | Barra de topo com 4 destinos visíveis + "Fazer rastreio" + "Entrar" |
+| **App** (com sessão) | **Barra de separadores em baixo**, sempre visível, 5 destinos com ícone **e** nome: Hoje · Treinos · Jogo · Consultas · Perfil. O rastreio abre a partir de Hoje e de Consultas | Os mesmos 5 destinos numa barra lateral estreita |
+| **Consola** (clínica e admin) | Uso secundário: menu em ecrã inteiro | Barra lateral fixa com grupos, migalhas de pão (breadcrumbs), tabelas primeiro |
+
+**Regras que valem para todos:**
+- O destino actual marca-se com `aria-current="page"` e com mais do que a cor (peso e
+  indicador).
+- **Cada passo é um endereço** (`/rastreio/passo-2`, `?passo=2`): o botão "voltar" do
+  telemóvel volta ao passo anterior e não deita fora a jornada. Voltar é o gesto mais
+  usado em Android.
+- Ao mudar de página: foco no `<h1>`, título do separador actualizado e anúncio para
+  leitores de ecrã (numa SPA isto não acontece sozinho).
+- Ligação "Saltar para o conteúdo" como primeiro elemento focável.
+- A barra de separadores guarda a posição de cada separador: voltar a "Treinos" não
+  volta ao topo.
+- Uma jornada de tarefa (rastreio, pagamento) esconde a navegação principal e mostra só
+  "Sair" com confirmação. Menos saídas, mais tarefas concluídas.
+- 404 útil: diz o que aconteceu e oferece os 3 destinos mais procurados.
+
+---
+
+## 6. O suco: momentos pensados
+
+O "suco" não é animação espalhada; são **poucos momentos, escolhidos, que recompensam ou
+tranquilizam**. Cada um tem de responder a "que sentimento queremos aqui?". Todos seguem
+os tokens de movimento (§3), respeitam o movimento reduzido e **nunca atrasam a tarefa**
+(interrompíveis, sem bloquear toques). Não há som (decisão de 2026-09-24).
+
+| Momento | Onde | O que acontece | Sentimento |
+|---|---|---|---|
+| O olhar alinha-se | Abertura do site | O olho do símbolo entra desviado e alinha-se na janela, **uma vez** | "É disto que se trata" |
+| Toque que responde | Todos os botões | Pressão a 97% em 100 ms; o carregamento acontece dentro do botão, sem ele mudar de tamanho | Controlo |
+| Passos com direcção | Rastreio, marcação, pagamento | Avançar desliza para a esquerda, voltar para a direita, em 250 ms; a barra "Passo X de Y" enche-se | Progresso |
+| Preparação que se confirma | Antes do rastreio | Cada condição (luz, distância, óculos) ganha um visto à medida que é confirmada | Confiança |
+| Resultado sereno | Resultado do rastreio | Revela-se com calma, **sem celebração nem confetes**: é um momento clínico. O próximo passo aparece logo | Segurança |
+| Evolução que se vê | Fim de treino | O número da evolução conta até ao valor ("+2 linhas") e a frase simples aparece a seguir | Orgulho |
+| Sequência celebrada à medida | Treinos diários | Pequeno (o dia fica marcado); a cada 7 dias, maior (padrão de lentes e dourado, os 5 diamantes a voar para a carteira) | Hábito |
+| Copiado | Dados bancários do Premium | O botão "Copiar" passa a "Copiado ✓" no mesmo sítio, 2 s | Certeza |
+| Estado vazio com calor | Listas sem nada | O símbolo, uma frase e o primeiro passo ("Comece pelo treino de 3 minutos") | Convite |
+| Espera que se entende | Carregamentos | Esqueleto com a forma do conteúdo, só depois de 300 ms | Paciência |
+| Mudança de página | App (Android) | View Transitions API como melhoria progressiva: o cartão tocado "abre" para a página | Continuidade |
+| Nome próprio | Painel e mensagens | "A Ana treinou 5 dias seguidos", não "Treinou 5 dias" | Pertença |
+
+**Limites:** no máximo um momento de celebração por ecrã; nada de celebração em ecrãs
+clínicos nem de dinheiro; interfaces optimistas (mostrar antes de o servidor confirmar)
+**só** em gestos sem consequência (marcar um favorito), nunca em pagamentos, sessões
+gravadas ou resultados (CLAUDE.md §6: nunca sucesso antes da resposta).
+
+---
+
+## 7. Qualidade dos componentes
+
+A lista do que torna um componente "pronto" (todos os estados, 44 px, teclado, dois
+temas, movimento reduzido, sem texto embutido, testado) e a forma de o escrever estão
+em `docs/SISTEMA_DESIGN.md` §4. Resumo das peças a construir primeiro, pela ordem em
+que as jornadas críticas precisam delas: Botao · Campo (com ajuda e erro) · Passos ·
+Cartao · Aviso · EstadoVazio · Esqueleto · Dialogo · MenuSite · BarraSeparadores.
+
+---
+
+## 8. O que isto muda no laboratório (`/_laboratorio`)
 
 > **Actualização 2026-09-29:** chegou o manual de marca. Cor, logótipo e letra seguem
 > agora `docs/MARCA.md` (Ubuntu em vez de Atkinson Hyperlegible; paleta oficial com
@@ -174,7 +260,7 @@ ponto a olhar no rastreio).
 
 ---
 
-## 6. O que só a Fase 0 pode responder
+## 9. O que só a Fase 0 pode responder
 
 - Os pais confiam mais num tom clínico (A/C) ou caloroso (B)?
 - Que palavras usam para "estrabismo"? ("olho vesgo", "olho torto"?) Ajusta o texto de 9-11 anos.
@@ -202,3 +288,7 @@ ponto a olhar no rastreio).
 - Baymard, *8 recommendations for input fields* — https://baymard.com/blog/input-fields
 - *Analysis of patient adherence to emerging treatment tools in amblyopia* (meta-análise, Journal of Optometry) — https://pmc.ncbi.nlm.nih.gov/articles/PMC13063279/
 - *Effectiveness of a gamified mobile app in enhancing treatment adherence for children with amblyopia* (JMIR Serious Games, 2025) — https://games.jmir.org/2025/1/e60309
+- Wallace et al., *Towards individuated reading experiences: different fonts increase reading speed for different individuals* (ACM TOCHI, 2022) — https://dl.acm.org/doi/10.1145/3502222
+- Braille Institute, *Atkinson Hyperlegible* — https://www.brailleinstitute.org/freefont/
+- NN/g, *Hamburger menus and hidden navigation hurt UX metrics* — https://www.nngroup.com/articles/hamburger-menus/
+- NN/g, *Basic patterns for mobile navigation* — https://www.nngroup.com/articles/mobile-navigation-patterns/

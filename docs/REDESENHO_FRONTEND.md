@@ -224,7 +224,7 @@ depois de a 2 fechar.
 |---|---|---|
 | Reescrever tudo de uma vez e nunca terminar | Alta | Estrangulamento; cada fase vai para produção sozinha |
 | Partir comportamento que funciona | Alta | 64 testes intactos; regressão visual e axe no CI |
-| Identidade genérica outra vez | Alta | Fotografia/ilustração locais; designer angolano na Fase 1; rever cada proposta contra os princípios |
+| Identidade genérica outra vez | Alta | Tudo parte do manual da marca (`docs/MARCA.md`); fotografia real angolana; sem designer, cada proposta é revista contra os princípios e aprovada pelo dono no laboratório |
 | Estragar os exercícios | Média | Lógica em `lib/visao/` com testes; só a moldura muda; palco sempre branco; CLAUDE.md §6 |
 | Textos EN maiores que PT | Média | Desenhar com as duas línguas; regressão visual nos dois idiomas |
 | Âmbito a crescer a meio | Média | Funcionalidades novas ficam fora, salvo decisão explícita |
@@ -244,7 +244,7 @@ Por responder antes da Fase 0. Registar a resposta e a data aqui quando decidido
 |---|---|---|
 | 1 | A marca muda ou fica? (logótipo e nome, ou rever também na Fase 1) | **Fica** (2026-09-29). Existe um manual de marca ("Um Olhar Alinhado", XANUS PRO, 2025): logótipo, paleta e Ubuntu são fixos. Especificação para o site em `docs/MARCA.md` |
 | 2 | Há orçamento para designer, ilustrador ou fotógrafo angolano? | *pendente* |
-| 3 | Quem desenha? (designer dedicado, Lukeny, ou design proposto pelo Claude com aprovação a cada passo) | *pendente* |
+| 3 | Quem desenha? (designer dedicado, Lukeny, ou design proposto pelo Claude com aprovação a cada passo) | **Sem designer** (2026-09-29): propostas feitas em código no laboratório, aprovadas pelo dono do projecto a cada passo. As regras ficam escritas em `docs/MARCA.md`, `docs/PESQUISA_UX.md` e `docs/SISTEMA_DESIGN.md`, para a consistência não depender de uma pessoa |
 | 4 | Qual jornada vem primeiro? (proposta: rastreio e marcação; alternativa: conversão Premium) | *pendente* |
 | 5 | Tema escuro entra no âmbito? (barato se pensado na Fase 1, caro depois) | *pendente* |
 | 6 | Há conta Figma para a equipa? (o plano gratuito chega para começar) | *pendente* |
@@ -257,13 +257,19 @@ Acrescentar abaixo, com data, o que for decidido ou detalhado em cada conversa s
 redesenho (referências visuais, páginas a priorizar, gostos e recusas do dono do
 projecto, feedback do Lukeny). Mais recente em cima.
 
+- **2026-09-29** — Não há designer no projecto: o design é proposto em código e aprovado
+  pelo dono (decisão 3). Letra: Ubuntu para todos, com a Atkinson Hyperlegible Next
+  como opção de leitura fácil. Acrescentados a navegação por modo, o catálogo de
+  momentos ("suco") e a qualidade dos componentes (`docs/PESQUISA_UX.md` §5-7), e as
+  regras de código do sistema de design (`docs/SISTEMA_DESIGN.md`), com o código novo
+  em TypeScript estrito (`npm run typecheck:redesenho`).
 - **2026-09-29** — O dono do projecto entregou o manual de marca "Identidade Visual Um
   Olhar Alinhado" (XANUS PRO, 2025) e pediu para o respeitar. Consequências: a marca
   fica (decisão 1); as três direcções do laboratório (`/_laboratorio`, só local no ramo
   `redesenho/frontend`) passaram a usar o logótipo, a paleta e a Ubuntu do manual e
   diferem só no uso (A Clínica, B Viva, C Humana); a Atkinson Hyperlegible saiu. Pesquisa
   de UX em `docs/PESQUISA_UX.md`; especificação da marca, lacunas do manual e perguntas
-  para o designer em `docs/MARCA.md`.
+  em aberto em `docs/MARCA.md`.
 
 - **2026-09-28** — Plano criado. Discussão detalhada sobre o frontend marcada para mais
   tarde no mesmo dia.
