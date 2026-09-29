@@ -121,7 +121,13 @@ const ResultadoContrasteEcra = ({ res, ctx }: { res: Record<Olho, ResultadoContr
           </CartaoOlho>
         );
       })}
-      notas={<p className="text-center text-xs text-muted-foreground">{t("Visao.contrasteSemNorma")}</p>}
+      notas={
+        <div className="space-y-2 text-center text-xs text-muted-foreground">
+          <p>{t("Visao.contrasteSemNorma")}</p>
+          {OLHOS.some((o) => res[o].limiteEcra) && <p>{t("Visao.contrasteLimiteEcra")}</p>}
+          {!ctx.calibrado && <p>{t("Visao.semCartaoAviso")}</p>}
+        </div>
+      }
     />
   );
 };
