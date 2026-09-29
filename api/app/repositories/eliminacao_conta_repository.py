@@ -18,7 +18,7 @@ import uuid
 from datetime import datetime
 from typing import Protocol
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.repositories.orm_models import (
@@ -71,6 +71,11 @@ class SQLAlchemyEliminacaoContaRepository:
         if utilizador is None or utilizador.anonimizado_em is not None:
             return  # já processado, ou já não existe -- nunca reprocessar
 
+        # O formulário de contacto não liga a mensagem à conta (não há
+        # `user_id` em `contact_messages`): as mensagens da pessoa só se
+        # encontram pelo email da conta, por isso guarda-se antes de o apagar.
+        email_original = utilizador.email
+
         utilizador.email = email_anonimo
         utilizador.password_hash = password_hash_invalido
         utilizador.nome_completo = None
@@ -104,7 +109,9 @@ class SQLAlchemyEliminacaoContaRepository:
             row.email = email_anonimo
             row.telefone = "+000000000"
 
-        for row in self._sessao.scalars(select(ContactMessage).where(ContactMessage.user_id == id_)):
+        for row in self._sessao.scalars(
+            select(ContactMessage).where(func.lower(ContactMessage.email) == email_original.lower())
+        ):
             row.nome = nome_anonimo
             row.email = email_anonimo
 
