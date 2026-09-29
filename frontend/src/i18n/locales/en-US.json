@@ -132,6 +132,12 @@
     "verGaleriaDaAccao": "View the Campaign Gallery",
     "equipaDoJanelasPara": "The Janelas para a Alma team together at the Gamek campaign"
   },
+  "UpcomingActivities": {
+    "proximasAccoes": "Upcoming Activities",
+    "junteSeANos": "Join us",
+    "vagasRestantes": "{{count}} spots available",
+    "semVagas": "No spots left"
+  },
   "AmbliopiaExercise": {
     "pts": "{{pontosNoNivel}}/{{pontosParaSubir}} pts",
     "rostoNaoDetectado": "Face not detected",
