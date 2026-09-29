@@ -28,7 +28,6 @@ vi.mock("@/lib/apiClient", () => ({
   exerciciosApi: {
     acesso: (...a: unknown[]) => acesso(...a),
     iniciarTrial: () => Promise.resolve(),
-    video: () => Promise.reject(new Error("sem vídeo")),
   },
   perfilApi: { atualizar: () => Promise.resolve({}) },
   mensagemDeErroApi: (_e: unknown, fallback: string) => fallback,

@@ -58,10 +58,7 @@ export const BotaoContinuar = ({
   );
 };
 
-/**
- * Primeiro passo de cada exercício. O vídeo explicativo (L-02) vive no
- * cabeçalho do `BaseExercise` (`ExercicioVideo`, #116), a pedido, e não aqui.
- */
+/** Primeiro passo de cada exercício. */
 export const PassoBrilho = ({ aoContinuar }: { aoContinuar: () => void }) => {
   const { t } = useTranslation();
   return (

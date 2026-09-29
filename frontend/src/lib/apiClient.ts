@@ -572,10 +572,6 @@ export const exerciciosApi = {
   /** Inicia o teste de 7 dias -- uma única vez por conta (409 depois). */
   iniciarTrial: () =>
     pedido<AcessoExerciciosPublico>("/exercicios/trial", { method: "POST" }),
-
-  /** URL assinado e temporário do vídeo do exercício (403 sem acesso). */
-  video: (exercicioId: string) =>
-    pedido<{ url: string }>(`/exercicios/${encodeURIComponent(exercicioId)}/video`),
 };
 
 export interface ScreeningInput {
