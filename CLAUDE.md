@@ -399,6 +399,15 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
 - **Sessões novas gravam `versao: 2`** e nunca mostram "guardado" antes da resposta da API
   (`useRegistoSessao`, com "Tentar de novo" que reenvia só o que falhou).
 
+### Relatórios
+
+- **Layout de relatório, não de folheto** (decisão do dono do projecto, 2026-09-29): preto
+  sobre branco, uma só família de letra em poucos tamanhos, secções numeradas, tabelas com
+  linhas finas, cabeçalho e rodapé com paginação. Nada de cores de marca, caixas, cantos
+  arredondados, ícones nem texto promocional. PDFs usam sempre `RelatorioPdf`
+  (`lib/relatorio/pdfRelatorio.ts`, com teste que impede cor); relatórios em HTML usam
+  `FolhaRelatorio`/`ConteudoRelatorio` (`components/visao/ConteudoRelatorio.tsx`).
+
 ### Build / ferramentas
 
 - **A dependência do Lovable.dev (`mcpPlugin()`) já corrompeu ficheiros silenciosamente
