@@ -51,7 +51,7 @@ Fase 3) quando a conta Meta estiver pronta.
 | Matchmaker | Fase 4B — consulta incluída no Premium vs. paga à parte | Sprint 4 | Preço por consulta (decisão do dono) |
 | Matchmaker | Selo de clínica verificada | Sprint 4 | Negociação comercial com números reais |
 | Matchmaker | `sugerir_clinicas` (correspondência por regras) | Sprint 4, PR C | Existir uma 2.ª clínica |
-| Exercícios | W-18 — exercícios refeitos sem webcam (branch `frontend/exercicios-sem-webcam`, 2026-09-28): os 3 Premium que eram só esqueleto (`estereopsia`, `flexibilidade-acomodativa`, `sacadas-convergencia`) passam a ter mecânica real; falta carregar os ficheiros de vídeo no R2 (o código já os mostra — L-02, #116) | Sprint 6 | Merge da branch; carregar os vídeos |
+| Exercícios | W-18 — exercícios refeitos sem webcam (branch `frontend/exercicios-sem-webcam`, 2026-09-28): os 3 Premium que eram só esqueleto (`estereopsia`, `flexibilidade-acomodativa`, `sacadas-convergencia`) passam a ter mecânica real; o vídeo explicativo foi retirado do frontend por decisão do produto (L-02; o endpoint da API mantém-se) | Sprint 6 | Merge da branch |
 | Exercícios | **LEG-01 — ⛔ BLOQUEIA O LANÇAMENTO PÚBLICO (não o merge):** Termos e Política de Privacidade ainda descrevem os exercícios como "terapia visual" e "baseados em biometria facial" — **dossiê para o jurista: [`docs/DOSSIE_JURISTA_LEG01.md`](DOSSIE_JURISTA_LEG01.md)** (resumo em [`docs/PENDENTE_REVISAO_LEGAL.md`](PENDENTE_REVISAO_LEGAL.md)) | W-18 | Validação do jurista; decisão do dono do projecto sobre o consentimento (pergunta 5.1 do dossiê) |
 | Scanner | W-13/W-14/W-16/L-14 — método, calibração, validação clínica, ecrã de resultados | Sprint 3 | Parceiro clínico (bloqueio nº 8) |
 | Scanner | Ecrã de resultados mostra 6 categorias, o cálculo só produz 2 | CLAUDE.md §11, W-09 | Localizar o repositório `janelas-scanner-api` |
@@ -806,8 +806,13 @@ visivelmente avariado. Nenhuma destas tarefas toca base de dados, RLS ou paywall
 - **Aproveitar para resolver o outro problema:** o relatório UX pede fotografias reais de pessoas negras angolanas em vez de imagens genéricas. Como estas têm de ser substituídas de qualquer forma, substituir por imagens representativas resolve os dois pontos de uma vez
 - **Pronto quando:** nenhuma imagem do site fica em branco, e `grep -r "__l5e" src/` não devolve nada
 
-### L-02 · Vídeos dos exercícios — ✅ **FEITO 2026-09-29**
-Novo `ExercicioVideo`, ligado a `BaseExercise` (só visível com o acesso confirmado):
+### L-02 · Vídeos dos exercícios — ⛔ **RETIRADO 2026-09-28 (decisão do produto)**
+**Nota:** o frontend deixou de usar o vídeo — o botão e o `ExercicioVideo` foram eliminados
+(não há vídeos e o botão não funcionava). O endpoint `GET /exercicios/{id}/video`, as regras
+de acesso e o bucket R2 privado ficam como estão, sem consumidor no frontend. O texto abaixo
+é o histórico do que foi feito no #116.
+
+Antigo `ExercicioVideo`, ligado a `BaseExercise` (só visível com o acesso confirmado):
 botão "Ver vídeo explicativo" que só pede o URL assinado (`exerciciosApi.video`) quando
 clicado — nunca ao abrir o exercício. Esconde-se por completo em qualquer falha, da API
 (403/404/503) ou do próprio `<video>` (ficheiro ainda por carregar no bucket R2 — isso
@@ -1254,10 +1259,9 @@ acrescentado antes disto agrava o problema.
   (confirmada no relatório semanal do Lukeny, 21-27/09/2026, secção "Prioridades para os
   Próximos Dias"), âmbito ainda por definir em detalhe.** Duas frentes já identificadas:
   (1) qualidade/profundidade dos 4 exercícios em si (`figure8`, `convergence`, `cerebro`,
-  `relax` — os do trial de 7 dias) e dos 4 do catálogo Premium acima; (2) carregar os
-  vídeos dos exercícios para o armazenamento privado (Cloudflare R2), item técnico
-  distinto apontado no mesmo relatório (**a parte do código está feita — L-02, PR #116**;
-  falta só carregar os ficheiros de vídeo em si, que não é código). Falta decidir com o
+  `relax` — os do trial de 7 dias) e dos 4 do catálogo Premium acima; (2) ~~carregar os
+  vídeos dos exercícios para o R2~~ — **retirado 2026-09-28**: o frontend deixou de usar
+  o vídeo por decisão do produto (L-02; o endpoint da API mantém-se). Falta decidir com o
   dono do projecto o que concretamente muda em cada exercício antes de abrir qualquer
   branch — este item é só o registo de que a tarefa existe e está activa, não um plano
   de implementação
@@ -1284,9 +1288,8 @@ acrescentado antes disto agrava o problema.
     `flexibilidade-acomodativa` Perto e longe (treinos). Saíram o Oito, o Foco Dinâmico,
     a Anti-Supressão e a Convergência com Saltos como exercício próprio; o Relaxamento
     passou a pausa entre blocos. Detalhe em CLAUDE.md §1 e §6. **Frente (1) feita;** a
-    frente (2), vídeos: o botão "Ver vídeo explicativo" do #116 (`ExercicioVideo` no
-    `BaseExercise`) continua em todos os exercícios novos; falta só carregar os ficheiros
-    de vídeo no R2 privado (não é código).
+    frente (2), vídeos: o botão "Ver vídeo explicativo" do #116 (`ExercicioVideo`) foi
+    **eliminado do frontend** por decisão do produto (2026-09-28); o endpoint da API fica.
 - **LEG-01 · ⛔ Revisão legal dos Termos e da Política de Privacidade — BLOQUEIA O
   LANÇAMENTO PÚBLICO dos exercícios sem webcam (não bloqueia o merge do código).**
   Aberta a 2026-09-28, com a W-18. Os textos legais ainda dizem que os exercícios são

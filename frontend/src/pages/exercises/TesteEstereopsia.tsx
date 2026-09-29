@@ -337,7 +337,7 @@ const TesteEstereopsia = () => {
         passos={nomes}
         passoActual={ETAPAS.indexOf(etapa)}
       >
-        {etapa === "brilho" && <PassoBrilho exercicioId={EXERCICIO_ID} aoContinuar={() => setEtapa("calibracao")} />}
+        {etapa === "brilho" && <PassoBrilho aoContinuar={() => setEtapa("calibracao")} />}
         {etapa === "calibracao" && (
           <PassoCalibracao calibracao={calibracao} aoGuardar={guardar} aoContinuar={() => setEtapa("distancia")} />
         )}

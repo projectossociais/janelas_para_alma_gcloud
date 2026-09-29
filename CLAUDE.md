@@ -84,7 +84,8 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   única em `api/app/services/acesso_exercicios_service.py`; a API recusa com 403 sessões
   (`POST /sessoes-exercicio`) e vídeos (`GET /exercicios/{id}/video`) sem direito de acesso.
   O frontend (`AcessoExerciciosContext`) só espelha `GET /exercicios/acesso`. Os vídeos vivem
-  num bucket R2 **privado** à parte (`r2_bucket_videos`), nunca no bucket público
+  num bucket R2 **privado** à parte (`r2_bucket_videos`), nunca no bucket público; o frontend
+  não os usa (botão retirado em 2026-09-28), o endpoint mantém-se
 - **Rede de clínicas parceiras**, doações, programa de voluntariado, painel administrativo
 - **Jogo "Inclusivamente"** (`frontend/src/pages/jogo/`, API `routers/jogo.py`) — quiz com
   economia virtual: moedas (ganhas a jogar) e diamantes. Saldo sempre decidido pela API

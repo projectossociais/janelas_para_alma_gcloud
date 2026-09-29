@@ -10,7 +10,6 @@ import {
   type TipoDesbloqueio,
 } from "@/components/exercises/useAcaoDesbloqueio";
 import { localizar } from "@/i18n/rotas";
-import ExercicioVideo from "@/components/exercises/ExercicioVideo";
 import { cn } from "@/lib/utils";
 
 // Chaves escritas por extenso (não montadas com `${tipo}`) para continuarem
@@ -119,8 +118,6 @@ const BaseExercise = ({
         <div className="min-w-0">
           <h1 className="text-lg font-bold text-foreground">{title}</h1>
           <p className="text-sm text-muted-foreground">{description}</p>
-          {/* Vídeo explicativo (L-02, #116): só depois de confirmado o acesso e só a pedido. */}
-          {!locked && <ExercicioVideo exercicioId={exercicioId} />}
         </div>
         <Button variant="ghost" size="sm" asChild className="shrink-0 gap-2">
           <Link to={localizar("/exercicios")} aria-label={t("BaseExercise.sairDoExercicio")}>
