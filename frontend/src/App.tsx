@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactElement } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProfileProvider } from "@/contexts/ProfileContext";
@@ -74,7 +74,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import NotFound from "./pages/NotFound";
 import IdiomaDaRota from "./i18n/IdiomaDaRota";
 import { inglesAtivo } from "./i18n/idiomas";
-import { ALIASES_PT, ROTAS, ROTAS_BILINGUES, type ChaveRota } from "./i18n/rotas";
+import { ALIASES_PT, EXERCICIOS_RETIRADOS, ROTAS, ROTAS_BILINGUES, type ChaveRota } from "./i18n/rotas";
 
 /**
  * Que componente renderiza cada página do mapa de rotas (`src/i18n/rotas.ts`).
@@ -153,10 +153,18 @@ const App = () => (
                 {ALIASES_PT.map((a) => (
                   <Route key={a.pt} path={a.pt} element={PAGINAS[a.chave]} />
                 ))}
+                {/* Exercícios retirados (2026-09-28): redireccionam para a lista, na mesma língua. */}
+                {EXERCICIOS_RETIRADOS.map((r) => (
+                  <Route key={r.pt} path={r.pt} element={<Navigate to="/exercicios" replace />} />
+                ))}
                 {/* Versão inglesa: só existe com VITE_ENABLE_EN=true; sem ela, /en/* cai no 404. Páginas só em PT (jogo) não têm rota inglesa. */}
                 {inglesAtivo() &&
                   ROTAS_BILINGUES.map((r) => (
                     <Route key={`en:${r.chave}`} path={r.en} element={PAGINAS[r.chave]} />
+                  ))}
+                {inglesAtivo() &&
+                  EXERCICIOS_RETIRADOS.map((r) => (
+                    <Route key={r.en} path={r.en} element={<Navigate to="/en/exercises" replace />} />
                   ))}
                 {/* Internas, só em português -- de propósito fora do mapa de rotas. */}
                 <Route path="/roadmap-tecnico" element={<RoadmapTecnico />} />
