@@ -52,7 +52,7 @@ Fase 3) quando a conta Meta estiver pronta.
 | Matchmaker | Selo de clínica verificada | Sprint 4 | Negociação comercial com números reais |
 | Matchmaker | `sugerir_clinicas` (correspondência por regras) | Sprint 4, PR C | Existir uma 2.ª clínica |
 | Exercícios | W-18 — exercícios refeitos sem webcam (branch `frontend/exercicios-sem-webcam`, 2026-09-28): os 3 Premium que eram só esqueleto (`estereopsia`, `flexibilidade-acomodativa`, `sacadas-convergencia`) passam a ter mecânica real; falta carregar os ficheiros de vídeo no R2 (o código já os mostra — L-02, #116) | Sprint 6 | Merge da branch; carregar os vídeos |
-| Exercícios | **LEG-01 — ⛔ BLOQUEIA O LANÇAMENTO PÚBLICO (não o merge):** Termos e Política de Privacidade ainda descrevem os exercícios como "terapia visual" e "baseados em biometria facial" — ver [`docs/PENDENTE_REVISAO_LEGAL.md`](PENDENTE_REVISAO_LEGAL.md) | W-18 | Revisão do dono do projecto e/ou do jurista |
+| Exercícios | **LEG-01 — ⛔ BLOQUEIA O LANÇAMENTO PÚBLICO (não o merge):** Termos e Política de Privacidade ainda descrevem os exercícios como "terapia visual" e "baseados em biometria facial" — **dossiê para o jurista: [`docs/DOSSIE_JURISTA_LEG01.md`](DOSSIE_JURISTA_LEG01.md)** (resumo em [`docs/PENDENTE_REVISAO_LEGAL.md`](PENDENTE_REVISAO_LEGAL.md)) | W-18 | Validação do jurista; decisão do dono do projecto sobre o consentimento (pergunta 5.1 do dossiê) |
 | Scanner | W-13/W-14/W-16/L-14 — método, calibração, validação clínica, ecrã de resultados | Sprint 3 | Parceiro clínico (bloqueio nº 8) |
 | Scanner | Ecrã de resultados mostra 6 categorias, o cálculo só produz 2 | CLAUDE.md §11, W-09 | Localizar o repositório `janelas-scanner-api` |
 | Produto | Histórico de exames com evolução · loja de óculos · conteúdo editável pelo admin | Sprint 6 | — |
@@ -1293,6 +1293,12 @@ acrescentado antes disto agrava o problema.
   "de terapia visual" e que se baseiam em "biometria facial" (isto continua certo para o
   scanner, mas já não para os exercícios). Chaves, linhas exactas em PT/EN e
   recomendação de linguagem neutra: [`docs/PENDENTE_REVISAO_LEGAL.md`](PENDENTE_REVISAO_LEGAL.md).
+  **Para o jurista:** [`docs/DOSSIE_JURISTA_LEG01.md`](DOSSIE_JURISTA_LEG01.md) — autónomo,
+  para não-programadores: contexto, tabela dos trechos (PT/EN), inventário dos dados que
+  os exercícios guardam (tirado do código), proposta de redacção marcada como sugestão
+  técnica e perguntas abertas. **Achado a decidir:** os resultados são gravados
+  automaticamente no fim de cada teste, sem um passo de consentimento explícito, embora
+  a Política fale em consentimento "expresso e escrito" para dados de saúde.
   Os textos **não** foram alterados no código: cabe ao dono do projecto e/ou ao
   jurista reescrevê-los. Fecha quando os textos PT e EN estiverem revistos e o site
   público puder anunciar os exercícios novos.
