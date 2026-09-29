@@ -60,17 +60,21 @@ Fase 3) quando a conta Meta estiver pronta.
 
 ### 🟡 Correcções rápidas (menos de uma hora cada)
 
-| Item | O que fazer | Quem |
-|---|---|---|
-| UX-03 | Pedir a província na doação de materiais — **código pronto, PR #113 à espera da tua revisão** (mexe no esquema de dados) | W+L |
+Todas as correcções rápidas identificadas na auditoria de 2026-09-28 estão fechadas —
+ver os "Feitos" abaixo. Novas correcções entram nesta tabela quando aparecerem.
 
 **✅ Feitos 2026-09-28:** UX-02/L-10 (gralha "Três tiers" → "Três níveis"), L-04 (Maps do
 `ContactSection.tsx` a abrir em separador novo), L-01 (9 ficheiros `.asset.json` órfãos
 do Lovable apagados).
 
-**✅ Feito 2026-09-29: UX-05** (vitrine pública das actividades de voluntariado, PR #114).
-Também fechados hoje: L-12 (Premium pendente) e "Próxima teleconsulta real no
-DashboardUser" — ver entradas próprias abaixo.
+**✅ Feito 2026-09-29: UX-05** (vitrine pública das actividades de voluntariado, PR #114),
+**UX-03** (província na doação de materiais, PR #113) e **L-02** (vídeo explicativo dos
+exercícios, PR #116). Também fechados hoje: L-12 (Premium pendente) e "Próxima
+teleconsulta real no DashboardUser" — ver entradas próprias abaixo. **Nota técnica:** o
+merge do #113 chegou a partir a `deploy-api` do CI (duas migrações Alembic nasceram em
+paralelo, a mesma classe de conflito já vista antes nesta sessão) — resolvido de
+imediato com uma migração de junção vazia (`9fc50926e92c`), verificada contra Postgres
+real antes de ir para `main`; deploy confirmado a seguir.
 
 **✅ Fechado 2026-09-28: L-12.** Quem envia o comprovativo já não fica sem saber o que
 aconteceu — novo `GET /premium-requests/meu` (sessão própria, nunca um id vindo do
@@ -2129,13 +2133,12 @@ corrigidos" abaixo em produção antes de os tratar como bug.
 `frontend/src/pages/Apoiar.tsx:422`. Mistura inglês ("tiers") com português — corrigir
 para "Três formas de transformar" ou "três níveis".
 
-### UX-03 — Falta campo de localização/província na doação de materiais · L — ⬜ **aberto** (confirmado 2026-09-28: `DoacaoMateriaisCriar` continua sem o campo)
+### UX-03 — Falta campo de localização/província na doação de materiais · L — ✅ **FEITO 2026-09-29**
 
-`api/app/schemas/doacao.py` (`DoacaoMateriaisCriar`) não tem campo de
-localização/província do doador, nem o formulário em `Apoiar.tsx` o pede — sem isto a
-equipa não sabe onde recolher o que foi doado. Adicionar ao schema Pydantic e ao
-formulário; validação simples (campo obrigatório), sem lógica de service — é dado, não
-regra de negócio.
+Nova coluna `doacoes.provincia` (nullable — só doações de materiais a preenchem),
+obrigatória em `DoacaoMateriaisCriar` e no formulário em `Apoiar.tsx` (reaproveita a
+lista `PROVINCES` já usada em `EditarPerfil.tsx`). PR #113, testes dos dois lados, CI
+verde, deploy confirmado.
 
 ### UX-04 — Candidatura pública do Kamba não grava em BD · L — ✅ **FEITO 2026-09-23** (ver "W-16 (candidaturas)" no Sprint 0: os dois formulários chamam `voluntariadoApi.candidatar`)
 
