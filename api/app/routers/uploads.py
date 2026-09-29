@@ -49,7 +49,7 @@ def preparar_upload_de_avatar(
         preparado = servico.preparar_avatar(utilizador.id, pedido.content_type)
     except TipoDeFicheiroNaoPermitidoError as exc:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="tipo de ficheiro não permitido (só PNG, JPEG ou WebP)",
         ) from exc
     return AvatarUploadPreparado(**preparado.__dict__)
@@ -85,7 +85,7 @@ def preparar_upload_de_comprovativo(
         preparado = servico.preparar(pedido.content_type)
     except TipoDeComprovativoNaoPermitidoError as exc:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="tipo de ficheiro não permitido (PNG, JPEG, WebP ou PDF)",
         ) from exc
     return ComprovativoUploadPreparado(**preparado.__dict__)

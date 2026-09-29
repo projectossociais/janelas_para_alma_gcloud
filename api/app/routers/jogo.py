@@ -564,7 +564,7 @@ def aprovar_pedido_loja(
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="este pedido já foi decidido")
     except PedidoLojaSemContaError:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="o pedido não está ligado a uma conta — não há a quem creditar",
         )
 

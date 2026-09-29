@@ -178,7 +178,7 @@ def preparar_capa(
         preparado = servico.preparar(publicacao_id, pedido.content_type)
     except TipoDeFicheiroNaoPermitidoError as exc:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="tipo de ficheiro não permitido (só PNG, JPEG ou WebP)",
         ) from exc
     return MidiaUploadPreparado(**preparado.__dict__)
@@ -217,7 +217,7 @@ def preparar_midia(
         preparado = servico.preparar(publicacao_id, pedido.content_type)
     except TipoDeFicheiroNaoPermitidoError as exc:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="tipo de ficheiro não permitido (só PNG, JPEG ou WebP)",
         ) from exc
     return MidiaUploadPreparado(**preparado.__dict__)
