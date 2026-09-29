@@ -1,65 +1,66 @@
-import { Play, ArrowRight, Eye, Sparkles, Target, Wind } from "lucide-react";
+import { Play, ArrowRight, Contrast, Eye, Minimize2, Sun } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { localizar } from "@/i18n/rotas";
 
+// Os 4 do teste de 7 dias (ids históricos; conteúdo desde 2026-09-28).
 const exercises = [
   {
     id: "figure8",
     get title() {
-      return i18n.t("ExercisesSection.acompanhamentoEmOito");
+      return i18n.t("Visao.acuidadeTitulo");
     },
     get description() {
-      return i18n.t("ExercisesSection.fortalecaAMusculaturaOcular");
-    },
-    icon: Target,
-    accent: "text-teal bg-teal/10",
-    get route() {
-      return localizar("/exercicios/tracking");
-    },
-  },
-  {
-    id: "convergence",
-    get title() {
-      return i18n.t("ExercisesSection.convergencia");
-    },
-    get description() {
-      return i18n.t("ExercisesSection.treineACoordenacaoBinocular");
+      return i18n.t("Visao.acuidadeCartao");
     },
     icon: Eye,
-    accent: "text-navy bg-navy/10",
+    accent: "text-teal bg-teal/10",
     get route() {
-      return localizar("/exercicios/convergencia");
+      return localizar("/exercicios/acuidade");
     },
   },
   {
-    id: "depth",
+    id: "cerebro",
     get title() {
-      return i18n.t("ExercisesSection.focoDinamico");
+      return i18n.t("Visao.contrasteTitulo");
     },
     get description() {
-      return i18n.t("ExercisesSection.alterneOFocoEntre");
+      return i18n.t("Visao.contrasteCartao");
     },
-    icon: Sparkles,
-    accent: "text-gold bg-gold/10",
+    icon: Contrast,
+    accent: "text-navy bg-navy/10",
     get route() {
-      return localizar("/exercicios/cerebro");
+      return localizar("/exercicios/contraste");
     },
   },
   {
     id: "relax",
     get title() {
-      return i18n.t("ExercisesSection.relaxamento");
+      return i18n.t("Visao.astigmatismoTitulo");
     },
     get description() {
-      return i18n.t("ExercisesSection.sincronizeRespiracaoEPiscar");
+      return i18n.t("Visao.astigmatismoCartao");
     },
-    icon: Wind,
+    icon: Sun,
+    accent: "text-gold bg-gold/10",
+    get route() {
+      return localizar("/exercicios/astigmatismo");
+    },
+  },
+  {
+    id: "convergence",
+    get title() {
+      return i18n.t("Visao.convergenciaTitulo");
+    },
+    get description() {
+      return i18n.t("Visao.convergenciaCartao");
+    },
+    icon: Minimize2,
     accent: "text-green bg-green/10",
     get route() {
-      return localizar("/exercicios/relaxamento");
+      return localizar("/exercicios/convergencia");
     },
   },
 ];

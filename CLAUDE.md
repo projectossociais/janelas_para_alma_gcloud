@@ -62,10 +62,22 @@ locais). Ver histórico do repositório antigo se for preciso consultar o que fa
 Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
 
 - **Rastreio ocular** por webcam (MediaPipe FaceMesh) — deteta sinais, encaminha para clínica
-- **Exercícios de terapia visual** com rastreio ocular — **8, todos pagos** (desde 2026-09-23;
-  eram 4 gratuitos + 8 premium, e 4 premium foram eliminados). 4 estão incluídos num **teste
-  de 7 dias** (`figure8`, `convergence`, `cerebro`, `relax`), os outros 4 só com Premium
-  (`ambliopia`, `sacadas-convergencia`, `flexibilidade-acomodativa`, `estereopsia`)
+- **Exercícios visuais sem webcam** (desde 2026-09-28) — testes de triagem e treinos de
+  apoio feitos só com resposta do utilizador (toque, Sim/Não). **Nenhum exercício usa câmara
+  nem MediaPipe** (o scanner é outro produto e continua a usá-los). **8, todos pagos** (desde
+  2026-09-23). Os ids históricos mantêm-se (acesso e preços iguais), mas quatro mudaram de
+  significado — `sessoes_exercicio.versao` separa as sessões antigas (1) das novas (2):
+  teste de 7 dias = `figure8` Teste de Acuidade, `cerebro` Teste de Contraste, `relax` Teste
+  de Astigmatismo, `convergence` Treino de Convergência (com saltos como nível avançado);
+  só Premium = `estereopsia` Teste de Estereopsia, `ambliopia` Treino de Anéis com tapa-olho,
+  `sacadas-convergencia` Treino de Contraste em blocos, `flexibilidade-acomodativa` Treino
+  Perto e longe. O Relaxamento deixou de ser exercício: é a pausa entre blocos dos treinos.
+  É **triagem e treino de apoio, nunca diagnóstico** — todos os ecrãs mostram o aviso, e
+  nenhum texto promete tratar, curar ou "fortalecer a musculatura". Base partilhada em
+  `frontend/src/lib/visao/` (TypeScript puro, com testes) e `components/visao/`; ver §6.
+  Perfil visual opcional em `utilizadores` (`px_por_mm`, `olho_mais_fraco`, `usa_oculos`,
+  `faixa_etaria`); progresso e relatório semanal imprimível em `/exercicios/progresso` e
+  `/exercicios/relatorio`
 - **Modelo de acesso** — Premium a 15.000 Kz/mês (pagamento por transferência + comprovativo)
   dá os 8; o teste de 7 dias (`utilizadores.trial_iniciado_em`/`trial_termina_em`, UTC) é
   iniciado pelo próprio utilizador, uma única vez por conta, e dá só os 4 do teste. Regra
@@ -359,8 +371,24 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
 - **Ângulos periódicos devem ser contínuos.** Nunca `elapsed % duracao` antes de
   `Math.sin`/`Math.cos` — já são periódicos; o módulo criava um salto visível por ciclo.
 - **Suavizar antes de amplificar, nunca depois.**
-- **Motor de exercícios:** `BaseExercise` + `useEyeTracking` + **um único**
-  `requestAnimationFrame` por exercício. Qualquer exercício novo segue este padrão.
+- **Exercícios sem câmara (desde 2026-09-28).** Nada de webcam, MediaPipe nem eye-tracking
+  nos exercícios — a resposta é sempre do utilizador. `useEyeTracking` foi apagado; não
+  reintroduzir sem nova decisão do dono do projecto.
+- **Motor de exercícios:** `BaseExercise` (casca: Sair, passos, aviso, bloqueio de acesso)
+  + `AssistenteTeste`/`AssistenteTreino` (`components/visao/`) + a lógica pura de
+  `lib/visao/` (geometria, escadas, contraste, tempo activo). Um passo por ecrã, um olho de
+  cada vez; no máximo **um** `requestAnimationFrame` por exercício.
+- **Tamanhos físicos, não píxeis soltos.** Todo o estímulo é calculado em ângulo visual a
+  partir de `pxPorMm` (calibração com cartão de banco) e da distância; níveis abaixo de
+  1,4 px de dispositivo descartam-se (`geometria.ts`). O "palco" (`PalcoVisual`) é sempre
+  fundo branco com optótipos pretos, também em modo escuro — o contraste faz parte da medição.
+- **Contraste em luminância linear.** A cor do anel converte-se de sRGB e usa-se sempre o
+  contraste *real* depois de arredondar a 8 bits (`contraste.ts`), nunca o pedido.
+- **Tempo activo só com respostas.** Conta intervalos entre respostas até 8 s e com o
+  separador visível (`tempoActivo.ts`). Treinos com um estímulo de controlo errado ficam
+  `sinais.baixa_atencao` e não contam para a dose.
+- **Sessões novas gravam `versao: 2`** e nunca mostram "guardado" antes da resposta da API
+  (`useRegistoSessao`, com "Tentar de novo" que reenvia só o que falhou).
 
 ### Build / ferramentas
 

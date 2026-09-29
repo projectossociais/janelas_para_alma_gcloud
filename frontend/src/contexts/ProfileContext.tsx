@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
-import { perfilApi, type PerfilPublico } from "@/lib/apiClient";
+import { perfilApi, type FaixaEtaria, type OlhoMaisFraco, type PerfilPublico } from "@/lib/apiClient";
 import { useAuth } from "@/contexts/AuthContext";
 
 export interface Profile {
@@ -18,6 +18,10 @@ export interface Profile {
   notificacoes_lembretes: boolean;
   notificacoes_comunidade: boolean;
   created_at: string;
+  px_por_mm: number | null;
+  olho_mais_fraco: OlhoMaisFraco | null;
+  usa_oculos: boolean | null;
+  faixa_etaria: FaixaEtaria | null;
 }
 
 const paraProfile = (p: PerfilPublico): Profile => ({
@@ -36,6 +40,10 @@ const paraProfile = (p: PerfilPublico): Profile => ({
   notificacoes_lembretes: p.notificacoes_lembretes,
   notificacoes_comunidade: p.notificacoes_comunidade,
   created_at: p.criado_em,
+  px_por_mm: p.px_por_mm ?? null,
+  olho_mais_fraco: p.olho_mais_fraco ?? null,
+  usa_oculos: p.usa_oculos ?? null,
+  faixa_etaria: p.faixa_etaria ?? null,
 });
 
 interface ProfileContextValue {

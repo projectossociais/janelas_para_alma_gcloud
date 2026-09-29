@@ -35,14 +35,17 @@ export const ROTAS = [
   { chave: "circular", pt: "/circular", en: "/en/circular-economy" },
   { chave: "suporte", pt: "/suporte", en: "/en/support" },
   { chave: "exercicios", pt: "/exercicios", en: "/en/exercises" },
-  { chave: "exercicioConvergencia", pt: "/exercicios/convergencia", en: "/en/exercises/convergence" },
-  { chave: "exercicioCerebro", pt: "/exercicios/cerebro", en: "/en/exercises/brain" },
-  { chave: "exercicioTracking", pt: "/exercicios/tracking", en: "/en/exercises/tracking" },
-  { chave: "exercicioRelaxamento", pt: "/exercicios/relaxamento", en: "/en/exercises/relaxation" },
-  { chave: "exercicioAmbliopia", pt: "/exercicios/ambliopia", en: "/en/exercises/amblyopia" },
-  { chave: "exercicioSacadasConvergencia", pt: "/exercicios/sacadas-convergencia", en: "/en/exercises/convergence-saccades" },
-  { chave: "exercicioFlexibilidadeAcomodativa", pt: "/exercicios/flexibilidade-acomodativa", en: "/en/exercises/accommodative-flexibility" },
+  // Testes (triagem) e treinos sem webcam, desde 2026-09-28.
+  { chave: "exercicioAcuidade", pt: "/exercicios/acuidade", en: "/en/exercises/visual-acuity" },
+  { chave: "exercicioContraste", pt: "/exercicios/contraste", en: "/en/exercises/contrast-sensitivity" },
+  { chave: "exercicioAstigmatismo", pt: "/exercicios/astigmatismo", en: "/en/exercises/astigmatism" },
   { chave: "exercicioEstereopsia", pt: "/exercicios/estereopsia", en: "/en/exercises/stereopsis" },
+  { chave: "exercicioAneis", pt: "/exercicios/aneis", en: "/en/exercises/rings" },
+  { chave: "exercicioContrasteBlocos", pt: "/exercicios/contraste-em-blocos", en: "/en/exercises/contrast-blocks" },
+  { chave: "exercicioConvergencia", pt: "/exercicios/convergencia", en: "/en/exercises/convergence" },
+  { chave: "exercicioPertoLonge", pt: "/exercicios/perto-e-longe", en: "/en/exercises/near-and-far" },
+  { chave: "exerciciosProgresso", pt: "/exercicios/progresso", en: "/en/exercises/progress", foraDoSitemap: true },
+  { chave: "exerciciosRelatorio", pt: "/exercicios/relatorio", en: "/en/exercises/report", foraDoSitemap: true },
   { chave: "scanner", pt: "/scanner", en: "/en/scanner" },
   { chave: "scannerResultados", pt: "/scanner/resultados", en: "/en/scanner/results", foraDoSitemap: true },
   { chave: "entrar", pt: "/login", en: "/en/sign-in", foraDoSitemap: true },
@@ -86,6 +89,24 @@ export const ALIASES_PT: readonly { pt: string; chave: ChaveRota }[] = [
   { pt: "/auth", chave: "entrar" },
   { pt: "/registo", chave: "entrar" },
   { pt: "/update-password", chave: "atualizarPassword" },
+];
+
+/**
+ * Páginas de exercícios retiradas em 2026-09-28 (os exercícios com webcam).
+ * Cada caminho antigo, em PT e EN, **redirecciona** (`<Navigate replace>`)
+ * para a lista de exercícios da mesma língua -- links guardados e resultados
+ * de pesquisa não dão 404. Os ingleses só existem com `VITE_ENABLE_EN=true`,
+ * como o resto do site inglês. `/exercicios/convergencia` e
+ * `/exercicios/estereopsia` (e os equivalentes ingleses) não estão aqui: essas
+ * páginas continuam a existir, com o conteúdo novo.
+ */
+export const EXERCICIOS_RETIRADOS: readonly { pt: string; en: string }[] = [
+  { pt: "/exercicios/tracking", en: "/en/exercises/tracking" }, // figure8 -- Acompanhamento em Oito
+  { pt: "/exercicios/cerebro", en: "/en/exercises/brain" }, // cerebro -- Foco Dinâmico
+  { pt: "/exercicios/relaxamento", en: "/en/exercises/relaxation" }, // relax -- Relaxamento
+  { pt: "/exercicios/ambliopia", en: "/en/exercises/amblyopia" }, // ambliopia -- Anti-Supressão
+  { pt: "/exercicios/sacadas-convergencia", en: "/en/exercises/convergence-saccades" }, // Convergência com Saltos
+  { pt: "/exercicios/flexibilidade-acomodativa", en: "/en/exercises/accommodative-flexibility" }, // esqueleto antigo
 ];
 
 type Entrada = { chave: ChaveRota; pt: string; en?: string };

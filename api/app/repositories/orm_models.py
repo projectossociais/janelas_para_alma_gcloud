@@ -68,6 +68,14 @@ class Utilizador(Base):
             "(trial_iniciado_em IS NULL) = (trial_termina_em IS NULL)",
             name="ck_utilizadores_trial_consistente",
         ),
+        CheckConstraint(
+            "olho_mais_fraco IS NULL OR olho_mais_fraco IN ('direito', 'esquerdo', 'nao_sei')",
+            name="ck_utilizadores_olho_mais_fraco",
+        ),
+        CheckConstraint(
+            "faixa_etaria IS NULL OR faixa_etaria IN ('ate_5', '6_12', '13_17', '18_39', '40_59', '60_mais')",
+            name="ck_utilizadores_faixa_etaria",
+        ),
     )
 
     id: Mapped[uuid.UUID] = _uuid_pk()
@@ -120,6 +128,15 @@ class Utilizador(Base):
     # reprocessa. Ver docs/BACKLOG.md, W-03: anonimizar, não apagar a linha
     # (apagar em cascata destruiria histórico clínico real).
     anonimizado_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    # Perfil visual dos exercícios sem webcam (2026-09-28) -- todos opcionais,
+    # preenchidos pelo próprio utilizador. `px_por_mm` é a calibração do ecrã
+    # (cartão de banco); os treinos só treinam o `olho_mais_fraco`. Limpos pela
+    # anonimização (W-03).
+    px_por_mm: Mapped[float | None] = mapped_column(Numeric)
+    olho_mais_fraco: Mapped[str | None] = mapped_column(Text)
+    usa_oculos: Mapped[bool | None] = mapped_column(Boolean)
+    faixa_etaria: Mapped[str | None] = mapped_column(Text)
 
     # AUTH-02: conta nasce por confirmar; /auth/entrar recusa login enquanto
     # isto for false (bloqueio total, decisão do dono do projecto). Nunca há
@@ -365,6 +382,13 @@ class Screening(Base):
 
 class SessaoExercicio(Base):
     __tablename__ = "sessoes_exercicio"
+    __table_args__ = (
+        CheckConstraint(
+            "olho IS NULL OR olho IN ('direito', 'esquerdo', 'ambos')",
+            name="ck_sessoes_exercicio_olho",
+        ),
+        Index("ix_sessoes_exercicio_user_id_created_at", "user_id", "created_at"),
+    )
 
     id: Mapped[uuid.UUID] = _uuid_pk()
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("utilizadores.id", ondelete="CASCADE"), nullable=False)
@@ -374,6 +398,19 @@ class SessaoExercicio(Base):
     precisao_percentual: Mapped[float] = mapped_column(Numeric, nullable=False, server_default="0")
     detalhes: Mapped[dict | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    # Exercícios sem webcam (2026-09-28). Os ids de `exercicio_id` mantêm-se,
+    # mas quatro mudaram de significado -- `versao` separa as sessões antigas
+    # (1) das novas (2). Resto opcional: resultado de um olho de cada vez.
+    versao: Mapped[int] = mapped_column(SmallInteger, nullable=False, server_default="1")
+    olho: Mapped[str | None] = mapped_column(Text)
+    segundos_activos: Mapped[int | None] = mapped_column()
+    limiar: Mapped[float | None] = mapped_column(Numeric)
+    unidade: Mapped[str | None] = mapped_column(Text)
+    distancia_mm: Mapped[int | None] = mapped_column()
+    px_por_mm: Mapped[float | None] = mapped_column(Numeric)
+    calibrado: Mapped[bool | None] = mapped_column(Boolean)
+    sinais: Mapped[dict | None] = mapped_column(JSONB)
 
 
 class SiteContent(Base):

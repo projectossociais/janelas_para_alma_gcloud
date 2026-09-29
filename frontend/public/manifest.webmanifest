@@ -1,7 +1,7 @@
 {
   "name": "Janelas Para a Alma",
   "short_name": "Janelas",
-  "description": "Projeto angolano dedicado à inclusão visual, combate ao estrabismo e exercícios terapêuticos.",
+  "description": "Projecto angolano dedicado à inclusão visual e ao combate ao estrabismo, com testes de triagem visual e treino visual de apoio.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

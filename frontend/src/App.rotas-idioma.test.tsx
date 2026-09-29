@@ -1,6 +1,7 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import i18n from "@/i18n";
 import App from "./App";
+import { EXERCICIOS_RETIRADOS } from "./i18n/rotas";
 
 /**
  * Percurso completo: rota -> página -> idioma do documento -> botão de idioma.
@@ -174,5 +175,34 @@ describe("com VITE_ENABLE_EN=true", () => {
     abrir("/faq");
     await waitFor(() => expect(document.documentElement.lang).toBe("pt-AO"));
     expect(i18n.language).toBe("pt-AO");
+  });
+});
+
+describe("exercícios retirados (2026-09-28) redireccionam para a lista de exercícios", () => {
+  it.each(EXERCICIOS_RETIRADOS.map((r) => r.pt))("%s -> /exercicios", async (antigo) => {
+    abrir(antigo);
+    await waitFor(() => expect(window.location.pathname).toBe("/exercicios"));
+    expect(await screen.findByRole("heading", { name: "Testes e treinos visuais" })).toBeInTheDocument();
+  });
+
+  it("com o inglês desligado, os caminhos ingleses antigos continuam a dar 404 (como todo o /en/*)", async () => {
+    abrir(EXERCICIOS_RETIRADOS[0].en);
+    expect(await screen.findByRole("heading", { name: "404" })).toBeInTheDocument();
+  });
+
+  describe("com VITE_ENABLE_EN=true", () => {
+    beforeEach(() => vi.stubEnv("VITE_ENABLE_EN", "true"));
+
+    it.each(EXERCICIOS_RETIRADOS.map((r) => r.en))("%s -> /en/exercises", async (antigo) => {
+      abrir(antigo);
+      await waitFor(() => expect(window.location.pathname).toBe("/en/exercises"));
+      expect(await screen.findByRole("heading", { name: "Vision tests and training" })).toBeInTheDocument();
+    });
+  });
+
+  it("as páginas que continuam (convergência e estereopsia) não redireccionam", async () => {
+    abrir("/exercicios/convergencia");
+    expect(await screen.findByRole("heading", { name: "Treino de Convergência" })).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/exercicios/convergencia");
   });
 });

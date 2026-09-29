@@ -67,6 +67,27 @@ describe("Exercicios — 8 exercícios em dois grupos", () => {
     iniciarTrial.mockReset();
   });
 
+  it("mostra os testes e treinos sem webcam e nenhum dos exercícios retirados", async () => {
+    acesso.mockResolvedValue(estado({}));
+    renderPagina();
+
+    await screen.findByText("Trial disponível");
+    const trial = grupo("Incluídos no teste de 7 dias");
+    for (const nome of ["Teste de Acuidade", "Teste de Contraste", "Teste de Astigmatismo", "Treino de Convergência"])
+      expect(within(trial).getByText(nome)).toBeInTheDocument();
+    const premium = grupo("Premium");
+    for (const nome of [
+      "Teste de Estereopsia",
+      "Treino de Anéis com tapa-olho",
+      "Treino de Contraste em blocos",
+      "Treino Perto e longe",
+    ])
+      expect(within(premium).getByText(nome)).toBeInTheDocument();
+    for (const retirado of [/Acompanhamento Ocular em Oito/i, /Foco Dinâmico/i, /Anti-Supressão/i, /Convergência com Saltos/i])
+      expect(screen.queryByText(retirado)).not.toBeInTheDocument();
+    expect(screen.queryByText(/fortale|musculatura/i)).not.toBeInTheDocument();
+  });
+
   it("mostra exactamente 4 no grupo do teste e 4 no Premium, sem os exercícios eliminados", async () => {
     acesso.mockResolvedValue(estado({}));
     renderPagina();

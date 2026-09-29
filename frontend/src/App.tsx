@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactElement } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProfileProvider } from "@/contexts/ProfileContext";
@@ -44,14 +44,16 @@ import PerfilJogador from "./pages/jogo/PerfilJogador";
 import LojaDiamantes from "./pages/jogo/LojaDiamantes";
 import LojaMoedas from "./pages/jogo/LojaMoedas";
 
-import ConvergenciaExercise from "./pages/exercises/ConvergenciaExercise";
-import CerebroExercise from "./pages/exercises/CerebroExercise";
-import TrackingExercise from "./pages/exercises/TrackingExercise";
-import RelaxamentoExercise from "./pages/exercises/RelaxamentoExercise";
-import AmbliopiaExercise from "./pages/exercises/AmbliopiaExercise";
-import SacadasConvergenciaExercise from "./pages/exercises/SacadasConvergenciaExercise";
-import FlexibilidadeAcomodativaExercise from "./pages/exercises/FlexibilidadeAcomodativaExercise";
-import EstereopsiaExercise from "./pages/exercises/EstereopsiaExercise";
+import TesteAcuidade from "./pages/exercises/TesteAcuidade";
+import TesteContraste from "./pages/exercises/TesteContraste";
+import TesteAstigmatismo from "./pages/exercises/TesteAstigmatismo";
+import TesteEstereopsia from "./pages/exercises/TesteEstereopsia";
+import TreinoAneis from "./pages/exercises/TreinoAneis";
+import TreinoContrasteBlocos from "./pages/exercises/TreinoContrasteBlocos";
+import TreinoConvergencia from "./pages/exercises/TreinoConvergencia";
+import TreinoPertoLonge from "./pages/exercises/TreinoPertoLonge";
+import ProgressoVisao from "./pages/exercises/ProgressoVisao";
+import RelatorioSemanal from "./pages/exercises/RelatorioSemanal";
 import DashboardUser from "./pages/DashboardUser";
 import DashboardPro from "./pages/DashboardPro";
 import AdminLayout from "./pages/admin/AdminLayout";
@@ -72,7 +74,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import NotFound from "./pages/NotFound";
 import IdiomaDaRota from "./i18n/IdiomaDaRota";
 import { inglesAtivo } from "./i18n/idiomas";
-import { ALIASES_PT, ROTAS, ROTAS_BILINGUES, type ChaveRota } from "./i18n/rotas";
+import { ALIASES_PT, EXERCICIOS_RETIRADOS, ROTAS, ROTAS_BILINGUES, type ChaveRota } from "./i18n/rotas";
 
 /**
  * Que componente renderiza cada página do mapa de rotas (`src/i18n/rotas.ts`).
@@ -93,14 +95,16 @@ const PAGINAS: Record<ChaveRota, ReactElement> = {
   circular: <Circular />,
   suporte: <Suporte />,
   exercicios: <Exercicios />,
-  exercicioConvergencia: <ConvergenciaExercise />,
-  exercicioCerebro: <CerebroExercise />,
-  exercicioTracking: <TrackingExercise />,
-  exercicioRelaxamento: <RelaxamentoExercise />,
-  exercicioAmbliopia: <AmbliopiaExercise />,
-  exercicioSacadasConvergencia: <SacadasConvergenciaExercise />,
-  exercicioFlexibilidadeAcomodativa: <FlexibilidadeAcomodativaExercise />,
-  exercicioEstereopsia: <EstereopsiaExercise />,
+  exercicioAcuidade: <TesteAcuidade />,
+  exercicioContraste: <TesteContraste />,
+  exercicioAstigmatismo: <TesteAstigmatismo />,
+  exercicioEstereopsia: <TesteEstereopsia />,
+  exercicioAneis: <TreinoAneis />,
+  exercicioContrasteBlocos: <TreinoContrasteBlocos />,
+  exercicioConvergencia: <TreinoConvergencia />,
+  exercicioPertoLonge: <TreinoPertoLonge />,
+  exerciciosProgresso: <ProgressoVisao />,
+  exerciciosRelatorio: <RelatorioSemanal />,
   scanner: <Scanner />,
   scannerResultados: <ScannerResultados />,
   entrar: <Auth />,
@@ -149,10 +153,18 @@ const App = () => (
                 {ALIASES_PT.map((a) => (
                   <Route key={a.pt} path={a.pt} element={PAGINAS[a.chave]} />
                 ))}
+                {/* Exercícios retirados (2026-09-28): redireccionam para a lista, na mesma língua. */}
+                {EXERCICIOS_RETIRADOS.map((r) => (
+                  <Route key={r.pt} path={r.pt} element={<Navigate to="/exercicios" replace />} />
+                ))}
                 {/* Versão inglesa: só existe com VITE_ENABLE_EN=true; sem ela, /en/* cai no 404. Páginas só em PT (jogo) não têm rota inglesa. */}
                 {inglesAtivo() &&
                   ROTAS_BILINGUES.map((r) => (
                     <Route key={`en:${r.chave}`} path={r.en} element={PAGINAS[r.chave]} />
+                  ))}
+                {inglesAtivo() &&
+                  EXERCICIOS_RETIRADOS.map((r) => (
+                    <Route key={r.en} path={r.en} element={<Navigate to="/en/exercises" replace />} />
                   ))}
                 {/* Internas, só em português -- de propósito fora do mapa de rotas. */}
                 <Route path="/roadmap-tecnico" element={<RoadmapTecnico />} />

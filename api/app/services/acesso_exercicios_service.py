@@ -27,6 +27,18 @@ from app.repositories.acesso_exercicios_repository import (
 
 TRIAL_DURACAO_DIAS = 7
 
+# Desde 2026-09-28 os exercícios não usam webcam (testes de triagem e treinos
+# com resposta do utilizador). Os ids ficam iguais -- o acesso não muda --
+# mas quatro mudaram de significado; `sessoes_exercicio.versao` (1 = antigo,
+# 2 = novo) distingue as sessões de antes e de depois:
+#   figure8                   Acompanhamento em Oito  -> Teste de Acuidade
+#   cerebro                   Foco Dinâmico           -> Teste de Contraste
+#   relax                     Relaxamento             -> Teste de Astigmatismo
+#   convergence               Convergência            -> Treino de Convergência (+ saltos)
+#   estereopsia               (esqueleto)             -> Teste de Estereopsia
+#   ambliopia                 Anti-Supressão          -> Treino de Anéis com tapa-olho
+#   sacadas-convergencia      Convergência c/ Saltos  -> Treino de Contraste em blocos
+#   flexibilidade-acomodativa (esqueleto)             -> Treino Perto e longe
 EXERCICIOS_TRIAL: tuple[str, ...] = ("figure8", "convergence", "cerebro", "relax")
 EXERCICIOS_PREMIUM: tuple[str, ...] = (
     "ambliopia",
