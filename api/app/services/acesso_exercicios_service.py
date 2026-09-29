@@ -39,9 +39,15 @@ TRIAL_DURACAO_DIAS = 7
 #   ambliopia                 Anti-Supressão          -> Treino de Anéis com tapa-olho
 #   sacadas-convergencia      Convergência c/ Saltos  -> Treino de Contraste em blocos
 #   flexibilidade-acomodativa (esqueleto)             -> Treino Perto e longe
-EXERCICIOS_TRIAL: tuple[str, ...] = ("figure8", "convergence", "cerebro", "relax")
+#
+# Desde 2026-09-29 (decisão do dono do projecto, docs/ANALISE_EXERCICIOS.md):
+# o Treino de Anéis entra no trial no lugar da Convergência -- o trial passa a
+# mostrar o treino com mais valor e mais evidência, em vez de um treino de
+# convergência contra-indicado em parte do público (esotropia) e com resultado
+# só auto-declarado.
+EXERCICIOS_TRIAL: tuple[str, ...] = ("figure8", "ambliopia", "cerebro", "relax")
 EXERCICIOS_PREMIUM: tuple[str, ...] = (
-    "ambliopia",
+    "convergence",
     "sacadas-convergencia",
     "flexibilidade-acomodativa",
     "estereopsia",

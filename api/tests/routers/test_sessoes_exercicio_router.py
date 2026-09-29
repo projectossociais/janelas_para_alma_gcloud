@@ -197,7 +197,7 @@ def test_trial_ativo_grava_exercicio_do_trial_mas_nao_premium(ambiente) -> None:
     agora = datetime.now(UTC)
     _com_acesso(_conta(trial_iniciado_em=agora, trial_termina_em=agora + timedelta(days=7)))
     assert c.post("/sessoes-exercicio", json={"exercicio_id": "cerebro", "duracao_segundos": 60}).status_code == 201
-    assert c.post("/sessoes-exercicio", json={"exercicio_id": "ambliopia", "duracao_segundos": 60}).status_code == 403
+    assert c.post("/sessoes-exercicio", json={"exercicio_id": "convergence", "duracao_segundos": 60}).status_code == 403
     assert [g["exercicio_id"] for g in repo.gravadas] == ["cerebro"]
 
 

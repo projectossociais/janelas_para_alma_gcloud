@@ -1,11 +1,12 @@
-import { Play, ArrowRight, Contrast, Eye, Minimize2, Sun } from "lucide-react";
+import { Play, ArrowRight, Contrast, Eye, Glasses, Sun } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { localizar } from "@/i18n/rotas";
 
-// Os 4 do teste de 7 dias (ids históricos; conteúdo desde 2026-09-28).
+// Os 4 do teste de 7 dias (ids históricos; conteúdo desde 2026-09-28; o
+// Treino de Anéis substituiu a Convergência no trial a 2026-09-29).
 const exercises = [
   {
     id: "figure8",
@@ -50,17 +51,17 @@ const exercises = [
     },
   },
   {
-    id: "convergence",
+    id: "ambliopia",
     get title() {
-      return i18n.t("Visao.convergenciaTitulo");
+      return i18n.t("Visao.aneisTitulo");
     },
     get description() {
-      return i18n.t("Visao.convergenciaCartao");
+      return i18n.t("Visao.aneisCartao");
     },
-    icon: Minimize2,
+    icon: Glasses,
     accent: "text-green bg-green/10",
     get route() {
-      return localizar("/exercicios/convergencia");
+      return localizar("/exercicios/aneis");
     },
   },
 ];

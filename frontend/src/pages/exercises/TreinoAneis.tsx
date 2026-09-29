@@ -25,7 +25,7 @@ const TreinoAneis = () => {
     <PaginaExercicio>
       <AssistenteTreino
         exercicioId={EXERCICIO_ID}
-        grupo="premium"
+        grupo="trial"
         titulo={t("Visao.aneisTitulo")}
         descricao={t("Visao.aneisDescricao")}
         monocular

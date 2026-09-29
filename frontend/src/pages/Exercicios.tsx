@@ -49,7 +49,8 @@ interface Exercicio {
   thumbnail?: string;
 }
 
-// Os ids são os históricos (acesso trial/Premium inalterado); o conteúdo
+// Os ids são os históricos. Desde 2026-09-29 o Treino de Anéis está no
+// trial no lugar da Convergência (docs/ANALISE_EXERCICIOS.md). O conteúdo
 // mudou em 2026-09-28 -- ver api/app/services/acesso_exercicios_service.py.
 const exerciciosTrial: Exercicio[] = [
   {
@@ -64,6 +65,20 @@ const exerciciosTrial: Exercicio[] = [
     icon: Eye,
     get route() {
       return localizar("/exercicios/acuidade");
+    },
+  },
+  {
+    id: "ambliopia",
+    tipo: "treino",
+    get title() {
+      return i18n.t("Visao.aneisTitulo");
+    },
+    get description() {
+      return i18n.t("Visao.aneisCartao");
+    },
+    icon: Glasses,
+    get route() {
+      return localizar("/exercicios/aneis");
     },
   },
   {
@@ -94,20 +109,6 @@ const exerciciosTrial: Exercicio[] = [
       return localizar("/exercicios/astigmatismo");
     },
   },
-  {
-    id: "convergence",
-    tipo: "treino",
-    get title() {
-      return i18n.t("Visao.convergenciaTitulo");
-    },
-    get description() {
-      return i18n.t("Visao.convergenciaCartao");
-    },
-    icon: Minimize2,
-    get route() {
-      return localizar("/exercicios/convergencia");
-    },
-  },
 ];
 
 const exerciciosPremium: Exercicio[] = [
@@ -123,20 +124,6 @@ const exerciciosPremium: Exercicio[] = [
     icon: Layers,
     get route() {
       return localizar("/exercicios/estereopsia");
-    },
-  },
-  {
-    id: "ambliopia",
-    tipo: "treino",
-    get title() {
-      return i18n.t("Visao.aneisTitulo");
-    },
-    get description() {
-      return i18n.t("Visao.aneisCartao");
-    },
-    icon: Glasses,
-    get route() {
-      return localizar("/exercicios/aneis");
     },
   },
   {
@@ -165,6 +152,20 @@ const exerciciosPremium: Exercicio[] = [
     icon: RefreshCw,
     get route() {
       return localizar("/exercicios/perto-e-longe");
+    },
+  },
+  {
+    id: "convergence",
+    tipo: "treino",
+    get title() {
+      return i18n.t("Visao.convergenciaTitulo");
+    },
+    get description() {
+      return i18n.t("Visao.convergenciaCartao");
+    },
+    icon: Minimize2,
+    get route() {
+      return localizar("/exercicios/convergencia");
     },
   },
 ];

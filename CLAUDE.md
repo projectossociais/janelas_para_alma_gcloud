@@ -67,11 +67,14 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   nem MediaPipe** (o scanner é outro produto e continua a usá-los). **8, todos pagos** (desde
   2026-09-23). Os ids históricos mantêm-se (acesso e preços iguais), mas quatro mudaram de
   significado — `sessoes_exercicio.versao` separa as sessões antigas (1) das novas (2):
-  teste de 7 dias = `figure8` Teste de Acuidade, `cerebro` Teste de Contraste, `relax` Teste
-  de Astigmatismo, `convergence` Treino de Convergência (com saltos como nível avançado);
-  só Premium = `estereopsia` Teste de Estereopsia, `ambliopia` Treino de Anéis com tapa-olho,
-  `sacadas-convergencia` Treino de Contraste em blocos, `flexibilidade-acomodativa` Treino
-  Perto e longe. O Relaxamento deixou de ser exercício: é a pausa entre blocos dos treinos.
+  teste de 7 dias = `figure8` Teste de Acuidade, `ambliopia` Treino de Anéis com tapa-olho,
+  `cerebro` Teste de Contraste, `relax` Teste de Astigmatismo; só Premium = `estereopsia`
+  Teste de Estereopsia, `convergence` Treino de Convergência (com saltos como nível
+  avançado), `sacadas-convergencia` Treino de Contraste em blocos,
+  `flexibilidade-acomodativa` Treino Perto e longe. **Anéis e Convergência trocaram de grupo
+  a 2026-09-29** (decisão do dono do projecto, `docs/ANALISE_EXERCICIOS.md`): o trial mostra
+  o treino com mais valor e evidência; a Convergência é contra-indicada em parte do público
+  (esotropia) e o resultado dela é auto-declarado. O Relaxamento deixou de ser exercício: é a pausa entre blocos dos treinos.
   É **triagem e treino de apoio, nunca diagnóstico** — todos os ecrãs mostram o aviso, e
   nenhum texto promete tratar, curar ou "fortalecer a musculatura". Base partilhada em
   `frontend/src/lib/visao/` (TypeScript puro, com testes) e `components/visao/`; ver §6.
