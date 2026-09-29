@@ -12,6 +12,7 @@ import {
 import { DISTANCIA_LONGE_MM, DISTANCIA_OMISSAO_MM } from "@/lib/visao/geometria";
 import type { Olho } from "@/lib/visao/resultados";
 import { cn } from "@/lib/utils";
+import { rotuloDistancia } from "@/components/visao/rotulos";
 
 /** Moldura comum de um passo: ícone, título, texto, conteúdo e botão. */
 export const EcraPasso = ({
@@ -260,14 +261,6 @@ export const PassoTaparOlho = ({
   );
 };
 
-/** Rótulo de uma distância ("Braço esticado (60 cm)", "1 metro", "45 cm"). */
-export const rotuloDistancia = (t: (chave: string, opcoes?: Record<string, unknown>) => string, mm: number): string =>
-  mm === DISTANCIA_OMISSAO_MM
-    ? t("Visao.distanciaBraco")
-    : mm === DISTANCIA_LONGE_MM
-      ? t("Visao.distanciaUmMetro")
-      : t("Visao.distanciaCm", { cm: Math.round(mm / 10) });
-
 export const PassoDistancia = ({
   distanciaMm,
   aoEscolher,
@@ -279,7 +272,7 @@ export const PassoDistancia = ({
 }) => {
   const { t } = useTranslation();
   const [escolha, setEscolha] = useState(distanciaMm);
-  const rotulo = (mm: number) => rotuloDistancia(t, mm);
+  const rotulo = (mm: number) => rotuloDistancia(mm);
   return (
     <EcraPasso
       icone={<Ruler className="h-7 w-7" />}
@@ -340,7 +333,7 @@ export const PassoRapido = ({
     ...(olhoATapar
       ? [t("Visao.rapidoTapaOlho", { olho: (olhoATapar === "direito" ? t("Visao.olhoDireito") : t("Visao.olhoEsquerdo")).toLocaleLowerCase() })]
       : []),
-    ...(comDistancia ? [t("Visao.rapidoDistancia", { distancia: rotuloDistancia(t, distanciaMm) })] : []),
+    ...(comDistancia ? [t("Visao.rapidoDistancia", { distancia: rotuloDistancia(distanciaMm) })] : []),
   ];
   return (
     <EcraPasso

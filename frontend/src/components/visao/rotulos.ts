@@ -1,5 +1,6 @@
 import i18n from "@/i18n";
 import { formatarDecimal } from "@/i18n/formatar";
+import { DISTANCIA_LONGE_MM, DISTANCIA_OMISSAO_MM } from "@/lib/visao/geometria";
 
 /** Nome curto de cada exercício (id histórico -> nome actual). */
 export const nomeDoExercicio = (id: string): string => {
@@ -56,3 +57,11 @@ export const limiarFormatado = (
       return formatarDecimal(limiar, 2);
   }
 };
+
+/** Rótulo de uma distância ("Braço esticado (60 cm)", "1 metro", "45 cm"). */
+export const rotuloDistancia = (mm: number): string =>
+  mm === DISTANCIA_OMISSAO_MM
+    ? i18n.t("Visao.distanciaBraco")
+    : mm === DISTANCIA_LONGE_MM
+      ? i18n.t("Visao.distanciaUmMetro")
+      : i18n.t("Visao.distanciaCm", { cm: Math.round(mm / 10) });
