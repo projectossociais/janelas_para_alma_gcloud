@@ -211,11 +211,11 @@ describe("título e descrição por página", () => {
       titulo: "Frequently Asked Questions | Janelas para a Alma",
       descricao: "Quick answers about privacy, health data and using the Janelas para a Alma platform.",
     });
-    expect(tituloEDescricao("/en").titulo).toBe("Janelas para a Alma | Visual Inclusion and the Fight Against Strabismus");
+    expect(tituloEDescricao("/en").titulo).toBe("Janelas para a Alma | Eye Health and Strabismus in Angola");
   });
 
   it("em português, páginas fora do mapa (admin) ficam com o título do site", () => {
-    expect(tituloEDescricao("/admin").titulo).toBe("Janelas Para a Alma | Inclusão Visual e Combate ao Estrabismo");
+    expect(tituloEDescricao("/admin").titulo).toBe("Janelas Para a Alma | Saúde Ocular e Estrabismo em Angola");
     expect(tituloEDescricao("/faq").titulo).toBe("Perguntas Frequentes | Janelas Para a Alma");
   });
 });
