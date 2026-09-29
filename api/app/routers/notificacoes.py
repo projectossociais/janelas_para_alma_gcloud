@@ -93,7 +93,7 @@ def enviar(
         resultado = servico.enviar(dados.titulo, dados.mensagem, dados.papel, dados.enviar_email)
     except PapelDeNotificacaoInvalidoError as exc:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=f"papel '{dados.papel}' inválido"
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=f"papel '{dados.papel}' inválido"
         ) from exc
     return NotificacaoEnviada(
         enviadas=resultado.notificacoes_criadas,

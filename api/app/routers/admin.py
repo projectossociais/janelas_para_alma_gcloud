@@ -66,7 +66,7 @@ def definir_papel(
         return servico.definir_papel(utilizador_id, dados.papel)
     except PapelInvalidoError as exc:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=f"papel '{dados.papel}' inválido — use /promover para tornar alguém admin",
         ) from exc
     except NaoPodeAlterarAdminPorAquiError as exc:

@@ -45,7 +45,12 @@ const ACENTO_PT = /[ãõçáàâéêíóôúÃÕÇÁÉÍÓÚ]/;
 it("não há texto português escrito directamente no código público (fora de pt-AO.json)", () => {
   const achados: string[] = [];
   for (const [ficheiro, codigo] of Object.entries(fontes)) {
-    codigo.split("\n").forEach((linha, i) => {
+    // Normalizar CRLF -- um ficheiro com final de linha Windows (`\r\n`)
+    // deixava um `\r` no fim de cada linha; `$` na regex de baixo não o
+    // atravessa (é um terminador de linha para o motor de regex do JS), o
+    // que impedia o corte do comentário `// "texto" ...` e produzia um
+    // falso positivo (`AmbliopiaExercise.tsx:217`, confirmado 2026-09-29).
+    codigo.replace(/\r\n/g, "\n").split("\n").forEach((linha, i) => {
       const t = linha.trim();
       if (t.startsWith("//") || t.startsWith("*") || t.startsWith("/*") || t.startsWith("{/*")) return;
       if (/console\.(log|warn|error|info)\(/.test(t)) return;

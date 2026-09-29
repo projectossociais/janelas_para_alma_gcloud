@@ -99,7 +99,7 @@ def aprovar_pagamento(
         ) from exc
     except PedidoSemContaError as exc:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="o pedido não está ligado a uma conta — não há Premium para activar",
         ) from exc
 
