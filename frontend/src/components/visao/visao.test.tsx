@@ -64,6 +64,31 @@ describe("useRegistoSessao", () => {
     expect(registar.mock.calls[1][0]).toEqual(registar.mock.calls[0][0]);
   });
 
+  it("expõe o bónus do jogo que a API devolveu (Fase B) -- nunca um valor inventado", async () => {
+    registar.mockResolvedValueOnce({ bonus: { moedas: 100, diamantes: 5, dias_seguidos: 7 } });
+    const { result } = renderHook(() => useRegistoSessao());
+    expect(result.current.bonus).toBeNull();
+
+    await act(async () => result.current.gravar([sessao]));
+    expect(result.current.estado).toBe("gravado");
+    expect(result.current.bonus).toEqual({ moedas: 100, diamantes: 5, dias_seguidos: 7 });
+  });
+
+  it("sem bónus na resposta (já treinou hoje, ou teste de triagem), fica sem bónus", async () => {
+    registar.mockResolvedValueOnce({ bonus: null });
+    const { result } = renderHook(() => useRegistoSessao());
+    await act(async () => result.current.gravar([sessao]));
+    expect(result.current.bonus).toBeNull();
+  });
+
+  it("com erro da API, nunca há bónus", async () => {
+    registar.mockRejectedValueOnce(new Error("500"));
+    const { result } = renderHook(() => useRegistoSessao());
+    await act(async () => result.current.gravar([sessao]));
+    expect(result.current.estado).toBe("erro");
+    expect(result.current.bonus).toBeNull();
+  });
+
   it("dois olhos: se o segundo falha, só o segundo é reenviado", async () => {
     registar.mockResolvedValueOnce({}).mockRejectedValueOnce(new Error("rede")).mockResolvedValueOnce({});
     const { result } = renderHook(() => useRegistoSessao());

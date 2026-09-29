@@ -2219,6 +2219,9 @@
     "periodoDias": "{{dias}} dias",
     "autoAvaliacaoNota": "Resultado auto-avaliado: depende das suas respostas e não é uma medição da visão.",
     "autoAvaliacaoCurto": "auto-avaliação",
-    "relatorioAutoAvaliacaoNota": "Os resultados marcados como auto-avaliação (Convergência, Perto e longe) dependem só das respostas do utilizador e não são medições."
+    "relatorioAutoAvaliacaoNota": "Os resultados marcados como auto-avaliação (Convergência, Perto e longe) dependem só das respostas do utilizador e não são medições.",
+    "bonusMoedas": "+{{moedas}} moedas no jogo Inclusivamente pelo treino de hoje.",
+    "bonusMarco": "{{dias}} dias seguidos: +{{diamantes}} diamantes!",
+    "bonusIrAoJogo": "Ir ao jogo"
   }
 }

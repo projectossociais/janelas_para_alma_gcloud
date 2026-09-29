@@ -1,12 +1,12 @@
 from datetime import UTC, datetime, timedelta
 
 from app.core.email import EmailEnvioFalhouError
+from app.core.fuso import inicio_do_dia_em_luanda
 from app.repositories.lembrete_exercicios_repository import DestinatarioLembrete
+from app.services.acesso_exercicios_service import IDS_TREINOS
 from app.services.lembrete_exercicios_service import (
-    IDS_TREINOS,
     JANELA_HABITO_DIAS,
     LembreteExerciciosService,
-    inicio_do_dia_em_luanda,
 )
 
 

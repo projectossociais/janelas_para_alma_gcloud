@@ -2219,6 +2219,9 @@
     "periodoDias": "{{dias}} days",
     "autoAvaliacaoNota": "Self-assessed result: it depends on your answers and is not a measurement of your vision.",
     "autoAvaliacaoCurto": "self-assessment",
-    "relatorioAutoAvaliacaoNota": "Results marked as self-assessment (Convergence, Near and far) depend only on the user’s answers and are not measurements."
+    "relatorioAutoAvaliacaoNota": "Results marked as self-assessment (Convergence, Near and far) depend only on the user’s answers and are not measurements.",
+    "bonusMoedas": "+{{moedas}} coins in the Inclusivamente game for today’s training.",
+    "bonusMarco": "{{dias}} days in a row: +{{diamantes}} diamonds!",
+    "bonusIrAoJogo": "Go to the game"
   }
 }

@@ -53,6 +53,9 @@ EXERCICIOS_PREMIUM: tuple[str, ...] = (
     "estereopsia",
 )
 TODOS_OS_EXERCICIOS: tuple[str, ...] = EXERCICIOS_TRIAL + EXERCICIOS_PREMIUM
+# Os treinos (os outros quatro são testes de triagem): contam para a dose, a
+# sequência de dias, os lembretes e o bónus de assiduidade.
+IDS_TREINOS: tuple[str, ...] = ("ambliopia", "sacadas-convergencia", "convergence", "flexibilidade-acomodativa")
 
 # Os vídeos do personagem animado vivem num prefixo privado do bucket — só
 # acessíveis por URL assinado, nunca pelo domínio público do R2.

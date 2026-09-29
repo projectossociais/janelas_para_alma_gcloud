@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Eye, Flame, Square } from "lucide-react";
+import { Coins, Eye, Flame, Gem, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BaseExercise from "@/components/exercises/BaseExercise";
 import type { GrupoExercicio } from "@/components/exercises/useAcaoDesbloqueio";
@@ -27,8 +27,8 @@ import {
 } from "@/components/visao/hooks";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
-import { perfilApi, type OlhoMaisFraco, type SessaoExercicioPublica, type UnidadeLimiar } from "@/lib/apiClient";
-import { localizar } from "@/i18n/rotas";
+import { perfilApi, type BonusAssiduidade, type OlhoMaisFraco, type SessaoExercicioPublica, type UnidadeLimiar } from "@/lib/apiClient";
+import { disponivelNoIdiomaActual, localizar } from "@/i18n/rotas";
 import { PX_POR_MM_NOMINAL } from "@/lib/visao/calibracao";
 import { DISTANCIA_OMISSAO_MM } from "@/lib/visao/geometria";
 import { IDS_AUTOAVALIACAO, diaLocal, minutosPorDia, sequenciaDeDias } from "@/lib/visao/progresso";
@@ -222,6 +222,33 @@ export const EscolherOlho = ({
   );
 };
 
+/**
+ * Bónus de assiduidade no jogo Inclusivamente (Fase B): só aparece depois de a
+ * API confirmar a gravação -- o valor vem sempre da resposta da API.
+ */
+const BonusDoJogo = ({ bonus }: { bonus: BonusAssiduidade }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="w-full rounded-xl border border-gold/50 bg-gold/10 p-4 text-sm text-foreground" role="status">
+      <p className="flex items-center justify-center gap-2 font-semibold">
+        <Coins className="h-4 w-4 text-gold" aria-hidden />
+        {t("Visao.bonusMoedas", { moedas: bonus.moedas })}
+      </p>
+      {bonus.diamantes > 0 && (
+        <p className="mt-1 flex items-center justify-center gap-2 font-semibold">
+          <Gem className="h-4 w-4 text-teal" aria-hidden />
+          {t("Visao.bonusMarco", { dias: bonus.dias_seguidos, diamantes: bonus.diamantes })}
+        </p>
+      )}
+      {disponivelNoIdiomaActual("/jogo-curiosidades") && (
+        <Link to={localizar("/jogo-curiosidades")} className="mt-2 inline-block text-sm font-medium text-navy underline underline-offset-2">
+          {t("Visao.bonusIrAoJogo")}
+        </Link>
+      )}
+    </div>
+  );
+};
+
 /** "Hoje: X min · Sequência: N dias" a partir do histórico. */
 export const ContadorDiario = ({ historico }: { historico: SessaoExercicioPublica[] }) => {
   const { t } = useTranslation();
@@ -265,7 +292,7 @@ const AssistenteTreino = ({
   const dpr = useDevicePixelRatio();
   const tempo = useTempoActivo();
   const { sessoes: historico, recarregar } = useHistoricoVisao();
-  const { estado: gravacao, gravar, tentarDeNovo } = useRegistoSessao();
+  const { estado: gravacao, gravar, tentarDeNovo, bonus } = useRegistoSessao();
 
   const olhoPerfil =
     profile?.olho_mais_fraco === "direito" || profile?.olho_mais_fraco === "esquerdo" ? profile.olho_mais_fraco : null;
@@ -539,6 +566,7 @@ const AssistenteTreino = ({
             {resumo.segundos < 1 && <p className="text-sm text-muted-foreground">{t("Visao.nadaParaGuardar")}</p>}
             {historico && <ContadorDiario historico={historico} />}
             <EstadoDaGravacao estado={gravacao} aoTentarDeNovo={() => void tentarDeNovo()} />
+            {gravacao === "gravado" && bonus && <BonusDoJogo bonus={bonus} />}
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
               <Button asChild size="lg" className="bg-teal text-teal-foreground hover:bg-teal/90">
                 <Link to={localizar("/exercicios/progresso")}>{t("Visao.verProgresso")}</Link>

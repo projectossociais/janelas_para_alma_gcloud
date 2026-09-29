@@ -68,3 +68,17 @@ class SessaoExercicioPublica(BaseModel):
     sinais: dict | None = None
 
     model_config = {"from_attributes": True}
+
+
+class BonusAssiduidadePublico(BaseModel):
+    """Bónus do jogo creditado por este treino (o primeiro que conta no dia)."""
+
+    moedas: int
+    diamantes: int
+    dias_seguidos: int
+
+
+class SessaoExercicioGravada(SessaoExercicioPublica):
+    """Resposta de `POST /sessoes-exercicio`: a sessão e, se houve, o bónus do dia."""
+
+    bonus: BonusAssiduidadePublico | None = None

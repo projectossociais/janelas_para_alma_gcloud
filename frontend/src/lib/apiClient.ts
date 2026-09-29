@@ -529,12 +529,23 @@ export interface SessaoExercicioPublica {
   sinais: Record<string, unknown> | null;
 }
 
+/** Bónus do jogo creditado pelo primeiro treino que conta no dia (Fase B). */
+export interface BonusAssiduidade {
+  moedas: number;
+  diamantes: number;
+  dias_seguidos: number;
+}
+
+export interface SessaoExercicioGravada extends SessaoExercicioPublica {
+  bonus: BonusAssiduidade | null;
+}
+
 export const sessoesExercicioApi = {
   /** Grava uma sessão terminada. Nunca envia `user_id` — a API tira-o do
    *  cookie de sessão (o `profile.id` do browser deixou de ser fonte de
    *  verdade para isto). */
   registar: (dados: SessaoExercicioInput) =>
-    pedido<SessaoExercicioPublica>("/sessoes-exercicio", {
+    pedido<SessaoExercicioGravada>("/sessoes-exercicio", {
       method: "POST",
       body: JSON.stringify(dados),
     }),

@@ -107,6 +107,15 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   não contam para `moedas_ganhas_total`. Os preços em Kz das moedas ficam sempre acima de
   0,25 Kz por moeda, para nunca sair mais barato comprar diamantes "às voltas" (teste em
   `test_loja_jogo_service.py`).
+  **Bónus de assiduidade dos treinos** (desde 2026-09-29, decisão do dono do projecto,
+  `docs/ANALISE_EXERCICIOS.md` Fase B): o primeiro treino que conta em cada dia de Luanda
+  dá **100 moedas**, e cada 7 dias seguidos dão **5 diamantes** (`BonusAssiduidadeService`,
+  constantes lá). Conta um dos 4 treinos, versão 2, com pelo menos 60 s activos e sem
+  baixa atenção. Uma linha por (utilizador, dia) em `bonus_assiduidade_treino` com chave
+  única; o registo e o crédito em `perfis_jogador` gravam-se na mesma transacção
+  (`INSERT ... ON CONFLICT`), por isso pedidos em simultâneo creditam uma só vez. Vem na
+  resposta de `POST /sessoes-exercicio` (`bonus`); uma falha no bónus nunca transforma a
+  sessão gravada num erro. Não conta para `moedas_ganhas_total` (é dos treinos, não do jogo).
   `JOGO_PAGAMENTOS_SIMULADOS=true` (só `docker-compose.yml` de desenvolvimento; **nunca** em
   produção) faz os Kwanzas creditarem logo, sem comprovativo; sem a flag, esse crédito
   imediato em Kwanzas recusa com 501. O catálogo e os preços vivem só em

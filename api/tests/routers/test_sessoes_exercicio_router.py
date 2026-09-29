@@ -11,13 +11,21 @@ from app.core.dependencies import (
 from app.main import app
 from app.repositories.sessoes_exercicio_repository import DadosVisao, SessaoExercicioRegisto
 from app.routers.exercicios import obter_acesso_exercicios_service
-from app.routers.sessoes_exercicio import obter_sessoes_exercicio_repository
+from app.routers.sessoes_exercicio import (
+    obter_bonus_assiduidade_service,
+    obter_sessoes_exercicio_repository,
+)
 from app.services.acesso_exercicios_service import AcessoExerciciosService
 from app.services.auth_service import AuthService
+from app.services.bonus_assiduidade_service import BonusAssiduidadeService
 from app.services.confirmacao_email_service import ConfirmacaoEmailService
 from app.services.conta_service import ContaService
 from tests.services.test_acesso_exercicios_service import RepositorioAcessoFalso, _conta
 from tests.services.test_auth_service import RepositorioFalso
+from tests.services.test_bonus_assiduidade_service import (
+    RepositorioBonusFalso,
+    RepositorioBonusQueFalha,
+)
 from tests.services.test_confirmacao_email_service import TokensConfirmacaoRepositorioFalso
 from tests.services.test_recuperacao_password_service import EmailSenderFalso
 
@@ -80,6 +88,9 @@ def ambiente():
     app.dependency_overrides[obter_auth_service] = lambda: AuthService(repo_auth)
     app.dependency_overrides[obter_sessoes_exercicio_repository] = lambda: repo_sessoes
     app.dependency_overrides[obter_acesso_exercicios_service] = _acesso_premium
+    # Bónus de assiduidade (Fase B): repositório falso, nunca o Postgres real.
+    repo_bonus = RepositorioBonusFalso()
+    app.dependency_overrides[obter_bonus_assiduidade_service] = lambda: BonusAssiduidadeService(repo_bonus)
     # /auth/entrar também chama o ContaService (cancelar eliminação
     # agendada) -- sem isto cairia no repositório real.
     app.dependency_overrides[obter_conta_service] = lambda: ContaService(repo_auth)
@@ -91,6 +102,7 @@ def ambiente():
     )
     with TestClient(app) as c:
         c.repo_auth = repo_auth  # type: ignore[attr-defined]
+        c.repo_bonus = repo_bonus  # type: ignore[attr-defined]
         yield c, repo_sessoes
     app.dependency_overrides.clear()
 
@@ -317,3 +329,46 @@ def test_listar_limite_fora_do_intervalo_devolve_422(ambiente) -> None:
     c, _ = ambiente
     _registar(c)
     assert c.get("/sessoes-exercicio", params={"limite": 5000}).status_code == 422
+
+
+# --- Bónus de assiduidade no jogo (Fase B, docs/ANALISE_EXERCICIOS.md) -----
+
+_TREINO = {
+    "exercicio_id": "ambliopia",
+    "duracao_segundos": 400,
+    "versao": 2,
+    "olho": "esquerdo",
+    "segundos_activos": 360,
+    "limiar": 0.3,
+    "unidade": "logmar",
+    "sinais": {"baixa_atencao": False},
+}
+
+
+def test_primeiro_treino_do_dia_devolve_o_bonus_e_o_segundo_nao(ambiente) -> None:
+    c, _ = ambiente
+    _registar(c)
+    primeira = c.post("/sessoes-exercicio", json=_TREINO)
+    assert primeira.status_code == 201
+    assert primeira.json()["bonus"] == {"moedas": 100, "diamantes": 0, "dias_seguidos": 1}
+    segunda = c.post("/sessoes-exercicio", json=_TREINO)
+    assert segunda.status_code == 201
+    assert segunda.json()["bonus"] is None
+
+
+def test_um_teste_de_triagem_nao_da_bonus(ambiente) -> None:
+    c, _ = ambiente
+    _registar(c)
+    r = c.post("/sessoes-exercicio", json={**_TREINO, "exercicio_id": "figure8"})
+    assert r.status_code == 201
+    assert r.json()["bonus"] is None
+
+
+def test_falha_no_bonus_nunca_torna_a_sessao_gravada_num_erro(ambiente) -> None:
+    c, repo_sessoes = ambiente
+    _registar(c)
+    app.dependency_overrides[obter_bonus_assiduidade_service] = lambda: BonusAssiduidadeService(RepositorioBonusQueFalha())
+    r = c.post("/sessoes-exercicio", json=_TREINO)
+    assert r.status_code == 201
+    assert r.json()["bonus"] is None
+    assert len(repo_sessoes.gravadas) == 1

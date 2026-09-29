@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -5,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.dependencies import obter_utilizador_atual
 from app.db import obter_sessao
+from app.repositories.bonus_assiduidade_repository import SQLAlchemyBonusAssiduidadeRepository
 from app.repositories.sessoes_exercicio_repository import (
     DadosVisao,
     SessaoExercicioRegisto,
@@ -12,12 +14,20 @@ from app.repositories.sessoes_exercicio_repository import (
 )
 from app.repositories.utilizadores_repository import UtilizadorRegisto
 from app.routers.exercicios import obter_acesso_exercicios_service
-from app.schemas.sessao_exercicio import SessaoExercicioCriar, SessaoExercicioPublica
+from app.schemas.sessao_exercicio import (
+    BonusAssiduidadePublico,
+    SessaoExercicioCriar,
+    SessaoExercicioGravada,
+    SessaoExercicioPublica,
+)
 from app.services.acesso_exercicios_service import (
     AcessoExerciciosService,
     ExercicioDesconhecidoError,
     SemAcessoAoExercicioError,
 )
+from app.services.bonus_assiduidade_service import BonusAssiduidadeService
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/sessoes-exercicio", tags=["sessoes-exercicio"])
 
@@ -28,13 +38,18 @@ def obter_sessoes_exercicio_repository(
     return SQLAlchemySessoesExercicioRepository(sessao)
 
 
-@router.post("", response_model=SessaoExercicioPublica, status_code=status.HTTP_201_CREATED)
+def obter_bonus_assiduidade_service(sessao: Session = Depends(obter_sessao)) -> BonusAssiduidadeService:
+    return BonusAssiduidadeService(SQLAlchemyBonusAssiduidadeRepository(sessao))
+
+
+@router.post("", response_model=SessaoExercicioGravada, status_code=status.HTTP_201_CREATED)
 def registar_sessao(
     dados: SessaoExercicioCriar,
     utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
     repo: SQLAlchemySessoesExercicioRepository = Depends(obter_sessoes_exercicio_repository),
     acesso: AcessoExerciciosService = Depends(obter_acesso_exercicios_service),
-) -> SessaoExercicioRegisto:
+    bonus_service: BonusAssiduidadeService = Depends(obter_bonus_assiduidade_service),
+) -> SessaoExercicioGravada:
     """Grava uma sessão terminada. O `user_id` vem do JWT — um `user_id`
     enviado no corpo nem existe no schema, quanto mais chega aqui.
 
@@ -45,7 +60,7 @@ def registar_sessao(
         acesso.verificar_acesso(utilizador.id, dados.exercicio_id)
     except (ExercicioDesconhecidoError, SemAcessoAoExercicioError):
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail="sem acesso a este exercício")
-    return repo.criar(
+    registo = repo.criar(
         user_id=utilizador.id,
         exercicio_id=dados.exercicio_id,
         duracao_segundos=dados.duracao_segundos,
@@ -64,6 +79,20 @@ def registar_sessao(
             sinais=dados.sinais,
         ),
     )
+    # A sessão já está gravada: uma falha no bónus do jogo regista-se, mas nunca
+    # transforma um treino guardado numa resposta de erro.
+    bonus = None
+    try:
+        atribuido = bonus_service.registar_treino(
+            utilizador.id, dados.exercicio_id, dados.versao, dados.segundos_activos, dados.sinais
+        )
+        if atribuido:
+            bonus = BonusAssiduidadePublico(
+                moedas=atribuido.moedas, diamantes=atribuido.diamantes, dias_seguidos=atribuido.dias_seguidos
+            )
+    except Exception:
+        logger.exception("Falha ao creditar o bónus de assiduidade (sessão %s já gravada)", registo.id)
+    return SessaoExercicioGravada(**SessaoExercicioPublica.model_validate(registo).model_dump(), bonus=bonus)
 
 
 @router.get("", response_model=list[SessaoExercicioPublica])

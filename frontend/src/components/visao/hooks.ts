@@ -4,6 +4,7 @@ import { useProfile } from "@/contexts/ProfileContext";
 import {
   perfilApi,
   sessoesExercicioApi,
+  type BonusAssiduidade,
   type SessaoExercicioInput,
   type SessaoExercicioPublica,
 } from "@/lib/apiClient";
@@ -124,13 +125,15 @@ export type EstadoGravacao = "parado" | "a_gravar" | "gravado" | "erro";
  */
 export function useRegistoSessao() {
   const [estado, setEstado] = useState<EstadoGravacao>("parado");
+  const [bonus, setBonus] = useState<BonusAssiduidade | null>(null);
   const pendentes = useRef<SessaoExercicioInput[]>([]);
 
   const enviar = useCallback(async () => {
     setEstado("a_gravar");
     try {
       while (pendentes.current.length) {
-        await sessoesExercicioApi.registar(pendentes.current[0]);
+        const gravada = await sessoesExercicioApi.registar(pendentes.current[0]);
+        if (gravada?.bonus) setBonus(gravada.bonus);
         pendentes.current.shift();
       }
       setEstado("gravado");
@@ -147,7 +150,7 @@ export function useRegistoSessao() {
     [enviar],
   );
 
-  return { estado, gravar, tentarDeNovo: enviar };
+  return { estado, gravar, tentarDeNovo: enviar, bonus };
 }
 
 /** Histórico de sessões versão 2 do próprio utilizador (para limiares e progresso). */

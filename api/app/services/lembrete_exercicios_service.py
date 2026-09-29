@@ -21,19 +21,17 @@ import html
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from app.core.config import obter_settings
 from app.core.email import EmailEnvioFalhouError, EmailSender
+from app.core.fuso import inicio_do_dia_em_luanda
 from app.repositories.lembrete_exercicios_repository import LembreteExerciciosRepository
+from app.services.acesso_exercicios_service import IDS_TREINOS
 
 logger = logging.getLogger(__name__)
 
-# Angola não tem hora de Verão: WAT é sempre UTC+1. Um offset fixo evita
-# depender da base de dados de fusos (tzdata) no Windows.
-FUSO_LUANDA = timezone(timedelta(hours=1))
 JANELA_HABITO_DIAS = 14
-IDS_TREINOS: tuple[str, ...] = ("ambliopia", "sacadas-convergencia", "convergence", "flexibilidade-acomodativa")
 ASSUNTO = "Ainda não treinou hoje: bastam 6 minutos"
 
 
@@ -41,12 +39,6 @@ ASSUNTO = "Ainda não treinou hoje: bastam 6 minutos"
 class ResultadoLembretes:
     enviados: int
     falhados: int
-
-
-def inicio_do_dia_em_luanda(agora: datetime) -> datetime:
-    """Meia-noite de hoje em Luanda, em UTC."""
-    local = agora.astimezone(FUSO_LUANDA)
-    return local.replace(hour=0, minute=0, second=0, microsecond=0).astimezone(UTC)
 
 
 class LembreteExerciciosService:

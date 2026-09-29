@@ -66,9 +66,13 @@ oftalmologista e prioridade de marcação na clínica parceira.
       Cloud Scheduler, como o W-03)
 
 ### Fase B — conversão
-- Fim do trial com a evolução medida da própria pessoa como argumento
-- Modo pais/criança; bónus de assiduidade no Inclusivamente
-- Premium inclui prioridade na clínica (já existe) e relatório enviado ao médico parceiro
+**Decisões do dono do projecto (2026-09-29):** bónus de 100 moedas por dia + 5 diamantes
+a cada 7 dias seguidos; modo criança **não** agora (fica para o Sprint 7); relatório para
+o médico por **link temporário partilhado pelo pai** (nunca envio automático).
+- [x] Fim do trial com a evolução medida da própria pessoa; Premium sem promessas falsas (#124)
+- [x] Bónus de assiduidade no Inclusivamente (PR à espera de revisão: tabela nova)
+- [ ] Relatório para o médico por link temporário, revogável (PR à espera de revisão: tabela nova)
+- Modo pais/criança: adiado para o Sprint 7
 
 ### Fase C — diferenciação clínica (precisa de parceiro clínico)
 - Treino dicóptico com os óculos vermelho-ciano já pedidos no teste de estereopsia
