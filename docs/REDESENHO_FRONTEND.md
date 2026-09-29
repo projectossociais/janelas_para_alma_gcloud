@@ -82,6 +82,9 @@ teleconsulta já existir (Sprint 4, Fase 2).
 
 ## 3. Princípios de design
 
+> A justificação de cada princípio e padrão, com fontes (NHS, GOV.UK, WCAG 2.2, NN/g,
+> Baymard, dados de Angola), está em `docs/PESQUISA_UX.md`.
+
 1. **Legível acima de tudo** — WCAG 2.2 AA no mínimo, AAA no texto corrido; tipografia
    pensada para baixa visão; alvos de toque de 44px. Se um ecrã não se lê bem, não está
    pronto.

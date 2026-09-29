@@ -18,6 +18,9 @@ const fontes = import.meta.glob(
     "!/src/pages/RoadmapTecnico.tsx", // interno, só PT
     "!/src/pages/jogo/perguntasOffline.ts", // banco de perguntas offline, fora da Fase 3
     "!/src/i18n/**",
+    // laboratório de identidade: só existe em desenvolvimento (import.meta.env.DEV
+    // em App.tsx), nunca chega ao site. O resto de src/redesenho não está excluído.
+    "!/src/redesenho/laboratorio/**",
   ],
   { query: "?raw", import: "default", eager: true },
 ) as Record<string, string>;

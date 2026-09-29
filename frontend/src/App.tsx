@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -74,6 +75,10 @@ import GlobalBanner from "./components/GlobalBanner";
 import { SiteBannerProvider } from "./contexts/SiteBannerContext";
 import ScrollToTop from "./components/ScrollToTop";
 import NotFound from "./pages/NotFound";
+
+// Laboratório de identidade do redesenho (Sprint 7): só em desenvolvimento.
+// Em produção `import.meta.env.DEV` é false e o import desaparece do build.
+const Laboratorio = import.meta.env.DEV ? lazy(() => import("./redesenho/laboratorio/Laboratorio")) : null;
 import IdiomaDaRota from "./i18n/IdiomaDaRota";
 import { inglesAtivo } from "./i18n/idiomas";
 import { ALIASES_PT, EXERCICIOS_RETIRADOS, ROTAS, ROTAS_BILINGUES, type ChaveRota } from "./i18n/rotas";
@@ -172,6 +177,16 @@ const App = () => (
                   ))}
                 {/* Internas, só em português -- de propósito fora do mapa de rotas. */}
                 <Route path="/roadmap-tecnico" element={<RoadmapTecnico />} />
+                {Laboratorio && (
+                  <Route
+                    path="/_laboratorio"
+                    element={
+                      <Suspense fallback={null}>
+                        <Laboratorio />
+                      </Suspense>
+                    }
+                  />
+                )}
 
                 <Route path="/admin" element={<AdminLayout />}>
                   <Route index element={<AdminOverview />} />
