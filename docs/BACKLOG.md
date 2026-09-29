@@ -62,7 +62,6 @@ Fase 3) quando a conta Meta estiver pronta.
 | Item | O que fazer | Quem |
 |---|---|---|
 | UX-03 | Pedir a província na doação de materiais — **código pronto, PR #113 à espera da tua revisão** (mexe no esquema de dados) | W+L |
-| CROSS-07 | Confirmar que a produção envia email do domínio do projecto e não de `onboarding@resend.dev` — infra pura, sem código a mudar aqui: `04-deploy.sh` já lê `EMAIL_REMETENTE` do ambiente, só falta confirmar o valor que está mesmo configurado no Cloud Run de produção hoje | L (DNS/gcloud) |
 
 **✅ Feitos 2026-09-28:** UX-02/L-10 (gralha "Três tiers" → "Três níveis"), L-04 (Maps do
 `ContactSection.tsx` a abrir em separador novo), L-01 (9 ficheiros `.asset.json` órfãos
@@ -1361,20 +1360,16 @@ O que ficou feito:
 - **Testes:** 14 novos na API (service + router, cobrindo token válido/expirado/já
   usado/inexistente, e a resposta idêntica com/sem conta) e 8 no frontend.
 
-**CROSS-07 — resolvida a 2026-09-14, confirmada a funcionar a 2026-09-15:** domínio
-`janelasparaalma.com` verificado no Resend (`GET /domains` → `status: verified`,
-`sending: enabled`) e chave de API gerada. **Testado a sério** — não só com o
-`EmailSender` falso dos testes automatizados: um pedido real a
-`POST https://api.resend.com/emails` com a chave e o remetente configurados foi aceite
-e o email chegou à caixa de entrada. A integração está confirmada de ponta a ponta;
-falta só colar `RESEND_API_KEY` no Secret Manager via
-`infra/gcloud/03-secrets.sh` — bloqueado por **DEP-02** (o projecto GCloud com
-facturação ainda não existe). Até lá, dá para testar tudo localmente: definir
-`RESEND_API_KEY` e `EMAIL_REMETENTE=noreply@janelasparaalma.com` em `api/.env`
-(gitignored — nunca commitar a chave) e correr a API sem Docker
-(`python -m uvicorn app.main:app --reload`), ou passá-las como variável de ambiente ao
-`docker compose up`. `04-deploy.sh` já sabe pegar no segredo automaticamente assim que
-`03-secrets.sh` o tiver criado — nenhum código a mudar quando o DEP-02 destrancar.
+**CROSS-07 — resolvida a 2026-09-14, confirmada a funcionar a 2026-09-15, confirmada em
+produção a 2026-09-29:** domínio `janelasparaalma.com` verificado no Resend
+(`GET /domains` → `status: verified`, `sending: enabled`) e chave de API gerada.
+**Testado a sério** — não só com o `EmailSender` falso dos testes automatizados: um
+pedido real a `POST https://api.resend.com/emails` com a chave e o remetente
+configurados foi aceite e o email chegou à caixa de entrada. DEP-02 (projecto GCloud
+com facturação) destrancou entretanto e a API já corre em produção — confirmação final
+do dono do projecto (2026-09-29): a conta criada a 15/09 recebeu o email de confirmação
+de `noreply@janelasparaalma.com`, não de `onboarding@resend.dev`. Fechado por completo,
+nada pendente aqui.
 
 ### AUTH-02 fechada — confirmação de conta por email, bloqueio total (2026-09-14)
 
@@ -1968,7 +1963,7 @@ e nas fotos de publicações (`ADMIN-03`).
 | 4 | Cloud Run exige cartão registado, mesmo sem cobrar | ✅ **Resolvido** (auditoria de 2026-09-28) — a API corre em produção no Cloud Run com deploy automático desde 2026-09-15, logo a conta de facturação já existe | — |
 | 5 | Consentimento parental para menores — nunca abordado, nem no código nem nos documentos | ⏳ Aberto | Wilson + apoio jurídico |
 | 6 | Recuperação de palavra-passe | ✅ **Resolvido 2026-09-14** — `POST /auth/recuperar-password` + `/auth/redefinir-password`, token de uso único hasheado (30 min), ligado no frontend. Ver secção dedicada abaixo | — |
-| 9 | Fornecedor de email transacional (Resend / SendGrid / SES) | ✅ **Resolvido 2026-09-14** — Resend. Falta só o domínio verificado no Resend (CROSS-07, Lukeny) para sair do remetente sandbox `onboarding@resend.dev` | Lukeny (DNS) |
+| 9 | Fornecedor de email transacional (Resend / SendGrid / SES) | ✅ **Resolvido 2026-09-14, confirmado em produção 2026-09-29** — Resend, domínio verificado, emails já saem de `noreply@janelasparaalma.com` (CROSS-07 fechado) | — |
 | 7 | Data de expiração do crédito Google Cloud trial — anotar | ⏳ Aberto | Wilson |
 
 ---
