@@ -397,7 +397,7 @@ const AssistenteTreino = ({
       <>
         {etapa === "brilho" && (
           <div className="flex flex-col gap-4">
-            <PassoBrilho exercicioId={exercicioId} aoContinuar={() => seguinte("brilho")} />
+            <PassoBrilho aoContinuar={() => seguinte("brilho")} />
             {historico && <ContadorDiario historico={historico} />}
           </div>
         )}

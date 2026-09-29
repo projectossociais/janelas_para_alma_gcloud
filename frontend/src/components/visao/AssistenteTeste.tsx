@@ -103,7 +103,7 @@ function AssistenteTeste<R>({
   const conteudo = (() => {
     switch (etapa.tipo) {
       case "brilho":
-        return <PassoBrilho exercicioId={exercicioId} aoContinuar={() => setEtapa({ tipo: "calibracao" })} />;
+        return <PassoBrilho aoContinuar={() => setEtapa({ tipo: "calibracao" })} />;
       case "calibracao":
         return (
           <PassoCalibracao calibracao={calibracao} aoGuardar={guardar} aoContinuar={() => setEtapa({ tipo: "oculos" })} />

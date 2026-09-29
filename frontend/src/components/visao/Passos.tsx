@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import { ArrowRight, CreditCard, Glasses, Ruler, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { exerciciosApi } from "@/lib/apiClient";
 import {
   CARTAO_ALTURA_MM,
   CARTAO_LARGURA_MM,
@@ -60,45 +59,10 @@ export const BotaoContinuar = ({
 };
 
 /**
- * Exercícios com vídeo do personagem já carregado no R2 privado. Vazio até
- * os vídeos novos existirem (W-18): sem isto, cada ecrã inicial pedia um URL
- * que a API recusa (503) e enchia a consola de erros. Acrescentar aqui o id
- * quando o vídeo for carregado.
+ * Primeiro passo de cada exercício. O vídeo explicativo (L-02) vive no
+ * cabeçalho do `BaseExercise` (`ExercicioVideo`, #116), a pedido, e não aqui.
  */
-const EXERCICIOS_COM_VIDEO: readonly string[] = [];
-
-/**
- * Vídeo do personagem animado a explicar o exercício (R2 privado, URL
- * assinado pela API). Sem vídeo carregado -- ou sem acesso --, não mostra
- * nada: o texto do passo chega para começar.
- */
-export const Personagem = ({ exercicioId }: { exercicioId: string }) => {
-  const [url, setUrl] = useState<string | null>(null);
-  useEffect(() => {
-    if (!EXERCICIOS_COM_VIDEO.includes(exercicioId)) return;
-    let cancelado = false;
-    exerciciosApi
-      .video(exercicioId)
-      .then((r) => !cancelado && setUrl(r.url))
-      .catch(() => undefined);
-    return () => {
-      cancelado = true;
-    };
-  }, [exercicioId]);
-  if (!url) return null;
-  return (
-    <video
-      src={url}
-      controls
-      playsInline
-      preload="metadata"
-      className="aspect-video w-full max-w-md rounded-xl bg-navy/5"
-      onError={() => setUrl(null)}
-    />
-  );
-};
-
-export const PassoBrilho = ({ exercicioId, aoContinuar }: { exercicioId: string; aoContinuar: () => void }) => {
+export const PassoBrilho = ({ aoContinuar }: { aoContinuar: () => void }) => {
   const { t } = useTranslation();
   return (
     <EcraPasso
@@ -106,7 +70,6 @@ export const PassoBrilho = ({ exercicioId, aoContinuar }: { exercicioId: string;
       titulo={t("Visao.brilhoTitulo")}
       accao={<BotaoContinuar aoClicar={aoContinuar} />}
     >
-      <Personagem exercicioId={exercicioId} />
       <p className="text-sm text-muted-foreground">{t("Visao.brilhoTexto")}</p>
     </EcraPasso>
   );
