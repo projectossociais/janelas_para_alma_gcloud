@@ -78,3 +78,27 @@ def test_sem_contas_pendentes_devolve_zero(client) -> None:
 
     assert resposta.status_code == 200
     assert resposta.json() == {"contas_anonimizadas": 0}
+
+
+# --- Lembretes diários de treino (Fase A, docs/ANALISE_EXERCICIOS.md) ------
+
+
+def test_lembretes_sem_segredo_devolve_403(client) -> None:
+    assert client.post("/interno/lembretes-exercicios").status_code == 403
+
+
+def test_lembretes_com_segredo_envia_e_devolve_as_contagens(client) -> None:
+    from app.repositories.lembrete_exercicios_repository import DestinatarioLembrete
+    from app.services.lembrete_exercicios_service import LembreteExerciciosService
+    from tests.services.test_lembrete_exercicios_service import EmailSenderFalso
+    from tests.services.test_lembrete_exercicios_service import RepositorioFalso as RepoLembretes
+
+    sender = EmailSenderFalso(falhar_para={"b@example.com"})
+    repo = RepoLembretes([DestinatarioLembrete("u1", "a@example.com", "Ana"), DestinatarioLembrete("u2", "b@example.com", None)])
+    app.dependency_overrides[obter_cron_valido] = lambda: None
+    app.dependency_overrides[interno_router.obter_lembrete_exercicios_service] = lambda: LembreteExerciciosService(repo, sender)
+
+    resposta = client.post("/interno/lembretes-exercicios")
+
+    assert resposta.status_code == 200
+    assert resposta.json() == {"enviados": 1, "falhados": 1}
