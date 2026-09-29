@@ -82,7 +82,7 @@ def test_iniciar_trial_uma_vez_e_depois_409(ambiente) -> None:
     assert primeira.json()["estado"] == "trial_ativo"
     assert primeira.json()["trial_dias_restantes"] == 7
     assert sorted(primeira.json()["exercicios_desbloqueados"]) == sorted(
-        ["figure8", "convergence", "cerebro", "relax"]
+        ["figure8", "ambliopia", "cerebro", "relax"]
     )
     assert c.post("/exercicios/trial").status_code == 409
 

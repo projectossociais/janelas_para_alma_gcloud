@@ -34,7 +34,8 @@
 |---|---|---|---|
 | **Consentimento parental** | Público inclui crianças e não existe fluxo de consentimento dos pais — só `consentimento_imagem` no rastreio | Bloqueio nº 5 | W + jurídico |
 | **Verificação de profissionais** | Qualquer pessoa se regista como `profissional`. O portal da clínica já está protegido (só um admin liga uma conta), mas o admin não tem nenhuma prova de credenciação para verificar | Sprint 4, "Riscos a não ignorar" | W |
-| **3 dos 4 exercícios Premium exclusivos não têm mecânica nenhuma** | `estereopsia`, `flexibilidade-acomodativa`, `sacadas-convergencia` (`frontend/src/pages/exercises/*.tsx`) são só `PremiumExercicioEsqueleto` — mostram literalmente "Este exercício ainda está em construção" a quem paga 15.000 Kz/mês por eles. Só `ambliopia` (748 linhas) tem uma implementação real. Confirmado 2026-09-29 ao investigar o L-02 (nunca tinha sido registado no backlog antes) | W-18 | W (decisão de mecânica) + W+L (construir) |
+
+**✅ Resolvido 2026-09-29: os 3 exercícios Premium que eram só esqueleto** passaram a ter mecânica real com a reescrita sem webcam (#118/#119). Ver [`ANALISE_EXERCICIOS.md`](ANALISE_EXERCICIOS.md).
 
 **✅ Fechado 2026-09-28: W-03, eliminação de conta.** Decisão do dono do projecto:
 anonimizar, não apagar a linha (evita destruir em cascata histórico clínico real). Código
@@ -51,7 +52,7 @@ Fase 3) quando a conta Meta estiver pronta.
 | Matchmaker | Fase 4B — consulta incluída no Premium vs. paga à parte | Sprint 4 | Preço por consulta (decisão do dono) |
 | Matchmaker | Selo de clínica verificada | Sprint 4 | Negociação comercial com números reais |
 | Matchmaker | `sugerir_clinicas` (correspondência por regras) | Sprint 4, PR C | Existir uma 2.ª clínica |
-| Exercícios | W-18 — exercícios refeitos sem webcam (branch `frontend/exercicios-sem-webcam`, 2026-09-28): os 3 Premium que eram só esqueleto (`estereopsia`, `flexibilidade-acomodativa`, `sacadas-convergencia`) passam a ter mecânica real; o vídeo explicativo foi retirado do frontend por decisão do produto (L-02; o endpoint da API mantém-se) | Sprint 6 | Merge da branch |
+| Exercícios | **W-18 — Fase A da [análise crítica](ANALISE_EXERCICIOS.md) (em curso, 2026-09-29):** sessão rápida, resultados em linguagem simples com tendência, auto-avaliação separada das medições, lembrete diário por email. A reescrita sem webcam já está em `main` (#118/#119, mesclada sem revisão; mantida por decisão do dono do projecto a 2026-09-29) e o Treino de Anéis já trocou de lugar com a Convergência no trial | Sprint 6 | — (Fases B e C: ver análise) |
 | Exercícios | **LEG-01 — ⛔ BLOQUEIA O LANÇAMENTO PÚBLICO (não o merge):** Termos e Política de Privacidade ainda descrevem os exercícios como "terapia visual" e "baseados em biometria facial" — **dossiê para o jurista: [`docs/DOSSIE_JURISTA_LEG01.md`](DOSSIE_JURISTA_LEG01.md)** (resumo em [`docs/PENDENTE_REVISAO_LEGAL.md`](PENDENTE_REVISAO_LEGAL.md)) | W-18 | Validação do jurista; decisão do dono do projecto sobre o consentimento (pergunta 5.1 do dossiê) |
 | Scanner | W-13/W-14/W-16/L-14 — método, calibração, validação clínica, ecrã de resultados | Sprint 3 | Parceiro clínico (bloqueio nº 8) |
 | Scanner | Ecrã de resultados mostra 6 categorias, o cálculo só produz 2 | CLAUDE.md §11, W-09 | Localizar o repositório `janelas-scanner-api` |

@@ -211,7 +211,7 @@ const TreinoConvergencia = () => {
     <PaginaExercicio>
       <AssistenteTreino
         exercicioId={EXERCICIO_ID}
-        grupo="trial"
+        grupo="premium"
         titulo={t("Visao.convergenciaTitulo")}
         descricao={t("Visao.convergenciaDescricao")}
         monocular={false}

@@ -31,8 +31,8 @@ vi.mock("@/lib/apiClient", () => ({
   mensagemDeErroApi: (_e: unknown, fallback: string) => fallback,
 }));
 
-const TRIAL = ["figure8", "convergence", "cerebro", "relax"];
-const PREMIUM = ["ambliopia", "sacadas-convergencia", "flexibilidade-acomodativa", "estereopsia"];
+const TRIAL = ["figure8", "ambliopia", "cerebro", "relax"];
+const PREMIUM = ["convergence", "sacadas-convergencia", "flexibilidade-acomodativa", "estereopsia"];
 
 const estado = (over: Record<string, unknown>) => ({
   estado: "trial_disponivel",
@@ -73,12 +73,12 @@ describe("Exercicios — 8 exercícios em dois grupos", () => {
 
     await screen.findByText("Trial disponível");
     const trial = grupo("Incluídos no teste de 7 dias");
-    for (const nome of ["Teste de Acuidade", "Teste de Contraste", "Teste de Astigmatismo", "Treino de Convergência"])
+    for (const nome of ["Teste de Acuidade", "Treino de Anéis com tapa-olho", "Teste de Contraste", "Teste de Astigmatismo"])
       expect(within(trial).getByText(nome)).toBeInTheDocument();
     const premium = grupo("Premium");
     for (const nome of [
       "Teste de Estereopsia",
-      "Treino de Anéis com tapa-olho",
+      "Treino de Convergência",
       "Treino de Contraste em blocos",
       "Treino Perto e longe",
     ])

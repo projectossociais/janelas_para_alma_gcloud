@@ -4,9 +4,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
 
 /** Ids dos exercícios, tal como a API os conhece (`sessoes_exercicio.exercicio_id`). */
-export const EXERCICIOS_TRIAL = ["figure8", "convergence", "cerebro", "relax"] as const;
+export const EXERCICIOS_TRIAL = ["figure8", "ambliopia", "cerebro", "relax"] as const;
 export const EXERCICIOS_PREMIUM = [
-  "ambliopia",
+  "convergence",
   "sacadas-convergencia",
   "flexibilidade-acomodativa",
   "estereopsia",

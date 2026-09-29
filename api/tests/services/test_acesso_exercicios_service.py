@@ -58,9 +58,9 @@ def _service(conta: EstadoAcessoRegisto | None, agora: datetime = AGORA):
 
 def test_os_8_exercicios_sao_4_do_trial_mais_4_premium() -> None:
     assert len(TODOS_OS_EXERCICIOS) == 8
-    assert set(EXERCICIOS_TRIAL) == {"figure8", "convergence", "cerebro", "relax"}
+    assert set(EXERCICIOS_TRIAL) == {"figure8", "ambliopia", "cerebro", "relax"}
     assert set(EXERCICIOS_PREMIUM) == {
-        "ambliopia",
+        "convergence",
         "sacadas-convergencia",
         "flexibilidade-acomodativa",
         "estereopsia",
@@ -174,8 +174,9 @@ def test_verificar_acesso_recusa_premium_durante_trial() -> None:
         _conta(trial_iniciado_em=AGORA, trial_termina_em=AGORA + timedelta(days=7))
     )
     service.verificar_acesso("u1", "figure8")  # não levanta
+    service.verificar_acesso("u1", "ambliopia")  # Treino de Anéis: no trial desde 2026-09-29
     with pytest.raises(SemAcessoAoExercicioError):
-        service.verificar_acesso("u1", "ambliopia")
+        service.verificar_acesso("u1", "convergence")
 
 
 def test_verificar_acesso_recusa_exercicio_eliminado_ou_desconhecido() -> None:

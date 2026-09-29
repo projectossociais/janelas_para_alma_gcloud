@@ -98,7 +98,7 @@ describe("DashboardUser — Exercícios disponíveis", () => {
   });
 
   it("com o teste de 7 dias activo, conta os 4 exercícios do teste", () => {
-    mockDesbloqueados = ["figure8", "convergence", "cerebro", "relax"];
+    mockDesbloqueados = ["figure8", "ambliopia", "cerebro", "relax"];
     render(
       <MemoryRouter>
         <DashboardUser />

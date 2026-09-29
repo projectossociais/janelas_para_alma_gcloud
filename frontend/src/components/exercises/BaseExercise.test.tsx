@@ -45,10 +45,10 @@ describe("BaseExercise (casca dos exercícios)", () => {
   });
 
   it("não há chave de tradução do botão de vídeo nos ficheiros PT e EN", () => {
-    for (const locale of [ptAO, enUS] as Record<string, Record<string, string>>[]) {
+    for (const locale of [ptAO, enUS] as unknown as Record<string, Record<string, unknown>>[]) {
       expect(locale.ExercicioVideo).toBeUndefined();
       const textos = Object.values(locale.BaseExercise ?? {}).concat(Object.values(locale.Visao ?? {}));
-      expect(textos.some((x) => /v[ií]deo/i.test(x) && /explicativo|explainer/i.test(x))).toBe(false);
+      expect(textos.some((x) => typeof x === "string" && /v[ií]deo/i.test(x) && /explicativo|explainer/i.test(x))).toBe(false);
     }
   });
 });
