@@ -17,6 +17,11 @@ export interface SessaoResumo {
 
 /** Ids que são treinos (contam para a dose e para a sequência). */
 export const IDS_TREINOS = ["ambliopia", "sacadas-convergencia", "convergence", "flexibilidade-acomodativa"];
+/**
+ * Treinos cujo resultado depende só do que o utilizador declara ("Vejo 1",
+ * "Nítido") -- não são medições e aparecem marcados como auto-avaliação.
+ */
+export const IDS_AUTOAVALIACAO = ["convergence", "flexibilidade-acomodativa"];
 /** Ids que são testes de triagem. */
 export const IDS_TESTES = ["figure8", "cerebro", "relax", "estereopsia"];
 

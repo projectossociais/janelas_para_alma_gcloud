@@ -2198,6 +2198,23 @@
     "rapidoDistancia": "Distância: {{distancia}}",
     "rapidoComecar": "Começar treino",
     "rapidoAlterar": "Alterar definições",
-    "passoPreparacao": "Preparação"
+    "passoPreparacao": "Preparação",
+    "tendenciaTitulo": "Em resumo",
+    "tendenciaPoucosDados": "{{olho}}: faça pelo menos mais uma sessão noutro dia para ver a evolução.",
+    "tendenciaEstavel": "{{olho}}: sem mudança clara em {{periodo}} (menos de uma linha de diferença).",
+    "tendenciaAcuidadeMelhorouUma": "{{olho}}: já lê uma linha mais pequena do que {{referencia}}.",
+    "tendenciaAcuidadeMelhorou": "{{olho}}: já lê {{n}} linhas mais pequenas do que {{referencia}}.",
+    "tendenciaAcuidadePiorouUma": "{{olho}}: precisa de anéis uma linha maiores do que {{referencia}}. Se continuar assim, fale com o oftalmologista.",
+    "tendenciaAcuidadePiorou": "{{olho}}: precisa de anéis {{n}} linhas maiores do que {{referencia}}. Se continuar assim, fale com o oftalmologista.",
+    "tendenciaContrasteMelhorou": "{{olho}}: já vê anéis mais claros do que {{referencia}}.",
+    "tendenciaContrastePiorou": "{{olho}}: precisa de anéis mais escuros do que {{referencia}}. Se continuar assim, fale com o oftalmologista.",
+    "tendenciaAproximada": "(aproximado: ecrã sem calibração com cartão)",
+    "quandoOntem": "ontem",
+    "quandoHaDias": "há {{dias}} dias",
+    "periodoUmDia": "1 dia",
+    "periodoDias": "{{dias}} dias",
+    "autoAvaliacaoNota": "Resultado auto-avaliado: depende das suas respostas e não é uma medição da visão.",
+    "autoAvaliacaoCurto": "auto-avaliação",
+    "relatorioAutoAvaliacaoNota": "Os resultados marcados como auto-avaliação (Convergência, Perto e longe) dependem só das respostas do utilizador e não são medições."
   }
 }

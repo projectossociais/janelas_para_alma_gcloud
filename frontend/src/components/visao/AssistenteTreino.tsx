@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import BaseExercise from "@/components/exercises/BaseExercise";
 import type { GrupoExercicio } from "@/components/exercises/useAcaoDesbloqueio";
 import PausaRespiracao from "@/components/visao/PausaRespiracao";
+import ResumoTendencia from "@/components/visao/ResumoTendencia";
 import { EstadoDaGravacao } from "@/components/visao/Resultados";
 import {
   BotaoContinuar,
@@ -30,7 +31,7 @@ import { perfilApi, type OlhoMaisFraco, type SessaoExercicioPublica, type Unidad
 import { localizar } from "@/i18n/rotas";
 import { PX_POR_MM_NOMINAL } from "@/lib/visao/calibracao";
 import { DISTANCIA_OMISSAO_MM } from "@/lib/visao/geometria";
-import { diaLocal, minutosPorDia, sequenciaDeDias } from "@/lib/visao/progresso";
+import { IDS_AUTOAVALIACAO, diaLocal, minutosPorDia, sequenciaDeDias } from "@/lib/visao/progresso";
 import { guardarEscolhas, lerEscolhas, podeUsarSessaoRapida } from "@/lib/visao/preparacao";
 import { olhoMaisFracoPelaAcuidade, type Olho, type OlhoSessao } from "@/lib/visao/resultados";
 import { ID_ACUIDADE } from "@/lib/visao/ids";
@@ -526,6 +527,12 @@ const AssistenteTreino = ({
               {t("Visao.resumoTempo", { minutos: Math.floor(resumo.segundos / 60), segundos: resumo.segundos % 60 })}
             </p>
             {resumo.resultado.resumo && <p className="text-lg font-semibold text-foreground">{resumo.resultado.resumo}</p>}
+            {IDS_AUTOAVALIACAO.includes(exercicioId) && (
+              <p className="text-sm text-muted-foreground">{t("Visao.autoAvaliacaoNota")}</p>
+            )}
+            {monocular && olho && historico && gravacao === "gravado" && (resumo.resultado.unidade === "logmar" || resumo.resultado.unidade === "log_cs") && (
+              <ResumoTendencia sessoes={historico} exercicioId={exercicioId} olhos={[olho]} />
+            )}
             {resumo.baixaAtencao && (
               <p className="rounded-lg bg-gold/10 px-3 py-2 text-sm text-foreground">{t("Visao.baixaAtencao")}</p>
             )}

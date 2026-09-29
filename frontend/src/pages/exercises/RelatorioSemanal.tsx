@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { formatarData, formatarDataHora, formatarDiaCurto } from "@/i18n/formatar";
 import { localizar } from "@/i18n/rotas";
-import { IDS_TREINOS, diaLocal, minutosPorDia, ultimosDias, ultimosResultados } from "@/lib/visao/progresso";
+import { IDS_AUTOAVALIACAO, IDS_TREINOS, diaLocal, minutosPorDia, ultimosDias, ultimosResultados } from "@/lib/visao/progresso";
 
 const DIAS = 7;
 
@@ -140,7 +140,10 @@ const RelatorioSemanal = () => {
                           {s.sinais?.baixa_atencao === true && ` (${t("Visao.baixaAtencaoCurto")})`}
                         </td>
                         <td className="py-1 pr-2">{nomeDoOlho(s.olho)}</td>
-                        <td className="py-1 pr-2">{limiarFormatado(s.limiar, s.unidade, s.sinais)}</td>
+                        <td className="py-1 pr-2">
+                          {limiarFormatado(s.limiar, s.unidade, s.sinais)}
+                          {IDS_AUTOAVALIACAO.includes(s.exercicio_id) && ` (${t("Visao.autoAvaliacaoCurto")})`}
+                        </td>
                         <td className="py-1 tabular-nums">
                           {IDS_TREINOS.includes(s.exercicio_id) ? Math.round((s.segundos_activos ?? 0) / 60) : "—"}
                         </td>
@@ -169,7 +172,7 @@ const RelatorioSemanal = () => {
             </section>
 
             <p className="border-t border-border pt-4 text-xs text-muted-foreground print:border-black print:text-black">
-              {t("Visao.avisoTeste")} {t("Visao.avisoTreino")}
+              {t("Visao.relatorioAutoAvaliacaoNota")} {t("Visao.avisoTeste")} {t("Visao.avisoTreino")}
             </p>
           </div>
         )}
