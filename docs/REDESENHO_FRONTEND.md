@@ -274,6 +274,15 @@ Acrescentar abaixo, com data, o que for decidido ou detalhado em cada conversa s
 redesenho (referências visuais, páginas a priorizar, gostos e recusas do dono do
 projecto, feedback do Lukeny). Mais recente em cima.
 
+- **2026-09-30** — **Fase 2, imagens e guardas.** Saíram 23 imagens sem uso (~2,3 MB); as
+  que estão em uso passaram de 2,5 MB para 600 KB (fotografias em PNG passaram a JPEG,
+  largura máxima 1600 px). Os ícones do site eram a imagem 1920×1080 do logótipo, não
+  quadrada: há agora favicon, ícone do iPhone, 192/512 e um "maskable" próprio. A imagem
+  de partilha (WhatsApp, Facebook) era da identidade antiga e tinha 858 KB: nova, com o
+  logótipo oficial e a Ubuntu, 1200×630, 60 KB. A CI passa a correr o
+  `typecheck:redesenho` e um orçamento de peso (`npm run orcamento`: pacote principal
+  ≤ 320 KB gzip, imagens ≤ 400 KB). Nota: o certificado de participação
+  (`benefit-certificate`) ainda mostra o logótipo antigo da janela.
 - **2026-09-30** — **Divisão do código por rotas** (Fase 2): cada página chega no seu
   próprio ficheiro (`React.lazy`), menos a página inicial e o 404. O pacote principal
   desceu de 649 KB para 300 KB (gzip). Enquanto uma página carrega, nada nos primeiros

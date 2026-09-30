@@ -531,7 +531,9 @@ chore(infra): adiciona docker-compose para desenvolvimento local
 
 **Portão de entrada para `main`:**
 1. PR obrigatório — nunca commit directo em `main`
-2. CI verde: `npm run lint` + `npm run test` + `npm run build` (frontend);
+2. CI verde: `npm run lint` + `npm run typecheck:redesenho` + `npm run test` +
+   `npm run build` + `npm run orcamento` (frontend; o último falha se o pacote principal
+   passar de 320 KB gzip ou uma imagem publicada de 400 KB);
    `ruff check` + `pytest` + `alembic upgrade head` contra um Postgres real (api);
    `docker build` da imagem da API (imagens) — ver `.github/workflows/ci.yml`. O deploy
    do frontend em si é o Vercel, fora deste CI — o `npm run build` aqui é só o portão de
