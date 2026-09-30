@@ -57,6 +57,7 @@ const SECCOES: Secao[] = [
           <Trans i18nKey="TermosUtilizacao.aPlataformaDestinaSe" />
         </p>
         <ul className="list-disc pl-5 space-y-1.5">
+          <li><Trans i18nKey="TermosUtilizacao.terDezoitoAnos" /></li>
           <li><Trans i18nKey="TermosUtilizacao.fornecerInformacaoVerdadeiraE" /></li>
           <li><Trans i18nKey="TermosUtilizacao.naoUtilizarAPlataforma" /></li>
           <li><Trans i18nKey="TermosUtilizacao.naoTentarAcederIndevidamente" /></li>

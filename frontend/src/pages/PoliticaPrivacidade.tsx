@@ -57,6 +57,9 @@ const SECCOES: Secao[] = [
         <p>
           <Trans i18nKey="PoliticaPrivacidade.nosTermosDoArtigo" components={{ strong: <strong className="text-foreground" /> }} />
         </p>
+        <p>
+          <Trans i18nKey="PoliticaPrivacidade.menores" components={{ strong: <strong className="text-foreground" /> }} />
+        </p>
       </>
     ),
   },
@@ -179,7 +182,7 @@ const SECCOES: Secao[] = [
     },
     body: (
       <p>
-        <Trans i18nKey="PoliticaPrivacidade.conservamosOsSeusDados" />
+        <Trans i18nKey="PoliticaPrivacidade.conservamosOsSeusDados" components={{ strong: <strong className="text-foreground" /> }} />
       </p>
     ),
   },

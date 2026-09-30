@@ -38,6 +38,18 @@ vi.mock("@/components/BackButton", () => ({ default: () => null }));
 
 import Scanner from "./Scanner";
 
+// O consentimento para dados de saúde tem testes próprios
+// (ConsentimentoSaudeContext.test.tsx); aqui a conta já consentiu.
+vi.mock("@/contexts/ConsentimentoSaudeContext", () => ({
+  useConsentimentoSaude: () => ({
+    consentido: true,
+    carregando: false,
+    garantir: () => Promise.resolve(true),
+    retirar: () => Promise.resolve(),
+  }),
+}));
+
+
 describe("Scanner — opção de upload removida", () => {
   it("não oferece upload de fotografia única — só a captura guiada por câmara", () => {
     render(

@@ -7,6 +7,7 @@ import { useProfile } from "@/contexts/ProfileContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
+import ConsentimentoSaudeDefinicoes from "@/components/ConsentimentoSaudeDefinicoes";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -258,6 +259,8 @@ const Configuracoes = () => {
           </Card>
 
           {/* Danger Zone */}
+          {isLoggedIn && <ConsentimentoSaudeDefinicoes />}
+
           <Card className="border-destructive/50 bg-destructive/5">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-destructive">

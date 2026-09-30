@@ -52,8 +52,13 @@ Fase 3) quando a conta Meta estiver pronta.
 | Matchmaker | Fase 4B — consulta incluída no Premium vs. paga à parte | Sprint 4 | Preço por consulta (decisão do dono) |
 | Matchmaker | Selo de clínica verificada | Sprint 4 | Negociação comercial com números reais |
 | Matchmaker | `sugerir_clinicas` (correspondência por regras) | Sprint 4, PR C | Existir uma 2.ª clínica |
+<<<<<<< HEAD
 | Exercícios | **W-18 — Fase A da [análise crítica](ANALISE_EXERCICIOS.md) feita em código (2026-09-29):** Treino de Anéis no trial (#120), sessão rápida (#121), evolução em linguagem simples e auto-avaliação separada (#122), lembrete diário por email (job do Cloud Scheduler activo desde 2026-09-30, 18:00 em Luanda). A reescrita sem webcam (#118/#119, mesclada sem revisão) foi mantida por decisão do dono do projecto | Sprint 6 | Fases B e C (ver análise) |
 | Exercícios | **LEG-01 — ⛔ BLOQUEIA O LANÇAMENTO PÚBLICO (não o merge):** Termos e Política de Privacidade ainda descrevem os exercícios como "terapia visual" e "baseados em biometria facial" — **dossiê para o jurista: [`docs/DOSSIE_JURISTA_LEG01.md`](DOSSIE_JURISTA_LEG01.md)** (resumo em [`docs/PENDENTE_REVISAO_LEGAL.md`](PENDENTE_REVISAO_LEGAL.md)) | W-18 | Validação do jurista; decisão do dono do projecto sobre o consentimento (pergunta 5.1 do dossiê) |
+=======
+| Exercícios | **W-18 — Fase A da [análise crítica](ANALISE_EXERCICIOS.md) feita em código (2026-09-29):** Treino de Anéis no trial (#120), sessão rápida (#121), evolução em linguagem simples e auto-avaliação separada (#122), lembrete diário por email. **Falta só criar o job do Cloud Scheduler** (comando abaixo). A reescrita sem webcam (#118/#119, mesclada sem revisão) foi mantida por decisão do dono do projecto | Sprint 6 | Wilson: criar o job; depois, Fases B e C (ver análise) |
+| Exercícios | **LEG-01 — resolvido sem jurista (2026-09-30):** Termos e Política reescritos a partir da Lei n.º 22/11 e do que o site faz; consentimento expresso e separado para dados de saúde, exigido pela API (`ConsentimentoSaudeService`); contas só para maiores de 18. **Falta a notificação/autorização à APD** ([`docs/APD_NOTIFICACAO.md`](APD_NOTIFICACAO.md)) | W-18 | Lukeny: submeter à APD; confirmar onde está alojado o `janelas-scanner-api` |
+>>>>>>> 6b1f12a (feat(legal): consentimento expresso para dados de saúde e Política/Termos reescritos (LEG-01))
 | Scanner | W-13/W-14/W-16/L-14 — método, calibração, validação clínica, ecrã de resultados | Sprint 3 | Parceiro clínico (bloqueio nº 8) |
 | Scanner | Ecrã de resultados mostra 6 categorias, o cálculo só produz 2 | CLAUDE.md §11, W-09 | Localizar o repositório `janelas-scanner-api` |
 | Produto | Histórico de exames com evolução · loja de óculos · conteúdo editável pelo admin | Sprint 6 | — |
@@ -1301,7 +1306,16 @@ acrescentado antes disto agrava o problema.
     passou a pausa entre blocos. Detalhe em CLAUDE.md §1 e §6. **Frente (1) feita;** a
     frente (2), vídeos: o botão "Ver vídeo explicativo" do #116 (`ExercicioVideo`) foi
     **eliminado do frontend** por decisão do produto (2026-09-28); o endpoint da API fica.
-- **LEG-01 · ⛔ Revisão legal dos Termos e da Política de Privacidade — BLOQUEIA O
+- **LEG-01 · Revisão legal dos Termos e da Política de Privacidade — RESOLVIDO SEM
+  JURISTA a 2026-09-30** (decisão do dono do projecto: não há jurista). As perguntas do
+  dossiê foram respondidas com o texto da Lei n.º 22/11: consentimento separado,
+  expresso e registado (art. 13.º e 14.º) antes do primeiro rastreio ou exercício, com
+  declaração de maioridade e de representante legal; a API recusa gravar sem ele (403);
+  contas só para maiores de 18; Política com subcontratantes, localização dos dados e
+  prazos reais. Em falta, fora do código: notificação e pedido de autorização à APD
+  (art. 35.º), preparados em [`docs/APD_NOTIFICACAO.md`](APD_NOTIFICACAO.md).
+  *Histórico abaixo.*
+- **LEG-01 (histórico) · Revisão legal dos Termos e da Política de Privacidade — BLOQUEIA O
   LANÇAMENTO PÚBLICO dos exercícios sem webcam (não bloqueia o merge do código).**
   Aberta a 2026-09-28, com a W-18. Os textos legais ainda dizem que os exercícios são
   "de terapia visual" e que se baseiam em "biometria facial" (isto continua certo para o

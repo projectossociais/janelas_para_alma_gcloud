@@ -70,6 +70,18 @@ vi.mock("sonner", () => ({
 
 import Configuracoes from "./Configuracoes";
 
+// O consentimento para dados de saúde tem testes próprios
+// (ConsentimentoSaudeContext.test.tsx); aqui a conta já consentiu.
+vi.mock("@/contexts/ConsentimentoSaudeContext", () => ({
+  useConsentimentoSaude: () => ({
+    consentido: true,
+    carregando: false,
+    garantir: () => Promise.resolve(true),
+    retirar: () => Promise.resolve(),
+  }),
+}));
+
+
 async function abrirDialogoPassword(user: ReturnType<typeof userEvent.setup>) {
   const botao = await screen.findByText("Mudar Palavra-passe");
   await user.click(botao);

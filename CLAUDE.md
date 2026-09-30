@@ -339,6 +339,16 @@ activa; verificar e testar isso explicitamente.**
    de Luanda; `europe-west1`); segredo `jpa-cron-secret` no Secret Manager. Nunca correr
    o `03-secrets.sh` inteiro só para mexer num segredo: sem `JWT_SECRET_KEY` definido,
    ele gera uma chave de sessão nova e desliga toda a gente (§10).
+9. **Dados de saúde só com consentimento expresso, verificado na API (Lei n.º 22/11,
+   art. 13.º e 14.º; 2026-09-30).** Resultados de rastreio e de exercícios são dados
+   sensíveis. O consentimento é separado dos Termos, dado por um adulto (contas só para
+   maiores de 18; a criança usa a conta do representante legal) e registado com data e
+   versão em `consentimentos_dados_saude` (`ConsentimentoSaudeService`, `VERSAO_ACTUAL`;
+   subir a versão quando o texto mudar de forma material). Toda a rota nova que grave
+   dados de saúde declara `Depends(exigir_consentimento_saude)` (403
+   `consentimento_dados_saude_em_falta`); no frontend, `ConsentimentoSaudeContext`
+   pede-o antes da câmara do scanner e dos exercícios. Sem jurista no projecto: a
+   leitura da lei e o que falta junto da APD estão em `docs/APD_NOTIFICACAO.md`.
 
 ---
 

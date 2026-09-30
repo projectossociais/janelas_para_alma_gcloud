@@ -9,6 +9,7 @@ from app.routers import (
     banner_homepage,
     banners,
     clinicas,
+    consentimento,
     conta,
     contact_messages,
     doacoes,
@@ -66,6 +67,7 @@ app.include_router(agendamentos.router)
 app.include_router(clinicas.router)
 app.include_router(interno.router)
 app.include_router(relatorios.router)
+app.include_router(consentimento.router)
 
 
 @app.get("/saude")

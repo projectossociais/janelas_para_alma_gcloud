@@ -8,6 +8,7 @@ from app.repositories.screening_repository import (
     SQLAlchemyScreeningsRepository,
 )
 from app.repositories.utilizadores_repository import UtilizadorRegisto
+from app.routers.consentimento import exigir_consentimento_saude
 from app.schemas.screening import ScreeningCriar, ScreeningPublica
 
 router = APIRouter(prefix="/screenings", tags=["screenings"])
@@ -22,7 +23,8 @@ def obter_screenings_repository(
 @router.post("", response_model=ScreeningPublica, status_code=status.HTTP_201_CREATED)
 def registar_screening(
     dados: ScreeningCriar,
-    utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
+    # O resultado do rastreio é um dado de saúde: sem consentimento, 403.
+    utilizador: UtilizadorRegisto = Depends(exigir_consentimento_saude),
     repo: SQLAlchemyScreeningsRepository = Depends(obter_screenings_repository),
 ) -> ScreeningRegisto:
     """Grava o resultado de um rastreio já calculado pelo janelas-scanner-api.

@@ -10,12 +10,14 @@ from app.core.dependencies import (
 )
 from app.main import app
 from app.repositories.screening_repository import ScreeningRegisto
+from app.routers.consentimento import obter_consentimento_saude_service
 from app.routers.screenings import obter_screenings_repository
 from app.services.auth_service import AuthService
 from app.services.confirmacao_email_service import ConfirmacaoEmailService
 from app.services.conta_service import ContaService
 from tests.services.test_auth_service import RepositorioFalso
 from tests.services.test_confirmacao_email_service import TokensConfirmacaoRepositorioFalso
+from tests.services.test_consentimento_saude_service import ServicoQueConsenteTodos
 from tests.services.test_recuperacao_password_service import EmailSenderFalso
 
 
@@ -75,6 +77,7 @@ def ambiente():
     repo_screenings = RepositorioScreeningsFalso()
     app.dependency_overrides[obter_auth_service] = lambda: AuthService(repo_auth)
     app.dependency_overrides[obter_screenings_repository] = lambda: repo_screenings
+    app.dependency_overrides[obter_consentimento_saude_service] = ServicoQueConsenteTodos
     app.dependency_overrides[obter_conta_service] = lambda: ContaService(repo_auth)
     app.dependency_overrides[obter_confirmacao_email_service] = lambda: ConfirmacaoEmailService(
         repo_auth, TokensConfirmacaoRepositorioFalso(), EmailSenderFalso()
@@ -187,6 +190,7 @@ def test_nunca_201_quando_a_gravacao_falha() -> None:
     repo_screenings.a_falhar = True
     app.dependency_overrides[obter_auth_service] = lambda: AuthService(repo_auth)
     app.dependency_overrides[obter_screenings_repository] = lambda: repo_screenings
+    app.dependency_overrides[obter_consentimento_saude_service] = ServicoQueConsenteTodos
     app.dependency_overrides[obter_conta_service] = lambda: ContaService(repo_auth)
     app.dependency_overrides[obter_confirmacao_email_service] = lambda: ConfirmacaoEmailService(
         repo_auth, TokensConfirmacaoRepositorioFalso(), EmailSenderFalso()

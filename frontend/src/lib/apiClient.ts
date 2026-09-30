@@ -602,6 +602,26 @@ export const relatoriosApi = {
     pedido<RelatorioPartilhado>(`/relatorios/partilhados/${encodeURIComponent(token)}`),
 };
 
+/** Consentimento para tratar dados de saúde (Lei 22/11, art. 13.º e 14.º).
+ *  Sem ele, a API recusa gravar rastreios e sessões com 403 e o detalhe
+ *  `DETALHE_CONSENTIMENTO_EM_FALTA`. */
+export const DETALHE_CONSENTIMENTO_EM_FALTA = "consentimento_dados_saude_em_falta";
+
+export interface EstadoConsentimentoSaude {
+  consentido: boolean;
+  versao_actual: string;
+  versao_aceite: string | null;
+  aceite_em: string | null;
+  representa_menor: boolean;
+}
+
+export const consentimentoSaudeApi = {
+  estado: () => pedido<EstadoConsentimentoSaude>("/consentimento-saude"),
+  dar: (dados: { declara_maioridade: boolean; aceita_tratamento: boolean; representa_menor: boolean }) =>
+    pedido<EstadoConsentimentoSaude>("/consentimento-saude", { method: "POST", body: JSON.stringify(dados) }),
+  retirar: () => pedido<EstadoConsentimentoSaude>("/consentimento-saude", { method: "DELETE" }),
+};
+
 export type EstadoAcessoExercicios =
   | "sem_sessao"
   | "premium"

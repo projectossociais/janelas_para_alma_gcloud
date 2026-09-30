@@ -4,6 +4,18 @@ import { MemoryRouter } from "react-router-dom";
 import TreinoConvergencia from "@/pages/exercises/TreinoConvergencia";
 import { AcessoExerciciosProvider } from "@/contexts/AcessoExerciciosContext";
 
+// O consentimento para dados de saúde tem testes próprios
+// (ConsentimentoSaudeContext.test.tsx); aqui a conta já consentiu.
+vi.mock("@/contexts/ConsentimentoSaudeContext", () => ({
+  useConsentimentoSaude: () => ({
+    consentido: true,
+    carregando: false,
+    garantir: () => Promise.resolve(true),
+    retirar: () => Promise.resolve(),
+  }),
+}));
+
+
 // Sessão rápida (Fase A, docs/ANALISE_EXERCICIOS.md): da segunda vez em diante
 // um treino abre num só ecrã de confirmação, em vez dos 5-6 passos de preparação.
 

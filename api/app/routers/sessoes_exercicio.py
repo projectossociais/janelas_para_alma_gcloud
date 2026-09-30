@@ -13,6 +13,7 @@ from app.repositories.sessoes_exercicio_repository import (
     SQLAlchemySessoesExercicioRepository,
 )
 from app.repositories.utilizadores_repository import UtilizadorRegisto
+from app.routers.consentimento import exigir_consentimento_saude
 from app.routers.exercicios import obter_acesso_exercicios_service
 from app.schemas.sessao_exercicio import (
     BonusAssiduidadePublico,
@@ -45,7 +46,8 @@ def obter_bonus_assiduidade_service(sessao: Session = Depends(obter_sessao)) -> 
 @router.post("", response_model=SessaoExercicioGravada, status_code=status.HTTP_201_CREATED)
 def registar_sessao(
     dados: SessaoExercicioCriar,
-    utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
+    # Resultados de testes visuais são dados de saúde: sem consentimento, 403.
+    utilizador: UtilizadorRegisto = Depends(exigir_consentimento_saude),
     repo: SQLAlchemySessoesExercicioRepository = Depends(obter_sessoes_exercicio_repository),
     acesso: AcessoExerciciosService = Depends(obter_acesso_exercicios_service),
     bonus_service: BonusAssiduidadeService = Depends(obter_bonus_assiduidade_service),

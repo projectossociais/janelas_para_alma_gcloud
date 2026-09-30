@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
 import EyeLandmarkOverlay from "@/components/EyeLandmarkOverlay";
 import { useAuth } from "@/contexts/AuthContext";
+import { useConsentimentoSaude } from "@/contexts/ConsentimentoSaudeContext";
 import { toast } from "sonner";
 import { submeterRastreioMultiGaze, type ScreeningResponse } from "@/services/api/screeningApi";
 import { screeningsApi, mensagemDeErroApi } from "@/lib/apiClient";
@@ -207,7 +208,13 @@ const Scanner = () => {
     }, 2500);
   }, [navigate]);
 
+  // A câmara só liga depois do consentimento (Lei 22/11, art. 14.º): a imagem
+  // é analisada para medir o alinhamento, um dado de saúde. Com sessão fica
+  // gravado na API; sem sessão vale para esta visita.
+  const { garantir: garantirConsentimento } = useConsentimentoSaude();
+
   const startCamera = async () => {
+    if (!(await garantirConsentimento())) return;
     setCameraError(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({

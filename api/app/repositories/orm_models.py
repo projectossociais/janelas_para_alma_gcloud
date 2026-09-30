@@ -460,6 +460,31 @@ class PartilhaRelatorio(Base):
     revogado_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+class ConsentimentoDadosSaude(Base):
+    """Consentimento expresso para tratar dados de saúde (rastreio, testes e
+    treinos visuais). Lei n.º 22/11, art. 13.º e 14.º: dados de saúde são
+    sensíveis e exigem consentimento inequívoco, expresso e escrito do titular
+    ou do seu representante legal. Separado da aceitação dos Termos, dado por
+    um adulto (contas só para maiores de 18; o menor usa a conta do
+    responsável). Uma linha por aceitação, nunca apagada: é a prova escrita.
+    Retirar o consentimento marca `revogado_em`; aceitar uma versão nova do
+    texto cria outra linha. Ver `ConsentimentoSaudeService`."""
+
+    __tablename__ = "consentimentos_dados_saude"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    utilizador_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    # Versão do texto de consentimento aceite (data, ex.: "2026-09-30").
+    versao: Mapped[str] = mapped_column(String(20), nullable=False)
+    declara_maioridade: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    # Declarou que também o faz como representante legal de um menor.
+    representa_menor: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    aceite_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    revogado_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class SiteContent(Base):
     __tablename__ = "site_content"
 

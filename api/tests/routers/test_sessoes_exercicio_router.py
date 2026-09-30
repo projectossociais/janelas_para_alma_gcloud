@@ -10,6 +10,7 @@ from app.core.dependencies import (
 )
 from app.main import app
 from app.repositories.sessoes_exercicio_repository import DadosVisao, SessaoExercicioRegisto
+from app.routers.consentimento import obter_consentimento_saude_service
 from app.routers.exercicios import obter_acesso_exercicios_service
 from app.routers.sessoes_exercicio import (
     obter_bonus_assiduidade_service,
@@ -27,6 +28,7 @@ from tests.services.test_bonus_assiduidade_service import (
     RepositorioBonusQueFalha,
 )
 from tests.services.test_confirmacao_email_service import TokensConfirmacaoRepositorioFalso
+from tests.services.test_consentimento_saude_service import ServicoQueConsenteTodos
 from tests.services.test_recuperacao_password_service import EmailSenderFalso
 
 
@@ -87,6 +89,7 @@ def ambiente():
     repo_sessoes = RepositorioSessoesFalso()
     app.dependency_overrides[obter_auth_service] = lambda: AuthService(repo_auth)
     app.dependency_overrides[obter_sessoes_exercicio_repository] = lambda: repo_sessoes
+    app.dependency_overrides[obter_consentimento_saude_service] = ServicoQueConsenteTodos
     app.dependency_overrides[obter_acesso_exercicios_service] = _acesso_premium
     # Bónus de assiduidade (Fase B): repositório falso, nunca o Postgres real.
     repo_bonus = RepositorioBonusFalso()
@@ -168,6 +171,7 @@ def test_nunca_201_quando_a_gravacao_falha() -> None:
     repo_sessoes.a_falhar = True
     app.dependency_overrides[obter_auth_service] = lambda: AuthService(repo_auth)
     app.dependency_overrides[obter_sessoes_exercicio_repository] = lambda: repo_sessoes
+    app.dependency_overrides[obter_consentimento_saude_service] = ServicoQueConsenteTodos
     app.dependency_overrides[obter_acesso_exercicios_service] = _acesso_premium
     app.dependency_overrides[obter_conta_service] = lambda: ContaService(repo_auth)
     app.dependency_overrides[obter_confirmacao_email_service] = lambda: ConfirmacaoEmailService(
