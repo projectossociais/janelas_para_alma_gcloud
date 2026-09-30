@@ -100,7 +100,7 @@ marinho ou com texto marinho por cima. Está provado em `marca.test.ts`.
 | Letra | Onde | Estado |
 |---|---|---|
 | **Ubuntu** | Todo o texto do site (títulos e corpo) | Livre (Ubuntu Font Licence), no Google Fonts. Auto-alojar só os pesos usados, subconjunto latino |
-| **LT Renovate** | Palavra do logótipo | **Licença por confirmar:** os sites de fontes contradizem-se ("uso pessoal" vs. "uso comercial permitido"). Até haver confirmação por escrito da LyonsType ou do estúdio do manual (XANUS PRO), só entra como traçado dentro do SVG do logótipo, que não precisa da letra |
+| **LT Renovate** | Palavra do logótipo; títulos de abertura e números grandes, se a direcção escolhida pedir | **Autorizada pelo dono do projecto (2026-09-30), que assume a licença.** Os sites de fontes contradizem-se sobre o uso comercial; fica registado. Auto-alojada (woff2, só os pesos usados), nunca para texto corrido |
 
 **Pesos:** 400 para texto corrido; 500 para etiquetas, botões e títulos pequenos; 700
 para títulos com força (direcção B); **300 (Light) só em títulos ≥ 32 px**, como na
@@ -135,8 +135,7 @@ Nascidos do manual, sem inventar formas novas:
 
 **Não há designer no projecto** (2026-09-29). Estas lacunas fecham-se aqui, com propostas
 testadas no laboratório e aprovadas pelo dono do projecto, e passam a regra quando
-aprovadas. Ao estúdio que fez o manual (XANUS PRO), se for possível contactá-lo, fica
-só uma pergunta: a licença da LT Renovate.
+aprovadas. A licença da LT Renovate ficou decidida pelo dono do projecto (§4).
 
 | Falta | Porque importa no site | Proposta |
 |---|---|---|
@@ -148,7 +147,7 @@ só uma pergunta: a licença da LT Renovate.
 | Cor de erro e de aviso | Formulários, pagamentos | Vermelho funcional, §3 |
 | Hierarquia tipográfica (tamanhos, pesos) | Consistência entre páginas | §4 |
 | Regras de fotografia (quem, onde, como) | Evitar banco de imagens | Preto e branco, pessoas angolanas reais, com consentimento (há crianças) |
-| Licença da LT Renovate | Usar nos títulos do site | §4 |
+| Licença da LT Renovate | Usar nos títulos do site | Decidido: autorizada pelo dono (2026-09-30), §4 |
 
 ---
 

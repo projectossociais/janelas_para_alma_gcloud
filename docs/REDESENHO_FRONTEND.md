@@ -245,9 +245,9 @@ Por responder antes da Fase 0. Registar a resposta e a data aqui quando decidido
 | 1 | A marca muda ou fica? (logótipo e nome, ou rever também na Fase 1) | **Fica** (2026-09-29). Existe um manual de marca ("Um Olhar Alinhado", XANUS PRO, 2025): logótipo, paleta e Ubuntu são fixos. Especificação para o site em `docs/MARCA.md` |
 | 2 | Há orçamento para designer, ilustrador ou fotógrafo angolano? | *pendente* |
 | 3 | Quem desenha? (designer dedicado, Lukeny, ou design proposto pelo Claude com aprovação a cada passo) | **Sem designer** (2026-09-29): propostas feitas em código no laboratório, aprovadas pelo dono do projecto a cada passo. As regras ficam escritas em `docs/MARCA.md`, `docs/PESQUISA_UX.md` e `docs/SISTEMA_DESIGN.md`, para a consistência não depender de uma pessoa |
-| 4 | Qual jornada vem primeiro? (proposta: rastreio e marcação; alternativa: conversão Premium) | *pendente* |
-| 5 | Tema escuro entra no âmbito? (barato se pensado na Fase 1, caro depois) | *pendente* |
-| 6 | Há conta Figma para a equipa? (o plano gratuito chega para começar) | *pendente* |
+| 4 | Qual jornada vem primeiro? (proposta: rastreio e marcação; alternativa: conversão Premium) | **Rastreio e marcação** (2026-09-30) |
+| 5 | Tema escuro entra no âmbito? (barato se pensado na Fase 1, caro depois) | **Sim** (2026-09-30) |
+| 6 | Há conta Figma para a equipa? (o plano gratuito chega para começar) | **Não é precisa** (2026-09-30): sem designer, o design faz-se em código no laboratório |
 
 ---
 
@@ -257,6 +257,13 @@ Acrescentar abaixo, com data, o que for decidido ou detalhado em cada conversa s
 redesenho (referências visuais, páginas a priorizar, gostos e recusas do dono do
 projecto, feedback do Lukeny). Mais recente em cima.
 
+- **2026-09-30** — Respostas do dono: contactos reais tirados do site actual (telefone
+  +244 926 969 819, janelasparaalma18@gmail.com, Instagram @janelas_para_alma); sem NIF;
+  LT Renovate autorizada; o manual não entra no repositório; fotografias à espera de
+  resposta. "Comunidade ▾" (Meu Kamba Estrábico) entra no menu, com actividades vindas
+  das publicações e campanhas das actividades de voluntariado (`docs/ESTRUTURA_SITE.md`
+  §5b). Primeira jornada: rastreio e marcação (decisão 4). Tema escuro no âmbito
+  (decisão 5).
 - **2026-09-30** — Estrutura do site novo em `docs/ESTRUTURA_SITE.md`: cabeçalho com 5
   destinos e "Entrar" sempre visível (também no telemóvel), uma só porta de entrada
   (email primeiro, Google, registo só quando faz falta), página inicial pela ordem das

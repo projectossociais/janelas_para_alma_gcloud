@@ -41,13 +41,14 @@ de "Entrar" visível em qualquer ecrã. O visitante 4 tem um lugar próprio e fo
 ### Computador
 
 ```
-[Logótipo]   Rastreio   Treinos   Clínicas   Sobre ▾   Apoiar          EN   Entrar   [ Fazer rastreio ]
+[Logótipo]   Rastreio   Treinos   Clínicas   Comunidade ▾   Sobre ▾      EN   Entrar   [ Fazer rastreio ]
 ```
 
-- **5 destinos**, não 9. "Sobre ▾" abre um painel com: A nossa história e impacto ·
-  O que é o estrabismo · Equipa · Publicações · Contactos (cada um com uma linha que
-  explica). Abre com clique e com teclado, não só ao passar o rato (Radix
-  NavigationMenu).
+- **5 destinos**, não 9. "Comunidade ▾" é o **Meu Kamba Estrábico** (§5b): Actividades ·
+  Ser voluntário · Doar · Doar óculos usados. "Sobre ▾" abre: A nossa história e impacto ·
+  O que é o estrabismo · Equipa · Publicações · Contactos. Cada entrada com uma linha que
+  explica. Os painéis abrem com clique e com teclado, não só ao passar o rato (Radix
+  NavigationMenu). "Doar" continua forte na página inicial (secção 7) e no rodapé.
 - **À direita, pela ordem de importância:** idioma (discreto), **"Entrar"** em texto e,
   por fim, o único botão cheio do cabeçalho, **"Fazer rastreio"**. Quem volta procura o
   "Entrar" no canto superior direito, e é aí que ele está. Quem chega pela primeira vez
@@ -133,11 +134,50 @@ espaço entre secções de 96 px no computador e 64 px no telemóvel.
 
 ---
 
+## 5b. Comunidade: Meu Kamba Estrábico
+
+**Pedido do dono do projecto (2026-09-30):** os admins publicam as actividades que
+realizaram e as campanhas de voluntariado; **qualquer pessoa vê, sem conta** (dá
+credibilidade); **quem tem conta candidata-se**.
+
+**O que já existe (auditado no código):**
+
+| Peça | Estado hoje | Leitura |
+|---|---|---|
+| Página `/kamba` | Candidatura + próximas actividades + "acções recentes" | A estrutura certa, com o nome certo |
+| "Acções recentes" (`ActivitiesFeed.tsx`) | **Escrito à mão no código** (só a campanha da Gamek) | Não escala: cada acção nova obrigava a mexer no código |
+| `CampanhaGamek.tsx` | Página inteira escrita à mão para uma acção | O mesmo problema |
+| Publicações (`publicacoes`, admin) | Título, resumo, texto, local, data, capa, fotografias e vídeos, rascunho/publicado | **É exactamente um relatório de actividade**, já gerido pelos admins |
+| Actividades de voluntariado (`atividades_voluntariado`, admin) | Título, descrição, local, datas, vagas, estado | São as **campanhas** futuras |
+| Candidatura (`candidaturas_voluntariado`) | Candidatura geral a voluntário, aprovada por um admin | Existe; falta a inscrição **por actividade** |
+
+**Proposta:**
+
+1. **"O que já fizemos" vem das publicações**, não do código. Uma acção realizada é uma
+   publicação com data, local e fotografias (a preto e branco, `docs/MARCA.md`). A página
+   da Gamek passa a ser a primeira publicação; o endereço antigo redirecciona para ela.
+   Cada acção tem a sua página, fácil de partilhar por WhatsApp.
+2. **"Próximas actividades" vem das actividades de voluntariado**, com data, local e vagas
+   restantes. Públicas, sem conta.
+3. **"Quero participar"** numa actividade: sem conta, abre a entrada e **volta à mesma
+   actividade** depois de entrar; com conta, uma confirmação curta com o telefone já
+   preenchido. Um voluntário ainda não aprovado vê que a inscrição fica pendente da
+   aprovação.
+4. **Ser voluntário** (a candidatura geral que já existe) continua, para quem quer ajudar
+   sem uma actividade em concreto.
+5. **Números reais no topo** (actividades realizadas, voluntários activos), calculados a
+   partir dos dados, nunca escritos à mão.
+
+**Trabalho de backend novo (PR próprio, com revisão):** inscrição por actividade (uma
+tabela de inscrições ligada a `atividades_voluntariado`, com o limite de vagas
+verificado na API), e uma forma de marcar as publicações que são relatos de actividade
+(por exemplo, uma categoria), para a Comunidade não mostrar notícias gerais.
+
 ## 6. Rodapé
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
-│ Precisa de ajuda?   WhatsApp · Telefone · Email      Seg–Sex, 8h–17h       │  ← faixa de contacto
+│ Precisa de ajuda?   +244 926 969 819 · janelasparaalma18@gmail.com         │  ← faixa de contacto
 ├──────────────────────────────────────────────────────────────────────────┤
 │ Serviço              Instituição            Ajuda                          │
 │ Rastreio             Sobre nós e impacto    Perguntas frequentes           │
@@ -145,14 +185,18 @@ espaço entre secções de 96 px no computador e 64 px no telemóvel.
 │ Clínicas parceiras   Publicações            Contactos                      │
 │ Preços e Premium     Apoiar · Voluntariado  Para clínicas (entrar)         │
 ├──────────────────────────────────────────────────────────────────────────┤
-│ [Logótipo com assinatura]   Luanda, Angola · Registo/NIF da instituição    │
+│ [Logótipo com assinatura]   Luanda, Angola · Instagram @janelas_para_alma  │
 │ Este serviço é triagem e não substitui uma consulta médica.                │
 │ Privacidade · Termos · Português / English              © 2026            │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
-- Canais, horário e dados legais do esquema são ilustrativos: **usar só os reais**,
-  confirmados pelo dono do projecto.
+- **Contactos reais** (tirados do site actual, 2026-09-30): telefone +244 926 969 819,
+  email janelasparaalma18@gmail.com, Instagram @janelas_para_alma, Luanda. A instituição
+  **não tem NIF**: não se mostra nenhum número de registo.
+- **Não há Facebook nem LinkedIn da instituição:** o rodapé actual tem esses botões a
+  apontar só para `facebook.com` e `linkedin.com`. Saem; só entram redes que existam.
+- Horário de atendimento: só se o dono do projecto o definir.
 - **A faixa de contacto vem primeiro:** num serviço de saúde, poder falar com alguém é
   a maior prova de que há pessoas reais por trás (NN/g, confiança).
 - **3 colunas**, não 5. No telemóvel ficam empilhadas e **abertas** (nada escondido em
@@ -177,9 +221,8 @@ muda o sítio onde cada página aparece no menu. Se algum mudar, fica um redirec
 | Treinos | `Exercicios` (+ progresso e relatório) · na app: Hoje (`DashboardUser`), Jogo |
 | Clínicas | `ClinicalPartners` / marcação, `PortalClinicoOptioptika`, `Parceiros` (para clínicas) |
 | Sobre ▾ | `Impacto` (história e impacto), `Sobre` (o que é o estrabismo), `Equipa`, `Publicacoes`, `JunteSe` (contactos), `Tecnologia` |
-| Apoiar | `Apoiar` (doações), voluntariado |
+| Comunidade ▾ | `Kamba` (Meu Kamba Estrábico: actividades e voluntariado, §5b), `Apoiar` (doar), `Circular` (doar óculos usados), `CampanhaGamek` (passa a publicação; o endereço redirecciona) |
 | Rodapé / ajuda | `Faq`, `Suporte`, `PoliticaPrivacidade`, `TermosUtilizacao` |
-| **A confirmar com o dono** | `Kamba` ("Meu Kamba Estrábico"), `Circular`, `CampanhaGamek`: o que são hoje e se ainda têm lugar no menu ou só por ligação directa |
 
 ---
 
