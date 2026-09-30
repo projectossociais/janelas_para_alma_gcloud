@@ -7,6 +7,7 @@ import { CORES, ESCALA_TIPO, RAIO, type NomeCor } from "../tokens";
 import { useTema, type PreferenciaTema } from "../useTema";
 import { Botao } from "../componentes/Botao";
 import { Campo } from "../componentes/Campo";
+import { Cartao, CartaoLigacao, CartaoTexto, CartaoTitulo } from "../componentes/Cartao";
 import { Simbolo } from "../marca/Simbolo";
 import { DemoAvisos, DemoCartoes, DemoDialogo, DemoEstados, DemoPassos } from "./DemosComponentes";
 import logotipo from "../marca/logotipo-horizontal-sem-assinatura.svg";
@@ -164,6 +165,30 @@ const Montra = () => {
               testes impedem que desçam abaixo das regras.
             </p>
           </div>
+
+          <section aria-labelledby="prototipos" className="pb-16">
+            <h2 id="prototipos" className="text-titulo-p text-tinta">
+              Arquétipos de página, à escala real
+            </h2>
+            <p className="mt-2 max-w-2xl text-corpo text-tinta-suave">
+              Cada tipo de página tem a sua composição, não só a sua cor (docs/LAYOUTS.md).
+            </p>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                ["site", "Site", "Ler e decidir: a página inicial"],
+                ["entrar", "Entrada", "Entrar ou criar conta"],
+                ["tarefa", "Tarefa", "O rastreio, um passo por ecrã"],
+                ["app", "App", "Hoje: voltar todos os dias"],
+              ].map(([id, nome, texto]) => (
+                <Cartao key={id} interactivo>
+                  <CartaoTitulo>
+                    <CartaoLigacao href={`/_montra/prototipos/${id}`}>{nome}</CartaoLigacao>
+                  </CartaoTitulo>
+                  <CartaoTexto>{texto}</CartaoTexto>
+                </Cartao>
+              ))}
+            </div>
+          </section>
 
           <Seccao id="cor" titulo="Cor" descricao="Só nomes com significado. Cada contraste é medido com a cor com que faz par (os fundos, com o texto).">
             <div className="space-y-10">

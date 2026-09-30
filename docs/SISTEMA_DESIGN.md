@@ -43,7 +43,11 @@ frontend/src/design/
                         Esqueleto/ZonaACarregar, Passos/TransicaoPasso, Dialogo
                         (a seguir: cabeçalho, menu, barra de separadores, rodapé)
   useAtraso.ts          só mostra indicadores de espera depois de N ms
-  montra/               /_montra, só em desenvolvimento: a documentação viva
+  layouts/              Contentor, SaltarConteudo, BarraInferior, LayoutSite,
+                        LayoutEntrada, LayoutTarefa, LayoutApp (docs/LAYOUTS.md)
+  navegacao/            CabecalhoSite, MenuMovel, Rodape, NavegacaoApp
+  Ligacao.tsx           ligação sem depender do router (a app injecta o Link)
+  montra/               /_montra e /_montra/prototipos/*, só em desenvolvimento
   testes/               verificação de acessibilidade (axe-core) e tipos dos matchers
   regras-codigo.test.ts as regras deste documento verificadas por máquina
 ```

@@ -173,7 +173,9 @@ Cada fase é entregável sozinha. A "acuidade" marca quão nítido fica o produt
   - [x] Montra `/_montra` (2026-09-30)
   - [x] Botao, Campo, Indicador (2026-09-30)
   - [x] Aviso, Cartao, EstadoVazio, Esqueleto/ZonaACarregar, Passos/TransicaoPasso, Dialogo (2026-09-30)
-  - [ ] Cabeçalho do site e menu no telemóvel, barra de separadores da app, rodapé
+  - [x] Arquétipos de página (`docs/LAYOUTS.md`): Site, Entrada, Tarefa e App, com cabeçalho e
+    menu do telemóvel, rodapé, barra de separadores/lateral da app e protótipos à escala real
+    em `/_montra/prototipos/{site,entrar,tarefa,app}` (2026-09-30)
   - [ ] Página inicial com a estrutura de `docs/ESTRUTURA_SITE.md` §5
 
 ### Fase 2 · Fundações técnicas — 6/24 · ≈ 2 semanas · quase invisível

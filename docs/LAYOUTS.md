@@ -145,7 +145,13 @@ títulos numerados; no computador, um índice fixo à esquerda que acompanha a l
 - A passagem de um arquétipo a outro é visível e com sentido: sair do Site para uma Tarefa
   "tira o barulho"; entrar na App "torna a página da pessoa".
 
-## 4. Onde vive no código
+## 4. Estado (2026-09-30)
+
+Site, Entrada, Tarefa e App estão construídos e testados (componentes com axe e testes de
+comportamento), com protótipos à escala real vistos no telemóvel e no computador, nos dois
+temas. Consola e Documento vêm nas fases 5 e 3.
+
+## 5. Onde vive no código
 
 `src/design/layouts/`: `LayoutSite`, `LayoutEntrada`, `LayoutTarefa`, `LayoutApp` (a
 Consola e o Documento vêm nas fases 5 e 3). Cada um recebe o conteúdo e o texto por
