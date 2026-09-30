@@ -15,6 +15,8 @@
     "src/pages/Inicio.tsx",
     "src/pages/Scanner.tsx",
     "src/pages/ScannerResultados.tsx",
+    "src/pages/MarcarConsulta.tsx",
+    "src/lib/marcacao",
     "src/hooks/useCameraRastreio.ts",
     "src/lib/rastreio",
     "src/vite-env.d.ts"

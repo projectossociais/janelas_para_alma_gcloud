@@ -64,7 +64,7 @@ export const DepoisDoRastreio = () => {
             ]}
             accao={
               <Botao asChild variante="secundario">
-                <Ligacao href={`${localizar("/parceiros")}?agendar=optiotica`}>{t("Inicio.consultaBotao")}</Ligacao>
+                <Ligacao href={localizar("/marcar-consulta")}>{t("Inicio.consultaBotao")}</Ligacao>
               </Botao>
             }
           />

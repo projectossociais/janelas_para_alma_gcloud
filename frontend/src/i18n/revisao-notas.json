@@ -23,7 +23,6 @@
   "KambaHeroCarousel.pessoasEstrabicasECom": "'Pessoas estrábicas' → linguagem centrada na pessoa (AMA): 'people with strabismus'.",
   "Navbar.clinicasOpticasEEspecialistas": "'democratizar o acesso à saúde visual' → 'make vision health accessible to everyone' (sentido, sem o jargão).",
   "Navbar.diagnosticoAssistidoPorInteligencia": "O PT diz 'Diagnóstico assistido por IA', mas o resto do site (Termos, FAQ) diz que o rastreio NÃO é diagnóstico. Traduzi fielmente ('AI-assisted diagnosis'); recomendo mudar PT e EN para 'rastreio'/'screening'.",
-  "OptioptikaBookingDialog.manha08h30As12h00": "Horas no formato AP (8:30 a.m., noon, 2 p.m.). Os horários vêm da clínica; confirmar que continuam válidos.",
   "PartnerDialog.clinicaOftalmologica": "Rótulo mostrado 'Eye Clinic'; o valor enviado continua 'Clínica Oftalmológica' (tPt).",
   "PoliticaPrivacidade.dadosDeNavegacaoE": "Remissão errada já no PT: diz 'ver secção 10', mas os cookies são a secção 11 (a 10 é a conservação de dados). Traduzido à letra; corrigir nos dois idiomas.",
   "PoliticaPrivacidade.oTratamentoDeDados": "Nomes de leis traduzidos descritivamente ('Law No. 22/11 of June 17'); a designação oficial em português da APD é mantida entre parênteses. Não é uma tradução jurídica validada.",

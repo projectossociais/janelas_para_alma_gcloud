@@ -473,7 +473,7 @@ const RegistoPremium = () => {
                         </label>
                         {opt.v === "nao" && diagnostico === "nao" && (
                           <p className="mt-3 text-sm text-muted-foreground ml-7">
-                            <Trans i18nKey="RegistoPremium.recomendamosUmaAvaliacaoPrevia" components={{ ligacao: <Link to={localizar("/parceiros?agendar=optiotica")} className="text-teal underline font-medium" /> }} />
+                            <Trans i18nKey="RegistoPremium.recomendamosUmaAvaliacaoPrevia" components={{ ligacao: <Link to={localizar("/marcar-consulta")} className="text-teal underline font-medium" /> }} />
                           </p>
                         )}
                         {opt.v === "duvida" && diagnostico === "duvida" && (

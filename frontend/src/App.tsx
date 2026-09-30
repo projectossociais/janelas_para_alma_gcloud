@@ -27,6 +27,7 @@ import Suporte from "./pages/Suporte";
 import Exercicios from "./pages/Exercicios";
 import Scanner from "./pages/Scanner";
 import ScannerResultados from "./pages/ScannerResultados";
+import MarcarConsulta from "./pages/MarcarConsulta";
 import Auth from "./pages/Auth";
 import AtualizarPassword from "./pages/AtualizarPassword";
 import ConfirmarEmail from "./pages/ConfirmarEmail";
@@ -117,6 +118,7 @@ const PAGINAS: Record<ChaveRota, ReactElement> = {
   relatorioPartilhado: <RelatorioPartilhado />,
   scanner: <Scanner />,
   scannerResultados: <ScannerResultados />,
+  marcarConsulta: <MarcarConsulta />,
   entrar: <Auth />,
   atualizarPassword: <AtualizarPassword />,
   confirmarEmail: <ConfirmarEmail />,

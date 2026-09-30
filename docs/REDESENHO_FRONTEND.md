@@ -274,6 +274,17 @@ Acrescentar abaixo, com data, o que for decidido ou detalhado em cada conversa s
 redesenho (referências visuais, páginas a priorizar, gostos e recusas do dono do
 projecto, feedback do Lukeny). Mais recente em cima.
 
+- **2026-09-30** — **Marcar consulta** (`/marcar-consulta`, arquétipo Tarefa), em vez do
+  diálogo antigo: como → quando → os seus dados → confirmar (com "Alterar" em cada linha)
+  → pedido enviado. Horários reais em pastilhas por dia, sempre na hora de Luanda; uma
+  falha a carregar diz que falhou (antes aparecia como "sem horários"); sem horários,
+  propõe a outra modalidade e o telefone da clínica; horário ocupado entretanto (409)
+  volta à escolha com a lista nova. Dados pré-preenchidos do perfil; vindo do resultado
+  do rastreio, o pedido fica ligado a ele (a clínica não recebe resultados). O ecrã final
+  diz "pedido enviado", nunca "consulta confirmada". Componentes novos: `GrupoEscolha`
+  (cartões e pastilhas) e `CampoTexto`. Encontrado ao auditar, corrigido no ramo à parte
+  `api/horarios-hora-luanda`: o servidor gerava os horários em UTC (a família via tudo
+  uma hora depois do que a clínica marcou) e os emails não diziam o dia nem a hora.
 - **2026-09-30** — **Rastreio (`/scanner`) no arquétipo Tarefa** (Passo A da jornada
   rastreio+marcação). Quatro passos: preparar (3 confirmações), explicar a câmara antes
   de a pedir (consentimento de saúde primeiro), três fotografias guiadas, medir. Tudo o

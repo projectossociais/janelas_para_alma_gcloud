@@ -86,14 +86,14 @@ describe("ScannerResultados — as três conclusões", () => {
     abrir();
     expect(await screen.findByRole("heading", { level: 1, name: T.avaliacaoTitulo })).toBeInTheDocument();
     expect(screen.getByText(T.avaliacaoAvisoTitulo)).toBeInTheDocument();
-    expect(principal(T.marcarConsulta)).toHaveAttribute("href", "/parceiros?agendar=optiotica");
+    expect(principal(T.marcarConsulta)).toHaveAttribute("href", "/marcar-consulta");
   });
 
   it("normal com fotografias fiáveis: sem sinais, mas deixa marcar consulta na mesma", async () => {
     guardar("Alinhamento Fisiológico Normal", ANALISE_NORMAL);
     abrir();
     expect(await screen.findByRole("heading", { level: 1, name: T.normalTitulo })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: T.marcarMesmoAssim })).toHaveAttribute("href", "/parceiros?agendar=optiotica");
+    expect(screen.getByRole("link", { name: T.marcarMesmoAssim })).toHaveAttribute("href", "/marcar-consulta");
     expect(principal(T.voltarInicio)).toHaveAttribute("href", "/");
   });
 
@@ -112,6 +112,16 @@ describe("ScannerResultados — as três conclusões", () => {
     expect(document.body.textContent).not.toMatch(
       /92\s*%|confian|esotropia|exotropia|hipertropia|hipotropia|Sagrada|Girassol|Multiperfil|Kz|converg/i,
     );
+  });
+});
+
+describe("ScannerResultados — ligação à marcação", () => {
+  it("com o rastreio guardado, a marcação leva o id dele (o pedido fica ligado)", async () => {
+    mockLogado = true;
+    guardar("Necessária Avaliação Oftalmológica", ANALISE_AVALIACAO);
+    abrir("/scanner/resultados?id=scr-1");
+    await screen.findByRole("heading", { level: 1 });
+    expect(principal(T.marcarConsulta)).toHaveAttribute("href", "/marcar-consulta?rastreio=scr-1");
   });
 });
 

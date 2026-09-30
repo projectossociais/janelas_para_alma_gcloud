@@ -46,8 +46,6 @@
   "KambaHeroCarousel.pessoasEstrabicasECom": "health",
   "Navbar.clinicasOpticasEEspecialistas": "duvida",
   "Navbar.diagnosticoAssistidoPorInteligencia": "health",
-  "OptioptikaBookingDialog.consultaPorVideochamadaRecebera": "health",
-  "OptioptikaBookingDialog.manha08h30As12h00": "duvida",
   "Parceiros.acessoDirectoARastreios": "health",
   "PartnerDialog.clinicaOftalmologica": "duvida",
   "PoliticaPrivacidade.aAutoridadeDeControlo": "legal",
@@ -228,5 +226,8 @@
   "Visao.autoAvaliacaoNota": "health",
   "Visao.relatorioAutoAvaliacaoNota": "health",
   "Visao.partilhaTexto": "legal",
-  "Visao.partilhadoAviso": "legal"
+  "Visao.partilhadoAviso": "legal",
+  "MarcarConsulta.partilhado": "legal",
+  "MarcarConsulta.enviadoTexto": "duvida",
+  "MarcarConsulta.onlineDescricao": "duvida"
 }

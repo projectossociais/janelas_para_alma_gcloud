@@ -104,7 +104,7 @@ export const EcraResultado = ({
       {notas}
       <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
         <Button asChild size="lg" className="w-full gap-2 bg-navy text-navy-foreground hover:bg-navy/90 sm:w-auto">
-          <Link to={localizar("/parceiros?agendar=optiotica")}>
+          <Link to={localizar("/marcar-consulta")}>
             <CalendarPlus className="h-4 w-4" />
             {t("Visao.marcarConsulta")}
           </Link>

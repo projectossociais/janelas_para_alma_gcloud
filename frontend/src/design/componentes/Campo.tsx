@@ -1,4 +1,4 @@
-import { forwardRef, useId, type InputHTMLAttributes, type ReactNode } from "react";
+import { forwardRef, useId, type InputHTMLAttributes, type ReactNode, type TextareaHTMLAttributes } from "react";
 import { AlertCircle } from "lucide-react";
 import { cn } from "../cn";
 
@@ -72,3 +72,70 @@ export const Campo = forwardRef<HTMLInputElement, CampoProps>(
   },
 );
 Campo.displayName = "Campo";
+
+/**
+ * Texto em várias linhas (ex.: "motivo da consulta"), com o mesmo rótulo, ajuda
+ * e erro do `Campo`. Mostra quantos caracteres faltam quando há `maxLength`,
+ * para o limite nunca apanhar ninguém de surpresa.
+ */
+export interface CampoTextoProps extends Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, "children"> {
+  rotulo: ReactNode;
+  ajuda?: ReactNode;
+  erro?: ReactNode;
+  /** Ex.: (n) => `Faltam ${n} caracteres` (traduzido por quem usa). */
+  textoRestantes?: (restantes: number) => string;
+}
+
+export const CampoTexto = forwardRef<HTMLTextAreaElement, CampoTextoProps>(
+  ({ rotulo, ajuda, erro, textoRestantes, id, className, value, maxLength, rows = 4, ...props }, ref) => {
+    const idGerado = useId();
+    const idCampo = id ?? idGerado;
+    const idAjuda = ajuda ? `${idCampo}-ajuda` : undefined;
+    const idErro = erro ? `${idCampo}-erro` : undefined;
+    const idRestantes = maxLength && textoRestantes ? `${idCampo}-restantes` : undefined;
+    const descritoPor = [idAjuda, idErro, idRestantes].filter(Boolean).join(" ") || undefined;
+    const restantes = maxLength ? maxLength - String(value ?? "").length : null;
+
+    return (
+      <div className={cn("flex flex-col gap-2", className)}>
+        <label htmlFor={idCampo} className="text-corpo font-medium text-tinta">
+          {rotulo}
+        </label>
+        {ajuda && (
+          <p id={idAjuda} className="text-legenda text-tinta-suave">
+            {ajuda}
+          </p>
+        )}
+        {erro && (
+          <p id={idErro} className="flex items-start gap-1.5 text-legenda font-medium text-erro">
+            <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <span>{erro}</span>
+          </p>
+        )}
+        <textarea
+          ref={ref}
+          id={idCampo}
+          rows={rows}
+          value={value}
+          maxLength={maxLength}
+          aria-invalid={erro ? true : undefined}
+          {...props}
+          aria-describedby={descritoPor}
+          className={cn(
+            "w-full rounded-controlo border border-linha-forte bg-superficie px-4 py-3 text-corpo text-tinta",
+            "placeholder:text-tinta-suave",
+            "transition-colors duration-feedback ease-padrao",
+            "focus-visible:border-accao focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco",
+            erro && "border-erro shadow-contorno-erro",
+          )}
+        />
+        {idRestantes && restantes !== null && textoRestantes && (
+          <p id={idRestantes} className="text-legenda text-tinta-suave">
+            {textoRestantes(restantes)}
+          </p>
+        )}
+      </div>
+    );
+  },
+);
+CampoTexto.displayName = "CampoTexto";

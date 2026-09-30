@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   MapPin,
@@ -14,7 +13,6 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import OptioptikaBookingDialog from "@/components/OptioptikaBookingDialog";
 import { optioptika, OPTIOPTIKA_YELLOW } from "@/data/optioptika";
 import optioptikaLogo from "@/assets/optioptika-logo.png";
 import { useTranslation } from "react-i18next";
@@ -60,17 +58,8 @@ const services = [
   },
 ];
 
-interface ClinicalPartnersProps {
-  defaultOpen?: boolean;
-}
-
-const ClinicalPartners = ({ defaultOpen = false }: ClinicalPartnersProps) => {
+const ClinicalPartners = () => {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(defaultOpen);
-
-  useEffect(() => {
-    if (defaultOpen) setOpen(true);
-  }, [defaultOpen]);
 
   return (
     <section id="parceiros-clinicos" className="pt-8 pb-20 md:pt-12 md:pb-28 bg-muted/40">
@@ -133,13 +122,11 @@ const ClinicalPartners = ({ defaultOpen = false }: ClinicalPartnersProps) => {
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-3 shrink-0">
-                <Button
-                  size="lg"
-                  onClick={() => setOpen(true)}
-                  className="bg-black text-white hover:bg-black/80 font-semibold"
-                >
-                  <CalendarPlus className="w-5 h-5 mr-2" />
-                  {t("ClinicalPartners.agendarConsulta")}
+                <Button asChild size="lg" className="bg-black text-white hover:bg-black/80 font-semibold">
+                  <Link to={localizar("/marcar-consulta")}>
+                    <CalendarPlus className="w-5 h-5 mr-2" />
+                    {t("ClinicalPartners.agendarConsulta")}
+                  </Link>
                 </Button>
                 <Button
                   asChild
@@ -232,7 +219,6 @@ const ClinicalPartners = ({ defaultOpen = false }: ClinicalPartnersProps) => {
         </article>
       </div>
 
-      <OptioptikaBookingDialog open={open} onOpenChange={setOpen} />
 
     </section>
   );

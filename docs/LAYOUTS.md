@@ -151,7 +151,7 @@ Site, Entrada, Tarefa e App estão construídos e testados (componentes com axe 
 comportamento), com protótipos à escala real vistos no telemóvel e no computador, nos dois
 temas. Consola e Documento vêm nas fases 5 e 3.
 
-Páginas reais já no sistema: a página inicial (Site) e o rastreio `/scanner` (Tarefa).
+Páginas reais já no sistema: a página inicial (Site), o rastreio `/scanner` e o seu resultado, e a marcação `/marcar-consulta` (Tarefa).
 Cada arquétipo traz o `ProvedorMovimento`: sem ele as animações `m.*` ficam paradas no
 estado inicial (bug real no rastreio, 2026-09-30; guarda em
 `arquetipos-movimento.test.tsx`).

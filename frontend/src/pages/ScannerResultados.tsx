@@ -107,7 +107,9 @@ const ScannerResultados = () => {
   const { conclusao, analise } = resultado;
   const { Icone, fundo, cor } = ASPECTO[conclusao];
   const nota = textoDoScannerNoIdioma(analise?.recomendacao);
-  const consulta = localizar("/parceiros?agendar=optiotica");
+  // O id do rastreio guardado segue para a marcação: o pedido fica ligado a ele.
+  const idRastreio = params.get("id");
+  const consulta = localizar(idRastreio ? `/marcar-consulta?rastreio=${encodeURIComponent(idRastreio)}` : "/marcar-consulta");
   const rastreio = localizar("/scanner");
 
   // Um só próximo passo, em destaque; o resto fica abaixo, mais discreto.

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { createRef } from "react";
+import { createRef, useState } from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Campo } from "./Campo";
+import { Campo, CampoTexto } from "./Campo";
 import { violacoesAcessibilidade } from "../testes/acessibilidade";
 
 describe("Campo", () => {
@@ -75,5 +75,33 @@ describe("Campo", () => {
       </form>,
     );
     expect(await violacoesAcessibilidade(container)).toEqual([]);
+  });
+});
+
+describe("CampoTexto", () => {
+  it("tem rótulo, e diz quantos caracteres faltam", async () => {
+    const Controlado = () => {
+      const [v, setV] = useState("");
+      return (
+        <CampoTexto
+          rotulo="Motivo"
+          value={v}
+          onChange={(e) => setV(e.target.value)}
+          maxLength={20}
+          textoRestantes={(n) => `Faltam ${n}`}
+        />
+      );
+    };
+    render(<Controlado />);
+    const campo = screen.getByRole("textbox", { name: "Motivo" });
+    await userEvent.type(campo, "olho");
+    expect(campo).toHaveAccessibleDescription("Faltam 16");
+  });
+
+  it("o erro descreve o campo e marca-o como inválido", () => {
+    render(<CampoTexto rotulo="Motivo" erro="Demasiado longo" />);
+    const campo = screen.getByRole("textbox", { name: "Motivo" });
+    expect(campo).toBeInvalid();
+    expect(campo).toHaveAccessibleDescription("Demasiado longo");
   });
 });

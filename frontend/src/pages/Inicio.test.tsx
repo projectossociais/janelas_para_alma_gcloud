@@ -63,7 +63,7 @@ describe("Inicio (página inicial do site novo)", () => {
   it("o preço está dito às claras e a consulta abre a marcação", () => {
     montar();
     expect(screen.getByText(T.treinosPreco)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: T.consultaBotao })).toHaveAttribute("href", "/parceiros?agendar=optiotica");
+    expect(screen.getByRole("link", { name: T.consultaBotao })).toHaveAttribute("href", "/marcar-consulta");
   });
 
   it("o jogo Inclusivamente tem um ponto de entrada (a página antiga tinha; não pode desaparecer)", () => {
