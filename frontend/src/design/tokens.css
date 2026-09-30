@@ -28,6 +28,7 @@
   --sombra-1: 0 1px 2px rgb(0 33 81 / 0.06), 0 4px 16px -8px rgb(0 33 81 / 0.10);
   --sombra-2: 0 2px 6px rgb(0 33 81 / 0.08), 0 16px 40px -16px rgb(0 33 81 / 0.22);
   --letra: 'Ubuntu', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --raio-pequeno: 6px;
   --raio-controlo: 12px;
   --raio-cartao: 16px;
   --raio-pilula: 999px;

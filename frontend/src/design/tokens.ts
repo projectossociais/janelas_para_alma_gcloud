@@ -137,6 +137,8 @@ export const ESCALA_TIPO = {
 
 
 export const RAIO = {
+  // Caixas de selecção: quadradas de cantos suaves. Um círculo leria como rádio.
+  pequeno: "6px",
   controlo: "12px",
   cartao: "16px",
   pilula: "999px",

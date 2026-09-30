@@ -43,6 +43,7 @@ const CLASSE_TIPO: Record<keyof typeof ESCALA_TIPO, string> = {
   abertura: "text-abertura",
 };
 const CLASSE_RAIO: Record<keyof typeof RAIO, string> = {
+  pequeno: "rounded-pequeno",
   controlo: "rounded-controlo",
   cartao: "rounded-cartao",
   pilula: "rounded-pilula",

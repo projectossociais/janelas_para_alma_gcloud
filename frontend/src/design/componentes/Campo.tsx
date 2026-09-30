@@ -19,10 +19,12 @@ export interface CampoProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
   rotulo: ReactNode;
   ajuda?: ReactNode;
   erro?: ReactNode;
+  /** Um botão dentro do campo, à direita (ex.: "Mostrar" na password). */
+  sufixo?: ReactNode;
 }
 
 export const Campo = forwardRef<HTMLInputElement, CampoProps>(
-  ({ rotulo, ajuda, erro, id, className, disabled, ...props }, ref) => {
+  ({ rotulo, ajuda, erro, sufixo, id, className, disabled, ...props }, ref) => {
     const idGerado = useId();
     const idCampo = id ?? idGerado;
     const idAjuda = ajuda ? `${idCampo}-ajuda` : undefined;
@@ -45,6 +47,7 @@ export const Campo = forwardRef<HTMLInputElement, CampoProps>(
             <span>{erro}</span>
           </p>
         )}
+        <div className="relative">
         <input
           ref={ref}
           id={idCampo}
@@ -59,8 +62,11 @@ export const Campo = forwardRef<HTMLInputElement, CampoProps>(
             "focus-visible:border-accao focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco",
             "disabled:cursor-not-allowed disabled:bg-superficie-alt disabled:opacity-70",
             erro && "border-erro shadow-contorno-erro",
+            sufixo && "pr-28",
           )}
         />
+        {sufixo && <div className="absolute inset-y-0 right-1 flex items-center">{sufixo}</div>}
+        </div>
       </div>
     );
   },
