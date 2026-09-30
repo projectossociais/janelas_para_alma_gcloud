@@ -73,3 +73,53 @@ export function paraResultadoEcra(r: ScreeningResponse, agora = new Date()) {
     apiData: r,
   };
 }
+
+/**
+ * O que o ecrã de resultados diz, a partir do que a análise devolveu:
+ *
+ * - `avaliacao`: a análise pediu avaliação (o único sinal que ela calcula hoje).
+ *   Tem prioridade: na dúvida, encaminha-se para o médico.
+ * - `inconclusivo`: não pediu avaliação, mas alguma fotografia não teve rosto
+ *   ou não foi fiável. Um "normal" tirado de fotografias fracas não se mostra
+ *   como normal: pede-se para repetir.
+ * - `normal`: nenhum sinal, com fotografias fiáveis.
+ *
+ * Sem os dados da análise (resultado antigo), decide só pelo diagnóstico
+ * guardado, e tudo o que não for o normal conta como `avaliacao`.
+ */
+export type Conclusao = "avaliacao" | "normal" | "inconclusivo";
+
+export function conclusaoDoRastreio(diagnostico: string, analise: ScreeningResponse | null): Conclusao {
+  if (!analise) return diagnostico === DIAGNOSTICO_NORMAL ? "normal" : "avaliacao";
+  if (requerAvaliacao(analise)) return "avaliacao";
+  const fraca = (analise.posicoes ?? []).some((p) => !p.rosto_detetado || p.qualidade_captura?.fiavel === false);
+  return fraca || !analise.posicoes?.length ? "inconclusivo" : "normal";
+}
+
+export interface ResultadoGuardado {
+  conclusao: Conclusao;
+  data: Date;
+  analise: ScreeningResponse | null;
+}
+
+/**
+ * Lê o resultado que o rastreio deixou em `sessionStorage`. Nunca confia na
+ * forma: um valor estragado ou antigo dá `null` (volta-se ao rastreio), nunca
+ * um ecrã partido.
+ */
+export function lerResultadoGuardado(bruto: string | null): ResultadoGuardado | null {
+  if (!bruto) return null;
+  try {
+    const r = JSON.parse(bruto) as { diagnosis?: unknown; date?: unknown; apiData?: unknown } | null;
+    if (!r || typeof r.diagnosis !== "string" || typeof r.date !== "string") return null;
+    const data = new Date(r.date);
+    if (Number.isNaN(data.getTime())) return null;
+    const analise =
+      r.apiData && typeof r.apiData === "object" && typeof (r.apiData as ScreeningResponse).estado === "string"
+        ? (r.apiData as ScreeningResponse)
+        : null;
+    return { conclusao: conclusaoDoRastreio(r.diagnosis, analise), data, analise };
+  } catch {
+    return null;
+  }
+}

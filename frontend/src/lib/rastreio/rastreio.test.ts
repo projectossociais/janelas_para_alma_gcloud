@@ -4,7 +4,9 @@ import {
   DIAGNOSTICO_AVALIACAO,
   DIAGNOSTICO_NORMAL,
   LUMINANCIA_MINIMA,
+  conclusaoDoRastreio,
   dataUrlParaBlob,
+  lerResultadoGuardado,
   luminanciaMedia,
   paraRegistoScreening,
   paraResultadoEcra,
@@ -75,5 +77,58 @@ describe("paraResultadoEcra", () => {
 
   it("a precisar de avaliação quando a API o diz", () => {
     expect(paraResultadoEcra({ ...RESPOSTA, incomitante: true }).diagnosis).toBe(DIAGNOSTICO_AVALIACAO);
+  });
+});
+
+describe("conclusaoDoRastreio", () => {
+  it("avaliação pedida pela análise ganha a tudo, mesmo com fotografias fracas", () => {
+    const fraca = { ...RESPOSTA, requer_avaliacao_humana: true };
+    expect(conclusaoDoRastreio(DIAGNOSTICO_AVALIACAO, fraca)).toBe("avaliacao");
+  });
+
+  it("sem avaliação mas com uma fotografia sem rosto é inconclusivo, nunca normal", () => {
+    // RESPOSTA tem a posição DIREITA sem rosto detectado.
+    expect(conclusaoDoRastreio(DIAGNOSTICO_NORMAL, RESPOSTA)).toBe("inconclusivo");
+  });
+
+  it("fotografia pouco fiável também é inconclusivo", () => {
+    const r: ScreeningResponse = {
+      ...RESPOSTA,
+      posicoes: [{ posicao: "CENTRO", estado: "ok", rosto_detetado: true, qualidade_captura: { pontuacao: 0.3, fiavel: false } }],
+    };
+    expect(conclusaoDoRastreio(DIAGNOSTICO_NORMAL, r)).toBe("inconclusivo");
+  });
+
+  it("normal só com todas as fotografias fiáveis", () => {
+    const r: ScreeningResponse = {
+      ...RESPOSTA,
+      posicoes: ["CENTRO", "DIREITA", "ESQUERDA"].map((posicao) => ({
+        posicao,
+        estado: "ok",
+        rosto_detetado: true,
+        qualidade_captura: { pontuacao: 0.9, fiavel: true },
+      })),
+    };
+    expect(conclusaoDoRastreio(DIAGNOSTICO_NORMAL, r)).toBe("normal");
+  });
+
+  it("sem dados da análise: só o normal guardado é normal (as 4 categorias antigas contam como avaliação)", () => {
+    expect(conclusaoDoRastreio(DIAGNOSTICO_NORMAL, null)).toBe("normal");
+    expect(conclusaoDoRastreio("Esotropia", null)).toBe("avaliacao");
+  });
+});
+
+describe("lerResultadoGuardado", () => {
+  it("lê o que o rastreio guarda", () => {
+    const r = lerResultadoGuardado(JSON.stringify(paraResultadoEcra({ ...RESPOSTA, incomitante: true })));
+    expect(r?.conclusao).toBe("avaliacao");
+    expect(r?.analise?.variacao_desalinhamento).toBe(1.4);
+  });
+
+  it("vazio, estragado ou sem data dá null", () => {
+    expect(lerResultadoGuardado(null)).toBeNull();
+    expect(lerResultadoGuardado("{isto não é json")).toBeNull();
+    expect(lerResultadoGuardado(JSON.stringify({ diagnosis: DIAGNOSTICO_NORMAL }))).toBeNull();
+    expect(lerResultadoGuardado(JSON.stringify({ diagnosis: DIAGNOSTICO_NORMAL, date: "ontem" }))).toBeNull();
   });
 });

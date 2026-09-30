@@ -282,7 +282,17 @@ projecto, feedback do Lukeny). Mais recente em cima.
   2,5 s e as "fases de detecção" por temporizador. Erro na análise: "Tentar de novo"
   reenvia as mesmas fotografias; a câmara desliga-se depois da última. Lógica pura em
   `lib/rastreio/`, câmara em `hooks/useCameraRastreio.ts`, ambos testados. O diálogo de
-  consentimento passou a usar o sistema de design. Falta o Passo B (resultados).
+  consentimento passou a usar o sistema de design.
+- **2026-09-30** — **Resultado do rastreio** (Passo B), no fim da mesma Tarefa. Três
+  conclusões decididas pelo que a análise mediu (`conclusaoDoRastreio`): avaliação
+  recomendada, sem sinais, ou inconclusivo (um "normal" com uma fotografia sem rosto ou
+  pouco fiável nunca aparece como normal). Um só próximo passo em destaque (marcar
+  consulta, repetir, ou voltar). Saíram: os 4 tipos de estrabismo que o analisador não
+  calcula, a "confiança" (era a qualidade da fotografia, com 92% inventado quando
+  faltava), as clínicas e preços escritos à mão, e a recomendação do Treino de
+  Convergência (contra-indicado em parte de quem tem estrabismo). O PDF para o médico
+  passou a levar as medições reais por posição. Diz-se sempre se o resultado ficou
+  guardado ou não.
 - **2026-09-30** — **Direcção escolhida: A · Clínica** (azul do logótipo como cor de
   acção, muito branco/neutro, Ubuntu, o símbolo que se alinha). Passa a ser a base dos
   tokens definitivos (Fase 1). Inventário do conteúdo actual, com o que fica, se reescreve

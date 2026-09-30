@@ -16,6 +16,8 @@ const fontes = import.meta.glob(
     "/src/components/inicio/**/*.{ts,tsx}",
     "/src/pages/Inicio.tsx",
     "/src/pages/Scanner.tsx",
+    "/src/pages/ScannerResultados.tsx",
+    "/src/lib/rastreio/relatorioRastreio.ts",
     "/src/hooks/useCameraRastreio.ts",
     "/src/lib/rastreio/rastreio.ts",
     "!/src/design/**/*.test.{ts,tsx}",
