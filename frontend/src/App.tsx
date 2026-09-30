@@ -13,66 +13,67 @@ import { AcessoExerciciosProvider } from "@/contexts/AcessoExerciciosContext";
 import { CarteiraJogoProvider } from "@/contexts/CarteiraJogoContext";
 import { ConsentimentoSaudeProvider } from "@/contexts/ConsentimentoSaudeContext";
 import Inicio from "./pages/Inicio";
-import Sobre from "./pages/Sobre";
-import Equipa from "./pages/Equipa";
-import Kamba from "./pages/Kamba";
-import CampanhaGamek from "./pages/CampanhaGamek";
-import Publicacoes from "./pages/Publicacoes";
-import PublicacaoDetalhe from "./pages/PublicacaoDetalhe";
-import Parceiros from "./pages/Parceiros";
-import PortalClinicoOptioptika from "./pages/PortalClinicoOptioptika";
-import Tecnologia from "./pages/Tecnologia";
-import Circular from "./pages/Circular";
-import Suporte from "./pages/Suporte";
-import Exercicios from "./pages/Exercicios";
-import Scanner from "./pages/Scanner";
-import ScannerResultados from "./pages/ScannerResultados";
-import MarcarConsulta from "./pages/MarcarConsulta";
+const Sobre = lazy(() => import("./pages/Sobre"));
+const Equipa = lazy(() => import("./pages/Equipa"));
+const Kamba = lazy(() => import("./pages/Kamba"));
+const CampanhaGamek = lazy(() => import("./pages/CampanhaGamek"));
+const Publicacoes = lazy(() => import("./pages/Publicacoes"));
+const PublicacaoDetalhe = lazy(() => import("./pages/PublicacaoDetalhe"));
+const Parceiros = lazy(() => import("./pages/Parceiros"));
+const PortalClinicoOptioptika = lazy(() => import("./pages/PortalClinicoOptioptika"));
+const Tecnologia = lazy(() => import("./pages/Tecnologia"));
+const Circular = lazy(() => import("./pages/Circular"));
+const Suporte = lazy(() => import("./pages/Suporte"));
+const Exercicios = lazy(() => import("./pages/Exercicios"));
+const Scanner = lazy(() => import("./pages/Scanner"));
+const ScannerResultados = lazy(() => import("./pages/ScannerResultados"));
+const MarcarConsulta = lazy(() => import("./pages/MarcarConsulta"));
 import { EstruturaSite } from "./components/site/EstruturaSite";
-import Auth from "./pages/Auth";
-import AtualizarPassword from "./pages/AtualizarPassword";
-import ConfirmarEmail from "./pages/ConfirmarEmail";
-import Apoiar from "./pages/Apoiar";
-import Configuracoes from "./pages/Configuracoes";
-import EditarPerfil from "./pages/EditarPerfil";
-import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
-import TermosUtilizacao from "./pages/TermosUtilizacao";
-import Faq from "./pages/Faq";
-import Impacto from "./pages/Impacto";
-import JunteSe from "./pages/JunteSe";
-import RegistoPremium from "./pages/RegistoPremium";
-import RoadmapTecnico from "./pages/RoadmapTecnico";
-import MenuJogo from "./pages/jogo/MenuJogo";
-import JogoCuriosidades from "./pages/jogo/JogoCuriosidades";
-import PerfilJogador from "./pages/jogo/PerfilJogador";
-import LojaDiamantes from "./pages/jogo/LojaDiamantes";
-import LojaMoedas from "./pages/jogo/LojaMoedas";
+import { CarregarPagina } from "./components/site/CarregarPagina";
+const Auth = lazy(() => import("./pages/Auth"));
+const AtualizarPassword = lazy(() => import("./pages/AtualizarPassword"));
+const ConfirmarEmail = lazy(() => import("./pages/ConfirmarEmail"));
+const Apoiar = lazy(() => import("./pages/Apoiar"));
+const Configuracoes = lazy(() => import("./pages/Configuracoes"));
+const EditarPerfil = lazy(() => import("./pages/EditarPerfil"));
+const PoliticaPrivacidade = lazy(() => import("./pages/PoliticaPrivacidade"));
+const TermosUtilizacao = lazy(() => import("./pages/TermosUtilizacao"));
+const Faq = lazy(() => import("./pages/Faq"));
+const Impacto = lazy(() => import("./pages/Impacto"));
+const JunteSe = lazy(() => import("./pages/JunteSe"));
+const RegistoPremium = lazy(() => import("./pages/RegistoPremium"));
+const RoadmapTecnico = lazy(() => import("./pages/RoadmapTecnico"));
+const MenuJogo = lazy(() => import("./pages/jogo/MenuJogo"));
+const JogoCuriosidades = lazy(() => import("./pages/jogo/JogoCuriosidades"));
+const PerfilJogador = lazy(() => import("./pages/jogo/PerfilJogador"));
+const LojaDiamantes = lazy(() => import("./pages/jogo/LojaDiamantes"));
+const LojaMoedas = lazy(() => import("./pages/jogo/LojaMoedas"));
 
-import TesteAcuidade from "./pages/exercises/TesteAcuidade";
-import TesteContraste from "./pages/exercises/TesteContraste";
-import TesteAstigmatismo from "./pages/exercises/TesteAstigmatismo";
-import TesteEstereopsia from "./pages/exercises/TesteEstereopsia";
-import TreinoAneis from "./pages/exercises/TreinoAneis";
-import TreinoContrasteBlocos from "./pages/exercises/TreinoContrasteBlocos";
-import TreinoConvergencia from "./pages/exercises/TreinoConvergencia";
-import TreinoPertoLonge from "./pages/exercises/TreinoPertoLonge";
-import ProgressoVisao from "./pages/exercises/ProgressoVisao";
-import RelatorioSemanal from "./pages/exercises/RelatorioSemanal";
-import RelatorioPartilhado from "./pages/exercises/RelatorioPartilhado";
-import DashboardUser from "./pages/DashboardUser";
-import DashboardPro from "./pages/DashboardPro";
-import AdminLayout from "./pages/admin/AdminLayout";
-import AdminOverview from "./pages/admin/AdminOverview";
-import AdminUsers from "./pages/admin/AdminUsers";
-import AdminAtividade from "./pages/admin/AdminAtividade";
-import AdminInbox from "./pages/admin/AdminInbox";
-import AdminBanners from "./pages/admin/AdminBanners";
-import AdminNotifications from "./pages/admin/AdminNotifications";
-import AdminPublicacoes from "./pages/admin/AdminPublicacoes";
-import AdminAdmins from "./pages/admin/AdminAdmins";
-import AdminVoluntariado from "./pages/admin/AdminVoluntariado";
-import AdminAgendamentos from "./pages/admin/AdminAgendamentos";
-import AdminClinicas from "./pages/admin/AdminClinicas";
+const TesteAcuidade = lazy(() => import("./pages/exercises/TesteAcuidade"));
+const TesteContraste = lazy(() => import("./pages/exercises/TesteContraste"));
+const TesteAstigmatismo = lazy(() => import("./pages/exercises/TesteAstigmatismo"));
+const TesteEstereopsia = lazy(() => import("./pages/exercises/TesteEstereopsia"));
+const TreinoAneis = lazy(() => import("./pages/exercises/TreinoAneis"));
+const TreinoContrasteBlocos = lazy(() => import("./pages/exercises/TreinoContrasteBlocos"));
+const TreinoConvergencia = lazy(() => import("./pages/exercises/TreinoConvergencia"));
+const TreinoPertoLonge = lazy(() => import("./pages/exercises/TreinoPertoLonge"));
+const ProgressoVisao = lazy(() => import("./pages/exercises/ProgressoVisao"));
+const RelatorioSemanal = lazy(() => import("./pages/exercises/RelatorioSemanal"));
+const RelatorioPartilhado = lazy(() => import("./pages/exercises/RelatorioPartilhado"));
+const DashboardUser = lazy(() => import("./pages/DashboardUser"));
+const DashboardPro = lazy(() => import("./pages/DashboardPro"));
+const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
+const AdminOverview = lazy(() => import("./pages/admin/AdminOverview"));
+const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
+const AdminAtividade = lazy(() => import("./pages/admin/AdminAtividade"));
+const AdminInbox = lazy(() => import("./pages/admin/AdminInbox"));
+const AdminBanners = lazy(() => import("./pages/admin/AdminBanners"));
+const AdminNotifications = lazy(() => import("./pages/admin/AdminNotifications"));
+const AdminPublicacoes = lazy(() => import("./pages/admin/AdminPublicacoes"));
+const AdminAdmins = lazy(() => import("./pages/admin/AdminAdmins"));
+const AdminVoluntariado = lazy(() => import("./pages/admin/AdminVoluntariado"));
+const AdminAgendamentos = lazy(() => import("./pages/admin/AdminAgendamentos"));
+const AdminClinicas = lazy(() => import("./pages/admin/AdminClinicas"));
 import GlobalBanner from "./components/GlobalBanner";
 import { SiteBannerProvider } from "./contexts/SiteBannerContext";
 import ScrollToTop from "./components/ScrollToTop";
@@ -192,6 +193,9 @@ const App = () => (
               <ScrollToTop />
               <IdiomaDaRota>
               <GlobalBanner />
+              {/* Cada página chega no seu próprio ficheiro (divisão por rotas): o
+                  pacote inicial leva só a página inicial e a estrutura. */}
+              <Suspense fallback={<CarregarPagina />}>
               <Routes>
                 {ROTAS.map((r) => (
                   <Route key={r.chave} path={r.pt} element={pagina(r.chave)} />
@@ -262,6 +266,7 @@ const App = () => (
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              </Suspense>
               </IdiomaDaRota>
               </SiteBannerProvider>
               </ConsentimentoSaudeProvider>

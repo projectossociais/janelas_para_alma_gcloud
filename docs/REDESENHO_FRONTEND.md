@@ -274,6 +274,12 @@ Acrescentar abaixo, com data, o que for decidido ou detalhado em cada conversa s
 redesenho (referências visuais, páginas a priorizar, gostos e recusas do dono do
 projecto, feedback do Lukeny). Mais recente em cima.
 
+- **2026-09-30** — **Divisão do código por rotas** (Fase 2): cada página chega no seu
+  próprio ficheiro (`React.lazy`), menos a página inicial e o 404. O pacote principal
+  desceu de 649 KB para 300 KB (gzip). Enquanto uma página carrega, nada nos primeiros
+  400 ms; depois, "A carregar a página…". Próxima optimização possível: não incluir o
+  inglês (~53 KB gzip) enquanto está desligado em produção; mexe no carregamento
+  síncrono do idioma (`IdiomaDaRota`), por isso fica para uma decisão à parte.
 - **2026-09-30** — **Cabeçalho e rodapé novos em todo o site público**, por transição:
   as 18 páginas públicas ainda por redesenhar vivem dentro do `EstruturaSite`
   (`PAGINAS_SITE` em `App.tsx`), e o `Navbar`/`Footer` antigos apagam-se lá dentro
