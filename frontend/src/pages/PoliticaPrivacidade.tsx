@@ -215,7 +215,7 @@ const PoliticaPrivacidade = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
-      <main className="flex-1 pt-24 pb-16 px-4">
+      <div className="flex-1 pt-10 pb-16 px-4">
         <div className="max-w-3xl mx-auto">
           <BackButton />
 
@@ -264,7 +264,7 @@ const PoliticaPrivacidade = () => {
             <Trans i18nKey="PoliticaPrivacidade.ultimaActualizacaoSetembroDe" components={{ a: <a href="mailto:janelasparaalma18@gmail.com" className="text-primary hover:underline font-medium" /> }} />
           </p>
         </div>
-      </main>
+      </div>
       <Footer />
     </div>
   );

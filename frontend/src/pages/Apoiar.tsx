@@ -338,9 +338,9 @@ const Apoiar = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1">
+      <div className="flex-1">
         {/* Hero */}
-        <section className="relative pt-28 pb-16 bg-gradient-to-br from-navy via-navy to-teal/80 text-primary-foreground overflow-hidden">
+        <section className="relative pt-16 pb-16 bg-gradient-to-br from-navy via-navy to-teal/80 text-primary-foreground overflow-hidden">
           <div
             className="absolute inset-0 opacity-10 pointer-events-none"
             style={{
@@ -545,7 +545,7 @@ const Apoiar = () => {
             </p>
           </div>
         </section>
-      </main>
+      </div>
       <Footer />
 
       <Dialog open={open} onOpenChange={(v) => (v ? setOpen(true) : closeDialog())}>

@@ -10,13 +10,16 @@ import type { Destino } from "@/design/navegacao/tipos";
 import logotipo from "@/design/marca/logotipo-horizontal-sem-assinatura.svg";
 import logotipoCompleto from "@/design/marca/logotipo-horizontal.svg";
 import { AlternarIdioma } from "./AlternarIdioma";
+import { ContextoSiteNovo } from "./contextoSiteNovo";
 import { LigacaoRouter } from "./LigacaoRouter";
 
 /**
  * O arquétipo Site ligado ao site real (docs/LAYOUTS.md §2.1;
  * docs/ESTRUTURA_SITE.md §3 e §6): rotas bilingues (`localizar`), sessão,
  * idioma e contactos reais. Cada página migrada do site passa a usar esta
- * estrutura; as que ainda não migraram continuam com a Navbar antiga.
+ * estrutura. As páginas públicas ainda por redesenhar também vivem aqui, por
+ * transição (`PAGINAS_SITE` em `App.tsx`): o `Navbar`/`Footer` antigos
+ * apagam-se lá dentro (`contextoSiteNovo.ts`).
  */
 
 // Contactos reais da instituição (site actual, 2026-09-30). Não há NIF.
@@ -108,6 +111,9 @@ export const EstruturaSite = ({ children, barraMovel, barraVisivel }: EstruturaS
                 { rotulo: t("SiteNovo.rastreio"), href: em("/scanner") },
                 { rotulo: t("SiteNovo.treinosEmCasa"), href: em("/exercicios") },
                 { rotulo: t("SiteNovo.clinicasParceiras"), href: em("/parceiros") },
+                // O jogo não está no cabeçalho (5 destinos, docs/ESTRUTURA_SITE.md):
+                // fica aqui, em todas as páginas públicas, e na secção da página inicial.
+                { rotulo: t("SiteNovo.jogo"), href: em("/jogo-curiosidades") },
               ],
             },
             {
@@ -141,7 +147,7 @@ export const EstruturaSite = ({ children, barraMovel, barraVisivel }: EstruturaS
           rotuloNavegacao: t("SiteNovo.ligacoesRodape"),
         }}
       >
-        {children}
+        <ContextoSiteNovo.Provider value={true}>{children}</ContextoSiteNovo.Provider>
       </LayoutSite>
     </ProvedorLigacao>
   );

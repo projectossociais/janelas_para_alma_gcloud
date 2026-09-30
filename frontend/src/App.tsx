@@ -28,6 +28,7 @@ import Exercicios from "./pages/Exercicios";
 import Scanner from "./pages/Scanner";
 import ScannerResultados from "./pages/ScannerResultados";
 import MarcarConsulta from "./pages/MarcarConsulta";
+import { EstruturaSite } from "./components/site/EstruturaSite";
 import Auth from "./pages/Auth";
 import AtualizarPassword from "./pages/AtualizarPassword";
 import ConfirmarEmail from "./pages/ConfirmarEmail";
@@ -85,6 +86,38 @@ const Prototipos = import.meta.env.DEV ? lazy(() => import("./design/montra/prot
 import IdiomaDaRota from "./i18n/IdiomaDaRota";
 import { inglesAtivo } from "./i18n/idiomas";
 import { ALIASES_PT, EXERCICIOS_RETIRADOS, ROTAS, ROTAS_BILINGUES, type ChaveRota } from "./i18n/rotas";
+
+/**
+ * Páginas públicas ainda por redesenhar que já usam o cabeçalho e o rodapé
+ * novos (transição, docs/REDESENHO_FRONTEND.md): o site público fica coerente
+ * de ponta a ponta. As páginas da conta (painel, definições, jogo, exercícios)
+ * ficam com o cabeçalho antigo até ao arquétipo App (Fase 4), que tem o menu de
+ * conta e as notificações. Cada página sai daqui quando for redesenhada.
+ */
+const PAGINAS_SITE: ReadonlySet<ChaveRota> = new Set<ChaveRota>([
+  "sobre",
+  "equipa",
+  "kamba",
+  "campanhaGamek",
+  "publicacoes",
+  "publicacaoDetalhe",
+  "parceiros",
+  "portalClinico",
+  "portalClinicoOptioptika",
+  "tecnologia",
+  "circular",
+  "suporte",
+  "exercicios",
+  "apoiar",
+  "politicaPrivacidade",
+  "termosUtilizacao",
+  "faq",
+  "impacto",
+  "junteSe",
+]);
+
+const pagina = (chave: ChaveRota) =>
+  PAGINAS_SITE.has(chave) ? <EstruturaSite>{PAGINAS[chave]}</EstruturaSite> : PAGINAS[chave];
 
 /**
  * Que componente renderiza cada página do mapa de rotas (`src/i18n/rotas.ts`).
@@ -161,10 +194,10 @@ const App = () => (
               <GlobalBanner />
               <Routes>
                 {ROTAS.map((r) => (
-                  <Route key={r.chave} path={r.pt} element={PAGINAS[r.chave]} />
+                  <Route key={r.chave} path={r.pt} element={pagina(r.chave)} />
                 ))}
                 {ALIASES_PT.map((a) => (
-                  <Route key={a.pt} path={a.pt} element={PAGINAS[a.chave]} />
+                  <Route key={a.pt} path={a.pt} element={pagina(a.chave)} />
                 ))}
                 {/* Exercícios retirados (2026-09-28): redireccionam para a lista, na mesma língua. */}
                 {EXERCICIOS_RETIRADOS.map((r) => (
@@ -173,7 +206,7 @@ const App = () => (
                 {/* Versão inglesa: só existe com VITE_ENABLE_EN=true; sem ela, /en/* cai no 404. Páginas só em PT (jogo) não têm rota inglesa. */}
                 {inglesAtivo() &&
                   ROTAS_BILINGUES.map((r) => (
-                    <Route key={`en:${r.chave}`} path={r.en} element={PAGINAS[r.chave]} />
+                    <Route key={`en:${r.chave}`} path={r.en} element={pagina(r.chave)} />
                   ))}
                 {inglesAtivo() &&
                   EXERCICIOS_RETIRADOS.map((r) => (

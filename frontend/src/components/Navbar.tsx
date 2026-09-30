@@ -1,3 +1,4 @@
+import { useDentroDoSiteNovo } from "@/components/site/contextoSiteNovo";
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Menu, Search, ArrowRight, User, Settings, Shield, LogOut, LogIn, Eye, LayoutDashboard, Gamepad2 } from "lucide-react";
@@ -399,7 +400,7 @@ const profissionalLinks: NavItem[] = [
 
 
 
-const Navbar = () => {
+const NavbarAntigo = () => {
   const { t } = useTranslation();
   const [scrolled, setScrolled] = useState(false);
   const [isScrollingDown, setIsScrollingDown] = useState(false);
@@ -794,5 +795,8 @@ const Navbar = () => {
     </>
   );
 };
+
+/** Dentro do site novo (transição do redesenho) não se desenha: o `EstruturaSite` já tem o seu. */
+const Navbar = () => (useDentroDoSiteNovo() ? null : <NavbarAntigo />);
 
 export default Navbar;

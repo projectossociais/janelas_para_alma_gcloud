@@ -99,7 +99,7 @@ const PortalClinicoOptioptika = () => {
       <Navbar />
       <BackButton fallbackPath={localizar("/portal-clinico")} label={t("PortalClinicoOptioptika.voltarAoPortalClinico")} />
 
-      <main className="flex-1">
+      <div className="flex-1">
         {/* Hero */}
         <section
           className="relative overflow-hidden py-16 md:py-24"
@@ -382,7 +382,7 @@ const PortalClinicoOptioptika = () => {
             </div>
           </div>
         </section>
-      </main>
+      </div>
 
       <Footer />
 

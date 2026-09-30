@@ -56,7 +56,7 @@ const CampanhaGamek = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
       <BackButton fallbackPath={localizar("/kamba")} label={t("CampanhaGamek.voltarAoMeuKamba")} />
-      <main className="flex-1">
+      <div className="flex-1">
         <div className="container">
           <div className="max-w-3xl mx-auto flex flex-col gap-12 py-10">
             <header className="text-center space-y-2">
@@ -113,7 +113,7 @@ const CampanhaGamek = () => {
             ))}
           </div>
         </div>
-      </main>
+      </div>
       <Footer />
     </div>
   );

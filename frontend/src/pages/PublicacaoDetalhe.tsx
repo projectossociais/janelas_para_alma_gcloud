@@ -59,7 +59,7 @@ const PublicacaoDetalhe = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
       <BackButton fallbackPath={localizar("/publicacoes")} label={t("PublicacaoDetalhe.voltarAsPublicacoes")} />
-      <main className="flex-1">
+      <div className="flex-1">
         <div className="container py-10">
           {aCarregar && (
             <div className="flex justify-center py-16">
@@ -156,7 +156,7 @@ const PublicacaoDetalhe = () => {
             </article>
           )}
         </div>
-      </main>
+      </div>
       <Footer />
     </div>
   );

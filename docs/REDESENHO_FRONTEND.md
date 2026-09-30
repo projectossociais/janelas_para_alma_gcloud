@@ -274,6 +274,14 @@ Acrescentar abaixo, com data, o que for decidido ou detalhado em cada conversa s
 redesenho (referências visuais, páginas a priorizar, gostos e recusas do dono do
 projecto, feedback do Lukeny). Mais recente em cima.
 
+- **2026-09-30** — **Cabeçalho e rodapé novos em todo o site público**, por transição:
+  as 18 páginas públicas ainda por redesenhar vivem dentro do `EstruturaSite`
+  (`PAGINAS_SITE` em `App.tsx`), e o `Navbar`/`Footer` antigos apagam-se lá dentro
+  (`contextoSiteNovo.ts`). O `<main>` próprio delas passou a `<div>` (não pode haver dois)
+  e saíram as folgas do cabeçalho fixo antigo. As páginas da conta (painel, definições,
+  jogo, exercícios) ficam com o cabeçalho antigo até ao arquétipo App (Fase 4), que tem o
+  menu de conta e as notificações: a fronteira coincide com a mudança de arquétipo. O jogo
+  saiu do cabeçalho e ficou no rodapé (coluna Serviço) e na secção da página inicial.
 - **2026-09-30** — **Marcar consulta** (`/marcar-consulta`, arquétipo Tarefa), em vez do
   diálogo antigo: como → quando → os seus dados → confirmar (com "Alterar" em cada linha)
   → pedido enviado. Horários reais em pastilhas por dia, sempre na hora de Luanda; uma

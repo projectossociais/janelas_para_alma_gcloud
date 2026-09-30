@@ -6,9 +6,9 @@ const JunteSe = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1 pt-16">
+      <div className="flex-1">
         <ContactSection />
-      </main>
+      </div>
       <Footer />
     </div>
   );
