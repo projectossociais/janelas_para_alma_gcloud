@@ -151,6 +151,11 @@ Site, Entrada, Tarefa e App estão construídos e testados (componentes com axe 
 comportamento), com protótipos à escala real vistos no telemóvel e no computador, nos dois
 temas. Consola e Documento vêm nas fases 5 e 3.
 
+Páginas reais já no sistema: a página inicial (Site) e o rastreio `/scanner` (Tarefa).
+Cada arquétipo traz o `ProvedorMovimento`: sem ele as animações `m.*` ficam paradas no
+estado inicial (bug real no rastreio, 2026-09-30; guarda em
+`arquetipos-movimento.test.tsx`).
+
 ## 5. Onde vive no código
 
 `src/design/layouts/`: `LayoutSite`, `LayoutEntrada`, `LayoutTarefa`, `LayoutApp` (a

@@ -4,16 +4,10 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { consentimentoSaudeApi, mensagemDeErroApi } from "@/lib/apiClient";
 import { localizar } from "@/i18n/rotas";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Aviso } from "@/design/componentes/Aviso";
+import { Botao } from "@/design/componentes/Botao";
+import { Dialogo, DialogoConteudo } from "@/design/componentes/Dialogo";
+import { OpcaoConfirmar } from "@/design/componentes/OpcaoConfirmar";
 
 interface ConsentimentoSaudeContextType {
   /** Com sessão: o que a API diz. Sem sessão: se aceitou nesta visita. */
@@ -121,65 +115,57 @@ export const ConsentimentoSaudeProvider = ({ children }: { children: ReactNode }
   return (
     <ConsentimentoSaudeContext.Provider value={{ consentido, carregando, garantir, retirar }}>
       {children}
-      <Dialog open={aberto} onOpenChange={(abrir) => !abrir && fechar(false)}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{t("ConsentimentoSaude.titulo")}</DialogTitle>
-            <DialogDescription>{t("ConsentimentoSaude.explicacao")}</DialogDescription>
-          </DialogHeader>
-          <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+      <Dialogo open={aberto} onOpenChange={(abrir) => !abrir && fechar(false)}>
+        <DialogoConteudo
+          titulo={t("ConsentimentoSaude.titulo")}
+          descricao={t("ConsentimentoSaude.explicacao")}
+          rotuloFechar={t("ConsentimentoSaude.fechar")}
+          rodape={
+            <>
+              <Botao variante="fantasma" onClick={() => fechar(false)} disabled={aGravar}>
+                {t("ConsentimentoSaude.agoraNao")}
+              </Botao>
+              <Botao onClick={() => void aceitar()} disabled={!maioridade || !aceita} aCarregar={aGravar}>
+                {aGravar ? t("ConsentimentoSaude.aGravar") : t("ConsentimentoSaude.aceitarEContinuar")}
+              </Botao>
+            </>
+          }
+        >
+          <ul className="flex list-disc flex-col gap-2 pl-5 text-legenda text-tinta-suave">
             <li>{t("ConsentimentoSaude.pontoQueDados")}</li>
             <li>{t("ConsentimentoSaude.pontoFotografias")}</li>
             <li>{t("ConsentimentoSaude.pontoQuemVe")}</li>
             <li>{t("ConsentimentoSaude.pontoOnde")}</li>
             <li>{t("ConsentimentoSaude.pontoRetirar")}</li>
           </ul>
-          <div className="space-y-4 pt-2">
-            <label className="flex items-start gap-3 text-sm">
-              <Checkbox
-                checked={maioridade}
-                onCheckedChange={(v) => setMaioridade(v === true)}
-                className="mt-0.5"
-                aria-describedby="consentimento-maioridade"
-              />
-              <span id="consentimento-maioridade">{t("ConsentimentoSaude.declaroMaioridade")}</span>
-            </label>
-            <label className="flex items-start gap-3 text-sm">
-              <Checkbox
-                checked={representaMenor}
-                onCheckedChange={(v) => setRepresentaMenor(v === true)}
-                className="mt-0.5"
-              />
-              <span>{t("ConsentimentoSaude.representaMenor")}</span>
-            </label>
-            <label className="flex items-start gap-3 text-sm">
-              <Checkbox checked={aceita} onCheckedChange={(v) => setAceita(v === true)} className="mt-0.5" />
-              <span>{t("ConsentimentoSaude.autorizo")}</span>
-            </label>
-            {/* Fora das etiquetas: clicar na ligação nunca marca uma caixa. */}
-            <Link
-              to={localizar("/politica-de-privacidade")}
-              target="_blank"
-              className="inline-block text-sm font-medium text-primary underline underline-offset-2"
-            >
-              {t("ConsentimentoSaude.lerPolitica")}
-            </Link>
+          <div className="mt-6 flex flex-col gap-3">
+            <OpcaoConfirmar
+              rotulo={t("ConsentimentoSaude.declaroMaioridade")}
+              marcada={maioridade}
+              aoMudar={setMaioridade}
+            />
+            <OpcaoConfirmar
+              rotulo={t("ConsentimentoSaude.representaMenor")}
+              marcada={representaMenor}
+              aoMudar={setRepresentaMenor}
+            />
+            <OpcaoConfirmar rotulo={t("ConsentimentoSaude.autorizo")} marcada={aceita} aoMudar={setAceita} />
           </div>
+          {/* Fora das opções: seguir a ligação nunca marca uma caixa. */}
+          <Link
+            to={localizar("/politica-de-privacidade")}
+            target="_blank"
+            className="mt-4 inline-block text-legenda font-medium text-accao underline underline-offset-2"
+          >
+            {t("ConsentimentoSaude.lerPolitica")}
+          </Link>
           {erro && (
-            <p role="alert" className="text-sm font-medium text-destructive">
+            <Aviso className="mt-4" variante="erro" anunciar>
               {erro}
-            </p>
+            </Aviso>
           )}
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="ghost" onClick={() => fechar(false)} disabled={aGravar}>
-              {t("ConsentimentoSaude.agoraNao")}
-            </Button>
-            <Button onClick={() => void aceitar()} disabled={!maioridade || !aceita || aGravar}>
-              {aGravar ? t("ConsentimentoSaude.aGravar") : t("ConsentimentoSaude.aceitarEContinuar")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </DialogoConteudo>
+      </Dialogo>
     </ConsentimentoSaudeContext.Provider>
   );
 };

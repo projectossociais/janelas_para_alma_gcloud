@@ -1,628 +1,343 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Camera, ScanLine, ShieldCheck, Loader2, CameraOff, RefreshCw, AlertTriangle } from "lucide-react";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import BackButton from "@/components/BackButton";
+import { useTranslation } from "react-i18next";
+import { ArrowRight, Camera, CheckCircle2, Eye, Glasses, Images, RefreshCw, Ruler, ScanFace, ShieldCheck, Sun } from "lucide-react";
 import EyeLandmarkOverlay from "@/components/EyeLandmarkOverlay";
 import { useAuth } from "@/contexts/AuthContext";
 import { useConsentimentoSaude } from "@/contexts/ConsentimentoSaudeContext";
-import { toast } from "sonner";
-import { submeterRastreioMultiGaze, type ScreeningResponse } from "@/services/api/screeningApi";
-import { screeningsApi, mensagemDeErroApi } from "@/lib/apiClient";
-import { Trans, useTranslation } from "react-i18next";
-import i18n from "@/i18n";
+import { Aviso } from "@/design/componentes/Aviso";
+import { Botao } from "@/design/componentes/Botao";
+import { OpcaoConfirmar } from "@/design/componentes/OpcaoConfirmar";
+import { TransicaoPasso } from "@/design/componentes/Passos";
+import { cn } from "@/design/cn";
+import { LayoutTarefa } from "@/design/layouts/LayoutTarefa";
+import { useCameraRastreio } from "@/hooks/useCameraRastreio";
 import { localizar } from "@/i18n/rotas";
+import { screeningsApi } from "@/lib/apiClient";
+import {
+  CHAVE_RESULTADO,
+  dataUrlParaBlob,
+  paraRegistoScreening,
+  paraResultadoEcra,
+} from "@/lib/rastreio/rastreio";
+import { submeterRastreioMultiGaze, textoDoScannerNoIdioma } from "@/services/api/screeningApi";
 
+/**
+ * Rastreio ocular, no arquétipo Tarefa (docs/LAYOUTS.md §2.3): preparar →
+ * explicar a câmara antes de a pedir → três fotografias guiadas → medir.
+ *
+ * Tudo o que se mostra é real: a luz mede-se na imagem, o rosto vem do
+ * detector, e a espera do passo 4 é a da análise, nada mais (a versão
+ * anterior tinha um atraso de 2,5 s e "fases de detecção" por temporizador).
+ * As fotografias vão para o janelas-scanner-api e nunca se guardam: na API
+ * própria grava-se só as medições (CLAUDE.md §4, regra 4).
+ */
 
-type TrackingStage = 0 | 1 | 2;
-const TRACKING_STAGES = [
-  { get label() {
-    return i18n.t("Scanner.aProcurarRosto");
-  }, color: "red" as const },
-  { get label() {
-    return i18n.t("Scanner.porFavorAproximeSe");
-  }, color: "yellow" as const },
-  { get label() {
-    return i18n.t("Scanner.rostoAlinhadoMantenhaSe");
-  }, color: "green" as const },
-];
+const TOTAL = 4;
 
-type CaptureStep = "IDLE" | "CENTER" | "RIGHT" | "LEFT" | "PROCESSING";
+const PREPARACAO = [
+  { chave: "luz", icone: <Sun /> },
+  { chave: "altura", icone: <Ruler /> },
+  { chave: "oculos", icone: <Glasses /> },
+] as const;
 
-interface ScanShot {
-  pose: string;
-  landmarks: Array<{ x: number; y: number; z?: number }>;
-  imageBase64: string;
-}
+/** A ordem das fotografias e o nome que cada uma tem na API. */
+const POSES = [
+  { chave: "Frente", api: "centro" },
+  { chave: "Direita", api: "direita" },
+  { chave: "Esquerda", api: "esquerda" },
+] as const;
 
-const GUIDED_LABELS: Record<Exclude<CaptureStep, "IDLE">, string> = {
-  get CENTER() {
-    return i18n.t("Scanner.n13OlheFixamente");
-  },
-  get RIGHT() {
-    return i18n.t("Scanner.n23OlhePara");
-  },
-  get LEFT() {
-    return i18n.t("Scanner.n33OlhePara");
-  },
-  get PROCESSING() {
-    return i18n.t("Scanner.aProcessarDiagnosticoClinico");
-  },
-};
-
-const MIN_LUMINANCE = 55; // 0-255 average luma threshold
-
-const dataUrlToBlob = (dataUrl: string): Blob | null => {
-  const [head, b64] = dataUrl.split(",");
-  if (!b64) return null;
-  const mime = /:(.*?);/.exec(head)?.[1] ?? "image/jpeg";
-  const bin = atob(b64);
-  const bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  return new Blob([bytes], { type: mime });
-};
-
-/** Persiste só as medições já calculadas pelo janelas-scanner-api na API
- *  própria — nunca a fotografia em si (CLAUDE.md secção 4, regra 4). Devolve
- *  o novo id, ou `null` se o utilizador não tiver sessão (o rastreio em si
- *  já correu; falhar aqui não pode apagar o resultado que a pessoa vê). */
-const persistirScreening = async (apiResult: ScreeningResponse): Promise<string | null> => {
-  const posCentro = apiResult.posicoes?.find((p) => p.posicao.toUpperCase() === "CENTRO");
-  const registado = await screeningsApi.registar({
-    estado: apiResult.estado,
-    rosto_detetado: apiResult.posicoes?.some((p) => p.rosto_detetado) ?? false,
-    requer_avaliacao_humana: apiResult.requer_avaliacao_humana ?? false,
-    // Mesmo critério do ecrã de resultado (ver mais abaixo, finishScan) --
-    // único sinal real que o janelas-scanner-api de facto calcula hoje.
-    diagnostico: apiResult.incomitante || apiResult.requer_avaliacao_humana ? "requer_avaliacao" : "normal",
-    assimetria_horizontal: apiResult.variacao_desalinhamento ?? null,
-    qualidade_captura: posCentro?.qualidade_captura?.pontuacao ?? null,
-    qualidade_fiavel: posCentro?.qualidade_captura?.fiavel ?? null,
-    qualidade_motivos: posCentro?.qualidade_captura?.motivos ?? [],
-    medicoes: apiResult as unknown as Record<string, unknown>,
-    versao_analise: "janelas-scanner-api/multi-gaze",
-  });
-  return registado.id;
-};
-
-
-
+type EstadoAnalise = "a-analisar" | "erro-rede" | "erro-fotos";
 
 const Scanner = () => {
-  const { t: tr } = useTranslation();
-
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [scanning, setScanning] = useState(false);
-  const [cameraOn, setCameraOn] = useState(false);
-  const [cameraError, setCameraError] = useState<string | null>(null);
-  const [trackingStage, setTrackingStage] = useState<TrackingStage>(0);
-  const [captureStep, setCaptureStep] = useState<CaptureStep>("IDLE");
-  const [lowLight, setLowLight] = useState(false);
-  const [scanPayload, setScanPayload] = useState<ScanShot[]>([]);
-  const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const [analysisId, setAnalysisId] = useState<string | null>(null);
-
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const timersRef = useRef<number[]>([]);
-  const landmarksRef = useRef<Array<{ x: number; y: number; z?: number }> | null>(null);
-  const qualityCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const payloadRef = useRef<ScanShot[]>([]);
-
-  const clearTimers = () => {
-    timersRef.current.forEach((id) => window.clearTimeout(id));
-    timersRef.current = [];
-  };
-
-  const stopCamera = useCallback(() => {
-    clearTimers();
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
-    setCameraOn(false);
-    setTrackingStage(0);
-    setCaptureStep("IDLE");
-    setLowLight(false);
-    payloadRef.current = [];
-  }, []);
-
-  useEffect(() => () => stopCamera(), [stopCamera]);
-
-  /** Environmental quality control: average pixel luminance of the current frame. */
-  const checkVideoQuality = useCallback((): number | null => {
-    const video = videoRef.current;
-    if (!video || video.readyState < 2) return null;
-    let canvas = qualityCanvasRef.current;
-    if (!canvas) {
-      canvas = document.createElement("canvas");
-      qualityCanvasRef.current = canvas;
-    }
-    const w = 64;
-    const h = Math.max(1, Math.round((video.videoHeight || 480) * (w / (video.videoWidth || 640))));
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
-    if (!ctx) return null;
-    try {
-      ctx.drawImage(video, 0, 0, w, h);
-      const { data } = ctx.getImageData(0, 0, w, h);
-      let sum = 0;
-      for (let i = 0; i < data.length; i += 4) {
-        sum += 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
-      }
-      return sum / (data.length / 4);
-    } catch {
-      return null;
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!cameraOn) return;
-    const id = window.setInterval(() => {
-      const luma = checkVideoQuality();
-      if (luma !== null) setLowLight(luma < MIN_LUMINANCE);
-    }, 700);
-    return () => window.clearInterval(id);
-  }, [cameraOn, checkVideoQuality]);
-
-
-  const finishScan = useCallback((
-    url: string | null,
-    analysisId: string | null,
-    apiResult: ScreeningResponse
-  ) => {
-    setPreviewUrl(url);
-    setScanning(true);
-
-    // Determina o diagnóstico e confiança a partir do retorno real da API de
-    // rastreio (janelas-scanner-api) — nunca inventado no frontend.
-    let diagnosis = "Alinhamento Fisiológico Normal";
-    let confidence = 92;
-
-    if (apiResult.incomitante || apiResult.requer_avaliacao_humana) {
-      // Categoria fixa — o texto livre de `recomendacao` vai em `apiData`,
-      // para o ecrã de resultados o mostrar à parte (nunca como chave de
-      // diagnóstico: DIAGNOSIS_DATA só conhece um conjunto fechado de chaves).
-      diagnosis = "Necessária Avaliação Oftalmológica";
-    }
-    // Calcula uma pontuação de confiança com base na qualidade da captura
-    const posCentro = apiResult.posicoes?.find(p => p.posicao.toUpperCase() === "CENTRO");
-    if (posCentro?.qualidade_captura?.pontuacao) {
-      confidence = Math.round(posCentro.qualidade_captura.pontuacao * 100);
-    }
-
-    window.setTimeout(() => {
-      sessionStorage.setItem(
-        "scanResult",
-        JSON.stringify({
-          diagnosis,
-          confidence,
-          date: new Date().toISOString(),
-          apiData: apiResult || null, // Guarda todos os dados clínicos reais da API
-        })
-      );
-      navigate(localizar(analysisId ? `/scanner/resultados?id=${analysisId}` : "/scanner/resultados"));
-    }, 2500);
-  }, [navigate]);
-
-  // A câmara só liga depois do consentimento (Lei 22/11, art. 14.º): a imagem
-  // é analisada para medir o alinhamento, um dado de saúde. Com sessão fica
-  // gravado na API; sem sessão vale para esta visita.
   const { garantir: garantirConsentimento } = useConsentimentoSaude();
+  const camera = useCameraRastreio();
 
-  const startCamera = async () => {
+  const [passo, setPasso] = useState(1);
+  const [direccao, setDireccao] = useState<1 | -1>(1);
+  const [prontos, setProntos] = useState<Record<string, boolean>>({});
+  const [pose, setPose] = useState(0);
+  const [analise, setAnalise] = useState<EstadoAnalise>("a-analisar");
+  const [mensagemErro, setMensagemErro] = useState<string | null>(null);
+  const fotos = useRef<string[]>([]);
+
+  const ir = (n: number) => {
+    setDireccao(n > passo ? 1 : -1);
+    setPasso(n);
+  };
+
+  const tudoPronto = PREPARACAO.every((p) => prontos[p.chave]);
+
+  const pedirCamera = async () => {
+    // O consentimento para dados de saúde vem antes da câmara (CLAUDE.md §4.9).
     if (!(await garantirConsentimento())) return;
-    setCameraError(null);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
-        audio: false,
-      });
-      streamRef.current = stream;
-      setCameraOn(true);
-      setTrackingStage(0);
-      window.setTimeout(() => {
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play().catch(() => {});
-        }
-      }, 50);
-      // Sequential tracking prompts (guided capture starts on user action)
-      timersRef.current.push(window.setTimeout(() => setTrackingStage(1), 1500));
-      timersRef.current.push(window.setTimeout(() => setTrackingStage(2), 3000));
-    } catch (err) {
-      console.error(err);
-      setCameraError(
-        tr("Scanner.naoFoiPossivelAceder")
-      );
+    if (await camera.ligar()) {
+      fotos.current = [];
+      setPose(0);
+      ir(3);
     }
   };
 
-  const snapshotBase64 = useCallback(() => {
-    const video = videoRef.current;
-    if (!video) return "";
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth || 720;
-    canvas.height = video.videoHeight || 960;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return "";
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL("image/jpeg", 0.9);
-  }, []);
-
-  const recordPose = useCallback(
-    (pose: string) => {
-      const shot: ScanShot = {
-        pose,
-        landmarks: (landmarksRef.current ?? []).map((l) => ({ x: l.x, y: l.y, z: l.z })),
-        imageBase64: snapshotBase64(),
-      };
-      payloadRef.current = [...payloadRef.current, shot];
-      setScanPayload(payloadRef.current);
-      return shot;
-    },
-    [snapshotBase64]
-  );
-
-  /** Máquina de estados da captura manual: cada clique avança um passo. */
-  const handleNextStep = useCallback(() => {
-    if (lowLight) return;
-
-    if (captureStep === "IDLE") {
-      setUploadError(null);
-      clearTimers(); // cancela os avisos iniciais de "A procurar rosto…", se ainda pendentes
-      payloadRef.current = [];
-      setScanPayload([]);
-      setCaptureStep("CENTER");
+  const analisar = async () => {
+    setAnalise("a-analisar");
+    setMensagemErro(null);
+    const blobs = POSES.map((_, i) => {
+      const foto = fotos.current[i];
+      return foto ? dataUrlParaBlob(foto) : null;
+    });
+    const [centro, direita, esquerda] = blobs;
+    if (!centro || !direita || !esquerda) {
+      setAnalise("erro-fotos");
       return;
     }
-
-    if (captureStep === "CENTER") {
-      recordPose("center");
-      setCaptureStep("RIGHT");
-      return;
-    }
-
-    if (captureStep === "RIGHT") {
-      recordPose("right");
-      setCaptureStep("LEFT");
-      return;
-    }
-
-    if (captureStep === "LEFT") {
-      recordPose("left");
-      setCaptureStep("PROCESSING");
-      const payload = payloadRef.current;
-      const center = payload.find((s) => s.pose === "center")?.imageBase64 ?? null;
-
-      void (async () => {
-        setUploading(true);
-        setUploadError(null);
-
+    try {
+      const resposta = await submeterRastreioMultiGaze({ centro, direita, esquerda });
+      // Com sessão, guarda-se só as medições. Falhar aqui não pode esconder
+      // um resultado que já existe: segue-se para o ecrã de resultados.
+      let id: string | null = null;
+      if (user) {
         try {
-          // 1. Converte as 3 poses para Blob
-          const centerShot = payload.find((s) => s.pose === "center");
-          const leftShot = payload.find((s) => s.pose === "left");
-          const rightShot = payload.find((s) => s.pose === "right");
-
-          const blobCentro = centerShot ? dataUrlToBlob(centerShot.imageBase64) : null;
-          const blobEsquerda = leftShot ? dataUrlToBlob(leftShot.imageBase64) : null;
-          const blobDireita = rightShot ? dataUrlToBlob(rightShot.imageBase64) : null;
-
-          if (!blobCentro || !blobEsquerda || !blobDireita) {
-            throw new Error(tr("Scanner.falhaAoPrepararAs"));
-          }
-
-          // 2. Executa o cálculo matemático no FastAPI (Python) — o
-          // janelas-scanner-api é um microserviço à parte, sem sessão própria.
-          toast.info(tr("Scanner.aCalcularAlinhamentoOcular"));
-          const apiResult = await submeterRastreioMultiGaze({
-            centro: blobCentro,
-            esquerda: blobEsquerda,
-            direita: blobDireita,
-          });
-
-          // 3. Se estiver autenticado, persiste só as medições na API própria
-          // — nunca as fotografias (CLAUDE.md secção 4, regra 4). Uma falha
-          // aqui não pode esconder o resultado que a pessoa já tem na mão.
-          let savedAnalysisId: string | null = null;
-          if (user) {
-            try {
-              savedAnalysisId = await persistirScreening(apiResult);
-              setAnalysisId(savedAnalysisId);
-            } catch (persistErr) {
-              console.warn("Aviso ao guardar o histórico do rastreio:", persistErr);
-            }
-          }
-
-          setUploading(false);
-          stopCamera();
-          finishScan(center, savedAnalysisId, apiResult);
+          id = (await screeningsApi.registar(paraRegistoScreening(resposta))).id;
         } catch (err) {
-          const message = mensagemDeErroApi(err, err instanceof Error ? err.message : String(err));
-          setUploading(false);
-          setUploadError(message);
-          setCaptureStep("IDLE");
-          toast.error(message);
+          console.warn("Aviso ao guardar o histórico do rastreio:", err);
         }
-      })();
+      }
+      fotos.current = [];
+      sessionStorage.setItem(CHAVE_RESULTADO, JSON.stringify(paraResultadoEcra(resposta)));
+      navigate(localizar(id ? `/scanner/resultados?id=${id}` : "/scanner/resultados"));
+    } catch (err) {
+      // O detalhe do scanner só se mostra se houver versão no idioma da
+      // página (ex.: "não foi possível comparar as posições"); nunca o texto
+      // técnico "Erro na análise (500)".
+      const detalhe = (err as { detail?: unknown } | null)?.detail;
+      setMensagemErro(textoDoScannerNoIdioma(typeof detalhe === "string" ? detalhe : null));
+      setAnalise("erro-rede");
     }
-  }, [captureStep, lowLight, recordPose, stopCamera, finishScan, user, tr]);
+  };
+
+  const fotografar = () => {
+    const foto = camera.fotografar();
+    if (!foto) return;
+    fotos.current[pose] = foto;
+    if (pose < POSES.length - 1) {
+      setPose(pose + 1);
+      return;
+    }
+    // A câmara não fica ligada durante a análise: já não é precisa.
+    camera.desligar();
+    ir(4);
+    void analisar();
+  };
+
+  const repetirFotografias = async () => {
+    fotos.current = [];
+    setPose(0);
+    if (await camera.ligar()) ir(3);
+    else ir(2);
+  };
+
+  const sair = () => {
+    camera.desligar();
+    fotos.current = [];
+    navigate(localizar("/"));
+  };
+
+  const aLigar = camera.estado === "a-ligar";
+  const falhaCamera = camera.estado === "recusada" || camera.estado === "indisponivel";
+
+  const accao =
+    passo === 1 ? (
+      <Botao tamanho="g" larguraTotal disabled={!tudoPronto} onClick={() => ir(2)}>
+        {t("Rastreio.estouPronto")} <ArrowRight />
+      </Botao>
+    ) : passo === 2 ? (
+      <Botao tamanho="g" larguraTotal aCarregar={aLigar} onClick={() => void pedirCamera()}>
+        {falhaCamera ? <RefreshCw /> : <Camera />}
+        {falhaCamera ? t("Rastreio.tentarDeNovo") : t("Rastreio.permitir")}
+      </Botao>
+    ) : passo === 3 ? (
+      <Botao tamanho="g" larguraTotal disabled={!camera.podeFotografar} onClick={fotografar}>
+        <Camera /> {t("Rastreio.tirarFotografia")}
+      </Botao>
+    ) : analise === "a-analisar" ? (
+      <Botao tamanho="g" larguraTotal aCarregar>
+        {t("Rastreio.aAnalisar")}
+      </Botao>
+    ) : (
+      <div className="flex flex-col gap-3">
+        {analise === "erro-rede" && (
+          <Botao tamanho="g" larguraTotal onClick={() => void analisar()}>
+            <RefreshCw /> {t("Rastreio.tentarDeNovo")}
+          </Botao>
+        )}
+        <Botao
+          tamanho="g"
+          larguraTotal
+          variante={analise === "erro-rede" ? "secundario" : "primario"}
+          onClick={() => void repetirFotografias()}
+        >
+          <Images /> {t("Rastreio.repetirFotografias")}
+        </Botao>
+      </div>
+    );
+
+  const poseActual = POSES[pose] ?? POSES[0];
+  const estadoCaptura = camera.escuro ? "escuro" : !camera.rostoOk ? "semRosto" : "pronto";
+  const IconeCaptura = { escuro: Sun, semRosto: ScanFace, pronto: CheckCircle2 }[estadoCaptura];
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <Navbar />
-      <BackButton />
-      <main className="flex-1">
-        <section className="container py-10 md:py-16">
-          <div className="max-w-3xl mx-auto text-center animate-fade-in">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal/10 text-teal text-xs font-semibold mb-5">
-              {tr("Scanner.scannerDeEstrabismoIa")}
-            </div>
-            <h1 className="text-3xl md:text-5xl font-bold text-foreground leading-tight">
-              {tr("Scanner.areaDeDiagnosticoInteligente")}
-            </h1>
-            <p className="mt-4 text-base md:text-lg text-muted-foreground">
-              {tr("Scanner.utilizeACamaraPara")}
-            </p>
-            <div className="mt-4 inline-flex items-center gap-2 text-xs text-muted-foreground">
-              <ShieldCheck className="w-4 h-4 text-green" />
-              {tr("Scanner.estaEUmaSimulacao")}
-            </div>
-          </div>
-
-          <div className="mt-10 md:mt-14 max-w-4xl mx-auto">
-            {scanning ? (
-              <ScanningView previewUrl={previewUrl} />
-            ) : cameraOn ? (
-              <div className="animate-fade-in">
-                <div className="relative mx-auto w-full max-w-2xl aspect-video rounded-3xl overflow-hidden bg-navy shadow-elevated">
-                  <video
-                    ref={videoRef}
-                    playsInline
-                    muted
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-
-                  {/* Real-time eye landmark extraction (MediaPipe FaceMesh) */}
-                  <EyeLandmarkOverlay videoRef={videoRef} active={cameraOn} landmarksRef={landmarksRef} />
-
-
-                  {/* HUD grid */}
-                  <div
-                    className="absolute inset-0 opacity-20 mix-blend-screen pointer-events-none"
-                    style={{
-                      backgroundImage:
-                        "linear-gradient(hsl(var(--teal) / 0.6) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--teal) / 0.6) 1px, transparent 1px)",
-                      backgroundSize: "32px 32px",
-                    }}
-                  />
-
-                  {/* Targeting reticle */}
-                  {(() => {
-                    const guided = captureStep !== "IDLE";
-                    const stage = guided
-                      ? {
-                          label: GUIDED_LABELS[captureStep as Exclude<CaptureStep, "IDLE">],
-                          color: (captureStep === "PROCESSING" ? "green" : "yellow") as "green" | "yellow",
-                        }
-                      : lowLight
-                        ? { label: tr("Scanner.ambienteMuitoEscuroAumente"), color: "yellow" as const }
-                        : TRACKING_STAGES[trackingStage];
-                    const colorMap = {
-                      red: { border: "border-red-500", glow: "shadow-[0_0_40px_hsl(0_85%_60%/0.6)]", text: "text-red-400", dot: "bg-red-500", bg: "bg-red-500/15", brd: "border-red-500/40" },
-                      yellow: { border: "border-yellow-400", glow: "shadow-[0_0_40px_hsl(48_95%_60%/0.6)]", text: "text-yellow-300", dot: "bg-yellow-400", bg: "bg-yellow-400/15", brd: "border-yellow-400/40" },
-                      green: { border: "border-emerald-400", glow: "shadow-[0_0_50px_hsl(160_70%_50%/0.7)]", text: "text-emerald-300", dot: "bg-emerald-400", bg: "bg-emerald-400/15", brd: "border-emerald-400/40" },
-                    }[stage.color];
-                    return (
-                      <>
-                        <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                          <div className={`relative w-52 h-72 md:w-60 md:h-80 rounded-[50%] border-2 ${colorMap.border} ${colorMap.glow} transition-all duration-500`}>
-                            {/* corner ticks */}
-                            {["-top-1 -left-1 border-l-2 border-t-2", "-top-1 -right-1 border-r-2 border-t-2", "-bottom-1 -left-1 border-l-2 border-b-2", "-bottom-1 -right-1 border-r-2 border-b-2"].map((c) => (
-                              <div key={c} className={`absolute w-5 h-5 ${colorMap.border} ${c} rounded-sm`} />
-                            ))}
-                            {/* crosshair */}
-                            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-px ${colorMap.dot}`} />
-                            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-8 w-px ${colorMap.dot}`} />
-                          </div>
-                        </div>
-                        {/* Status banner */}
-                        <div className={`absolute bottom-4 left-1/2 -translate-x-1/2 inline-flex items-center gap-2 px-4 py-2 rounded-full ${colorMap.bg} backdrop-blur border ${colorMap.brd} ${colorMap.text} text-xs md:text-sm font-semibold transition-all duration-300`}>
-                          <span className={`w-2 h-2 rounded-full ${colorMap.dot} animate-pulse`} />
-                          {stage.label}
-                        </div>
-                      </>
-                    );
-                  })()}
-
-                  <div className="absolute top-4 left-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur text-white text-xs font-medium">
-                    <Trans i18nKey="Scanner.aoVivoIa" components={{ span: <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" /> }} />
-                  </div>
-                  <div className="absolute top-4 right-4 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur text-white text-[10px] font-mono tracking-wider">
-                    <Trans i18nKey="Scanner.trk03" values={{ valor: String(trackingStage + 1).padStart(2, "0") }} />
-                  </div>
-                </div>
-                <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-                  <button
-                    onClick={handleNextStep}
-                    disabled={lowLight || captureStep === "PROCESSING" || uploading}
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-teal text-teal-foreground font-semibold text-sm hover:bg-teal/90 transition-all shadow-elevated disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-teal"
-                  >
-                    {captureStep === "IDLE" ? (
-                      <>
-                        <Camera className="w-4 h-4" />{" "}{tr("Scanner.iniciarCaptura")}
-                      </>
-                    ) : captureStep === "CENTER" ? (
-                      <>
-                        <Camera className="w-4 h-4" />{" "}{tr("Scanner.capturarFrente13")}
-                      </>
-                    ) : captureStep === "RIGHT" ? (
-                      <>
-                        <Camera className="w-4 h-4" />{" "}{tr("Scanner.capturarDireita23")}
-                      </>
-                    ) : captureStep === "LEFT" ? (
-                      <>
-                        <Camera className="w-4 h-4" />{" "}{tr("Scanner.capturarEsquerda33")}
-                      </>
-                    ) : uploading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />{" "}{tr("Scanner.aEnviarImagensPara")}
-                      </>
-                    ) : (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />{" "}{tr("Scanner.aAnalisar")}
-                      </>
-                    )}
-                  </button>
-                  <button
-                    onClick={stopCamera}
-                    className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-muted text-foreground font-medium text-sm hover:bg-muted/80 transition-colors"
-                  >
-                    <CameraOff className="w-4 h-4" />{" "}{tr("Scanner.cancelar")}
-                  </button>
-                </div>
-
-                {lowLight && (
-                  <div className="mt-4 max-w-2xl mx-auto p-4 rounded-2xl bg-yellow-400/15 border border-yellow-400/40 text-sm text-yellow-700 dark:text-yellow-300 flex items-start gap-2">
-                    <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-                    {tr("Scanner.ambienteMuitoEscuroPor")}
-                  </div>
-                )}
-
-                {uploadError && (
-                  <div className="mt-4 max-w-2xl mx-auto p-4 rounded-2xl bg-destructive/10 border border-destructive/40 text-sm text-destructive flex items-start gap-2">
-                    <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-                    <span><Trans i18nKey="Scanner.erroAoEnviarO" values={{ uploadError }} /></span>
-                  </div>
-                )}
-
-
-                <p className="mt-3 text-center text-xs text-muted-foreground">
-                  {captureStep === "IDLE"
-                    ? tr("Scanner.aCapturaGuiadaTem")
-                    : captureStep === "PROCESSING"
-                      ? tr("Scanner.aProcessarDiagnosticoClinico")
-                      : tr("Scanner.sigaAsInstrucoesNo")}
-                </p>
-
-              </div>
-            ) : (
-              <div className="max-w-md mx-auto animate-fade-in">
-                <button
-                  onClick={startCamera}
-                  className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-navy to-navy/80 p-8 md:p-10 text-left text-navy-foreground transition-all duration-300 hover:-translate-y-1 hover:shadow-elevated w-full"
-                >
-                  <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center mb-5 group-hover:bg-white/25 transition-colors">
-                    <Camera className="w-7 h-7" />
-                  </div>
-                  <h3 className="text-xl font-bold">{tr("Scanner.usarCamara")}</h3>
-                  <p className="mt-2 text-sm text-white/80">
-                    {tr("Scanner.capture3ImagensGuiadas")}
-                  </p>
-                  <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-gold">
-                    {tr("Scanner.activarCamara")}
-                  </span>
-                </button>
-                <p className="mt-3 text-center text-xs text-muted-foreground">
-                  {tr("Scanner.oDiagnosticoECalculado")}
-                </p>
-              </div>
-            )}
-
-            {cameraError && (
-              <div className="mt-5 max-w-2xl mx-auto p-4 rounded-2xl bg-destructive/10 border border-destructive/30 text-sm text-destructive flex items-start gap-2">
-                <CameraOff className="w-4 h-4 mt-0.5 shrink-0" />
-                <div className="flex-1">
-                  {cameraError}
-                  <button
-                    onClick={startCamera}
-                    className="ml-2 inline-flex items-center gap-1 font-semibold underline"
-                  >
-                    <RefreshCw className="w-3 h-3" />{" "}{tr("Scanner.tentarNovamente")}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {!scanning && !cameraOn && (
-            <div className="mt-12 max-w-3xl mx-auto grid sm:grid-cols-3 gap-4 text-center">
-              {[
-                { n: "01", t: tr("Scanner.captura"), d: tr("Scanner.imagemNitidaDoRosto") },
-                { n: "02", t: tr("Scanner.analiseIa"), d: tr("Scanner.processamentoEmSegundos") },
-                { n: "03", t: tr("Scanner.resultado"), d: tr("Scanner.diagnosticoOrientador") },
-              ].map((s) => (
-                <div key={s.n} className="p-5 rounded-2xl bg-card border border-border shadow-card">
-                  <div className="text-xs font-bold text-teal tracking-widest">{s.n}</div>
-                  <div className="mt-1 text-base font-semibold text-foreground">{s.t}</div>
-                  <div className="text-xs text-muted-foreground mt-1">{s.d}</div>
-                </div>
+    <LayoutTarefa
+      tema="claro"
+      passo={{ actual: passo, total: TOTAL, rotulo: t("Rastreio.passo", { actual: passo, total: TOTAL }) }}
+      sair={{ rotulo: t("Rastreio.sair"), aoSair: sair }}
+      confirmarSaida={
+        passo > 1
+          ? {
+              titulo: t("Rastreio.confirmarSaidaTitulo"),
+              descricao: t("Rastreio.confirmarSaidaTexto"),
+              ficar: t("Rastreio.ficar"),
+              sair: t("Rastreio.confirmarSair"),
+              fechar: t("Rastreio.fechar"),
+            }
+          : undefined
+      }
+      accao={accao}
+      textoSaltar={t("Rastreio.saltar")}
+    >
+      <TransicaoPasso chave={passo} direccao={direccao}>
+        {passo === 1 && (
+          <>
+            <h1 className="text-titulo-m text-tinta">{t("Rastreio.prepararTitulo")}</h1>
+            <p className="mt-3 text-corpo text-tinta-suave">{t("Rastreio.prepararTexto")}</p>
+            <div className="mt-8 flex flex-col gap-3">
+              {PREPARACAO.map((p) => (
+                <OpcaoConfirmar
+                  key={p.chave}
+                  icone={p.icone}
+                  rotulo={t(`Rastreio.${p.chave}`)}
+                  descricao={t(`Rastreio.${p.chave}Descricao`)}
+                  marcada={!!prontos[p.chave]}
+                  aoMudar={(v) => setProntos((s) => ({ ...s, [p.chave]: v }))}
+                />
               ))}
             </div>
-          )}
-        </section>
-      </main>
-      <Footer />
-    </div>
-  );
-};
-
-const ScanningView = ({ previewUrl }: { previewUrl: string | null }) => {
-  const { t } = useTranslation();
-  return (
-    <div className="animate-fade-in">
-      <div className="relative mx-auto w-full max-w-md aspect-[3/4] rounded-3xl overflow-hidden bg-gradient-to-br from-navy to-navy/70 shadow-elevated">
-        {previewUrl ? (
-          <img src={previewUrl} alt={t("Scanner.aAnalisar2")} className="absolute inset-0 w-full h-full object-cover opacity-90" />
-        ) : (
-          <svg viewBox="0 0 200 260" className="absolute inset-0 w-full h-full text-white/25" fill="currentColor">
-            <circle cx="100" cy="85" r="48" />
-            <path d="M30 260c0-44 31-74 70-74s70 30 70 74H30z" />
-          </svg>
+            {/* Um botão desactivado sem explicação frustra: diz-se o que falta. */}
+            <p role="status" className="mt-4 text-legenda text-tinta-suave">
+              {tudoPronto ? t("Rastreio.tudoPronto") : t("Rastreio.faltaConfirmar")}
+            </p>
+            <p className="mt-8 flex items-center gap-2 text-legenda text-tinta-suave">
+              <ShieldCheck className="size-4 shrink-0 text-accao" aria-hidden />
+              {t("Rastreio.triagem")}
+            </p>
+          </>
         )}
 
-        <div
-          className="absolute inset-0 opacity-30 mix-blend-screen"
-          style={{
-            backgroundImage:
-              "linear-gradient(hsl(170 72% 60% / 0.5) 1px, transparent 1px), linear-gradient(90deg, hsl(170 72% 60% / 0.5) 1px, transparent 1px)",
-            backgroundSize: "24px 24px",
-          }}
-        />
+        {passo === 2 && (
+          <>
+            <h1 className="text-titulo-m text-tinta">{t("Rastreio.cameraTitulo")}</h1>
+            <p className="mt-3 text-corpo text-tinta-suave">{t("Rastreio.cameraTexto")}</p>
+            <ul className="mt-8 flex flex-col gap-5">
+              {[
+                { icone: Eye, texto: t("Rastreio.cameraPonto1") },
+                { icone: Images, texto: t("Rastreio.cameraPonto2") },
+                { icone: ShieldCheck, texto: t("Rastreio.cameraPonto3") },
+              ].map(({ icone: Icone, texto }) => (
+                <li key={texto} className="flex gap-4">
+                  <Icone className="mt-0.5 size-6 shrink-0 text-accao" aria-hidden />
+                  <span className="text-corpo text-tinta">{texto}</span>
+                </li>
+              ))}
+            </ul>
+            {falhaCamera && (
+              <Aviso
+                className="mt-8"
+                variante="erro"
+                anunciar
+                titulo={t(camera.estado === "recusada" ? "Rastreio.recusadaTitulo" : "Rastreio.indisponivelTitulo")}
+              >
+                {t(camera.estado === "recusada" ? "Rastreio.recusadaTexto" : "Rastreio.indisponivelTexto")}
+              </Aviso>
+            )}
+          </>
+        )}
 
-        <div className="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-teal to-transparent shadow-[0_0_24px_4px_hsl(var(--teal))] animate-[scan_2s_ease-in-out_infinite]" style={{ top: 0 }} />
+        {passo === 3 && (
+          <>
+            <p className="text-legenda font-medium text-tinta-suave">{t("Rastreio.fotografia", { n: pose + 1 })}</p>
+            <div aria-live="polite">
+              <h1 className="mt-1 text-titulo-m text-tinta">{t(`Rastreio.pose${poseActual.chave}Titulo`)}</h1>
+              <p className="mt-2 text-corpo text-tinta-suave">{t(`Rastreio.pose${poseActual.chave}Texto`)}</p>
+            </div>
 
-        {["top-4 left-4 border-l-2 border-t-2", "top-4 right-4 border-r-2 border-t-2", "bottom-4 left-4 border-l-2 border-b-2", "bottom-4 right-4 border-r-2 border-b-2"].map((c) => (
-          <div key={c} className={`absolute w-8 h-8 border-teal ${c} rounded-sm`} />
-        ))}
+            {/* Quadrado no telemóvel (cabe com o título e o botão, mesmo em ecrãs
+                baixos); retrato estreito a partir do tablet. */}
+            <div className="relative mx-auto mt-6 aspect-square w-full overflow-hidden rounded-cartao bg-tinta sm:aspect-retrato sm:max-w-xs">
+              {/* Espelhado só no ecrã (é o que a pessoa espera ver); a
+                  fotografia enviada é a imagem real, sem espelho. */}
+              <video
+                ref={camera.refVideo}
+                autoPlay
+                playsInline
+                muted
+                aria-label={t("Rastreio.videoRotulo")}
+                className="size-full -scale-x-100 object-cover"
+              />
+              <EyeLandmarkOverlay
+                videoRef={camera.videoRef}
+                active={camera.estado === "ligada"}
+                onLandmarks={camera.aoDetectar}
+                desenhar={false}
+              />
+              {/* Guia do rosto: parado, sem animação (conforto visual). */}
+              <div aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                <div
+                  className={cn(
+                    "h-3/5 w-3/5 rounded-pilula border-2 transition-colors duration-feedback ease-padrao",
+                    estadoCaptura === "pronto" ? "border-sucesso" : "border-superficie/70",
+                  )}
+                />
+              </div>
+              {/* O que falta para fotografar, no topo da imagem: é para onde a
+                  pessoa está a olhar, e nunca fica por baixo da barra do botão,
+                  nem em telemóveis baixos. */}
+              <div className="pointer-events-none absolute inset-x-3 top-3 flex justify-center">
+                <p
+                  role="status"
+                  className="flex items-center gap-2 rounded-pilula bg-superficie px-4 py-2 text-center text-legenda font-medium text-tinta shadow-nivel-1"
+                >
+                  <IconeCaptura className={cn("size-4 shrink-0", estadoCaptura === "pronto" ? "text-sucesso" : "text-accao")} aria-hidden />
+                  {t(`Rastreio.${estadoCaptura}`)}
+                </p>
+              </div>
+            </div>
+          </>
+        )}
 
-        <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 rounded-full bg-black/40 backdrop-blur text-white text-xs font-medium">
-          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          {t("Scanner.aAnalisarPontosOculares")}
-        </div>
-      </div>
-
-      <div className="mt-6 max-w-md mx-auto text-center">
-        <div className="inline-flex items-center gap-2 text-teal text-sm font-semibold">
-          <ScanLine className="w-4 h-4 animate-pulse" />{" "}{t("Scanner.processamentoIaEmCurso")}
-        </div>
-        <p className="text-xs text-muted-foreground mt-2">
-          {t("Scanner.aDetectarAlinhamentoOcular")}
-        </p>
-      </div>
-
-      <style>{`
-        @keyframes scan {
-          0% { top: 0%; }
-          50% { top: calc(100% - 4px); }
-          100% { top: 0%; }
-        }
-      `}</style>
-    </div>
+        {passo === 4 && (
+          <>
+            <h1 className="text-titulo-m text-tinta">
+              {analise === "a-analisar" ? t("Rastreio.analiseTitulo") : t("Rastreio.erroAnaliseTitulo")}
+            </h1>
+            {analise === "a-analisar" ? (
+              <>
+                <p className="mt-3 text-corpo text-tinta-suave">{t("Rastreio.analiseTexto")}</p>
+                <p role="status" className="mt-8 text-legenda text-tinta-suave">
+                  {t("Rastreio.analiseEstado")}
+                </p>
+              </>
+            ) : (
+              <Aviso className="mt-6" variante="erro" anunciar>
+                {analise === "erro-fotos" ? t("Rastreio.erroPreparar") : (mensagemErro ?? t("Rastreio.erroAnaliseTexto"))}
+              </Aviso>
+            )}
+          </>
+        )}
+      </TransicaoPasso>
+    </LayoutTarefa>
   );
 };
 

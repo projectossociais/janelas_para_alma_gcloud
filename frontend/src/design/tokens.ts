@@ -237,6 +237,8 @@ export const temaTailwind = {
   minWidth: Object.fromEntries(Object.keys(ALVO).map((n) => [`alvo-${n}`, `var(--alvo-${n})`])),
   // Margem para a barra do iPhone (zona segura): pelo menos 1rem.
   spacing: { "seguro-inferior": "max(1rem, env(safe-area-inset-bottom))" },
+  // Proporções com nome: a câmara do rastreio e as fotografias de retrato.
+  aspectRatio: { retrato: "3 / 4" },
   transitionDuration: { feedback: "100ms", transicao: "250ms", entrada: "400ms" },
   transitionTimingFunction: { padrao: "cubic-bezier(0.2, 0, 0, 1)" },
 } as const;

@@ -134,7 +134,7 @@ export const PrototipoTarefa = ({ tema }: { tema: TemaEfectivo }) => {
           <>
             <h1 className="text-titulo-m text-tinta">Olhe para o ponto</h1>
             <p className="mt-3 text-corpo text-tinta-suave">Fique quieto durante 3 segundos.</p>
-            <div className="mt-8 flex aspect-[3/4] w-full items-center justify-center rounded-cartao bg-superficie-alt">
+            <div className="mt-8 flex aspect-retrato w-full items-center justify-center rounded-cartao bg-superficie-alt">
               {/* O ponto de fixação não se mexe (PESQUISA_UX §3, Conforto visual). */}
               <div className="relative flex h-3/4 w-2/3 items-center justify-center rounded-pilula border-2 border-accao/60">
                 <span className="size-5 rounded-pilula bg-acento ring-4 ring-superficie" />

@@ -274,6 +274,15 @@ Acrescentar abaixo, com data, o que for decidido ou detalhado em cada conversa s
 redesenho (referências visuais, páginas a priorizar, gostos e recusas do dono do
 projecto, feedback do Lukeny). Mais recente em cima.
 
+- **2026-09-30** — **Rastreio (`/scanner`) no arquétipo Tarefa** (Passo A da jornada
+  rastreio+marcação). Quatro passos: preparar (3 confirmações), explicar a câmara antes
+  de a pedir (consentimento de saúde primeiro), três fotografias guiadas, medir. Tudo o
+  que se mostra é real: a luz mede-se na imagem, o rosto vem do detector (se este não
+  responder em 5 s deixa de bloquear e a API verifica no fim); saíram o atraso fingido de
+  2,5 s e as "fases de detecção" por temporizador. Erro na análise: "Tentar de novo"
+  reenvia as mesmas fotografias; a câmara desliga-se depois da última. Lógica pura em
+  `lib/rastreio/`, câmara em `hooks/useCameraRastreio.ts`, ambos testados. O diálogo de
+  consentimento passou a usar o sistema de design. Falta o Passo B (resultados).
 - **2026-09-30** — **Direcção escolhida: A · Clínica** (azul do logótipo como cor de
   acção, muito branco/neutro, Ubuntu, o símbolo que se alinha). Passa a ser a base dos
   tokens definitivos (Fase 1). Inventário do conteúdo actual, com o que fica, se reescreve

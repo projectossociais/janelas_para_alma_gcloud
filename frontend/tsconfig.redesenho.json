@@ -13,6 +13,9 @@
     "src/components/site",
     "src/components/inicio",
     "src/pages/Inicio.tsx",
+    "src/pages/Scanner.tsx",
+    "src/hooks/useCameraRastreio.ts",
+    "src/lib/rastreio",
     "src/vite-env.d.ts"
   ]
 }

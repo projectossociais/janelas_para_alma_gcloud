@@ -26,6 +26,7 @@ export default {
       boxShadow: temaTailwind.boxShadow,
       minHeight: temaTailwind.minHeight,
       minWidth: temaTailwind.minWidth,
+      aspectRatio: temaTailwind.aspectRatio,
       transitionDuration: temaTailwind.transitionDuration,
       transitionTimingFunction: temaTailwind.transitionTimingFunction,
       colors: {

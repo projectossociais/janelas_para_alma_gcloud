@@ -34,7 +34,6 @@
   "Publicacoes.accoesRecentes": "'Publicações' → 'posts' no texto corrido e 'Publications' só no URL (/en/publications), já aprovado. Confirmar se preferem 'News'.",
   "RegistoPremium.oProgramaDevolveuMe": "Testemunho atribuído a um 'Kamba do programa'. Confirmar que é real e autorizado (em inglês, um testemunho inventado é publicidade enganosa).",
   "RegistoPremium.programaClinicoValidadoPor": "Afirmação clínica forte ('validado por oftalmologistas'). Traduzida à letra; confirmar que existe essa validação antes de publicar em inglês.",
-  "Scanner.areaDeDiagnosticoInteligente": "'Diagnóstico' → 'screening'/'result' em toda a área do scanner (AMA: uma triagem automática não é um diagnóstico, e o próprio site o diz). Confirmar a escolha; se quiserem fidelidade literal, 'Smart Diagnosis Area'.",
   "ScannerResultados.clinicaSagradaEsperanca": "Nomes e preços das clínicas recomendadas são dados do PT (não inventados). Confirmar que estão actuais: vão agora para um público inglês.",
   "ScannerResultados.diagAvaliacao": "'Necessária Avaliação Oftalmológica' → 'Eye Exam Recommended'. O PT diz 'necessária' (obrigatória); 'recommended' é mais prudente para um rastreio (AMA). Alternativa literal: 'Ophthalmological Evaluation Required'.",
   "ScannerResultados.facaPausasVisuaisRegulares": "A regra 20-20-20 é definida em pés (20 feet ≈ 6 m); acrescentei '20 feet' porque é a forma canónica em inglês, mantendo os 6 metros do original.",

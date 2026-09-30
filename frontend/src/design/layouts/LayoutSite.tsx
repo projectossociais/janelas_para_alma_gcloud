@@ -3,6 +3,7 @@ import { CabecalhoSite, type CabecalhoSiteProps } from "../navegacao/CabecalhoSi
 import { Rodape, type RodapeProps } from "../navegacao/Rodape";
 import { BarraInferior } from "./BarraInferior";
 import { SaltarConteudo } from "./Contentor";
+import { ProvedorMovimento } from "../ProvedorMovimento";
 
 /**
  * Arquétipo Site (docs/LAYOUTS.md §2.1): ler e decidir. Cabeçalho completo,
@@ -21,16 +22,18 @@ export interface LayoutSiteProps {
 }
 
 export const LayoutSite = ({ cabecalho, rodape, textoSaltar, barraMovel, barraVisivel = true, children }: LayoutSiteProps) => (
-  <div className="flex min-h-screen flex-col bg-fundo text-corpo text-tinta">
-    <SaltarConteudo rotulo={textoSaltar} />
-    <CabecalhoSite {...cabecalho} />
-    {/* tabIndex -1: o "Saltar para o conteúdo" põe mesmo o foco aqui. */}
-    <main id="conteudo" tabIndex={-1} className="flex-1 outline-none">
-      {children}
-    </main>
-    <div className={barraMovel ? "pb-24 lg:pb-0" : undefined}>
-      <Rodape {...rodape} />
+  <ProvedorMovimento>
+    <div className="flex min-h-screen flex-col bg-fundo text-corpo text-tinta">
+      <SaltarConteudo rotulo={textoSaltar} />
+      <CabecalhoSite {...cabecalho} />
+      {/* tabIndex -1: o "Saltar para o conteúdo" põe mesmo o foco aqui. */}
+      <main id="conteudo" tabIndex={-1} className="flex-1 outline-none">
+        {children}
+      </main>
+      <div className={barraMovel ? "pb-24 lg:pb-0" : undefined}>
+        <Rodape {...rodape} />
+      </div>
+      {barraMovel && <BarraInferior visivel={barraVisivel}>{barraMovel}</BarraInferior>}
     </div>
-    {barraMovel && <BarraInferior visivel={barraVisivel}>{barraMovel}</BarraInferior>}
-  </div>
+  </ProvedorMovimento>
 );
