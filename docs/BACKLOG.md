@@ -52,21 +52,27 @@ Fase 3) quando a conta Meta estiver pronta.
 | Matchmaker | Fase 4B — consulta incluída no Premium vs. paga à parte | Sprint 4 | Preço por consulta (decisão do dono) |
 | Matchmaker | Selo de clínica verificada | Sprint 4 | Negociação comercial com números reais |
 | Matchmaker | `sugerir_clinicas` (correspondência por regras) | Sprint 4, PR C | Existir uma 2.ª clínica |
-| Exercícios | **W-18 — Fase A da [análise crítica](ANALISE_EXERCICIOS.md) feita em código (2026-09-29):** Treino de Anéis no trial (#120), sessão rápida (#121), evolução em linguagem simples e auto-avaliação separada (#122), lembrete diário por email. **Falta só criar o job do Cloud Scheduler** (comando abaixo). A reescrita sem webcam (#118/#119, mesclada sem revisão) foi mantida por decisão do dono do projecto | Sprint 6 | Wilson: criar o job; depois, Fases B e C (ver análise) |
+| Exercícios | **W-18 — Fase A da [análise crítica](ANALISE_EXERCICIOS.md) feita em código (2026-09-29):** Treino de Anéis no trial (#120), sessão rápida (#121), evolução em linguagem simples e auto-avaliação separada (#122), lembrete diário por email (job do Cloud Scheduler activo desde 2026-09-30, 18:00 em Luanda). A reescrita sem webcam (#118/#119, mesclada sem revisão) foi mantida por decisão do dono do projecto | Sprint 6 | Fases B e C (ver análise) |
 | Exercícios | **LEG-01 — ⛔ BLOQUEIA O LANÇAMENTO PÚBLICO (não o merge):** Termos e Política de Privacidade ainda descrevem os exercícios como "terapia visual" e "baseados em biometria facial" — **dossiê para o jurista: [`docs/DOSSIE_JURISTA_LEG01.md`](DOSSIE_JURISTA_LEG01.md)** (resumo em [`docs/PENDENTE_REVISAO_LEGAL.md`](PENDENTE_REVISAO_LEGAL.md)) | W-18 | Validação do jurista; decisão do dono do projecto sobre o consentimento (pergunta 5.1 do dossiê) |
 | Scanner | W-13/W-14/W-16/L-14 — método, calibração, validação clínica, ecrã de resultados | Sprint 3 | Parceiro clínico (bloqueio nº 8) |
 | Scanner | Ecrã de resultados mostra 6 categorias, o cálculo só produz 2 | CLAUDE.md §11, W-09 | Localizar o repositório `janelas-scanner-api` |
 | Produto | Histórico de exames com evolução · loja de óculos · conteúdo editável pelo admin | Sprint 6 | — |
 | Frontend | Redesenho total UX/UI | **Sprint 7**, `docs/REDESENHO_FRONTEND.md` | 6 decisões do dono (secção 8 do plano) |
 
-**Lembrete diário de treino — criar o job uma vez** (usa o mesmo `jpa-cron-secret` do W-03;
-18:00 em Luanda, sem novas tentativas para nunca reenviar):
+**Tarefas agendadas (Cloud Scheduler) — activas desde 2026-09-30.** Segredo
+`jpa-cron-secret` criado só com essa parte do `03-secrets.sh` (correr o script inteiro sem
+`JWT_SECRET_KEY` definido geraria uma chave de sessão nova e desligaria toda a gente),
+ligado ao Cloud Run como `CRON_SECRET` (o `04-deploy.sh` volta a ligá-lo em cada deploy
+porque o segredo existe). Jobs em `europe-west1`, fuso `Africa/Luanda`, sem novas
+tentativas, `--message-body='{}'` (um POST sem corpo recebe 411 do Google):
 
-```bash
-API_URL="$(gcloud run services describe jpa-api --region=$REGION --format='value(status.url)')"
-CRON_SECRET="$(gcloud secrets versions access latest --secret=jpa-cron-secret)"
-gcloud scheduler jobs create http lembretes-exercicios   --location="$REGION" --schedule="0 18 * * *" --time-zone="Africa/Luanda"   --uri="${API_URL}/interno/lembretes-exercicios" --http-method=POST   --headers="X-Cron-Secret=${CRON_SECRET}" --max-retry-attempts=0
-```
+| Job | Quando | Endpoint |
+|---|---|---|
+| `eliminar-contas-pendentes` | 04:00 | `POST /interno/eliminar-contas-pendentes` (W-03) |
+| `lembretes-exercicios` | 18:00 | `POST /interno/lembretes-exercicios` |
+
+Verificado: sem segredo ou com segredo errado → 403; execução real do primeiro job → 200.
+Ver o estado: `gcloud scheduler jobs describe <job> --location=europe-west1`.
 
 ### 🟡 Correcções rápidas (menos de uma hora cada)
 
@@ -115,8 +121,7 @@ W-08 (CI) · W-12 + L-13 (candidaturas) · W-17 (não guardar imagens) · L-07 (
 Utilização) · L-09 (planos de exercícios separados) · L-11 (aprovar pagamento no admin) ·
 UX-04 (candidatura do Kamba) · UX-07 (painel com dados reais) · sprint "Identidade
 externa e email" (falta só o domínio) · bloqueio nº 4 (cartão no Cloud Run) · **W-03
-(eliminação real de contas, por anonimização — código e testes feitos 2026-09-28, falta
-só o dono do projecto correr a infra do Cloud Scheduler)**.
+(eliminação real de contas, por anonimização — código 2026-09-28, job activo 2026-09-30)**.
 **Obsoletos:** W-07 (assumia Supabase/RLS), W-15 (substituído pelo `janelas-scanner-api`),
 Sprint 5 (papéis já nasceram numa coluna única), UX-01 (deploy automático).
 
@@ -755,15 +760,7 @@ Não depende de infraestrutura nova. Dias, não semanas.
 - **Decisão do dono do projecto (2026-09-28):** anonimizar em vez de apagar. Apagar `utilizadores` em cascata destruiria histórico clínico real (`screenings`, `sessoes_exercicio`, etc., todos `ON DELETE CASCADE`) que não tem de desaparecer só porque a identidade da pessoa desaparece
 - **Feito:** `utilizadores` ganha `anonimizado_em` (migração `f3c8a1e6b9d4`). Novo `EliminacaoContaService.processar_pendentes()` lê as contas com `eliminar_agendado_para` vencido e ainda não processadas, e por cada uma: apaga email/password (email passa a `conta-eliminada+<id>@anonimo.janelasparaalma.com`, password para um hash aleatório impossível de usar), limpa nome/avatar/biografia/data de nascimento/género/província/telefone/preferências de notificação, desliga o Premium, e faz o mesmo à cópia directa de nome/email/telefone que existe em `premium_requests`, `agendamentos_clinicos`, `contact_messages` e ao telefone em `candidaturas_voluntariado` (essas tabelas guardam os dados directamente, sem depender de um join — mesmo padrão de `Doacao.email`, ver CLAUDE.md). `Doacao` não tem `utilizador_id` nenhum, por isso não há como ligá-la a uma conta para anonimizar — limitação conhecida, aceitável porque doar nunca exigiu sessão
 - **Endpoint interno:** `POST /interno/eliminar-contas-pendentes`, protegido por um segredo partilhado no cabeçalho `X-Cron-Secret` (`obter_cron_valido`, `hmac.compare_digest`) — nunca por sessão de utilizador. Sem `CRON_SECRET` configurado, recusa sempre (nunca "aberto por engano" em produção)
-- **Infra por fazer (Wilson, uma vez):** correr `infra/gcloud/03-secrets.sh` de novo (cria `jpa-cron-secret`) e `04-deploy.sh` (liga-o ao Cloud Run), depois criar o agendamento:
-  ```bash
-  API_URL="$(gcloud run services describe jpa-api --region=$REGION --format='value(status.url)')"
-  CRON_SECRET="$(gcloud secrets versions access latest --secret=jpa-cron-secret)"
-  gcloud scheduler jobs create http eliminar-contas-pendentes \
-    --location="$REGION" --schedule="0 4 * * *" --uri="${API_URL}/interno/eliminar-contas-pendentes" \
-    --http-method=POST --headers="X-Cron-Secret=${CRON_SECRET}"
-  ```
-  Mesma infra que os lembretes por WhatsApp (Sprint 4, Fase 3) vão precisar
+- **Infra: feita em 2026-09-30** (job `eliminar-contas-pendentes`, 04:00 em Luanda; ver a secção "Tarefas agendadas" no topo)
 - **Onde:** `src/pages/Configuracoes.tsx` → `handleDelete` (frontend inalterado — já mostra "Conta eliminada" depois de `POST /conta/eliminar`, que continua só a agendar; a anonimização em si acontece 30 dias depois, em segundo plano)
 - **Testes:** `test_eliminacao_conta_service.py` (nunca reprocessa, gera email/hash únicos por conta) + `test_interno_router.py` (403 sem segredo/com segredo errado, 200 com o segredo certo)
 

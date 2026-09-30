@@ -334,7 +334,11 @@ activa; verificar e testar isso explicitamente.**
    `/interno/lembretes-exercicios` (lembrete diário de treino por email, só a quem activou
    "Lembretes de Exercícios Visuais", tem acesso, treinou nos últimos 14 dias e ainda não
    treinou hoje em Luanda — `LembreteExerciciosService`). Os jobs do Cloud Scheduler correm
-   sem novas tentativas automáticas: repetir reenviaria a quem já recebeu.
+   sem novas tentativas automáticas: repetir reenviaria a quem já recebeu. Activos desde
+   2026-09-30 (`eliminar-contas-pendentes` às 04:00 e `lembretes-exercicios` às 18:00, hora
+   de Luanda; `europe-west1`); segredo `jpa-cron-secret` no Secret Manager. Nunca correr
+   o `03-secrets.sh` inteiro só para mexer num segredo: sem `JWT_SECRET_KEY` definido,
+   ele gera uma chave de sessão nova e desliga toda a gente (§10).
 
 ---
 
