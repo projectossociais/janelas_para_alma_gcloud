@@ -7,6 +7,10 @@ export default defineConfig({
   server: {
     host: "::",
     port: 8080,
+    // Só em desenvolvimento: deixa abrir o `npm run dev` pelo reencaminhamento de
+    // portas do VS Code (https://…devtunnels.ms), para testar no telemóvel com a
+    // câmara (que exige https). O build de produção não usa este servidor.
+    allowedHosts: [".devtunnels.ms"],
     // Em `npm run dev` o browser vê tudo na mesma origem (:8080). `/api/*` é
     // reencaminhado para a API (uvicorn em :8000), tal como o rewrite de
     // `vercel.json` faz em produção — o cookie httpOnly de sessão passa a
