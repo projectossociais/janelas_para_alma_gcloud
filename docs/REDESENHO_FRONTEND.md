@@ -172,7 +172,7 @@ Cada fase é entregável sozinha. A "acuidade" marca quão nítido fica o produt
   - [x] Guardas de código e de acessibilidade (axe) (2026-09-30)
   - [x] Montra `/_montra` (2026-09-30)
   - [x] Botao, Campo, Indicador (2026-09-30)
-  - [ ] Passos, Aviso, Cartao, EstadoVazio, Esqueleto, Dialogo
+  - [x] Aviso, Cartao, EstadoVazio, Esqueleto/ZonaACarregar, Passos/TransicaoPasso, Dialogo (2026-09-30)
   - [ ] Cabeçalho do site e menu no telemóvel, barra de separadores da app, rodapé
   - [ ] Página inicial com a estrutura de `docs/ESTRUTURA_SITE.md` §5
 

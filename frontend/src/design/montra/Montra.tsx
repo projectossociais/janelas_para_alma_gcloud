@@ -8,6 +8,7 @@ import { useTema, type PreferenciaTema } from "../useTema";
 import { Botao } from "../componentes/Botao";
 import { Campo } from "../componentes/Campo";
 import { Simbolo } from "../marca/Simbolo";
+import { DemoAvisos, DemoCartoes, DemoDialogo, DemoEstados, DemoPassos } from "./DemosComponentes";
 import logotipo from "../marca/logotipo-horizontal-sem-assinatura.svg";
 import logotipoNegativo from "../marca/logotipo-horizontal-negativo-sem-assinatura.svg";
 
@@ -69,6 +70,11 @@ const SECCOES = [
   ["forma", "Forma"],
   ["botoes", "Botões"],
   ["campos", "Campos"],
+  ["avisos", "Avisos"],
+  ["cartoes", "Cartões"],
+  ["estados", "Estados"],
+  ["passos", "Passos"],
+  ["dialogo", "Diálogo"],
   ["simbolo", "Símbolo"],
 ] as const;
 
@@ -262,6 +268,26 @@ const Montra = () => {
               />
               <Campo rotulo="Província" defaultValue="Luanda" disabled />
             </div>
+          </Seccao>
+
+          <Seccao id="avisos" titulo="Avisos" descricao="Informação, sucesso, aviso e erro: sempre com ícone e texto. Só se anunciam quando aparecem por causa de uma acção.">
+            <DemoAvisos />
+          </Seccao>
+
+          <Seccao id="cartoes" titulo="Cartões" descricao="No cartão clicável só o título é ligação, mas todo o cartão responde. Passe o rato ou use o Tab.">
+            <DemoCartoes />
+          </Seccao>
+
+          <Seccao id="estados" titulo="Estados" descricao="Vazio explica e dá o primeiro passo. A carregar anuncia o estado e só mostra o esqueleto se a espera passar dos 300 ms.">
+            <DemoEstados />
+          </Seccao>
+
+          <Seccao id="passos" titulo="Passos" descricao="Uma coisa por ecrã. Avançar entra pela direita, voltar pela esquerda. O foco vai para o título do ecrã novo.">
+            <DemoPassos />
+          </Seccao>
+
+          <Seccao id="dialogo" titulo="Diálogo" descricao="Para confirmações curtas. Foco preso, Esc fecha, o foco volta ao botão que o abriu.">
+            <DemoDialogo />
           </Seccao>
 
           <Seccao id="simbolo" titulo="Símbolo" descricao="O olhar alinha-se uma vez. Com movimento reduzido aparece logo alinhado.">

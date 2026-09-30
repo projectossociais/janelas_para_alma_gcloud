@@ -42,6 +42,15 @@ const TEXTO: [NomeCor, NomeCor][] = [
   ["erro", "fundo"],
   ["erro", "erro-suave"],
   ["sobre-erro", "erro"],
+  // Texto dos avisos sobre os fundos de estado
+  ["tinta", "accao-suave"],
+  ["tinta-suave", "accao-suave"],
+  ["tinta", "sucesso-suave"],
+  ["tinta-suave", "sucesso-suave"],
+  ["tinta", "aviso-suave"],
+  ["tinta-suave", "aviso-suave"],
+  ["tinta", "erro-suave"],
+  ["tinta-suave", "erro-suave"],
 ];
 
 // Componentes e foco: WCAG 3:1 (1.4.11, 2.4.13). [elemento, fundo]

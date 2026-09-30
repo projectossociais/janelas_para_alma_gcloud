@@ -39,8 +39,10 @@ frontend/src/design/
   ProvedorMovimento.tsx LazyMotion (strict) + movimento reduzido para tudo
   useTema.ts            preferência de tema (sistema/claro/escuro), guardada no browser
   marca/                logótipos, Simbolo, cores oficiais
-  componentes/          Botao, Campo, Indicador (a seguir: Passos, Aviso, Cartao,
-                        EstadoVazio, Esqueleto, Dialogo, MenuSite, BarraSeparadores)
+  componentes/          Botao, Campo, Indicador, Aviso, Cartao, EstadoVazio,
+                        Esqueleto/ZonaACarregar, Passos/TransicaoPasso, Dialogo
+                        (a seguir: cabeçalho, menu, barra de separadores, rodapé)
+  useAtraso.ts          só mostra indicadores de espera depois de N ms
   montra/               /_montra, só em desenvolvimento: a documentação viva
   testes/               verificação de acessibilidade (axe-core) e tipos dos matchers
   regras-codigo.test.ts as regras deste documento verificadas por máquina
