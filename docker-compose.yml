@@ -35,6 +35,8 @@ services:
     volumes:
       - ./api/app:/app/app
       - ./api/alembic:/app/alembic
+      # Scripts de desenvolvimento (ex.: dados de teste locais), sem rebuild.
+      - ./api/scripts:/app/scripts
     ports:
       - "8000:8000"
     depends_on:

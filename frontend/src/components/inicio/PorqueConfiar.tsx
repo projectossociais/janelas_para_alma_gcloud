@@ -4,7 +4,9 @@ import { localizar } from "@/i18n/rotas";
 import { cn } from "@/design/cn";
 import { Contentor } from "@/design/layouts/Contentor";
 import { Ligacao } from "@/design/Ligacao";
-import fotoDalva from "@/assets/team-dalva.jpg";
+// Recorte de retrato (cabeça e ombros): a fotografia inteira é de corpo inteiro
+// e, num círculo, mostrava só o tronco e as mãos.
+import fotoDalva from "@/assets/team-dalva-retrato.jpg";
 import logoDesafioGenial from "@/assets/partner-desafio-genial-logo.png";
 import logoUnicef from "@/assets/partner-unicef-logo.jpg";
 import logoArotec from "@/assets/partner-arotec-logo.png";

@@ -179,6 +179,19 @@ describe("MarcarConsulta — caminhos de erro", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(T.erroHorariosTitulo);
   });
 
+  it("sem nenhuma clínica activa, diz que não há horários (não que falhou)", async () => {
+    // Bug real (2026-09-30, base de dados local vazia): uma lista de clínicas
+    // vazia aparecia como "Não foi possível ver os horários".
+    listarClinicas.mockResolvedValue([]);
+    const u = userEvent.setup();
+    montar();
+    await u.click(screen.getByText(T.presencial));
+    await u.click(await accao(T.continuar));
+    expect(await screen.findByText(T.semHorariosTitulo)).toBeInTheDocument();
+    expect(screen.queryByText(T.erroHorariosTitulo)).not.toBeInTheDocument();
+    expect(horariosDisponiveis).not.toHaveBeenCalled();
+  });
+
   it("sem horários livres: diz-se, com outra modalidade e o telefone da clínica", async () => {
     horariosDisponiveis.mockResolvedValue([]);
     const u = userEvent.setup();

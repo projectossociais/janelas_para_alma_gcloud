@@ -231,6 +231,12 @@ Localmente: `docker-compose.yml` sobe só `db` + `api` — o frontend não tem c
 próprio (ver nota do Vercel em §0). Para desenvolvimento do dia-a-dia do frontend,
 `npm run dev` dentro de `frontend/` continua a ser o caminho — mais rápido, com hot
 reload real, e o proxy do Vite já reencaminha `/api/*` tal como o Vercel faz em produção.
+A base local nasce vazia: depois do primeiro `docker compose up`, correr
+`docker compose exec api python -m alembic upgrade head` e, para ter uma clínica com
+horários e uma conta de teste confirmada, `docker compose exec api python -m
+scripts.dados_teste_locais` (recusa correr fora da base local). Para testar no telemóvel
+com câmara (exige https), encaminhar a porta 8080 no VS Code como pública: o
+`vite.config.ts` aceita os endereços `*.devtunnels.ms`.
 
 O browser fala **sempre com `/api/*` na mesma origem** — nunca com um URL absoluto da
 API. Em dev (`npm run dev`) o proxy do Vite (`vite.config.ts`) reencaminha `/api/*` para

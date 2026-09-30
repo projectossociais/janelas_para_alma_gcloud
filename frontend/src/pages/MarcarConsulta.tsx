@@ -95,7 +95,13 @@ const MarcarConsulta = () => {
       if (!id) {
         // Por agora há uma clínica parceira (a Optioptika); o id vem da API.
         id = (await agendamentosApi.listarClinicas())[0]?.id ?? null;
-        if (!id) throw new Error("clinica");
+        if (!id) {
+          // Nenhuma clínica activa não é uma falha: é não haver horários. Diz-se
+          // isso, com o telefone da clínica (bug real: aparecia "não foi possível").
+          setHorarios([]);
+          setEstadoHorarios("pronto");
+          return;
+        }
         setClinicaId(id);
       }
       const lista = await agendamentosApi.horariosDisponiveis(id, m);
