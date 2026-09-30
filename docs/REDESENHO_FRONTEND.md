@@ -176,7 +176,12 @@ Cada fase é entregável sozinha. A "acuidade" marca quão nítido fica o produt
   - [x] Arquétipos de página (`docs/LAYOUTS.md`): Site, Entrada, Tarefa e App, com cabeçalho e
     menu do telemóvel, rodapé, barra de separadores/lateral da app e protótipos à escala real
     em `/_montra/prototipos/{site,entrar,tarefa,app}` (2026-09-30)
-  - [ ] Página inicial com a estrutura de `docs/ESTRUTURA_SITE.md` §5
+  - [x] Página inicial real (`src/pages/Inicio.tsx`, substitui `Index.tsx`): estrutura de
+    `docs/ESTRUTURA_SITE.md` §5, textos em pt-AO e en-US, rotas reais, sessão, campanha dos
+    admins, parceiros e fotografia real da equipa; `EstruturaSite` partilhada para as páginas
+    que migrarem a seguir (2026-09-30). **Antes do merge:** a formalização da "Olhar
+    Alinhado" (hoje só nas Novidades antigas, mantidas no código) tem de passar a publicação;
+    logótipos da Arotec e da Nelt com menos margem
 
 ### Fase 2 · Fundações técnicas — 6/24 · ≈ 2 semanas · quase invisível
 - Três layouts partilhados; `Navbar` dividida por modo.

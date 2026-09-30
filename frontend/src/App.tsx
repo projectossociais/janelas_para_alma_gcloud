@@ -12,7 +12,7 @@ import { FeedbackProvider } from "@/contexts/FeedbackContext";
 import { AcessoExerciciosProvider } from "@/contexts/AcessoExerciciosContext";
 import { CarteiraJogoProvider } from "@/contexts/CarteiraJogoContext";
 import { ConsentimentoSaudeProvider } from "@/contexts/ConsentimentoSaudeContext";
-import Index from "./pages/Index";
+import Inicio from "./pages/Inicio";
 import Sobre from "./pages/Sobre";
 import Equipa from "./pages/Equipa";
 import Kamba from "./pages/Kamba";
@@ -90,7 +90,7 @@ import { ALIASES_PT, EXERCICIOS_RETIRADOS, ROTAS, ROTAS_BILINGUES, type ChaveRot
  * O `Record` obriga a que toda a chave do mapa tenha aqui uma página.
  */
 const PAGINAS: Record<ChaveRota, ReactElement> = {
-  inicio: <Index />,
+  inicio: <Inicio />,
   sobre: <Sobre />,
   equipa: <Equipa />,
   kamba: <Kamba />,

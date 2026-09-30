@@ -10,6 +10,9 @@
   "include": [
     "src/design",
     "src/redesenho",
+    "src/components/site",
+    "src/components/inicio",
+    "src/pages/Inicio.tsx",
     "src/vite-env.d.ts"
   ]
 }

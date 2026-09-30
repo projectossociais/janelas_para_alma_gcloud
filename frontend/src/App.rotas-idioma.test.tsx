@@ -159,9 +159,8 @@ describe("com VITE_ENABLE_EN=true", () => {
     menu.unmount();
     abrir("/en");
     await waitFor(() => expect(document.documentElement.lang).toBe("en-US"));
-    expect(await screen.findByRole("button", { name: "Game: Inclusivamente" })).toBeInTheDocument();
-    expect(screen.getByText("Launching our game: Inclusivamente")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Try our game/ })).toBeInTheDocument();
+    // Página inicial nova (2026-09-30): o jogo tem a secção "Para as crianças".
+    expect(await screen.findByRole("link", { name: /Play Inclusivamente/ })).toHaveAttribute("href", "/en/trivia-game");
   });
 
   it("as páginas legais em inglês avisam que prevalece a versão portuguesa", async () => {

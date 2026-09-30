@@ -134,8 +134,8 @@ Já tratada em `docs/ESTRUTURA_SITE.md` §5. Destino do conteúdo actual:
 | `AboutTeaserSection` | Vai para "Porque confiar" (texto bom) |
 | `PillarsSection` | Sai (T4, T5); o que é real vai para "Quem somos" |
 | `CuriosidadesSection` | Vai para o jogo e para o artigo do estrabismo, com fontes |
-| `NovidadesSection` | Passa a publicações (T8) |
-| `ParceirosSection` | Vai para "Porque confiar" |
+| `NovidadesSection` | Passa a publicações (T8). **Mantida no código** até a formalização da "Olhar Alinhado" existir como publicação (depende da pergunta 1) |
+| `ParceirosSection` | Foi para "Porque confiar" (2026-09-30), com os mesmos 5 parceiros: Desafio Genial (programa da UNICEF Angola com a Arotec), UNICEF, Arotec, Optioptika, Nelt Group |
 
 ### Novidade da formalização (`FirmaOlharAlinhadoModal`)
 

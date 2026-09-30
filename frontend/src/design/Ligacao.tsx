@@ -1,4 +1,4 @@
-import { createContext, forwardRef, useContext, type AnchorHTMLAttributes, type ComponentType, type ReactNode, type Ref } from "react";
+import { createContext, forwardRef, useContext, type AnchorHTMLAttributes, type ComponentType, type ReactNode, type RefAttributes } from "react";
 
 /**
  * Ligação do sistema de design. Os componentes de navegação (cabeçalho, menu,
@@ -11,7 +11,7 @@ export interface LigacaoProps extends AnchorHTMLAttributes<HTMLAnchorElement> {
   children?: ReactNode;
 }
 
-type ComponenteLigacao = ComponentType<LigacaoProps & { ref?: Ref<HTMLAnchorElement> }>;
+type ComponenteLigacao = ComponentType<LigacaoProps & RefAttributes<HTMLAnchorElement>>;
 
 const ContextoLigacao = createContext<ComponenteLigacao | null>(null);
 

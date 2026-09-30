@@ -11,7 +11,13 @@ import { describe, expect, it } from "vitest";
 const fontes = import.meta.glob(
   [
     "/src/design/**/*.{ts,tsx}",
+    // O código novo do site, feito com o sistema de design, segue as mesmas regras.
+    "/src/components/site/**/*.{ts,tsx}",
+    "/src/components/inicio/**/*.{ts,tsx}",
+    "/src/pages/Inicio.tsx",
     "!/src/design/**/*.test.{ts,tsx}",
+    "!/src/components/site/**/*.test.{ts,tsx}",
+    "!/src/components/inicio/**/*.test.{ts,tsx}",
     "!/src/design/tokens.ts",
     "!/src/design/marca/marca.ts",
     "!/src/design/contraste.ts",
