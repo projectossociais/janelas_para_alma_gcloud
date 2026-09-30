@@ -1,5 +1,9 @@
 # Dossiê para revisão jurídica — LEG-01
 
+> **Estado a 2026-09-30:** sem jurista no projecto, as perguntas da secção 5 foram
+> respondidas com o texto da Lei n.º 22/11 e aplicadas (ver LEG-01 em `docs/BACKLOG.md`
+> e `docs/APD_NOTIFICACAO.md`). O dossiê continua válido se um jurista vier a rever.
+
 **Assunto:** actualizar os Termos de Utilização e a Política de Privacidade do site
 Janelas Para a Alma depois da mudança dos exercícios visuais.
 **Data:** 28 de Setembro de 2026.

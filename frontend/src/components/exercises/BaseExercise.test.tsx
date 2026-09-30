@@ -5,6 +5,18 @@ import BaseExercise from "./BaseExercise";
 import ptAO from "@/i18n/locales/pt-AO.json";
 import enUS from "@/i18n/locales/en-US.json";
 
+// O consentimento para dados de saúde tem testes próprios
+// (ConsentimentoSaudeContext.test.tsx); aqui a conta já consentiu.
+vi.mock("@/contexts/ConsentimentoSaudeContext", () => ({
+  useConsentimentoSaude: () => ({
+    consentido: true,
+    carregando: false,
+    garantir: () => Promise.resolve(true),
+    retirar: () => Promise.resolve(),
+  }),
+}));
+
+
 // O botão "Ver vídeo explicativo" foi retirado dos exercícios (2026-09-28,
 // decisão do produto: não há vídeos). Estes testes falham se voltar a
 // aparecer na casca, com o exercício desbloqueado -- o único estado em que

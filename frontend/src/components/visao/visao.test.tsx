@@ -5,6 +5,18 @@ import { useRegistoSessao } from "./hooks";
 import TesteAcuidade from "@/pages/exercises/TesteAcuidade";
 import { AcessoExerciciosProvider } from "@/contexts/AcessoExerciciosContext";
 
+// O consentimento para dados de saúde tem testes próprios
+// (ConsentimentoSaudeContext.test.tsx); aqui a conta já consentiu.
+vi.mock("@/contexts/ConsentimentoSaudeContext", () => ({
+  useConsentimentoSaude: () => ({
+    consentido: true,
+    carregando: false,
+    garantir: () => Promise.resolve(true),
+    retirar: () => Promise.resolve(),
+  }),
+}));
+
+
 // Exercícios sem webcam (2026-09-28): gravar uma sessão nunca mostra
 // sucesso antes da resposta da API (CLAUDE.md §6), e nenhum exercício pede
 // a câmara.

@@ -1,5 +1,10 @@
 # Pendente de revisão legal: textos dos Termos e da Política de Privacidade
 
+> **Resolvido a 2026-09-30, sem jurista** (não há jurista no projecto): textos
+> reescritos e consentimento para dados de saúde implementado. Ver LEG-01 em
+> `docs/BACKLOG.md` e o que falta fazer junto da APD em `docs/APD_NOTIFICACAO.md`.
+> O resto deste ficheiro fica como histórico.
+
 > **Tarefa LEG-01 do backlog.** Bloqueia o **lançamento público** dos exercícios sem
 > webcam, **não** o merge do código. Os textos legais **não foram alterados**: rever e
 > reescrever cabe ao dono do projecto e/ou ao jurista.

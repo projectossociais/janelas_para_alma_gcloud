@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Info, Lock, LogOut, Play, UserPlus } from "lucide-react";
+import { Info, Lock, LogOut, Play, ShieldCheck, UserPlus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { useAcessoExercicios } from "@/contexts/AcessoExerciciosContext";
+import { useConsentimentoSaude } from "@/contexts/ConsentimentoSaudeContext";
 import {
   useAcaoDesbloqueio,
   type GrupoExercicio,
@@ -94,6 +95,10 @@ interface BaseExerciseProps {
  * resposta do utilizador. Cada exercício gere o seu próprio fluxo; aqui só
  * fica o que é comum. Enquanto o acesso não está confirmado pela API, o
  * conteúdo nem é montado (nunca desbloquear por omissão).
+ *
+ * Os resultados são dados de saúde: sem consentimento (Lei 22/11, art. 14.º)
+ * o exercício também não é montado, para ninguém fazer um teste que a API
+ * depois se recusaria a gravar.
  */
 const BaseExercise = ({
   title,
@@ -109,8 +114,12 @@ const BaseExercise = ({
   const { temAcesso, loading: acessoLoading } = useAcessoExercicios();
   const { tipoPara, executar, aIniciarTrial } = useAcaoDesbloqueio();
 
+  const { consentido, carregando: consentimentoLoading, garantir } = useConsentimentoSaude();
+
   const locked = acessoLoading || !temAcesso(exercicioId);
   const tipoDesbloqueio = acessoLoading ? null : tipoPara(exercicioId, grupo);
+  const pedeConsentimento = !locked && !consentimentoLoading && !consentido;
+  const bloqueado = locked || consentimentoLoading || !consentido;
 
   return (
     <div className="relative w-full overflow-hidden rounded-2xl border border-border/60 bg-card shadow-card">
@@ -127,17 +136,36 @@ const BaseExercise = ({
         </Button>
       </div>
 
-      {!locked && <IndicadorPassos passos={passos} actual={passoActual} />}
+      {!bloqueado && <IndicadorPassos passos={passos} actual={passoActual} />}
 
       <div className="px-5 pt-4">
         <AvisoExercicio tipo={tipo} />
       </div>
 
       <div className="relative">
-        {locked ? (
+        {bloqueado ? (
           <div className="h-[360px]" aria-hidden />
         ) : (
           <div className="p-5">{children}</div>
+        )}
+
+        {pedeConsentimento && (
+          <div className="absolute inset-0 flex items-center justify-center p-6">
+            <div className="max-w-sm rounded-2xl border border-border bg-card p-6 text-center shadow-elevated">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-navy/10 text-navy">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+              <h2 className="mb-2 text-lg font-bold text-foreground">{t("ConsentimentoSaude.antesDeComecar")}</h2>
+              <p className="mb-4 text-sm text-muted-foreground">{t("ConsentimentoSaude.antesDeComecarTexto")}</p>
+              <Button
+                onClick={() => void garantir()}
+                className="w-full gap-2 bg-navy text-navy-foreground hover:bg-navy/90"
+              >
+                <ShieldCheck className="h-4 w-4" />
+                {t("ConsentimentoSaude.lerEAceitar")}
+              </Button>
+            </div>
+          </div>
         )}
 
         {locked && tipoDesbloqueio && (
