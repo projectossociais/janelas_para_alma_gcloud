@@ -174,6 +174,11 @@ publicações que são relatos de actividade (por exemplo, uma categoria), para 
 Comunidade não mostrar notícias gerais. A inscrição por actividade já existe (corrigido
 a 2026-09-30, depois de auditar o código). Conteúdo: `docs/INVENTARIO_CONTEUDO.md`.
 
+**Mais tarde, espaço de interacção entre membros** (pedido do dono do projecto,
+2026-09-30): perguntas e respostas e testemunhos moderados dentro da Comunidade. Registado
+como SPRINT 8 em `docs/BACKLOG.md`, com as regras de segurança e as decisões por tomar.
+O menu "Comunidade ▾" já tem lugar para uma entrada nova quando existir.
+
 ## 6. Rodapé
 
 ```

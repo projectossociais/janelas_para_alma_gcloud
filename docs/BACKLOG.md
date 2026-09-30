@@ -110,7 +110,7 @@ testes novos entre API e frontend, CI verde, deploy confirmado. Sem alteração 
 - **i18n:** 296 textos marcados para revisão humana (os de saúde com um clínico, os legais com apoio jurídico) e data de lançamento do site em inglês (`VITE_ENABLE_EN`)
 - **Jogo:** confirmar na base de dados as 4 correcções factuais às perguntas; aprovar os preços dos pacotes de moedas (350 / 1.000 / 2.500 Kz, "a confirmar" no CLAUDE.md §1)
 - **Google Cloud:** anotar a data de expiração do crédito do trial (bloqueio nº 7)
-- **Kamba Social:** proposta registada no fim deste ficheiro, à espera de decisão
+- **Kamba Social:** registado como SPRINT 8 (espaço de interacção entre membros); 5 decisões do dono do projecto antes de arrancar
 - **Tabela órfã `scanner_analyses`:** decidir apagar ou manter (CLAUDE.md §10 exige confirmação)
 - **UX-08, L-03, L-05, L-06, L-08** (polimentos visuais e levantamento de links) passam para o Sprint 7
 
@@ -1351,14 +1351,63 @@ página por jornada (nunca um lançamento "big bang"), regressão visual + axe +
 performance no CI. Seis fases (Descoberta → Identidade → Fundações → Jornadas críticas →
 App → Consola), 17-19 semanas indicativas.
 
-**Estado:** nada implementado. Seis decisões do dono do projecto por responder antes da
-Fase 0 (marca, orçamento para gente local, quem desenha, jornada prioritária, tema
-escuro, Figma) — ver secção 8 do documento. Discussão detalhada marcada para mais tarde
-em 2026-09-28; o que for decidido regista-se na secção 9 do documento, não aqui.
+**Estado (2026-09-30):** Fase 1 feita e parte da Fase 2, só no ramo local
+`redesenho/frontend` (sem merge, à espera de aprovação do dono do projecto): sistema de
+design, página inicial, rastreio, resultado, marcação de consulta, cabeçalho e rodapé
+novos nas páginas públicas, divisão por rotas. O detalhe e as decisões estão nas secções
+5, 8 e 9 do documento, não aqui.
 
 **Relação com outras tarefas:** absorve UX-08 (polimentos de UI), a correcção das 6
 categorias de `ScannerResultados` (Fase 3) e a "Próxima teleconsulta" real no
 `DashboardUser` (Fase 4); anda em conjunto com W-18 (melhorar os exercícios, Fase 4).
+
+---
+
+## SPRINT 8 — Espaço da comunidade (Kamba Social) · registado 2026-09-30, não iniciado
+
+**Pedido do dono do projecto (2026-09-30):** a Comunidade (Meu Kamba Estrábico) não pode
+ser só um sítio para se candidatar a actividades. Tem de haver um **espaço de interacção
+entre os membros**. Por agora fica só registado: não arranca sem as decisões abaixo.
+
+**O que existe hoje:** tudo no Meu Kamba Estrábico vai num sentido só, da organização
+para as pessoas: publicações dos admins (actividades realizadas), actividades de
+voluntariado, candidatura a voluntário e inscrição por actividade
+(`docs/ESTRUTURA_SITE.md` §5b). Não há nenhum sítio onde os membros falem entre si.
+
+**Proposta de partida** (a que estava registada como "proposta Kamba Social"):
+- **Perguntas e respostas da comunidade:** um membro pergunta ("o meu filho vai começar a
+  usar tapa-olho, como o convenceram?"), outros respondem. Estruturado, não um chat livre.
+- **Testemunhos:** histórias na primeira pessoa, publicadas depois de revistas.
+- **Reacções simples** (útil, obrigado) em vez de gostos e contagens públicas.
+- **Moderação no painel admin**, com o mesmo padrão das Publicações e dos Banners (fila,
+  aprovar, esconder, motivo), e um botão "Denunciar" em cada mensagem.
+
+**Regras que tornam isto seguro** (não negociáveis, pelas mesmas razões do CLAUDE.md §4):
+- **Público com crianças:** as contas são de adultos (CLAUDE.md §4.9); a criança
+  participa pela conta do responsável. Sem mensagens privadas entre membros na primeira
+  versão (é onde o risco para menores está).
+- **Dados de saúde:** falar do próprio estrabismo ou do do filho é dado de saúde (Lei
+  22/11). Publicar exige consentimento próprio para esta finalidade (visível a outros
+  membros), separado do consentimento do rastreio, e o direito a apagar o que se escreveu.
+- **Nome visível:** primeiro nome ou pseudónimo, nunca apelido, email nem telefone.
+- **Nada de fotografias de crianças** nas mensagens.
+- **Sem conselhos clínicos:** avisos claros de que respostas de outros pais não
+  substituem o médico; respostas que prometem cura ou tratamento são removidas.
+- Eliminação de conta (W-03) anonimiza também o que a pessoa publicou.
+
+**Decisões do dono do projecto antes de arrancar:**
+1. Quem pode participar: qualquer pessoa com conta, só voluntários aprovados, ou também
+   pessoas estrábicas adultas a falar por si?
+2. Moderação **antes** de publicar (mais seguro, mais lento) ou **depois** (com denúncias)?
+3. Quem modera, e com que tempo de resposta?
+4. Leitura pública (sem conta, dá credibilidade) ou só para membros (mais privacidade)?
+5. Mensagens privadas entre membros: nunca, ou numa versão futura com regras próprias?
+
+**Onde encaixa:** depende do arquétipo App (redesenho, Fase 4: área de conta, menu e
+notificações) e usa o sistema de design novo. Backend novo, com revisão humana (esquema de
+dados e autorização, CLAUDE.md §9): tabelas de perguntas, respostas, testemunhos, reacções
+e denúncias; um service com as regras de moderação e de visibilidade; consentimento
+próprio. Estimativa grosseira depois das decisões: 3 a 4 semanas.
 
 ---
 
@@ -2243,15 +2292,10 @@ Dois problemas apontados pelo dono do projecto ao usar o painel a sério:
     sugere arquivar, para nunca apagar o rasto real de um voluntário que se inscreveu.
     Confirmação obrigatória no ecrã (`AlertDialog`) antes do pedido.
 
-### Kamba Social — proposta, não tarefa ainda
+### Kamba Social — passou a sprint
 
-Levantado à parte da auditoria técnica: "Meu Kamba Estrábico" tem hoje só um
-formulário de candidatura a voluntário — nada do espaço de apoio mútuo entre pessoas
-estrábicas que o nome sugere. Proposta (fica registada, não entra em sprint sem decisão
-do dono do produto): separar em dois produtos debaixo do mesmo nome — (1) voluntariado,
-reparado por UX-04/UX-05; (2) "Kamba Social", testemunhos moderados + mural de
-perguntas/respostas estruturado (não chat livre — mais seguro com público infantil,
-mais fácil de moderar pelo mesmo padrão já usado em Publicações/Banners).
+Registado como **SPRINT 8 — Espaço da comunidade (Kamba Social)** a 2026-09-30, a pedido
+do dono do projecto. Ver essa secção.
 
 ---
 
