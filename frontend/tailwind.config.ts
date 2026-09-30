@@ -22,6 +22,7 @@ export default {
       // Sistema de design novo (src/design/tokens.ts): nomes em português, que não
       // colidem com os do site antigo abaixo. As páginas migradas usam só estes.
       fontSize: temaTailwind.fontSize,
+      spacing: temaTailwind.spacing,
       boxShadow: temaTailwind.boxShadow,
       minHeight: temaTailwind.minHeight,
       minWidth: temaTailwind.minWidth,

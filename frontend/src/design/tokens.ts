@@ -206,6 +206,12 @@ export function gerarCss(): string {
     escuro("  "),
     "}",
     "",
+    "/* Zona escura dentro de uma página clara (ex.: uma faixa marinho no Site). */",
+    ".tema-escuro {",
+    "  color-scheme: dark;",
+    escuro("  "),
+    "}",
+    "",
   ].join("\n");
 }
 
@@ -227,6 +233,8 @@ export const temaTailwind = {
   },
   minHeight: Object.fromEntries(Object.keys(ALVO).map((n) => [`alvo-${n}`, `var(--alvo-${n})`])),
   minWidth: Object.fromEntries(Object.keys(ALVO).map((n) => [`alvo-${n}`, `var(--alvo-${n})`])),
+  // Margem para a barra do iPhone (zona segura): pelo menos 1rem.
+  spacing: { "seguro-inferior": "max(1rem, env(safe-area-inset-bottom))" },
   transitionDuration: { feedback: "100ms", transicao: "250ms", entrada: "400ms" },
   transitionTimingFunction: { padrao: "cubic-bezier(0.2, 0, 0, 1)" },
 } as const;

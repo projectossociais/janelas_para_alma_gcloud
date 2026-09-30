@@ -80,6 +80,7 @@ import NotFound from "./pages/NotFound";
 // Em produção `import.meta.env.DEV` é false e o import desaparece do build.
 const Laboratorio = import.meta.env.DEV ? lazy(() => import("./redesenho/laboratorio/Laboratorio")) : null;
 const Montra = import.meta.env.DEV ? lazy(() => import("./design/montra/Montra")) : null;
+const Prototipos = import.meta.env.DEV ? lazy(() => import("./design/montra/prototipos/Prototipos")) : null;
 import IdiomaDaRota from "./i18n/IdiomaDaRota";
 import { inglesAtivo } from "./i18n/idiomas";
 import { ALIASES_PT, EXERCICIOS_RETIRADOS, ROTAS, ROTAS_BILINGUES, type ChaveRota } from "./i18n/rotas";
@@ -194,6 +195,16 @@ const App = () => (
                     element={
                       <Suspense fallback={null}>
                         <Montra />
+                      </Suspense>
+                    }
+                  />
+                )}
+                {Prototipos && (
+                  <Route
+                    path="/_montra/prototipos/:qual"
+                    element={
+                      <Suspense fallback={null}>
+                        <Prototipos />
                       </Suspense>
                     }
                   />
