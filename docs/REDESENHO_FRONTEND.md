@@ -257,6 +257,10 @@ Acrescentar abaixo, com data, o que for decidido ou detalhado em cada conversa s
 redesenho (referências visuais, páginas a priorizar, gostos e recusas do dono do
 projecto, feedback do Lukeny). Mais recente em cima.
 
+- **2026-09-30** — **Direcção escolhida: A · Clínica** (azul do logótipo como cor de
+  acção, muito branco/neutro, Ubuntu, o símbolo que se alinha). Passa a ser a base dos
+  tokens definitivos (Fase 1). Inventário do conteúdo actual, com o que fica, se reescreve
+  e sai, em `docs/INVENTARIO_CONTEUDO.md` (6 perguntas ao dono na secção 4).
 - **2026-09-30** — Respostas do dono: contactos reais tirados do site actual (telefone
   +244 926 969 819, janelasparaalma18@gmail.com, Instagram @janelas_para_alma); sem NIF;
   LT Renovate autorizada; o manual não entra no repositório; fotografias à espera de

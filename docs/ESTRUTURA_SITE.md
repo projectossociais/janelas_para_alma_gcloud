@@ -149,7 +149,8 @@ credibilidade); **quem tem conta candidata-se**.
 | `CampanhaGamek.tsx` | Página inteira escrita à mão para uma acção | O mesmo problema |
 | Publicações (`publicacoes`, admin) | Título, resumo, texto, local, data, capa, fotografias e vídeos, rascunho/publicado | **É exactamente um relatório de actividade**, já gerido pelos admins |
 | Actividades de voluntariado (`atividades_voluntariado`, admin) | Título, descrição, local, datas, vagas, estado | São as **campanhas** futuras |
-| Candidatura (`candidaturas_voluntariado`) | Candidatura geral a voluntário, aprovada por um admin | Existe; falta a inscrição **por actividade** |
+| Candidatura (`candidaturas_voluntariado`) | Candidatura geral a voluntário, aprovada por um admin | Existe |
+| Inscrição por actividade (`inscricoes_atividade`) | Só voluntários aprovados; uma por pessoa por actividade; cancelável; "as minhas inscrições" | **Já existe no backend e no cliente da API**; falta só a interface nova |
 
 **Proposta:**
 
@@ -160,18 +161,18 @@ credibilidade); **quem tem conta candidata-se**.
 2. **"Próximas actividades" vem das actividades de voluntariado**, com data, local e vagas
    restantes. Públicas, sem conta.
 3. **"Quero participar"** numa actividade: sem conta, abre a entrada e **volta à mesma
-   actividade** depois de entrar; com conta, uma confirmação curta com o telefone já
-   preenchido. Um voluntário ainda não aprovado vê que a inscrição fica pendente da
-   aprovação.
+   actividade** depois de entrar; voluntário aprovado inscreve-se com um toque (a API já
+   o faz); quem ainda não é voluntário é levado à candidatura, e fica a saber que a
+   inscrição depende da aprovação.
 4. **Ser voluntário** (a candidatura geral que já existe) continua, para quem quer ajudar
    sem uma actividade em concreto.
 5. **Números reais no topo** (actividades realizadas, voluntários activos), calculados a
    partir dos dados, nunca escritos à mão.
 
-**Trabalho de backend novo (PR próprio, com revisão):** inscrição por actividade (uma
-tabela de inscrições ligada a `atividades_voluntariado`, com o limite de vagas
-verificado na API), e uma forma de marcar as publicações que são relatos de actividade
-(por exemplo, uma categoria), para a Comunidade não mostrar notícias gerais.
+**Trabalho de backend novo (PR próprio, com revisão):** só uma forma de marcar as
+publicações que são relatos de actividade (por exemplo, uma categoria), para a
+Comunidade não mostrar notícias gerais. A inscrição por actividade já existe (corrigido
+a 2026-09-30, depois de auditar o código). Conteúdo: `docs/INVENTARIO_CONTEUDO.md`.
 
 ## 6. Rodapé
 
