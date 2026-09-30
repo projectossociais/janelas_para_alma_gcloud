@@ -41,6 +41,7 @@ const TEXTO: [NomeCor, NomeCor][] = [
   ["erro", "superficie"],
   ["erro", "fundo"],
   ["erro", "erro-suave"],
+  ["sobre-erro", "erro"],
 ];
 
 // Componentes e foco: WCAG 3:1 (1.4.11, 2.4.13). [elemento, fundo]

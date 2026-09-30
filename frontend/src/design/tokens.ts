@@ -48,6 +48,7 @@ export const NOMES_COR = [
   "aviso",
   "aviso-suave",
   "erro",
+  "sobre-erro",
   "erro-suave",
   // Anel de foco do teclado
   "foco",
@@ -80,6 +81,7 @@ export const CORES: Record<Tema, Paleta> = {
     aviso: "#6E5300",
     "aviso-suave": "#FBF3D5",
     erro: "#B42318",
+    "sobre-erro": "#FFFFFF",
     "erro-suave": "#FDECEA",
     foco: MARCA.azul,
   },
@@ -104,6 +106,7 @@ export const CORES: Record<Tema, Paleta> = {
     aviso: "#EBCF6B",
     "aviso-suave": "#3A3212",
     erro: "#FF9D8F",
+    "sobre-erro": "#2A0906",
     "erro-suave": "#4A1A17",
     foco: MARCA.azulClaro,
   },
@@ -216,7 +219,12 @@ export const temaTailwind = {
     ]),
   ),
   borderRadius: Object.fromEntries(Object.keys(RAIO).map((n) => [n, `var(--raio-${n})`])),
-  boxShadow: { "nivel-1": "var(--sombra-1)", "nivel-2": "var(--sombra-2)" },
+  boxShadow: {
+    "nivel-1": "var(--sombra-1)",
+    "nivel-2": "var(--sombra-2)",
+    // Reforça o contorno de um campo com erro sem mudar a largura da borda.
+    "contorno-erro": "0 0 0 1px rgb(var(--cor-erro))",
+  },
   minHeight: Object.fromEntries(Object.keys(ALVO).map((n) => [`alvo-${n}`, `var(--alvo-${n})`])),
   minWidth: Object.fromEntries(Object.keys(ALVO).map((n) => [`alvo-${n}`, `var(--alvo-${n})`])),
   transitionDuration: { feedback: "100ms", transicao: "250ms", entrada: "400ms" },

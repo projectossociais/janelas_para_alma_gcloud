@@ -79,6 +79,7 @@ import NotFound from "./pages/NotFound";
 // Laboratório de identidade do redesenho (Sprint 7): só em desenvolvimento.
 // Em produção `import.meta.env.DEV` é false e o import desaparece do build.
 const Laboratorio = import.meta.env.DEV ? lazy(() => import("./redesenho/laboratorio/Laboratorio")) : null;
+const Montra = import.meta.env.DEV ? lazy(() => import("./design/montra/Montra")) : null;
 import IdiomaDaRota from "./i18n/IdiomaDaRota";
 import { inglesAtivo } from "./i18n/idiomas";
 import { ALIASES_PT, EXERCICIOS_RETIRADOS, ROTAS, ROTAS_BILINGUES, type ChaveRota } from "./i18n/rotas";
@@ -183,6 +184,16 @@ const App = () => (
                     element={
                       <Suspense fallback={null}>
                         <Laboratorio />
+                      </Suspense>
+                    }
+                  />
+                )}
+                {Montra && (
+                  <Route
+                    path="/_montra"
+                    element={
+                      <Suspense fallback={null}>
+                        <Montra />
                       </Suspense>
                     }
                   />

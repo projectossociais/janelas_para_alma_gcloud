@@ -22,6 +22,7 @@
   --cor-aviso: 110 83 0;
   --cor-aviso-suave: 251 243 213;
   --cor-erro: 180 35 24;
+  --cor-sobre-erro: 255 255 255;
   --cor-erro-suave: 253 236 234;
   --cor-foco: 0 100 168;
   --sombra-1: 0 1px 2px rgb(0 33 81 / 0.06), 0 4px 16px -8px rgb(0 33 81 / 0.10);
@@ -63,6 +64,7 @@
     --cor-aviso: 235 207 107;
     --cor-aviso-suave: 58 50 18;
     --cor-erro: 255 157 143;
+    --cor-sobre-erro: 42 9 6;
     --cor-erro-suave: 74 26 23;
     --cor-foco: 151 207 252;
     --sombra-1: none;
@@ -92,6 +94,7 @@
   --cor-aviso: 235 207 107;
   --cor-aviso-suave: 58 50 18;
   --cor-erro: 255 157 143;
+  --cor-sobre-erro: 42 9 6;
   --cor-erro-suave: 74 26 23;
   --cor-foco: 151 207 252;
   --sombra-1: none;

@@ -21,6 +21,10 @@ const fontes = import.meta.glob(
     // laboratório de identidade: só existe em desenvolvimento (import.meta.env.DEV
     // em App.tsx), nunca chega ao site. O resto de src/redesenho não está excluído.
     "!/src/redesenho/laboratorio/**",
+    // montra do sistema de design: documentação viva, só em desenvolvimento.
+    "!/src/design/montra/**",
+    // tokens: só valores e os comentários do CSS que gera; nenhum texto de interface.
+    "!/src/design/tokens.ts",
   ],
   { query: "?raw", import: "default", eager: true },
 ) as Record<string, string>;

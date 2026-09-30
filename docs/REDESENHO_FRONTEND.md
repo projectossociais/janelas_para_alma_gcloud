@@ -165,6 +165,16 @@ Cada fase é entregável sozinha. A "acuidade" marca quão nítido fica o produt
   página viva.
 - **Pronto quando:** tokens no repositório e página de referência com todos os
   componentes nos dois temas.
+- **Execução (local, ramo `redesenho/frontend`):**
+  - [x] Tokens definitivos da direcção A (`src/design/tokens.ts`), CSS gerado e testado,
+    tema do Tailwind com nomes que não colidem com o site antigo (2026-09-30)
+  - [x] Ubuntu auto-alojada (sai o `@import` do Google); movimento e tema (2026-09-30)
+  - [x] Guardas de código e de acessibilidade (axe) (2026-09-30)
+  - [x] Montra `/_montra` (2026-09-30)
+  - [x] Botao, Campo, Indicador (2026-09-30)
+  - [ ] Passos, Aviso, Cartao, EstadoVazio, Esqueleto, Dialogo
+  - [ ] Cabeçalho do site e menu no telemóvel, barra de separadores da app, rodapé
+  - [ ] Página inicial com a estrutura de `docs/ESTRUTURA_SITE.md` §5
 
 ### Fase 2 · Fundações técnicas — 6/24 · ≈ 2 semanas · quase invisível
 - Três layouts partilhados; `Navbar` dividida por modo.

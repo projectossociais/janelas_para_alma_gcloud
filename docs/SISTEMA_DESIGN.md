@@ -31,15 +31,26 @@
 
 ```
 frontend/src/design/
-  tokens.css            camadas 1 e 2 de tokens (variáveis CSS, claro e escuro)
-  movimento.ts          durações e molas (a única fonte para o `motion`)
-  marca/                logótipos, Simbolo, cores oficiais (hoje em src/redesenho/marca)
-  componentes/          Botao, Campo, Cartao, Etiqueta, Aviso, EstadoVazio, Esqueleto,
-                        Dialogo, MenuSite, BarraSeparadores, Passos...
-  layouts/              LayoutSite, LayoutApp, LayoutConsola (com <Outlet>)
-  util/cn.ts            junção de classes (clsx + tailwind-merge)
+  tokens.ts             FONTE ÚNICA: cores (claro/escuro), tipo, raios, sombras, alvos
+  tokens.css            gerado por `npm run tokens` (nunca editar à mão; teste verifica)
+  contraste.ts          cálculo de contraste WCAG (uma só implementação)
+  cn.ts                 junção de classes que conhece os nomes do sistema
+  movimento.ts          durações, curva, molas e transições nomeadas
+  ProvedorMovimento.tsx LazyMotion (strict) + movimento reduzido para tudo
+  useTema.ts            preferência de tema (sistema/claro/escuro), guardada no browser
+  marca/                logótipos, Simbolo, cores oficiais
+  componentes/          Botao, Campo, Indicador (a seguir: Passos, Aviso, Cartao,
+                        EstadoVazio, Esqueleto, Dialogo, MenuSite, BarraSeparadores)
+  montra/               /_montra, só em desenvolvimento: a documentação viva
+  testes/               verificação de acessibilidade (axe-core) e tipos dos matchers
+  regras-codigo.test.ts as regras deste documento verificadas por máquina
 ```
 
+- **Armadilha resolvida:** o `cn` genérico (`@/lib/utils`) não conhece os nomes do
+  sistema e, em `text-corpo text-tinta`, apagava o tamanho de letra. Em `src/design/`
+  usa-se sempre `design/cn.ts` (regra verificada).
+- **Classes sempre escritas por inteiro:** o Tailwind só gera as classes que encontra no
+  código; `` `text-${nome}` `` nunca chega ao CSS (regra verificada).
 - `components/ui/` (shadcn) fica como camada de primitivos durante a migração. Os
   componentes novos embrulham o Radix directamente ou esses primitivos; as páginas
   migradas só importam de `design/`.
@@ -174,10 +185,10 @@ Botao.displayName = "Botao";
 | Portão | Estado | Nota |
 |---|---|---|
 | TypeScript **estrito** no código novo | Activo: `npm run typecheck:redesenho` (`tsconfig.redesenho.json`, com `strict` e `noUncheckedIndexedAccess`) | A app antiga continua com `strict: false`; o código novo nasce estrito e a pasta de verificação cresce com a migração. Entra no CI quando o ramo for integrado |
-| Contraste de cores AA | Activo (`direcoes.test.ts`, `marca.test.ts`) | Passa para os tokens finais |
+| Contraste de cores | Activo (`tokens.test.ts`, `marca.test.ts`): texto 4,5:1, contornos de controlo e foco 3:1 (WCAG 1.4.11), destaque 3:1, conforto visual | |
 | Texto português fora do i18n | Activo (`codigo-fonte.test.ts`) | |
-| Cores e tamanhos fora dos tokens | A criar | Teste no estilo de `codigo-fonte.test.ts` |
-| Acessibilidade automática (axe) | A criar | `vitest-axe` nos testes de componentes |
+| Cores e tamanhos fora dos tokens | Activo (`regras-codigo.test.ts`): sem hex, sem valores arbitrários, sem classes do site antigo, sem classes montadas dinamicamente, sem o `cn` genérico, sem `motion.*` completo. As próprias regras têm testes | |
+| Acessibilidade automática (axe) | Activo: `violacoesAcessibilidade()` (axe-core directo; o `vitest-axe` está parado) em cada teste de componente | Contraste fica nos testes dos tokens (o jsdom não calcula cores) |
 | Ordem das classes Tailwind | A decidir | Prettier com `prettier-plugin-tailwindcss` (hoje o projecto não usa Prettier: adoptar só nas pastas novas, para não reformatar tudo) |
 | Regressão visual | Fase 2 | Playwright, capturas por componente, tema e idioma |
 | Orçamento de JavaScript | Fase 2 | Build falha acima do limite (PESQUISA_UX §3) |
