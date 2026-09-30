@@ -134,12 +134,14 @@ Já tratada em `docs/ESTRUTURA_SITE.md` §5. Destino do conteúdo actual:
 | `AboutTeaserSection` | Vai para "Porque confiar" (texto bom) |
 | `PillarsSection` | Sai (T4, T5); o que é real vai para "Quem somos" |
 | `CuriosidadesSection` | Vai para o jogo e para o artigo do estrabismo, com fontes |
-| `NovidadesSection` | Passa a publicações (T8). **Mantida no código** até a formalização da "Olhar Alinhado" existir como publicação (depende da pergunta 1) |
+| `NovidadesSection` | Retirada do código (2026-09-30). O texto da formalização e do lançamento do jogo está em `docs/PUBLICACOES_A_CRIAR.md`, pronto a publicar pelos admins (a formalização depende da pergunta 1) |
 | `ParceirosSection` | Foi para "Porque confiar" (2026-09-30), com os mesmos 5 parceiros: Desafio Genial (programa da UNICEF Angola com a Arotec), UNICEF, Arotec, Optioptika, Nelt Group |
 
 ### Novidade da formalização (`FirmaOlharAlinhadoModal`)
 
-**Vira publicação.** Ver T1: esclarecer a entidade legal.
+**Vira publicação.** Ver T1: esclarecer a entidade legal. O componente saiu do código
+(2026-09-30); o texto original e uma revisão sem promessa de tratamento estão em
+`docs/PUBLICACOES_A_CRIAR.md`.
 
 ---
 

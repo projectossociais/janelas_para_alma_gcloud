@@ -179,9 +179,9 @@ Cada fase é entregável sozinha. A "acuidade" marca quão nítido fica o produt
   - [x] Página inicial real (`src/pages/Inicio.tsx`, substitui `Index.tsx`): estrutura de
     `docs/ESTRUTURA_SITE.md` §5, textos em pt-AO e en-US, rotas reais, sessão, campanha dos
     admins, parceiros e fotografia real da equipa; `EstruturaSite` partilhada para as páginas
-    que migrarem a seguir (2026-09-30). **Antes do merge:** a formalização da "Olhar
-    Alinhado" (hoje só nas Novidades antigas, mantidas no código) tem de passar a publicação;
-    logótipos da Arotec e da Nelt com menos margem
+    que migrarem a seguir (2026-09-30). Feito antes do merge: as Novidades
+    antigas saíram do código (texto a publicar em `docs/PUBLICACOES_A_CRIAR.md`) e os
+    logótipos dos parceiros foram recortados ao conteúdo
 
 ### Fase 2 · Fundações técnicas — 6/24 · ≈ 2 semanas · quase invisível
 - Três layouts partilhados; `Navbar` dividida por modo.
