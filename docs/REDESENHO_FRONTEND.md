@@ -257,6 +257,12 @@ Acrescentar abaixo, com data, o que for decidido ou detalhado em cada conversa s
 redesenho (referências visuais, páginas a priorizar, gostos e recusas do dono do
 projecto, feedback do Lukeny). Mais recente em cima.
 
+- **2026-09-30** — Estrutura do site novo em `docs/ESTRUTURA_SITE.md`: cabeçalho com 5
+  destinos e "Entrar" sempre visível (também no telemóvel), uma só porta de entrada
+  (email primeiro, Google, registo só quando faz falta), página inicial pela ordem das
+  perguntas do pai, rodapé com contacto humano e aviso clínico, e a lista do que torna um
+  site "genérico de IA" com a nossa alternativa. Por confirmar: o lugar de `Kamba`,
+  `Circular` e `CampanhaGamek`.
 - **2026-09-29** — Não há designer no projecto: o design é proposto em código e aprovado
   pelo dono (decisão 3). Letra: Ubuntu para todos, com a Atkinson Hyperlegible Next
   como opção de leitura fácil. Acrescentados a navegação por modo, o catálogo de
