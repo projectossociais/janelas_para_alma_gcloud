@@ -7,5 +7,9 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true
   },
-  "include": ["src/redesenho", "src/vite-env.d.ts"]
+  "include": [
+    "src/design",
+    "src/redesenho",
+    "src/vite-env.d.ts"
+  ]
 }

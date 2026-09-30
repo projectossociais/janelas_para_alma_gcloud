@@ -11,9 +11,11 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck:redesenho": "tsc --noEmit -p tsconfig.redesenho.json"
+    "typecheck:redesenho": "tsc --noEmit -p tsconfig.redesenho.json",
+    "tokens": "vite-node scripts/gerar-tokens.ts"
   },
   "dependencies": {
+    "@fontsource/ubuntu": "^5.3.0",
     "@hookform/resolvers": "^3.10.0",
     "@mediapipe/camera_utils": "^0.3.1675466862",
     "@mediapipe/face_mesh": "^0.4.1633559619",
@@ -84,6 +86,7 @@
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react-swc": "^3.11.0",
     "autoprefixer": "^10.4.21",
+    "axe-core": "^4.13.0",
     "eslint": "^9.32.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",

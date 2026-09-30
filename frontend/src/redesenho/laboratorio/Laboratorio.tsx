@@ -1,5 +1,5 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
-import { AnimatePresence, motion, useReducedMotion, type Variants } from "motion/react";
+import { AnimatePresence, LazyMotion, domAnimation, motion, useReducedMotion, type Variants } from "motion/react";
 import {
   AlertCircle,
   ArrowRight,
@@ -14,8 +14,8 @@ import {
   Timer,
 } from "lucide-react";
 // Na navegação o logótipo é pequeno: versão sem assinatura (docs/MARCA.md §2).
-import logotipo from "../marca/logotipo-horizontal-sem-assinatura.svg";
-import logotipoNegativo from "../marca/logotipo-horizontal-negativo-sem-assinatura.svg";
+import logotipo from "@/design/marca/logotipo-horizontal-sem-assinatura.svg";
+import logotipoNegativo from "@/design/marca/logotipo-horizontal-negativo-sem-assinatura.svg";
 import { DIRECCOES, FONTES_GOOGLE, variaveis, type Direccao, type IdDireccao, type Tema } from "./direcoes";
 import { Decoracao } from "./Decoracoes";
 import { EcraRastreio } from "./EcraRastreio";
@@ -316,6 +316,8 @@ const Laboratorio = () => {
   const d = DIRECCOES[id];
 
   return (
+    // Sem `strict`: o laboratório usa `motion.*`; o símbolo da marca usa `m.*`.
+    <LazyMotion features={domAnimation}>
     <div className="min-h-screen bg-neutral-100 text-neutral-900">
       {/* Barra do laboratório (neutra, fora da direcção avaliada) */}
       <div className="sticky top-0 z-50 border-b border-neutral-300 bg-white/95 backdrop-blur">
@@ -360,6 +362,7 @@ const Laboratorio = () => {
         </motion.div>
       </AnimatePresence>
     </div>
+    </LazyMotion>
   );
 };
 

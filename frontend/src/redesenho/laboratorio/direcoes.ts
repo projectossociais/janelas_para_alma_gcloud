@@ -9,7 +9,10 @@
  * forma, movimento). Cores fora da paleta são só tons derivados dela
  * (superfícies, linhas) e o vermelho funcional de erro.
  */
-import { MARCA } from "../marca/marca";
+import { MARCA } from "@/design/marca/marca";
+import { contraste, luminancia } from "@/design/contraste";
+
+export { contraste, luminancia };
 
 export type IdDireccao = "clara" | "viva" | "humana";
 export type Tema = "claro" | "escuro";
@@ -251,18 +254,4 @@ export function variaveis(d: Direccao, tema: Tema): Record<string, string> {
     "--r-letra-titulo": d.letraTitulo,
     "--r-letra-texto": d.letraTexto,
   };
-}
-
-/** Luminância relativa (WCAG 2.x) de uma cor #RRGGBB. */
-export function luminancia(hex: string): number {
-  const canal = (i: number) => parseInt(hex.slice(i, i + 2), 16) / 255;
-  const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
-  return 0.2126 * lin(canal(1)) + 0.7152 * lin(canal(3)) + 0.0722 * lin(canal(5));
-}
-
-/** Contraste WCAG entre duas cores (1 a 21). */
-export function contraste(a: string, b: string): number {
-  const la = luminancia(a);
-  const lb = luminancia(b);
-  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
 }

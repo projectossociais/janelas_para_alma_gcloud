@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { contraste } from "../laboratorio/direcoes";
+import { contraste } from "../contraste";
 import { MARCA } from "./marca";
 
 // Os factos de contraste por trás das regras de uso de docs/MARCA.md §3.

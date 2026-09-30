@@ -1,6 +1,6 @@
 import { motion, useReducedMotion } from "motion/react";
-import { MARCA, SIMBOLO } from "../marca/marca";
-import { Simbolo } from "../marca/Simbolo";
+import { MARCA, SIMBOLO } from "@/design/marca/marca";
+import { Simbolo } from "@/design/marca/Simbolo";
 import type { IdDireccao, Tema } from "./direcoes";
 
 /**
