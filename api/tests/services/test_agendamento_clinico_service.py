@@ -9,6 +9,7 @@ from datetime import UTC, datetime, time
 import pytest
 
 from app.core.email import EmailEnvioFalhouError
+from app.core.fuso import FUSO_LUANDA
 from app.repositories.agendamento_clinico_repository import AgendamentoClinicoRegisto
 from app.repositories.clinica_parceira_repository import ClinicaParceiraRegisto
 from app.repositories.disponibilidade_clinica_repository import DisponibilidadeRegisto
@@ -257,6 +258,51 @@ class TestPedir:
         destinatarios = {e["destinatario"] for e in email_sender.enviados}
         assert destinatarios == {"ana@example.com", "geral@optioptika.com"}
 
+    def test_aceita_horario_no_inicio_da_janela_em_hora_de_luanda(self) -> None:
+        # 09:00 em Luanda (08:00 UTC), numa janela 09:00-12:00 da clínica.
+        disponibilidades = RepositorioDisponibilidadesFalso(
+            janelas=[_disponibilidade(hora_inicio=time(9, 0), hora_fim=time(12, 0))]
+        )
+        dados = {**DADOS_PEDIDO, "horario_inicio": datetime(2027, 1, 4, 8, 0, tzinfo=UTC)}
+        assert _servico(disponibilidades=disponibilidades).pedir(**dados).estado == "pendente"
+
+    def test_recusa_horario_antes_da_janela_em_hora_de_luanda(self) -> None:
+        # 08:00 em Luanda (07:00 UTC) está fora de uma janela 09:00-12:00.
+        disponibilidades = RepositorioDisponibilidadesFalso(
+            janelas=[_disponibilidade(hora_inicio=time(9, 0), hora_fim=time(12, 0))]
+        )
+        dados = {**DADOS_PEDIDO, "horario_inicio": datetime(2027, 1, 4, 7, 0, tzinfo=UTC)}
+        with pytest.raises(HorarioIndisponivelError):
+            _servico(disponibilidades=disponibilidades).pedir(**dados)
+
+    def test_o_dia_da_semana_e_o_de_luanda(self) -> None:
+        # Segunda 00:30 em Luanda é domingo 23:30 UTC.
+        disponibilidades = RepositorioDisponibilidadesFalso(
+            janelas=[_disponibilidade(dia_semana=0, hora_inicio=time(0, 0), hora_fim=time(1, 0))]
+        )
+        dados = {**DADOS_PEDIDO, "horario_inicio": datetime(2027, 1, 3, 23, 30, tzinfo=UTC)}
+        assert _servico(disponibilidades=disponibilidades).pedir(**dados).estado == "pendente"
+
+    def test_horario_sem_fuso_conta_como_utc_em_vez_de_rebentar(self) -> None:
+        dados = {**DADOS_PEDIDO, "horario_inicio": HORARIO_VALIDO.replace(tzinfo=None)}
+        assert _servico().pedir(**dados).estado == "pendente"
+
+    def test_os_emails_dizem_o_dia_e_a_hora_de_luanda(self) -> None:
+        # Bug real: nenhum dos dois emails dizia quando era a consulta.
+        email_sender = EmailSenderFalso()
+        _servico(email_sender=email_sender).pedir(**DADOS_PEDIDO)
+        # HORARIO_VALIDO = 09:00 UTC = 10:00 em Luanda.
+        for enviado in email_sender.enviados:
+            assert "04/01/2027 às 10:00" in enviado["corpo_html"]
+
+    def test_o_email_da_clinica_escapa_o_que_o_utilizador_escreve(self) -> None:
+        email_sender = EmailSenderFalso()
+        dados = {**DADOS_PEDIDO, "nome": "<b>Ana</b>", "motivo": "<script>x</script>"}
+        _servico(email_sender=email_sender).pedir(**dados)
+        clinica = next(e for e in email_sender.enviados if e["destinatario"] == "geral@optioptika.com")
+        assert "<script>" not in clinica["corpo_html"]
+        assert "&lt;b&gt;Ana&lt;/b&gt;" in clinica["corpo_html"]
+
     def test_falha_no_email_nao_impede_o_pedido(self) -> None:
         resultado = _servico(email_sender=EmailSenderFalso(falha=True)).pedir(**DADOS_PEDIDO)
         assert resultado.estado == "pendente"
@@ -270,8 +316,21 @@ class TestHorariosDisponiveis:
         resultado = _servico(disponibilidades=disponibilidades).horarios_disponiveis("clinica-1", "presencial")
 
         assert len(resultado) > 0
-        assert all(h.inicio.weekday() == 0 for h in resultado)
-        assert all(time(8, 0) <= h.inicio.time() < time(9, 0) for h in resultado)
+        locais = [h.inicio.astimezone(FUSO_LUANDA) for h in resultado]
+        assert all(h.weekday() == 0 for h in locais)
+        assert all(time(8, 0) <= h.time() < time(9, 0) for h in locais)
+
+    def test_a_janela_da_clinica_e_na_hora_de_luanda(self) -> None:
+        # Bug real (2026-09-30): a clínica escreve "09:00" no portal, em hora
+        # local, e o serviço gerava 09:00 UTC -- a família via 10:00.
+        disponibilidades = RepositorioDisponibilidadesFalso(
+            janelas=[_disponibilidade(dia_semana=0, hora_inicio=time(9, 0), hora_fim=time(10, 0))]
+        )
+        resultado = _servico(disponibilidades=disponibilidades).horarios_disponiveis("clinica-1", "presencial")
+
+        primeiro = resultado[0].inicio
+        assert primeiro.astimezone(FUSO_LUANDA).time() == time(9, 0)
+        assert primeiro.astimezone(UTC).time() == time(8, 0)
 
     def test_exclui_horario_ja_ocupado(self) -> None:
         agendamentos = RepositorioAgendamentosFalso(conflito=True)
@@ -303,6 +362,12 @@ class TestConfirmarERecusar:
         assert agendamentos.confirmado["admin_id"] == "admin-9"
         assert len(email_sender.enviados) == 1
         assert email_sender.enviados[0]["destinatario"] == "ana@example.com"
+
+    def test_o_email_de_confirmacao_diz_o_dia_e_a_hora_de_luanda(self) -> None:
+        agendamentos = RepositorioAgendamentosFalso(existente=_agendamento(horario_inicio=HORARIO_VALIDO))
+        email_sender = EmailSenderFalso()
+        _servico(agendamentos=agendamentos, email_sender=email_sender).confirmar("ag-1", "admin-9")
+        assert "segunda-feira, 04/01/2027 às 10:00 (hora de Luanda)" in email_sender.enviados[0]["corpo_html"]
 
     def test_confirmar_consulta_online_cria_teleconsulta_e_inclui_o_link_no_email(self) -> None:
         agendamentos = RepositorioAgendamentosFalso(existente=_agendamento(modalidade="online"))
