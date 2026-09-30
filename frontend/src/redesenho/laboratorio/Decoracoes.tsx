@@ -19,29 +19,39 @@ const SimboloAlinhado = ({ tema }: { tema: Tema }) => (
 // Lente do olho do logótipo, reduzida a um losango de pontas curvas.
 const LENTE = "M4 40 C24 14 72 14 92 40 C72 66 24 66 4 40 Z";
 
-/** B: padrão de lentes nas cores da marca, sobre marinho, a deslizar devagar. */
+/**
+ * B: padrão de lentes nas cores da marca, sobre marinho. Parado, espaçado e de
+ * contraste baixo: padrões regulares de alto contraste (e ainda mais em
+ * movimento) causam desconforto visual, sobretudo em quem já tem problemas de
+ * visão (PESQUISA_UX §3, Conforto visual). Aparece de uma vez, suavemente.
+ */
 const PadraoLentes = () => {
   const reduzido = useReducedMotion();
   return (
     <div className="relative h-full w-full overflow-hidden" style={{ background: MARCA.marinho }} aria-hidden>
       <motion.svg
         viewBox="0 0 480 480"
-        className="absolute inset-0 h-[140%] w-[140%]"
-        animate={reduzido ? undefined : { x: [0, -48, 0], y: [0, -32, 0] }}
-        transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute inset-0 h-full w-full"
+        initial={reduzido ? false : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1.2, ease: "easeOut" }}
       >
         <defs>
-          <pattern id="lentes" width="96" height="80" patternUnits="userSpaceOnUse">
-            <path d={LENTE} fill="none" stroke={MARCA.turquesa} strokeWidth="5" />
-            <circle cx="48" cy="40" r="11" fill={MARCA.azul} />
-            <circle cx="48" cy="40" r="5" fill={SIMBOLO.pupila} />
-          </pattern>
-          <pattern id="lentes-alt" width="96" height="80" patternUnits="userSpaceOnUse" x="48" y="40">
-            <circle cx="48" cy="40" r="4" fill={MARCA.dourado} />
+          <pattern id="lentes" width="160" height="136" patternUnits="userSpaceOnUse" patternTransform="translate(-20 -10)">
+            <g transform="translate(32 28)" opacity="0.32">
+              <path d={LENTE} fill="none" stroke={MARCA.turquesa} strokeWidth="4" />
+              <circle cx="48" cy="40" r="10" fill={MARCA.azul} />
+            </g>
+            <circle cx="136" cy="112" r="3.5" fill={MARCA.dourado} opacity="0.55" />
           </pattern>
         </defs>
         <rect width="480" height="480" fill="url(#lentes)" />
-        <rect width="480" height="480" fill="url(#lentes-alt)" />
+        {/* Uma só lente em destaque, na cor plena: o olhar tem onde pousar. */}
+        <g transform="translate(192 176) scale(1.6)">
+          <path d={LENTE} fill={MARCA.marinho} stroke={MARCA.turquesa} strokeWidth="4" />
+          <circle cx="48" cy="40" r="12" fill={MARCA.azul} />
+          <circle cx="48" cy="40" r="5.5" fill={SIMBOLO.pupila} />
+        </g>
       </motion.svg>
       <div
         className="absolute inset-x-0 bottom-0 h-1/2"

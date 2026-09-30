@@ -123,6 +123,9 @@ Nascidos do manual, sem inventar formas novas:
 2. **Símbolo que se alinha** (pág. 3-4), só na abertura.
 3. **Padrão de lentes:** a lente do olho repetida em turquesa e azul, com pontos em
    dourado, sobre marinho, para ecrãs de celebração e para o mundo das crianças.
+   **Sempre parado, espaçado e de contraste baixo**, com uma só lente em destaque:
+   padrões regulares de alto contraste causam desconforto visual (PESQUISA_UX §3,
+   Conforto visual).
 4. **A janela como moldura:** a moldura quadrada do símbolo, com a mesma opacidade, a
    enquadrar fotografias reais a preto e branco (pág. 2).
 

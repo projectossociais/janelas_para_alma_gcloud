@@ -17,6 +17,26 @@ const PARES = [
   ["erro", "fundo"],
 ] as const;
 
+// Suave aos olhos (PESQUISA_UX §3, Conforto visual): legível (AAA, ≥ 7:1) mas sem
+// extremos. Nada de branco puro no fundo nem preto puro no texto; no escuro, o
+// texto muito claro sobre fundo muito escuro "vibra", por isso o tecto é mais baixo.
+describe("tokens das direcções: conforto visual, sem extremos", () => {
+  const TECTO: Record<Tema, number> = { claro: 16, escuro: 15 };
+  for (const d of Object.values(DIRECCOES)) {
+    for (const tema of ["claro", "escuro"] as Tema[]) {
+      it(`${d.nome} · ${tema}`, () => {
+        const c = d.cores[tema];
+        expect(c.fundo.toUpperCase()).not.toBe("#FFFFFF");
+        expect(c.fundo.toUpperCase()).not.toBe("#000000");
+        expect(["#000000", "#FFFFFF"]).not.toContain(c.tinta.toUpperCase());
+        const r = contraste(c.tinta, c.fundo);
+        expect(r).toBeGreaterThanOrEqual(7);
+        expect(r).toBeLessThanOrEqual(TECTO[tema]);
+      });
+    }
+  }
+});
+
 // O destaque só pinta títulos grandes (≥ 24 px): basta o limite AA de texto
 // grande, 3:1.
 describe("tokens das direcções: destaque legível nos títulos grandes", () => {

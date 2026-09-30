@@ -142,16 +142,12 @@ export const EcraRastreio = ({ d }: { d: Direccao }) => {
                   Olhe para o ponto
                 </h3>
                 <div className="relative mt-6 flex h-64 w-48 items-center justify-center">
-                  <motion.div
-                    className="absolute inset-0 rounded-[50%] border-[3px] border-dashed border-[var(--r-prim)]"
-                    animate={reduzido ? undefined : { scale: [1, 1.03, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  />
-                  <motion.span
-                    className="h-5 w-5 rounded-full bg-[var(--r-acento)]"
-                    animate={reduzido ? undefined : { scale: [1, 1.5, 1], opacity: [1, 0.6, 1] }}
-                    transition={{ duration: 1.2, repeat: Infinity }}
-                  />
+                  {/* Contorno contínuo e parado: tracejados e pulsação são padrões
+                      repetidos em movimento, que cansam (PESQUISA_UX §3, Conforto). */}
+                  <div className="absolute inset-0 rounded-[50%] border-[3px] border-[var(--r-prim)] opacity-60" />
+                  {/* O ponto de fixação não se mexe: uma criança com estrabismo tem de o
+                      fixar, e um alvo a pulsar dificulta a fixação. */}
+                  <span className="h-5 w-5 rounded-full bg-[var(--r-acento)] ring-4 ring-[var(--r-sup-alt)]" />
                 </div>
                 <div className="mt-6 h-2 w-full overflow-hidden rounded-full bg-[var(--r-sup-alt)]">
                   <motion.div

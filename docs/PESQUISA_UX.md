@@ -108,6 +108,51 @@ contínua nos ecrãs de tarefa, carrosséis na página inicial.
 | Sem rede | Mantém o que já está no ecrã, avisa sem bloquear, e guarda o que foi escrito |
 | Sucesso | Confirma **só** depois da resposta do servidor, e diz o que acontece a seguir |
 
+### Conforto visual: suave aos olhos
+
+O nosso público inclui pessoas com estrabismo e ambliopia, que se cansam mais a olhar
+para um ecrã. "Suave" aqui não é um adjectivo: são regras que se medem.
+
+**Cor e contraste: legível, mas sem extremos**
+- Texto principal entre **7:1 e 16:1** (AAA, sem chegar ao máximo de 21:1); no tema
+  escuro no máximo **15:1**, porque o texto muito claro sobre fundo muito escuro "vibra"
+  e cansa, sobretudo com astigmatismo. Nunca branco puro no fundo nem preto puro no
+  texto. **Verificado por teste** (`direcoes.test.ts`, "conforto visual").
+- Nada de cores muito saturadas em áreas grandes: turquesa, dourado e lima são sinais
+  pequenos ou fundos de pouca área; as áreas grandes são neutras ou marinho.
+- **Contraste de claro e escuro, não só de cor:** duas cores com brilho parecido lado a
+  lado (turquesa sobre azul, vermelho sobre verde) causam mais desconforto do que um
+  contraste normal de claro/escuro (Wilkins e colegas).
+
+**Padrões e texturas**
+- **Nada de riscas nem padrões regulares de alto contraste.** São o estímulo que mais
+  provoca desconforto e dores de cabeça ("pattern glare"), no máximo com riscas iguais,
+  na escala de ~3 ciclos por grau (o tamanho de um padrão de ecrã visto a 40 cm), e mais
+  ainda em quem já tem problemas de visão. Padrões só com contraste baixo, espaçados e
+  **parados**. Nada de fundos tracejados, riscados ou em xadrez.
+- Contornos contínuos em vez de tracejados; barras de progresso lisas, nunca listadas.
+- As fotografias são imagens naturais (é o que o olho processa com menos esforço); nada
+  de texturas geradas, ruído ou gradientes com muitas bandas de cor.
+
+**Movimento sem sobressalto**
+- Anima-se só `transform` e `opacity` (fluido a 60 fps, mesmo em telemóveis modestos);
+  nunca largura, altura ou posição que obrigue a recalcular a página.
+- Curvas suaves ou molas amortecidas (sem ressalto), nunca `linear` em movimento de
+  interface.
+- **Nada pisca, pulsa ou roda continuamente em ecrãs de tarefa.** Em particular, o
+  **ponto de fixação** do rastreio e dos testes **fica parado**: uma criança com
+  estrabismo tem de o fixar. WCAG 2.3.1: nunca mais de 3 flashes por segundo.
+- Nada salta: espaço reservado para imagens e conteúdo que carrega (CLS ≤ 0,1);
+  imagens aparecem com um desvanecer curto sobre uma cor de fundo, não "de repente".
+- Mudar de tema claro/escuro faz uma transição curta, não um corte seco.
+- Deslocamento suave nas ligações internas, excepto com movimento reduzido.
+
+**Calma no ecrã**
+- Espaço generoso, uma acção principal por ecrã, alinhamentos consistentes (grelha de
+  12 colunas, ritmo de 8 px): o olho não tem de procurar.
+- Sombras suaves e raras; linhas finas de cor próxima do fundo, não contornos duros.
+- No máximo dois pesos de letra por bloco, e texto corrido nunca em maiúsculas.
+
 ### Movimento (um só vocabulário, em tokens)
 | Token | Valor | Uso |
 |---|---|---|
@@ -292,3 +337,8 @@ Cartao · Aviso · EstadoVazio · Esqueleto · Dialogo · MenuSite · BarraSepar
 - Braille Institute, *Atkinson Hyperlegible* — https://www.brailleinstitute.org/freefont/
 - NN/g, *Hamburger menus and hidden navigation hurt UX metrics* — https://www.nngroup.com/articles/hamburger-menus/
 - NN/g, *Basic patterns for mobile navigation* — https://www.nngroup.com/articles/mobile-navigation-patterns/
+- Wilkins et al., *A physiological basis for visual discomfort: application in lighting design* — https://journals.sagepub.com/doi/full/10.1177/1477153515612526
+- Evans e Stevenson, *The Pattern Glare Test: a review and determination of normative values* — https://onlinelibrary.wiley.com/doi/full/10.1111/j.1475-1313.2008.00578.x
+- Juricevic et al., *Visual discomfort and natural image statistics* — https://doi.org/10.1068/p6656
+- *Visual discomfort and variations in chromaticity in art and nature* — https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8720932/
+- UX Movement, *Why you should never use pure black for text or backgrounds* (opinião de especialistas, evidência fraca) — https://uxmovement.com/content/why-you-should-never-use-pure-black-for-text-or-backgrounds/
