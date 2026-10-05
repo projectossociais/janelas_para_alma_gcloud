@@ -19,15 +19,22 @@ export interface CarrosselProps {
   itens: readonly ReactNode[];
   /** Nome da região (ex.: "Parceiros"). */
   rotulo: string;
-  textos: { anterior: string; seguinte: string; parar: string; retomar: string };
+  /** `parar`/`retomar` só são precisos com `comPausa`. */
+  textos: { anterior: string; seguinte: string; parar?: string; retomar?: string };
   intervaloMs?: number;
+  /**
+   * Botão visível para parar a passagem (WCAG 2.2.2). Ligado por omissão. Os
+   * parceiros desligam-no por decisão do dono do projecto (2026-10-05): continua a
+   * parar ao tocar, ao passar o rato, com o teclado e com "reduzir movimento".
+   */
+  comPausa?: boolean;
   className?: string;
 }
 
 const movimentoReduzido = () =>
   typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-export const Carrossel = ({ itens, rotulo, textos, intervaloMs = 3000, className }: CarrosselProps) => {
+export const Carrossel = ({ itens, rotulo, textos, intervaloMs = 3000, comPausa = true, className }: CarrosselProps) => {
   const faixa = useRef<HTMLUListElement>(null);
   const [transborda, setTransborda] = useState(false);
   const [paradoPeloUtilizador, setParadoPeloUtilizador] = useState(false);
@@ -127,7 +134,7 @@ export const Carrossel = ({ itens, rotulo, textos, intervaloMs = 3000, className
           <button type="button" className={botao} aria-label={textos.seguinte} onClick={() => mover(1)}>
             <ChevronRight aria-hidden />
           </button>
-          {!reduzido && (
+          {comPausa && !reduzido && (
             <button
               type="button"
               className={cn(botao, "ml-auto")}

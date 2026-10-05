@@ -104,6 +104,15 @@ describe("Carrossel", () => {
     expect(scrollTo).not.toHaveBeenCalled();
   });
 
+  it("com comPausa={false}, não há botão de pausa mas continua a passar e a ter setas", () => {
+    simularLayout({ transborda: true });
+    render(<Carrossel itens={ITENS} rotulo="Parceiros" textos={TEXTOS} comPausa={false} />);
+    expect(screen.queryByRole("button", { name: TEXTOS.parar })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: TEXTOS.seguinte })).toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(3000));
+    expect(scrollTo).toHaveBeenCalledTimes(1);
+  });
+
   it("sem violações de acessibilidade", async () => {
     vi.useRealTimers();
     simularLayout({ transborda: true });

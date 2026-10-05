@@ -86,9 +86,8 @@ export const PorqueConfiar = () => {
             textos={{
               anterior: t("Inicio.parceirosAnterior"),
               seguinte: t("Inicio.parceirosSeguinte"),
-              parar: t("Inicio.parceirosParar"),
-              retomar: t("Inicio.parceirosRetomar"),
             }}
+            comPausa={false}
             itens={PARCEIROS.map((p) => (
               <a
                 key={p.url}

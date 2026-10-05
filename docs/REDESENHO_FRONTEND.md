@@ -280,11 +280,15 @@ projecto, feedback do Lukeny). Mais recente em cima.
   e deixe avançar e recuar. A regra "nada de carrosséis na página inicial" mantém-se para
   conteúdo principal; esta é uma excepção pensada para a faixa de logótipos, que é
   secundária. Componente `Carrossel` (`src/design/componentes/`, com testes), feito para
-  evitar os defeitos que levaram à regra: botão de pausa visível (WCAG 2.2.2); pára
+  evitar os defeitos que levaram à regra: pára
   enquanto a pessoa lhe toca, passa o rato ou usa o teclado lá dentro, e fora do ecrã;
   não se mexe com "reduzir movimento"; desliza com o dedo; do último volta ao primeiro.
   Onde todos cabem (computador), ficam parados e sem controlos. Cartões todos de
-  160×96 px com o logótipo centrado.
+  160×96 px com o logótipo centrado. O componente tem um botão de pausa visível
+  (WCAG 2.2.2), mas o dono do projecto pediu para o tirar nos parceiros (mesmo dia):
+  fica `comPausa={false}`. Sem esse botão, a página deixa de cumprir à letra o 2.2.2
+  nesta faixa; o que fica a compensar é que pára ao tocar, ao passar o rato e com o
+  teclado, nunca se mexe com "reduzir movimento", e são só logótipos (nada para ler).
 
 - **2026-09-30** — **Fase 2, imagens e guardas.** Saíram 23 imagens sem uso (~2,3 MB); as
   que estão em uso passaram de 2,5 MB para 600 KB (fotografias em PNG passaram a JPEG,
