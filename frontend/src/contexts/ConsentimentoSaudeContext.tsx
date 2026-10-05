@@ -83,8 +83,15 @@ export const ConsentimentoSaudeProvider = ({ children }: { children: ReactNode }
     });
   }, [consentido]);
 
+  // Quem consente tem de ser adulto: diz "tenho 18 anos" (1) ou "sou representante
+  // legal", cujo texto também declara a maioridade (2). E tem sempre de autorizar (3).
+  // Um adulto sem filhos marca 1 e 3; um pai pode marcar só 2 e 3 (pedido do dono
+  // do projecto, 2026-10-05). A API continua a exigir a maioridade declarada.
+  const declaraMaioridade = maioridade || representaMenor;
+  const podeAceitar = declaraMaioridade && aceita;
+
   const aceitar = async () => {
-    if (!maioridade || !aceita) return;
+    if (!podeAceitar) return;
     if (!isLoggedIn) {
       setConsentido(true);
       fechar(true);
@@ -94,7 +101,7 @@ export const ConsentimentoSaudeProvider = ({ children }: { children: ReactNode }
     setErro(null);
     try {
       const estado = await consentimentoSaudeApi.dar({
-        declara_maioridade: maioridade,
+        declara_maioridade: declaraMaioridade,
         aceita_tratamento: aceita,
         representa_menor: representaMenor,
       });
@@ -125,7 +132,7 @@ export const ConsentimentoSaudeProvider = ({ children }: { children: ReactNode }
               <Botao variante="fantasma" onClick={() => fechar(false)} disabled={aGravar}>
                 {t("ConsentimentoSaude.agoraNao")}
               </Botao>
-              <Botao onClick={() => void aceitar()} disabled={!maioridade || !aceita} aCarregar={aGravar}>
+              <Botao onClick={() => void aceitar()} disabled={!podeAceitar} aCarregar={aGravar}>
                 {aGravar ? t("ConsentimentoSaude.aGravar") : t("ConsentimentoSaude.aceitarEContinuar")}
               </Botao>
             </>
