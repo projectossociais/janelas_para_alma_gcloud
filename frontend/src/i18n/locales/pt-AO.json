@@ -2140,12 +2140,12 @@
     "analiseEstado": "A analisar as três fotografias…",
     "aAnalisar": "A analisar",
     "erroAnaliseTitulo": "Não foi possível analisar as fotografias",
-    "erroAnaliseTexto": "Verifique a ligação à internet. As fotografias continuam neste telemóvel: pode tentar de novo.",
+    "erroAnaliseTexto": "Verifique a ligação à internet. As fotografias continuam neste aparelho: pode tentar de novo.",
     "erroPreparar": "Não foi possível preparar as fotografias. Tire-as de novo.",
     "repetirFotografias": "Tirar as fotografias de novo",
     "semSuporteTitulo": "Este browser não deixa usar a câmara nesta página",
     "semSuporteTexto": "A câmara só funciona em páginas seguras (endereço a começar por https). Abra o site pelo endereço janelasparaalma.com e tente outra vez.",
-    "erroServicoTexto": "O serviço de análise não está a responder. Tente daqui a pouco: as fotografias continuam neste telemóvel."
+    "erroServicoTexto": "O serviço de análise não está a responder. Tente daqui a pouco: as fotografias continuam neste aparelho."
   },
   "ResultadoRastreio": {
     "saltar": "Saltar para o conteúdo",
