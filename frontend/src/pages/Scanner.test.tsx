@@ -155,6 +155,18 @@ describe("Scanner — preparação e câmara", () => {
     expect(await screen.findByRole("heading", { name: T.cameraTitulo })).toBeInTheDocument();
   });
 
+  it("browser sem câmara nesta página (http por IP): diz porquê e não promete 'tentar de novo'", async () => {
+    Object.defineProperty(navigator, "mediaDevices", { configurable: true, value: undefined });
+    const u = user();
+    montar();
+    for (const r of [T.luz, T.altura, T.oculos]) await u.click(screen.getByText(r));
+    await u.click(accao(T.estouPronto));
+    await u.click(await esperarAccao(T.permitir));
+    expect(await screen.findByRole("alert")).toHaveTextContent(T.semSuporteTitulo);
+    expect(screen.queryByText(T.indisponivelTitulo)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: T.tentarDeNovo })).not.toBeInTheDocument();
+  });
+
   it("câmara recusada: explica como desbloquear e deixa tentar de novo", async () => {
     getUserMedia.mockRejectedValueOnce(Object.assign(new Error("x"), { name: "NotAllowedError" }));
     const u = user();
@@ -227,6 +239,17 @@ describe("Scanner — fotografias e análise", () => {
     expect(await screen.findByText("Página de resultados")).toBeInTheDocument();
   });
 
+  it("sem internet, diz que falta a internet", async () => {
+    submeterRastreioMultiGaze.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    const online = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    const u = user();
+    montar();
+    await prepararEPedirCamera(u);
+    await tirarAsTres(u);
+    expect(await screen.findByRole("alert")).toHaveTextContent(T.erroAnaliseTexto);
+    online.mockRestore();
+  });
+
   it("se a análise falhar, não há resultado; tentar de novo reenvia as mesmas fotografias", async () => {
     submeterRastreioMultiGaze.mockRejectedValueOnce(new Error("Failed to fetch")).mockResolvedValueOnce(RESPOSTA);
     const u = user();
@@ -234,7 +257,9 @@ describe("Scanner — fotografias e análise", () => {
     await prepararEPedirCamera(u);
     await tirarAsTres(u);
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(T.erroAnaliseTexto);
+    // Com internet, a culpa não é da ligação: é o serviço que não respondeu
+    // (caso real, 2026-10-05: a mensagem mandava verificar a internet).
+    expect(await screen.findByRole("alert")).toHaveTextContent(T.erroServicoTexto);
     expect(screen.queryByText("Página de resultados")).not.toBeInTheDocument();
     expect(sessionStorage.getItem("scanResult")).toBeNull();
 

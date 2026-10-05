@@ -2138,7 +2138,10 @@
     "erroAnaliseTitulo": "The photos could not be analysed",
     "erroAnaliseTexto": "Check your internet connection. The photos are still on this phone: you can try again.",
     "erroPreparar": "The photos could not be prepared. Please take them again.",
-    "repetirFotografias": "Take the photos again"
+    "repetirFotografias": "Take the photos again",
+    "semSuporteTitulo": "This browser does not allow the camera on this page",
+    "semSuporteTexto": "The camera only works on secure pages (addresses starting with https). Open the site at its usual https address and try again.",
+    "erroServicoTexto": "The analysis service is not responding. Please try again shortly: the photos are still on this phone."
   },
   "ResultadoRastreio": {
     "saltar": "Skip to content",

@@ -11,7 +11,7 @@ import { LUMINANCIA_MINIMA, luminanciaMedia } from "@/lib/rastreio/rastreio";
  * servidor faz a verificação final (`rosto_detetado`). Nunca bloquear para
  * sempre por uma dependência que pode falhar.
  */
-export type EstadoCamera = "desligada" | "a-ligar" | "ligada" | "recusada" | "indisponivel";
+export type EstadoCamera = "desligada" | "a-ligar" | "ligada" | "recusada" | "indisponivel" | "sem-suporte";
 
 const INTERVALO_LUZ = 700;
 export const ESPERA_DETECTOR = 5000;
@@ -43,6 +43,12 @@ export function useCameraRastreio() {
   useEffect(() => () => fluxo.current?.getTracks().forEach((t) => t.stop()), []);
 
   const ligar = useCallback(async (): Promise<boolean> => {
+    // Sem página segura (ex.: http por IP da rede) ou sem API de câmara, o browser
+    // nem deixa pedir: diz-se isso, em vez de "outra aplicação está a usá-la".
+    if (window.isSecureContext === false || !navigator.mediaDevices?.getUserMedia) {
+      setEstado("sem-suporte");
+      return false;
+    }
     setEstado("a-ligar");
     try {
       const stream = await navigator.mediaDevices.getUserMedia({

@@ -113,8 +113,13 @@ const Scanner = () => {
       // O detalhe do scanner só se mostra se houver versão no idioma da
       // página (ex.: "não foi possível comparar as posições"); nunca o texto
       // técnico "Erro na análise (500)".
+      // Sem detalhe, a causa: sem internet, diz-se isso; com internet, foi o
+      // serviço que não respondeu (caso real: a mensagem mandava ver a internet).
       const detalhe = (err as { detail?: unknown } | null)?.detail;
-      setMensagemErro(textoDoScannerNoIdioma(typeof detalhe === "string" ? detalhe : null));
+      setMensagemErro(
+        textoDoScannerNoIdioma(typeof detalhe === "string" ? detalhe : null) ??
+          (navigator.onLine === false ? null : t("Rastreio.erroServicoTexto")),
+      );
       setAnalise("erro-rede");
     }
   };
@@ -147,7 +152,8 @@ const Scanner = () => {
   };
 
   const aLigar = camera.estado === "a-ligar";
-  const falhaCamera = camera.estado === "recusada" || camera.estado === "indisponivel";
+  const semSuporte = camera.estado === "sem-suporte";
+  const falhaCamera = camera.estado === "recusada" || camera.estado === "indisponivel" || semSuporte;
 
   const accao =
     passo === 1 ? (
@@ -155,10 +161,13 @@ const Scanner = () => {
         {t("Rastreio.estouPronto")} <ArrowRight />
       </Botao>
     ) : passo === 2 ? (
-      <Botao tamanho="g" larguraTotal aCarregar={aLigar} onClick={() => void pedirCamera()}>
-        {falhaCamera ? <RefreshCw /> : <Camera />}
-        {falhaCamera ? t("Rastreio.tentarDeNovo") : t("Rastreio.permitir")}
-      </Botao>
+      // Sem suporte, tentar de novo não muda nada: não se oferece.
+      semSuporte ? undefined : (
+        <Botao tamanho="g" larguraTotal aCarregar={aLigar} onClick={() => void pedirCamera()}>
+          {falhaCamera ? <RefreshCw /> : <Camera />}
+          {falhaCamera ? t("Rastreio.tentarDeNovo") : t("Rastreio.permitir")}
+        </Botao>
+      )
     ) : passo === 3 ? (
       <Botao tamanho="g" larguraTotal disabled={!camera.podeFotografar} onClick={fotografar}>
         <Camera /> {t("Rastreio.tirarFotografia")}
@@ -257,9 +266,21 @@ const Scanner = () => {
                 className="mt-8"
                 variante="erro"
                 anunciar
-                titulo={t(camera.estado === "recusada" ? "Rastreio.recusadaTitulo" : "Rastreio.indisponivelTitulo")}
+                titulo={t(
+                  camera.estado === "recusada"
+                    ? "Rastreio.recusadaTitulo"
+                    : semSuporte
+                      ? "Rastreio.semSuporteTitulo"
+                      : "Rastreio.indisponivelTitulo",
+                )}
               >
-                {t(camera.estado === "recusada" ? "Rastreio.recusadaTexto" : "Rastreio.indisponivelTexto")}
+                {t(
+                  camera.estado === "recusada"
+                    ? "Rastreio.recusadaTexto"
+                    : semSuporte
+                      ? "Rastreio.semSuporteTexto"
+                      : "Rastreio.indisponivelTexto",
+                )}
               </Aviso>
             )}
           </>

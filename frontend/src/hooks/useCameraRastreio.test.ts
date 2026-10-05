@@ -62,6 +62,32 @@ describe("useCameraRastreio", () => {
     expect(b.result.current.estado).toBe("indisponivel");
   });
 
+  it("página não segura (http por IP da rede): 'sem-suporte', sem pedir a câmara", async () => {
+    // Caso real (2026-10-05): iPhone por http://192.168.x.x — o browser esconde a
+    // câmara e a mensagem dizia "outra aplicação está a usá-la".
+    const original = window.isSecureContext;
+    Object.defineProperty(window, "isSecureContext", { configurable: true, value: false });
+    try {
+      const { result } = renderHook(() => useCameraRastreio());
+      await act(async () => {
+        expect(await result.current.ligar()).toBe(false);
+      });
+      expect(result.current.estado).toBe("sem-suporte");
+      expect(getUserMedia).not.toHaveBeenCalled();
+    } finally {
+      Object.defineProperty(window, "isSecureContext", { configurable: true, value: original });
+    }
+  });
+
+  it("browser sem acesso à câmara (sem mediaDevices): 'sem-suporte'", async () => {
+    Object.defineProperty(navigator, "mediaDevices", { configurable: true, value: undefined });
+    const { result } = renderHook(() => useCameraRastreio());
+    await act(async () => {
+      await result.current.ligar();
+    });
+    expect(result.current.estado).toBe("sem-suporte");
+  });
+
   it("o <video> que aparece depois de a câmara ligar recebe o fluxo", async () => {
     const { result } = await ligada();
     const video = videoPronto();
