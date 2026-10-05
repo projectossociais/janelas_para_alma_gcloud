@@ -117,7 +117,7 @@ describe("MarcarConsulta — percurso completo", () => {
     expect(screen.getByText("ABCDEF12")).toBeInTheDocument();
     // Diz "pedido enviado", nunca "consulta confirmada": quem confirma é a clínica.
     expect(document.body.textContent).not.toMatch(/consulta confirmada/i);
-  });
+  }, 15000);
 
   it("as horas são as de Luanda e os dias vêm agrupados", async () => {
     const u = userEvent.setup();

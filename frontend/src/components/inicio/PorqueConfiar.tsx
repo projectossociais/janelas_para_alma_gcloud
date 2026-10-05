@@ -4,6 +4,7 @@ import { localizar } from "@/i18n/rotas";
 import { cn } from "@/design/cn";
 import { Contentor } from "@/design/layouts/Contentor";
 import { Ligacao } from "@/design/Ligacao";
+import { Carrossel } from "@/design/componentes/Carrossel";
 // Recorte de retrato (cabeça e ombros): a fotografia inteira é de corpo inteiro
 // e, num círculo, mostrava só o tronco e as mãos.
 import fotoDalva from "@/assets/team-dalva-retrato.jpg";
@@ -74,26 +75,36 @@ export const PorqueConfiar = () => {
           </Ligacao>
         </div>
 
-        <div className="border-t border-linha pt-10 lg:col-span-12">
+        <div className="min-w-0 border-t border-linha pt-10 lg:col-span-12">
           <h3 className="text-legenda font-medium uppercase tracking-wide text-tinta-suave">{t("Inicio.parceirosRotulo")}</h3>
-          <ul className="mt-6 flex flex-wrap items-center gap-4">
-            {PARCEIROS.map((p) => (
-                <li key={p.url}>
-                  <a
-                    href={p.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={cn(
-                      "flex h-20 min-w-32 items-center justify-center rounded-controlo border border-linha px-5",
-                      "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco",
-                      p.fundoClaro && "bg-white",
-                    )}
-                  >
-                    <img src={p.logo} alt={t(p.nome)} loading="lazy" decoding="async" className="h-12 w-auto max-w-36 object-contain" />
-                  </a>
-                </li>
+          {/* Cartões todos do mesmo tamanho, logótipo centrado; no telemóvel passam
+              num carrossel (decisão do dono do projecto, 2026-10-05), no computador
+              cabem todos e ficam parados. */}
+          <Carrossel
+            className="mt-6"
+            rotulo={t("Inicio.parceirosRotulo")}
+            textos={{
+              anterior: t("Inicio.parceirosAnterior"),
+              seguinte: t("Inicio.parceirosSeguinte"),
+              parar: t("Inicio.parceirosParar"),
+              retomar: t("Inicio.parceirosRetomar"),
+            }}
+            itens={PARCEIROS.map((p) => (
+              <a
+                key={p.url}
+                href={p.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(
+                  "flex h-24 w-40 items-center justify-center rounded-controlo border border-linha px-4",
+                  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco",
+                  p.fundoClaro && "bg-white",
+                )}
+              >
+                <img src={p.logo} alt={t(p.nome)} loading="lazy" decoding="async" className="max-h-14 max-w-full object-contain" />
+              </a>
             ))}
-          </ul>
+          />
         </div>
       </Contentor>
     </section>

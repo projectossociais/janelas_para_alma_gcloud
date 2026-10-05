@@ -47,7 +47,9 @@ de nós (serviço de saúde para toda a gente, incluindo quem lê pouco):
 
 **Rejeitado de propósito:** dark patterns de subscrição (renovar sem aviso, esconder o
 cancelar), gamificação no rastreio (é um acto clínico, não um jogo), animação decorativa
-contínua nos ecrãs de tarefa, carrosséis na página inicial.
+contínua nos ecrãs de tarefa, carrosséis na página inicial. *(Excepção decidida pelo
+dono do projecto a 2026-10-05: a faixa de logótipos dos parceiros, com pausa e sem
+movimento para quem o reduz. Ver `docs/REDESENHO_FRONTEND.md` §9.)*
 
 ---
 

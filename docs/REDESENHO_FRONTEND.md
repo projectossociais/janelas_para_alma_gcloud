@@ -274,6 +274,18 @@ Acrescentar abaixo, com data, o que for decidido ou detalhado em cada conversa s
 redesenho (referências visuais, páginas a priorizar, gostos e recusas do dono do
 projecto, feedback do Lukeny). Mais recente em cima.
 
+- **2026-10-05** — **Parceiros em carrossel (altera `docs/PESQUISA_UX.md` §2).** Ao testar
+  no telemóvel, a lista de parceiros saía desarrumada (linhas de 2/1/2, cartões de
+  tamanhos diferentes). O dono do projecto pediu um carrossel que passe de 3 em 3 segundos
+  e deixe avançar e recuar. A regra "nada de carrosséis na página inicial" mantém-se para
+  conteúdo principal; esta é uma excepção pensada para a faixa de logótipos, que é
+  secundária. Componente `Carrossel` (`src/design/componentes/`, com testes), feito para
+  evitar os defeitos que levaram à regra: botão de pausa visível (WCAG 2.2.2); pára
+  enquanto a pessoa lhe toca, passa o rato ou usa o teclado lá dentro, e fora do ecrã;
+  não se mexe com "reduzir movimento"; desliza com o dedo; do último volta ao primeiro.
+  Onde todos cabem (computador), ficam parados e sem controlos. Cartões todos de
+  160×96 px com o logótipo centrado.
+
 - **2026-09-30** — **Fase 2, imagens e guardas.** Saíram 23 imagens sem uso (~2,3 MB); as
   que estão em uso passaram de 2,5 MB para 600 KB (fotografias em PNG passaram a JPEG,
   largura máxima 1600 px). Os ícones do site eram a imagem 1920×1080 do logótipo, não
