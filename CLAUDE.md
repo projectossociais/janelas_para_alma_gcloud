@@ -239,7 +239,10 @@ com câmara (exige https), encaminhar a porta 8080 no VS Code como pública (o
 `vite.config.ts` aceita os endereços `*.devtunnels.ms`) e servir com `npm run telemovel`
 em vez de `npm run dev`: o modo de desenvolvimento pelo túnel é lento demais (centenas de
 módulos sem compressão); o `telemovel` compila e serve como em produção, com o mesmo
-encaminhamento de `/api/*`. Um IP da rede (`http://192.168…`) não serve: sem https, o
+encaminhamento de `/api/*`. A análise do rastreio (`janelas-scanner-api`, serviço à
+parte) também vai pela mesma origem em local: sem `VITE_API_SCANNER_URL`, o frontend
+chama `/scanner/*` e o Vite reencaminha para o serviço de produção (o CORS dele só aceita
+produção e `localhost`, não o túnel); `SCANNER_ALVO` aponta para outro. Um IP da rede (`http://192.168…`) não serve: sem https, o
 browser esconde a câmara.
 
 O browser fala **sempre com `/api/*` na mesma origem** — nunca com um URL absoluto da

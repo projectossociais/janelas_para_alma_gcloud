@@ -57,7 +57,9 @@ export interface ScreeningResponse {
 // sempre com "/api" na mesma origem — ver src/lib/apiClient.ts). O scanner
 // vive num repositório FastAPI à parte (janelas-scanner-api), daí a variável
 // própria: reutilizar VITE_API_URL aqui sequestraria o cliente da API própria.
-const API_BASE = import.meta.env.VITE_API_SCANNER_URL || 'http://localhost:8001/api/v1';
+// Sem a variável (teste local), vai pela mesma origem: o Vite reencaminha
+// `/scanner/*` para o serviço (vite.config.ts), também pelo túnel do telemóvel.
+const API_BASE = import.meta.env.VITE_API_SCANNER_URL || '/scanner/api/v1';
 
 export async function submeterRastreioMultiGaze(
   imagens: { centro: Blob; esquerda: Blob; direita: Blob },
