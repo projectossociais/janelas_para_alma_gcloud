@@ -235,8 +235,12 @@ A base local nasce vazia: depois do primeiro `docker compose up`, correr
 `docker compose exec api python -m alembic upgrade head` e, para ter uma clínica com
 horários e uma conta de teste confirmada, `docker compose exec api python -m
 scripts.dados_teste_locais` (recusa correr fora da base local). Para testar no telemóvel
-com câmara (exige https), encaminhar a porta 8080 no VS Code como pública: o
-`vite.config.ts` aceita os endereços `*.devtunnels.ms`.
+com câmara (exige https), encaminhar a porta 8080 no VS Code como pública (o
+`vite.config.ts` aceita os endereços `*.devtunnels.ms`) e servir com `npm run telemovel`
+em vez de `npm run dev`: o modo de desenvolvimento pelo túnel é lento demais (centenas de
+módulos sem compressão); o `telemovel` compila e serve como em produção, com o mesmo
+encaminhamento de `/api/*`. Um IP da rede (`http://192.168…`) não serve: sem https, o
+browser esconde a câmara.
 
 O browser fala **sempre com `/api/*` na mesma origem** — nunca com um URL absoluto da
 API. Em dev (`npm run dev`) o proxy do Vite (`vite.config.ts`) reencaminha `/api/*` para

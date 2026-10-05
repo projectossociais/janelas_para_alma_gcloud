@@ -9,6 +9,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
+    "telemovel": "vite build --mode development --outDir dist-teste && vite preview --outDir dist-teste --port 8080 --strictPort",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck:redesenho": "tsc --noEmit -p tsconfig.redesenho.json",
