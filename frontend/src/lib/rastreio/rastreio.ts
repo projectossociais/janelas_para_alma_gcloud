@@ -30,10 +30,24 @@ export function dataUrlParaBlob(dataUrl: string): Blob | null {
   return new Blob([bytes], { type: tipo });
 }
 
-/** O único sinal que o janelas-scanner-api calcula hoje (CLAUDE.md §11). */
-export const requerAvaliacao = (r: ScreeningResponse) => !!(r.incomitante || r.requer_avaliacao_humana);
-
 const posicaoCentro = (r: ScreeningResponse) => r.posicoes?.find((p) => p.posicao.toUpperCase() === "CENTRO");
+
+/** Variação do desalinhamento entre posições (dentro de `motilidade`). */
+export const variacaoDesalinhamento = (r: ScreeningResponse): number | null =>
+  typeof r.motilidade?.variacao_desalinhamento === "number" ? r.motilidade.variacao_desalinhamento : null;
+
+/** O desvio muda com a direcção do olhar? `null` se não se comparou. */
+export const incomitancia = (r: ScreeningResponse): boolean | null =>
+  typeof r.motilidade?.incomitante === "boolean" ? r.motilidade.incomitante : null;
+
+/** Desalinhamento entre os olhos a olhar em frente (fracção da largura do olho). */
+export const desalinhamentoEmFrente = (r: ScreeningResponse): number | null => {
+  const v = posicaoCentro(r)?.alinhamento_ocular?.assimetria_horizontal;
+  return typeof v === "number" ? v : null;
+};
+
+/** O único sinal que o janelas-scanner-api calcula hoje (CLAUDE.md §11). */
+export const requerAvaliacao = (r: ScreeningResponse) => !!(incomitancia(r) || r.requer_avaliacao_humana);
 
 /**
  * O que se grava na API própria: **só as medições**, nunca uma imagem
@@ -46,7 +60,8 @@ export function paraRegistoScreening(r: ScreeningResponse) {
     rosto_detetado: r.posicoes?.some((p) => p.rosto_detetado) ?? false,
     requer_avaliacao_humana: r.requer_avaliacao_humana ?? false,
     diagnostico: requerAvaliacao(r) ? ("requer_avaliacao" as const) : ("normal" as const),
-    assimetria_horizontal: r.variacao_desalinhamento ?? null,
+    assimetria_horizontal: desalinhamentoEmFrente(r),
+    assimetria_vertical: posicaoCentro(r)?.alinhamento_ocular?.assimetria_vertical ?? null,
     qualidade_captura: centro?.qualidade_captura?.pontuacao ?? null,
     qualidade_fiavel: centro?.qualidade_captura?.fiavel ?? null,
     qualidade_motivos: centro?.qualidade_captura?.motivos ?? [],
@@ -93,13 +108,16 @@ export type Conclusao = "avaliacao" | "normal" | "inconclusivo";
 
 export function conclusaoDoRastreio(diagnostico: string, analise: ScreeningResponse | null): Conclusao {
   if (!analise) return diagnostico === DIAGNOSTICO_NORMAL ? "normal" : "avaliacao";
-  const fraca = (analise.posicoes ?? []).some((p) => !p.rosto_detetado || p.qualidade_captura?.fiavel === false);
+  const fraca = (analise.posicoes ?? []).some(
+    (p) => !p.rosto_detetado || p.qualidade_captura?.fiavel === false || p.utilizavel === false,
+  );
   // O serviço também pede avaliação quando não conseguiu comparar as posições
   // (fotografia fraca, cabeça mexida): aí não viu sinal nenhum, só não mediu, e
   // o que se pede é para repetir. Caso real (2026-10-06): foto direita 39/100,
   // variação "sem dado", e o ecrã dizia "avaliação recomendada".
-  const naoMediu = typeof analise.variacao_desalinhamento !== "number" && !analise.incomitante;
-  if (requerAvaliacao(analise) && !(naoMediu && fraca)) return "avaliacao";
+  if (incomitancia(analise)) return "avaliacao";
+  const naoComparou = variacaoDesalinhamento(analise) === null;
+  if (analise.requer_avaliacao_humana && !(naoComparou && fraca)) return "avaliacao";
   return fraca || !analise.posicoes?.length ? "inconclusivo" : "normal";
 }
 

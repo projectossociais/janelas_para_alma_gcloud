@@ -1,5 +1,6 @@
 import type { RelatorioPdf } from "@/lib/relatorio/pdfRelatorio";
 import { textoDoScannerNoIdioma } from "@/services/api/screeningApi";
+import { desalinhamentoEmFrente, incomitancia, variacaoDesalinhamento } from "./rastreio";
 import type { Conclusao, ResultadoGuardado } from "./rastreio";
 
 /**
@@ -41,8 +42,8 @@ export function escreverRelatorioRastreio(
   dataFormatada: string,
 ): void {
   const { conclusao, analise } = resultado;
-  const simNao = (v: boolean | undefined) =>
-    v === undefined ? t("ResultadoRastreio.semDado") : v ? t("ResultadoRastreio.sim") : t("ResultadoRastreio.nao");
+  const simNao = (v: boolean | null | undefined) =>
+    v === undefined || v === null ? t("ResultadoRastreio.semDado") : v ? t("ResultadoRastreio.sim") : t("ResultadoRastreio.nao");
 
   r.seccao(t("ResultadoRastreio.pdfSecResultado"));
   r.campos([
@@ -52,15 +53,14 @@ export function escreverRelatorioRastreio(
 
   if (analise) {
     r.seccao(t("ResultadoRastreio.pdfSecMedicoes"));
+    // Fracções da largura do olho: duas casas (0,05 é 5% da largura).
+    const numero = (v: number | null) => (v === null ? t("ResultadoRastreio.semDado") : v.toFixed(2));
     r.campos([
-      [
-        t("ResultadoRastreio.pdfVariacao"),
-        typeof analise.variacao_desalinhamento === "number"
-          ? analise.variacao_desalinhamento.toFixed(1)
-          : t("ResultadoRastreio.semDado"),
-      ],
-      [t("ResultadoRastreio.pdfIncomitante"), simNao(analise.incomitante)],
+      [t("ResultadoRastreio.pdfEmFrente"), numero(desalinhamentoEmFrente(analise))],
+      [t("ResultadoRastreio.pdfVariacao"), numero(variacaoDesalinhamento(analise))],
+      [t("ResultadoRastreio.pdfIncomitante"), simNao(incomitancia(analise))],
     ]);
+    r.paragrafo(t("ResultadoRastreio.pdfUnidade"), { cinzento: true });
     if (analise.posicoes?.length) {
       r.tabela(
         [

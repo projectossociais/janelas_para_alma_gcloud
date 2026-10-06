@@ -21,20 +21,33 @@ function gravar(resultado: ResultadoGuardado) {
 const ANALISE: ScreeningResponse = {
   estado: "concluido",
   requer_avaliacao_humana: true,
-  incomitante: true,
-  variacao_desalinhamento: 4.25,
+  motilidade: { variacao_desalinhamento: 0.0425, incomitante: true },
   recomendacao: "Texto livre desconhecido.",
   posicoes: [
-    { posicao: "CENTRO", estado: "ok", rosto_detetado: true, qualidade_captura: { pontuacao: 0.874, fiavel: true } },
+    {
+      posicao: "CENTRO",
+      estado: "ok",
+      rosto_detetado: true,
+      qualidade_captura: { pontuacao: 0.874, fiavel: true },
+      alinhamento_ocular: { assimetria_horizontal: 0.123 },
+    },
     { posicao: "ESQUERDA", estado: "ok", rosto_detetado: false },
   ],
 };
 
 describe("escreverRelatorioRastreio", () => {
+  it("sem comparação entre posições, as medições dizem 'sem dado' (nunca um número inventado)", () => {
+    const linhas = gravar({ conclusao: "inconclusivo", data: new Date(), analise: { ...ANALISE, motilidade: null } });
+    expect(linhas).toContain("pdfVariacao: semDado");
+    expect(linhas).toContain("pdfIncomitante: semDado");
+  });
+
   it("tem o resultado, as medições reais e a qualidade de cada fotografia", () => {
     const linhas = gravar({ conclusao: "avaliacao", data: new Date(), analise: ANALISE });
     expect(linhas).toContain("pdfCampoResultado: rotuloAvaliacao");
-    expect(linhas).toContain("pdfVariacao: 4.3");
+    expect(linhas).toContain("pdfEmFrente: 0.12");
+    expect(linhas).toContain("pdfVariacao: 0.04");
+    expect(linhas).toContain("pdfUnidade");
     expect(linhas).toContain("pdfIncomitante: sim");
     expect(linhas).toContain("posicaoCentro | sim | 87/100 | sim");
     expect(linhas).toContain("posicaoEsquerda | nao | semDado | semDado");

@@ -44,7 +44,7 @@ describe("screeningApi -- textos do microserviço do scanner", () => {
   });
 
   it("envia as 3 imagens num POST multipart real ao microserviço e devolve a resposta dele, sem mock", async () => {
-    const respostaReal = { estado: "concluido", variacao_desalinhamento: 2.3, requer_avaliacao_humana: true };
+    const respostaReal = { estado: "OK", motilidade: { variacao_desalinhamento: 2.3, incomitante: true }, requer_avaliacao_humana: true };
     const fetchMock = vi.fn(async () => new Response(JSON.stringify(respostaReal), { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
 

@@ -5,6 +5,9 @@ import {
   DIAGNOSTICO_NORMAL,
   LUMINANCIA_MINIMA,
   conclusaoDoRastreio,
+  desalinhamentoEmFrente,
+  incomitancia,
+  variacaoDesalinhamento,
   dataUrlParaBlob,
   lerResultadoGuardado,
   luminanciaMedia,
@@ -15,12 +18,20 @@ import {
 const RESPOSTA: ScreeningResponse = {
   estado: "concluido",
   posicoes: [
-    { posicao: "CENTRO", estado: "ok", rosto_detetado: true, qualidade_captura: { pontuacao: 0.87, fiavel: true, motivos: [] } },
+    {
+      posicao: "CENTRO",
+      estado: "ok",
+      rosto_detetado: true,
+      qualidade_captura: { pontuacao: 0.87, fiavel: true, motivos: [] },
+      alinhamento_ocular: { assimetria_horizontal: 0.04, assimetria_vertical: 0.01 },
+    },
     { posicao: "DIREITA", estado: "ok", rosto_detetado: false },
   ],
   requer_avaliacao_humana: false,
-  variacao_desalinhamento: 1.4,
+  // Como o serviço responde: a comparação vem dentro de `motilidade`.
+  motilidade: { variacao_desalinhamento: 1.4, incomitante: false },
 };
+const INCOMITANTE: ScreeningResponse = { ...RESPOSTA, motilidade: { variacao_desalinhamento: 1.4, incomitante: true } };
 
 describe("luminanciaMedia", () => {
   it("preto é 0, branco é 255", () => {
@@ -56,12 +67,14 @@ describe("paraRegistoScreening (o que se grava)", () => {
     expect(r.estado).toBe("concluido");
     expect(r.rosto_detetado).toBe(true);
     expect(r.qualidade_captura).toBe(0.87);
-    expect(r.assimetria_horizontal).toBe(1.4);
+    // O desalinhamento a olhar em frente (posição CENTRO), não a variação.
+    expect(r.assimetria_horizontal).toBe(0.04);
+    expect(r.assimetria_vertical).toBe(0.01);
     expect(r.diagnostico).toBe("normal");
   });
 
   it("incomitante ou avaliação humana passam a 'requer_avaliacao'", () => {
-    expect(paraRegistoScreening({ ...RESPOSTA, incomitante: true }).diagnostico).toBe("requer_avaliacao");
+    expect(paraRegistoScreening(INCOMITANTE).diagnostico).toBe("requer_avaliacao");
     expect(paraRegistoScreening({ ...RESPOSTA, requer_avaliacao_humana: true }).diagnostico).toBe("requer_avaliacao");
   });
 });
@@ -72,15 +85,54 @@ describe("paraResultadoEcra", () => {
     expect(r.diagnosis).toBe(DIAGNOSTICO_NORMAL);
     expect(r.confidence).toBe(87);
     expect(r.date).toBe("2026-09-30T10:00:00.000Z");
-    expect(r.apiData.variacao_desalinhamento).toBe(1.4);
+    expect(r.apiData.motilidade?.variacao_desalinhamento).toBe(1.4);
   });
 
   it("a precisar de avaliação quando a API o diz", () => {
-    expect(paraResultadoEcra({ ...RESPOSTA, incomitante: true }).diagnosis).toBe(DIAGNOSTICO_AVALIACAO);
+    expect(paraResultadoEcra(INCOMITANTE).diagnosis).toBe(DIAGNOSTICO_AVALIACAO);
   });
 });
 
 describe("conclusaoDoRastreio", () => {
+  it("lê a variação e a incomitância dentro de `motilidade` (no topo nunca vêm; caso real 2026-10-06)", () => {
+    expect(variacaoDesalinhamento(RESPOSTA)).toBe(1.4);
+    expect(incomitancia(INCOMITANTE)).toBe(true);
+    expect(desalinhamentoEmFrente(RESPOSTA)).toBe(0.04);
+    const semComparacao: ScreeningResponse = { ...RESPOSTA, motilidade: null };
+    expect(variacaoDesalinhamento(semComparacao)).toBeNull();
+    expect(incomitancia(semComparacao)).toBeNull();
+  });
+
+  it("com tudo fiável e comparado, um pedido de avaliação do serviço mantém-se (ex.: desvio igual em todas as direcções)", () => {
+    const r: ScreeningResponse = {
+      estado: "OK",
+      posicoes: ["CENTRO", "ESQUERDA", "DIREITA"].map((posicao) => ({
+        posicao,
+        estado: "OK",
+        rosto_detetado: true,
+        utilizavel: true,
+        qualidade_captura: { pontuacao: 0.9, fiavel: true },
+      })),
+      motilidade: { variacao_desalinhamento: 0.01, incomitante: false },
+      requer_avaliacao_humana: true,
+    };
+    expect(conclusaoDoRastreio(DIAGNOSTICO_AVALIACAO, r)).toBe("avaliacao");
+  });
+
+  it("posição que não entrou na comparação (cabeça mexida) conta como fotografia fraca", () => {
+    const r: ScreeningResponse = {
+      estado: "QUALIDADE_INSUFICIENTE",
+      posicoes: [
+        { posicao: "CENTRO", estado: "OK", rosto_detetado: true, utilizavel: true, qualidade_captura: { pontuacao: 0.9, fiavel: true } },
+        { posicao: "ESQUERDA", estado: "OK", rosto_detetado: true, utilizavel: false, motivos_invalidez: ["OLHAR_NAO_MUDOU"], qualidade_captura: { pontuacao: 0.9, fiavel: true } },
+        { posicao: "DIREITA", estado: "OK", rosto_detetado: true, utilizavel: true, qualidade_captura: { pontuacao: 0.9, fiavel: true } },
+      ],
+      motilidade: null,
+      requer_avaliacao_humana: true,
+    };
+    expect(conclusaoDoRastreio(DIAGNOSTICO_AVALIACAO, r)).toBe("inconclusivo");
+  });
+
   it("avaliação pedida pela análise ganha a tudo, mesmo com fotografias fracas", () => {
     const fraca = { ...RESPOSTA, requer_avaliacao_humana: true };
     expect(conclusaoDoRastreio(DIAGNOSTICO_AVALIACAO, fraca)).toBe("avaliacao");
@@ -114,7 +166,7 @@ describe("conclusaoDoRastreio", () => {
   });
 
   it("incomitância detectada é avaliação, mesmo sem variação e com foto fraca", () => {
-    const r: ScreeningResponse = { ...RESPOSTA, variacao_desalinhamento: undefined, incomitante: true };
+    const r: ScreeningResponse = { ...RESPOSTA, motilidade: { variacao_desalinhamento: null, incomitante: true } };
     expect(conclusaoDoRastreio(DIAGNOSTICO_AVALIACAO, r)).toBe("avaliacao");
   });
 
@@ -152,9 +204,9 @@ describe("conclusaoDoRastreio", () => {
 
 describe("lerResultadoGuardado", () => {
   it("lê o que o rastreio guarda", () => {
-    const r = lerResultadoGuardado(JSON.stringify(paraResultadoEcra({ ...RESPOSTA, incomitante: true })));
+    const r = lerResultadoGuardado(JSON.stringify(paraResultadoEcra(INCOMITANTE)));
     expect(r?.conclusao).toBe("avaliacao");
-    expect(r?.analise?.variacao_desalinhamento).toBe(1.4);
+    expect(r?.analise?.motilidade?.variacao_desalinhamento).toBe(1.4);
   });
 
   it("vazio, estragado ou sem data dá null", () => {

@@ -60,7 +60,7 @@ const RESPOSTA = {
     { posicao: "CENTRO", estado: "ok", rosto_detetado: true, qualidade_captura: { pontuacao: 0.9, fiavel: true, motivos: [] } },
   ],
   requer_avaliacao_humana: false,
-  variacao_desalinhamento: 1.4,
+  motilidade: { variacao_desalinhamento: 1.4, incomitante: false },
 };
 
 const getUserMedia = vi.fn();
@@ -201,8 +201,8 @@ describe("Scanner — fotografias e análise", () => {
 
     // Segue logo para os resultados (sem atraso fingido), com o que a API devolveu.
     expect(await screen.findByText("Página de resultados")).toBeInTheDocument();
-    const guardado = JSON.parse(sessionStorage.getItem("scanResult")!) as { apiData: Record<string, unknown> };
-    expect(guardado.apiData.variacao_desalinhamento).toBe(1.4);
+    const guardado = JSON.parse(sessionStorage.getItem("scanResult")!) as { apiData: { motilidade: { variacao_desalinhamento: number } } };
+    expect(guardado.apiData.motilidade.variacao_desalinhamento).toBe(1.4);
     // A câmara desliga-se depois da última fotografia.
     expect(pararCamera).toHaveBeenCalled();
   });

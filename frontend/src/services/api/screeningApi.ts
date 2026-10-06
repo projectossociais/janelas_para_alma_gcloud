@@ -42,10 +42,27 @@ export interface ScreeningResponse {
         desvio_horizontal: number;
         desvio_vertical: number;
       };
-    };
+      /** Desalinhamento entre os dois olhos, em fracção da largura do olho. */
+      assimetria_horizontal?: number;
+      assimetria_vertical?: number;
+    } | null;
+    /** Se esta posição entrou na comparação entre posições. */
+    utilizavel?: boolean;
+    motivos_invalidez?: string[];
   }>;
-  variacao_desalinhamento?: number;
-  incomitante?: boolean;
+  /**
+   * A comparação entre posições. Ausente (null) com menos de duas posições
+   * utilizáveis. A variação e a incomitância vivem **aqui**, não no topo da
+   * resposta: o frontend lia-as no topo e mostrava sempre "sem dado" (2026-10-06,
+   * contrato em https://janelas-scanner-api.onrender.com/openapi.json).
+   */
+  motilidade?: {
+    variacao_desalinhamento?: number | null;
+    incomitante?: boolean | null;
+    assimetria_excursao_esquerda?: number | null;
+    assimetria_excursao_direita?: number | null;
+  } | null;
+  /** O serviço põe true quando há sinais a confirmar OU quando não conseguiu concluir. */
   requer_avaliacao_humana?: boolean;
   recomendacao?: string;
   aviso?: string;
