@@ -40,6 +40,8 @@ export function escreverRelatorioRastreio(
   resultado: ResultadoGuardado,
   t: Traduzir,
   dataFormatada: string,
+  /** Idioma da página: decide a vírgula ou o ponto decimal ("-0,09" em pt). */
+  idioma = "pt-AO",
 ): void {
   const { conclusao, analise } = resultado;
   const simNao = (v: boolean | null | undefined) =>
@@ -54,7 +56,8 @@ export function escreverRelatorioRastreio(
   if (analise) {
     r.seccao(t("ResultadoRastreio.pdfSecMedicoes"));
     // Fracções da largura do olho: duas casas (0,05 é 5% da largura).
-    const numero = (v: number | null) => (v === null ? t("ResultadoRastreio.semDado") : v.toFixed(2));
+    const formato = new Intl.NumberFormat(idioma, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const numero = (v: number | null) => (v === null ? t("ResultadoRastreio.semDado") : formato.format(v));
     r.campos([
       [t("ResultadoRastreio.pdfEmFrente"), numero(desalinhamentoEmFrente(analise))],
       [t("ResultadoRastreio.pdfVariacao"), numero(variacaoDesalinhamento(analise))],

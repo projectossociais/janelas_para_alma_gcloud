@@ -36,6 +36,24 @@ const ANALISE: ScreeningResponse = {
 };
 
 describe("escreverRelatorioRastreio", () => {
+  it("números com vírgula em português e ponto em inglês (caso real: '-0.09' num relatório em pt)", () => {
+    const linhas: string[] = [];
+    const escritor = {
+      seccao: () => {},
+      paragrafo: () => {},
+      lista: () => {},
+      campos: (pares: readonly [string, string][]) => void linhas.push(...pares.map(([c, v]) => `${c}: ${v}`)),
+      tabela: () => {},
+    };
+    const analise: ScreeningResponse = {
+      ...ANALISE,
+      posicoes: [{ posicao: "CENTRO", estado: "OK", rosto_detetado: true, alinhamento_ocular: { assimetria_horizontal: -0.0912 } }],
+    };
+    escreverRelatorioRastreio(escritor, { conclusao: "avaliacao", data: new Date(), analise }, (c) => c.replace("ResultadoRastreio.", ""), "x", "pt-AO");
+    escreverRelatorioRastreio(escritor, { conclusao: "avaliacao", data: new Date(), analise }, (c) => c.replace("ResultadoRastreio.", ""), "x", "en-US");
+    expect(linhas.filter((l) => l.startsWith("pdfEmFrente"))).toEqual(["pdfEmFrente: -0,09", "pdfEmFrente: -0.09"]);
+  });
+
   it("sem comparação entre posições, as medições dizem 'sem dado' (nunca um número inventado)", () => {
     const linhas = gravar({ conclusao: "inconclusivo", data: new Date(), analise: { ...ANALISE, motilidade: null } });
     expect(linhas).toContain("pdfVariacao: semDado");
@@ -45,8 +63,8 @@ describe("escreverRelatorioRastreio", () => {
   it("tem o resultado, as medições reais e a qualidade de cada fotografia", () => {
     const linhas = gravar({ conclusao: "avaliacao", data: new Date(), analise: ANALISE });
     expect(linhas).toContain("pdfCampoResultado: rotuloAvaliacao");
-    expect(linhas).toContain("pdfEmFrente: 0.12");
-    expect(linhas).toContain("pdfVariacao: 0.04");
+    expect(linhas).toContain("pdfEmFrente: 0,12");
+    expect(linhas).toContain("pdfVariacao: 0,04");
     expect(linhas).toContain("pdfUnidade");
     expect(linhas).toContain("pdfIncomitante: sim");
     expect(linhas).toContain("posicaoCentro | sim | 87/100 | sim");

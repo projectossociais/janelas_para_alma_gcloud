@@ -330,10 +330,10 @@ const MarcarConsulta = () => {
                 titulo={t("MarcarConsulta.semHorariosTitulo")}
                 accao={
                   <div className="flex flex-col items-start gap-1">
-                    <Botao variante="fantasma" className="-ml-5" onClick={() => ir(1)}>
+                    <Botao variante="fantasma" className="-ml-3 sm:-ml-5" onClick={() => ir(1)}>
                       {t("MarcarConsulta.trocarModalidade")}
                     </Botao>
-                    <Botao asChild variante="fantasma" className="-ml-5">
+                    <Botao asChild variante="fantasma" className="-ml-3 sm:-ml-5">
                       <a href={`tel:${TELEFONE_CLINICA.replace(/\s/g, "")}`}>
                         <Phone aria-hidden /> {t("MarcarConsulta.ligarClinica", { telefone: TELEFONE_CLINICA })}
                       </a>

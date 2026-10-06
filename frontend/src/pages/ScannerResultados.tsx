@@ -36,7 +36,7 @@ const ASPECTO: Record<Conclusao, { Icone: LucideIcon; fundo: string; cor: string
 };
 
 const ScannerResultados = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const { isLoggedIn } = useAuth();
@@ -76,7 +76,7 @@ const ScannerResultados = () => {
         imagem,
       );
       r.paragrafo(t("ResultadoRastreio.pdfIntro"), { cinzento: true });
-      escreverRelatorioRastreio(r, resultado, t, quando);
+      escreverRelatorioRastreio(r, resultado, t, quando, i18n.language);
       r.rodape(t("ResultadoRastreio.pdfRodape"), (i, total) => t("ResultadoRastreio.pdfPagina", { i, total }));
       doc.save(`${t("ResultadoRastreio.pdfNomeFicheiro")}-${resultado.data.toISOString().slice(0, 10)}.pdf`);
     } catch {
@@ -184,18 +184,18 @@ const ScannerResultados = () => {
       )}
 
       <div className="mt-8 flex flex-col items-start gap-1 border-t border-linha pt-6">
-        <Botao variante="fantasma" className="-ml-5" aCarregar={aGerar} onClick={() => void descarregar()}>
+        <Botao variante="fantasma" className="-ml-3 sm:-ml-5" aCarregar={aGerar} onClick={() => void descarregar()}>
           <Download aria-hidden /> {aGerar ? t("ResultadoRastreio.aPreparar") : t("ResultadoRastreio.descarregar")}
         </Botao>
         {conclusao === "normal" && (
-          <Botao asChild variante="fantasma" className="-ml-5">
+          <Botao asChild variante="fantasma" className="-ml-3 sm:-ml-5">
             <Link to={consulta}>
               <CalendarCheck aria-hidden /> {t("ResultadoRastreio.marcarMesmoAssim")}
             </Link>
           </Botao>
         )}
         {conclusao !== "inconclusivo" && (
-          <Botao asChild variante="fantasma" className="-ml-5">
+          <Botao asChild variante="fantasma" className="-ml-3 sm:-ml-5">
             <Link to={rastreio}>
               <RotateCcw aria-hidden /> {t("ResultadoRastreio.repetir")}
             </Link>
