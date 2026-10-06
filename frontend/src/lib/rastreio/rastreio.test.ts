@@ -86,6 +86,38 @@ describe("conclusaoDoRastreio", () => {
     expect(conclusaoDoRastreio(DIAGNOSTICO_AVALIACAO, fraca)).toBe("avaliacao");
   });
 
+  it("pedido de avaliação por não ter conseguido medir, com foto fraca, é inconclusivo (caso real 2026-10-06)", () => {
+    const r: ScreeningResponse = {
+      estado: "concluido",
+      posicoes: [
+        { posicao: "CENTRO", estado: "ok", rosto_detetado: true, qualidade_captura: { pontuacao: 0.74, fiavel: true } },
+        { posicao: "ESQUERDA", estado: "ok", rosto_detetado: true, qualidade_captura: { pontuacao: 0.77, fiavel: true } },
+        { posicao: "DIREITA", estado: "ok", rosto_detetado: true, qualidade_captura: { pontuacao: 0.39, fiavel: false } },
+      ],
+      requer_avaliacao_humana: true,
+    };
+    expect(conclusaoDoRastreio(DIAGNOSTICO_AVALIACAO, r)).toBe("inconclusivo");
+  });
+
+  it("sem medição mas com todas as fotos fiáveis, o pedido de avaliação mantém-se", () => {
+    const r: ScreeningResponse = {
+      estado: "concluido",
+      posicoes: ["CENTRO", "DIREITA", "ESQUERDA"].map((posicao) => ({
+        posicao,
+        estado: "ok",
+        rosto_detetado: true,
+        qualidade_captura: { pontuacao: 0.9, fiavel: true },
+      })),
+      requer_avaliacao_humana: true,
+    };
+    expect(conclusaoDoRastreio(DIAGNOSTICO_AVALIACAO, r)).toBe("avaliacao");
+  });
+
+  it("incomitância detectada é avaliação, mesmo sem variação e com foto fraca", () => {
+    const r: ScreeningResponse = { ...RESPOSTA, variacao_desalinhamento: undefined, incomitante: true };
+    expect(conclusaoDoRastreio(DIAGNOSTICO_AVALIACAO, r)).toBe("avaliacao");
+  });
+
   it("sem avaliação mas com uma fotografia sem rosto é inconclusivo, nunca normal", () => {
     // RESPOSTA tem a posição DIREITA sem rosto detectado.
     expect(conclusaoDoRastreio(DIAGNOSTICO_NORMAL, RESPOSTA)).toBe("inconclusivo");

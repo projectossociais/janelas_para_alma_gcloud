@@ -78,7 +78,9 @@ export function paraResultadoEcra(r: ScreeningResponse, agora = new Date()) {
  * O que o ecrã de resultados diz, a partir do que a análise devolveu:
  *
  * - `avaliacao`: a análise pediu avaliação (o único sinal que ela calcula hoje).
- *   Tem prioridade: na dúvida, encaminha-se para o médico.
+ *   Tem prioridade: na dúvida, encaminha-se para o médico. Excepção: se não
+ *   mediu nada (sem variação nem incomitância) e alguma fotografia foi fraca, o
+ *   pedido vem da falta de medição, não de um sinal: é `inconclusivo`.
  * - `inconclusivo`: não pediu avaliação, mas alguma fotografia não teve rosto
  *   ou não foi fiável. Um "normal" tirado de fotografias fracas não se mostra
  *   como normal: pede-se para repetir.
@@ -91,8 +93,13 @@ export type Conclusao = "avaliacao" | "normal" | "inconclusivo";
 
 export function conclusaoDoRastreio(diagnostico: string, analise: ScreeningResponse | null): Conclusao {
   if (!analise) return diagnostico === DIAGNOSTICO_NORMAL ? "normal" : "avaliacao";
-  if (requerAvaliacao(analise)) return "avaliacao";
   const fraca = (analise.posicoes ?? []).some((p) => !p.rosto_detetado || p.qualidade_captura?.fiavel === false);
+  // O serviço também pede avaliação quando não conseguiu comparar as posições
+  // (fotografia fraca, cabeça mexida): aí não viu sinal nenhum, só não mediu, e
+  // o que se pede é para repetir. Caso real (2026-10-06): foto direita 39/100,
+  // variação "sem dado", e o ecrã dizia "avaliação recomendada".
+  const naoMediu = typeof analise.variacao_desalinhamento !== "number" && !analise.incomitante;
+  if (requerAvaliacao(analise) && !(naoMediu && fraca)) return "avaliacao";
   return fraca || !analise.posicoes?.length ? "inconclusivo" : "normal";
 }
 
