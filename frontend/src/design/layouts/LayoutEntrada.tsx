@@ -31,7 +31,7 @@ export const LayoutEntrada = ({ logotipo, inicio, voltar, frase, factos, textoSa
       <SaltarConteudo rotulo={textoSaltar} />
 
       {/* Painel da marca: zona escura, mesmo com a página em tema claro. */}
-      <aside className="tema-escuro flex flex-col bg-superficie px-4 py-5 text-tinta sm:px-6 lg:col-span-5 lg:px-12 lg:py-10 xl:col-span-4">
+      <aside className="tema-escuro flex flex-col bg-superficie px-4 py-5 text-tinta sm:px-6 lg:sticky lg:top-0 lg:col-span-5 lg:h-screen lg:self-start lg:px-12 lg:py-10 xl:col-span-4">
         <div className="flex items-center justify-between gap-4">
           <Ligacao
             href={inicio.href}
