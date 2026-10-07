@@ -274,6 +274,20 @@ Acrescentar abaixo, com data, o que for decidido ou detalhado em cada conversa s
 redesenho (referências visuais, páginas a priorizar, gostos e recusas do dono do
 projecto, feedback do Lukeny). Mais recente em cima.
 
+- **2026-10-07** — **Redesenho em produção e Fase 3 retomada (entrar e criar conta).** O dono
+  do projecto aprovou o redesenho; foi para o `main` no PR #134 (com o rastreio completo
+  escondido, `noindex`, só para testes). A Fase 3 continua com **entrar e criar conta** no
+  arquétipo Entrada (`pages/Auth.tsx`, ramo `redesenho/fase-3`): ecrã dividido, sem cabeçalho nem
+  rodapé do site; painel marinho fixo à altura do ecrã. Decisões: (1) **dois modos claros**
+  (entrar / criar conta) em vez do "email primeiro" do protótipo, porque adivinhar se a conta
+  existe obrigaria a API a revelar emails registados, o que ela nunca faz; (2) a **confirmação da
+  password** foi trocada pelo "Mostrar" no campo (PESQUISA_UX §3); (3) validação ao submeter, com
+  resumo de erros no topo (recebe o foco) e erro em cada campo, a corrigir em tempo real depois da
+  primeira tentativa; (4) género e perfil são botões de opção (`GrupoEscolha`) e a província um
+  seletor nativo (novo `Seleccao`, em `design/componentes/`). Os erros da API continuam em toast
+  (o de "email não confirmado" mantém o "Reenviar link"). **Falta da Fase 3:** teste de 7 dias e
+  passagem a Premium (`RegistoPremium.tsx`, 714 linhas).
+
 - **2026-10-05** — **Parceiros em carrossel (altera `docs/PESQUISA_UX.md` §2).** Ao testar
   no telemóvel, a lista de parceiros saía desarrumada (linhas de 2/1/2, cartões de
   tamanhos diferentes). O dono do projecto pediu um carrossel que passe de 3 em 3 segundos
