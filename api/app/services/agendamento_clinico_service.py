@@ -14,8 +14,10 @@ causa de um envio de email seria pior para quem precisa de ser visto.
 import logging
 import secrets
 from datetime import UTC, datetime, timedelta
+from html import escape
 
 from app.core.email import EmailEnvioFalhouError, EmailSender
+from app.core.fuso import FUSO_LUANDA
 from app.repositories.agendamento_clinico_repository import (
     AgendamentoClinicoRegisto,
     AgendamentoClinicoRepository,
@@ -48,6 +50,24 @@ ANTECEDENCIA_MINIMA = timedelta(hours=2)
 # Não gerar uma lista infinita de horários -- 14 dias é suficiente para
 # reservar sem forçar a clínica a planear meses à frente.
 DIAS_A_GERAR = 14
+
+
+# As janelas de disponibilidade são escritas pela clínica no portal em hora
+# local (`<input type="time">`), por isso são horas de Luanda, nunca UTC.
+# Bug real até 2026-09-30: eram tratadas como UTC e a família via tudo uma
+# hora mais tarde do que a clínica tinha marcado.
+DIAS_DA_SEMANA = ("segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo")
+
+
+def formatar_horario(momento: datetime) -> str:
+    """"segunda-feira, 04/01/2027 às 10:00 (hora de Luanda)", para os emails."""
+    local = momento.astimezone(FUSO_LUANDA)
+    return f"{DIAS_DA_SEMANA[local.weekday()]}, {local:%d/%m/%Y} às {local:%H:%M} (hora de Luanda)"
+
+
+def _com_fuso(momento: datetime) -> datetime:
+    """Um instante sem fuso conta como UTC (em vez de rebentar ao comparar)."""
+    return momento if momento.tzinfo is not None else momento.replace(tzinfo=UTC)
 
 
 class ClinicaNaoEncontradaError(Exception):
@@ -93,15 +113,16 @@ class AgendamentoClinicoService:
         agora = datetime.now(UTC)
         limite_inferior = agora + ANTECEDENCIA_MINIMA
         duracao = timedelta(minutes=DURACAO_SLOT_MINUTOS)
+        hoje_em_luanda = agora.astimezone(FUSO_LUANDA).date()
         resultado: list[HorarioDisponivel] = []
 
         for i in range(DIAS_A_GERAR):
-            dia = (agora + timedelta(days=i)).date()
+            dia = hoje_em_luanda + timedelta(days=i)
             for janela in janelas:
                 if janela.dia_semana != dia.weekday():
                     continue
-                cursor = datetime.combine(dia, janela.hora_inicio, tzinfo=UTC)
-                fim_janela = datetime.combine(dia, janela.hora_fim, tzinfo=UTC)
+                cursor = datetime.combine(dia, janela.hora_inicio, tzinfo=FUSO_LUANDA)
+                fim_janela = datetime.combine(dia, janela.hora_fim, tzinfo=FUSO_LUANDA)
                 while cursor + duracao <= fim_janela:
                     if cursor >= limite_inferior and not self._agendamentos.existe_conflito(clinica_id, cursor):
                         resultado.append(HorarioDisponivel(inicio=cursor, fim=cursor + duracao))
@@ -112,16 +133,17 @@ class AgendamentoClinicoService:
 
     def _horario_e_valido(self, clinica_id: str, modalidade: str, horario_inicio: datetime) -> bool:
         janelas = [j for j in self._disponibilidades.listar_por_clinica(clinica_id) if j.modalidade == modalidade]
+        local = horario_inicio.astimezone(FUSO_LUANDA)
         for janela in janelas:
-            if janela.dia_semana != horario_inicio.weekday():
+            if janela.dia_semana != local.weekday():
                 continue
-            inicio_janela = horario_inicio.replace(
+            inicio_janela = local.replace(
                 hour=janela.hora_inicio.hour, minute=janela.hora_inicio.minute, second=0, microsecond=0
             )
-            fim_janela = horario_inicio.replace(
+            fim_janela = local.replace(
                 hour=janela.hora_fim.hour, minute=janela.hora_fim.minute, second=0, microsecond=0
             )
-            if inicio_janela <= horario_inicio < fim_janela:
+            if inicio_janela <= local < fim_janela:
                 return True
         return False
 
@@ -141,6 +163,7 @@ class AgendamentoClinicoService:
         if clinica is None or not clinica.ativa:
             raise ClinicaNaoEncontradaError(clinica_id)
 
+        horario_inicio = _com_fuso(horario_inicio)
         agora = datetime.now(UTC)
         if horario_inicio < agora + ANTECEDENCIA_MINIMA:
             raise HorarioIndisponivelError(horario_inicio)
@@ -161,18 +184,22 @@ class AgendamentoClinicoService:
             motivo=motivo,
         )
 
+        # Tudo o que o utilizador escreveu é escapado antes de entrar no HTML.
+        quando = formatar_horario(horario_inicio)
         self._enviar_email_best_effort(
             email,
             f"Pedido de consulta recebido — {clinica.nome}",
-            f"<p>Recebemos o seu pedido de consulta {modalidade} com {clinica.nome}. "
-            "A clínica vai avaliar a disponibilidade e entrará em contacto consigo em breve.</p>",
+            f"<p>Recebemos o seu pedido de consulta {modalidade} com {escape(clinica.nome)} "
+            f"para {quando}.</p>"
+            "<p>A clínica vai confirmar e entrará em contacto consigo em breve.</p>",
         )
         self._enviar_email_best_effort(
             clinica.email_contacto,
             "Novo pedido de consulta — Janelas Para a Alma",
-            f"<p>{nome} pediu uma consulta {modalidade} através da Janelas Para a Alma.</p>"
-            f"<p>Contacto: {telefone} / {email}</p>"
-            f"<p>Motivo: {motivo or '(não indicado)'}</p>",
+            f"<p>{escape(nome)} pediu uma consulta {modalidade} através da Janelas Para a Alma, "
+            f"para {quando}.</p>"
+            f"<p>Contacto: {escape(telefone)} / {escape(email)}</p>"
+            f"<p>Motivo: {escape(motivo) if motivo else '(não indicado)'}</p>",
         )
         return agendamento
 
@@ -180,9 +207,10 @@ class AgendamentoClinicoService:
         agendamento = self._obter_pendente(agendamento_id)
         resultado = self._agendamentos.confirmar(agendamento_id, admin_id, datetime.now(UTC))
 
+        quando = formatar_horario(agendamento.horario_inicio) if agendamento.horario_inicio else None
         corpo = (
-            "<p>A sua consulta foi confirmada. A clínica vai entrar em contacto consigo "
-            "para combinar os detalhes finais.</p>"
+            f"<p>A sua consulta foi confirmada{f' para {quando}' if quando else ''}. "
+            "A clínica vai entrar em contacto consigo para combinar os detalhes finais.</p>"
         )
         if agendamento.modalidade == "online":
             sala = f"{PREFIXO_SALA_VIDEO}-{secrets.token_hex(12)}"
