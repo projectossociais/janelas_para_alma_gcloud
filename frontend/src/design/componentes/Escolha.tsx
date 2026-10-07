@@ -8,11 +8,13 @@ import { cn } from "../cn";
  * opção, o Tab entra e sai do grupo, e o leitor de ecrã diz "1 de 3". O grupo
  * é um `fieldset` com `legend`: a pergunta é o nome do grupo.
  *
- * Duas aparências:
+ * Três aparências:
  * - `cartao`: linhas grandes, com ícone e descrição (poucas opções que pedem
  *   explicação). O indicador é um círculo com ponto, para não se confundir
  *   com a caixa quadrada do `OpcaoConfirmar`.
  * - `pastilha`: botões compactos em grelha (dias e horas).
+ * - `radio`: o botão de rádio de sempre, sem caixa, todos na mesma linha (poucas
+ *   opções curtas, como o género).
  *
  * O estado escolhido vê-se pela forma (ponto, preenchimento), nunca só pela cor.
  */
@@ -34,7 +36,7 @@ export interface GrupoEscolhaProps<T extends string> {
   opcoes: readonly OpcaoEscolha<T>[];
   valor: T | null;
   aoMudar: (valor: T) => void;
-  aparencia?: "cartao" | "pastilha";
+  aparencia?: "cartao" | "pastilha" | "radio";
   erro?: ReactNode;
   className?: string;
 }
@@ -52,6 +54,7 @@ export function GrupoEscolha<T extends string>({
   const nome = useId();
   const idErro = erro ? `${nome}-erro` : undefined;
   const pastilha = aparencia === "pastilha";
+  const radio = aparencia === "radio";
 
   return (
     <fieldset className={cn("min-w-0", className)} aria-describedby={idErro}>
@@ -62,7 +65,15 @@ export function GrupoEscolha<T extends string>({
           <span>{erro}</span>
         </p>
       )}
-      <div className={pastilha ? "grid grid-cols-3 gap-2 sm:grid-cols-4" : "flex flex-col gap-3"}>
+      <div
+        className={
+          radio
+            ? "flex flex-wrap gap-x-4 gap-y-1"
+            : pastilha
+              ? "grid grid-cols-3 gap-2 sm:grid-cols-4"
+              : "flex flex-col gap-3"
+        }
+      >
         {opcoes.map((o) => {
           const escolhida = o.valor === valor;
           const id = `${nome}-${o.valor}`;
@@ -75,19 +86,24 @@ export function GrupoEscolha<T extends string>({
               key={o.valor}
               htmlFor={id}
               className={cn(
-                "relative flex cursor-pointer items-center rounded-controlo border",
-                "transition-colors duration-feedback ease-padrao",
+                "relative flex cursor-pointer",
                 "has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-foco",
-                pastilha
-                  ? cn(
-                      "min-h-alvo-app justify-center px-2 py-2 text-center text-corpo font-medium",
-                      escolhida
-                        ? "border-accao bg-accao text-sobre-accao"
-                        : "border-linha-forte bg-superficie text-tinta hover:border-accao",
-                    )
+                radio
+                  ? "min-h-alvo-app items-center gap-1.5 rounded-controlo"
                   : cn(
-                      "min-h-14 gap-4 p-4",
-                      escolhida ? "border-accao bg-accao-suave" : "border-linha-forte bg-superficie hover:border-accao",
+                      "items-center rounded-controlo border",
+                      "transition-colors duration-feedback ease-padrao",
+                      pastilha
+                        ? cn(
+                            "min-h-alvo-app justify-center px-2 py-2 text-center text-corpo font-medium",
+                            escolhida
+                              ? "border-accao bg-accao text-sobre-accao"
+                              : "border-linha-forte bg-superficie text-tinta hover:border-accao",
+                          )
+                        : cn(
+                            "min-h-12 gap-4 px-4 py-2.5",
+                            escolhida ? "border-accao bg-accao-suave" : "border-linha-forte bg-superficie hover:border-accao",
+                          ),
                     ),
               )}
             >
@@ -103,7 +119,19 @@ export function GrupoEscolha<T extends string>({
                 aria-describedby={idDescricao}
                 className="sr-only"
               />
-              {pastilha ? (
+              {radio ? (
+                <>
+                  <span
+                    aria-hidden
+                    className="flex size-5 shrink-0 items-center justify-center rounded-pilula border-2 border-accao"
+                  >
+                    {escolhida && <span className="size-2.5 rounded-pilula bg-accao" />}
+                  </span>
+                  <span id={idRotulo} className="text-legenda text-tinta">
+                    {o.rotulo}
+                  </span>
+                </>
+              ) : pastilha ? (
                 <span aria-hidden={o.rotuloAcessivel ? true : undefined}>{o.rotulo}</span>
               ) : (
                 <>

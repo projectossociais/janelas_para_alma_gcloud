@@ -239,7 +239,7 @@ export const PrototipoSite = ({ tema }: { tema: TemaEfectivo }) => {
               <p className="text-titulo-m text-tinta">
                 “O Janelas para a Alma nasceu da necessidade de dar visibilidade ao que muitas vezes é ignorado.”
               </p>
-              <footer className="mt-6 text-corpo text-tinta-suave">Dalva Filipe, coordenação geral</footer>
+              <footer className="mt-6 text-corpo text-tinta-suave">Dalva Filipe, coordenadora geral</footer>
             </blockquote>
           </div>
           <ul className="flex flex-col gap-5 lg:col-span-4 lg:col-start-9">
