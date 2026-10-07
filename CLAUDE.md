@@ -62,19 +62,21 @@ locais). Ver histórico do repositório antigo se for preciso consultar o que fa
 Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
 
 - **Rastreio ocular** por webcam (MediaPipe FaceMesh) — deteta sinais, encaminha para clínica
-  **Rastreio completo com o motor próprio** (desde 2026-10-07, **só em teste local**, nunca em
-  produção até passar as fases V1 e V2 de `docs/MOTOR_ANALISE_RASTREIO.md`): rota
-  `/rastreio-completo` (`pages/RastreioCompleto.tsx`), presente apenas em `npm run dev` e no
-  build de teste (`npm run telemovel`, modo `development`; o build de produção não leva a página
-  nem o motor, e a rota dá 404). Outra pessoa fotografa com a câmara de trás e a luz acesa
+  **Rastreio completo com o motor próprio** (desde 2026-10-07; **publicado só para testes com
+  voluntários**, por decisão do dono do projecto, antes de passar as fases V1 e V2 de
+  `docs/MOTOR_ANALISE_RASTREIO.md`): rota `/rastreio-completo` (`pages/RastreioCompleto.tsx`),
+  sem ligação nos menus, fora do sitemap, `noindex`, com o aviso "versão de teste". Os limiares
+  são provisórios e não validados clinicamente: não o promover a rastreio oficial sem V1 e V2.
+  Outra pessoa fotografa com a câmara de trás e a luz acesa
   (Android: câmara na página, `useCameraTraseira`; iPhone e o resto: câmara nativa por
   `<input capture>`). As fotografias são medidas **no telemóvel** (`lib/rastreio/analise/`,
   `lib/rastreio/captura/`) e libertadas da memória logo a seguir; só números seguem em
   `POST /rastreio-completo` (`RastreioCompletoService`). A **regra de decisão vive na API**
   (`ClassificacaoRastreioService`, limiares provisórios de 6 Δ, versão em `VERSAO_REGRA`):
   `encaminhar` / `sem_sinais` / `nao_mediu`. Aberto a convidados (resultado sem gravar); com
-  sessão e consentimento grava em `screenings` **só quando houve medição** (`nao_mediu` nunca se
-  grava, nem como "normal"). O resultado guardado em `sessionStorage` leva o bloco `motor`
+  sessão e consentimento grava em `screenings.diagnostico` `requer_avaliacao` / `normal` /
+  **`inconclusivo`** (`nao_mediu`; desde 2026-10-07, sem migração: coluna de texto) — nunca
+  "normal" sem medição fiável. O resultado guardado em `sessionStorage` leva o bloco `motor`
   (`ResultadoMotor`), e `ScannerResultados` e o PDF mostram os Δ. O `/scanner` e o
   `janelas-scanner-api` continuam a ser o rastreio em produção
 - **Exercícios visuais sem webcam** (desde 2026-09-28) — testes de triagem e treinos de

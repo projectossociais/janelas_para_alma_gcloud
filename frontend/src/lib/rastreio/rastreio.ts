@@ -57,11 +57,16 @@ export const requerAvaliacao = (r: ScreeningResponse) => !!(incomitancia(r) || r
  */
 export function paraRegistoScreening(r: ScreeningResponse) {
   const centro = posicaoCentro(r);
+  // O histórico diz o que a pessoa viu: "inconclusivo" nunca se grava como "normal".
+  const conclusao = conclusaoDoRastreio(requerAvaliacao(r) ? DIAGNOSTICO_AVALIACAO : DIAGNOSTICO_NORMAL, r);
+  const diagnostico = (
+    { avaliacao: "requer_avaliacao", normal: "normal", inconclusivo: "inconclusivo" } as const
+  )[conclusao];
   return {
     estado: r.estado,
     rosto_detetado: r.posicoes?.some((p) => p.rosto_detetado) ?? false,
     requer_avaliacao_humana: r.requer_avaliacao_humana ?? false,
-    diagnostico: requerAvaliacao(r) ? ("requer_avaliacao" as const) : ("normal" as const),
+    diagnostico,
     assimetria_horizontal: desalinhamentoEmFrente(r),
     assimetria_vertical: posicaoCentro(r)?.alinhamento_ocular?.assimetria_vertical ?? null,
     qualidade_captura: centro?.qualidade_captura?.pontuacao ?? null,

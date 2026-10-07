@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import ptAO from "@/i18n/locales/pt-AO.json";
 import { violacoesAcessibilidade } from "@/design/testes/acessibilidade";
@@ -89,13 +90,15 @@ const Resultados = () => <p>Página de resultados{useLocation().search}</p>;
 
 const montar = () =>
   render(
+    <HelmetProvider>
     <MemoryRouter initialEntries={["/rastreio-completo"]}>
       <Routes>
         <Route path="/rastreio-completo" element={<RastreioCompleto />} />
         <Route path="/scanner/resultados" element={<Resultados />} />
         <Route path="/" element={<p>Página inicial</p>} />
       </Routes>
-    </MemoryRouter>,
+    </MemoryRouter>
+    </HelmetProvider>,
   );
 
 /** A acção principal existe duas vezes no DOM (telemóvel e computador): usa-se a primeira. */
@@ -125,6 +128,11 @@ describe("RastreioCompleto — preparação", () => {
     expect(ligacao).toHaveAttribute("href", "/alvo-fixacao.svg");
     expect(ligacao).toHaveAttribute("target", "_blank");
     expect(ligacao).toHaveAttribute("rel", expect.stringContaining("noopener"));
+  });
+
+  it("não se deixa indexar pelos motores de busca", async () => {
+    montar();
+    await waitFor(() => expect(document.head.querySelector('meta[name="robots"]')?.getAttribute("content")).toContain("noindex"));
   });
 
   it("avisa que é uma versão de teste", () => {

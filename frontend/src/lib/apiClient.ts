@@ -655,7 +655,7 @@ export interface ScreeningInput {
   estado: string;
   rosto_detetado: boolean;
   requer_avaliacao_humana: boolean;
-  diagnostico?: "normal" | "requer_avaliacao";
+  diagnostico?: "normal" | "requer_avaliacao" | "inconclusivo";
   assimetria_horizontal?: number | null;
   assimetria_vertical?: number | null;
   qualidade_captura?: number | null;

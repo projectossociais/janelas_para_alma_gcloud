@@ -95,13 +95,13 @@ def test_sem_consentimento_responde_mas_nao_grava(ambiente) -> None:
     assert repo.gravadas == []
 
 
-def test_nao_mediu_responde_e_nao_grava(ambiente) -> None:
+def test_nao_mediu_grava_inconclusivo(ambiente) -> None:
     c, repo = ambiente
     _entrar(c)
     r = c.post("/rastreio-completo", json={**MEDICOES, "fotografias_validas": 1})
     assert r.json()["conclusao"] == "nao_mediu"
-    assert r.json()["screening_id"] is None
-    assert repo.gravadas == []
+    assert r.json()["screening_id"] == "screening-1"
+    assert repo.gravadas[0]["diagnostico"] == "inconclusivo"
 
 
 @pytest.mark.parametrize(

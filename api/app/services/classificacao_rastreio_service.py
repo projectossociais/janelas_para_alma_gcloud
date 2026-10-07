@@ -60,13 +60,15 @@ class Classificacao:
     versao_regra: str
 
     @property
-    def diagnostico_registo(self) -> str | None:
-        """Valor para ``screenings.diagnostico`` ("normal" / "requer_avaliacao").
-
-        ``None`` quando não se mediu: um rastreio sem medição fiável nunca se grava
-        como "normal".
-        """
-        return {"encaminhar": "requer_avaliacao", "sem_sinais": "normal"}.get(self.conclusao)
+    def diagnostico_registo(self) -> str:
+        """Valor para ``screenings.diagnostico``: "normal", "requer_avaliacao" ou
+        "inconclusivo" (não se mediu). Um rastreio sem medição fiável nunca se grava
+        como "normal": fica "inconclusivo", que é o que a pessoa viu."""
+        return {
+            "encaminhar": "requer_avaliacao",
+            "sem_sinais": "normal",
+            "nao_mediu": "inconclusivo",
+        }[self.conclusao]
 
 
 def _nao_mediu(motivo: str) -> Classificacao:

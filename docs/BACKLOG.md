@@ -28,6 +28,19 @@
 > (não com a memória de ninguém) e marcado no próprio item. Esta secção é o resumo, por
 > prioridade. **Quem fechar um item, actualiza-o aqui e no sítio dele.**
 
+### ⏸️ Adiado de propósito (decisão do dono do projecto, 2026-10-07)
+
+Nada disto avança agora; fica aqui para não se perder.
+
+| Item | O que fica por fazer | Depende de |
+|---|---|---|
+| **Sprint 8, espaço da comunidade (Kamba Social)** | Só registado; deixado "para outro dia" | Decisões do dono (ver SPRINT 8) |
+| **Motor próprio, fase V1** | Medições reais com fotografias (bancada, CSV) para fixar o factor de Hirschberg e a repetibilidade | Voluntários e fotografias |
+| **Motor próprio, fase V2** | Medir num iPhone real (resolução do vídeo, `torch`) e num Android; fixar os limiares (hoje provisórios, 6 Δ) e a dispersão máxima | Aparelhos reais |
+| **Trocar o `janelas-scanner-api` pelo motor próprio** | Ligar o motor ao `/scanner`, retirar o serviço externo (hoje o `/rastreio-completo` já está publicado, só para testes, escondido e `noindex`) | V1 e V2, e revisão humana da regra, do esquema e do texto do consentimento |
+| **Motor próprio, fase V3** | Validação clínica com crianças angolanas: parceria clínica (quem fala com a Optioptika?) e comissão de ética | Parceria e ética |
+| **Teste do −0,09** | 3 a 5 adultos sem estrabismo fazem o rastreio actual e mandam o PDF, para ver se o desalinhamento a olhar em frente ronda 0,06 a 0,10 (convergência de perto) | Voluntários (fazem-no no `/rastreio-completo` publicado) |
+
 ### 🔴 Urgente — risco legal ou de confiança
 
 | Item | O que se passa | Onde | Quem |

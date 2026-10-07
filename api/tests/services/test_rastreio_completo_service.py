@@ -62,18 +62,32 @@ def test_com_sessao_sem_sinais_grava_como_normal() -> None:
     assert g.gravadas[0]["requer_avaliacao_humana"] is False
 
 
-def test_nao_mediu_nunca_se_grava_nem_como_normal() -> None:
+def test_nao_mediu_grava_inconclusivo_nunca_normal_e_sem_numeros_inventados() -> None:
     g = GravadorFalso()
     svc = RastreioCompletoService(g)
     for m in (
         medicoes(fotografias_validas=1),
-        medicoes(falha="sem-reflexo"),
+        medicoes(falha="sem-reflexo", fotografias_validas=0),
         medicoes(dispersao_delta=9.0),
     ):
         r = svc.classificar_e_registar(m, user_id="u1")
         assert r.classificacao.conclusao == "nao_mediu"
-        assert r.screening_id is None
-    assert g.gravadas == []
+        assert r.screening_id is not None
+    assert len(g.gravadas) == 3
+    for gravada in g.gravadas:
+        assert gravada["diagnostico"] == "inconclusivo"
+        assert gravada["requer_avaliacao_humana"] is False
+        assert gravada["qualidade_fiavel"] is False
+        assert gravada["assimetria_horizontal"] is None
+        assert gravada["assimetria_vertical"] is None
+        assert gravada["medicoes"]["horizontal_delta"] is None
+
+
+def test_convidado_com_nao_mediu_nada_se_grava() -> None:
+    g = GravadorFalso()
+    r = RastreioCompletoService(g).classificar_e_registar(medicoes(fotografias_validas=0), user_id=None)
+    assert r.classificacao.conclusao == "nao_mediu"
+    assert r.screening_id is None and g.gravadas == []
 
 
 def test_falha_na_gravacao_nao_e_engolida() -> None:

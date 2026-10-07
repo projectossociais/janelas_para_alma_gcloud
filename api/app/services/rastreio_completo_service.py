@@ -4,9 +4,9 @@ consentimento, grava o resultado (docs/MOTOR_ANALISE_RASTREIO.md §7).
 Duas decisões que vivem aqui e não no router (CLAUDE.md §3):
 
 - **Convidados também recebem o resultado**, sem se gravar nada.
-- **Só se grava quando houve medição.** Um "não mediu" não tem lugar em
-  ``screenings.diagnostico`` (só "normal" / "requer_avaliacao"): gravá-lo como um
-  dos dois seria dizer o que não se mediu.
+- **Um "não mediu" grava-se como "inconclusivo"**, nunca como "normal" nem como
+  "requer_avaliacao": o histórico diz o que a pessoa viu (decisão do dono do
+  projecto, 2026-10-07).
 """
 
 from dataclasses import dataclass
@@ -20,6 +20,7 @@ from app.services.classificacao_rastreio_service import (
 )
 
 ESTADO_MEDIDO = "OK"
+ESTADO_NAO_MEDIDO = "QUALIDADE_INSUFICIENTE"
 
 
 class ScreeningsGravador(Protocol):
@@ -56,23 +57,25 @@ class RastreioCompletoService:
     ) -> ResultadoRastreioCompleto:
         classificacao = classificar(medicoes)
         diagnostico = classificacao.diagnostico_registo
-        if user_id is None or diagnostico is None:
+        if user_id is None:
             return ResultadoRastreioCompleto(classificacao, None)
+        mediu = classificacao.conclusao != "nao_mediu"
         registo = self._repo.criar(
             user_id=user_id,
-            estado=ESTADO_MEDIDO,
-            rosto_detetado=True,
+            estado=ESTADO_MEDIDO if mediu else ESTADO_NAO_MEDIDO,
+            rosto_detetado=medicoes.fotografias_validas > 0,
             requer_avaliacao_humana=classificacao.conclusao == "encaminhar",
             diagnostico=diagnostico,
-            assimetria_horizontal=medicoes.horizontal_delta,
-            assimetria_vertical=medicoes.vertical_delta,
+            # Sem medição, os desvios chegam a zero: não são medidas, não se gravam.
+            assimetria_horizontal=medicoes.horizontal_delta if mediu else None,
+            assimetria_vertical=medicoes.vertical_delta if mediu else None,
             qualidade_captura=None,
-            qualidade_fiavel=True,
+            qualidade_fiavel=mediu,
             qualidade_motivos=[],
             medicoes={
                 "unidade": "dioptrias_prismaticas",
-                "horizontal_delta": medicoes.horizontal_delta,
-                "vertical_delta": medicoes.vertical_delta,
+                "horizontal_delta": medicoes.horizontal_delta if mediu else None,
+                "vertical_delta": medicoes.vertical_delta if mediu else None,
                 "dispersao_delta": medicoes.dispersao_delta,
                 "fotografias_validas": medicoes.fotografias_validas,
                 "fotografias_total": medicoes.fotografias_total,

@@ -90,8 +90,8 @@ class TestNaoMediu:
 
 class TestRegistoCompativel:
     def test_traduz_para_o_diagnostico_que_a_tabela_ja_guarda(self) -> None:
-        # `screenings.diagnostico` aceita hoje "normal" e "requer_avaliacao";
-        # "não mediu" nunca se grava como "normal" (bug do fluxo antigo).
+        # "não mediu" nunca se grava como "normal" (bug do fluxo antigo): grava-se
+        # "inconclusivo" (2026-10-07, decisão do dono do projecto).
         assert classificar(medicoes(horizontal_delta=20)).diagnostico_registo == "requer_avaliacao"
         assert classificar(medicoes()).diagnostico_registo == "normal"
-        assert classificar(medicoes(falha="sem-reflexo", fotografias_validas=0)).diagnostico_registo is None
+        assert classificar(medicoes(falha="sem-reflexo", fotografias_validas=0)).diagnostico_registo == "inconclusivo"

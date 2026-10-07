@@ -63,7 +63,16 @@ describe("dataUrlParaBlob", () => {
 
 describe("paraRegistoScreening (o que se grava)", () => {
   it("nunca leva imagem nenhuma, só as medições", () => {
-    const r = paraRegistoScreening(RESPOSTA);
+    // Todas as fotografias com rosto e fiáveis: só assim "normal" é "normal".
+    const boa: ScreeningResponse = {
+      ...RESPOSTA,
+      posicoes: RESPOSTA.posicoes!.map((p) => ({
+        ...p,
+        rosto_detetado: true,
+        qualidade_captura: p.qualidade_captura ?? { pontuacao: 0.9, fiavel: true },
+      })),
+    };
+    const r = paraRegistoScreening(boa);
     expect(JSON.stringify(r)).not.toMatch(/base64|imagem|image/i);
     expect(r.estado).toBe("concluido");
     expect(r.rosto_detetado).toBe(true);
@@ -72,6 +81,21 @@ describe("paraRegistoScreening (o que se grava)", () => {
     expect(r.assimetria_horizontal).toBe(0.04);
     expect(r.assimetria_vertical).toBe(0.01);
     expect(r.diagnostico).toBe("normal");
+  });
+
+  it("não mediu (foto fraca, sem comparação) grava-se 'inconclusivo', nunca 'normal'", () => {
+    const fraca: ScreeningResponse = {
+      estado: "QUALIDADE_INSUFICIENTE",
+      posicoes: [
+        { posicao: "CENTRO", estado: "OK", rosto_detetado: true, qualidade_captura: { pontuacao: 0.9, fiavel: true } },
+        { posicao: "DIREITA", estado: "OK", rosto_detetado: true, qualidade_captura: { pontuacao: 0.3, fiavel: false } },
+      ],
+      motilidade: null,
+      requer_avaliacao_humana: true,
+    };
+    expect(paraRegistoScreening(fraca).diagnostico).toBe("inconclusivo");
+    // Uma fotografia sem rosto num rastreio sem sinais também não é "normal".
+    expect(paraRegistoScreening(RESPOSTA).diagnostico).toBe("inconclusivo");
   });
 
   it("incomitante ou avaliação humana passam a 'requer_avaliacao'", () => {

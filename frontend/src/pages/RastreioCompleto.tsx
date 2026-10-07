@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -47,8 +48,9 @@ import { CHAVE_RESULTADO, paraResultadoMotor } from "@/lib/rastreio/rastreio";
  *   três fotografias, uma de cada vez.
  *
  * As fotografias vivem só na memória desta página e são libertadas logo depois
- * de medidas (CLAUDE.md §4, regra 4). Ainda só em teste (a produção continua a
- * usar o `/scanner` até o motor passar as fases V1 e V2).
+ * de medidas (CLAUDE.md §4, regra 4). Publicado só para testes com voluntários
+ * (2026-10-07): sem ligação nos menus, `noindex` e aviso "versão de teste"; o
+ * rastreio oficial continua a ser o `/scanner`.
  */
 
 const TOTAL = 4;
@@ -245,6 +247,10 @@ const RastreioCompleto = () => {
     );
 
   return (
+    <>
+    <Helmet>
+      <meta name="robots" content="noindex, nofollow" />
+    </Helmet>
     <LayoutTarefa
       tema="claro"
       passo={{ actual: passo, total: TOTAL, rotulo: t("Rastreio.passo", { actual: passo, total: TOTAL }) }}
@@ -414,6 +420,7 @@ const RastreioCompleto = () => {
         )}
       </TransicaoPasso>
     </LayoutTarefa>
+    </>
   );
 };
 
