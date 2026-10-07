@@ -274,6 +274,20 @@ Acrescentar abaixo, com data, o que for decidido ou detalhado em cada conversa s
 redesenho (referências visuais, páginas a priorizar, gostos e recusas do dono do
 projecto, feedback do Lukeny). Mais recente em cima.
 
+- **2026-10-07** — **Fase 3, pedir o Premium (`RegistoPremium.tsx`, ramo `redesenho/premium`).** Passa
+  a arquétipo Tarefa, de 5 passos para 3 (plano, dados, pagamento) mais o ecrã de pedido enviado.
+  Decisões: (1) **exige sessão**: a API só aprova pedidos ligados a uma conta (`PedidoSemContaError`),
+  por isso quem pagava sem conta ficava sem Premium; sem sessão, a página leva a entrar ou criar
+  conta e volta aqui; (2) **o passo do "perfil clínico" saiu** ("para quem é", "tem diagnóstico?"):
+  nunca ia para a API e é um dado de saúde que não precisamos de recolher; (3) **saíram o
+  testemunho e "programa validado por oftalmologistas"** (não há como os provar) e a imagem do
+  painel; (4) planos, preços (15.000 e 150.000 Kz) e benefícios ficam **exactamente como estavam**
+  (CLAUDE.md §10: só o dono os altera); (5) o texto final deixou de prometer "contacto em 24 horas
+  e primeira teleconsulta" (não está garantido por nada no código) e diz só o que acontece:
+  confirmamos o pagamento e activamos o Premium na conta. Componentes novos do sistema de
+  design: `CampoFicheiro` e `LinhaCopiar`. **A rever pelo dono:** "Sessão de triagem online com
+  oftalmologista" e "Suporte prioritário" são promessas do plano que não verifiquei.
+  **Falta da Fase 3:** o teste de 7 dias (os ecrãs de acesso em `BaseExercise` e em `/exercicios`).
 - **2026-10-07** — **Redesenho em produção e Fase 3 retomada (entrar e criar conta).** O dono
   do projecto aprovou o redesenho; foi para o `main` no PR #134 (com o rastreio completo
   escondido, `noindex`, só para testes). A Fase 3 continua com **entrar e criar conta** no
