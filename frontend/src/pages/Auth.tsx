@@ -312,7 +312,7 @@ const Auth = () => {
                 />
                 <GrupoEscolha<Genero>
                   legenda={t("Auth.genero")}
-                  aparencia="pastilha"
+                  aparencia="radio"
                   opcoes={GENEROS.map((g) => ({ valor: g, rotulo: t(ROTULO_GENERO[g]) }))}
                   valor={genero}
                   aoMudar={setGenero}

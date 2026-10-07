@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { useState } from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -59,5 +59,46 @@ describe("GrupoEscolha", () => {
   it.each(["cartao", "pastilha"] as const)("sem violações de acessibilidade (%s)", async (aparencia) => {
     const { container } = render(<Controlado aparencia={aparencia} />);
     expect(await violacoesAcessibilidade(container)).toEqual([]);
+  });
+
+  it("aparência 'radio': botões de rádio sem caixa, todos na mesma linha, com o estado marcado", async () => {
+    const aoMudar = vi.fn();
+    const { container } = render(
+      <GrupoEscolha<"a" | "b" | "c">
+        legenda="Género"
+        aparencia="radio"
+        opcoes={[
+          { valor: "a", rotulo: "Masculino" },
+          { valor: "b", rotulo: "Feminino" },
+          { valor: "c", rotulo: "Prefiro não dizer" },
+        ]}
+        valor="b"
+        aoMudar={aoMudar}
+      />,
+    );
+    const radios = screen.getAllByRole("radio");
+    expect(radios).toHaveLength(3);
+    expect(screen.getByRole("radio", { name: "Feminino" })).toBeChecked();
+    // Sem caixa à volta (não são botões grandes) e a quebrar só se não couber.
+    expect(container.querySelector("fieldset > div")!.className).toContain("flex-wrap");
+    expect(container.querySelector("label")!.className).not.toContain("border");
+    await userEvent.setup().click(screen.getByRole("radio", { name: "Prefiro não dizer" }));
+    expect(aoMudar).toHaveBeenCalledWith("c");
+  });
+
+  it("por omissão, as pastilhas ficam em grelha (dias e horas)", () => {
+    const { container } = render(
+      <GrupoEscolha<"a" | "b">
+        legenda="Hora"
+        aparencia="pastilha"
+        opcoes={[
+          { valor: "a", rotulo: "09:00" },
+          { valor: "b", rotulo: "10:00" },
+        ]}
+        valor={null}
+        aoMudar={() => {}}
+      />,
+    );
+    expect(container.querySelector("fieldset > div")!.className).toContain("grid");
   });
 });
