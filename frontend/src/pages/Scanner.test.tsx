@@ -102,7 +102,7 @@ describe("Scanner — persistência do rastreio guiado", () => {
         },
       ],
       requer_avaliacao_humana: false,
-      variacao_desalinhamento: 1.4,
+      motilidade: { variacao_desalinhamento: 1.4, incomitante: false },
     });
     registarScreening.mockResolvedValue({ id: "screening-1" });
 
@@ -138,8 +138,8 @@ describe("Scanner — persistência do rastreio guiado", () => {
       expect(imagens[pose]).toBeInstanceOf(Blob);
     }
     await waitFor(() => expect(sessionStorage.getItem("scanResult")).not.toBeNull(), { timeout: 4000 });
-    const guardado = JSON.parse(sessionStorage.getItem("scanResult")!) as { apiData: Record<string, unknown> };
-    expect(guardado.apiData.variacao_desalinhamento).toBe(1.4);
+    const guardado = JSON.parse(sessionStorage.getItem("scanResult")!) as { apiData: { motilidade: { variacao_desalinhamento: number } } };
+    expect(guardado.apiData.motilidade.variacao_desalinhamento).toBe(1.4);
   });
 
   it("quando requer avaliação humana, grava diagnostico=requer_avaliacao (Fase 1 do matchmaker)", async () => {
@@ -154,7 +154,7 @@ describe("Scanner — persistência do rastreio guiado", () => {
         },
       ],
       requer_avaliacao_humana: true,
-      variacao_desalinhamento: 4.2,
+      motilidade: { variacao_desalinhamento: 4.2, incomitante: true },
     });
     registarScreening.mockResolvedValue({ id: "screening-2" });
 

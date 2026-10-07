@@ -44,8 +44,15 @@ export interface ScreeningResponse {
       };
     };
   }>;
-  variacao_desalinhamento?: number;
-  incomitante?: boolean;
+  /**
+   * A comparação entre posições vem **aqui dentro**, nunca no topo da resposta
+   * (contrato do janelas-scanner-api em /openapi.json). Ler no topo dava sempre
+   * "sem dado". `null` com menos de duas posições utilizáveis.
+   */
+  motilidade?: {
+    variacao_desalinhamento?: number | null;
+    incomitante?: boolean | null;
+  } | null;
   requer_avaliacao_humana?: boolean;
   recomendacao?: string;
   aviso?: string;

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import jsPDF from "jspdf";
-import { ESTILO_RELATORIO, RelatorioPdf } from "./pdfRelatorio";
+import { COLUNA_CAMPO, ESTILO_RELATORIO, RelatorioPdf } from "./pdfRelatorio";
 
 // Estilo único de relatório (pedido do dono do projecto, 2026-09-29): preto
 // sobre branco, sem cores decorativas nem caixas. Este teste impede que um
@@ -61,5 +61,20 @@ describe("RelatorioPdf (estilo único dos relatórios)", () => {
     // O rodapé escreve "Página i de N" em todas as páginas.
     const texto = doc.output();
     for (let i = 1; i <= total; i++) expect(texto).toContain(`Página ${i} de ${total}`);
+  });
+
+  it("um nome de campo comprido muda de linha e nunca entra na coluna do valor", () => {
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+    const texto = vi.spyOn(doc, "text");
+    const r = new RelatorioPdf(doc);
+    const longo = "Desvio diferente conforme a direcção (incomitância)";
+    r.campos([[longo, "Sem dado"]]);
+    const chamada = texto.mock.calls.find((c) => [c[0]].flat().join(" ") === longo);
+    expect(chamada).toBeDefined();
+    const nome = [chamada![0]].flat() as string[];
+    expect(nome.length).toBeGreaterThan(1);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(ESTILO_RELATORIO.corpo);
+    for (const linha of nome) expect(doc.getTextWidth(linha)).toBeLessThan(COLUNA_CAMPO);
   });
 });

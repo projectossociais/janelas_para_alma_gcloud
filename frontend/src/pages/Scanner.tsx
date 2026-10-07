@@ -75,8 +75,9 @@ const persistirScreening = async (apiResult: ScreeningResponse): Promise<string 
     requer_avaliacao_humana: apiResult.requer_avaliacao_humana ?? false,
     // Mesmo critério do ecrã de resultado (ver mais abaixo, finishScan) --
     // único sinal real que o janelas-scanner-api de facto calcula hoje.
-    diagnostico: apiResult.incomitante || apiResult.requer_avaliacao_humana ? "requer_avaliacao" : "normal",
-    assimetria_horizontal: apiResult.variacao_desalinhamento ?? null,
+    diagnostico:
+      apiResult.motilidade?.incomitante || apiResult.requer_avaliacao_humana ? "requer_avaliacao" : "normal",
+    assimetria_horizontal: apiResult.motilidade?.variacao_desalinhamento ?? null,
     qualidade_captura: posCentro?.qualidade_captura?.pontuacao ?? null,
     qualidade_fiavel: posCentro?.qualidade_captura?.fiavel ?? null,
     qualidade_motivos: posCentro?.qualidade_captura?.motivos ?? [],
@@ -182,7 +183,7 @@ const Scanner = () => {
     let diagnosis = "Alinhamento Fisiológico Normal";
     let confidence = 92;
 
-    if (apiResult.incomitante || apiResult.requer_avaliacao_humana) {
+    if (apiResult.motilidade?.incomitante || apiResult.requer_avaliacao_humana) {
       // Categoria fixa — o texto livre de `recomendacao` vai em `apiData`,
       // para o ecrã de resultados o mostrar à parte (nunca como chave de
       // diagnóstico: DIAGNOSIS_DATA só conhece um conjunto fechado de chaves).
