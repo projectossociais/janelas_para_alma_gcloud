@@ -9,6 +9,7 @@ import {
   FlaskConical,
   Glasses,
   Images,
+  Printer,
   RefreshCw,
   ShieldCheck,
   Sun,
@@ -294,6 +295,15 @@ const RastreioCompleto = () => {
                 />
               ))}
             </div>
+            {/* Sem impressora, desenha-se à mão: o texto da folha diz como. */}
+            <a
+              href="/alvo-fixacao.svg"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex min-h-alvo-app items-center gap-2 rounded-controlo font-medium text-accao underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco"
+            >
+              <Printer className="size-5" aria-hidden /> {t("RastreioCompleto.alvoLigacao")}
+            </a>
             <p role="status" className="mt-4 text-legenda text-tinta-suave">
               {tudoPronto ? t("Rastreio.tudoPronto") : t("RastreioCompleto.faltaConfirmar")}
             </p>

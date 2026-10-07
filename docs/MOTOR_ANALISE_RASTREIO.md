@@ -434,8 +434,10 @@ revisão humana do esquema, da regra e do texto do consentimento).
   próprio passar V1 e V2, com limiar conservador e "triagem, não diagnóstico".
 
 **Por decidir:**
-1. **Alvo de fixação:** o projecto fornece um autocolante (ex.: nas campanhas do Kamba) ou
-   mostra-se um desenho para imprimir?
+1. **Alvo de fixação:** ~~autocolante ou desenho?~~ **Provisório (2026-10-07): desenho para imprimir**
+   (`frontend/public/alvo-fixacao.svg`, ligado no passo 1 do rastreio completo): grátis e imediato
+   para os testes. O autocolante do projecto fica para quando houver campanhas; **a confirmar
+   pelo dono do projecto**.
 2. **Parceria clínica para V3:** quem fala com a Optioptika (ou outra clínica) e com uma
    comissão de ética?
 

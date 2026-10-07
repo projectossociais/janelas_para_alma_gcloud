@@ -119,6 +119,14 @@ describe("RastreioCompleto — preparação", () => {
     expect(accao(R.estouPronto)).toBeEnabled();
   });
 
+  it("oferece a folha com os pontos para imprimir (abre noutro separador)", () => {
+    montar();
+    const ligacao = screen.getByRole("link", { name: T.alvoLigacao });
+    expect(ligacao).toHaveAttribute("href", "/alvo-fixacao.svg");
+    expect(ligacao).toHaveAttribute("target", "_blank");
+    expect(ligacao).toHaveAttribute("rel", expect.stringContaining("noopener"));
+  });
+
   it("avisa que é uma versão de teste", () => {
     montar();
     expect(screen.getByText(T.testeTitulo)).toBeInTheDocument();
