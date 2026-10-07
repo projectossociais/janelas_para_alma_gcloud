@@ -150,10 +150,22 @@ describe("Auth — entrar (AUTH-02)", () => {
     const formulario = screen.getByLabelText("Palavra-passe").closest("form")!;
     await user.click(within(formulario).getByRole("button", { name: /Entrar/ }));
 
-    const resumo = await screen.findByRole("alert");
-    expect(within(resumo).getByText("Escreva o email completo, por exemplo nome@gmail.com.")).toBeInTheDocument();
-    expect(within(resumo).getByText("Escreva a palavra-passe.")).toBeInTheDocument();
+    // O erro fica no próprio campo, e o foco vai para o primeiro por corrigir.
+    expect(await screen.findByText("Escreva o email completo, por exemplo nome@gmail.com.")).toBeInTheDocument();
+    expect(screen.getByText("Escreva a palavra-passe.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Email")).toHaveAttribute("aria-invalid", "true");
+    await waitFor(() => expect(screen.getByLabelText("Email")).toHaveFocus());
     expect(signIn).not.toHaveBeenCalled();
+  });
+
+  it("não há caixa de resumo de erros por cima do formulário", async () => {
+    const user = userEvent.setup();
+    montar();
+    const formulario = screen.getByLabelText("Palavra-passe").closest("form")!;
+    await user.click(within(formulario).getByRole("button", { name: /Entrar/ }));
+    await screen.findByText("Escreva a palavra-passe.");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Corrija o que falta/)).not.toBeInTheDocument();
   });
 
   it("não mostra erros enquanto se escreve pela primeira vez", async () => {
@@ -219,18 +231,17 @@ describe("Auth — criar conta (AUTH-02)", () => {
     await irParaCriarEPreencher(user, { password: "12345678" });
 
     expect(registerUser).not.toHaveBeenCalled();
-    const resumo = await screen.findByRole("alert");
-    expect(within(resumo).getByText("A palavra-passe precisa de pelo menos uma letra.")).toBeInTheDocument();
+    expect(await screen.findByText("A palavra-passe precisa de pelo menos uma letra.")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByLabelText("Palavra-passe")).toHaveFocus());
   });
 
-  it("sem preencher nada, o resumo lista tudo o que falta e o foco vai para ele", async () => {
+  it("sem preencher nada, cada campo diz o que falta e o foco vai para o primeiro", async () => {
     const user = userEvent.setup();
     montar();
     await user.click(screen.getByRole("button", { name: "Criar Conta" }));
     await screen.findByLabelText("Nome Completo");
     await user.click(screen.getByRole("button", { name: "Criar Conta" }));
 
-    const resumo = await screen.findByRole("alert");
     for (const texto of [
       "Escreva o seu nome.",
       "Escreva o email completo, por exemplo nome@gmail.com.",
@@ -239,10 +250,26 @@ describe("Auth — criar conta (AUTH-02)", () => {
       "Escolha uma opção de género.",
       "Escolha o seu perfil.",
     ]) {
-      expect(within(resumo).getByText(texto)).toBeInTheDocument();
+      expect(await screen.findByText(texto)).toBeInTheDocument();
     }
     expect(registerUser).not.toHaveBeenCalled();
-    await waitFor(() => expect(resumo.parentElement).toHaveFocus());
+    await waitFor(() => expect(screen.getByLabelText("Nome Completo")).toHaveFocus());
+  });
+
+  it("se só o perfil falta, o foco vai para o grupo de perfil", async () => {
+    const user = userEvent.setup();
+    montar();
+    await user.click(screen.getByRole("button", { name: "Criar Conta" }));
+    await user.type(await screen.findByLabelText("Nome Completo"), "Ana");
+    await user.type(screen.getByLabelText("Email"), "ana@example.com");
+    await user.type(screen.getByLabelText("Palavra-passe"), "password-forte-123");
+    await user.selectOptions(screen.getByLabelText("Província"), "Luanda");
+    await user.click(screen.getByRole("radio", { name: "Feminino" }));
+    await user.click(screen.getByRole("button", { name: "Criar Conta" }));
+
+    expect(await screen.findByText("Escolha o seu perfil.")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole("radio", { name: "Comum" })).toHaveFocus());
+    expect(registerUser).not.toHaveBeenCalled();
   });
 
   it("depois da primeira tentativa, o erro desaparece assim que o campo é corrigido", async () => {
@@ -251,11 +278,11 @@ describe("Auth — criar conta (AUTH-02)", () => {
     await user.click(screen.getByRole("button", { name: "Criar Conta" }));
     await screen.findByLabelText("Nome Completo");
     await user.click(screen.getByRole("button", { name: "Criar Conta" }));
-    expect(await screen.findAllByText("Escreva o seu nome.")).not.toHaveLength(0);
+    expect(await screen.findByText("Escreva o seu nome.")).toBeInTheDocument();
 
     await user.type(screen.getByLabelText("Nome Completo"), "Ana");
 
-    await waitFor(() => expect(screen.queryAllByText("Escreva o seu nome.")).toHaveLength(0));
+    await waitFor(() => expect(screen.queryByText("Escreva o seu nome.")).not.toBeInTheDocument());
   });
 
   it("envia só o que a API precisa, sem confirmação de password", async () => {

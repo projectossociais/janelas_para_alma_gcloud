@@ -282,7 +282,8 @@ projecto, feedback do Lukeny). Mais recente em cima.
   (entrar / criar conta) em vez do "email primeiro" do protótipo, porque adivinhar se a conta
   existe obrigaria a API a revelar emails registados, o que ela nunca faz; (2) a **confirmação da
   password** foi trocada pelo "Mostrar" no campo (PESQUISA_UX §3); (3) validação ao submeter, com
-  resumo de erros no topo (recebe o foco) e erro em cada campo, a corrigir em tempo real depois da
+  o erro em cada campo e o foco no primeiro por corrigir (sem caixa de resumo por cima: o dono do
+  projecto achou-a feia, e o erro fica onde se corrige), a corrigir em tempo real depois da
   primeira tentativa; (4) género e perfil são botões de opção (`GrupoEscolha`) e a província um
   seletor nativo (novo `Seleccao`, em `design/componentes/`). Os erros da API continuam em toast
   (o de "email não confirmado" mantém o "Reenviar link"). **Falta da Fase 3:** teste de 7 dias e

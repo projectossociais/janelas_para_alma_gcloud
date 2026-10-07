@@ -28,9 +28,10 @@ import { erroDePasswordFraca } from "@/lib/validarPassword";
  * `recuperar-password`); por isso aqui a pessoa diz o que quer fazer.
  *
  * Validação (docs/PESQUISA_UX.md §3): não se mostra erro enquanto a pessoa
- * escreve pela primeira vez; ao submeter, um resumo no topo recebe o foco e
- * cada campo diz o seu erro; depois disso, o erro desaparece assim que o campo
- * fica corrigido. A confirmação da password foi substituída pelo "Mostrar" no
+ * escreve pela primeira vez; ao submeter, cada campo diz o seu erro e o foco vai
+ * para o primeiro por corrigir (o leitor de ecrã lê-lhe o nome e o erro); depois
+ * disso, o erro desaparece assim que o campo fica corrigido. Sem caixa de
+ * resumo por cima: o erro fica onde se corrige. A confirmação da password foi substituída pelo "Mostrar" no
  * campo (a pessoa vê o que escreveu e os gestores de passwords funcionam).
  * Quem decide se a password serve é sempre a API (`validarPassword.ts` é só
  * uma cópia para dar resposta imediata).
@@ -85,7 +86,7 @@ const Auth = () => {
   const [googleLoading, setGoogleLoading] = useState(false);
   // Só depois da primeira tentativa de submeter é que os erros aparecem.
   const [tentou, setTentou] = useState(false);
-  const resumo = useRef<HTMLDivElement>(null);
+  const formulario = useRef<HTMLFormElement>(null);
 
   const irParaProximo = () => navigate(localizar(nextPath));
 
@@ -117,13 +118,17 @@ const Auth = () => {
   };
 
   const erros = tentou ? calcularErros() : {};
-  const mensagens = Object.values(erros);
 
-  /** Valida ao submeter; se houver erros, mostra o resumo e leva o foco até ele. */
+  /** Valida ao submeter; se houver erros, leva o foco ao primeiro campo por corrigir. */
   const podeSeguir = () => {
     setTentou(true);
     if (Object.keys(calcularErros()).length === 0) return true;
-    window.setTimeout(() => resumo.current?.focus(), 0);
+    // Depois de os erros estarem no ecrã: campos com erro, ou o primeiro botão de um grupo com erro.
+    window.setTimeout(() => {
+      formulario.current
+        ?.querySelector<HTMLElement>('[aria-invalid="true"], fieldset[aria-describedby] input')
+        ?.focus();
+    }, 0);
     return false;
   };
 
@@ -261,22 +266,11 @@ const Auth = () => {
         )}
 
         <form
+          ref={formulario}
           onSubmit={modo === "entrar" ? handleLogin : handleRegister}
           noValidate
           className={import.meta.env.VITE_GOOGLE_CLIENT_ID ? undefined : "mt-8"}
         >
-          {mensagens.length > 0 && (
-            <div ref={resumo} tabIndex={-1} className="mb-6 outline-none">
-              <Aviso variante="erro" anunciar titulo={t("Auth.resumoErros")}>
-                <ul className="list-disc pl-5">
-                  {mensagens.map((m) => (
-                    <li key={m}>{m}</li>
-                  ))}
-                </ul>
-              </Aviso>
-            </div>
-          )}
-
           <div className="flex flex-col gap-6">
             {modo === "criar" && (
               <Campo
