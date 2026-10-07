@@ -60,4 +60,37 @@ describe("GrupoEscolha", () => {
     const { container } = render(<Controlado aparencia={aparencia} />);
     expect(await violacoesAcessibilidade(container)).toEqual([]);
   });
+
+  it("na disposição 'linha', as pastilhas têm a largura do texto e não numa grelha de colunas iguais", () => {
+    const { container } = render(
+      <GrupoEscolha
+        legenda="Género"
+        aparencia="pastilha"
+        disposicao="linha"
+        opcoes={[
+          { valor: "a", rotulo: "Masculino" },
+          { valor: "b", rotulo: "Feminino" },
+          { valor: "c", rotulo: "Prefiro não dizer" },
+        ]}
+        valor={null}
+        aoMudar={() => {}}
+      />,
+    );
+    const pastilhas = container.querySelector("fieldset > div")!;
+    expect(pastilhas.className).toContain("flex-wrap");
+    expect(pastilhas.className).not.toContain("grid");
+  });
+
+  it("por omissão, as pastilhas ficam em grelha (dias e horas)", () => {
+    const { container } = render(
+      <GrupoEscolha
+        legenda="Hora"
+        aparencia="pastilha"
+        opcoes={[{ valor: "a", rotulo: "09:00" }, { valor: "b", rotulo: "10:00" }]}
+        valor={null}
+        aoMudar={() => {}}
+      />,
+    );
+    expect(container.querySelector("fieldset > div")!.className).toContain("grid");
+  });
 });
