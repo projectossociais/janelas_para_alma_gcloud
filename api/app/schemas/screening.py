@@ -3,11 +3,11 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-# Sinal real para o matchmaker clínico (Fase 1, docs/BACKLOG.md Sprint 4) --
-# só os dois valores que o janelas-scanner-api de facto calcula hoje. Não
-# confundir com as 4 subcategorias de estrabismo que o frontend antigo
-# mostrava (vinham do Math.random(), removido no PR #61).
-Diagnostico = Literal["normal", "requer_avaliacao"]
+# Sinal real para o matchmaker clínico (Fase 1, docs/BACKLOG.md Sprint 4).
+# "inconclusivo" (2026-10-07): não se conseguiu medir; nunca se grava como
+# "normal". Não confundir com as 4 subcategorias de estrabismo que o frontend
+# antigo mostrava (vinham do Math.random(), removido no PR #61).
+Diagnostico = Literal["normal", "requer_avaliacao", "inconclusivo"]
 
 
 class ScreeningCriar(BaseModel):

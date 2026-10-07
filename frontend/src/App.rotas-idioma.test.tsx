@@ -45,14 +45,15 @@ describe("com VITE_ENABLE_EN desligada (omissão)", () => {
   it("em português os links internos ficam exactamente como estavam", async () => {
     abrir("/faq");
     await screen.findByRole("heading", { name: "Perguntas Frequentes" });
-    expect(rodape().getByRole("link", { name: "Política de Privacidade" })).toHaveAttribute("href", "/politica-de-privacidade");
+    expect(rodape().getByRole("link", { name: "Privacidade" })).toHaveAttribute("href", "/politica-de-privacidade");
   });
 
   it("em português o jogo continua visível e as páginas legais não têm a nota da tradução", async () => {
     abrir("/termos-de-utilizacao");
     await screen.findByRole("heading", { name: "Termos de Utilização" });
     expect(screen.queryByRole("note")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Jogo: Inclusivamente" })).toBeInTheDocument();
+    // O jogo saiu do cabeçalho (docs/ESTRUTURA_SITE.md) e está no rodapé de todas as páginas públicas.
+    expect(rodape().getByRole("link", { name: "Jogo Inclusivamente" })).toHaveAttribute("href", "/jogo-curiosidades");
   });
 
   it("o site é português e o botão EN não aparece", async () => {
@@ -94,16 +95,17 @@ describe("com VITE_ENABLE_EN=true", () => {
   it("numa página inglesa, os links internos levam às rotas /en/...", async () => {
     abrir("/en/faq");
     await screen.findByRole("heading", { name: "Frequently Asked Questions" });
-    expect(rodape().getByRole("link", { name: "Privacy Policy" })).toHaveAttribute("href", "/en/privacy-policy");
-    expect(rodape().getByRole("link", { name: "Terms of Use" })).toHaveAttribute("href", "/en/terms-of-use");
-    expect(rodape().getByRole("link", { name: "FAQ" })).toHaveAttribute("href", "/en/faq");
+    expect(rodape().getByRole("link", { name: "Privacy" })).toHaveAttribute("href", "/en/privacy-policy");
+    expect(rodape().getByRole("link", { name: "Terms" })).toHaveAttribute("href", "/en/terms-of-use");
+    expect(rodape().getByRole("link", { name: "Frequently asked questions" })).toHaveAttribute("href", "/en/faq");
   });
 
   it("links dentro do conteúdo (respostas da FAQ, definidas ao nível do módulo) também vão para /en/...", async () => {
     abrir("/en/faq");
     await screen.findByRole("heading", { name: "Frequently Asked Questions" });
-    const links = screen.getAllByRole("link", { name: "Privacy Policy" });
-    expect(links.length).toBeGreaterThan(1); // rodapé + resposta aberta por omissão
+    // A resposta aberta por omissão tem a ligação no texto; o rodapé tem a sua.
+    const links = [...screen.getAllByRole("link", { name: "Privacy Policy" }), rodape().getByRole("link", { name: "Privacy" })];
+    expect(links.length).toBeGreaterThan(1);
     for (const l of links) expect(l).toHaveAttribute("href", "/en/privacy-policy");
   });
 
@@ -159,9 +161,8 @@ describe("com VITE_ENABLE_EN=true", () => {
     menu.unmount();
     abrir("/en");
     await waitFor(() => expect(document.documentElement.lang).toBe("en-US"));
-    expect(await screen.findByRole("button", { name: "Game: Inclusivamente" })).toBeInTheDocument();
-    expect(screen.getByText("Launching our game: Inclusivamente")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Try our game/ })).toBeInTheDocument();
+    // Página inicial nova (2026-09-30): o jogo tem a secção "Para as crianças".
+    expect(await screen.findByRole("link", { name: /Play Inclusivamente/ })).toHaveAttribute("href", "/en/trivia-game");
   });
 
   it("as páginas legais em inglês avisam que prevalece a versão portuguesa", async () => {

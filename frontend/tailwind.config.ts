@@ -1,5 +1,6 @@
 import type { Config } from "tailwindcss";
 import tailwindcssAnimate from "tailwindcss-animate";
+import { temaTailwind } from "./src/design/tokens";
 
 export default {
   darkMode: ["class"],
@@ -18,7 +19,18 @@ export default {
         sans: ["Ubuntu", "sans-serif"],
         display: ["Ubuntu", "sans-serif"],
       },
+      // Sistema de design novo (src/design/tokens.ts): nomes em português, que não
+      // colidem com os do site antigo abaixo. As páginas migradas usam só estes.
+      fontSize: temaTailwind.fontSize,
+      spacing: temaTailwind.spacing,
+      boxShadow: temaTailwind.boxShadow,
+      minHeight: temaTailwind.minHeight,
+      minWidth: temaTailwind.minWidth,
+      aspectRatio: temaTailwind.aspectRatio,
+      transitionDuration: temaTailwind.transitionDuration,
+      transitionTimingFunction: temaTailwind.transitionTimingFunction,
       colors: {
+        ...temaTailwind.colors,
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -84,6 +96,7 @@ export default {
         },
       },
       borderRadius: {
+        ...temaTailwind.borderRadius,
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",

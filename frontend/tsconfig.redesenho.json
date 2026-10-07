@@ -1,0 +1,24 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true
+  },
+  "include": [
+    "src/design",
+    "src/redesenho",
+    "src/components/site",
+    "src/components/inicio",
+    "src/pages/Inicio.tsx",
+    "src/pages/Scanner.tsx",
+    "src/pages/ScannerResultados.tsx",
+    "src/pages/MarcarConsulta.tsx",
+    "src/lib/marcacao",
+    "src/hooks/useCameraRastreio.ts",
+    "src/lib/rastreio",
+    "src/vite-env.d.ts"
+  ]
+}

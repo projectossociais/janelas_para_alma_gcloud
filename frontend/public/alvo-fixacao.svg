@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="297mm" viewBox="0 0 210 297" font-family="Arial, Helvetica, sans-serif">
+  <title>Pontos para o rastreio completo</title>
+  <rect width="210" height="297" fill="#fff"/>
+  <text x="105" y="22" text-anchor="middle" font-size="9" font-weight="bold" fill="#111">Ponto para o rastreio ocular</text>
+  <text x="105" y="31" text-anchor="middle" font-size="4.2" fill="#333">Janelas Para a Alma · janelasparaalma.com</text>
+  <text x="20" y="46" font-size="3.9" fill="#111">1. Imprima esta folha em tamanho real (sem «ajustar à página») e corte um ponto pelo tracejado.</text>
+  <text x="20" y="53" font-size="3.9" fill="#111">2. Cole-o mesmo ao lado da lente da câmara de trás do telemóvel, do lado da luz.</text>
+  <text x="20" y="60" font-size="3.9" fill="#111">3. A criança olha sempre para o centro do ponto, sem mexer a cabeça, durante as fotografias.</text>
+  <text x="20" y="67" font-size="3.9" fill="#111">Sem impressora: desenhe um círculo de 2 a 3 cm com um ponto vermelho ao meio e cole-o.</text>
+  <text x="20" y="80" font-size="3.8" fill="#555">Este rastreio é uma triagem e não um diagnóstico. Só um médico pode confirmar ou afastar um problema.</text>
+  <g>
+    <circle cx="60" cy="105" r="17" fill="none" stroke="#999" stroke-width="0.3" stroke-dasharray="1.5 1.2"/>
+    <circle cx="60" cy="105" r="14" fill="#111"/>
+    <circle cx="60" cy="105" r="10.5" fill="#fff"/>
+    <circle cx="60" cy="105" r="7" fill="#d62828"/>
+    <circle cx="60" cy="105" r="3.5" fill="#fff"/>
+    <circle cx="60" cy="105" r="1.6" fill="#111"/>
+  </g>
+  <g>
+    <circle cx="60" cy="150" r="17" fill="none" stroke="#999" stroke-width="0.3" stroke-dasharray="1.5 1.2"/>
+    <circle cx="60" cy="150" r="14" fill="#111"/>
+    <circle cx="60" cy="150" r="10.5" fill="#fff"/>
+    <circle cx="60" cy="150" r="7" fill="#d62828"/>
+    <circle cx="60" cy="150" r="3.5" fill="#fff"/>
+    <circle cx="60" cy="150" r="1.6" fill="#111"/>
+  </g>
+  <g>
+    <circle cx="60" cy="195" r="17" fill="none" stroke="#999" stroke-width="0.3" stroke-dasharray="1.5 1.2"/>
+    <circle cx="60" cy="195" r="14" fill="#111"/>
+    <circle cx="60" cy="195" r="10.5" fill="#fff"/>
+    <circle cx="60" cy="195" r="7" fill="#d62828"/>
+    <circle cx="60" cy="195" r="3.5" fill="#fff"/>
+    <circle cx="60" cy="195" r="1.6" fill="#111"/>
+  </g>
+  <g>
+    <circle cx="60" cy="240" r="17" fill="none" stroke="#999" stroke-width="0.3" stroke-dasharray="1.5 1.2"/>
+    <circle cx="60" cy="240" r="14" fill="#111"/>
+    <circle cx="60" cy="240" r="10.5" fill="#fff"/>
+    <circle cx="60" cy="240" r="7" fill="#d62828"/>
+    <circle cx="60" cy="240" r="3.5" fill="#fff"/>
+    <circle cx="60" cy="240" r="1.6" fill="#111"/>
+  </g>
+  <g>
+    <circle cx="150" cy="105" r="17" fill="none" stroke="#999" stroke-width="0.3" stroke-dasharray="1.5 1.2"/>
+    <circle cx="150" cy="105" r="14" fill="#111"/>
+    <circle cx="150" cy="105" r="10.5" fill="#fff"/>
+    <circle cx="150" cy="105" r="7" fill="#d62828"/>
+    <circle cx="150" cy="105" r="3.5" fill="#fff"/>
+    <circle cx="150" cy="105" r="1.6" fill="#111"/>
+  </g>
+  <g>
+    <circle cx="150" cy="150" r="17" fill="none" stroke="#999" stroke-width="0.3" stroke-dasharray="1.5 1.2"/>
+    <circle cx="150" cy="150" r="14" fill="#111"/>
+    <circle cx="150" cy="150" r="10.5" fill="#fff"/>
+    <circle cx="150" cy="150" r="7" fill="#d62828"/>
+    <circle cx="150" cy="150" r="3.5" fill="#fff"/>
+    <circle cx="150" cy="150" r="1.6" fill="#111"/>
+  </g>
+  <g>
+    <circle cx="150" cy="195" r="17" fill="none" stroke="#999" stroke-width="0.3" stroke-dasharray="1.5 1.2"/>
+    <circle cx="150" cy="195" r="14" fill="#111"/>
+    <circle cx="150" cy="195" r="10.5" fill="#fff"/>
+    <circle cx="150" cy="195" r="7" fill="#d62828"/>
+    <circle cx="150" cy="195" r="3.5" fill="#fff"/>
+    <circle cx="150" cy="195" r="1.6" fill="#111"/>
+  </g>
+  <g>
+    <circle cx="150" cy="240" r="17" fill="none" stroke="#999" stroke-width="0.3" stroke-dasharray="1.5 1.2"/>
+    <circle cx="150" cy="240" r="14" fill="#111"/>
+    <circle cx="150" cy="240" r="10.5" fill="#fff"/>
+    <circle cx="150" cy="240" r="7" fill="#d62828"/>
+    <circle cx="150" cy="240" r="3.5" fill="#fff"/>
+    <circle cx="150" cy="240" r="1.6" fill="#111"/>
+  </g>
+</svg>

@@ -225,3 +225,18 @@ def test_listar_minhas_devolve_so_as_do_proprio_utilizador(ambiente) -> None:
 def test_listar_minhas_sem_sessao_devolve_401(ambiente) -> None:
     c, _ = ambiente
     assert c.get("/screenings/minhas").status_code == 401
+
+
+def test_aceita_diagnostico_inconclusivo(ambiente) -> None:
+    """Não se mediu: grava-se 'inconclusivo' (2026-10-07), nunca 'normal'."""
+    c, repo = ambiente
+    _registar(c)
+    resposta = c.post("/screenings", json={**PAYLOAD_VALIDO, "diagnostico": "inconclusivo"})
+    assert resposta.status_code == 201
+    assert repo.gravadas[0]["diagnostico"] == "inconclusivo"
+
+
+def test_recusa_diagnostico_desconhecido(ambiente) -> None:
+    c, _ = ambiente
+    _registar(c)
+    assert c.post("/screenings", json={**PAYLOAD_VALIDO, "diagnostico": "esotropia"}).status_code == 422

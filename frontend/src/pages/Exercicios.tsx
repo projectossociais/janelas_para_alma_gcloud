@@ -392,8 +392,8 @@ const Exercicios = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1">
-        <BackButton className="pt-20 md:pt-24" />
+      <div className="flex-1">
+        <BackButton />
         <section className="pt-8 pb-8 bg-background">
           <div className="container text-center max-w-2xl mx-auto">
             <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
@@ -495,7 +495,7 @@ const Exercicios = () => {
             </div>
           </div>
         </section>
-      </main>
+      </div>
       <Footer />
       <FeedbackWidget />
       <PremiumPaywallModal open={paywallAberto} onOpenChange={setPaywallAberto} />

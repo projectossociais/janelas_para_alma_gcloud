@@ -50,3 +50,6 @@ npm-debug.log*
 
 # Override local do Compose (porta da DB, etc.) — por máquina, nunca versionado
 docker-compose.override.yml
+
+# Build de teste para o telemóvel (npm run telemovel)
+frontend/dist-teste/

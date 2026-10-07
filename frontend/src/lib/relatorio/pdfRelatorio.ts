@@ -146,7 +146,8 @@ export class RelatorioPdf {
     const h = this.alturaLinha(ESTILO_RELATORIO.corpo) + 2;
     for (const [campo, valor] of pares) {
       // O nome também muda de linha dentro da sua coluna: um nome comprido
-      // escrevia-se por cima do valor (caso real, relatório de 2026-10-06).
+      // ("Variação do desalinhamento entre posições") escrevia-se por cima do
+      // valor (caso real, relatório de rastreio de 2026-10-06).
       this.fonte(ESTILO_RELATORIO.corpo, true);
       const nome: string[] = this.doc.splitTextToSize(campo, COLUNA_CAMPO - ESPACO_CAMPO);
       this.fonte(ESTILO_RELATORIO.corpo);
@@ -164,13 +165,16 @@ export class RelatorioPdf {
 
   tabela(colunas: readonly Coluna[], linhas: readonly (readonly string[])[]) {
     const h = this.alturaLinha(ESTILO_RELATORIO.corpo);
-    const xs = colunas.reduce<number[]>((acc, _c, i) => {
-      acc.push(i === 0 ? this.m : acc[i - 1] + colunas[i - 1].largura * this.util);
-      return acc;
-    }, []);
+    // Onde começa cada coluna: a margem mais as larguras das anteriores.
+    let x = this.m;
+    const xs = colunas.map((c) => {
+      const inicio = x;
+      x += c.largura * this.util;
+      return inicio;
+    });
     const cabecalho = () => {
       this.fonte(ESTILO_RELATORIO.corpo, true);
-      colunas.forEach((c, i) => this.doc.text(c.titulo, xs[i], this.y));
+      colunas.forEach((c, i) => this.doc.text(c.titulo, xs[i] ?? this.m, this.y));
       this.y += 5;
       this.regua(this.y);
       this.y += h;
@@ -179,7 +183,7 @@ export class RelatorioPdf {
     cabecalho();
     for (const linha of linhas) {
       this.fonte(ESTILO_RELATORIO.corpo);
-      const partidas = linha.map((txt, i) => this.doc.splitTextToSize(txt, colunas[i].largura * this.util - 8) as string[]);
+      const partidas = linha.map((txt, i) => this.doc.splitTextToSize(txt, (colunas[i]?.largura ?? 0) * this.util - 8) as string[]);
       const n = Math.max(...partidas.map((p) => p.length));
       if (this.y + h * n > this.altura - this.m - ESTILO_RELATORIO.alturaRodape) {
         this.doc.addPage();
@@ -187,7 +191,7 @@ export class RelatorioPdf {
         cabecalho();
         this.fonte(ESTILO_RELATORIO.corpo);
       }
-      partidas.forEach((p, i) => this.doc.text(p, xs[i], this.y, { lineHeightFactor: ESTILO_RELATORIO.entrelinha }));
+      partidas.forEach((p, i) => this.doc.text(p, xs[i] ?? this.m, this.y, { lineHeightFactor: ESTILO_RELATORIO.entrelinha }));
       this.y += h * (n - 1) + 4;
       this.regua(this.y);
       this.y += h;

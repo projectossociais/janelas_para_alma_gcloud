@@ -1,3 +1,4 @@
+import { useDentroDoSiteNovo } from "@/components/site/contextoSiteNovo";
 import { Instagram, Facebook, Linkedin, MapPin, Phone, Mail, ChevronRight } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
@@ -30,7 +31,7 @@ const AlternarIdioma = () => {
   );
 };
 
-const Footer = () => {
+const FooterAntigo = () => {
   const { t } = useTranslation();
   return (
     <footer className="bg-slate-50 text-slate-700 border-t border-slate-200">
@@ -186,5 +187,8 @@ const Footer = () => {
     </footer>
   );
 };
+
+/** Dentro do site novo (transição do redesenho) não se desenha: o `EstruturaSite` já tem o seu. */
+const Footer = () => (useDentroDoSiteNovo() ? null : <FooterAntigo />);
 
 export default Footer;

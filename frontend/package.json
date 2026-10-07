@@ -9,10 +9,15 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
+    "telemovel": "vite build --mode development --outDir dist-teste && vite preview --outDir dist-teste --port 8080 --strictPort",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "typecheck:redesenho": "tsc --noEmit -p tsconfig.redesenho.json",
+    "orcamento": "node scripts/orcamento-pacote.mjs",
+    "tokens": "vite-node scripts/gerar-tokens.ts"
   },
   "dependencies": {
+    "@fontsource/ubuntu": "^5.3.0",
     "@hookform/resolvers": "^3.10.0",
     "@mediapipe/camera_utils": "^0.3.1675466862",
     "@mediapipe/face_mesh": "^0.4.1633559619",
@@ -55,6 +60,7 @@
     "input-otp": "^1.4.2",
     "jspdf": "^4.2.1",
     "lucide-react": "^0.462.0",
+    "motion": "^12.43.0",
     "next-themes": "^0.3.0",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
@@ -82,6 +88,7 @@
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react-swc": "^3.11.0",
     "autoprefixer": "^10.4.21",
+    "axe-core": "^4.13.0",
     "eslint": "^9.32.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",

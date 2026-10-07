@@ -364,8 +364,8 @@ class Screening(Base):
     rosto_detetado: Mapped[bool] = mapped_column(Boolean, nullable=False)
     requer_avaliacao_humana: Mapped[bool] = mapped_column(Boolean, nullable=False)
     # Sinal real para o matchmaker clínico (Fase 1, docs/BACKLOG.md Sprint 4) --
-    # só "normal"/"requer_avaliacao", os únicos que o janelas-scanner-api de
-    # facto calcula hoje. Não confundir com as 4 subcategorias de estrabismo
+    # "normal" / "requer_avaliacao" / "inconclusivo" (não se mediu; 2026-10-07;
+    # coluna de texto, sem restrição: não precisou de migração). Não confundir com as 4 subcategorias de estrabismo
     # que `ScannerResultados.tsx` ainda mostra (Esotropia/Exotropia/...) --
     # essas vêm do antigo Math.random() (removido no PR #61) e nunca são
     # atribuídas pelo cálculo real; dívida à parte, não este campo.

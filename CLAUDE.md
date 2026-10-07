@@ -62,6 +62,23 @@ locais). Ver histórico do repositório antigo se for preciso consultar o que fa
 Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
 
 - **Rastreio ocular** por webcam (MediaPipe FaceMesh) — deteta sinais, encaminha para clínica
+  **Rastreio completo com o motor próprio** (desde 2026-10-07; **publicado só para testes com
+  voluntários**, por decisão do dono do projecto, antes de passar as fases V1 e V2 de
+  `docs/MOTOR_ANALISE_RASTREIO.md`): rota `/rastreio-completo` (`pages/RastreioCompleto.tsx`),
+  sem ligação nos menus, fora do sitemap, `noindex`, com o aviso "versão de teste". Os limiares
+  são provisórios e não validados clinicamente: não o promover a rastreio oficial sem V1 e V2.
+  Outra pessoa fotografa com a câmara de trás e a luz acesa
+  (Android: câmara na página, `useCameraTraseira`; iPhone e o resto: câmara nativa por
+  `<input capture>`). As fotografias são medidas **no telemóvel** (`lib/rastreio/analise/`,
+  `lib/rastreio/captura/`) e libertadas da memória logo a seguir; só números seguem em
+  `POST /rastreio-completo` (`RastreioCompletoService`). A **regra de decisão vive na API**
+  (`ClassificacaoRastreioService`, limiares provisórios de 6 Δ, versão em `VERSAO_REGRA`):
+  `encaminhar` / `sem_sinais` / `nao_mediu`. Aberto a convidados (resultado sem gravar); com
+  sessão e consentimento grava em `screenings.diagnostico` `requer_avaliacao` / `normal` /
+  **`inconclusivo`** (`nao_mediu`; desde 2026-10-07, sem migração: coluna de texto) — nunca
+  "normal" sem medição fiável. O resultado guardado em `sessionStorage` leva o bloco `motor`
+  (`ResultadoMotor`), e `ScannerResultados` e o PDF mostram os Δ. O `/scanner` e o
+  `janelas-scanner-api` continuam a ser o rastreio em produção
 - **Exercícios visuais sem webcam** (desde 2026-09-28) — testes de triagem e treinos de
   apoio feitos só com resposta do utilizador (toque, Sim/Não). **Nenhum exercício usa câmara
   nem MediaPipe** (o scanner é outro produto e continua a usá-los). **8, todos pagos** (desde
@@ -231,6 +248,19 @@ Localmente: `docker-compose.yml` sobe só `db` + `api` — o frontend não tem c
 próprio (ver nota do Vercel em §0). Para desenvolvimento do dia-a-dia do frontend,
 `npm run dev` dentro de `frontend/` continua a ser o caminho — mais rápido, com hot
 reload real, e o proxy do Vite já reencaminha `/api/*` tal como o Vercel faz em produção.
+A base local nasce vazia: depois do primeiro `docker compose up`, correr
+`docker compose exec api python -m alembic upgrade head` e, para ter uma clínica com
+horários e uma conta de teste confirmada, `docker compose exec api python -m
+scripts.dados_teste_locais` (recusa correr fora da base local). Para testar no telemóvel
+com câmara (exige https), encaminhar a porta 8080 no VS Code como pública (o
+`vite.config.ts` aceita os endereços `*.devtunnels.ms`) e servir com `npm run telemovel`
+em vez de `npm run dev`: o modo de desenvolvimento pelo túnel é lento demais (centenas de
+módulos sem compressão); o `telemovel` compila e serve como em produção, com o mesmo
+encaminhamento de `/api/*`. A análise do rastreio (`janelas-scanner-api`, serviço à
+parte) também vai pela mesma origem em local: sem `VITE_API_SCANNER_URL`, o frontend
+chama `/scanner/*` e o Vite reencaminha para o serviço de produção (o CORS dele só aceita
+produção e `localhost`, não o túnel); `SCANNER_ALVO` aponta para outro. Um IP da rede (`http://192.168…`) não serve: sem https, o
+browser esconde a câmara.
 
 O browser fala **sempre com `/api/*` na mesma origem** — nunca com um URL absoluto da
 API. Em dev (`npm run dev`) o proxy do Vite (`vite.config.ts`) reencaminha `/api/*` para
@@ -531,7 +561,9 @@ chore(infra): adiciona docker-compose para desenvolvimento local
 
 **Portão de entrada para `main`:**
 1. PR obrigatório — nunca commit directo em `main`
-2. CI verde: `npm run lint` + `npm run test` + `npm run build` (frontend);
+2. CI verde: `npm run lint` + `npm run typecheck:redesenho` + `npm run test` +
+   `npm run build` + `npm run orcamento` (frontend; o último falha se o pacote principal
+   passar de 320 KB gzip ou uma imagem publicada de 400 KB);
    `ruff check` + `pytest` + `alembic upgrade head` contra um Postgres real (api);
    `docker build` da imagem da API (imagens) — ver `.github/workflows/ci.yml`. O deploy
    do frontend em si é o Vercel, fora deste CI — o `npm run build` aqui é só o portão de
@@ -577,9 +609,8 @@ Não imitar estes padrões enquanto a migração módulo-a-módulo decorre (ver 
 | Onde | Problema |
 |---|---|
 | `ScannerAnalysis` (`orm_models.py`) | Modelo e tabela `scanner_analyses` ficaram órfãos depois de `analises_scanner` passar a contar `screenings` (corrigido 2026-09-23) — nada mais lê nem escreve esta tabela. Não apagada agora (dropar tabela é decisão à parte, ver CLAUDE.md §10); útil só se algum dado antigo lá dentro precisar de ser consultado uma vez |
-| `ScannerResultados.tsx` | Define 6 categorias de diagnóstico (`Esotropia`/`Exotropia`/`Hipertropia`/`Hipotropia`/etc.), mas o pipeline real (`Scanner.tsx`) só produz 2 — as 4 subcategorias eram do antigo `Math.random()` (removido no PR #61) e nunca foram atribuídas pelo cálculo real. Confirmado 2026-09-24 ao desenhar a Fase 1 do matchmaker (`docs/BACKLOG.md`, Sprint 4). Investigação sobre corrigir isto a sério (via `janelas-scanner-api`, o microserviço de análise, repositório à parte cujo URL do GitHub ainda não está confirmado) registada em `docs/BACKLOG.md`, W-09 |
 
-Itens antigos desta tabela já confirmados como resolvidos ou obsoletos: `ProfileContext.tsx` já usa `perfilApi` por completo (não é Supabase); `Produto.tsx` foi apagado do projecto num refactor antigo e já não existe (2026-09-17); `ClinicalPartners.tsx`/`OptioptikaBookingDialog.tsx` já persistem o pedido de consulta via `POST /agendamentos` (Sprint 4, Fase 0, PR #86, 2026-09-24).
+Itens antigos desta tabela já confirmados como resolvidos ou obsoletos: `ScannerResultados.tsx` deixou de mostrar as 4 subcategorias de estrabismo que o analisador nunca calcula (redesenho, 2026-09-30: três conclusões reais em `conclusaoDoRastreio`, `lib/rastreio/rastreio.ts`; distinguir subtipos a sério continua em `docs/BACKLOG.md`, W-09); `ProfileContext.tsx` já usa `perfilApi` por completo (não é Supabase); `Produto.tsx` foi apagado do projecto num refactor antigo e já não existe (2026-09-17); o pedido de consulta persiste-se via `POST /agendamentos` (Sprint 4, Fase 0, PR #86, 2026-09-24), hoje na página `MarcarConsulta.tsx` (`/marcar-consulta`; o diálogo `OptioptikaBookingDialog.tsx` foi retirado no redesenho, 2026-09-30, e `/parceiros?agendar=optiotica` redirecciona para lá).
 
 ---
 

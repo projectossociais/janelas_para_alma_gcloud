@@ -1,771 +1,230 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import jsPDF from "jspdf";
-import { RelatorioPdf } from "@/lib/relatorio/pdfRelatorio";
-import {
-  CheckCircle2,
-  Info,
-  MapPin,
-  Activity,
-  Users,
-  Phone,
-  ArrowRight,
-  ShieldCheck,
-  AlertCircle,
-  Download,
-  Stethoscope,
-  Eye,
-} from "lucide-react";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import BackButton from "@/components/BackButton";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { CalendarCheck, CheckCircle2, Download, House, RotateCcw, ScanFace, Stethoscope } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import logoImg from "@/assets/logo.png";
-import { Trans, useTranslation } from "react-i18next";
-import i18n from "@/i18n";
-import { localizar } from "@/i18n/rotas";
+import { useAuth } from "@/contexts/AuthContext";
+import { Aviso } from "@/design/componentes/Aviso";
+import { Botao } from "@/design/componentes/Botao";
+import { cn } from "@/design/cn";
+import { LayoutTarefa } from "@/design/layouts/LayoutTarefa";
 import { formatarData, formatarDataHora } from "@/i18n/formatar";
+import { localizar } from "@/i18n/rotas";
+import { CHAVE_RESULTADO, lerResultadoGuardado, type Conclusao, type ResultadoGuardado } from "@/lib/rastreio/rastreio";
+import { carregarImagemComoDataUrl, escreverRelatorioRastreio } from "@/lib/rastreio/relatorioRastreio";
 import { textoDoScannerNoIdioma } from "@/services/api/screeningApi";
 
-interface LogoBitmap {
-  dataUrl: string;
-  width: number;
-  height: number;
-}
-
 /**
- * jsPDF `addImage` exige um data URL — o URL que o Vite dá ao importar o
- * ficheiro (`/src/assets/...` em dev, hash em build) não é aceite de forma
- * fiável entre navegadores. Desenha-se num canvas só para extrair o base64.
+ * Resultado do rastreio: o fim da tarefa, no mesmo arquétipo (docs/LAYOUTS.md
+ * §2.3). Diz o que se encontrou em frases simples e dá **um** próximo passo
+ * (docs/PESQUISA_UX.md §4.1). Revela-se com calma, sem celebração: é um
+ * momento clínico.
+ *
+ * Três conclusões, todas decididas em `conclusaoDoRastreio` a partir do que a
+ * análise mediu. A versão anterior mostrava quatro tipos de estrabismo que o
+ * analisador nunca calcula, uma "confiança" que era a qualidade da fotografia
+ * (92% inventado quando faltava), clínicas e preços escritos à mão, e
+ * recomendava o Treino de Convergência, contra-indicado em parte de quem tem
+ * estrabismo.
  */
-const carregarLogoComoDataUrl = (src: string): Promise<LogoBitmap> =>
-  new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return reject(new Error("Canvas indisponível para preparar o logótipo."));
-      ctx.drawImage(img, 0, 0);
-      resolve({ dataUrl: canvas.toDataURL("image/png"), width: img.naturalWidth, height: img.naturalHeight });
-    };
-    img.onerror = () => reject(new Error("Falha ao carregar o logótipo."));
-    img.src = src;
-  });
 
-type DiagnosisKey =
-  | "Esotropia"
-  | "Exotropia"
-  | "Hipertropia"
-  | "Hipotropia"
-  | "Alinhamento Fisiológico Normal"
-  | "Necessária Avaliação Oftalmológica";
-
-const DIAGNOSIS_FALLBACK: DiagnosisKey = "Necessária Avaliação Oftalmológica";
-
-/** O diagnóstico é um valor estável (português) que vem da API e serve de
- *  chave; só o rótulo mostrado é traduzido. Um valor desconhecido aparece tal
- *  como veio. */
-const CHAVE_ROTULO_DIAGNOSTICO: Record<DiagnosisKey, string> = {
-  Esotropia: "ScannerResultados.diagEsotropia",
-  Exotropia: "ScannerResultados.diagExotropia",
-  Hipertropia: "ScannerResultados.diagHipertropia",
-  Hipotropia: "ScannerResultados.diagHipotropia",
-  "Alinhamento Fisiológico Normal": "ScannerResultados.diagNormal",
-  "Necessária Avaliação Oftalmológica": "ScannerResultados.diagAvaliacao",
-};
-const rotuloDiagnostico = (valor: string): string => {
-  const chave = CHAVE_ROTULO_DIAGNOSTICO[valor as DiagnosisKey];
-  return chave ? i18n.t(chave) : valor;
-};
-const DIAGNOSTICO_NORMAL: DiagnosisKey = "Alinhamento Fisiológico Normal";
-
-type TabKey = "condicao" | "clinicas" | "exercicios" | "comunidade";
-
-type DiagnosisInfo = {
-  short: string;
-  description: string;
-  symptoms: string[];
-  treatments: string[];
+const ASPECTO: Record<Conclusao, { Icone: LucideIcon; fundo: string; cor: string }> = {
+  avaliacao: { Icone: Stethoscope, fundo: "bg-aviso-suave", cor: "text-aviso" },
+  normal: { Icone: CheckCircle2, fundo: "bg-sucesso-suave", cor: "text-sucesso" },
+  inconclusivo: { Icone: ScanFace, fundo: "bg-accao-suave", cor: "text-accao" },
 };
 
-const DIAGNOSIS_DATA: Record<DiagnosisKey, DiagnosisInfo> = {
-  Esotropia: {
-    get short() {
-      return i18n.t("ScannerResultados.desvioConvergenteOlhoS");
-    },
-    get description() {
-      return i18n.t("ScannerResultados.esotropiaEUmTipo");
-    },
-    get symptoms() {
-      return [
-      i18n.t("ScannerResultados.olhosVoltadosParaDentro"),
-      i18n.t("ScannerResultados.visaoDuplaDiplopia"),
-      i18n.t("ScannerResultados.fadigaOcularEDores"),
-      i18n.t("ScannerResultados.inclinacaoOuRotacaoDa"),
-    ];
-    },
-    get treatments() {
-      return [
-      i18n.t("ScannerResultados.oculosComCorreccaoHipermetropica"),
-      i18n.t("ScannerResultados.terapiaVisualOrtoptica"),
-      i18n.t("ScannerResultados.oclusaoComTampaoAmbliopia"),
-      i18n.t("ScannerResultados.toxinaBotulinicaOuCirurgia"),
-    ];
-    },
-  },
-  Exotropia: {
-    get short() {
-      return i18n.t("ScannerResultados.desvioDivergenteOlhoS");
-    },
-    get description() {
-      return i18n.t("ScannerResultados.exotropiaCaracterizaSePelo");
-    },
-    get symptoms() {
-      return [
-      i18n.t("ScannerResultados.olhoQueSeDesvia"),
-      i18n.t("ScannerResultados.fecharUmOlhoSob"),
-      i18n.t("ScannerResultados.dificuldadeDeVisaoDe"),
-      i18n.t("ScannerResultados.fadigaVisualEmLeitura"),
-    ];
-    },
-    get treatments() {
-      return [
-      i18n.t("ScannerResultados.exerciciosDeConvergenciaOcular"),
-      i18n.t("ScannerResultados.oculosComPrismas"),
-      i18n.t("ScannerResultados.terapiaVisualOrtoptica"),
-      i18n.t("ScannerResultados.cirurgiaMuscularExtraocularQuando"),
-    ];
-    },
-  },
-  Hipertropia: {
-    get short() {
-      return i18n.t("ScannerResultados.desvioVerticalOlhoS");
-    },
-    get description() {
-      return i18n.t("ScannerResultados.hipertropiaEUmDesvio");
-    },
-    get symptoms() {
-      return [
-      i18n.t("ScannerResultados.visaoDuplaVertical"),
-      i18n.t("ScannerResultados.inclinacaoDaCabecaTorcicolo"),
-      i18n.t("ScannerResultados.tonturaEDesconfortoVisual"),
-      i18n.t("ScannerResultados.dificuldadeAoDescerEscadas"),
-    ];
-    },
-    get treatments() {
-      return [
-      i18n.t("ScannerResultados.oculosComPrismasVerticais"),
-      i18n.t("ScannerResultados.avaliacaoNeuroftalmologica"),
-      i18n.t("ScannerResultados.toxinaBotulinicaEmCasos"),
-      i18n.t("ScannerResultados.cirurgiaDosMusculosObliquos"),
-    ];
-    },
-  },
-  Hipotropia: {
-    get short() {
-      return i18n.t("ScannerResultados.desvioVerticalOlhoS2");
-    },
-    get description() {
-      return i18n.t("ScannerResultados.hipotropiaEODesvio");
-    },
-    get symptoms() {
-      return [
-      i18n.t("ScannerResultados.visaoDuplaVertical"),
-      i18n.t("ScannerResultados.posturaAnomalaDaCabeca"),
-      i18n.t("ScannerResultados.limitacaoDosMovimentosOculares"),
-      i18n.t("ScannerResultados.dificuldadeEmFocarObjectos"),
-    ];
-    },
-    get treatments() {
-      return [
-      i18n.t("ScannerResultados.prismasCorrectivosNosOculos"),
-      i18n.t("ScannerResultados.investigacaoDeCausasNeurologicas"),
-      i18n.t("ScannerResultados.reabilitacaoOrtoptica"),
-      i18n.t("ScannerResultados.cirurgiaMuscularCorrectiva"),
-    ];
-    },
-  },
-  "Alinhamento Fisiológico Normal": {
-    get short() {
-      return i18n.t("ScannerResultados.eixosVisuaisSimetricosE");
-    },
-    get description() {
-      return i18n.t("ScannerResultados.aAnaliseDasTres");
-    },
-    get symptoms() {
-      return [
-      i18n.t("ScannerResultados.boaCoordenacaoBinocular"),
-      i18n.t("ScannerResultados.ausenciaDeDiplopiaVisao"),
-      i18n.t("ScannerResultados.confortoVisualNasPosicoes"),
-    ];
-    },
-    get treatments() {
-      return [
-      i18n.t("ScannerResultados.manterConsultasOftalmologicasDe"),
-      i18n.t("ScannerResultados.praticarPausasVisuaisRegulares"),
-      i18n.t("ScannerResultados.utilizarProteccaoUvAo"),
-    ];
-    },
-  },
-  "Necessária Avaliação Oftalmológica": {
-    get short() {
-      return i18n.t("ScannerResultados.assimetriaDeReflexosOu");
-    },
-    get description() {
-      return i18n.t("ScannerResultados.aTriagemAutomatizadaIdentificou");
-    },
-    get symptoms() {
-      return [
-      i18n.t("ScannerResultados.possivelDesvioIntermitenteNas"),
-      i18n.t("ScannerResultados.desconfortoOuFadigaVisual"),
-      i18n.t("ScannerResultados.dificuldadeDeFixacaoProlongada"),
-    ];
-    },
-    get treatments() {
-      return [
-      i18n.t("ScannerResultados.consultaDeOftalmologiaOu"),
-      i18n.t("ScannerResultados.exameDeMotilidadeOcular"),
-      i18n.t("ScannerResultados.avaliacaoDeAcuidadeVisual"),
-    ];
-    },
-  },
-};
-
-const tabs: { key: TabKey; label: string; icon: typeof Info }[] = [
-  { key: "condicao", get label() {
-    return i18n.t("ScannerResultados.oSeuResultado");
-  }, icon: Info },
-  { key: "clinicas", get label() {
-    return i18n.t("ScannerResultados.clinicasPrecos");
-  }, icon: MapPin },
-  { key: "exercicios", get label() {
-    return i18n.t("ScannerResultados.exercicios");
-  }, icon: Activity },
-  { key: "comunidade", get label() {
-    return i18n.t("ScannerResultados.comunidade");
-  }, icon: Users },
-];
-
-const ALL_CLINICS = {
-  sagrada: {
-    get name() {
-      return i18n.t("ScannerResultados.clinicaSagradaEsperanca");
-    },
-    get city() {
-      return i18n.t("ScannerResultados.luandaIlhaDeLuanda");
-    },
-    get specialty() {
-      return i18n.t("ScannerResultados.oftalmologiaGeralEstrabismo");
-    },
-    get price() {
-      return i18n.t("ScannerResultados.n25000A40");
-    },
-    phone: "+244923167950",
-    phoneDisplay: "+244 923 167 950",
-    website: "https://www.cse.co.ao",
-  },
-  optico: {
-    get name() {
-      return i18n.t("ScannerResultados.centroOpticoAngolano");
-    },
-    get city() {
-      return i18n.t("ScannerResultados.luandaCallCenter");
-    },
-    get specialty() {
-      return i18n.t("ScannerResultados.avaliacaoVisualOculos");
-    },
-    get price() {
-      return i18n.t("ScannerResultados.n15000A22");
-    },
-    phone: "+244923400300",
-    phoneDisplay: "+244 923 400 300",
-    website: "https://centrooptico.co.ao",
-  },
-  multiperfil: {
-    get name() {
-      return i18n.t("ScannerResultados.clinicaMultiperfil");
-    },
-    get city() {
-      return i18n.t("ScannerResultados.luandaMorroBento");
-    },
-    get specialty() {
-      return i18n.t("ScannerResultados.pediatriaCirurgiaOftalmologica");
-    },
-    get price() {
-      return i18n.t("ScannerResultados.n30000A45");
-    },
-    phone: "+244923501168",
-    phoneDisplay: "+244 923 501 168",
-    website: "https://www.multiperfil.co.ao",
-  },
-  girassol: {
-    get name() {
-      return i18n.t("ScannerResultados.hospitalGirassol");
-    },
-    get city() {
-      return i18n.t("ScannerResultados.luandaMaianga");
-    },
-    get specialty() {
-      return i18n.t("ScannerResultados.neuroftalmologiaExamesAvancados");
-    },
-    get price() {
-      return i18n.t("ScannerResultados.n35000A55");
-    },
-    phone: "+244222641000",
-    phoneDisplay: "+244 222 641 000",
-    website: "https://www.hospitalgirassol.co.ao",
-  },
+/** O que sugerir ao repetir o rastreio completo, pelo motivo da falha. */
+const DICA_REPETICAO = {
+  semRosto: "ResultadoRastreio.dicaSemRosto",
+  longe: "ResultadoRastreio.dicaLonge",
+  luz: "ResultadoRastreio.dicaLuz",
+  olhar: "ResultadoRastreio.dicaOlhar",
+  geral: "ResultadoRastreio.dicaGeral",
 } as const;
 
-type ClinicRec = (typeof ALL_CLINICS)[keyof typeof ALL_CLINICS] & { subtitle: string };
-
-// Função (e não constante): os `...ALL_CLINICS.x` copiam os valores dos
-// getters no momento em que correm. Ao nível do módulo isso acontecia uma vez,
-// em português, e a página inglesa (e o PDF) ficavam com as clínicas em PT.
-const CLINIC_RECOMMENDATIONS = (): Record<DiagnosisKey, ClinicRec[]> => ({
-  Esotropia: [
-    { ...ALL_CLINICS.sagrada, get subtitle() {
-      return i18n.t("ScannerResultados.centroDeExcelenciaEm");
-    } },
-    { ...ALL_CLINICS.optico, get subtitle() {
-      return i18n.t("ScannerResultados.avaliacaoRefractivaComplementar");
-    } },
-  ],
-  Exotropia: [
-    { ...ALL_CLINICS.multiperfil, get subtitle() {
-      return i18n.t("ScannerResultados.especialistasEmCirurgiaDivergente");
-    } },
-    { ...ALL_CLINICS.optico, get subtitle() {
-      return i18n.t("ScannerResultados.avaliacaoRefractivaComplementar");
-    } },
-  ],
-  Hipertropia: [
-    { ...ALL_CLINICS.girassol, get subtitle() {
-      return i18n.t("ScannerResultados.unidadeAvancadaDeNeuroftalmologia");
-    } },
-  ],
-  Hipotropia: [
-    { ...ALL_CLINICS.girassol, get subtitle() {
-      return i18n.t("ScannerResultados.unidadeAvancadaDeNeuroftalmologia");
-    } },
-  ],
-  "Alinhamento Fisiológico Normal": [
-    { ...ALL_CLINICS.optico, get subtitle() {
-      return i18n.t("ScannerResultados.examesDeRotinaCuidados");
-    } },
-    { ...ALL_CLINICS.sagrada, get subtitle() {
-      return i18n.t("ScannerResultados.checkUpOftalmologicoAnual");
-    } },
-  ],
-  "Necessária Avaliação Oftalmológica": [
-    { ...ALL_CLINICS.sagrada, get subtitle() {
-      return i18n.t("ScannerResultados.avaliacaoOrtopticaEEstrabismo");
-    } },
-    { ...ALL_CLINICS.multiperfil, get subtitle() {
-      return i18n.t("ScannerResultados.diagnosticoDiferencialEspecializado");
-    } },
-  ],
-});
-
-// Exercícios sem webcam (2026-09-28): testes de triagem e o treino do teste de 7 dias.
-const exercises = [
-  { get title() {
-    return i18n.t("Visao.acuidadeTitulo");
-  }, get to() {
-    return localizar("/exercicios/acuidade");
-  }, get desc() {
-    return i18n.t("Visao.acuidadeCartao");
-  } },
-  { get title() {
-    return i18n.t("Visao.contrasteTitulo");
-  }, get to() {
-    return localizar("/exercicios/contraste");
-  }, get desc() {
-    return i18n.t("Visao.contrasteCartao");
-  } },
-  { get title() {
-    return i18n.t("Visao.astigmatismoTitulo");
-  }, get to() {
-    return localizar("/exercicios/astigmatismo");
-  }, get desc() {
-    return i18n.t("Visao.astigmatismoCartao");
-  } },
-  { get title() {
-    return i18n.t("Visao.convergenciaTitulo");
-  }, get to() {
-    return localizar("/exercicios/convergencia");
-  }, get desc() {
-    return i18n.t("Visao.convergenciaCartao");
-  } },
-];
-
-/** A frase seguinte (`recomendaSeConsultaOftalmologica`) já começa com ". ":
- * sem isto, um texto que acabe em ponto dava "pedido.." (bug real). */
-const semPontoFinal = (texto: string) => texto.replace(/[.\s]+$/, "");
-
-const Resultados = () => {
-  const { t: tr } = useTranslation();
+const ScannerResultados = () => {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<TabKey>("condicao");
-  const [result, setResult] = useState<{
-    diagnosis: DiagnosisKey;
-    confidence: number;
-    date: string;
-    apiData?: { recomendacao?: string; aviso?: string } | null;
-  } | null>(null);
+  const [params] = useSearchParams();
+  const { isLoggedIn } = useAuth();
+  const [resultado, setResultado] = useState<ResultadoGuardado | null>(null);
+  const [aGerar, setAGerar] = useState(false);
+  const [erroPdf, setErroPdf] = useState(false);
+  const logo = useRef<ReturnType<typeof carregarImagemComoDataUrl> | null>(null);
 
   useEffect(() => {
-    const raw = sessionStorage.getItem("scanResult");
-    if (!raw) {
-      navigate(localizar("/scanner"), { replace: true });
-      return;
-    }
-    try {
-      setResult(JSON.parse(raw));
-    } catch {
-      navigate(localizar("/scanner"), { replace: true });
-    }
+    const lido = lerResultadoGuardado(sessionStorage.getItem(CHAVE_RESULTADO));
+    // Sem resultado (entrada directa, sessão nova): o sítio certo é o rastreio.
+    if (!lido) navigate(localizar("/scanner"), { replace: true });
+    else setResultado(lido);
   }, [navigate]);
 
-  // `result` vem de sessionStorage sem validação de esquema — a API pode, no
-  // limite, ter sido chamada antes de os dicionários abaixo serem
-  // atualizados. O fallback garante que o ecrã nunca fica preso em
-  // "A carregar resultados…" por uma chave desconhecida.
-  const info = useMemo(
-    () => (result ? DIAGNOSIS_DATA[result.diagnosis] ?? DIAGNOSIS_DATA[DIAGNOSIS_FALLBACK] : null),
-    [result]
-  );
-  const recommendedClinics = useMemo<ClinicRec[]>(
-    () => (result ? CLINIC_RECOMMENDATIONS()[result.diagnosis] ?? CLINIC_RECOMMENDATIONS()[DIAGNOSIS_FALLBACK] : []),
-    [result]
-  );
-
-  const isNormal = result?.diagnosis === DIAGNOSTICO_NORMAL;
-  const visibleTabs = useMemo(() => tabs.filter((t) => !(t.key === "clinicas" && isNormal)), [isNormal]);
-
-  // Carregado uma única vez e reutilizado — não há motivo para re-converter o
-  // logótipo em base64 a cada download.
-  const logoRef = useRef<Promise<LogoBitmap> | null>(null);
-  const obterLogo = () => {
-    if (!logoRef.current) logoRef.current = carregarLogoComoDataUrl(logoImg);
-    return logoRef.current;
-  };
-
-  const handleDownload = async () => {
-    if (!result || !info) return;
-    const date = new Date(result.date);
-    const formatted = formatarDataHora(date);
-    const logo = await obterLogo().catch(() => null);
-
-    // Estilo único de relatório (lib/relatorio/pdfRelatorio.ts): preto sobre
-    // branco, secções numeradas, tabelas simples -- sem cores decorativas.
-    const doc = new jsPDF({ unit: "pt", format: "a4" });
-    const r = new RelatorioPdf(doc);
-    r.cabecalho(
-      {
-        organizacao: "Janelas Para a Alma",
-        titulo: tr("ScannerResultados.pdfRelatorioTitulo"),
-        subtitulo: tr("ScannerResultados.pdfEmitidoEm", { formatted }),
-      },
-      logo ? { dataUrl: logo.dataUrl, largura: logo.width, altura: logo.height } : null,
-    );
-    r.paragrafo(tr("ScannerResultados.pdfIntroRelatorio"), { cinzento: true });
-
-    r.seccao(tr("ScannerResultados.resultado"));
-    r.campos([
-      [tr("ScannerResultados.pdfCampoResultado"), rotuloDiagnostico(result.diagnosis)],
-      [tr("ScannerResultados.pdfCampoConfianca"), `${result.confidence}%`],
-      [tr("ScannerResultados.pdfCampoData"), formatted],
-    ]);
-    r.paragrafo(info.short);
-    r.paragrafo(info.description);
-
-    if (!isNormal) {
-      r.seccao(tr("ScannerResultados.sinaisFrequentesDeEstrabismo"));
-      r.lista(info.symptoms);
-    }
-
-    r.seccao(tr("ScannerResultados.recomendacoes"));
-    r.lista(info.treatments);
-
-    if (!isNormal && recommendedClinics.length) {
-      r.seccao(tr("ScannerResultados.clinicasRecomendadasEmAngola"));
-      r.tabela(
-        [
-          { titulo: tr("ScannerResultados.pdfColClinica"), largura: 0.3 },
-          { titulo: tr("ScannerResultados.pdfColCidade"), largura: 0.12 },
-          { titulo: tr("ScannerResultados.pdfColEspecialidade"), largura: 0.22 },
-          { titulo: tr("ScannerResultados.pdfColContacto"), largura: 0.2 },
-          { titulo: tr("ScannerResultados.pdfColPreco"), largura: 0.16 },
-        ],
-        recommendedClinics.map((c) => [c.name, c.city, c.specialty, c.phoneDisplay, c.price]),
+  const descarregar = async () => {
+    if (!resultado) return;
+    setAGerar(true);
+    setErroPdf(false);
+    try {
+      // Carregados só quando se pedem: o jsPDF é pesado e a maioria não descarrega.
+      const [{ default: jsPDF }, { RelatorioPdf }] = await Promise.all([
+        import("jspdf"),
+        import("@/lib/relatorio/pdfRelatorio"),
+      ]);
+      logo.current ??= carregarImagemComoDataUrl(logoImg);
+      const imagem = await logo.current.catch(() => null);
+      const quando = formatarDataHora(resultado.data);
+      const doc = new jsPDF({ unit: "pt", format: "a4" });
+      const r = new RelatorioPdf(doc);
+      r.cabecalho(
+        {
+          organizacao: "Janelas Para a Alma",
+          titulo: t("ResultadoRastreio.pdfTitulo"),
+          subtitulo: t("ResultadoRastreio.pdfEmitido", { data: formatarDataHora(new Date()) }),
+        },
+        imagem,
       );
+      r.paragrafo(t("ResultadoRastreio.pdfIntro"), { cinzento: true });
+      escreverRelatorioRastreio(r, resultado, t, quando, i18n.language);
+      r.rodape(t("ResultadoRastreio.pdfRodape"), (i, total) => t("ResultadoRastreio.pdfPagina", { i, total }));
+      doc.save(`${t("ResultadoRastreio.pdfNomeFicheiro")}-${resultado.data.toISOString().slice(0, 10)}.pdf`);
+    } catch {
+      setErroPdf(true);
+    } finally {
+      setAGerar(false);
     }
-
-    r.seccao(tr("ScannerResultados.recomendacoesGerais"));
-    r.lista(
-      isNormal
-        ? [
-            tr("ScannerResultados.utilizeOculosDeSol"),
-            tr("ScannerResultados.facaPausasVisuaisRegulares"),
-            tr("ScannerResultados.mantenhaExamesOftalmologicosDe"),
-            tr("ScannerResultados.junteSeAComunidade2"),
-          ]
-        : [
-            tr("ScannerResultados.procureAvaliacaoPresencialCom"),
-            tr("ScannerResultados.realizeExamesDeRefraccao"),
-            tr("ScannerResultados.mantenhaPausasVisuaisRegulares"),
-            tr("ScannerResultados.inicieExerciciosVisuaisTerapeuticos"),
-            tr("ScannerResultados.junteSeAComunidade3"),
-          ],
-    );
-
-    r.seccao(tr("ScannerResultados.pdfAviso"));
-    r.paragrafo(tr("ScannerResultados.pdfAvisoTexto"));
-
-    r.rodape(
-      "Janelas Para a Alma · Luanda, Angola · +244 926 969 819 · janelasparaalma18@gmail.com",
-      (i, pageCount) => tr("ScannerResultados.pdfPagina", { i, pageCount }),
-    );
-
-    doc.save(`${tr("ScannerResultados.pdfNomeFicheiro")}-${rotuloDiagnostico(result.diagnosis).toLowerCase()}-${date.toISOString().slice(0, 10)}.pdf`);
   };
 
-  if (!result || !info) {
+  const sair = () => navigate(localizar("/"));
+  const comum = {
+    tema: "claro" as const,
+    passo: { actual: 4, total: 4, rotulo: t("ResultadoRastreio.passo") },
+    sair: { rotulo: t("ResultadoRastreio.sair"), aoSair: sair },
+    textoSaltar: t("ResultadoRastreio.saltar"),
+  };
+
+  if (!resultado) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background text-muted-foreground">
-        {tr("ScannerResultados.aCarregarResultados")}
-      </div>
+      <LayoutTarefa {...comum}>
+        <p role="status" className="text-corpo text-tinta-suave">
+          {t("ResultadoRastreio.aCarregar")}
+        </p>
+      </LayoutTarefa>
     );
   }
 
+  const { conclusao, analise, motor } = resultado;
+  const { Icone, fundo, cor } = ASPECTO[conclusao];
+  const nota = textoDoScannerNoIdioma(analise?.recomendacao);
+  // O id do rastreio guardado segue para a marcação: o pedido fica ligado a ele.
+  const idRastreio = params.get("id");
+  const consulta = localizar(idRastreio ? `/marcar-consulta?rastreio=${encodeURIComponent(idRastreio)}` : "/marcar-consulta");
+  // Quem fez o rastreio completo repete o rastreio completo.
+  const rastreio = localizar(motor ? "/rastreio-completo" : "/scanner");
+
+  // Um só próximo passo, em destaque; o resto fica abaixo, mais discreto.
+  const accao =
+    conclusao === "avaliacao" ? (
+      <Botao asChild tamanho="g" larguraTotal>
+        <Link to={consulta}>
+          <CalendarCheck aria-hidden /> {t("ResultadoRastreio.marcarConsulta")}
+        </Link>
+      </Botao>
+    ) : conclusao === "inconclusivo" ? (
+      <Botao asChild tamanho="g" larguraTotal>
+        <Link to={rastreio}>
+          <RotateCcw aria-hidden /> {t("ResultadoRastreio.repetir")}
+        </Link>
+      </Botao>
+    ) : (
+      <Botao asChild tamanho="g" larguraTotal>
+        <Link to={localizar(isLoggedIn ? "/dashboard" : "/")}>
+          <House aria-hidden /> {t(isLoggedIn ? "ResultadoRastreio.minhaArea" : "ResultadoRastreio.voltarInicio")}
+        </Link>
+      </Botao>
+    );
+
+  const guardado = params.get("id")
+    ? { variante: "sucesso" as const, texto: t("ResultadoRastreio.guardado") }
+    : isLoggedIn
+      ? { variante: "aviso" as const, texto: t("ResultadoRastreio.naoGuardadoConta") }
+      : { variante: "info" as const, texto: t("ResultadoRastreio.naoGuardadoSemSessao") };
+
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <Navbar />
-      <BackButton fallbackPath={localizar("/scanner")} label={tr("ScannerResultados.novaAnalise")} />
-      <main className="flex-1">
-        <section className="container py-8 md:py-12">
-          <div className="max-w-5xl mx-auto rounded-3xl bg-gradient-to-br from-navy to-navy/80 text-navy-foreground p-6 md:p-10 shadow-elevated animate-fade-in">
-            <div className="flex items-center gap-2 text-teal text-xs font-bold uppercase tracking-widest">
-              <CheckCircle2 className="w-4 h-4" />{" "}{tr("ScannerResultados.analiseConcluida")}
-            </div>
-            <h1 className="mt-3 text-3xl md:text-4xl font-bold leading-tight">
-              <Trans i18nKey="ScannerResultados.diagnostico" components={{ span: <span className="text-gold" /> }} values={{ diagnosis: rotuloDiagnostico(result.diagnosis) }} />
-            </h1>
-            <p className="mt-3 text-sm md:text-base text-white/80 max-w-2xl">
-              {semPontoFinal(textoDoScannerNoIdioma(result.apiData?.recomendacao) ?? info.short)}{tr("ScannerResultados.recomendaSeConsultaOftalmologica")}
-            </p>
+    <LayoutTarefa {...comum} accao={accao}>
+      <span aria-hidden className={cn("flex size-12 items-center justify-center rounded-pilula", fundo, cor)}>
+        <Icone className="size-6" />
+      </span>
+      <p className="mt-5 text-legenda font-medium text-tinta-suave">
+        {t("ResultadoRastreio.cabecalho", { data: formatarData(resultado.data) })}
+      </p>
+      <h1 className="mt-1 text-titulo-m text-tinta">{t(`ResultadoRastreio.${conclusao}Titulo`)}</h1>
+      <p className="mt-3 text-corpo text-tinta-suave">{t(`ResultadoRastreio.${conclusao}Texto`)}</p>
+      {conclusao === "inconclusivo" && (
+        <p className="mt-3 text-corpo text-tinta">
+          {t(motor ? DICA_REPETICAO[motor.dica] : "ResultadoRastreio.inconclusivoDica")}
+        </p>
+      )}
 
-            <div className="mt-6 grid sm:grid-cols-3 gap-3">
-              {[
-                { l: tr("ScannerResultados.confiancaIa"), v: `${result.confidence}%` },
-                { l: tr("ScannerResultados.tipo"), v: rotuloDiagnostico(result.diagnosis) },
-                { l: tr("ScannerResultados.data"), v: formatarData(result.date) },
-              ].map((m) => (
-                <div key={m.l} className="rounded-2xl bg-white/10 backdrop-blur px-4 py-3">
-                  <div className="text-xs text-white/70">{m.l}</div>
-                  <div className="text-lg font-bold">{m.v}</div>
-                </div>
-              ))}
-            </div>
+      {conclusao !== "inconclusivo" && (
+        <Aviso
+          className="mt-6"
+          variante={conclusao === "avaliacao" ? "aviso" : "info"}
+          titulo={t(`ResultadoRastreio.${conclusao}AvisoTitulo`)}
+        >
+          {t(`ResultadoRastreio.${conclusao}AvisoTexto`)}
+        </Aviso>
+      )}
 
-            <div className="mt-5 flex flex-wrap items-center gap-3 text-xs text-white/70">
-              <span className="inline-flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-teal" />{" "}{tr("ScannerResultados.dadosConfidenciais")}</span>
-              <button
-                onClick={() => void handleDownload()}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-              >
-                <Download className="w-3.5 h-3.5" />{" "}{tr("ScannerResultados.descarregarRelatorio")}
-              </button>
-            </div>
-          </div>
-
-          <div className="max-w-5xl mx-auto mt-5 flex items-start gap-3 p-4 rounded-2xl bg-gold/10 border border-gold/30 text-sm text-foreground">
-            <AlertCircle className="w-5 h-5 text-gold shrink-0 mt-0.5" />
-            <p>
-              <Trans i18nKey="ScannerResultados.estaAnaliseEOrientadora" components={{ strong: <strong /> }} />
-            </p>
-          </div>
-
-          <div className="max-w-5xl mx-auto mt-8">
-            <div className="flex flex-wrap gap-2 p-1.5 rounded-2xl bg-muted">
-              {visibleTabs.map((t) => {
-                const Icon = t.icon;
-                const active = tab === t.key;
-                return (
-                  <button
-                    key={t.key}
-                    onClick={() => setTab(t.key)}
-                    className={`flex-1 min-w-[140px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                      active ? "bg-card text-foreground shadow-card" : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    {t.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="mt-6 animate-fade-in" key={tab}>
-              {tab === "condicao" && <CondicaoPanel diagnosis={result.diagnosis} info={info} />}
-              {tab === "clinicas" && !isNormal && (
-                <ClinicasPanel clinics={recommendedClinics} diagnosis={result.diagnosis} />
-              )}
-              {tab === "exercicios" && <ExerciciosPanel />}
-              {tab === "comunidade" && <ComunidadePanel />}
-            </div>
-          </div>
+      {nota && (
+        <section aria-labelledby="nota-analise" className="mt-6">
+          <h2 id="nota-analise" className="text-legenda font-medium text-tinta-suave">
+            {t("ResultadoRastreio.notaAnalise")}
+          </h2>
+          <p className="mt-1 text-corpo text-tinta">{nota}</p>
         </section>
-      </main>
-      <Footer />
-    </div>
+      )}
+
+      {conclusao === "avaliacao" && (
+        <section aria-labelledby="proximo-passo" className="mt-6 rounded-cartao border border-linha p-5">
+          <h2 id="proximo-passo" className="text-legenda font-medium text-tinta-suave">
+            {t("ResultadoRastreio.proximoPasso")}
+          </h2>
+          <p className="mt-2 text-titulo-p text-tinta">{t("ResultadoRastreio.consultaClinica")}</p>
+          <p className="mt-1 text-corpo text-tinta-suave">{t("ResultadoRastreio.consultaDetalhe")}</p>
+        </section>
+      )}
+
+      <div className="mt-8 flex flex-col items-start gap-1 border-t border-linha pt-6">
+        <Botao variante="fantasma" className="-ml-3 sm:-ml-5" aCarregar={aGerar} onClick={() => void descarregar()}>
+          <Download aria-hidden /> {aGerar ? t("ResultadoRastreio.aPreparar") : t("ResultadoRastreio.descarregar")}
+        </Botao>
+        {conclusao === "normal" && (
+          <Botao asChild variante="fantasma" className="-ml-3 sm:-ml-5">
+            <Link to={consulta}>
+              <CalendarCheck aria-hidden /> {t("ResultadoRastreio.marcarMesmoAssim")}
+            </Link>
+          </Botao>
+        )}
+        {conclusao !== "inconclusivo" && (
+          <Botao asChild variante="fantasma" className="-ml-3 sm:-ml-5">
+            <Link to={rastreio}>
+              <RotateCcw aria-hidden /> {t("ResultadoRastreio.repetir")}
+            </Link>
+          </Botao>
+        )}
+      </div>
+      {erroPdf && (
+        <Aviso className="mt-4" variante="erro" anunciar>
+          {t("ResultadoRastreio.erroPdf")}
+        </Aviso>
+      )}
+
+      <Aviso className="mt-6" variante={guardado.variante}>
+        {guardado.texto}
+      </Aviso>
+    </LayoutTarefa>
   );
 };
 
-const Card = ({ children }: { children: React.ReactNode }) => (
-  <div className="rounded-2xl bg-card border border-border shadow-card p-6">{children}</div>
-);
-
-const CondicaoPanel = ({ diagnosis, info }: { diagnosis: DiagnosisKey; info: DiagnosisInfo }) => {
-  const { t: tr } = useTranslation();
-  return (
-  <div className="grid md:grid-cols-2 gap-4">
-    <Card>
-      <div className="flex items-center gap-2 text-teal text-xs font-bold uppercase tracking-widest">
-        <Info className="w-4 h-4" />{" "}{tr("ScannerResultados.oSeuResultado")}
-      </div>
-      <h2 className="mt-2 text-xl font-bold text-foreground"><Trans i18nKey="ScannerResultados.oQueE" values={{ diagnosis: rotuloDiagnostico(diagnosis) }} /></h2>
-      <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{info.description}</p>
-      {diagnosis !== DIAGNOSTICO_NORMAL && (
-        <div className="mt-5">
-          <div className="text-xs font-semibold uppercase tracking-wider text-foreground/70 mb-2">{tr("ScannerResultados.sintomasFrequentes")}</div>
-          <ul className="space-y-1.5">
-            {info.symptoms.map((s) => (
-              <li key={s} className="flex items-start gap-2 text-sm text-muted-foreground">
-                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-teal shrink-0" />
-                {s}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </Card>
-
-    <Card>
-      <div className="flex items-center gap-2 text-green text-xs font-bold uppercase tracking-widest">
-        <Stethoscope className="w-4 h-4" />{" "}{tr("ScannerResultados.oQueRecomendamos")}
-      </div>
-      <h2 className="mt-2 text-xl font-bold text-foreground">{tr("ScannerResultados.planoTerapeuticoOrientador")}</h2>
-      <p className="mt-3 text-sm text-muted-foreground">
-        <Trans i18nKey="ScannerResultados.asOpcoesAbaixoSao" values={{ diagnosis: rotuloDiagnostico(diagnosis) }} />
-      </p>
-      <ul className="mt-4 space-y-2">
-        {info.treatments.map((t) => (
-          <li key={t} className="flex items-start gap-3 p-3 rounded-xl bg-muted">
-            <CheckCircle2 className="w-4 h-4 text-green mt-0.5 shrink-0" />
-            <span className="text-sm text-foreground">{t}</span>
-          </li>
-        ))}
-      </ul>
-    </Card>
-  </div>
-);
-};
-
-const ClinicasPanel = ({ clinics, diagnosis }: { clinics: ClinicRec[]; diagnosis: DiagnosisKey }) => {
-  const { t } = useTranslation();
-  return (
-  <div className="space-y-4">
-    <div className="flex items-start gap-3 p-4 rounded-2xl bg-teal/5 border border-teal/20">
-      <Eye className="w-5 h-5 text-teal shrink-0 mt-0.5" />
-      <p className="text-sm text-foreground">
-        <Trans i18nKey="ScannerResultados.recomendacoesPersonalizadasComBase" components={{ strong: <strong /> }} values={{ diagnosis: rotuloDiagnostico(diagnosis) }} />
-      </p>
-    </div>
-    <div className="grid md:grid-cols-2 gap-4">
-      {clinics.map((c) => (
-        <Card key={c.name}>
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h3 className="text-base font-bold text-foreground">{c.name}</h3>
-              <div className="mt-1 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-teal/10 text-teal text-[11px] font-semibold">
-                <Stethoscope className="w-3 h-3" /> {c.subtitle}
-              </div>
-              <div className="text-xs text-muted-foreground inline-flex items-center gap-1 mt-2">
-                <MapPin className="w-3 h-3" /> {c.city}
-              </div>
-            </div>
-            <span className="shrink-0 text-xs font-semibold text-teal bg-teal/10 px-2.5 py-1 rounded-full">{c.price}</span>
-          </div>
-          <p className="mt-3 text-sm text-muted-foreground">{c.specialty}</p>
-          <div className="mt-4 flex items-center justify-between">
-            <a href={`tel:${c.phone}`} className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
-              <Phone className="w-3.5 h-3.5" /> {c.phoneDisplay}
-            </a>
-            <button
-              type="button"
-              onClick={() => window.open(c.website, "_blank", "noopener,noreferrer")}
-              className="text-xs font-semibold text-green inline-flex items-center gap-1 hover:gap-2 transition-all"
-            >
-              {t("ScannerResultados.agendar")}{" "}<ArrowRight className="w-3 h-3" />
-            </button>
-          </div>
-        </Card>
-      ))}
-    </div>
-  </div>
-);
-};
-
-const ExerciciosPanel = () => {
-  const { t } = useTranslation();
-  return (
-  <div className="grid sm:grid-cols-2 gap-4">
-    {exercises.map((e) => (
-      <Link
-        key={e.to}
-        to={e.to}
-        className="group rounded-2xl bg-card border border-border shadow-card p-6 transition-all hover:-translate-y-1 hover:shadow-elevated hover:border-teal/40"
-      >
-        <div className="w-10 h-10 rounded-xl bg-teal/10 text-teal flex items-center justify-center">
-          <Activity className="w-5 h-5" />
-        </div>
-        <h3 className="mt-4 text-base font-bold text-foreground">{e.title}</h3>
-        <p className="mt-1 text-sm text-muted-foreground">{e.desc}</p>
-        <div className="mt-4 flex items-center gap-1.5 text-sm font-semibold text-green/80 group-hover:text-green">
-          {t("ScannerResultados.iniciar")}{" "}<ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-        </div>
-      </Link>
-    ))}
-  </div>
-);
-};
-
-const ComunidadePanel = () => {
-  const { t } = useTranslation();
-  return (
-  <Card>
-    <div className="flex flex-col md:flex-row md:items-center gap-6">
-      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal to-green flex items-center justify-center shrink-0">
-        <Users className="w-8 h-8 text-white" />
-      </div>
-      <div className="flex-1">
-        <h2 className="text-xl font-bold text-foreground">{t("ScannerResultados.naoEstaSozinhoA")}</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          <Trans i18nKey="ScannerResultados.junteSeAComunidade" components={{ strong: <strong /> }} />
-        </p>
-      </div>
-      <Link
-        to={localizar("/kamba")}
-        className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors shrink-0"
-      >
-        {t("ScannerResultados.juntarMe")}{" "}<ArrowRight className="w-4 h-4" />
-      </Link>
-    </div>
-  </Card>
-);
-};
-
-export default Resultados;
+export default ScannerResultados;

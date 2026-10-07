@@ -42,7 +42,7 @@ const Impacto = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1 pt-16">
+      <div className="flex-1">
         <AboutSection />
         <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
         <ImpactSection />
@@ -78,7 +78,7 @@ const Impacto = () => {
             </div>
           </div>
         </section>
-      </main>
+      </div>
       <Footer />
     </div>
   );

@@ -42,17 +42,27 @@ export interface ScreeningResponse {
         desvio_horizontal: number;
         desvio_vertical: number;
       };
-    };
+      /** Desalinhamento entre os dois olhos, em fracção da largura do olho. */
+      assimetria_horizontal?: number;
+      assimetria_vertical?: number;
+    } | null;
+    /** Se esta posição entrou na comparação entre posições. */
+    utilizavel?: boolean;
+    motivos_invalidez?: string[];
   }>;
   /**
-   * A comparação entre posições vem **aqui dentro**, nunca no topo da resposta
-   * (contrato do janelas-scanner-api em /openapi.json). Ler no topo dava sempre
-   * "sem dado". `null` com menos de duas posições utilizáveis.
+   * A comparação entre posições. Ausente (null) com menos de duas posições
+   * utilizáveis. A variação e a incomitância vivem **aqui**, não no topo da
+   * resposta: o frontend lia-as no topo e mostrava sempre "sem dado" (2026-10-06,
+   * contrato em https://janelas-scanner-api.onrender.com/openapi.json).
    */
   motilidade?: {
     variacao_desalinhamento?: number | null;
     incomitante?: boolean | null;
+    assimetria_excursao_esquerda?: number | null;
+    assimetria_excursao_direita?: number | null;
   } | null;
+  /** O serviço põe true quando há sinais a confirmar OU quando não conseguiu concluir. */
   requer_avaliacao_humana?: boolean;
   recomendacao?: string;
   aviso?: string;
@@ -64,7 +74,9 @@ export interface ScreeningResponse {
 // sempre com "/api" na mesma origem — ver src/lib/apiClient.ts). O scanner
 // vive num repositório FastAPI à parte (janelas-scanner-api), daí a variável
 // própria: reutilizar VITE_API_URL aqui sequestraria o cliente da API própria.
-const API_BASE = import.meta.env.VITE_API_SCANNER_URL || 'http://localhost:8001/api/v1';
+// Sem a variável (teste local), vai pela mesma origem: o Vite reencaminha
+// `/scanner/*` para o serviço (vite.config.ts), também pelo túnel do telemóvel.
+const API_BASE = import.meta.env.VITE_API_SCANNER_URL || '/scanner/api/v1';
 
 export async function submeterRastreioMultiGaze(
   imagens: { centro: Blob; esquerda: Blob; direita: Blob },

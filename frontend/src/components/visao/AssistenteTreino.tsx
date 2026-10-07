@@ -155,7 +155,7 @@ export const EscolherOlho = ({
               {t("Visao.treinarOlho", { olho: nomeOlho(sugerido) })}
             </BotaoContinuar>
             <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
-              <Link to={localizar("/parceiros?agendar=optiotica")}>{t("Visao.marcarConsulta")}</Link>
+              <Link to={localizar("/marcar-consulta")}>{t("Visao.marcarConsulta")}</Link>
             </Button>
             <Button variant="ghost" onClick={() => setNaoSei(false)}>
               {t("Visao.escolherOutroOlho")}
@@ -185,7 +185,7 @@ export const EscolherOlho = ({
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
-              <Link to={localizar("/parceiros?agendar=optiotica")}>{t("Visao.marcarConsulta")}</Link>
+              <Link to={localizar("/marcar-consulta")}>{t("Visao.marcarConsulta")}</Link>
             </Button>
             <Button variant="ghost" onClick={() => setNaoSei(false)}>
               {t("Visao.jaSeiOOlho")}
