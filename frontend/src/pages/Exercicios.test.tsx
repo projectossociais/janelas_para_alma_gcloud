@@ -200,29 +200,24 @@ describe("Exercicios — 8 exercícios em dois grupos", () => {
     expect(contarDisponiveis(grupo("Incluídos no teste de 7 dias"))).toBe(0);
   });
 
-  it("começar o teste com sucesso desbloqueia os 4 do teste", async () => {
+  it("o botão do teste leva à página que explica e confirma, sem o iniciar logo (só se usa uma vez)", async () => {
     acesso.mockResolvedValue(estado({ estado: "trial_disponivel" }));
-    iniciarTrial.mockResolvedValue(
-      estado({ estado: "trial_ativo", exercicios_desbloqueados: TRIAL, trial_dias_restantes: 7 }),
+    render(
+      <MemoryRouter initialEntries={["/exercicios"]}>
+        <AcessoExerciciosProvider>
+          <Routes>
+            <Route path="/exercicios" element={<Exercicios />} />
+            <Route path="/teste-de-7-dias" element={<p>Página do teste</p>} />
+          </Routes>
+        </AcessoExerciciosProvider>
+      </MemoryRouter>,
     );
-    renderPagina();
 
     fireEvent.click(await screen.findByRole("button", { name: /Começar teste gratuito de 7 dias/i }));
 
-    expect(await screen.findByText(/Faltam 7 dias/)).toBeInTheDocument();
-    expect(iniciarTrial).toHaveBeenCalledTimes(1);
-    expect(contarDisponiveis(grupo("Incluídos no teste de 7 dias"))).toBe(4);
-  });
-
-  it("se a API recusar o início do teste (ex.: 409), nada fica desbloqueado", async () => {
-    acesso.mockResolvedValue(estado({ estado: "trial_disponivel" }));
-    iniciarTrial.mockRejectedValue(Object.assign(new Error("já utilizado"), { status: 409 }));
-    renderPagina();
-
-    fireEvent.click(await screen.findByRole("button", { name: /Começar teste gratuito de 7 dias/i }));
-
-    await waitFor(() => expect(iniciarTrial).toHaveBeenCalled());
-    expect(contarDisponiveis(grupo("Incluídos no teste de 7 dias"))).toBe(0);
+    expect(await screen.findByText("Página do teste")).toBeInTheDocument();
+    // Nada foi iniciado: quem começa o teste é a página do teste, depois de confirmar.
+    expect(iniciarTrial).not.toHaveBeenCalled();
   });
 });
 

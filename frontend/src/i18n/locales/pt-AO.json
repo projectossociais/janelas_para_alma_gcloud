@@ -103,7 +103,9 @@
     "exerciciosRelatorioTitulo": "Relatório semanal",
     "exerciciosRelatorioDescricao": "Relatório semanal imprimível de testes e treinos, para levar à consulta.",
     "relatorioPartilhadoTitulo": "Relatório partilhado",
-    "relatorioPartilhadoDescricao": "Relatório dos exercícios partilhado pela família com o médico."
+    "relatorioPartilhadoDescricao": "Relatório dos exercícios partilhado pela família com o médico.",
+    "testeSeteDiasTitulo": "Teste de 7 dias",
+    "testeSeteDiasDescricao": "Experimente quatro exercícios visuais durante 7 dias, sem pagar. Só se pode usar uma vez por conta."
   },
   "AboutSection": {
     "conhecaNos": "Conheça-nos",
@@ -1450,10 +1452,6 @@
   "legal": {
     "notaTraducao": "Esta tradução inglesa é disponibilizada por conveniência. Prevalece a versão portuguesa."
   },
-  "AcessoExercicios": {
-    "testeIniciado": "Teste gratuito iniciado. Bom treino!",
-    "naoFoiPossivelIniciar": "Não foi possível iniciar o teste gratuito."
-  },
   "CarteiraJogo": {
     "moedas": "Moedas",
     "moedasSaldo": "Moedas: {{valor}} -- abrir a Loja de Moedas",
@@ -2347,5 +2345,40 @@
     "numeroPedido": "Número do pedido",
     "voltarInicio": "Voltar ao início",
     "minhaArea": "Ir para a minha área"
+  },
+  "TesteSeteDias": {
+    "sair": "Sair",
+    "saltar": "Saltar para o conteúdo",
+    "passo": "Passo {{actual}} de {{total}}",
+    "passoPronto": "Teste de 7 dias",
+    "aPreparar": "A preparar…",
+    "semContaTitulo": "Crie uma conta para começar o teste",
+    "semContaTexto": "O teste de 7 dias fica ligado à sua conta, e só se pode usar uma vez. Criar a conta demora um minuto e volta aqui a seguir.",
+    "criarConta": "Criar conta",
+    "entrar": "Já tenho conta: entrar",
+    "titulo": "Teste de 7 dias",
+    "texto": "Experimente quatro dos oito exercícios, sem pagar, durante 7 dias.",
+    "incluiTitulo": "O que inclui",
+    "comoFuncionaTitulo": "Como funciona",
+    "comoFuncionaConta": "Começa quando carregar no botão em baixo e dura 7 dias seguidos.",
+    "comoFuncionaUmaVez": "Só se pode usar uma vez por conta. Não dá para pausar nem repetir.",
+    "comoFuncionaDepois": "Depois dos 7 dias, para continuar, há o Premium ({{preco}} por mês), com os 8 exercícios.",
+    "comoFuncionaTriagem": "São testes de triagem e treinos de apoio. Não são um diagnóstico.",
+    "comecar": "Começar o teste de 7 dias",
+    "aComecar": "A começar…",
+    "erroTitulo": "Não foi possível começar o teste",
+    "erroTexto": "Tente novamente dentro de momentos. Se já o usou antes, o teste não pode ser repetido.",
+    "activoTitulo": "O seu teste de 7 dias está activo",
+    "activoAte": "Vai até {{data}}",
+    "diasRestantes": "faltam {{dias}} dias",
+    "umDiaRestante": "falta 1 dia",
+    "escolhaPorOndeComecar": "Escolha por onde começar",
+    "terminouTitulo": "O teste de 7 dias terminou",
+    "terminouTexto": "Os exercícios do teste voltaram a ficar bloqueados. Para continuar a usá-los, e ter os 8, é preciso o Premium.",
+    "terminouPreco": "O Premium custa {{preco}} por mês.",
+    "verPremium": "Ver o Premium",
+    "premiumTitulo": "Já tem o Premium",
+    "premiumTexto": "Tem os 8 exercícios abertos. Não precisa do teste de 7 dias.",
+    "verExercicios": "Ver os exercícios"
   }
 }

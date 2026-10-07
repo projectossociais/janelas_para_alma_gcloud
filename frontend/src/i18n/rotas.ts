@@ -64,6 +64,7 @@ export const ROTAS = [
   { chave: "faq", pt: "/faq", en: "/en/faq" },
   { chave: "impacto", pt: "/impacto", en: "/en/impact" },
   { chave: "junteSe", pt: "/junte-se", en: "/en/contact" },
+  { chave: "testeSeteDias", pt: "/teste-de-7-dias", en: "/en/7-day-trial", foraDoSitemap: true },
   { chave: "registoPremium", pt: "/registo-premium", en: "/en/premium-sign-up", foraDoSitemap: true },
   { chave: "dashboard", pt: "/dashboard", en: "/en/dashboard", foraDoSitemap: true },
   { chave: "dashboardPro", pt: "/dashboard-pro", en: "/en/dashboard-pro", foraDoSitemap: true },
