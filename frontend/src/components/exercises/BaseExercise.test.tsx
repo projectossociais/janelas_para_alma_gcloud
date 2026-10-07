@@ -26,7 +26,7 @@ vi.mock("@/contexts/AcessoExerciciosContext", () => ({
   useAcessoExercicios: () => ({ temAcesso: () => true, loading: false }),
 }));
 vi.mock("@/components/exercises/useAcaoDesbloqueio", () => ({
-  useAcaoDesbloqueio: () => ({ tipoPara: () => null, executar: () => undefined, aIniciarTrial: false }),
+  useAcaoDesbloqueio: () => ({ tipoPara: () => null, executar: () => undefined }),
 }));
 
 const IDS = [

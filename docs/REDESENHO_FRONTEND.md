@@ -274,6 +274,17 @@ Acrescentar abaixo, com data, o que for decidido ou detalhado em cada conversa s
 redesenho (referências visuais, páginas a priorizar, gostos e recusas do dono do
 projecto, feedback do Lukeny). Mais recente em cima.
 
+- **2026-10-07** — **Fase 3, teste de 7 dias (`TesteSeteDias.tsx`, rota `/teste-de-7-dias`, ramo
+  `redesenho/teste-7-dias`).** Antes era um botão dentro do painel bloqueado de cada exercício e da
+  página `/exercicios` que **iniciava o teste de imediato**. Como só se pode usar **uma vez por
+  conta** e começa a contar já, ganhou uma página no arquétipo Tarefa: explica o que inclui (os 4
+  exercícios), como funciona e o que custa continuar (Premium, com o preço lido do plano), e só
+  começa quando a pessoa carrega em "Começar". Mostra também os outros estados (sem conta, a
+  decorrer com os dias que faltam e ligações para os 4 exercícios, terminado, já com Premium). O
+  estado vem sempre da API. `useAcaoDesbloqueio` deixou de iniciar o teste: leva a esta página. Com
+  isto a **Fase 3 fica completa** (início, rastreio, resultado, marcação, entrar e criar conta,
+  Premium e teste de 7 dias); falta só testá-la com pessoas reais, que é o critério da fase.
+
 - **2026-10-05** — **Parceiros em carrossel (altera `docs/PESQUISA_UX.md` §2).** Ao testar
   no telemóvel, a lista de parceiros saía desarrumada (linhas de 2/1/2, cartões de
   tamanhos diferentes). O dono do projecto pediu um carrossel que passe de 3 em 3 segundos

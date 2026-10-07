@@ -112,7 +112,7 @@ const BaseExercise = ({
 }: BaseExerciseProps) => {
   const { t } = useTranslation();
   const { temAcesso, loading: acessoLoading } = useAcessoExercicios();
-  const { tipoPara, executar, aIniciarTrial } = useAcaoDesbloqueio();
+  const { tipoPara, executar } = useAcaoDesbloqueio();
 
   const { consentido, carregando: consentimentoLoading, garantir } = useConsentimentoSaude();
 
@@ -185,7 +185,6 @@ const BaseExercise = ({
               <p className="mb-4 text-sm text-muted-foreground">{t(TEXTOS_BLOQUEIO[tipoDesbloqueio].texto)}</p>
               <Button
                 onClick={() => void executar(tipoDesbloqueio)}
-                disabled={aIniciarTrial}
                 className="w-full gap-2 bg-navy text-navy-foreground hover:bg-navy/90"
               >
                 {tipoDesbloqueio === "criar_conta" && <UserPlus className="h-4 w-4" />}

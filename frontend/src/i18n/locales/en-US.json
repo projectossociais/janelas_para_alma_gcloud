@@ -103,7 +103,9 @@
     "exerciciosRelatorioTitulo": "Weekly report",
     "exerciciosRelatorioDescricao": "A printable weekly report of tests and training to take to your appointment.",
     "relatorioPartilhadoTitulo": "Shared report",
-    "relatorioPartilhadoDescricao": "Exercise report shared by the family with the doctor."
+    "relatorioPartilhadoDescricao": "Exercise report shared by the family with the doctor.",
+    "testeSeteDiasTitulo": "7-day trial",
+    "testeSeteDiasDescricao": "Try four visual exercises for 7 days, free. It can only be used once per account."
   },
   "AboutSection": {
     "conhecaNos": "Get to Know Us",
@@ -1445,10 +1447,6 @@
   "legal": {
     "notaTraducao": "This English translation is provided for convenience. The Portuguese version prevails."
   },
-  "AcessoExercicios": {
-    "testeIniciado": "Free trial started. Happy training!",
-    "naoFoiPossivelIniciar": "Couldn't start the free trial."
-  },
   "CarteiraJogo": {
     "moedas": "Coins",
     "moedasSaldo": "Coins: {{valor}} -- open the Coin Shop",
@@ -2342,5 +2340,40 @@
     "numeroPedido": "Request number",
     "voltarInicio": "Back to the home page",
     "minhaArea": "Go to my account"
+  },
+  "TesteSeteDias": {
+    "sair": "Leave",
+    "saltar": "Skip to the content",
+    "passo": "Step {{actual}} of {{total}}",
+    "passoPronto": "7-day trial",
+    "aPreparar": "Getting ready…",
+    "semContaTitulo": "Create an account to start the trial",
+    "semContaTexto": "The 7-day trial is tied to your account, and can only be used once. Creating the account takes a minute and you come back here afterwards.",
+    "criarConta": "Create account",
+    "entrar": "I already have an account: sign in",
+    "titulo": "7-day trial",
+    "texto": "Try four of the eight exercises, free, for 7 days.",
+    "incluiTitulo": "What is included",
+    "comoFuncionaTitulo": "How it works",
+    "comoFuncionaConta": "It starts when you press the button below and lasts 7 days in a row.",
+    "comoFuncionaUmaVez": "It can only be used once per account. It cannot be paused or repeated.",
+    "comoFuncionaDepois": "After the 7 days, to carry on, there is Premium ({{preco}} a month), with all 8 exercises.",
+    "comoFuncionaTriagem": "These are screening tests and supporting training. They are not a diagnosis.",
+    "comecar": "Start the 7-day trial",
+    "aComecar": "Starting…",
+    "erroTitulo": "We could not start the trial",
+    "erroTexto": "Please try again in a moment. If you used it before, the trial cannot be repeated.",
+    "activoTitulo": "Your 7-day trial is active",
+    "activoAte": "Until {{data}}",
+    "diasRestantes": "{{dias}} days left",
+    "umDiaRestante": "1 day left",
+    "escolhaPorOndeComecar": "Choose where to start",
+    "terminouTitulo": "The 7-day trial has ended",
+    "terminouTexto": "The trial exercises are locked again. To keep using them, and to get all 8, you need Premium.",
+    "terminouPreco": "Premium costs {{preco}} a month.",
+    "verPremium": "See Premium",
+    "premiumTitulo": "You already have Premium",
+    "premiumTexto": "All 8 exercises are open to you. You do not need the 7-day trial.",
+    "verExercicios": "See the exercises"
   }
 }

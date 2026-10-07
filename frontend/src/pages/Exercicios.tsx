@@ -215,7 +215,7 @@ const EvolucaoFimTrial = () => {
 const BannerEstado = ({ aoVerPremium }: { aoVerPremium: () => void }) => {
   const { t } = useTranslation();
   const { acesso, loading } = useAcessoExercicios();
-  const { executar, aIniciarTrial } = useAcaoDesbloqueio();
+  const { executar } = useAcaoDesbloqueio();
 
   if (loading) return <div className="h-[88px]" aria-hidden />;
 
@@ -291,7 +291,6 @@ const BannerEstado = ({ aoVerPremium }: { aoVerPremium: () => void }) => {
       </div>
       <Button
         onClick={config.acao}
-        disabled={aIniciarTrial}
         className="h-auto shrink-0 whitespace-normal bg-navy py-2.5 text-navy-foreground hover:bg-navy/90"
       >
         <Icon className="h-4 w-4 shrink-0" />
@@ -305,7 +304,7 @@ const CartaoExercicio = ({ ex, grupo }: { ex: Exercicio; grupo: GrupoExercicio }
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { loading } = useAcessoExercicios();
-  const { tipoPara, executar, aIniciarTrial } = useAcaoDesbloqueio();
+  const { tipoPara, executar } = useAcaoDesbloqueio();
   const Icon = ex.icon;
   const tipo = loading ? null : tipoPara(ex.id, grupo);
   const desbloqueado = !loading && tipo === null;
@@ -371,8 +370,8 @@ const CartaoExercicio = ({ ex, grupo }: { ex: Exercicio; grupo: GrupoExercicio }
         ) : semBotao ? null : (
           <Button
             variant="outline"
-            disabled={loading || aIniciarTrial || !tipo}
-            onClick={() => tipo && void executar(tipo)}
+            disabled={loading || !tipo}
+            onClick={() => tipo && executar(tipo)}
             className="w-full border-navy/25 text-navy hover:bg-navy/5"
           >
             {BotaoIcon && <BotaoIcon className="h-4 w-4" />}

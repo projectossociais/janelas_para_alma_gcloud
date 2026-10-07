@@ -1,9 +1,5 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { useTranslation } from "react-i18next";
 import { useAcessoExercicios } from "@/contexts/AcessoExerciciosContext";
-import { mensagemDeErroApi } from "@/lib/apiClient";
 import { localizar } from "@/i18n/rotas";
 
 export type GrupoExercicio = "trial" | "premium";
@@ -16,10 +12,8 @@ export type TipoDesbloqueio = "criar_conta" | "iniciar_trial" | "premium";
  * Devolve `null` quando o exercício já está desbloqueado.
  */
 export const useAcaoDesbloqueio = () => {
-  const { t } = useTranslation();
   const navigate = useNavigate();
-  const { acesso, temAcesso, iniciarTrial } = useAcessoExercicios();
-  const [aIniciarTrial, setAIniciarTrial] = useState(false);
+  const { acesso, temAcesso } = useAcessoExercicios();
 
   const tipoPara = (exercicioId: string, grupo: GrupoExercicio): TipoDesbloqueio | null => {
     if (temAcesso(exercicioId)) return null;
@@ -28,7 +22,7 @@ export const useAcaoDesbloqueio = () => {
     return "premium";
   };
 
-  const executar = async (tipo: TipoDesbloqueio) => {
+  const executar = (tipo: TipoDesbloqueio) => {
     if (tipo === "criar_conta") {
       // A rota de login é `/login` (ver `entrar` em i18n/rotas.ts) -- `/entrar`
       // não existe e dava 404.
@@ -39,16 +33,10 @@ export const useAcaoDesbloqueio = () => {
       navigate(localizar("/registo-premium"));
       return;
     }
-    setAIniciarTrial(true);
-    try {
-      await iniciarTrial();
-      toast.success(t("AcessoExercicios.testeIniciado"));
-    } catch (err) {
-      toast.error(mensagemDeErroApi(err, t("AcessoExercicios.naoFoiPossivelIniciar")));
-    } finally {
-      setAIniciarTrial(false);
-    }
+    // O teste de 7 dias só se usa uma vez por conta: tem página própria, que
+    // explica o que inclui e só começa quando a pessoa o confirma.
+    navigate(localizar("/teste-de-7-dias"));
   };
 
-  return { tipoPara, executar, aIniciarTrial };
+  return { tipoPara, executar };
 };

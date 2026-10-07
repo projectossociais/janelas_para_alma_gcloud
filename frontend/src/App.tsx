@@ -42,6 +42,7 @@ const Faq = lazy(() => import("./pages/Faq"));
 const Impacto = lazy(() => import("./pages/Impacto"));
 const JunteSe = lazy(() => import("./pages/JunteSe"));
 const RegistoPremium = lazy(() => import("./pages/RegistoPremium"));
+const TesteSeteDias = lazy(() => import("./pages/TesteSeteDias"));
 const RoadmapTecnico = lazy(() => import("./pages/RoadmapTecnico"));
 const MenuJogo = lazy(() => import("./pages/jogo/MenuJogo"));
 const JogoCuriosidades = lazy(() => import("./pages/jogo/JogoCuriosidades"));
@@ -170,6 +171,7 @@ const PAGINAS: Record<ChaveRota, ReactElement> = {
   impacto: <Impacto />,
   junteSe: <JunteSe />,
   registoPremium: <RegistoPremium />,
+  testeSeteDias: <TesteSeteDias />,
   dashboard: <DashboardUser />,
   dashboardPro: <DashboardPro />,
   jogoMenu: <MenuJogo />,
