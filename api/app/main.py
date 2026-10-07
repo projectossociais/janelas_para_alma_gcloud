@@ -1,5 +1,11 @@
-from fastapi import FastAPI
+import math
+
+from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
+from fastapi.exception_handlers import request_validation_exception_handler
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.core.config import obter_settings
 from app.routers import (
@@ -21,6 +27,7 @@ from app.routers import (
     perfil,
     premium,
     publicacoes,
+    rastreio_completo,
     relatorios,
     screenings,
     sessoes_exercicio,
@@ -29,6 +36,23 @@ from app.routers import (
 )
 
 app = FastAPI(title="Janelas Para a Alma — API")
+
+
+@app.exception_handler(RequestValidationError)
+async def _erro_de_validacao(pedido: Request, exc: RequestValidationError):
+    """422 normal, com uma excepção: um corpo com ``NaN``/``Infinity`` (o ``json`` do
+    Python aceita-os) fazia a própria mensagem de erro repetir o valor, que não cabe
+    em JSON, e o pedido acabava em 500. Nesse caso retira-se só o valor repetido."""
+    erros = exc.errors()
+    if not any(isinstance(e.get("input"), float) and not math.isfinite(e["input"]) for e in erros):
+        return await request_validation_exception_handler(pedido, exc)
+    limpos = [
+        {k: v for k, v in e.items() if k != "input"}
+        if isinstance(e.get("input"), float) and not math.isfinite(e["input"])
+        else e
+        for e in erros
+    ]
+    return JSONResponse(status_code=422, content={"detail": jsonable_encoder(limpos)})
 
 # O caminho normal é mesma-origem: o browser chama `/api/*`, servido pelo proxy
 # do Vite em dev e pelo NGINX nos containers — aí o CORS nem é exercitado. Este
@@ -61,6 +85,7 @@ app.include_router(admin.router)
 app.include_router(voluntariado.router)
 app.include_router(publicacoes.router)
 app.include_router(notificacoes.router)
+app.include_router(rastreio_completo.router)
 app.include_router(screenings.router)
 app.include_router(jogo.router)
 app.include_router(agendamentos.router)
