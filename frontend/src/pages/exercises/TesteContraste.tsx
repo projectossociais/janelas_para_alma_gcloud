@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import AnelLandolt from "@/components/visao/AnelLandolt";
 import AssistenteTeste, { type ContextoTeste } from "@/components/visao/AssistenteTeste";
-import PaginaExercicio from "@/components/visao/PaginaExercicio";
 import { CartaoOlho, EcraResultado } from "@/components/visao/Resultados";
 import TarefaAnelTeste from "@/components/visao/TarefaAnelTeste";
 import { useHistoricoVisao, useRegistoSessao } from "@/components/visao/hooks";
@@ -135,16 +134,14 @@ const ResultadoContrasteEcra = ({ res, ctx }: { res: Record<Olho, ResultadoContr
 const TesteContraste = () => {
   const { t } = useTranslation();
   return (
-    <PaginaExercicio>
-      <AssistenteTeste<ResultadoContraste>
-        exercicioId={EXERCICIO_ID}
-        grupo="trial"
-        titulo={t("Visao.contrasteTitulo")}
-        descricao={t("Visao.contrasteDescricao")}
-        tarefa={(_olho, ctx, aoTerminar) => <TarefaContraste ctx={ctx} aoTerminar={aoTerminar} />}
-        resultado={(res, ctx) => <ResultadoContrasteEcra res={res} ctx={ctx} />}
-      />
-    </PaginaExercicio>
+    <AssistenteTeste<ResultadoContraste>
+      exercicioId={EXERCICIO_ID}
+      grupo="trial"
+      titulo={t("Visao.contrasteTitulo")}
+      descricao={t("Visao.contrasteDescricao")}
+      tarefa={(_olho, ctx, aoTerminar) => <TarefaContraste ctx={ctx} aoTerminar={aoTerminar} />}
+      resultado={(res, ctx) => <ResultadoContrasteEcra res={res} ctx={ctx} />}
+    />
   );
 };
 

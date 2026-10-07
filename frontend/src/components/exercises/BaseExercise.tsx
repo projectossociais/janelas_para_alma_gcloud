@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
-import { Link } from "react-router-dom";
-import { Info, Lock, LogOut, Play, ShieldCheck, UserPlus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Lock, Play, ShieldCheck, UserPlus } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
 import { useAcessoExercicios } from "@/contexts/AcessoExerciciosContext";
 import { useConsentimentoSaude } from "@/contexts/ConsentimentoSaudeContext";
 import {
@@ -10,8 +9,10 @@ import {
   type GrupoExercicio,
   type TipoDesbloqueio,
 } from "@/components/exercises/useAcaoDesbloqueio";
+import { Botao } from "@/design/componentes/Botao";
+import { cn } from "@/design/cn";
+import { LayoutTarefa } from "@/design/layouts/LayoutTarefa";
 import { localizar } from "@/i18n/rotas";
-import { cn } from "@/lib/utils";
 
 // Chaves escritas por extenso (não montadas com `${tipo}`) para continuarem
 // a aparecer numa pesquisa pelo nome da chave.
@@ -33,42 +34,26 @@ const TEXTOS_BLOQUEIO: Record<TipoDesbloqueio, { titulo: string; texto: string; 
   },
 };
 
+const ICONE_BLOQUEIO: Record<TipoDesbloqueio, ReactNode> = {
+  criar_conta: <UserPlus aria-hidden />,
+  iniciar_trial: <Play aria-hidden />,
+  premium: <Lock aria-hidden />,
+};
+
 export type TipoExercicio = "teste" | "treino";
 
-/** Aviso obrigatório em todos os ecrãs de um teste ou treino. */
+/**
+ * Aviso obrigatório em todos os ecrãs de um teste ou treino (nunca diagnóstico).
+ * Uma linha discreta e não uma caixa: repete-se em cada passo e não pode empurrar
+ * o exercício para fora do ecrã do telemóvel.
+ */
 export const AvisoExercicio = ({ tipo, className }: { tipo: TipoExercicio; className?: string }) => {
   const { t } = useTranslation();
   return (
-    <p
-      className={cn(
-        "flex items-start gap-2 rounded-lg border border-navy/15 bg-navy/[0.03] px-3 py-2 text-xs text-muted-foreground",
-        className,
-      )}
-    >
-      <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-navy dark:text-foreground" aria-hidden />
+    <p className={cn("flex items-start gap-2 text-legenda text-tinta-suave", className)}>
+      <ShieldCheck className="mt-0.5 size-4 shrink-0 text-accao" aria-hidden />
       <span>{tipo === "teste" ? t("Visao.avisoTeste") : t("Visao.avisoTreino")}</span>
     </p>
-  );
-};
-
-/** Indicador de passos do assistente ("Passo 2 de 5" + barra). */
-export const IndicadorPassos = ({ passos, actual }: { passos: readonly string[]; actual: number }) => {
-  const { t } = useTranslation();
-  if (!passos.length) return null;
-  return (
-    <div className="px-5 pt-4">
-      <p className="mb-2 text-xs font-medium text-muted-foreground" aria-live="polite">
-        {t("Visao.passoDe", { actual: actual + 1, total: passos.length })} · {passos[actual]}
-      </p>
-      <ol className="flex gap-1.5" aria-hidden>
-        {passos.map((p, i) => (
-          <li
-            key={`${p}-${i}`}
-            className={cn("h-1.5 flex-1 rounded-full", i <= actual ? "bg-teal" : "bg-muted")}
-          />
-        ))}
-      </ol>
-    </div>
   );
 };
 
@@ -80,25 +65,28 @@ interface BaseExerciseProps {
   /** Grupo do exercício: incluído no teste de 7 dias, ou só Premium. */
   grupo: GrupoExercicio;
   tipo: TipoExercicio;
-  /** Nomes dos passos do assistente (vazio = sem indicador). */
+  /** Nomes dos passos do assistente (vazio = um só passo). */
   passos?: readonly string[];
   passoActual?: number;
   children: ReactNode;
 }
 
 /**
- * Casca dos exercícios de visão: cabeçalho com "Sair", indicador de passos,
- * aviso de triagem/treino em todos os ecrãs e bloqueio de conteúdo pago
- * (Premium ou teste de 7 dias, estado vindo da API).
+ * Casca dos exercícios de visão, no arquétipo Tarefa (docs/LAYOUTS.md §2.3): sem
+ * navegação do site, o passo em que se está e "Sair" (com confirmação a meio, para
+ * ninguém perder uma sessão por engano). Lá dentro: título, aviso de triagem/treino
+ * em todos os ecrãs, e o bloqueio do conteúdo pago (Premium ou teste de 7 dias,
+ * estado vindo da API).
  *
- * Desde 2026-09-28 **sem câmara**: os exercícios são testes e treinos com
- * resposta do utilizador. Cada exercício gere o seu próprio fluxo; aqui só
- * fica o que é comum. Enquanto o acesso não está confirmado pela API, o
- * conteúdo nem é montado (nunca desbloquear por omissão).
+ * Desde 2026-09-28 **sem câmara**: os exercícios são testes e treinos com resposta
+ * do utilizador. Cada exercício gere o seu próprio fluxo; aqui só fica o que é comum.
+ * Enquanto o acesso não está confirmado pela API, o conteúdo nem é montado (nunca
+ * desbloquear por omissão). Os resultados são dados de saúde: sem consentimento
+ * (Lei 22/11, art. 14.º) o exercício também não é montado.
  *
- * Os resultados são dados de saúde: sem consentimento (Lei 22/11, art. 14.º)
- * o exercício também não é montado, para ninguém fazer um teste que a API
- * depois se recusaria a gravar.
+ * A coluna é a mais larga das tarefas (`texto`): o cartão de calibração e os
+ * estereogramas precisam de espaço. O palco do estímulo continua branco em
+ * qualquer tema (CLAUDE.md §6).
  */
 const BaseExercise = ({
   title,
@@ -111,9 +99,9 @@ const BaseExercise = ({
   children,
 }: BaseExerciseProps) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { temAcesso, loading: acessoLoading } = useAcessoExercicios();
   const { tipoPara, executar } = useAcaoDesbloqueio();
-
   const { consentido, carregando: consentimentoLoading, garantir } = useConsentimentoSaude();
 
   const locked = acessoLoading || !temAcesso(exercicioId);
@@ -121,82 +109,85 @@ const BaseExercise = ({
   const pedeConsentimento = !locked && !consentimentoLoading && !consentido;
   const bloqueado = locked || consentimentoLoading || !consentido;
 
+  const total = Math.max(1, passos.length);
+  const actual = bloqueado ? 1 : Math.min(passoActual, total - 1) + 1;
+  const nomePasso = !bloqueado && passos.length ? passos[actual - 1] : null;
+  const rotuloPasso = nomePasso
+    ? `${t("Visao.passoDe", { actual, total })} · ${nomePasso}`
+    : t("Visao.passoDe", { actual, total });
+
+  const sair = () => navigate(localizar("/exercicios"));
+
   return (
-    <div className="relative w-full overflow-hidden rounded-2xl border border-border/60 bg-card shadow-card">
-      <div className="flex items-center justify-between gap-4 border-b border-border/60 px-5 py-4">
-        <div className="min-w-0">
-          <h1 className="text-lg font-bold text-foreground">{title}</h1>
-          <p className="text-sm text-muted-foreground">{description}</p>
-        </div>
-        <Button variant="ghost" size="sm" asChild className="shrink-0 gap-2">
-          <Link to={localizar("/exercicios")} aria-label={t("BaseExercise.sairDoExercicio")}>
-            <LogOut className="h-4 w-4" />
-            {t("BaseExercise.sair")}
-          </Link>
-        </Button>
-      </div>
+    <LayoutTarefa
+      tema="claro"
+      largura="texto"
+      passo={{ actual, total, rotulo: rotuloPasso }}
+      sair={{ rotulo: t("BaseExercise.sair"), aoSair: sair }}
+      confirmarSaida={
+        !bloqueado && passoActual > 0
+          ? {
+              titulo: t("BaseExercise.confirmarSaidaTitulo"),
+              descricao: t("BaseExercise.confirmarSaidaTexto"),
+              ficar: t("BaseExercise.ficar"),
+              sair: t("BaseExercise.sair"),
+              fechar: t("BaseExercise.fechar"),
+            }
+          : undefined
+      }
+      textoSaltar={t("BaseExercise.saltar")}
+    >
+      {/* O título da página é o nome do exercício; cada passo traz o seu próprio título.
+          A descrição só no primeiro ecrã: a partir daí, o espaço é do exercício. */}
+      <h1 className="text-legenda font-medium text-tinta-suave">{title}</h1>
+      {(bloqueado || passoActual === 0) && <p className="mt-1 text-corpo text-tinta">{description}</p>}
+      <AvisoExercicio tipo={tipo} className="mt-3" />
 
-      {!bloqueado && <IndicadorPassos passos={passos} actual={passoActual} />}
-
-      <div className="px-5 pt-4">
-        <AvisoExercicio tipo={tipo} />
-      </div>
-
-      <div className="relative">
-        {bloqueado ? (
-          <div className="h-[360px]" aria-hidden />
-        ) : (
-          <div className="p-5">{children}</div>
-        )}
+      <div className="mt-8">
+        {!bloqueado && children}
 
         {pedeConsentimento && (
-          <div className="absolute inset-0 flex items-center justify-center p-6">
-            <div className="max-w-sm rounded-2xl border border-border bg-card p-6 text-center shadow-elevated">
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-navy/10 text-navy">
-                <ShieldCheck className="h-5 w-5" />
-              </div>
-              <h2 className="mb-2 text-lg font-bold text-foreground">{t("ConsentimentoSaude.antesDeComecar")}</h2>
-              <p className="mb-4 text-sm text-muted-foreground">{t("ConsentimentoSaude.antesDeComecarTexto")}</p>
-              <Button
-                onClick={() => void garantir()}
-                className="w-full gap-2 bg-navy text-navy-foreground hover:bg-navy/90"
-              >
-                <ShieldCheck className="h-4 w-4" />
-                {t("ConsentimentoSaude.lerEAceitar")}
-              </Button>
-            </div>
-          </div>
+          <section aria-labelledby="exercicio-consentimento">
+            <span aria-hidden className="flex size-12 items-center justify-center rounded-pilula bg-accao-suave text-accao [&_svg]:size-6">
+              <ShieldCheck />
+            </span>
+            <h2 id="exercicio-consentimento" className="mt-5 text-titulo-m text-tinta">
+              {t("ConsentimentoSaude.antesDeComecar")}
+            </h2>
+            <p className="mt-3 text-corpo text-tinta-suave">{t("ConsentimentoSaude.antesDeComecarTexto")}</p>
+            <Botao tamanho="g" larguraTotal className="mt-8" onClick={() => void garantir()}>
+              <ShieldCheck aria-hidden />
+              {t("ConsentimentoSaude.lerEAceitar")}
+            </Botao>
+          </section>
         )}
 
         {locked && tipoDesbloqueio && (
-          <div className="absolute inset-0 flex items-center justify-center p-6">
-            <div className="max-w-sm rounded-2xl border border-border bg-card p-6 text-center shadow-elevated">
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-navy/10 text-navy">
-                <Lock className="h-5 w-5" />
-              </div>
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-teal">
-                {tipoDesbloqueio === "premium"
-                  ? t("BaseExercise.conteudoPremium")
-                  : t("BaseExercise.incluidoNoTeste")}
-              </p>
-              <h2 className="mb-2 text-lg font-bold text-foreground">
-                {t(TEXTOS_BLOQUEIO[tipoDesbloqueio].titulo)}
-              </h2>
-              <p className="mb-4 text-sm text-muted-foreground">{t(TEXTOS_BLOQUEIO[tipoDesbloqueio].texto)}</p>
-              <Button
-                onClick={() => void executar(tipoDesbloqueio)}
-                className="w-full gap-2 bg-navy text-navy-foreground hover:bg-navy/90"
-              >
-                {tipoDesbloqueio === "criar_conta" && <UserPlus className="h-4 w-4" />}
-                {tipoDesbloqueio === "iniciar_trial" && <Play className="h-4 w-4" />}
-                {tipoDesbloqueio === "premium" && <Lock className="h-4 w-4" />}
-                {t(TEXTOS_BLOQUEIO[tipoDesbloqueio].botao)}
-              </Button>
-            </div>
-          </div>
+          <section aria-labelledby="exercicio-bloqueio">
+            <span aria-hidden className="flex size-12 items-center justify-center rounded-pilula bg-accao-suave text-accao [&_svg]:size-6">
+              <Lock />
+            </span>
+            <p className="mt-5 text-legenda font-medium text-tinta-suave">
+              {tipoDesbloqueio === "premium" ? t("BaseExercise.conteudoPremium") : t("BaseExercise.incluidoNoTeste")}
+            </p>
+            <h2 id="exercicio-bloqueio" className="mt-1 text-titulo-m text-tinta">
+              {t(TEXTOS_BLOQUEIO[tipoDesbloqueio].titulo)}
+            </h2>
+            <p className="mt-3 text-corpo text-tinta-suave">{t(TEXTOS_BLOQUEIO[tipoDesbloqueio].texto)}</p>
+            <Botao tamanho="g" larguraTotal className="mt-8" onClick={() => executar(tipoDesbloqueio)}>
+              {ICONE_BLOQUEIO[tipoDesbloqueio]}
+              {t(TEXTOS_BLOQUEIO[tipoDesbloqueio].botao)}
+            </Botao>
+          </section>
+        )}
+
+        {locked && !tipoDesbloqueio && (
+          <p role="status" className="text-corpo text-tinta-suave">
+            {t("BaseExercise.aPreparar")}
+          </p>
         )}
       </div>
-    </div>
+    </LayoutTarefa>
   );
 };
 

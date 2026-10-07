@@ -1,16 +1,14 @@
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { AlertTriangle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Botao } from "@/design/componentes/Botao";
 import AssistenteTreino, {
   type ApiTarefa,
   type ContextoTreino,
   type ResultadoTreino,
 } from "@/components/visao/AssistenteTreino";
-import PaginaExercicio from "@/components/visao/PaginaExercicio";
 import PalcoVisual from "@/components/visao/PalcoVisual";
 import { PAUSA_AUTOMATICA_MS } from "@/lib/visao/tempoActivo";
-import { cn } from "@/lib/utils";
 import { ID_CONVERGENCIA } from "@/lib/visao/ids";
 
 const EXERCICIO_ID = ID_CONVERGENCIA;
@@ -142,20 +140,18 @@ const TarefaConvergencia = ({
     <div className="flex flex-col items-center gap-4">
       <div role="radiogroup" aria-label={t("Visao.convergenciaNivel")} className="flex gap-2">
         {(["normal", "saltos"] as const).map((n) => (
-          <Button
+          <Botao
             key={n}
             role="radio"
             aria-checked={nivel === n}
-            size="sm"
-            variant={nivel === n ? "default" : "outline"}
-            className={cn(nivel === n && "bg-navy text-navy-foreground hover:bg-navy/90")}
+            variante={nivel === n ? "primario" : "secundario"}
             onClick={() => {
               setNivel(n);
               if (n === "saltos") setUsouSaltos(true);
             }}
           >
             {n === "normal" ? t("Visao.nivelNormal") : t("Visao.nivelSaltos")}
-          </Button>
+          </Botao>
         ))}
       </div>
       <p className="text-center text-sm text-muted-foreground">
@@ -177,12 +173,12 @@ const TarefaConvergencia = ({
         </p>
       )}
       <div className="grid w-full max-w-sm grid-cols-2 gap-3">
-        <Button size="lg" className="h-14 bg-teal text-lg text-teal-foreground hover:bg-teal/90" onClick={() => responder(1)}>
+        <Botao tamanho="g" onClick={() => responder(1)}>
           {t("Visao.vejo1")}
-        </Button>
-        <Button size="lg" variant="outline" className="h-14 text-lg" onClick={() => responder(2)}>
+        </Botao>
+        <Botao tamanho="g" variante="secundario" onClick={() => responder(2)}>
           {t("Visao.vejo2")}
-        </Button>
+        </Botao>
       </div>
     </div>
   );
@@ -192,12 +188,12 @@ const AvisoConvergencia = () => {
   const { t } = useTranslation();
   return (
     <div className="space-y-3 text-left text-sm">
-      <p className="flex gap-2 rounded-lg border border-gold/60 bg-gold/10 p-3 text-foreground" role="note">
-        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-gold" aria-hidden />
+      <p className="flex gap-2 rounded-lg border border-linha bg-aviso-suave p-3 text-foreground" role="note">
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-aviso" aria-hidden />
         <span>{t("Visao.convergenciaAvisoParar")}</span>
       </p>
-      <p className="flex gap-2 rounded-lg border border-gold/60 bg-gold/10 p-3 text-foreground" role="note">
-        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-gold" aria-hidden />
+      <p className="flex gap-2 rounded-lg border border-linha bg-aviso-suave p-3 text-foreground" role="note">
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-aviso" aria-hidden />
         <span>{t("Visao.convergenciaAvisoEstrabismo")}</span>
       </p>
       <p className="text-muted-foreground">{t("Visao.convergenciaComoFazer")}</p>
@@ -208,17 +204,15 @@ const AvisoConvergencia = () => {
 const TreinoConvergencia = () => {
   const { t } = useTranslation();
   return (
-    <PaginaExercicio>
-      <AssistenteTreino
-        exercicioId={EXERCICIO_ID}
-        grupo="premium"
-        titulo={t("Visao.convergenciaTitulo")}
-        descricao={t("Visao.convergenciaDescricao")}
-        monocular={false}
-        aviso={<AvisoConvergencia />}
-        tarefa={(api, ctx, resultado) => <TarefaConvergencia api={api} ctx={ctx} resultado={resultado} />}
-      />
-    </PaginaExercicio>
+    <AssistenteTreino
+      exercicioId={EXERCICIO_ID}
+      grupo="premium"
+      titulo={t("Visao.convergenciaTitulo")}
+      descricao={t("Visao.convergenciaDescricao")}
+      monocular={false}
+      aviso={<AvisoConvergencia />}
+      tarefa={(api, ctx, resultado) => <TarefaConvergencia api={api} ctx={ctx} resultado={resultado} />}
+    />
   );
 };
 
