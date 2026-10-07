@@ -75,9 +75,10 @@ export const CampoFicheiro = ({
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>
-      <span id={`${id}-rotulo`} className="text-corpo font-medium text-tinta">
+      {/* Etiqueta nativa (e não `aria-labelledby`): é a forma que todos os leitores e o axe aceitam. */}
+      <label htmlFor={id} className="text-corpo font-medium text-tinta">
         {rotulo}
-      </span>
+      </label>
       {ajuda && (
         <p id={idAjuda} className="text-legenda text-tinta-suave">
           {ajuda}
@@ -110,7 +111,6 @@ export const CampoFicheiro = ({
           type="file"
           accept={tiposAceites.join(",")}
           onChange={aoEscolher}
-          aria-labelledby={`${id}-rotulo`}
           aria-describedby={[idAjuda, idErro].filter(Boolean).join(" ") || undefined}
           aria-invalid={mensagem ? true : undefined}
           className="sr-only"

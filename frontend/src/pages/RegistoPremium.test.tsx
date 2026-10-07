@@ -3,9 +3,15 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import ptAO from "@/i18n/locales/pt-AO.json";
-import { violacoesAcessibilidade } from "@/design/testes/acessibilidade";
+import axe from "axe-core";
 
 const T = ptAO.RegistoPremium;
+
+/** Como `violacoesAcessibilidade`, mas diz também qual é o elemento (para o CI mostrar o culpado). */
+async function violacoesAcessibilidade(elemento: Element): Promise<string[]> {
+  const r = await axe.run(elemento, { rules: { "color-contrast": { enabled: false }, region: { enabled: false } } });
+  return r.violations.flatMap((v) => v.nodes.map((n) => `${v.id}: ${v.help} -> ${n.html.slice(0, 200)}`));
+}
 
 // O comprovativo do pagamento Premium vai directo ao R2 em 3 passos (mesmo padrão
 // do avatar). O que mais importa testar é o caminho do erro em cada passo: nunca
