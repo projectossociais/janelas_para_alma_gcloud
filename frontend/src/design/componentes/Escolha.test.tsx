@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { useState } from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -61,32 +61,40 @@ describe("GrupoEscolha", () => {
     expect(await violacoesAcessibilidade(container)).toEqual([]);
   });
 
-  it("na disposição 'linha', as pastilhas têm a largura do texto e não numa grelha de colunas iguais", () => {
+  it("aparência 'radio': botões de rádio sem caixa, todos na mesma linha, com o estado marcado", async () => {
+    const aoMudar = vi.fn();
     const { container } = render(
-      <GrupoEscolha
+      <GrupoEscolha<"a" | "b" | "c">
         legenda="Género"
-        aparencia="pastilha"
-        disposicao="linha"
+        aparencia="radio"
         opcoes={[
           { valor: "a", rotulo: "Masculino" },
           { valor: "b", rotulo: "Feminino" },
           { valor: "c", rotulo: "Prefiro não dizer" },
         ]}
-        valor={null}
-        aoMudar={() => {}}
+        valor="b"
+        aoMudar={aoMudar}
       />,
     );
-    const pastilhas = container.querySelector("fieldset > div")!;
-    expect(pastilhas.className).toContain("flex-wrap");
-    expect(pastilhas.className).not.toContain("grid");
+    const radios = screen.getAllByRole("radio");
+    expect(radios).toHaveLength(3);
+    expect(screen.getByRole("radio", { name: "Feminino" })).toBeChecked();
+    // Sem caixa à volta (não são botões grandes) e a quebrar só se não couber.
+    expect(container.querySelector("fieldset > div")!.className).toContain("flex-wrap");
+    expect(container.querySelector("label")!.className).not.toContain("border");
+    await userEvent.setup().click(screen.getByRole("radio", { name: "Prefiro não dizer" }));
+    expect(aoMudar).toHaveBeenCalledWith("c");
   });
 
   it("por omissão, as pastilhas ficam em grelha (dias e horas)", () => {
     const { container } = render(
-      <GrupoEscolha
+      <GrupoEscolha<"a" | "b">
         legenda="Hora"
         aparencia="pastilha"
-        opcoes={[{ valor: "a", rotulo: "09:00" }, { valor: "b", rotulo: "10:00" }]}
+        opcoes={[
+          { valor: "a", rotulo: "09:00" },
+          { valor: "b", rotulo: "10:00" },
+        ]}
         valor={null}
         aoMudar={() => {}}
       />,
