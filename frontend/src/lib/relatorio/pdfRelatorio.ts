@@ -39,6 +39,10 @@ export interface Coluna {
   largura: number;
 }
 
+/** Largura da coluna dos nomes em `campos` e o espaço mínimo até ao valor (pt). */
+export const COLUNA_CAMPO = 150;
+const ESPACO_CAMPO = 12;
+
 export class RelatorioPdf {
   private readonly doc: jsPDF;
   private y: number;
@@ -140,15 +144,20 @@ export class RelatorioPdf {
   /** Pares "Campo: valor" alinhados em duas colunas. */
   campos(pares: readonly [string, string][]) {
     const h = this.alturaLinha(ESTILO_RELATORIO.corpo) + 2;
-    const col = 150;
     for (const [campo, valor] of pares) {
-      const linhas: string[] = this.doc.splitTextToSize(valor, this.util - col);
-      this.garantir(h * linhas.length);
+      // O nome também muda de linha dentro da sua coluna: um nome comprido
+      // escrevia-se por cima do valor (caso real, relatório de 2026-10-06).
       this.fonte(ESTILO_RELATORIO.corpo, true);
-      this.doc.text(campo, this.m, this.y);
+      const nome: string[] = this.doc.splitTextToSize(campo, COLUNA_CAMPO - ESPACO_CAMPO);
       this.fonte(ESTILO_RELATORIO.corpo);
-      this.doc.text(linhas, this.m + col, this.y, { lineHeightFactor: ESTILO_RELATORIO.entrelinha });
-      this.y += h * linhas.length;
+      const linhas: string[] = this.doc.splitTextToSize(valor, this.util - COLUNA_CAMPO);
+      const n = Math.max(nome.length, linhas.length);
+      this.garantir(h * n);
+      this.fonte(ESTILO_RELATORIO.corpo, true);
+      this.doc.text(nome, this.m, this.y, { lineHeightFactor: ESTILO_RELATORIO.entrelinha });
+      this.fonte(ESTILO_RELATORIO.corpo);
+      this.doc.text(linhas, this.m + COLUNA_CAMPO, this.y, { lineHeightFactor: ESTILO_RELATORIO.entrelinha });
+      this.y += h * n;
     }
     this.y += 8;
   }
