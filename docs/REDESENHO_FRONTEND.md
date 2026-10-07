@@ -274,6 +274,19 @@ Acrescentar abaixo, com data, o que for decidido ou detalhado em cada conversa s
 redesenho (referências visuais, páginas a priorizar, gostos e recusas do dono do
 projecto, feedback do Lukeny). Mais recente em cima.
 
+- **2026-10-07** — **Fase 4 começa: o painel (`DashboardUser.tsx`, ramo `redesenho/fase-4`).** Passa ao
+  arquétipo App (`LayoutApp`): navegação única (separadores em baixo no telemóvel, barra lateral no
+  computador), sino de notificações e **menu da conta** (novo `MenuConta`: perfil, definições, sair).
+  No topo, **um próximo passo** decidido por `lib/painel/proximoPasso.ts` (teleconsulta marcada →
+  marcar consulta se o último rastreio pediu avaliação → primeiro rastreio → repetir se não mediu →
+  continuar os treinos → teste de 7 dias → Premium), por baixo o resumo real (rastreios, último
+  resultado, exercícios abertos em 8) e os atalhos. Tudo vem da API: se o histórico falha, mostra "—"
+  (antes mostrava 0, um número inventado) e o próximo passo não afirma o que não sabe; enquanto os
+  dados chegam, não mostra nenhum próximo passo. O aviso do pedido Premium (`PremiumRequestBanner`)
+  passou ao estilo novo. **Falta da Fase 4:** os 8 exercícios (moldura), o progresso e o relatório,
+  e o jogo Inclusivamente (decompor `JogoCuriosidades.tsx` antes de redesenhar). As páginas ainda
+  por redesenhar, para onde o painel liga, mantêm o visual antigo até lá.
+
 - **2026-10-07** — **Fase 3, teste de 7 dias (`TesteSeteDias.tsx`, rota `/teste-de-7-dias`, ramo
   `redesenho/teste-7-dias`).** Antes era um botão dentro do painel bloqueado de cada exercício e da
   página `/exercicios` que **iniciava o teste de imediato**. Como só se pode usar **uma vez por

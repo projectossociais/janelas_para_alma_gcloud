@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { Clock, ShieldAlert } from "lucide-react";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Aviso } from "@/design/componentes/Aviso";
+import { Botao } from "@/design/componentes/Botao";
 import { useProfile } from "@/contexts/ProfileContext";
 import { premiumApi, type PedidoPremiumPublico } from "@/lib/apiClient";
 import { localizar } from "@/i18n/rotas";
@@ -45,25 +44,24 @@ const PremiumRequestBanner = () => {
 
   if (pedido.status === "pendente") {
     return (
-      <Alert className="border-gold/50 bg-gold/10">
-        <Clock className="w-4 h-4 text-gold" />
-        <AlertTitle>{t("DashboardUser.premiumPendenteTitulo")}</AlertTitle>
-        <AlertDescription>{t("DashboardUser.premiumPendenteDescricao")}</AlertDescription>
-      </Alert>
+      <Aviso variante="aviso" titulo={t("DashboardUser.premiumPendenteTitulo")}>
+        {t("DashboardUser.premiumPendenteDescricao")}
+      </Aviso>
     );
   }
 
   return (
-    <Alert variant="destructive">
-      <ShieldAlert className="w-4 h-4" />
-      <AlertTitle>{t("DashboardUser.premiumRevogadoTitulo")}</AlertTitle>
-      <AlertDescription className="space-y-3">
-        <p>{t("DashboardUser.premiumRevogadoDescricao")}</p>
-        <Button size="sm" variant="outline" onClick={() => navigate(localizar("/registo-premium"))}>
+    <Aviso
+      variante="erro"
+      titulo={t("DashboardUser.premiumRevogadoTitulo")}
+      accao={
+        <Botao variante="secundario" onClick={() => navigate(localizar("/registo-premium"))}>
           {t("DashboardUser.premiumSubmeterNovoPedido")}
-        </Button>
-      </AlertDescription>
-    </Alert>
+        </Botao>
+      }
+    >
+      {t("DashboardUser.premiumRevogadoDescricao")}
+    </Aviso>
   );
 };
 
