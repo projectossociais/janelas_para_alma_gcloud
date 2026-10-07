@@ -284,6 +284,20 @@ projecto, feedback do Lukeny). Mais recente em cima.
   estado vem sempre da API. `useAcaoDesbloqueio` deixou de iniciar o teste: leva a esta página. Com
   isto a **Fase 3 fica completa** (início, rastreio, resultado, marcação, entrar e criar conta,
   Premium e teste de 7 dias); falta só testá-la com pessoas reais, que é o critério da fase.
+- **2026-10-07** — **Redesenho em produção e Fase 3 retomada (entrar e criar conta).** O dono
+  do projecto aprovou o redesenho; foi para o `main` no PR #134 (com o rastreio completo
+  escondido, `noindex`, só para testes). A Fase 3 continua com **entrar e criar conta** no
+  arquétipo Entrada (`pages/Auth.tsx`, ramo `redesenho/fase-3`): ecrã dividido, sem cabeçalho nem
+  rodapé do site; painel marinho fixo à altura do ecrã. Decisões: (1) **dois modos claros**
+  (entrar / criar conta) em vez do "email primeiro" do protótipo, porque adivinhar se a conta
+  existe obrigaria a API a revelar emails registados, o que ela nunca faz; (2) a **confirmação da
+  password** foi trocada pelo "Mostrar" no campo (PESQUISA_UX §3); (3) validação ao submeter, com
+  o erro em cada campo e o foco no primeiro por corrigir (sem caixa de resumo por cima: o dono do
+  projecto achou-a feia, e o erro fica onde se corrige), a corrigir em tempo real depois da
+  primeira tentativa; (4) género e perfil são botões de opção (`GrupoEscolha`) e a província um
+  seletor nativo (novo `Seleccao`, em `design/componentes/`). Os erros da API continuam em toast
+  (o de "email não confirmado" mantém o "Reenviar link"). **Falta da Fase 3:** teste de 7 dias e
+  passagem a Premium (`RegistoPremium.tsx`, 714 linhas).
 
 - **2026-10-05** — **Parceiros em carrossel (altera `docs/PESQUISA_UX.md` §2).** Ao testar
   no telemóvel, a lista de parceiros saía desarrumada (linhas de 2/1/2, cartões de
