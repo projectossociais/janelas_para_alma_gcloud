@@ -36,6 +36,26 @@ const ANALISE: ScreeningResponse = {
 };
 
 describe("escreverRelatorioRastreio", () => {
+  it("rastreio completo: desvios em Δ com vírgula em pt, fotografias usadas e a regra, sem a secção do serviço antigo", () => {
+    const motor = {
+      horizontalDelta: 9.24,
+      verticalDelta: -0.4,
+      dispersaoDelta: 0.9,
+      fotografiasValidas: 4,
+      fotografiasTotal: 5,
+      versaoRegra: "regra-1",
+      motivo: null,
+      dica: "geral" as const,
+    };
+    const linhas = gravar({ conclusao: "avaliacao", data: new Date(), analise: null, motor });
+    expect(linhas).toContain("pdfDesvioH: 9,2 Δ");
+    expect(linhas).toContain("pdfDesvioV: -0,4 Δ");
+    expect(linhas).toContain("pdfFotosValidas: pdfFotosValidasValor");
+    expect(linhas).toContain("pdfUnidadeMotor");
+    expect(linhas).toContain("pdfRegra");
+    expect(linhas.join("\n")).not.toMatch(/pdfVariacao|pdfEmFrente|pdfIncomitante/);
+  });
+
   it("números com vírgula em português e ponto em inglês (caso real: '-0.09' num relatório em pt)", () => {
     const linhas: string[] = [];
     const escritor = {

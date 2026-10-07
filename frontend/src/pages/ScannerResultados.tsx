@@ -35,6 +35,15 @@ const ASPECTO: Record<Conclusao, { Icone: LucideIcon; fundo: string; cor: string
   inconclusivo: { Icone: ScanFace, fundo: "bg-accao-suave", cor: "text-accao" },
 };
 
+/** O que sugerir ao repetir o rastreio completo, pelo motivo da falha. */
+const DICA_REPETICAO = {
+  semRosto: "ResultadoRastreio.dicaSemRosto",
+  longe: "ResultadoRastreio.dicaLonge",
+  luz: "ResultadoRastreio.dicaLuz",
+  olhar: "ResultadoRastreio.dicaOlhar",
+  geral: "ResultadoRastreio.dicaGeral",
+} as const;
+
 const ScannerResultados = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -104,13 +113,14 @@ const ScannerResultados = () => {
     );
   }
 
-  const { conclusao, analise } = resultado;
+  const { conclusao, analise, motor } = resultado;
   const { Icone, fundo, cor } = ASPECTO[conclusao];
   const nota = textoDoScannerNoIdioma(analise?.recomendacao);
   // O id do rastreio guardado segue para a marcação: o pedido fica ligado a ele.
   const idRastreio = params.get("id");
   const consulta = localizar(idRastreio ? `/marcar-consulta?rastreio=${encodeURIComponent(idRastreio)}` : "/marcar-consulta");
-  const rastreio = localizar("/scanner");
+  // Quem fez o rastreio completo repete o rastreio completo.
+  const rastreio = localizar(motor ? "/rastreio-completo" : "/scanner");
 
   // Um só próximo passo, em destaque; o resto fica abaixo, mais discreto.
   const accao =
@@ -151,7 +161,9 @@ const ScannerResultados = () => {
       <h1 className="mt-1 text-titulo-m text-tinta">{t(`ResultadoRastreio.${conclusao}Titulo`)}</h1>
       <p className="mt-3 text-corpo text-tinta-suave">{t(`ResultadoRastreio.${conclusao}Texto`)}</p>
       {conclusao === "inconclusivo" && (
-        <p className="mt-3 text-corpo text-tinta">{t("ResultadoRastreio.inconclusivoDica")}</p>
+        <p className="mt-3 text-corpo text-tinta">
+          {t(motor ? DICA_REPETICAO[motor.dica] : "ResultadoRastreio.inconclusivoDica")}
+        </p>
       )}
 
       {conclusao !== "inconclusivo" && (

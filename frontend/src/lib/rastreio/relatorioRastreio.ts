@@ -43,7 +43,7 @@ export function escreverRelatorioRastreio(
   /** Idioma da página: decide a vírgula ou o ponto decimal ("-0,09" em pt). */
   idioma = "pt-AO",
 ): void {
-  const { conclusao, analise } = resultado;
+  const { conclusao, analise, motor } = resultado;
   const simNao = (v: boolean | null | undefined) =>
     v === undefined || v === null ? t("ResultadoRastreio.semDado") : v ? t("ResultadoRastreio.sim") : t("ResultadoRastreio.nao");
 
@@ -53,7 +53,22 @@ export function escreverRelatorioRastreio(
     [t("ResultadoRastreio.pdfCampoData"), dataFormatada],
   ]);
 
-  if (analise) {
+  if (motor) {
+    // Rastreio completo: o motor próprio mede o reflexo da luz na córnea, em Δ.
+    const delta = new Intl.NumberFormat(idioma, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    r.seccao(t("ResultadoRastreio.pdfSecMedicoes"));
+    r.campos([
+      [t("ResultadoRastreio.pdfDesvioH"), `${delta.format(motor.horizontalDelta)} Δ`],
+      [t("ResultadoRastreio.pdfDesvioV"), `${delta.format(motor.verticalDelta)} Δ`],
+      [t("ResultadoRastreio.pdfDispersao"), `${delta.format(motor.dispersaoDelta)} Δ`],
+      [
+        t("ResultadoRastreio.pdfFotosValidas"),
+        t("ResultadoRastreio.pdfFotosValidasValor", { validas: motor.fotografiasValidas, total: motor.fotografiasTotal }),
+      ],
+    ]);
+    r.paragrafo(t("ResultadoRastreio.pdfUnidadeMotor"), { cinzento: true });
+    r.paragrafo(t("ResultadoRastreio.pdfRegra", { versao: motor.versaoRegra }), { cinzento: true });
+  } else if (analise) {
     r.seccao(t("ResultadoRastreio.pdfSecMedicoes"));
     // Fracções da largura do olho: duas casas (0,05 é 5% da largura).
     const formato = new Intl.NumberFormat(idioma, { minimumFractionDigits: 2, maximumFractionDigits: 2 });

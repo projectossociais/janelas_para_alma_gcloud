@@ -17,7 +17,8 @@ export const FOTOGRAFIAS_VALIDAS_MINIMAS = 2;
  */
 export const DISPERSAO_MAXIMA_DELTA = 3;
 
-export type MotivoFalhaFotografia = MotivoFalhaOlho | MotivoFalhaBinocular;
+/** `sem-rosto` e `canvas-indisponivel` vêm da captura, antes de o motor medir. */
+export type MotivoFalhaFotografia = MotivoFalhaOlho | MotivoFalhaBinocular | "sem-rosto" | "canvas-indisponivel";
 export type ResultadoFotografia = Resultado<DesvioBinocular, MotivoFalhaFotografia>;
 
 /** Mede uma fotografia, dadas as posições aproximadas das duas íris. */

@@ -83,6 +83,10 @@ import NotFound from "./pages/NotFound";
 // Em produção `import.meta.env.DEV` é false e o import desaparece do build.
 const Laboratorio = import.meta.env.DEV ? lazy(() => import("./redesenho/laboratorio/Laboratorio")) : null;
 const Montra = import.meta.env.DEV ? lazy(() => import("./design/montra/Montra")) : null;
+// Rastreio completo (motor próprio): só em desenvolvimento e no build de teste
+// (`npm run telemovel`, modo "development"). O build de produção não o leva.
+const RastreioCompleto =
+  import.meta.env.DEV || import.meta.env.MODE === "development" ? lazy(() => import("./pages/RastreioCompleto")) : null;
 const Prototipos = import.meta.env.DEV ? lazy(() => import("./design/montra/prototipos/Prototipos")) : null;
 import IdiomaDaRota from "./i18n/IdiomaDaRota";
 import { inglesAtivo } from "./i18n/idiomas";
@@ -151,6 +155,7 @@ const PAGINAS: Record<ChaveRota, ReactElement> = {
   exerciciosRelatorio: <RelatorioSemanal />,
   relatorioPartilhado: <RelatorioPartilhado />,
   scanner: <Scanner />,
+  rastreioCompleto: RastreioCompleto ? <RastreioCompleto /> : <NotFound />,
   scannerResultados: <ScannerResultados />,
   marcarConsulta: <MarcarConsulta />,
   entrar: <Auth />,

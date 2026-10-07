@@ -1,3 +1,5 @@
+import type { ResultadoRastreioCompleto } from "@/lib/apiClient";
+import type { DicaRepeticao, MedicoesParaApi } from "@/lib/rastreio/captura/sessaoCompleta";
 import type { ScreeningResponse } from "@/services/api/screeningApi";
 
 /**
@@ -121,10 +123,94 @@ export function conclusaoDoRastreio(diagnostico: string, analise: ScreeningRespo
   return fraca || !analise.posicoes?.length ? "inconclusivo" : "normal";
 }
 
+/**
+ * O que o motor próprio mediu (rastreio completo), em dioptrias prismáticas (Δ).
+ * Guardado ao lado do resultado para o ecrã e o relatório mostrarem os números.
+ */
+export interface ResultadoMotor {
+  horizontalDelta: number;
+  verticalDelta: number;
+  dispersaoDelta: number;
+  fotografiasValidas: number;
+  fotografiasTotal: number;
+  versaoRegra: string;
+  motivo: string | null;
+  /** O que sugerir ao repetir, quando não se mediu. */
+  dica: DicaRepeticao;
+}
+
+const CONCLUSAO_DO_MOTOR: Record<ResultadoRastreioCompleto["conclusao"], Conclusao> = {
+  encaminhar: "avaliacao",
+  sem_sinais: "normal",
+  nao_mediu: "inconclusivo",
+};
+
+/** O que o ecrã de resultados guarda no fim do rastreio completo. */
+export function paraResultadoMotor(
+  medicoes: MedicoesParaApi,
+  r: ResultadoRastreioCompleto,
+  dica: DicaRepeticao,
+  agora = new Date(),
+) {
+  const conclusao = CONCLUSAO_DO_MOTOR[r.conclusao];
+  const motor: ResultadoMotor = {
+    horizontalDelta: medicoes.horizontal_delta,
+    verticalDelta: medicoes.vertical_delta,
+    dispersaoDelta: medicoes.dispersao_delta,
+    fotografiasValidas: medicoes.fotografias_validas,
+    fotografiasTotal: medicoes.fotografias_total,
+    versaoRegra: r.versao_regra,
+    motivo: r.motivo,
+    dica,
+  };
+  return {
+    // Só os dois valores antigos existem como texto; "não mediu" não é nenhum
+    // deles, e a conclusão vem sempre de `motor`, nunca daqui.
+    diagnosis: conclusao === "normal" ? DIAGNOSTICO_NORMAL : DIAGNOSTICO_AVALIACAO,
+    confidence: 0,
+    date: agora.toISOString(),
+    apiData: null,
+    conclusao,
+    motor,
+  };
+}
+
+const DICAS: readonly DicaRepeticao[] = ["semRosto", "longe", "luz", "olhar", "geral"];
+const CONCLUSOES: readonly Conclusao[] = ["avaliacao", "normal", "inconclusivo"];
+const numero = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
+
+function lerMotor(bruto: unknown): ResultadoMotor | null {
+  if (!bruto || typeof bruto !== "object") return null;
+  const m = bruto as Record<string, unknown>;
+  if (
+    !numero(m.horizontalDelta) ||
+    !numero(m.verticalDelta) ||
+    !numero(m.dispersaoDelta) ||
+    !numero(m.fotografiasValidas) ||
+    !numero(m.fotografiasTotal) ||
+    typeof m.versaoRegra !== "string" ||
+    !DICAS.includes(m.dica as DicaRepeticao)
+  ) {
+    return null;
+  }
+  return {
+    horizontalDelta: m.horizontalDelta,
+    verticalDelta: m.verticalDelta,
+    dispersaoDelta: m.dispersaoDelta,
+    fotografiasValidas: m.fotografiasValidas,
+    fotografiasTotal: m.fotografiasTotal,
+    versaoRegra: m.versaoRegra,
+    motivo: typeof m.motivo === "string" ? m.motivo : null,
+    dica: m.dica as DicaRepeticao,
+  };
+}
+
 export interface ResultadoGuardado {
   conclusao: Conclusao;
   data: Date;
   analise: ScreeningResponse | null;
+  /** Presente só no rastreio completo (motor próprio). */
+  motor?: ResultadoMotor | null;
 }
 
 /**
@@ -135,10 +221,21 @@ export interface ResultadoGuardado {
 export function lerResultadoGuardado(bruto: string | null): ResultadoGuardado | null {
   if (!bruto) return null;
   try {
-    const r = JSON.parse(bruto) as { diagnosis?: unknown; date?: unknown; apiData?: unknown } | null;
+    const r = JSON.parse(bruto) as {
+      diagnosis?: unknown;
+      date?: unknown;
+      apiData?: unknown;
+      motor?: unknown;
+      conclusao?: unknown;
+    } | null;
     if (!r || typeof r.diagnosis !== "string" || typeof r.date !== "string") return null;
     const data = new Date(r.date);
     if (Number.isNaN(data.getTime())) return null;
+    // Rastreio completo: a conclusão vem do motor e só vale com as medições à vista.
+    const motor = lerMotor(r.motor);
+    if (motor && CONCLUSOES.includes(r.conclusao as Conclusao)) {
+      return { conclusao: r.conclusao as Conclusao, data, analise: null, motor };
+    }
     const analise =
       r.apiData && typeof r.apiData === "object" && typeof (r.apiData as ScreeningResponse).estado === "string"
         ? (r.apiData as ScreeningResponse)

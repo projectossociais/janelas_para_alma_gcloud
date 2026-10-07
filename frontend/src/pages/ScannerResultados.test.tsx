@@ -67,6 +67,7 @@ const abrir = (url = "/scanner/resultados") =>
         <Route path="/scanner/resultados" element={<ScannerResultados />} />
         <Route path="/en/scanner/results" element={<ScannerResultados />} />
         <Route path="/scanner" element={<p>Página do rastreio</p>} />
+        <Route path="/rastreio-completo" element={<p>Página do rastreio completo</p>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -232,5 +233,54 @@ describe("ScannerResultados — acessibilidade", () => {
     const { container } = abrir();
     await screen.findByRole("heading", { level: 1 });
     expect(await violacoesAcessibilidade(container)).toEqual([]);
+  });
+});
+
+describe("ScannerResultados — rastreio completo (motor próprio)", () => {
+  const motor = (dica = "geral") => ({
+    horizontalDelta: 9.2,
+    verticalDelta: 0.4,
+    dispersaoDelta: 0.9,
+    fotografiasValidas: 4,
+    fotografiasTotal: 5,
+    versaoRegra: "regra-1",
+    motivo: null,
+    dica,
+  });
+  const guardarMotor = (conclusao: string, dica = "geral") =>
+    sessionStorage.setItem(
+      "scanResult",
+      JSON.stringify({
+        diagnosis: conclusao === "normal" ? "Alinhamento Fisiológico Normal" : "Necessária Avaliação Oftalmológica",
+        confidence: 0,
+        date: "2026-10-07T10:00:00Z",
+        apiData: null,
+        conclusao,
+        motor: motor(dica),
+      }),
+    );
+
+  it("avaliação do motor: encaminha para consulta e repetir leva ao rastreio completo", async () => {
+    guardarMotor("avaliacao");
+    abrir();
+    expect(await screen.findByRole("heading", { level: 1, name: T.avaliacaoTitulo })).toBeInTheDocument();
+    expect(principal(T.marcarConsulta)).toHaveAttribute("href", "/marcar-consulta");
+    expect(screen.getByRole("link", { name: T.repetir })).toHaveAttribute("href", "/rastreio-completo");
+  });
+
+  it("não mediu: inconclusivo, com a dica do motivo e a repetir no rastreio completo", async () => {
+    guardarMotor("inconclusivo", "luz");
+    abrir();
+    expect(await screen.findByRole("heading", { level: 1, name: T.inconclusivoTitulo })).toBeInTheDocument();
+    expect(screen.getByText(T.dicaLuz)).toBeInTheDocument();
+    expect(principal(T.repetir)).toHaveAttribute("href", "/rastreio-completo");
+  });
+
+  it("o relatório PDF sai com as medições do motor", async () => {
+    guardarMotor("avaliacao");
+    const u = userEvent.setup();
+    abrir();
+    await u.click(await screen.findByRole("button", { name: T.descarregar }));
+    await waitFor(() => expect(gravarPdf).toHaveBeenCalled());
   });
 });

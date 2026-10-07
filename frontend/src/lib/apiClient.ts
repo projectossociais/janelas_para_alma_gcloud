@@ -1,5 +1,6 @@
 import i18n from "@/i18n";
 import { IDIOMA_EN } from "@/i18n/idiomas";
+import type { MedicoesParaApi } from "@/lib/rastreio/captura/sessaoCompleta";
 import { TEXTOS_CONHECIDOS_SCANNER } from "@/services/api/screeningApi";
 /**
  * Cliente fino para a API própria (FastAPI). Nunca guarda tokens — a sessão
@@ -691,6 +692,23 @@ export const screeningsApi = {
     }),
 
   listarMinhas: () => pedido<ScreeningPublica[]>("/screenings/minhas"),
+};
+
+export interface ResultadoRastreioCompleto {
+  conclusao: "encaminhar" | "sem_sinais" | "nao_mediu";
+  motivo: string | null;
+  versao_regra: string;
+  /** Preenchido só se ficou gravado no histórico da conta. */
+  screening_id: string | null;
+}
+
+export const rastreioCompletoApi = {
+  /** Envia só as medições do motor (nunca imagens); a API decide o resultado. */
+  classificar: (medicoes: MedicoesParaApi) =>
+    pedido<ResultadoRastreioCompleto>("/rastreio-completo", {
+      method: "POST",
+      body: JSON.stringify(medicoes),
+    }),
 };
 
 export interface DoacaoPublica {

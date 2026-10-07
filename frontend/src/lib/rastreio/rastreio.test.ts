@@ -10,6 +10,7 @@ import {
   variacaoDesalinhamento,
   dataUrlParaBlob,
   lerResultadoGuardado,
+  paraResultadoMotor,
   luminanciaMedia,
   paraRegistoScreening,
   paraResultadoEcra,
@@ -214,5 +215,52 @@ describe("lerResultadoGuardado", () => {
     expect(lerResultadoGuardado("{isto não é json")).toBeNull();
     expect(lerResultadoGuardado(JSON.stringify({ diagnosis: DIAGNOSTICO_NORMAL }))).toBeNull();
     expect(lerResultadoGuardado(JSON.stringify({ diagnosis: DIAGNOSTICO_NORMAL, date: "ontem" }))).toBeNull();
+  });
+});
+
+describe("rastreio completo (motor próprio)", () => {
+  const MEDICOES = {
+    horizontal_delta: 9.2,
+    vertical_delta: 0.4,
+    dispersao_delta: 0.9,
+    fotografias_validas: 4,
+    fotografias_total: 5,
+    falha: null,
+    versao_motor: "motor-teste",
+  };
+  const guardar = (conclusao: "encaminhar" | "sem_sinais" | "nao_mediu") =>
+    JSON.stringify(
+      paraResultadoMotor(
+        MEDICOES,
+        { conclusao, motivo: conclusao === "encaminhar" ? "desvio-horizontal" : null, versao_regra: "regra-1", screening_id: null },
+        "geral",
+        new Date("2026-10-07T10:00:00Z"),
+      ),
+    );
+
+  it("as três conclusões do servidor passam a avaliação, normal e inconclusivo", () => {
+    expect(lerResultadoGuardado(guardar("encaminhar"))?.conclusao).toBe("avaliacao");
+    expect(lerResultadoGuardado(guardar("sem_sinais"))?.conclusao).toBe("normal");
+    expect(lerResultadoGuardado(guardar("nao_mediu"))?.conclusao).toBe("inconclusivo");
+  });
+
+  it("traz as medições em Δ para o ecrã e o relatório", () => {
+    const r = lerResultadoGuardado(guardar("encaminhar"));
+    expect(r?.motor).toMatchObject({ horizontalDelta: 9.2, verticalDelta: 0.4, fotografiasValidas: 4, versaoRegra: "regra-1" });
+    expect(r?.analise).toBeNull();
+  });
+
+  it("'não mediu' nunca fica como normal, nem no texto de compatibilidade", () => {
+    const bruto = JSON.parse(guardar("nao_mediu"));
+    expect(bruto.diagnosis).not.toBe(DIAGNOSTICO_NORMAL);
+    expect(lerResultadoGuardado(JSON.stringify(bruto))?.conclusao).toBe("inconclusivo");
+  });
+
+  it("conclusão adulterada ou medições em falta: não se confia (cai no formato antigo, nunca em 'normal')", () => {
+    const bruto = JSON.parse(guardar("encaminhar"));
+    expect(lerResultadoGuardado(JSON.stringify({ ...bruto, conclusao: "sem_sinais" }))?.conclusao).toBe("avaliacao");
+    const semNumeros = { ...bruto, motor: { ...bruto.motor, horizontalDelta: "9" } };
+    expect(lerResultadoGuardado(JSON.stringify(semNumeros))?.motor).toBeUndefined();
+    expect(lerResultadoGuardado(JSON.stringify(semNumeros))?.conclusao).toBe("avaliacao");
   });
 });

@@ -16,6 +16,7 @@ const fontes = import.meta.glob(
     "!/src/pages/admin/**",
     "!/src/components/admin/**",
     "!/src/pages/RoadmapTecnico.tsx", // interno, só PT
+    "!/src/lib/rastreio/analise/relatorioV1.ts", // relatório interno da fase V1 (validação do motor), nunca no site, só PT
     "!/src/pages/jogo/perguntasOffline.ts", // banco de perguntas offline, fora da Fase 3
     "!/src/i18n/**",
     // laboratório de identidade: só existe em desenvolvimento (import.meta.env.DEV

@@ -49,6 +49,8 @@ export const ROTAS = [
   // Link temporário que a família envia ao médico (Fase B): público, fora do sitemap, noindex.
   { chave: "relatorioPartilhado", pt: "/relatorio-partilhado/:token", en: "/en/shared-report/:token", foraDoSitemap: true },
   { chave: "scanner", pt: "/scanner", en: "/en/scanner" },
+  // Rastreio com o motor próprio: só em teste local (ver App.tsx), nunca no sitemap.
+  { chave: "rastreioCompleto", pt: "/rastreio-completo", en: "/en/complete-screening", foraDoSitemap: true },
   { chave: "scannerResultados", pt: "/scanner/resultados", en: "/en/scanner/results", foraDoSitemap: true },
   { chave: "marcarConsulta", pt: "/marcar-consulta", en: "/en/book-appointment", foraDoSitemap: true },
   { chave: "entrar", pt: "/login", en: "/en/sign-in", foraDoSitemap: true },

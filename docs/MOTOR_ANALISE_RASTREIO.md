@@ -406,6 +406,23 @@ mostrava estes números (corrigido no ramo `redesenho/frontend`, commit `3c402de
 
 ---
 
+### Estado em 2026-10-07: o fluxo real já existe (só em teste)
+
+Feito, atrás da rota `/rastreio-completo` (só `npm run dev` e `npm run telemovel`):
+- **Captura:** caminho A (câmara de trás na página, luz, 4 fotografias seguidas) e caminho B
+  (câmara nativa, 3 fotografias uma a uma); se o A falhar oferece-se o B.
+- **Análise no telemóvel:** detector de íris + motor + sessão (`lib/rastreio/captura/sessaoCompleta.ts`),
+  com a dica de repetição pelo motivo mais frequente da falha.
+- **API:** `POST /rastreio-completo` classifica (convidados também) e grava só se houve medição.
+- **Resultado e relatório:** `ScannerResultados` e o PDF mostram os Δ do motor.
+
+**Falta:** a **medição real** das fases V1 e V2 (fotografias reais, o Android e o iPhone, a
+resolução do vídeo no iPhone), onde se fixam os limiares e a dispersão máxima; o alvo de
+fixação (decisão 1 abaixo); e a ligação do rastreio em produção (só depois de V1 e V2 e de
+revisão humana do esquema, da regra e do texto do consentimento).
+
+---
+
 ## 11. Decisões do dono do projecto
 
 **Tomadas a 2026-09-30:**
