@@ -60,6 +60,18 @@ describe("actividade (últimos 14 dias)", () => {
 });
 
 describe("serieDeLimiares", () => {
+  it("ignora as sessões de baixa atenção (como a tendência): não são uma medição fiável", () => {
+    const serie = serieDeLimiares(
+      [
+        s({ d: 6, exercicio_id: "ambliopia", olho: "esquerdo", limiar: 0.4 }),
+        s({ d: 6, h: 18, exercicio_id: "ambliopia", olho: "esquerdo", limiar: 1.0, sinais: { baixa_atencao: true } }),
+        s({ d: 7, exercicio_id: "ambliopia", olho: "esquerdo", limiar: 1.0, sinais: { baixa_atencao: true } }),
+      ],
+      "ambliopia",
+    );
+    expect(serie).toEqual([{ dia: "2026-10-06", esquerdo: 0.4 }]);
+  });
+
   it("um ponto por dia, nunca duas datas iguais; conta a última sessão do dia", () => {
     const serie = serieDeLimiares(
       [

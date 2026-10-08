@@ -457,6 +457,15 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
 - **Tempo activo só com respostas.** Conta intervalos entre respostas até 8 s e com o
   separador visível (`tempoActivo.ts`). Treinos com um estímulo de controlo errado ficam
   `sinais.baixa_atencao` e não contam para a dose.
+- **Nunca mostrar um resultado que a sessão não mediu.** O limiar de um treino só existe com
+  pelo menos 4 inversões da escada (`INVERSOES_MINIMAS`, `lib/visao/escada.ts`); sem isso o
+  resumo diz que não houve medição e grava `limiar: null` (até 2026-10-08 mostrava o nível de
+  partida, ou o anel maior a quem errou tudo, e isso chegava ao relatório do médico). Sem
+  valores de referência (contraste), um valor é "a comparar", nunca "Sem sinais".
+- **Testes de acuidade e contraste contam anel a anel** (`limiarFinoTeste`, como a ETDRS conta
+  letra a letra): cada erro no último nível passado piora 1/3 de nível, cada acerto no primeiro
+  falhado melhora 1/3. Só com o último nível passado, dois olhos com erros diferentes davam o
+  mesmo resultado (caso real, 2026-10-08).
 - **Sessões novas gravam `versao: 2`** e nunca mostram "guardado" antes da resposta da API
   (`useRegistoSessao`, com "Tentar de novo" que reenvia só o que falhou).
 

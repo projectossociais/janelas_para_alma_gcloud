@@ -44,6 +44,8 @@ export interface EstadoEscadaTeste {
   /** Passou o nível mais difícil que o ecrã consegue mostrar. */
   atingiuLimite: boolean;
   respostas: number;
+  /** Acertos e erros em cada nível mostrado (um nível nunca se repete no teste). */
+  porNivel: Readonly<Record<number, { acertos: number; erros: number }>>;
 }
 
 export function iniciarEscadaTeste(total: number, indiceInicial: number): EstadoEscadaTeste {
@@ -59,6 +61,7 @@ export function iniciarEscadaTeste(total: number, indiceInicial: number): Estado
     limiar: null,
     atingiuLimite: false,
     respostas: 0,
+    porNivel: {},
   };
 }
 
@@ -72,7 +75,13 @@ export function responderTeste(e: EstadoEscadaTeste, acertou: boolean): EstadoEs
   if (e.terminado) return e;
   const acertos = e.acertosNoNivel + (acertou ? 1 : 0);
   const erros = e.errosNoNivel + (acertou ? 0 : 1);
-  const base = { ...e, acertosNoNivel: acertos, errosNoNivel: erros, respostas: e.respostas + 1 };
+  const base = {
+    ...e,
+    acertosNoNivel: acertos,
+    errosNoNivel: erros,
+    respostas: e.respostas + 1,
+    porNivel: { ...e.porNivel, [e.indice]: { acertos, erros } },
+  };
 
   const errosPermitidos = TENTATIVAS_POR_NIVEL - ACERTOS_PARA_PASSAR;
   if (acertos >= ACERTOS_PARA_PASSAR) return passarNivel(base);
@@ -108,6 +117,30 @@ function falharNivel(e: EstadoEscadaTeste): EstadoEscadaTeste {
     return { ...e, falhados, terminado: true, limiar: null };
   }
   return proximoNivel({ ...e, falhados }, anterior);
+}
+
+/**
+ * Limiar do teste com contagem anel a anel (como a ETDRS conta letra a letra),
+ * no valor de cada nível (`valores[i]`, do mais fácil ao mais difícil). Parte
+ * do último nível passado; cada erro nesse nível aproxima 1/3 do nível mais
+ * fácil, cada acerto no primeiro nível falhado aproxima 1/3 do mais difícil.
+ * Sem isto, dois olhos que passassem os mesmos níveis davam sempre o mesmo
+ * resultado, mesmo com um a errar mais (caso real, 2026-10-08). `null` =
+ * nem o nível mais fácil.
+ */
+export function limiarFinoTeste(e: EstadoEscadaTeste, valores: readonly number[]): number | null {
+  if (e.limiar === null) return null;
+  const n = e.limiar;
+  let valor = valores[n];
+  const passoFacil =
+    n > 0 ? valores[n - 1] - valores[n] : n + 1 < valores.length ? valores[n] - valores[n + 1] : 0;
+  const erros = e.porNivel[n]?.erros ?? 0;
+  valor += (passoFacil * erros) / TENTATIVAS_POR_NIVEL;
+  const seguinte = e.porNivel[n + 1];
+  if (seguinte && n + 1 < valores.length) {
+    valor += ((valores[n + 1] - valores[n]) * seguinte.acertos) / TENTATIVAS_POR_NIVEL;
+  }
+  return valor;
 }
 
 // --- Treino -----------------------------------------------------------------
@@ -167,12 +200,22 @@ function mover(e: EstadoEscadaTreino, sentido: 1 | -1): EstadoEscadaTreino {
 }
 
 /**
- * Estimativa do limiar do treino, em índice (pode ser fraccionária): média
- * das últimas inversões; sem inversões suficientes, o nível actual.
+ * Inversões que a escada precisa para a sessão ter medido um limiar. Menos do
+ * que isto -- sessão parada logo no início, ou erros mesmo no nível mais
+ * fácil (a escada fica presa em baixo, sem inverter) -- e não há medição.
  */
-export function limiarTreino(e: EstadoEscadaTreino): number {
+export const INVERSOES_MINIMAS = 4;
+
+/**
+ * Estimativa do limiar do treino, em índice (pode ser fraccionária): média
+ * das últimas inversões. `null` quando a sessão não o mediu: até 2026-10-08
+ * devolvia o nível onde a escada estava (o de partida, ou o mais fácil para
+ * quem errou tudo), e esse número aparecia como resultado e ia para o
+ * progresso e para o relatório do médico.
+ */
+export function limiarTreino(e: EstadoEscadaTreino): number | null {
+  if (e.inversoes.length < INVERSOES_MINIMAS) return null;
   const ultimas = e.inversoes.slice(-INVERSOES_PARA_LIMIAR);
-  if (ultimas.length < 2) return e.indice;
   return ultimas.reduce((s, x) => s + x, 0) / ultimas.length;
 }
 
