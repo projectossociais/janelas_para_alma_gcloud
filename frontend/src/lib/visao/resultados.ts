@@ -73,9 +73,9 @@ export const DISPARIDADES_ARCSEG = [800, 400, 200, 140, 100, 70, 50, 40];
 
 /**
  * Pior do que isto (só viu a forma a 400″ ou 800″) é sinal a investigar.
- * PROVISÓRIO (2026-10-08), a confirmar pelo dono do projecto: os testes de
- * pontos aleatórios em papel encaminham a partir de 100-200″ nas crianças;
- * aqui, com óculos de papel e ecrã (cross-talk), fica-se pelo lado tolerante.
+ * Aprovado pelo dono do projecto a 2026-10-08 (PR #145): os testes de pontos
+ * aleatórios em papel encaminham a partir de 100-200″ nas crianças; aqui, com
+ * óculos de papel e ecrã (cross-talk), fica-se pelo lado tolerante.
  */
 export const ESTEREO_SINAL_ACIMA_ARCSEG = 200;
 

@@ -19,18 +19,43 @@ export const Dialogo = Radix.Root;
 export const DialogoGatilho = Radix.Trigger;
 export const DialogoFechar = Radix.Close;
 
-export interface DialogoConteudoProps {
+interface DialogoConteudoBase {
   titulo: ReactNode;
   descricao?: ReactNode;
-  /** Nome acessível do botão X, traduzido (ex.: "Fechar"). */
-  rotuloFechar: string;
   /** Botões de acção, alinhados à direita (no telemóvel, empilhados). */
   rodape?: ReactNode;
   children?: ReactNode;
   className?: string;
 }
 
-export const DialogoConteudo = ({ titulo, descricao, rotuloFechar, rodape, children, className }: DialogoConteudoProps) => (
+export type DialogoConteudoProps = DialogoConteudoBase &
+  (
+    | {
+        /** Nome acessível do botão X, traduzido (ex.: "Fechar"). */
+        rotuloFechar: string;
+        obrigaEscolha?: false;
+      }
+    | {
+        /**
+         * Só se sai por um dos botões do rodapé: sem X, e Esc ou um clique fora
+         * não fecham. Raro -- só quando fechar "por engano" saltaria um passo
+         * que tem de acontecer (ex.: a Vida Extra do jogo, que ao encerrar
+         * mostra sempre a resposta certa e a explicação).
+         */
+        obrigaEscolha: true;
+        rotuloFechar?: never;
+      }
+  );
+
+export const DialogoConteudo = ({
+  titulo,
+  descricao,
+  rotuloFechar,
+  obrigaEscolha = false,
+  rodape,
+  children,
+  className,
+}: DialogoConteudoProps) => (
   <Radix.Portal>
     <Radix.Overlay
       className={cn(
@@ -43,6 +68,9 @@ export const DialogoConteudo = ({ titulo, descricao, rotuloFechar, rodape, child
       <Radix.Content
         // Sem descrição, diz-se explicitamente que não há (o Radix avisa se faltar).
         {...(descricao ? {} : { "aria-describedby": undefined })}
+        {...(obrigaEscolha
+          ? { onEscapeKeyDown: (e: Event) => e.preventDefault(), onInteractOutside: (e: Event) => e.preventDefault() }
+          : {})}
         className={cn(
           "relative w-full max-w-lg rounded-cartao bg-superficie-elevada p-6 text-tinta shadow-nivel-2",
           "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco",
@@ -58,16 +86,18 @@ export const DialogoConteudo = ({ titulo, descricao, rotuloFechar, rodape, child
         ) : null}
         {children && <div className="mt-4">{children}</div>}
         {rodape && <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">{rodape}</div>}
-        <Radix.Close
-          aria-label={rotuloFechar}
-          className={cn(
-            "absolute right-3 top-3 flex min-h-alvo-app min-w-alvo-app items-center justify-center rounded-controlo",
-            "text-tinta-suave transition-colors duration-feedback hover:bg-superficie-alt hover:text-tinta",
-            "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco",
-          )}
-        >
-          <X className="size-5" aria-hidden />
-        </Radix.Close>
+        {!obrigaEscolha && (
+          <Radix.Close
+            aria-label={rotuloFechar}
+            className={cn(
+              "absolute right-3 top-3 flex min-h-alvo-app min-w-alvo-app items-center justify-center rounded-controlo",
+              "text-tinta-suave transition-colors duration-feedback hover:bg-superficie-alt hover:text-tinta",
+              "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco",
+            )}
+          >
+            <X className="size-5" aria-hidden />
+          </Radix.Close>
+        )}
       </Radix.Content>
     </Radix.Overlay>
   </Radix.Portal>
