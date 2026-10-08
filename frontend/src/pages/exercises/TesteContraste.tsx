@@ -99,7 +99,10 @@ const ResultadoContrasteEcra = ({ res, ctx }: { res: Record<Olho, ResultadoContr
           <CartaoOlho
             key={olho}
             titulo={olho === "direito" ? t("Visao.olhoDireito") : t("Visao.olhoEsquerdo")}
-            estado={r.logCs === null ? "sinal" : diferenca ? "indeterminado" : "ok"}
+            // Sem valores de referência (ver a nota no fim), um valor é para
+            // comparar, nunca "Sem sinais": até 2026-10-08 quem só viu o anel
+            // mais escuro (0,00) recebia o cartão verde.
+            estado={r.logCs === null ? "sinal" : "indeterminado"}
           >
             {r.logCs === null ? (
               t("Visao.contrasteNaoViu")

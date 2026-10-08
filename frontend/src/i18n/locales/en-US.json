@@ -1929,7 +1929,8 @@
     "partilhaLink": "Link for the doctor",
     "partilhadoMarca": "Janelas Para a Alma",
     "aneisSemLimiar": "This session did not measure a threshold: there were too few answers, or mistakes even with the largest rings. No value was added to your progress.",
-    "contrasteBlocosSemLimiar": "This session did not measure contrast sensitivity: there were too few answers, or mistakes even with the darkest rings. No value was added to your progress."
+    "contrasteBlocosSemLimiar": "This session did not measure contrast sensitivity: there were too few answers, or mistakes even with the darkest rings. No value was added to your progress.",
+    "estereoSinalDiferencaGrande": "You only identified the shape with the largest differences ({{valor}}″): depth perception below what is expected, a sign worth checking."
   },
   "ConsentimentoSaude": {
     "titulo": "Permission to process health data",

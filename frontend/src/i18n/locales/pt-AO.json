@@ -1929,7 +1929,8 @@
     "partilhaLink": "Link para o médico",
     "partilhadoMarca": "Janelas Para a Alma",
     "aneisSemLimiar": "Esta sessão não chegou a medir o limiar: houve poucas respostas, ou erros mesmo nos anéis maiores. Nenhum valor foi registado no progresso.",
-    "contrasteBlocosSemLimiar": "Esta sessão não chegou a medir a sensibilidade ao contraste: houve poucas respostas, ou erros mesmo nos anéis mais escuros. Nenhum valor foi registado no progresso."
+    "contrasteBlocosSemLimiar": "Esta sessão não chegou a medir a sensibilidade ao contraste: houve poucas respostas, ou erros mesmo nos anéis mais escuros. Nenhum valor foi registado no progresso.",
+    "estereoSinalDiferencaGrande": "Só identificou a forma com as diferenças maiores ({{valor}}″): visão em profundidade abaixo do esperado, sinal a investigar."
   },
   "ConsentimentoSaude": {
     "titulo": "Autorização para tratar dados de saúde",
