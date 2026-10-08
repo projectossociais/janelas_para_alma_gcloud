@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Ruler } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Botao } from "@/design/componentes/Botao";
 import AnelLandolt from "@/components/visao/AnelLandolt";
 import AssistenteTeste, { type ContextoTeste } from "@/components/visao/AssistenteTeste";
-import PaginaExercicio from "@/components/visao/PaginaExercicio";
 import { CartaoOlho, EcraResultado } from "@/components/visao/Resultados";
 import TarefaAnelTeste, { type FimTarefaAnel } from "@/components/visao/TarefaAnelTeste";
 import { useRegistoSessao } from "@/components/visao/hooks";
@@ -150,10 +149,10 @@ const ResultadoAcuidadeEcra = ({
       }
       accoesExtra={
         algumLimite && ctx.distanciaMm < DISTANCIA_LONGE_MM ? (
-          <Button variant="outline" size="lg" className="w-full gap-2 sm:w-auto" onClick={() => repetirA(DISTANCIA_LONGE_MM)}>
+          <Botao variante="secundario" tamanho="g" className="w-full sm:w-auto" onClick={() => repetirA(DISTANCIA_LONGE_MM)}>
             <Ruler className="h-4 w-4" />
             {t("Visao.repetirAUmMetro")}
-          </Button>
+          </Botao>
         ) : undefined
       }
     />
@@ -163,16 +162,14 @@ const ResultadoAcuidadeEcra = ({
 const TesteAcuidade = () => {
   const { t } = useTranslation();
   return (
-    <PaginaExercicio>
-      <AssistenteTeste<ResultadoAcuidade>
-        exercicioId={EXERCICIO_ID}
-        grupo="trial"
-        titulo={t("Visao.acuidadeTitulo")}
-        descricao={t("Visao.acuidadeDescricao")}
-        tarefa={(_olho, ctx, aoTerminar) => <TarefaAcuidade ctx={ctx} aoTerminar={aoTerminar} />}
-        resultado={(res, ctx, repetirA) => <ResultadoAcuidadeEcra res={res} ctx={ctx} repetirA={repetirA} />}
-      />
-    </PaginaExercicio>
+    <AssistenteTeste<ResultadoAcuidade>
+      exercicioId={EXERCICIO_ID}
+      grupo="trial"
+      titulo={t("Visao.acuidadeTitulo")}
+      descricao={t("Visao.acuidadeDescricao")}
+      tarefa={(_olho, ctx, aoTerminar) => <TarefaAcuidade ctx={ctx} aoTerminar={aoTerminar} />}
+      resultado={(res, ctx, repetirA) => <ResultadoAcuidadeEcra res={res} ctx={ctx} repetirA={repetirA} />}
+    />
   );
 };
 

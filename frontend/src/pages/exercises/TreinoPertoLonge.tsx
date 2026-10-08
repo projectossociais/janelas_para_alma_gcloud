@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { Mountain } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Botao } from "@/design/componentes/Botao";
 import AnelLandolt from "@/components/visao/AnelLandolt";
 import AssistenteTreino, {
   type ApiTarefa,
   type ContextoTreino,
   type ResultadoTreino,
 } from "@/components/visao/AssistenteTreino";
-import PaginaExercicio from "@/components/visao/PaginaExercicio";
 import PalcoVisual from "@/components/visao/PalcoVisual";
 import SeletorDireccao from "@/components/visao/SeletorDireccao";
 import { formatarDecimal } from "@/i18n/formatar";
@@ -144,9 +143,9 @@ const TarefaPertoLonge = ({
               <Mountain className="h-16 w-16" style={{ color: "#16305C" }} aria-hidden />
             )}
           </PalcoVisual>
-          <Button size="lg" className="h-14 w-full max-w-xs bg-teal text-lg text-teal-foreground hover:bg-teal/90" onClick={nitido}>
+          <Botao tamanho="g" className="w-full max-w-xs" onClick={nitido}>
             {t("Visao.nitido")}
-          </Button>
+          </Botao>
         </>
       )}
     </div>
@@ -156,18 +155,16 @@ const TarefaPertoLonge = ({
 const TreinoPertoLonge = () => {
   const { t } = useTranslation();
   return (
-    <PaginaExercicio>
-      <AssistenteTreino
-        exercicioId={EXERCICIO_ID}
-        grupo="premium"
-        titulo={t("Visao.pertoLongeTitulo")}
-        descricao={t("Visao.pertoLongeDescricao")}
-        monocular
-        distanciaFixaMm={DISTANCIA_PERTO_MM}
-        aviso={<p className="text-sm text-muted-foreground">{t("Visao.pertoLongeComoFazer")}</p>}
-        tarefa={(api, ctx, resultado) => <TarefaPertoLonge api={api} ctx={ctx} resultado={resultado} />}
-      />
-    </PaginaExercicio>
+    <AssistenteTreino
+      exercicioId={EXERCICIO_ID}
+      grupo="premium"
+      titulo={t("Visao.pertoLongeTitulo")}
+      descricao={t("Visao.pertoLongeDescricao")}
+      monocular
+      distanciaFixaMm={DISTANCIA_PERTO_MM}
+      aviso={<p className="text-sm text-muted-foreground">{t("Visao.pertoLongeComoFazer")}</p>}
+      tarefa={(api, ctx, resultado) => <TarefaPertoLonge api={api} ctx={ctx} resultado={resultado} />}
+    />
   );
 };
 

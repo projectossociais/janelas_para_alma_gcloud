@@ -28,10 +28,25 @@ export interface LayoutTarefaProps {
   /** A acção principal do passo (normalmente um Botao grande, largura total). */
   accao?: ReactNode;
   textoSaltar: string;
+  /**
+   * Largura da coluna. `leitura` (36 rem, por omissão) para formulários e
+   * perguntas; `texto` (42 rem) para tarefas com um estímulo visual que precisa
+   * de espaço (os exercícios: cartão de calibração, estereogramas).
+   */
+  largura?: "leitura" | "texto";
   children: ReactNode;
 }
 
-export const LayoutTarefa = ({ tema, passo, sair, confirmarSaida, accao, textoSaltar, children }: LayoutTarefaProps) => {
+export const LayoutTarefa = ({
+  tema,
+  passo,
+  sair,
+  confirmarSaida,
+  accao,
+  textoSaltar,
+  largura = "leitura",
+  children,
+}: LayoutTarefaProps) => {
   const botaoSair = (
     <Botao variante="fantasma" className="gap-1.5 px-3" onClick={confirmarSaida ? undefined : sair.aoSair}>
       <X aria-hidden />
@@ -74,13 +89,13 @@ export const LayoutTarefa = ({ tema, passo, sair, confirmarSaida, accao, textoSa
               )}
             </div>
           </Contentor>
-          <Contentor largura="leitura" className="pb-3 sm:hidden">
+          <Contentor largura={largura} className="pb-3 sm:hidden">
             <IndicadorPassos {...passo} />
           </Contentor>
         </header>
 
         <main id="conteudo" tabIndex={-1} className="flex-1 outline-none">
-          <Contentor largura="leitura" className="pb-32 pt-8 sm:pt-14 lg:pb-16">
+          <Contentor largura={largura} className="pb-32 pt-8 sm:pt-14 lg:pb-16">
             {children}
             {accao && <div className="mt-10 hidden lg:block">{accao}</div>}
           </Contentor>

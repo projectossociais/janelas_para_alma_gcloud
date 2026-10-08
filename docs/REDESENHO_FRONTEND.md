@@ -274,6 +274,18 @@ Acrescentar abaixo, com data, o que for decidido ou detalhado em cada conversa s
 redesenho (referências visuais, páginas a priorizar, gostos e recusas do dono do
 projecto, feedback do Lukeny). Mais recente em cima.
 
+- **2026-10-07** — **Fase 4, a moldura dos 8 exercícios (ramo `redesenho/exercicios`).** A casca
+  (`BaseExercise`) passa ao arquétipo Tarefa: sem navegação do site, o passo com o nome ("Passo 2 de
+  7 · Cartão") e "Sair", que **pede confirmação a meio** para ninguém perder uma sessão por engano.
+  Coluna `texto` (42 rem, nova opção do `LayoutTarefa`) por causa do cartão de calibração e dos
+  estereogramas. O aviso de triagem passa de caixa a **uma linha discreta** (repete-se em todos os
+  passos e empurrava o exercício para fora do ecrã do telemóvel); a descrição só aparece no primeiro
+  passo. Bloqueio (criar conta, teste de 7 dias, Premium) e consentimento no estilo novo. Dentro dos
+  passos, só o aspecto: os ~40 botões antigos passaram ao `Botao` e as cores escritas à mão (teal,
+  navy, gold) aos tokens (acção, aviso, sucesso), com o mesmo significado. **A lógica, as tarefas e o
+  palco branco não mudaram** (CLAUDE.md §6). **Falta:** a página `/exercicios` (lista), o progresso e
+  o relatório (`PaginaExercicio` fica só para esses), e o jogo.
+
 - **2026-10-07** — **Fase 4 começa: o painel (`DashboardUser.tsx`, ramo `redesenho/fase-4`).** Passa ao
   arquétipo App (`LayoutApp`): navegação única (separadores em baixo no telemóvel, barra lateral no
   computador), sino de notificações e **menu da conta** (novo `MenuConta`: perfil, definições, sair).

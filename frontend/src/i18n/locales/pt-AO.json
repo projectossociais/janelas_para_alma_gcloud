@@ -301,7 +301,6 @@
   "BaseExercise": {
     "sair": "Sair",
     "conteudoPremium": "Conteúdo Premium",
-    "sairDoExercicio": "Sair do exercício",
     "incluidoNoTeste": "Incluído no teste de 7 dias",
     "tituloCriarConta": "Crie uma conta para começar",
     "textoCriarConta": "Com uma conta, pode experimentar este exercício gratuitamente durante 7 dias.",
@@ -311,7 +310,13 @@
     "botaoIniciarTrial": "Começar teste gratuito de 7 dias",
     "tituloPremium": "Disponível no plano Premium",
     "textoPremium": "Active o plano Premium para ter acesso a todos os exercícios, sem limite.",
-    "botaoPremium": "Ver planos Premium"
+    "botaoPremium": "Ver planos Premium",
+    "saltar": "Saltar para o exercício",
+    "confirmarSaidaTitulo": "Sair do exercício?",
+    "confirmarSaidaTexto": "Esta sessão ainda não foi guardada. Se sair agora, perde o que fez até aqui.",
+    "ficar": "Continuar o exercício",
+    "fechar": "Fechar",
+    "aPreparar": "A preparar o exercício…"
   },
   "CampanhaGamek": {
     "n12DeSetembro": "12 de Setembro",

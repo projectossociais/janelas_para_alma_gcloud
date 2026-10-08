@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObjec
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Coins, Eye, Flame, Gem, Square } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Botao } from "@/design/componentes/Botao";
 import BaseExercise from "@/components/exercises/BaseExercise";
 import type { GrupoExercicio } from "@/components/exercises/useAcaoDesbloqueio";
 import PausaRespiracao from "@/components/visao/PausaRespiracao";
@@ -154,12 +154,12 @@ export const EscolherOlho = ({
             <BotaoContinuar aoClicar={() => void escolher(sugerido)} desactivado={aGravar}>
               {t("Visao.treinarOlho", { olho: nomeOlho(sugerido) })}
             </BotaoContinuar>
-            <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
+            <Botao asChild variante="secundario" tamanho="g" className="w-full sm:w-auto">
               <Link to={localizar("/marcar-consulta")}>{t("Visao.marcarConsulta")}</Link>
-            </Button>
-            <Button variant="ghost" onClick={() => setNaoSei(false)}>
+            </Botao>
+            <Botao variante="fantasma" onClick={() => setNaoSei(false)}>
               {t("Visao.escolherOutroOlho")}
-            </Button>
+            </Botao>
           </>
         }
       >
@@ -179,17 +179,17 @@ export const EscolherOlho = ({
         titulo={t("Visao.naoSeiOlhoTitulo")}
         accao={
           <>
-            <Button asChild size="lg" className="w-full bg-teal text-teal-foreground hover:bg-teal/90 sm:w-auto">
+            <Botao asChild tamanho="g" className="w-full sm:w-auto">
               <Link to={localizar("/exercicios/acuidade")}>
                 {temAcuidade ? t("Visao.repetirTesteAcuidade") : t("Visao.fazerTesteAcuidade")}
               </Link>
-            </Button>
-            <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
+            </Botao>
+            <Botao asChild variante="secundario" tamanho="g" className="w-full sm:w-auto">
               <Link to={localizar("/marcar-consulta")}>{t("Visao.marcarConsulta")}</Link>
-            </Button>
-            <Button variant="ghost" onClick={() => setNaoSei(false)}>
+            </Botao>
+            <Botao variante="fantasma" onClick={() => setNaoSei(false)}>
               {t("Visao.jaSeiOOlho")}
-            </Button>
+            </Botao>
           </>
         }
       >
@@ -203,15 +203,15 @@ export const EscolherOlho = ({
     <EcraPasso icone={<Eye className="h-7 w-7" />} titulo={t("Visao.qualOlhoMaisFraco")}>
       <p className="text-sm text-muted-foreground">{t("Visao.qualOlhoMaisFracoTexto")}</p>
       <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-        <Button size="lg" variant="outline" disabled={aGravar} onClick={() => void escolher("direito")}>
+        <Botao tamanho="g" variante="secundario" disabled={aGravar} onClick={() => void escolher("direito")}>
           {t("Visao.olhoDireito")}
-        </Button>
-        <Button size="lg" variant="outline" disabled={aGravar} onClick={() => void escolher("esquerdo")}>
+        </Botao>
+        <Botao tamanho="g" variante="secundario" disabled={aGravar} onClick={() => void escolher("esquerdo")}>
           {t("Visao.olhoEsquerdo")}
-        </Button>
-        <Button size="lg" variant="ghost" disabled={aGravar} onClick={() => void escolher("nao_sei")}>
+        </Botao>
+        <Botao tamanho="g" variante="fantasma" disabled={aGravar} onClick={() => void escolher("nao_sei")}>
           {t("Visao.naoSei")}
-        </Button>
+        </Botao>
       </div>
       {erro && (
         <p className="text-sm text-destructive" role="alert">
@@ -229,19 +229,19 @@ export const EscolherOlho = ({
 const BonusDoJogo = ({ bonus }: { bonus: BonusAssiduidade }) => {
   const { t } = useTranslation();
   return (
-    <div className="w-full rounded-xl border border-gold/50 bg-gold/10 p-4 text-sm text-foreground" role="status">
+    <div className="w-full rounded-xl border border-linha bg-aviso-suave p-4 text-sm text-foreground" role="status">
       <p className="flex items-center justify-center gap-2 font-semibold">
-        <Coins className="h-4 w-4 text-gold" aria-hidden />
+        <Coins className="h-4 w-4 text-aviso" aria-hidden />
         {t("Visao.bonusMoedas", { moedas: bonus.moedas })}
       </p>
       {bonus.diamantes > 0 && (
         <p className="mt-1 flex items-center justify-center gap-2 font-semibold">
-          <Gem className="h-4 w-4 text-teal" aria-hidden />
+          <Gem className="h-4 w-4 text-accao" aria-hidden />
           {t("Visao.bonusMarco", { dias: bonus.dias_seguidos, diamantes: bonus.diamantes })}
         </p>
       )}
       {disponivelNoIdiomaActual("/jogo-curiosidades") && (
-        <Link to={localizar("/jogo-curiosidades")} className="mt-2 inline-block text-sm font-medium text-navy underline underline-offset-2">
+        <Link to={localizar("/jogo-curiosidades")} className="mt-2 inline-block text-sm font-medium text-accao underline underline-offset-2">
           {t("Visao.bonusIrAoJogo")}
         </Link>
       )}
@@ -257,7 +257,7 @@ export const ContadorDiario = ({ historico }: { historico: SessaoExercicioPublic
   const sequencia = sequenciaDeDias(historico, hoje);
   return (
     <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-      <Flame className="h-4 w-4 text-gold" aria-hidden />
+      <Flame className="h-4 w-4 text-aviso" aria-hidden />
       {sequencia === 1
         ? t("Visao.contadorDiarioUmDia", { minutos })
         : t("Visao.contadorDiario", { minutos, dias: sequencia })}
@@ -523,9 +523,9 @@ const AssistenteTreino = ({
                     total: BLOCO_SEGUNDOS,
                   })}
                 </span>
-                <Button size="sm" variant="ghost" className="gap-1.5" onClick={terminar}>
+                <Botao variante="fantasma" onClick={terminar}>
                   <Square className="h-3.5 w-3.5" /> {t("Visao.terminarAgora")}
-                </Button>
+                </Botao>
               </div>
               {tarefa(api, ctx, resultadoRef)}
               {tempo.emPausa && etapa === "bloco" && (
@@ -561,19 +561,19 @@ const AssistenteTreino = ({
               <ResumoTendencia sessoes={historico} exercicioId={exercicioId} olhos={[olho]} />
             )}
             {resumo.baixaAtencao && (
-              <p className="rounded-lg bg-gold/10 px-3 py-2 text-sm text-foreground">{t("Visao.baixaAtencao")}</p>
+              <p className="rounded-lg bg-aviso-suave px-3 py-2 text-sm text-foreground">{t("Visao.baixaAtencao")}</p>
             )}
             {resumo.segundos < 1 && <p className="text-sm text-muted-foreground">{t("Visao.nadaParaGuardar")}</p>}
             {historico && <ContadorDiario historico={historico} />}
             <EstadoDaGravacao estado={gravacao} aoTentarDeNovo={() => void tentarDeNovo()} />
             {gravacao === "gravado" && bonus && <BonusDoJogo bonus={bonus} />}
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-              <Button asChild size="lg" className="bg-teal text-teal-foreground hover:bg-teal/90">
+              <Botao asChild tamanho="g" >
                 <Link to={localizar("/exercicios/progresso")}>{t("Visao.verProgresso")}</Link>
-              </Button>
-              <Button asChild variant="outline" size="lg">
+              </Botao>
+              <Botao asChild variante="secundario" tamanho="g">
                 <Link to={localizar("/exercicios")}>{t("Visao.voltarAosExercicios")}</Link>
-              </Button>
+              </Botao>
             </div>
           </section>
         )}

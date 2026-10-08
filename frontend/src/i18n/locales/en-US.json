@@ -301,7 +301,6 @@
   "BaseExercise": {
     "sair": "Exit",
     "conteudoPremium": "Premium Content",
-    "sairDoExercicio": "Exit exercise",
     "incluidoNoTeste": "Included in the 7-day trial",
     "tituloCriarConta": "Create an account to get started",
     "textoCriarConta": "With an account, you can try this exercise free for 7 days.",
@@ -311,7 +310,13 @@
     "botaoIniciarTrial": "Start free 7-day trial",
     "tituloPremium": "Available on the Premium plan",
     "textoPremium": "Activate the Premium plan for unlimited access to every exercise.",
-    "botaoPremium": "See Premium plans"
+    "botaoPremium": "See Premium plans",
+    "saltar": "Skip to the exercise",
+    "confirmarSaidaTitulo": "Leave the exercise?",
+    "confirmarSaidaTexto": "This session has not been saved yet. If you leave now, you lose what you did so far.",
+    "ficar": "Continue the exercise",
+    "fechar": "Close",
+    "aPreparar": "Getting the exercise ready…"
   },
   "CampanhaGamek": {
     "n12DeSetembro": "September 12",
