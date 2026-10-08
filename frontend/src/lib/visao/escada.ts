@@ -167,12 +167,22 @@ function mover(e: EstadoEscadaTreino, sentido: 1 | -1): EstadoEscadaTreino {
 }
 
 /**
- * Estimativa do limiar do treino, em índice (pode ser fraccionária): média
- * das últimas inversões; sem inversões suficientes, o nível actual.
+ * Inversões que a escada precisa para a sessão ter medido um limiar. Menos do
+ * que isto -- sessão parada logo no início, ou erros mesmo no nível mais
+ * fácil (a escada fica presa em baixo, sem inverter) -- e não há medição.
  */
-export function limiarTreino(e: EstadoEscadaTreino): number {
+export const INVERSOES_MINIMAS = 4;
+
+/**
+ * Estimativa do limiar do treino, em índice (pode ser fraccionária): média
+ * das últimas inversões. `null` quando a sessão não o mediu: até 2026-10-08
+ * devolvia o nível onde a escada estava (o de partida, ou o mais fácil para
+ * quem errou tudo), e esse número aparecia como resultado e ia para o
+ * progresso e para o relatório do médico.
+ */
+export function limiarTreino(e: EstadoEscadaTreino): number | null {
+  if (e.inversoes.length < INVERSOES_MINIMAS) return null;
   const ultimas = e.inversoes.slice(-INVERSOES_PARA_LIMIAR);
-  if (ultimas.length < 2) return e.indice;
   return ultimas.reduce((s, x) => s + x, 0) / ultimas.length;
 }
 

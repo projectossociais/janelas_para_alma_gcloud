@@ -3,6 +3,7 @@ import {
   escolhaAleatoria,
   iniciarEscadaTeste,
   iniciarEscadaTreino,
+  INVERSOES_MINIMAS,
   limiarTreino,
   responderTeste,
   responderTreino,
@@ -92,6 +93,29 @@ describe("escada do treino", () => {
     expect(limiarTreino(e)).toBeGreaterThanOrEqual(14);
     expect(limiarTreino(e)).toBeLessThanOrEqual(17);
     expect(e.melhor).toBe(16);
+  });
+
+  // Caso real (2026-10-08): o resumo do treino mostrava um "limiar desta
+  // sessão" que a sessão nunca mediu -- o nível de partida, ou o anel maior
+  // para quem errou tudo -- e esse número ia para o progresso e o relatório.
+  it("sessão terminada logo no início: não mediu limiar nenhum (null, nunca o nível de partida)", () => {
+    let e = iniciarEscadaTreino(20, 8);
+    for (const r of [true, true, false]) e = responderTreino(e, r);
+    expect(limiarTreino(e)).toBeNull();
+  });
+
+  it("errar tudo, mesmo no nível mais fácil, não mede limiar (nunca 'leu o maior')", () => {
+    let e = iniciarEscadaTreino(20, 8);
+    for (let i = 0; i < 120; i++) e = responderTreino(e, false);
+    expect(e.indice).toBe(0);
+    expect(limiarTreino(e)).toBeNull();
+  });
+
+  it(`com ${INVERSOES_MINIMAS} inversões já há limiar`, () => {
+    let e = iniciarEscadaTreino(20, 5);
+    for (let i = 0; i < 200 && e.inversoes.length < INVERSOES_MINIMAS; i++) e = responderTreino(e, e.indice <= 8);
+    expect(e.inversoes.length).toBe(INVERSOES_MINIMAS);
+    expect(limiarTreino(e)).not.toBeNull();
   });
 
   it("valorNoIndice interpola entre níveis", () => {

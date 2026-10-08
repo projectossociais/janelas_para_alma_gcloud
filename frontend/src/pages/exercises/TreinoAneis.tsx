@@ -47,14 +47,18 @@ const TreinoAneis = () => {
             indiceInicial={indiceMaisProximo(niveis, partida)}
             estimulo={(i, d) => <AnelLandolt aberturaPx={aberturaPx(niveis[i], ctx.distanciaMm, ctx.pxPorMm)} direccao={d} />}
             calcularResultado={(escada) => {
-              const limiar = Math.round(valorNoIndice(niveis, limiarTreino(escada)) * 100) / 100;
+              const indice = limiarTreino(escada);
+              const limiar = indice === null ? null : Math.round(valorNoIndice(niveis, indice) * 100) / 100;
               return {
                 limiar,
                 unidade: "logmar",
-                resumo: t("Visao.aneisResumo", {
-                  fraccao: fraccao6(limiar, separadorDecimal()),
-                  logmar: formatarDecimal(limiar, 2),
-                }),
+                resumo:
+                  limiar === null
+                    ? t("Visao.aneisSemLimiar")
+                    : t("Visao.aneisResumo", {
+                        fraccao: fraccao6(limiar, separadorDecimal()),
+                        logmar: formatarDecimal(limiar, 2),
+                      }),
                 sinais: { nivel_inicial: niveis[indiceMaisProximo(niveis, partida)], melhor_nivel: niveis[escada.melhor] },
               };
             }}

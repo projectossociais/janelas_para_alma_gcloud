@@ -57,11 +57,15 @@ const TreinoContrasteBlocos = () => {
             indiceInicial={inicio}
             estimulo={(i, d) => <AnelLandolt aberturaPx={gap} direccao={d} cor={corCinzento(DEGRAUS[i].cinzento)} />}
             calcularResultado={(escada) => {
-              const cs = Math.round(valorNoIndice(LOG_CS, limiarTreino(escada)) * 100) / 100;
+              const indice = limiarTreino(escada);
+              const cs = indice === null ? null : Math.round(valorNoIndice(LOG_CS, indice) * 100) / 100;
               return {
                 limiar: cs,
                 unidade: "log_cs",
-                resumo: t("Visao.contrasteBlocosResumo", { valor: formatarDecimal(cs, 2) }),
+                resumo:
+                  cs === null
+                    ? t("Visao.contrasteBlocosSemLimiar")
+                    : t("Visao.contrasteBlocosResumo", { valor: formatarDecimal(cs, 2) }),
                 sinais: {
                   tamanho_logmar: Math.round((acuidade + MARGEM_CONTRASTE_LOGMAR) * 100) / 100,
                   melhor_contraste: Math.round(contrasteDoCinzento(DEGRAUS[escada.melhor].cinzento) * 10000) / 10000,

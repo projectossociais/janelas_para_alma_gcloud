@@ -56,7 +56,14 @@ export interface PontoDaSerie {
  */
 export function serieDeLimiares(sessoes: readonly SessaoResumo[], exercicioId: string): PontoDaSerie[] {
   const validas = sessoes
-    .filter((s) => s.exercicio_id === exercicioId && typeof s.limiar === "number" && (s.olho === "direito" || s.olho === "esquerdo"))
+    .filter(
+      (s) =>
+        s.exercicio_id === exercicioId &&
+        typeof s.limiar === "number" &&
+        (s.olho === "direito" || s.olho === "esquerdo") &&
+        // Baixa atenção não é medição fiável: fora do gráfico, como já da tendência.
+        s.sinais?.baixa_atencao !== true,
+    )
     .sort((a, b) => a.created_at.localeCompare(b.created_at));
   const porDia = new Map<string, PontoDaSerie>();
   for (const s of validas) {
