@@ -768,7 +768,21 @@
     "modoConvidado": "You're playing as a guest, with practice questions and no rewards.",
     "modoTreinoIngles": "Practice mode: the English questions don't give coins or diamonds. Rewards are available in the Portuguese version of the game.",
     "entrarParaGanhar": "Sign in to earn coins and diamonds.",
-    "semPremioConvidado": "As a guest, this game doesn't give coins or diamonds."
+    "semPremioConvidado": "As a guest, this game doesn't give coins or diamonds.",
+    "rotuloPatamar": "Level {{patamar}} of {{total}} · {{valor}}",
+    "sair": "Leave",
+    "confirmarSaidaTitulo": "Leave the game?",
+    "confirmarSaidaTexto": "The game ends here and you cannot come back to this question.",
+    "fechar": "Close",
+    "saltar": "Skip to the question",
+    "aCarregarPergunta": "Loading the question…",
+    "verEscada": "See the prize ladder",
+    "ajudas": "Lifelines",
+    "estadoCerta": "Correct answer",
+    "estadoErrada": "Your answer, wrong",
+    "moedas": "coins",
+    "diamantes": "diamonds",
+    "premioEmJogo": "Prize for this level"
   },
   "KambaHeroCarousel": {
     "programaMeuKambaEstrabico": "Meu Kamba Estrábico Program",
