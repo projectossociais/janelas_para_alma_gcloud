@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import RecompensaSequenciaModal from "./RecompensaSequenciaModal";
+import { violacoesAcessibilidade } from "@/design/testes/acessibilidade";
 
 describe("RecompensaSequenciaModal (Level Up)", () => {
   it("mostra a sequência atingida e os diamantes ganhos", async () => {
@@ -53,5 +54,11 @@ describe("RecompensaSequenciaModal no limite diário", () => {
     render(<RecompensaSequenciaModal recompensa={{ sequencia: 3, diamantes: 10 }} onContinuar={() => {}} />);
     await screen.findByRole("heading", { name: "Level Up!" });
     expect(screen.queryByText(/limite de 60 diamantes/)).not.toBeInTheDocument();
+  });
+
+  it("sem violações de acessibilidade", async () => {
+    render(<RecompensaSequenciaModal recompensa={{ sequencia: 6, diamantes: 20 }} onContinuar={() => {}} />);
+    await screen.findByRole("heading", { name: "Level Up!" });
+    expect(await violacoesAcessibilidade(screen.getByRole("dialog"))).toEqual([]);
   });
 });

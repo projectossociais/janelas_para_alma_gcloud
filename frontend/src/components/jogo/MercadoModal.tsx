@@ -3,8 +3,9 @@ import { Link } from "react-router-dom";
 import { Gem, Loader2, Lock, MessageCircle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Aviso } from "@/design/componentes/Aviso";
+import { Botao } from "@/design/componentes/Botao";
+import { Dialogo, DialogoConteudo } from "@/design/componentes/Dialogo";
 import { useCarteiraJogo } from "@/contexts/CarteiraJogoContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import {
@@ -16,22 +17,15 @@ import {
   type VendedorMercado,
 } from "@/lib/apiClient";
 import { localizar } from "@/i18n/rotas";
-import { cn } from "@/lib/utils";
+import { cn } from "@/design/cn";
 import { formatarTempoRestante, msRestantes, nivelDeCerteza } from "@/pages/jogo/mercadoConfig";
 
-// Só apresentação -- cor e iniciais do "avatar" de cada profissional.
-const COR_VENDEDOR: Record<string, string> = {
-  "estudante-medicina": "bg-orange-500/15 text-orange-600",
-  "enfermeira-oftalmica": "bg-pink-500/15 text-pink-600",
-  optometrista: "bg-teal/15 text-teal",
-  oftalmologista: "bg-gold/20 text-gold",
-};
-
+// Cor da barra de certeza, por nível (o nível também se lê em texto ao lado).
 const COR_CERTEZA = {
-  baixa: "bg-destructive",
-  media: "bg-orange-500",
-  alta: "bg-teal",
-  muitoAlta: "bg-green",
+  baixa: "bg-erro",
+  media: "bg-aviso",
+  alta: "bg-accao",
+  muitoAlta: "bg-sucesso",
 } as const;
 
 interface MercadoModalProps {
@@ -133,69 +127,75 @@ const MercadoModal = ({ open, onOpenChange, perguntaId, opcoesExcluidas, onAjuda
   const saldo = perfil?.diamantes ?? 0;
 
   return (
-    <Dialog open={open} onOpenChange={(aberto) => !aComprar && onOpenChange(aberto)}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-xl">{t("Mercado.titulo")}</DialogTitle>
-          <DialogDescription>{t("Mercado.descricao")}</DialogDescription>
-          {mercado?.categoria && (
-            <p className="text-xs font-semibold uppercase tracking-wide text-teal">
-              {t("Mercado.temaDaPergunta", {
-                categoria: t(`PerfilJogador.categorias.${mercado.categoria}`, { defaultValue: mercado.categoria }),
-              })}
-            </p>
-          )}
-        </DialogHeader>
+    <Dialogo open={open} onOpenChange={(aberto) => !aComprar && onOpenChange(aberto)}>
+      <DialogoConteudo
+        titulo={t("Mercado.titulo")}
+        descricao={t("Mercado.descricao")}
+        rotuloFechar={t("Mercado.fechar")}
+      >
+        {mercado?.categoria && (
+          <p className="mb-4 text-legenda font-medium text-accao">
+            {t("Mercado.temaDaPergunta", {
+              categoria: t(`PerfilJogador.categorias.${mercado.categoria}`, { defaultValue: mercado.categoria }),
+            })}
+          </p>
+        )}
 
         {!profile && (
-          <div className="space-y-3 text-center py-4">
-            <p className="text-sm text-muted-foreground">{t("Mercado.inicieSessao")}</p>
-            <Button asChild className="bg-teal text-teal-foreground hover:bg-teal/90">
+          <div className="space-y-3 py-4 text-center">
+            <p className="text-corpo text-tinta-suave">{t("Mercado.inicieSessao")}</p>
+            <Botao asChild>
               <Link to={localizar("/auth")}>{t("Mercado.entrar")}</Link>
-            </Button>
+            </Botao>
           </div>
         )}
 
         {profile && ajuda && (
-          <div className="rounded-xl bg-teal/10 border border-teal/40 p-4 space-y-3" role="status">
-            <p className="flex items-start gap-2 text-foreground">
-              <MessageCircle className="w-5 h-5 text-teal shrink-0 mt-0.5" />
+          <div className="space-y-3 rounded-controlo border-l-4 border-accao bg-accao-suave p-4" role="status">
+            <p className="flex items-start gap-2 text-corpo text-tinta">
+              <MessageCircle className="mt-1 size-5 shrink-0 text-accao" aria-hidden />
               <span>
-                <span className="font-bold">{t(`Mercado.vendedores.${ajuda.vendedor_id}.nome`)}: </span>
+                <span className="font-medium">{t(`Mercado.vendedores.${ajuda.vendedor_id}.nome`)}: </span>
                 {t(`Mercado.vendedores.${ajuda.vendedor_id}.resposta`, { opcao: ajuda.resposta_sugerida })}
               </span>
             </p>
-            <p className="text-xs text-muted-foreground">{t("Mercado.avisoSugestao")}</p>
-            <Button onClick={() => onOpenChange(false)} className="w-full bg-teal text-teal-foreground hover:bg-teal/90">
+            <p className="text-legenda text-tinta-suave">{t("Mercado.avisoSugestao")}</p>
+            <Botao larguraTotal onClick={() => onOpenChange(false)}>
               {t("Mercado.voltarAPergunta")}
-            </Button>
+            </Botao>
           </div>
         )}
 
         {profile && !ajuda && (
           <>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">{t("Mercado.oSeuSaldo")}</span>
-              <span className="inline-flex items-center gap-1 font-bold text-teal">
-                <Gem className="w-4 h-4" />
+            <div className="mb-3 flex items-center justify-between text-corpo">
+              <span className="text-tinta-suave">{t("Mercado.oSeuSaldo")}</span>
+              <span className="inline-flex items-center gap-1 font-medium tabular-nums text-tinta">
+                <Gem className="size-4 text-accao" aria-hidden />
                 {saldo}
               </span>
             </div>
 
             {aCarregar && !mercado && (
-              <div className="flex justify-center py-10">
-                <Loader2 className="w-7 h-7 animate-spin text-teal" />
-              </div>
+              <p role="status" className="flex items-center justify-center gap-2 py-10 text-corpo text-tinta-suave">
+                <Loader2 className="size-5 animate-spin text-accao" aria-hidden />
+                {t("Mercado.aCarregar")}
+              </p>
             )}
 
             {erro && !aCarregar && (
-              <div className="text-center space-y-3 py-4">
-                <p className="text-sm text-muted-foreground">{t("Mercado.naoFoiPossivelCarregar")}</p>
-                <Button variant="outline" onClick={() => void carregar()}>
-                  <RefreshCw className="w-4 h-4" />
-                  {t("Mercado.tentarNovamente")}
-                </Button>
-              </div>
+              <Aviso
+                variante="erro"
+                anunciar
+                accao={
+                  <Botao variante="secundario" onClick={() => void carregar()}>
+                    <RefreshCw aria-hidden />
+                    {t("Mercado.tentarNovamente")}
+                  </Botao>
+                }
+              >
+                {t("Mercado.naoFoiPossivelCarregar")}
+              </Aviso>
             )}
 
             {mercado && (
@@ -211,14 +211,14 @@ const MercadoModal = ({ open, onOpenChange, perguntaId, opcoesExcluidas, onAjuda
                       key={vendedor.id}
                       data-testid={`vendedor-${vendedor.id}`}
                       className={cn(
-                        "rounded-xl border p-4 flex gap-3",
-                        bloqueado ? "bg-muted/60 border-border" : "bg-card border-border/60"
+                        "flex gap-3 rounded-cartao border border-linha p-4",
+                        bloqueado ? "bg-superficie-alt" : "bg-superficie",
                       )}
                     >
                       <div
                         className={cn(
-                          "w-12 h-12 shrink-0 rounded-full flex items-center justify-center font-bold",
-                          bloqueado ? "bg-muted text-muted-foreground" : COR_VENDEDOR[vendedor.id] ?? "bg-muted"
+                          "flex size-12 shrink-0 items-center justify-center rounded-pilula font-medium",
+                          bloqueado ? "bg-linha text-tinta-suave" : "bg-accao-suave text-accao",
                         )}
                         aria-hidden
                       >
@@ -228,38 +228,38 @@ const MercadoModal = ({ open, onOpenChange, perguntaId, opcoesExcluidas, onAjuda
                           .join("")
                           .slice(0, 2)}
                       </div>
-                      <div className="flex-1 min-w-0 space-y-2">
+                      <div className="min-w-0 flex-1 space-y-2">
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
-                            <p className={cn("font-bold", bloqueado ? "text-muted-foreground" : "text-foreground")}>
+                            <p className={cn("text-corpo font-medium", bloqueado ? "text-tinta-suave" : "text-tinta")}>
                               {nome}
                             </p>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-legenda text-tinta-suave">
                               {t(`Mercado.vendedores.${vendedor.id}.profissao`, { defaultValue: "" })}
                             </p>
                           </div>
-                          <span className="inline-flex items-center gap-1 font-bold text-teal shrink-0">
-                            <Gem className="w-4 h-4" />
+                          <span className="inline-flex shrink-0 items-center gap-1 font-medium tabular-nums text-tinta">
+                            <Gem className="size-4 text-accao" aria-hidden />
                             {vendedor.custo_diamantes}
                           </span>
                         </div>
 
                         {!bloqueado && (
-                          <p className="text-sm italic text-foreground/80">
+                          <p className="text-legenda italic text-tinta-suave">
                             “{t(`Mercado.vendedores.${vendedor.id}.bordao`, { defaultValue: "" })}”
                           </p>
                         )}
 
                         <div className="space-y-1">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="text-muted-foreground">{t("Mercado.certeza")}</span>
-                            <span className="font-semibold text-foreground">
+                          <div className="flex items-center justify-between text-legenda">
+                            <span className="text-tinta-suave">{t("Mercado.certeza")}</span>
+                            <span className="font-medium text-tinta">
                               {t(`Mercado.nivel.${nivel}`)} · {Math.round(vendedor.precisao * 100)}%
                             </span>
                           </div>
-                          <div className="h-2 rounded-full bg-muted overflow-hidden">
+                          <div className="h-2 overflow-hidden rounded-pilula bg-linha" aria-hidden>
                             <div
-                              className={cn("h-full rounded-full", COR_CERTEZA[nivel])}
+                              className={cn("h-full rounded-pilula", COR_CERTEZA[nivel])}
                               style={{ width: `${vendedor.precisao * 100}%` }}
                             />
                           </div>
@@ -267,24 +267,24 @@ const MercadoModal = ({ open, onOpenChange, perguntaId, opcoesExcluidas, onAjuda
 
                         {bloqueado ? (
                           <p
-                            className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground"
+                            className="inline-flex items-center gap-1.5 text-legenda font-medium text-tinta-suave"
                             role="timer"
                             aria-label={t("Mercado.disponivelDaquiA", { tempo: formatarTempoRestante(restante) })}
                           >
-                            <Lock className="w-4 h-4" />
+                            <Lock className="size-4" aria-hidden />
                             <span className="tabular-nums">{formatarTempoRestante(restante)}</span>
                           </p>
                         ) : (
-                          <Button
-                            size="sm"
-                            className="w-full bg-teal text-teal-foreground hover:bg-teal/90"
-                            disabled={semSaldo || aComprar !== null}
+                          <Botao
+                            variante="secundario"
+                            larguraTotal
+                            disabled={semSaldo || (aComprar !== null && aComprar !== vendedor.id)}
+                            aCarregar={aComprar === vendedor.id}
                             onClick={() => void comprar(vendedor)}
                             aria-label={t("Mercado.comprarA", { nome, custo: vendedor.custo_diamantes })}
                           >
-                            {aComprar === vendedor.id && <Loader2 className="w-4 h-4 animate-spin" />}
                             {semSaldo ? t("Mercado.saldoInsuficiente") : t("Mercado.comprar")}
-                          </Button>
+                          </Botao>
                         )}
                       </div>
                     </li>
@@ -294,11 +294,11 @@ const MercadoModal = ({ open, onOpenChange, perguntaId, opcoesExcluidas, onAjuda
             )}
 
             {/* Sem link directo para a Loja: sair daqui abandonava a partida em curso. */}
-            <p className="text-center text-xs text-muted-foreground">{t("Mercado.precisaDeMaisDiamantes")}</p>
+            <p className="mt-4 text-center text-legenda text-tinta-suave">{t("Mercado.precisaDeMaisDiamantes")}</p>
           </>
         )}
-      </DialogContent>
-    </Dialog>
+      </DialogoConteudo>
+    </Dialogo>
   );
 };
 

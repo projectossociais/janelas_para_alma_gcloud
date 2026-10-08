@@ -274,6 +274,14 @@ Acrescentar abaixo, com data, o que for decidido ou detalhado em cada conversa s
 redesenho (referências visuais, páginas a priorizar, gostos e recusas do dono do
 projecto, feedback do Lukeny). Mais recente em cima.
 
+- **2026-10-08** — **Fase 4, o jogo: os diálogos da partida (ramo `redesenho/jogo-dialogos`).** Vida
+  Extra, "Level Up!" (sequência) e Consultório passam ao `Dialogo` do sistema de design, com as cores
+  dos tokens e sem brilhos animados. O `DialogoConteudo` ganhou `obrigaEscolha` (sem ×, Esc e clique
+  fora não fecham) para a Vida Extra, que tem de passar sempre pela resposta certa e pela explicação
+  ao encerrar. A Vida Extra mostra custo, saldo e vidas restantes lado a lado; no Consultório os
+  avatares deixam de ter uma cor por pessoa (a certeza já se lê em texto e na barra). **Falta do
+  jogo:** o menu, as lojas e o perfil do jogador.
+
 - **2026-10-08** — **Fase 4, o jogo: a partida (`JogoCuriosidades.tsx`, ramo `redesenho/jogo`).**
   Primeiro **decomposto sem mudar nada do que se vê**: a lógica toda (temporizador, ajudas, vida
   extra, sequências, fim de partida) passou a `partida/usePartidaJogo.ts`, os testes do jogo sem

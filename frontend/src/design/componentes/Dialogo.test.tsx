@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Botao } from "./Botao";
 import { Dialogo, DialogoConteudo, DialogoFechar, DialogoGatilho } from "./Dialogo";
@@ -63,5 +63,40 @@ describe("Dialogo", () => {
     await userEvent.click(screen.getByRole("button", { name: "Retirar autorização" }));
     await screen.findByRole("dialog");
     expect(await violacoesAcessibilidade(document.body)).toEqual([]);
+  });
+
+  describe("obrigaEscolha", () => {
+    const Obriga = () => (
+      <Dialogo defaultOpen>
+        <DialogoConteudo
+          titulo="Vida Extra"
+          obrigaEscolha
+          rodape={
+            <DialogoFechar asChild>
+              <Botao>Encerrar</Botao>
+            </DialogoFechar>
+          }
+        />
+      </Dialogo>
+    );
+
+    it("não tem X, e Esc não fecha: só os botões do rodapé", async () => {
+      render(<Obriga />);
+      const dialogo = await screen.findByRole("dialog", { name: "Vida Extra" });
+      expect(screen.getAllByRole("button")).toHaveLength(1);
+      await userEvent.keyboard("{Escape}");
+      expect(dialogo).toBeInTheDocument();
+      await userEvent.click(screen.getByRole("button", { name: "Encerrar" }));
+      await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    });
+
+    it("um clique fora não fecha", async () => {
+      render(<Obriga />);
+      const dialogo = await screen.findByRole("dialog");
+      // O Radix fecha em "pointerdown" fora (o body fica com pointer-events: none).
+      fireEvent.pointerDown(document.body);
+      fireEvent.pointerUp(document.body);
+      expect(dialogo).toBeInTheDocument();
+    });
   });
 });

@@ -1596,7 +1596,9 @@
         "bordao": "Com os meus anos de experiência clínica, o diagnóstico é claro.",
         "resposta": "O diagnóstico é claro: é a {{opcao}}."
       }
-    }
+    },
+    "fechar": "Fechar",
+    "aCarregar": "A carregar o Consultório…"
   },
   "VidaExtra": {
     "titulo": "Vida Extra",
@@ -1611,7 +1613,8 @@
     "saldoInsuficienteAviso": "Não tem diamantes suficientes. Ganhe mais a jogar ou visite a Loja no menu do jogo.",
     "diamantesInsuficientesBotao": "Diamantes insuficientes",
     "diamantesInsuficientes": "Não tem diamantes suficientes para a Vida Extra.",
-    "naoFoiPossivelUsar": "Não foi possível usar a Vida Extra. Nenhum diamante foi gasto."
+    "naoFoiPossivelUsar": "Não foi possível usar a Vida Extra. Nenhum diamante foi gasto.",
+    "restantesCurto": "Restantes"
   },
   "RecompensaSequencia": {
     "titulo": "Level Up!",
@@ -1621,7 +1624,8 @@
     "proximoMarco": "A cada 3 respostas certas seguidas ganha mais diamantes. Se errar, a sequência recomeça.",
     "continuar": "Continuar",
     "sequenciaAtual": "Sequência de {{sequencia}} respostas certas",
-    "limiteDiarioAtingido": "Atingiu o limite de 60 diamantes por dia em sequências. Continue a jogar: amanhã volta a ganhar diamantes."
+    "limiteDiarioAtingido": "Atingiu o limite de 60 diamantes por dia em sequências. Continue a jogar: amanhã volta a ganhar diamantes.",
+    "fechar": "Fechar"
   },
   "Visao": {
     "avisoTeste": "Teste de triagem. Não é um exame médico, não diagnostica doenças e não substitui a consulta com um oftalmologista.",
