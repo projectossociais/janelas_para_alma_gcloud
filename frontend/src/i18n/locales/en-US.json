@@ -605,9 +605,9 @@
     "cartaoCriarConta": "Create account",
     "cartaoIniciarTrial": "Start trial",
     "cartaoPremium": "Unlock",
-    "estadoTrialDisponivel": "Trial available",
-    "estadoTrialAtivo": "Trial active",
-    "estadoTrialTerminado": "Trial ended",
+    "estadoTrialDisponivel": "7-day trial not started",
+    "estadoTrialAtivo": "7-day trial active",
+    "estadoTrialTerminado": "The 7-day trial has ended",
     "estadoPremium": "Premium",
     "bannerSemSessaoTitulo": "Try it free for 7 days",
     "bannerSemSessaoTexto": "Create your account and get access to the 4 core exercises for 7 full days.",
@@ -621,7 +621,8 @@
     "evolucaoMelhorouUma": "In {{dias}} days of training, the {{olho}} now reads one line smaller.",
     "evolucaoMelhorou": "In {{dias}} days of training, the {{olho}} now reads {{n}} lines smaller.",
     "evolucaoContinuar": "Continue with Premium to keep the pace and take the report to your next appointment.",
-    "evolucaoPiorou": "The results for the {{olho}} got worse in the last {{dias}} days. Talk to the ophthalmologist."
+    "evolucaoPiorou": "The results for the {{olho}} got worse in the last {{dias}} days. Talk to the ophthalmologist.",
+    "aCarregar": "Loading the exercises…"
   },
   "ExercisesSection": {
     "exerciciosVisuais": "Vision Exercises",
@@ -1082,18 +1083,6 @@
     "n8hAs13h00": "8 a.m. to 1 p.m.",
     "voltarAoPortalClinico": "Back to the Clinical Portal",
     "codigosQrParaDescarregar": "QR codes to download the Optioptika app on Google Play and the App Store"
-  },
-  "PremiumPaywallModal": {
-    "registarParaAcessoPremium": "Sign Up for Premium Access",
-    "precos": "Premium plan pricing",
-    "porMes": "per month",
-    "porAnoPoupe2Meses": "per year · save 2 months",
-    "tituloAcompanhamento": "Follow the treatment at home",
-    "subtituloAcompanhamento": "A short training session every day, each eye’s progress measured every week, and a report to take to the ophthalmologist.",
-    "beneficioTodosOsExercicios": "All 8 tests and trainings, without limits, including the eye-patch trainings.",
-    "beneficioEvolucao": "Each eye’s progress explained in plain language.",
-    "beneficioRelatorio": "Weekly report to show the ophthalmologist.",
-    "beneficioClinicas": "Priority booking and teleconsultation with partner clinics."
   },
   "ProgramModal": {
     "programaMeuKambaEstrabico": "Meu Kamba Estrábico Program",

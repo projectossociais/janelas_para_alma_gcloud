@@ -77,7 +77,7 @@ describe("Exercicios — 8 exercícios em dois grupos", () => {
     acesso.mockResolvedValue(estado({}));
     renderPagina();
 
-    await screen.findByText("Trial disponível");
+    await screen.findByText("Teste de 7 dias por começar");
     const trial = grupo("Incluídos no teste de 7 dias");
     for (const nome of ["Teste de Acuidade", "Treino de Anéis com tapa-olho", "Teste de Contraste", "Teste de Astigmatismo"])
       expect(within(trial).getByText(nome)).toBeInTheDocument();
@@ -98,7 +98,7 @@ describe("Exercicios — 8 exercícios em dois grupos", () => {
     acesso.mockResolvedValue(estado({}));
     renderPagina();
 
-    await screen.findByText("Trial disponível");
+    await screen.findByText("Teste de 7 dias por começar");
     expect(contarBloqueados(grupo("Incluídos no teste de 7 dias"))).toBe(4);
     expect(contarBloqueados(grupo("Premium"))).toBe(4);
     for (const eliminado of [
@@ -176,7 +176,7 @@ describe("Exercicios — 8 exercícios em dois grupos", () => {
     acesso.mockResolvedValue(estado({ estado: "trial_terminado" }));
     renderPagina();
 
-    expect(await screen.findByText("Trial terminado")).toBeInTheDocument();
+    expect(await screen.findByText("O teste de 7 dias terminou")).toBeInTheDocument();
     expect(contarBloqueados(grupo("Incluídos no teste de 7 dias"))).toBe(4);
     expect(contarBloqueados(grupo("Premium"))).toBe(4);
     expect(screen.queryByRole("button", { name: /Começar teste/i })).not.toBeInTheDocument();

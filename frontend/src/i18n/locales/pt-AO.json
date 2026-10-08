@@ -605,9 +605,9 @@
     "cartaoCriarConta": "Criar conta",
     "cartaoIniciarTrial": "Começar teste",
     "cartaoPremium": "Desbloquear",
-    "estadoTrialDisponivel": "Trial disponível",
-    "estadoTrialAtivo": "Trial activo",
-    "estadoTrialTerminado": "Trial terminado",
+    "estadoTrialDisponivel": "Teste de 7 dias por começar",
+    "estadoTrialAtivo": "Teste de 7 dias activo",
+    "estadoTrialTerminado": "O teste de 7 dias terminou",
     "estadoPremium": "Premium",
     "bannerSemSessaoTitulo": "Experimente durante 7 dias, sem pagar",
     "bannerSemSessaoTexto": "Crie a sua conta e tenha acesso aos 4 exercícios base durante 7 dias completos.",
@@ -621,7 +621,8 @@
     "evolucaoMelhorouUma": "Em {{dias}} dias de treino, o {{olho}} já lê uma linha mais pequena.",
     "evolucaoMelhorou": "Em {{dias}} dias de treino, o {{olho}} já lê {{n}} linhas mais pequenas.",
     "evolucaoContinuar": "Continue com o Premium para manter o ritmo e leve o relatório à próxima consulta.",
-    "evolucaoPiorou": "Os resultados do {{olho}} pioraram nos últimos {{dias}} dias. Fale com o oftalmologista."
+    "evolucaoPiorou": "Os resultados do {{olho}} pioraram nos últimos {{dias}} dias. Fale com o oftalmologista.",
+    "aCarregar": "A carregar os exercícios…"
   },
   "ExercisesSection": {
     "exerciciosVisuais": "Exercícios Visuais",
@@ -1082,18 +1083,6 @@
     "n8hAs13h00": "8h às 13h00",
     "voltarAoPortalClinico": "Voltar ao Portal Clínico",
     "codigosQrParaDescarregar": "Códigos QR para descarregar a aplicação Optioptika na Google Play e App Store"
-  },
-  "PremiumPaywallModal": {
-    "registarParaAcessoPremium": "Registar para Acesso Premium",
-    "precos": "Preços do plano Premium",
-    "porMes": "por mês",
-    "porAnoPoupe2Meses": "por ano · poupe 2 meses",
-    "tituloAcompanhamento": "Acompanhe o tratamento em casa",
-    "subtituloAcompanhamento": "Um treino curto por dia, a evolução de cada olho medida todas as semanas e um relatório para levar ao oftalmologista.",
-    "beneficioTodosOsExercicios": "Os 8 testes e treinos, sem limite, incluindo os treinos com tapa-olho.",
-    "beneficioEvolucao": "Evolução de cada olho explicada em linguagem simples.",
-    "beneficioRelatorio": "Relatório semanal para mostrar ao oftalmologista.",
-    "beneficioClinicas": "Prioridade na marcação de consultas e teleconsulta com as clínicas parceiras."
   },
   "ProgramModal": {
     "programaMeuKambaEstrabico": "Programa Meu Kamba Estrábico",
