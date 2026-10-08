@@ -1824,8 +1824,6 @@
     "progressoTitulo": "O meu progresso",
     "progressoTexto": "Resultados dos testes e minutos de treino. Para comparar consigo mesmo e levar à consulta.",
     "progressoSemSessao": "Inicie sessão para ver o seu histórico.",
-    "sequenciaDias": "{{dias}} dias seguidos de treino",
-    "minutosUltimos14": "Minutos de treino nos últimos 14 dias",
     "curvaLimiar": "Evolução por olho",
     "semDadosAinda": "Ainda não há resultados.",
     "curvaLogmarNota": "logMAR: quanto mais alto no gráfico, melhor (o eixo está invertido).",
@@ -1911,7 +1909,11 @@
     "partilhaErroRevogar": "Não foi possível revogar o link. Tente de novo.",
     "partilhadoAviso": "Relatório partilhado pela família através da plataforma Janelas Para a Alma. Link válido até {{expira}}.",
     "partilhadoInvalidoTitulo": "Este link já não é válido",
-    "partilhadoInvalidoTexto": "O link expirou ou foi revogado. Peça um novo à família."
+    "partilhadoInvalidoTexto": "O link expirou ou foi revogado. Peça um novo à família.",
+    "saltarParaRelatorio": "Saltar para o relatório",
+    "partilhadoACarregar": "A abrir o relatório…",
+    "partilhaLink": "Link para o médico",
+    "partilhadoMarca": "Janelas Para a Alma"
   },
   "ConsentimentoSaude": {
     "titulo": "Autorização para tratar dados de saúde",
@@ -2407,5 +2409,35 @@
     "atalhoTreinosTexto": "Testes e treinos visuais, no seu ritmo.",
     "atalhoProgresso": "O meu progresso",
     "atalhoProgressoTexto": "Veja como tem evoluído, semana a semana."
+  },
+  "ProgressoApp": {
+    "sair": "Sair",
+    "entrar": "Entrar",
+    "criarConta": "Criar conta",
+    "semSessaoTitulo": "Entre para ver o seu progresso",
+    "aCarregar": "A carregar o seu histórico…",
+    "erroTexto": "Os seus resultados estão guardados; só não conseguimos lê-los agora. Verifique a ligação e tente de novo.",
+    "vazioTitulo": "Ainda não há nada para mostrar",
+    "vazioTexto": "Quando fizer o primeiro teste ou treino, os resultados e os minutos aparecem aqui, para comparar consigo mesmo e levar à consulta.",
+    "verTreinos": "Ver os testes e treinos",
+    "actividadeTitulo": "Os últimos 14 dias",
+    "actividadeTexto": "Minutos de treino que contam para o tratamento (os testes e as sessões com pouca atenção não contam).",
+    "sequencia": "Dias seguidos",
+    "umDia": "1 dia",
+    "nDias": "{{n}} dias",
+    "minutos": "Minutos",
+    "nMin": "{{n}} min",
+    "diasComTreino": "Dias com treino",
+    "deDias": "{{n}} de {{total}}",
+    "dia": "Dia",
+    "tabelaMinutos": "Minutos de treino por dia, nos últimos 14 dias",
+    "semTreinos": "Ainda sem treinos nestes 14 dias. Os testes de triagem não contam aqui: aparecem na evolução, em baixo.",
+    "exercicio": "Exercício",
+    "escolhaExercicio": "Escolha o exercício",
+    "semResultadosExercicio": "Ainda não há resultados deste exercício.",
+    "verValores": "Ver os valores",
+    "tabelaValores": "Resultados de {{exercicio}} por dia e por olho",
+    "relatorioTitulo": "Para a consulta",
+    "relatorioTexto": "Um relatório da semana para imprimir, guardar em PDF ou enviar ao oftalmologista por um link temporário."
   }
 }

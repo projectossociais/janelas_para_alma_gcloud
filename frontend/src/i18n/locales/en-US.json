@@ -1824,8 +1824,6 @@
     "progressoTitulo": "My progress",
     "progressoTexto": "Test results and training minutes, to compare with yourself and take to your appointment.",
     "progressoSemSessao": "Sign in to see your history.",
-    "sequenciaDias": "{{dias}} days of training in a row",
-    "minutosUltimos14": "Training minutes over the last 14 days",
     "curvaLimiar": "Progress by eye",
     "semDadosAinda": "No results yet.",
     "curvaLogmarNota": "logMAR: higher on the chart is better (the axis is flipped).",
@@ -1911,7 +1909,11 @@
     "partilhaErroRevogar": "The link could not be revoked. Please try again.",
     "partilhadoAviso": "Report shared by the family through the Janelas Para a Alma platform. Link valid until {{expira}}.",
     "partilhadoInvalidoTitulo": "This link is no longer valid",
-    "partilhadoInvalidoTexto": "The link has expired or was revoked. Ask the family for a new one."
+    "partilhadoInvalidoTexto": "The link has expired or was revoked. Ask the family for a new one.",
+    "saltarParaRelatorio": "Skip to the report",
+    "partilhadoACarregar": "Opening the report…",
+    "partilhaLink": "Link for the doctor",
+    "partilhadoMarca": "Janelas Para a Alma"
   },
   "ConsentimentoSaude": {
     "titulo": "Permission to process health data",
@@ -2407,5 +2409,35 @@
     "atalhoTreinosTexto": "Visual tests and training, at your own pace.",
     "atalhoProgresso": "My progress",
     "atalhoProgressoTexto": "See how you are doing, week by week."
+  },
+  "ProgressoApp": {
+    "sair": "Leave",
+    "entrar": "Sign in",
+    "criarConta": "Create account",
+    "semSessaoTitulo": "Sign in to see your progress",
+    "aCarregar": "Loading your history…",
+    "erroTexto": "Your results are saved; we just could not read them right now. Check your connection and try again.",
+    "vazioTitulo": "Nothing to show yet",
+    "vazioTexto": "Once you do your first test or training, the results and minutes appear here, to compare with yourself and bring to the appointment.",
+    "verTreinos": "See the tests and training",
+    "actividadeTitulo": "The last 14 days",
+    "actividadeTexto": "Training minutes that count towards the treatment (tests and low-attention sessions do not count).",
+    "sequencia": "Days in a row",
+    "umDia": "1 day",
+    "nDias": "{{n}} days",
+    "minutos": "Minutes",
+    "nMin": "{{n}} min",
+    "diasComTreino": "Days with training",
+    "deDias": "{{n}} of {{total}}",
+    "dia": "Day",
+    "tabelaMinutos": "Training minutes per day, over the last 14 days",
+    "semTreinos": "No training in these 14 days yet. Screening tests do not count here: they appear in the progress below.",
+    "exercicio": "Exercise",
+    "escolhaExercicio": "Choose the exercise",
+    "semResultadosExercicio": "No results for this exercise yet.",
+    "verValores": "See the values",
+    "tabelaValores": "Results of {{exercicio}} per day and per eye",
+    "relatorioTitulo": "For the appointment",
+    "relatorioTexto": "A weekly report to print, save as PDF or send to the eye doctor through a temporary link."
   }
 }

@@ -27,11 +27,11 @@ const fraseDeTendencia = (t: (k: string, o?: Record<string, unknown>) => string,
 };
 
 const Icone = ({ r }: { r: Tendencia }) => {
-  const c = "mt-0.5 h-4 w-4 shrink-0";
-  if (r.tipo === "melhorou") return <TrendingUp className={`${c} text-teal`} aria-hidden />;
-  if (r.tipo === "piorou") return <TrendingDown className={`${c} text-gold`} aria-hidden />;
-  if (r.tipo === "estavel") return <Minus className={`${c} text-muted-foreground`} aria-hidden />;
-  return <Clock className={`${c} text-muted-foreground`} aria-hidden />;
+  const c = "mt-0.5 size-5 shrink-0";
+  if (r.tipo === "melhorou") return <TrendingUp className={`${c} text-sucesso`} aria-hidden />;
+  if (r.tipo === "piorou") return <TrendingDown className={`${c} text-aviso`} aria-hidden />;
+  if (r.tipo === "estavel") return <Minus className={`${c} text-tinta-suave`} aria-hidden />;
+  return <Clock className={`${c} text-tinta-suave`} aria-hidden />;
 };
 
 /**
@@ -65,16 +65,16 @@ const ResumoTendencia = ({
       </ul>
     );
   return (
-    <section aria-label={t("Visao.tendenciaTitulo")} className="w-full rounded-xl border border-border bg-muted/30 p-4 text-left">
-      <h3 className="mb-2 text-sm font-semibold text-foreground">{t("Visao.tendenciaTitulo")}</h3>
-      <ul className="space-y-2 text-sm text-foreground">
+    <section aria-label={t("Visao.tendenciaTitulo")} className="w-full rounded-cartao bg-superficie-alt p-4 text-left">
+      <h3 className="mb-2 text-legenda font-medium uppercase tracking-wide text-tinta-suave">{t("Visao.tendenciaTitulo")}</h3>
+      <ul className="space-y-2 text-corpo text-tinta">
         {linhas.map(({ olho, r }) => (
           <li key={olho} className="flex gap-2">
             <Icone r={r} />
             <span>
               {fraseDeTendencia(t, olho, r)}
               {r.tipo !== "poucos_dados" && r.aproximado && (
-                <span className="text-muted-foreground"> {t("Visao.tendenciaAproximada")}</span>
+                <span className="text-tinta-suave"> {t("Visao.tendenciaAproximada")}</span>
               )}
             </span>
           </li>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Check, Copy } from "lucide-react";
+import { cn } from "../cn";
 import { Botao } from "./Botao";
 
 /**
@@ -16,9 +17,14 @@ export interface LinhaCopiarProps {
   valor: string;
   mostrado?: string;
   textos: { copiar: string; copiado: string };
+  /**
+   * `palavras` (por omissão) parte só entre palavras (nomes, IBAN com espaços);
+   * `qualquer` parte em qualquer sítio, para valores sem espaços (um link).
+   */
+  quebra?: "palavras" | "qualquer";
 }
 
-export const LinhaCopiar = ({ rotulo, valor, mostrado, textos }: LinhaCopiarProps) => {
+export const LinhaCopiar = ({ rotulo, valor, mostrado, textos, quebra = "palavras" }: LinhaCopiarProps) => {
   const [copiado, setCopiado] = useState(false);
   const relogio = useRef<number>();
   useEffect(() => () => window.clearTimeout(relogio.current), []);
@@ -35,12 +41,16 @@ export const LinhaCopiar = ({ rotulo, valor, mostrado, textos }: LinhaCopiarProp
   };
 
   return (
-    <div className="flex items-center justify-between gap-4 py-3">
+    // No telemóvel, o botão vai para baixo do valor: um valor longo (um link) nunca
+    // fica espremido numa coluna estreita ao lado dele.
+    <div className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
       <div className="min-w-0">
         <p className="text-legenda text-tinta-suave">{rotulo}</p>
-        <p className="break-words text-corpo font-medium text-tinta">{mostrado ?? valor}</p>
+        <p className={cn("text-corpo font-medium text-tinta", quebra === "qualquer" ? "break-all" : "break-words")}>
+          {mostrado ?? valor}
+        </p>
       </div>
-      <Botao type="button" variante="secundario" className="shrink-0 px-4" onClick={() => void copiar()}>
+      <Botao type="button" variante="secundario" className="shrink-0 self-start px-4 sm:self-auto" onClick={() => void copiar()}>
         {copiado ? <Check /> : <Copy />}
         <span aria-live="polite">{copiado ? textos.copiado : textos.copiar}</span>
       </Botao>

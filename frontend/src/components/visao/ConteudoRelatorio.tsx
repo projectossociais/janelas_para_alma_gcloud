@@ -4,6 +4,7 @@ import ResumoTendencia from "@/components/visao/ResumoTendencia";
 import { limiarFormatado, nomeDoExercicio, nomeDoOlho } from "@/components/visao/rotulos";
 import { formatarData, formatarDataHora, formatarDiaCurto } from "@/i18n/formatar";
 import { ID_ACUIDADE, ID_ANEIS } from "@/lib/visao/ids";
+import { olhosComResultados } from "@/lib/visao/resumoProgresso";
 import {
   DIAS_RELATORIO,
   IDS_AUTOAVALIACAO,
@@ -108,12 +109,20 @@ const ConteudoRelatorio = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRela
 
       <section className="break-inside-avoid space-y-2">
         <h2 className={H2}>3. {t("Visao.relatorioEvolucao")}</h2>
-        {[ID_ACUIDADE, ID_ANEIS].map((id) => (
-          <div key={id}>
-            <p className="font-semibold">{nomeDoExercicio(id)}</p>
-            <ResumoTendencia sessoes={sessoes} exercicioId={id} olhos={["direito", "esquerdo"]} simples />
-          </div>
-        ))}
+        {[ID_ACUIDADE, ID_ANEIS].map((id) => {
+          // Só os olhos com resultados: um treino monocular nunca mostra o outro olho.
+          const olhos = olhosComResultados(sessoes, id);
+          return (
+            <div key={id}>
+              <p className="font-semibold">{nomeDoExercicio(id)}</p>
+              {olhos.length ? (
+                <ResumoTendencia sessoes={sessoes} exercicioId={id} olhos={olhos} simples />
+              ) : (
+                <p className="text-neutral-600">{t("Visao.semDadosAinda")}</p>
+              )}
+            </div>
+          );
+        })}
       </section>
 
       <section className="break-inside-avoid">
