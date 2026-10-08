@@ -462,6 +462,10 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   resumo diz que não houve medição e grava `limiar: null` (até 2026-10-08 mostrava o nível de
   partida, ou o anel maior a quem errou tudo, e isso chegava ao relatório do médico). Sem
   valores de referência (contraste), um valor é "a comparar", nunca "Sem sinais".
+- **Testes de acuidade e contraste contam anel a anel** (`limiarFinoTeste`, como a ETDRS conta
+  letra a letra): cada erro no último nível passado piora 1/3 de nível, cada acerto no primeiro
+  falhado melhora 1/3. Só com o último nível passado, dois olhos com erros diferentes davam o
+  mesmo resultado (caso real, 2026-10-08).
 - **Sessões novas gravam `versao: 2`** e nunca mostram "guardado" antes da resposta da API
   (`useRegistoSessao`, com "Tentar de novo" que reenvia só o que falhou).
 
