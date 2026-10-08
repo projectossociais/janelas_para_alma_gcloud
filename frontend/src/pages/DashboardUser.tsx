@@ -1,19 +1,14 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Activity, ChevronRight, Dumbbell, Home, ScanFace, Settings, TrendingUp, User } from "lucide-react";
-import NotificationBell from "@/components/NotificationBell";
+import { Activity, ChevronRight, Dumbbell, ScanFace } from "lucide-react";
+import { MolduraApp } from "@/components/app/MolduraApp";
 import PremiumRequestBanner from "@/components/PremiumRequestBanner";
-import { LigacaoRouter } from "@/components/site/LigacaoRouter";
 import { useAcessoExercicios } from "@/contexts/AcessoExerciciosContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { Botao } from "@/design/componentes/Botao";
 import { Cartao, CartaoLigacao, CartaoTexto, CartaoTitulo } from "@/design/componentes/Cartao";
-import { MenuConta } from "@/design/componentes/MenuConta";
-import { LayoutApp } from "@/design/layouts/LayoutApp";
-import { ProvedorLigacao } from "@/design/Ligacao";
-import { Simbolo } from "@/design/marca/Simbolo";
 import { formatarData, formatarDataHora } from "@/i18n/formatar";
 import { localizar } from "@/i18n/rotas";
 import {
@@ -45,8 +40,7 @@ const TOTAL_EXERCICIOS = 8;
 
 const DashboardUser = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { profile } = useProfile();
   const { acesso } = useAcessoExercicios();
 
@@ -87,13 +81,6 @@ const DashboardUser = () => {
     exerciciosDisponiveis,
     estadoAcesso: acesso.estado,
   });
-
-  const destinos = [
-    { rotulo: t("PainelApp.inicio"), href: localizar("/dashboard"), icone: <Home />, activo: true },
-    { rotulo: t("PainelApp.rastreio"), href: localizar("/scanner"), icone: <ScanFace /> },
-    { rotulo: t("PainelApp.treinos"), href: localizar("/exercicios"), icone: <Dumbbell /> },
-    { rotulo: t("PainelApp.progresso"), href: localizar("/exercicios/progresso"), icone: <TrendingUp /> },
-  ];
 
   const accaoDoPasso = (): ReactNode => {
     const ir = (para: string, texto: string) => (
@@ -180,36 +167,11 @@ const DashboardUser = () => {
   const { titulo, texto } = carregado ? textoDoPasso() : { titulo: "", texto: "" };
 
   return (
-    <ProvedorLigacao componente={LigacaoRouter}>
-      <LayoutApp
-        destinos={destinos}
-        rotuloNavegacao={t("PainelApp.navegacao")}
-        simbolo={<Simbolo fundo="claro" />}
-        saudacao={primeiroNome ? t("DashboardUser.saudacao", { nome: primeiroNome }) : t("DashboardUser.saudacaoSemNome")}
-        subtitulo={t("DashboardUser.oSeuEspacoDe")}
-        conta={
-          <>
-            <NotificationBell claro={false} />
-            <MenuConta
-              nome={nome}
-              avatarUrl={profile?.avatar_url || user?.avatarUrl}
-              rotulo={t("PainelApp.contaDe", { nome: nome || t("PainelApp.contaSemNome") })}
-              itens={[
-                { rotulo: t("Navbar.editarPerfil"), href: localizar("/editar-perfil"), icone: <User /> },
-                { rotulo: t("Navbar.configuracoes"), href: localizar("/configuracoes"), icone: <Settings /> },
-              ]}
-              sair={{
-                rotulo: t("Navbar.sair"),
-                aoSair: () => {
-                  logout();
-                  navigate(localizar("/"));
-                },
-              }}
-            />
-          </>
-        }
-        textoSaltar={t("PainelApp.saltar")}
-      >
+    <MolduraApp
+      activo="inicio"
+      titulo={primeiroNome ? t("DashboardUser.saudacao", { nome: primeiroNome }) : t("DashboardUser.saudacaoSemNome")}
+      subtitulo={t("DashboardUser.oSeuEspacoDe")}
+    >
         <div className="flex flex-col gap-8">
           <PremiumRequestBanner />
 
@@ -271,8 +233,7 @@ const DashboardUser = () => {
             </ul>
           </section>
         </div>
-      </LayoutApp>
-    </ProvedorLigacao>
+    </MolduraApp>
   );
 };
 

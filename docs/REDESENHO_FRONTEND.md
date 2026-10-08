@@ -274,6 +274,21 @@ Acrescentar abaixo, com data, o que for decidido ou detalhado em cada conversa s
 redesenho (referências visuais, páginas a priorizar, gostos e recusas do dono do
 projecto, feedback do Lukeny). Mais recente em cima.
 
+- **2026-10-08** — **Fase 4, progresso e relatórios (ramo `redesenho/progresso-relatorio`).** O
+  progresso passa ao arquétipo App (o separador "Progresso" do painel; a moldura da app passou a um
+  componente partilhado, `MolduraApp`). Corrigido o que estava mal: separadores falsos dos
+  exercícios (agora um seletor nativo), barras de minutos sem dias, datas repetidas no gráfico (um
+  ponto por dia, a última sessão do dia), **marcas do eixo erradas** (o gráfico punha 0,35 e
+  escrevia "0,3"; agora `eixoDosLimiares`, décimas exactas), linha curva que sugeria valores
+  nunca medidos (agora segmentos rectos), cores à mão que não seguiam o tema (agora
+  `currentColor`), "1 dias", e nenhuma alternativa ao gráfico (agora tabela com os valores). Os
+  olhos distinguem-se por cor, traço e marcador. Os relatórios ganham uma página limpa
+  (`MolduraRelatorio`: barra fina com voltar e imprimir, que não sai no papel); **a folha não
+  mudou de estilo** (CLAUDE.md §6). Corrigido na folha: um treino monocular (Anéis) mostrava o
+  outro olho a "pedir mais uma sessão" (`olhosComResultados`), e as datas levavam segundos.
+  "Partilhar com o médico" no sistema de design, com o link inteiro e "Copiar" por baixo no
+  telemóvel. **Falta da Fase 4:** o jogo.
+
 - **2026-10-08** — **Fase 4, a lista dos exercícios (`Exercicios.tsx`, ramo `redesenho/lista-exercicios`).**
   Arquétipo Site (quem não tem conta também a vê): cabeçalho com o aviso numa linha, o estado do acesso
   num cartão com **uma** acção, e os dois grupos com cartões do sistema de design. Num cartão aberto o

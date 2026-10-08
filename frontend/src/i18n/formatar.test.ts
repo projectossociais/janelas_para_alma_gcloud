@@ -9,7 +9,12 @@ describe("formatarData / formatarDataHora", () => {
   it("em português mantém exactamente o formato pt-PT de sempre", () => {
     void i18n.changeLanguage("pt-AO");
     expect(formatarData(DATA)).toBe(new Date(DATA).toLocaleDateString("pt-PT"));
-    expect(formatarDataHora(DATA)).toBe(new Date(DATA).toLocaleString("pt-PT"));
+    const d = new Date(DATA);
+    const dois = (n: number) => String(n).padStart(2, "0");
+    // Dia, mês, ano, hora e minutos; nunca os segundos.
+    expect(formatarDataHora(DATA)).toBe(
+      `${dois(d.getDate())}/${dois(d.getMonth() + 1)}/${d.getFullYear()}, ${dois(d.getHours())}:${dois(d.getMinutes())}`,
+    );
   });
 
   it("em inglês usa o formato americano por extenso", () => {

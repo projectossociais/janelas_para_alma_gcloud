@@ -1,15 +1,14 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Printer } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import ConteudoRelatorio, {
-  CabecalhoRelatorio,
-  FolhaRelatorio,
-} from "@/components/visao/ConteudoRelatorio";
+import { ArrowLeft } from "lucide-react";
+import ConteudoRelatorio, { CabecalhoRelatorio, FolhaRelatorio } from "@/components/visao/ConteudoRelatorio";
+import { MolduraRelatorio } from "@/components/visao/MolduraRelatorio";
 import PartilharComMedico from "@/components/visao/PartilharComMedico";
 import { useHistoricoVisao } from "@/components/visao/hooks";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
+import { Aviso } from "@/design/componentes/Aviso";
+import { Botao } from "@/design/componentes/Botao";
 import { localizar } from "@/i18n/rotas";
 
 /**
@@ -18,6 +17,9 @@ import { localizar } from "@/i18n/rotas";
  * dos testes. Imprime-se com `window.print()` (o browser gera o PDF) ou
  * partilha-se por link temporário (Fase B, `PartilharComMedico`). O conteúdo é
  * o mesmo que o médico vê no link (`ConteudoRelatorio`).
+ *
+ * Os estados (sem sessão, erro, a carregar) ficam **fora** da folha: a folha é só
+ * para o que vai para o médico.
  */
 const RelatorioSemanal = () => {
   const { t } = useTranslation();
@@ -27,28 +29,47 @@ const RelatorioSemanal = () => {
   // O histórico completo é preciso para a evolução e os "últimos resultados".
   const { sessoes, erro, recarregar } = useHistoricoVisao();
 
+  const voltar = (
+    <Botao asChild variante="fantasma" className="-ml-3 px-3">
+      <Link to={localizar("/exercicios/progresso")}>
+        <ArrowLeft aria-hidden /> {t("Visao.voltarAoProgresso")}
+      </Link>
+    </Botao>
+  );
+
+  if (!isLoggedIn) {
+    return (
+      <MolduraRelatorio esquerda={voltar} podeImprimir={false}>
+        <Aviso variante="info" titulo={t("Visao.relatorioTitulo")}>
+          {t("Visao.progressoSemSessao")}
+        </Aviso>
+        <Botao asChild className="mt-6">
+          <Link to={localizar(`/login?next=${encodeURIComponent("/exercicios/relatorio")}`)}>{t("ProgressoApp.entrar")}</Link>
+        </Botao>
+      </MolduraRelatorio>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-background print:bg-white print:text-black">
-      <div className="container mx-auto max-w-3xl px-4 py-8 print:max-w-none print:p-0">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 print:hidden">
-          <Button variant="ghost" asChild>
-            <Link to={localizar("/exercicios/progresso")}>
-              <ArrowLeft className="h-4 w-4" />
-              {t("Visao.voltarAoProgresso")}
-            </Link>
-          </Button>
-          <Button
-            onClick={() => window.print()}
-            className="gap-2 bg-navy text-navy-foreground hover:bg-navy/90"
-            disabled={!sessoes}
-          >
-            <Printer className="h-4 w-4" />
-            {t("Visao.imprimir")}
-          </Button>
-        </div>
-
-        {isLoggedIn && <PartilharComMedico />}
-
+    <MolduraRelatorio esquerda={voltar} podeImprimir={!!sessoes} antesDaFolha={<PartilharComMedico />}>
+      {erro ? (
+        <Aviso
+          variante="erro"
+          anunciar
+          titulo={t("Visao.erroACarregar")}
+          accao={
+            <Botao variante="secundario" onClick={() => void recarregar()}>
+              {t("Visao.tentarDeNovo")}
+            </Botao>
+          }
+        >
+          {t("ProgressoApp.erroTexto")}
+        </Aviso>
+      ) : sessoes === null ? (
+        <p role="status" className="text-corpo text-tinta-suave">
+          {t("ProgressoApp.aCarregar")}
+        </p>
+      ) : (
         <FolhaRelatorio>
           <CabecalhoRelatorio
             hoje={hoje}
@@ -56,31 +77,10 @@ const RelatorioSemanal = () => {
             olhoMaisFraco={profile?.olho_mais_fraco ?? null}
             usaOculos={profile?.usa_oculos ?? null}
           />
-
-          {!isLoggedIn ? (
-            <p className="text-[13px] text-neutral-600">
-              {t("Visao.progressoSemSessao")}
-            </p>
-          ) : erro ? (
-            <div className="text-sm text-destructive" role="alert">
-              <p>{t("Visao.erroACarregar")}</p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-3 print:hidden"
-                onClick={() => void recarregar()}
-              >
-                {t("Visao.tentarDeNovo")}
-              </Button>
-            </div>
-          ) : sessoes === null ? (
-            <div className="h-40" aria-busy />
-          ) : (
-            <ConteudoRelatorio sessoes={sessoes} hoje={hoje} />
-          )}
+          <ConteudoRelatorio sessoes={sessoes} hoje={hoje} />
         </FolhaRelatorio>
-      </div>
-    </div>
+      )}
+    </MolduraRelatorio>
   );
 };
 
