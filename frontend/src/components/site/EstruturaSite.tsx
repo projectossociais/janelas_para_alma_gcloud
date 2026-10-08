@@ -73,7 +73,7 @@ export const EstruturaSite = ({ children, barraMovel, barraVisivel }: EstruturaS
   const entrada = (
     <Ligacao
       href={isLoggedIn ? em("/dashboard") : em("/login")}
-      className="inline-flex min-h-alvo-app items-center rounded-controlo px-3 text-corpo font-medium text-accao hover:bg-accao-suave focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco"
+      className="inline-flex min-h-alvo-app items-center whitespace-nowrap rounded-controlo px-2 text-legenda font-medium text-accao hover:bg-accao-suave sm:px-3 sm:text-corpo focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco"
     >
       {isLoggedIn ? t("SiteNovo.minhaArea") : t("SiteNovo.entrar")}
     </Ligacao>

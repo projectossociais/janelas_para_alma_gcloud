@@ -274,6 +274,17 @@ Acrescentar abaixo, com data, o que for decidido ou detalhado em cada conversa s
 redesenho (referências visuais, páginas a priorizar, gostos e recusas do dono do
 projecto, feedback do Lukeny). Mais recente em cima.
 
+- **2026-10-08** — **Fase 4, a lista dos exercícios (`Exercicios.tsx`, ramo `redesenho/lista-exercicios`).**
+  Arquétipo Site (quem não tem conta também a vê): cabeçalho com o aviso numa linha, o estado do acesso
+  num cartão com **uma** acção, e os dois grupos com cartões do sistema de design. Num cartão aberto o
+  cartão inteiro leva ao exercício (só o título é a ligação, como pede o `Cartao`); fechado, mostra a
+  acção certa (começar o teste, ver o Premium) ou nenhuma, para quem não tem conta (a acção fica só no
+  topo). **Saiu a janela intermédia "Ver planos Premium"** (`PremiumPaywallModal`): era um passo a mais
+  antes da página do Premium, que já explica os planos. "Trial activo/disponível/terminado" passa a
+  "Teste de 7 dias …" (o anglicismo já não se usava no resto do site). Corrigido também o cabeçalho do
+  site no telemóvel: "A minha área" partia-se em duas linhas. **Falta da Fase 4:** o progresso, o
+  relatório e o jogo.
+
 - **2026-10-07** — **Fase 4, a moldura dos 8 exercícios (ramo `redesenho/exercicios`).** A casca
   (`BaseExercise`) passa ao arquétipo Tarefa: sem navegação do site, o passo com o nome ("Passo 2 de
   7 · Cartão") e "Sair", que **pede confirmação a meio** para ninguém perder uma sessão por engano.
