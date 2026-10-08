@@ -126,6 +126,7 @@ vi.mock("sonner", () => ({
 }));
 
 import JogoCuriosidades from "./JogoCuriosidades";
+import { PERGUNTAS_OFFLINE_POR_PATAMAR } from "./perguntasOffline";
 import i18n from "@/i18n";
 
 const TERMINADA = {
@@ -626,6 +627,41 @@ describe("JogoCuriosidades", () => {
       expect(validarResposta).not.toHaveBeenCalled();
       expect(iniciarPartida).not.toHaveBeenCalled();
     });
+
+    it("tempo esgotado nunca conta como acerto, mesmo quando a resposta certa é 'A' (defeito real)", async () => {
+      // Antes: sem servidor, o tempo esgotado validava como se se tivesse escolhido
+      // "A"; se a certa fosse A, o jogador subia de patamar sem responder.
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      try {
+        render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+        await comecarJogo();
+        // Sobe ao patamar 4, onde a primeira pergunta da reserva tem a resposta "A".
+        for (let p = 1; p <= 3; p++) {
+          const q = PERGUNTAS_OFFLINE_POR_PATAMAR[p][0];
+          await screen.findByText(q.texto_pergunta, {}, { timeout: 4000 });
+          const certa = { A: q.opcao_a, B: q.opcao_b, C: q.opcao_c, D: q.opcao_d }[q.resposta_correta];
+          await userEvent.click(screen.getByText(certa));
+        }
+        const q4 = PERGUNTAS_OFFLINE_POR_PATAMAR[4][0];
+        expect(q4.resposta_correta).toBe("A");
+        await screen.findByText(q4.texto_pergunta, {}, { timeout: 4000 });
+
+        for (let i = 0; i < 46; i++) {
+          await act(async () => {
+            vi.advanceTimersByTime(1000);
+          });
+        }
+
+        expect(await screen.findByText("Tempo esgotado!")).toBeInTheDocument();
+        // E não sobe de patamar, nem depois do tempo que o avanço automático levaria.
+        await act(async () => {
+          vi.advanceTimersByTime(2000);
+        });
+        expect(screen.queryByText(PERGUNTAS_OFFLINE_POR_PATAMAR[5][0].texto_pergunta)).not.toBeInTheDocument();
+      } finally {
+        vi.useRealTimers();
+      }
+    }, 20000);
 
     it("no fim, não há prémio -- convida a entrar", async () => {
       render(<JogoCuriosidades />, { wrapper: MemoryRouter });

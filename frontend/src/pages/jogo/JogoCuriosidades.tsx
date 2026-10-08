@@ -53,6 +53,7 @@ import { obterPerguntaOfflineNaoVista, obterPerguntaOfflinePorId, obterPerguntas
 import { Trans, useTranslation } from "react-i18next";
 import { localizar } from "@/i18n/rotas";
 import { useIdioma } from "@/i18n/useIdioma";
+import { gerarOpiniaoPublico } from "@/lib/jogo/opiniaoPublico";
 import { IDIOMA_EN } from "@/i18n/idiomas";
 
 const TEMPO_SPLASH_MS = 2500;
@@ -73,26 +74,6 @@ interface RecompensaLocal {
   moedas: number;
   diamantes: number;
 }
-
-// Só para o modo offline (perguntas locais) -- com servidor, a sondagem vem
-// de `jogoApi.opiniaoPublico`. Simula uma sondagem: a opção certa fica sempre entre 55% e 75%, o resto
-// reparte-se pelas outras três de forma plausível (nunca 0%, soma sempre 100).
-const gerarOpiniaoPublico = (correta: RespostaOpcaoJogo): Record<RespostaOpcaoJogo, number> => {
-  const percentagemCorreta = 55 + Math.floor(Math.random() * 21);
-  const restantes = OPCOES.filter((o) => o !== correta);
-  const pesos = restantes.map(() => Math.random() + 0.1);
-  const somaPesos = pesos.reduce((a, b) => a + b, 0);
-  const disponivel = 100 - percentagemCorreta;
-  const valores = pesos.map((p) => Math.max(1, Math.round((p / somaPesos) * disponivel)));
-  valores[0] += disponivel - valores.reduce((a, b) => a + b, 0);
-
-  const resultado = { A: 0, B: 0, C: 0, D: 0 } as Record<RespostaOpcaoJogo, number>;
-  resultado[correta] = percentagemCorreta;
-  restantes.forEach((opcao, i) => {
-    resultado[opcao] = valores[i];
-  });
-  return resultado;
-};
 
 const JogoCuriosidades = () => {
   const { t: tr } = useTranslation();
@@ -406,7 +387,9 @@ const JogoCuriosidades = () => {
   const aoTempoEsgotar = async () => {
     if (!pergunta || aValidar) return;
     if (emModoOffline) {
-      setResultado({ ...validarLocalmente("A"), tempoEsgotado: true });
+      // O tempo esgotado é sempre um erro: a "A" serve só para obter a resposta
+      // certa e a explicação. Antes, se a certa fosse A, contava como acerto.
+      setResultado({ ...validarLocalmente("A"), correta: false, tempoEsgotado: true });
       return;
     }
     setAValidar(true);
