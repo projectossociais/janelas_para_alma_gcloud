@@ -1,142 +1,128 @@
-import { useState } from "react";
+import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Globe, User, Users, UserRound } from "lucide-react";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import BackButton from "@/components/BackButton";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useProfile } from "@/contexts/ProfileContext";
-import CarteiraJogo from "@/components/jogo/CarteiraJogo";
+import { ChevronRight, Globe, User, UserRound, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import CarteiraJogo from "@/components/jogo/CarteiraJogo";
+import { useProfile } from "@/contexts/ProfileContext";
+import { Botao } from "@/design/componentes/Botao";
+import { Cartao, CartaoLigacao, CartaoTexto, CartaoTitulo } from "@/design/componentes/Cartao";
+import { Contentor } from "@/design/layouts/Contentor";
 import { localizar } from "@/i18n/rotas";
 
-type ModoEmBreve = "local" | "online" | null;
+const IconeModo = ({ children, apagado = false }: { children: ReactNode; apagado?: boolean }) => (
+  <span
+    aria-hidden
+    className={
+      apagado
+        ? "flex size-12 items-center justify-center rounded-pilula bg-superficie-alt text-tinta-suave [&_svg]:size-6"
+        : "flex size-12 items-center justify-center rounded-pilula bg-accao-suave text-accao [&_svg]:size-6"
+    }
+  >
+    {children}
+  </span>
+);
 
+/** Um modo que ainda não existe: diz-se já o que vai ser, sem clique que não leva a lado nenhum. */
+const ModoEmBreve = ({ icone, titulo, texto }: { icone: ReactNode; titulo: string; texto: string }) => {
+  const { t } = useTranslation();
+  return (
+    <Cartao className="bg-superficie-alt shadow-none">
+      <div className="flex items-start justify-between gap-3">
+        <IconeModo apagado>{icone}</IconeModo>
+        <span className="rounded-pilula border border-linha bg-superficie px-2.5 py-0.5 text-legenda font-medium text-tinta-suave">
+          {t("MenuJogo.emBreve")}
+        </span>
+      </div>
+      <CartaoTitulo className="mt-4 text-tinta-suave">{titulo}</CartaoTitulo>
+      <CartaoTexto>{texto}</CartaoTexto>
+    </Cartao>
+  );
+};
+
+/**
+ * Entrada do jogo Inclusivamente (arquétipo Site, como a lista dos exercícios:
+ * quem não tem conta também joga). Quem é o jogador e o saldo, e os modos de
+ * jogo -- um a funcionar, dois anunciados.
+ */
 const MenuJogo = () => {
   const { t } = useTranslation();
   const { profile } = useProfile();
-  const [modoEmBreve, setModoEmBreve] = useState<ModoEmBreve>(null);
+  const nome = profile ? profile.nome_completo || profile.email : "";
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <Navbar />
-      <BackButton fallbackPath={localizar("/")} label={t("MenuJogo.voltar")} />
+    <Contentor className="py-12 lg:py-16">
+      <header className="max-w-2xl">
+        <p className="text-legenda font-medium text-accao">{t("MenuJogo.inclusivamente")}</p>
+        <h1 className="mt-2 text-titulo-g text-tinta">{t("MenuJogo.oJogoDaSaude")}</h1>
+        <p className="mt-4 text-corpo-g text-tinta-suave">{t("MenuJogo.escolhaComoQuerJogar")}</p>
+      </header>
 
-      <main className="flex-1">
-        <div className="container pb-16">
-          <header className="max-w-2xl mx-auto text-center space-y-3 mb-8">
-            <span className="text-sm font-medium tracking-widest uppercase text-teal">
-              {t("MenuJogo.inclusivamente")}
-            </span>
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground">{t("MenuJogo.oJogoDaSaude")}</h1>
-            <p className="text-muted-foreground">{t("MenuJogo.escolhaComoQuerJogar")}</p>
-          </header>
-
-          {/* Cabeçalho do jogador -- avatar/nome e saldos */}
-          <div className="max-w-3xl mx-auto rounded-2xl bg-card border border-border/60 shadow-card p-5 sm:p-6 flex items-center justify-between gap-4 flex-wrap mb-8">
-            {profile ? (
-              <Link to={localizar("/jogo-curiosidades/perfil")} className="flex items-center gap-3 group min-w-0">
-                <Avatar className="h-12 w-12 shrink-0">
-                  {profile.avatar_url && <AvatarImage src={profile.avatar_url} alt={profile.nome_completo} />}
-                  <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
-                    {(profile.nome_completo || profile.email)[0]?.toUpperCase() ?? "?"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0">
-                  <p className="font-bold text-foreground group-hover:text-teal transition-colors truncate">
-                    {profile.nome_completo || profile.email}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{t("MenuJogo.verPerfilEEstatisticas")}</p>
-                </div>
-              </Link>
+      {/* Quem joga e o saldo */}
+      <Cartao className="mt-10 flex flex-wrap items-center justify-between gap-4 p-5">
+        {profile ? (
+          <Link
+            to={localizar("/jogo-curiosidades/perfil")}
+            className="group flex min-w-0 items-center gap-3 rounded-controlo focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco"
+          >
+            {profile.avatar_url ? (
+              <img src={profile.avatar_url} alt="" className="size-12 shrink-0 rounded-pilula object-cover" />
             ) : (
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-12 h-12 shrink-0 rounded-full bg-muted flex items-center justify-center">
-                  <UserRound className="w-6 h-6 text-muted-foreground" />
-                </div>
-                <div className="min-w-0">
-                  <p className="font-bold text-foreground">{t("MenuJogo.convidado")}</p>
-                  <Link to={localizar("/auth")} className="text-xs text-teal hover:underline">
-                    {t("MenuJogo.inicieSessaoParaGuardar")}
-                  </Link>
-                </div>
-              </div>
+              <span
+                aria-hidden
+                className="flex size-12 shrink-0 items-center justify-center rounded-pilula bg-accao text-corpo-g font-medium text-sobre-accao"
+              >
+                {nome[0]?.toUpperCase() ?? "?"}
+              </span>
             )}
-
-            <CarteiraJogo className="shrink-0" />
-          </div>
-
-          {/* Modos de jogo */}
-          <div className="grid sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
-            <Link
-              to={localizar("/jogo-curiosidades/jogar")}
-              className="group rounded-2xl bg-card border border-border/60 shadow-card hover:shadow-elevated hover:-translate-y-1 transition-all p-6 text-center space-y-3"
-            >
-              <div className="w-14 h-14 rounded-2xl bg-teal/10 text-teal flex items-center justify-center mx-auto transition-colors group-hover:bg-teal group-hover:text-teal-foreground">
-                <User className="w-7 h-7" />
-              </div>
-              <h3 className="font-bold text-foreground">{t("MenuJogo.umJogador")}</h3>
-              <p className="text-sm text-muted-foreground">{t("MenuJogo.subaOs15Patamares")}</p>
-            </Link>
-
-            <button
-              type="button"
-              onClick={() => setModoEmBreve("local")}
-              className="relative rounded-2xl bg-card border border-border/60 shadow-card hover:shadow-elevated transition-all p-6 text-center space-y-3"
-            >
-              <span className="absolute top-3 right-3 text-[10px] font-bold uppercase tracking-wide bg-gold/15 text-gold rounded-full px-2 py-1">
-                {t("MenuJogo.emBreve")}
+            <span className="min-w-0">
+              <span className="block truncate text-corpo font-medium text-tinta">{nome}</span>
+              <span className="flex items-center gap-1 text-legenda text-accao group-hover:underline">
+                {t("MenuJogo.verPerfilEEstatisticas")} <ChevronRight className="size-4" aria-hidden />
               </span>
-              <div className="w-14 h-14 rounded-2xl bg-muted text-muted-foreground flex items-center justify-center mx-auto">
-                <Users className="w-7 h-7" />
-              </div>
-              <h3 className="font-bold text-foreground">{t("MenuJogo.multijogadorLocal")}</h3>
-              <p className="text-sm text-muted-foreground">{t("MenuJogo.desafieUmAmigoNo")}</p>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setModoEmBreve("online")}
-              className="relative rounded-2xl bg-card border border-border/60 shadow-card hover:shadow-elevated transition-all p-6 text-center space-y-3"
-            >
-              <span className="absolute top-3 right-3 text-[10px] font-bold uppercase tracking-wide bg-gold/15 text-gold rounded-full px-2 py-1">
-                {t("MenuJogo.emBreve")}
-              </span>
-              <div className="w-14 h-14 rounded-2xl bg-muted text-muted-foreground flex items-center justify-center mx-auto">
-                <Globe className="w-7 h-7" />
-              </div>
-              <h3 className="font-bold text-foreground">{t("MenuJogo.multijogadorOnline")}</h3>
-              <p className="text-sm text-muted-foreground">{t("MenuJogo.jogueEmTempoReal")}</p>
-            </button>
+            </span>
+          </Link>
+        ) : (
+          <div className="flex min-w-0 items-center gap-3">
+            <span aria-hidden className="flex size-12 shrink-0 items-center justify-center rounded-pilula bg-superficie-alt text-tinta-suave">
+              <UserRound className="size-6" />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-corpo font-medium text-tinta">{t("MenuJogo.convidado")}</span>
+              <span className="block text-legenda text-tinta-suave">{t("MenuJogo.inicieSessaoParaGuardar")}</span>
+            </span>
           </div>
-        </div>
-      </main>
+        )}
 
-      <Dialog open={modoEmBreve !== null} onOpenChange={(open) => !open && setModoEmBreve(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{modoEmBreve === "online" ? t("MenuJogo.multijogadorOnline") : t("MenuJogo.multijogadorLocal")}</DialogTitle>
-            <DialogDescription>
-              {modoEmBreve === "online"
-                ? t("MenuJogo.estamosAConstruirO")
-                : t("MenuJogo.emBreveVaiPoder")}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              onClick={() => setModoEmBreve(null)}
-              className="w-full bg-teal text-teal-foreground hover:bg-teal/90"
-            >
-              {t("MenuJogo.entendi")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        {profile ? (
+          <CarteiraJogo className="shrink-0" />
+        ) : (
+          <Botao asChild variante="secundario">
+            <Link to={localizar("/auth")}>{t("MenuJogo.entrar")}</Link>
+          </Botao>
+        )}
+      </Cartao>
 
-      <Footer />
-    </div>
+      {/* Modos de jogo */}
+      <h2 className="mt-12 text-titulo-m text-tinta">{t("MenuJogo.modosDeJogo")}</h2>
+      <div className="mt-6 grid gap-4 md:grid-cols-3">
+        <Cartao interactivo className="border-accao">
+          <IconeModo>
+            <User />
+          </IconeModo>
+          <CartaoTitulo className="mt-4">
+            <CartaoLigacao asChild>
+              <Link to={localizar("/jogo-curiosidades/jogar")}>{t("MenuJogo.umJogador")}</Link>
+            </CartaoLigacao>
+          </CartaoTitulo>
+          <CartaoTexto>{t("MenuJogo.subaOs15Patamares")}</CartaoTexto>
+          <p className="mt-4 flex items-center gap-1 text-corpo font-medium text-accao" aria-hidden>
+            {t("MenuJogo.jogar")} <ChevronRight className="size-5" />
+          </p>
+        </Cartao>
+        <ModoEmBreve icone={<Users />} titulo={t("MenuJogo.multijogadorLocal")} texto={t("MenuJogo.emBreveVaiPoder")} />
+        <ModoEmBreve icone={<Globe />} titulo={t("MenuJogo.multijogadorOnline")} texto={t("MenuJogo.estamosAConstruirO")} />
+      </div>
+    </Contentor>
   );
 };
 

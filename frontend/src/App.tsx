@@ -120,6 +120,9 @@ const PAGINAS_SITE: ReadonlySet<ChaveRota> = new Set<ChaveRota>([
   "faq",
   "impacto",
   "junteSe",
+  "jogoMenu",
+  "jogoLoja",
+  "jogoLojaMoedas",
 ]);
 
 const pagina = (chave: ChaveRota) =>
