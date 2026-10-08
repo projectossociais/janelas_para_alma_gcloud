@@ -3,7 +3,7 @@ import { Coins, Gem, Loader2, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useCarteiraJogo } from "@/contexts/CarteiraJogoContext";
 import { localizar } from "@/i18n/rotas";
-import { cn } from "@/lib/utils";
+import { cn } from "@/design/cn";
 
 const formatarSaldo = (valor: number) => valor.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
@@ -20,35 +20,35 @@ const CarteiraJogo = ({ className }: { className?: string }) => {
   const diamantes = perfil?.diamantes ?? 0;
 
   const pilula =
-    "inline-flex items-center gap-2 rounded-full bg-card border border-border/60 shadow-card pl-2 pr-3 py-1.5 font-bold transition-colors hover:border-teal/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal";
+    "inline-flex min-h-alvo-app items-center gap-2 rounded-pilula border border-linha bg-superficie py-1 pl-1.5 pr-2 text-corpo font-medium tabular-nums text-tinta transition-colors duration-feedback hover:border-accao focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco";
 
   return (
     <div className={cn("flex items-center gap-2 sm:gap-3", className)}>
       <Link
         to={localizar("/jogo-curiosidades/loja-moedas")}
-        className={cn(pilula, "text-gold hover:border-gold/60")}
+        className={pilula}
         aria-label={t("CarteiraJogo.moedasSaldo", { valor: moedas })}
       >
-        <span className="w-7 h-7 rounded-full bg-gold/15 flex items-center justify-center">
-          <Coins className="w-4 h-4" />
+        <span aria-hidden className="flex size-8 items-center justify-center rounded-pilula bg-aviso-suave text-aviso">
+          <Coins className="size-4" />
         </span>
-        {aCarregar ? <Loader2 className="w-4 h-4 animate-spin" /> : formatarSaldo(moedas)}
-        <span className="w-5 h-5 rounded-full bg-gold text-navy flex items-center justify-center">
-          <Plus className="w-3.5 h-3.5" />
+        {aCarregar ? <Loader2 className="size-4 animate-spin" aria-hidden /> : formatarSaldo(moedas)}
+        <span aria-hidden className="flex size-5 items-center justify-center rounded-pilula bg-accao text-sobre-accao">
+          <Plus className="size-3.5" />
         </span>
       </Link>
 
       <Link
         to={localizar("/jogo-curiosidades/loja")}
-        className={cn(pilula, "text-teal")}
+        className={pilula}
         aria-label={t("CarteiraJogo.diamantesSaldo", { valor: diamantes })}
       >
-        <span className="w-7 h-7 rounded-full bg-teal/15 flex items-center justify-center">
-          <Gem className="w-4 h-4" />
+        <span aria-hidden className="flex size-8 items-center justify-center rounded-pilula bg-accao-suave text-accao">
+          <Gem className="size-4" />
         </span>
-        {aCarregar ? <Loader2 className="w-4 h-4 animate-spin" /> : formatarSaldo(diamantes)}
-        <span className="w-5 h-5 rounded-full bg-teal text-teal-foreground flex items-center justify-center">
-          <Plus className="w-3.5 h-3.5" />
+        {aCarregar ? <Loader2 className="size-4 animate-spin" aria-hidden /> : formatarSaldo(diamantes)}
+        <span aria-hidden className="flex size-5 items-center justify-center rounded-pilula bg-accao text-sobre-accao">
+          <Plus className="size-3.5" />
         </span>
       </Link>
     </div>

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
@@ -128,6 +128,7 @@ vi.mock("sonner", () => ({
 import JogoCuriosidades from "./JogoCuriosidades";
 import { PERGUNTAS_OFFLINE_POR_PATAMAR } from "./perguntasOffline";
 import i18n from "@/i18n";
+import { violacoesAcessibilidade } from "@/design/testes/acessibilidade";
 
 const TERMINADA = {
   perfil: { moedas: 0, diamantes: 0, partidas_jogadas: 1, patamar_maximo_alcancado: 0 },
@@ -235,6 +236,11 @@ describe("JogoCuriosidades", () => {
     expect(await screen.findByText("Essa não era a resposta certa")).toBeInTheDocument();
     expect(screen.getByText("A explicação científica da resposta certa.")).toBeInTheDocument();
     expect(screen.getByText(/B\) Certa B/)).toBeInTheDocument();
+    expect(screen.getByText("Errada A").closest("button")).toHaveAttribute("data-estado", "errada");
+    expect(screen.getByText("Certa B").closest("button")).toHaveAttribute("data-estado", "certa");
+    // ...e não só pela cor: o leitor de ecrã ouve qual é qual.
+    expect(screen.getByText("Errada A").closest("button")).toHaveTextContent("A sua resposta, errada");
+    expect(screen.getByText("Certa B").closest("button")).toHaveTextContent("Resposta certa");
 
     // fecha o modal reiniciando o jogo -- devolve o jogador ao patamar 1.
     obterPerguntaDaPartida.mockClear();
@@ -421,7 +427,7 @@ describe("JogoCuriosidades", () => {
       expect(screen.queryByText("Essa não era a resposta certa")).not.toBeInTheDocument();
       expect(terminarPartida).not.toHaveBeenCalled();
       // Nenhuma opção aparece como a certa.
-      expect(screen.getByText("Certa B").closest("button")).not.toHaveClass("border-green");
+      expect(screen.getByText("Certa B").closest("button")).toHaveAttribute("data-estado", "normal");
     });
 
     it("usar a vida extra: mesma pergunta, sem a opção falhada, e continua a jogar", async () => {
@@ -520,7 +526,7 @@ describe("JogoCuriosidades", () => {
     it("o × do modal de resposta errada volta ao menu do jogo e não recomeça a partida", async () => {
       await perderComSessao();
 
-      await userEvent.click(screen.getByRole("button", { name: "Close" }));
+      await userEvent.click(screen.getByRole("button", { name: "Fechar" }));
 
       expect(navigateMock).toHaveBeenCalledWith("/jogo-curiosidades");
       semRecomeco();
@@ -598,7 +604,7 @@ describe("JogoCuriosidades", () => {
       await userEvent.click(screen.getByText("Uma alteração na cor natural da íris")); // errada
       await screen.findByText("Essa não era a resposta certa");
 
-      await userEvent.click(screen.getByRole("button", { name: "Close" }));
+      await userEvent.click(screen.getByRole("button", { name: "Fechar" }));
 
       expect(navigateMock).toHaveBeenCalledWith("/jogo-curiosidades");
       expect(terminarPartida).not.toHaveBeenCalled();
@@ -927,6 +933,69 @@ describe("JogoCuriosidades", () => {
 
       expect(await screen.findByText("Strabismus is a misalignment of the visual axes of the two eyes.")).toBeInTheDocument();
       expect(validarResposta).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("moldura da partida (arquétipo Tarefa)", () => {
+    it("o passo diz o patamar e o prémio; a escada abre-se num diálogo", async () => {
+      obterPerguntaDaPartida.mockResolvedValue(PERGUNTA_1);
+      render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+      await comecarJogo();
+      await screen.findByText(PERGUNTA_1.texto_pergunta);
+
+      expect(screen.getAllByText("Patamar 1 de 15 · Kz 500").length).toBeGreaterThan(0);
+      await userEvent.click(screen.getByRole("button", { name: "Ver a escada de prémios" }));
+      const escada = await screen.findByRole("dialog", { name: "Escada de prémios" });
+      expect(escada).toHaveTextContent("Kz 1.000.000");
+    });
+
+    it("antes de começar, Sair vai logo para o menu (não há nada a perder)", async () => {
+      obterPerguntaDaPartida.mockResolvedValue(PERGUNTA_1);
+      render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+      await screen.findByText("Prepare-se para subir a escada");
+
+      await userEvent.click(screen.getByRole("button", { name: "Sair" }));
+
+      expect(navigateMock).toHaveBeenCalledWith("/jogo-curiosidades");
+      expect(terminarPartida).not.toHaveBeenCalled();
+    });
+
+    it("a meio da partida, Sair pede confirmação; 'Continuar a jogar' fica", async () => {
+      obterPerguntaDaPartida.mockResolvedValue(PERGUNTA_1);
+      render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+      await comecarJogo();
+      await screen.findByText(PERGUNTA_1.texto_pergunta);
+
+      await userEvent.click(screen.getByRole("button", { name: "Sair" }));
+      expect(await screen.findByRole("dialog", { name: "Sair da partida?" })).toBeInTheDocument();
+      expect(navigateMock).not.toHaveBeenCalled();
+
+      await userEvent.click(screen.getByRole("button", { name: "Continuar a jogar" }));
+      await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+      expect(navigateMock).not.toHaveBeenCalled();
+      expect(terminarPartida).not.toHaveBeenCalled();
+    });
+
+    it("confirmar a saída termina a partida no servidor (paga o que já subiu) e vai para o menu", async () => {
+      obterPerguntaDaPartida.mockResolvedValue(PERGUNTA_1);
+      render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+      await comecarJogo();
+      await screen.findByText(PERGUNTA_1.texto_pergunta);
+
+      await userEvent.click(screen.getByRole("button", { name: "Sair" }));
+      const dialogo = await screen.findByRole("dialog", { name: "Sair da partida?" });
+      await userEvent.click(within(dialogo).getByRole("button", { name: "Sair" }));
+
+      expect(navigateMock).toHaveBeenCalledWith("/jogo-curiosidades");
+      expect(terminarPartida).toHaveBeenCalledTimes(1);
+    });
+
+    it("sem violações de acessibilidade com uma pergunta no ecrã", async () => {
+      obterPerguntaDaPartida.mockResolvedValue(PERGUNTA_1);
+      const { container } = render(<JogoCuriosidades />, { wrapper: MemoryRouter });
+      await comecarJogo();
+      await screen.findByText(PERGUNTA_1.texto_pergunta);
+      expect(await violacoesAcessibilidade(container)).toEqual([]);
     });
   });
 });

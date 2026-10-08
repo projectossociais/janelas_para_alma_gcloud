@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/utils";
+import { cn } from "@/design/cn";
 
 interface TemporizadorCircularProps {
   tempoRestante: number;
@@ -30,7 +30,7 @@ export const TemporizadorCircular = ({ tempoRestante, tempoTotal }: Temporizador
           cy={TAMANHO_TEMPORIZADOR / 2}
           r={RAIO_TEMPORIZADOR}
           strokeWidth={ESPESSURA_TEMPORIZADOR}
-          className="fill-none stroke-muted"
+          className="fill-none stroke-linha"
         />
         <circle
           cx={TAMANHO_TEMPORIZADOR / 2}
@@ -41,15 +41,15 @@ export const TemporizadorCircular = ({ tempoRestante, tempoTotal }: Temporizador
           strokeDashoffset={offset}
           strokeLinecap="round"
           className={cn(
-            "fill-none transition-[stroke-dashoffset] duration-1000 ease-linear",
-            urgente ? "stroke-destructive" : "stroke-teal"
+            "fill-none transition-[stroke-dashoffset] duration-1000 ease-linear motion-reduce:transition-none",
+            urgente ? "stroke-erro" : "stroke-accao"
           )}
         />
       </svg>
       <div
         className={cn(
-          "absolute inset-0 flex items-center justify-center text-base font-bold",
-          urgente ? "text-destructive" : "text-foreground"
+          "absolute inset-0 flex items-center justify-center text-corpo font-medium tabular-nums",
+          urgente ? "text-erro" : "text-tinta"
         )}
       >
         {tempoRestante}

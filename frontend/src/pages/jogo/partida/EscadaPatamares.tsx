@@ -1,5 +1,5 @@
 import { Check } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/design/cn";
 import { PATAMARES, formatarKz } from "../jogoConfig";
 
 interface EscadaPatamaresProps {
@@ -7,29 +7,27 @@ interface EscadaPatamaresProps {
   className?: string;
 }
 
+/** Os 15 prémios, do mais alto ao mais baixo; só os valores, nunca o número do patamar. */
 export const EscadaPatamares = ({ patamarAtual, className }: EscadaPatamaresProps) => (
-  <div className={cn("rounded-2xl bg-card border border-border/60 shadow-card p-3", className)}>
-    <ul className="flex flex-col-reverse gap-1">
-      {PATAMARES.map(({ numero, valorKz }) => {
-        const ativo = numero === patamarAtual;
-        const superado = numero < patamarAtual;
-        return (
-          <li
-            key={numero}
-            className={cn(
-              "flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors",
-              ativo && "bg-teal/10 border border-teal text-foreground font-bold",
-              superado && "text-muted-foreground",
-              !ativo && !superado && "text-muted-foreground/70"
-            )}
-          >
-            {superado && <Check className="w-3.5 h-3.5 text-green shrink-0" />}
-            <span className={cn(ativo && "text-gold font-bold", superado && "text-foreground/70")}>
-              {formatarKz(valorKz)}
-            </span>
-          </li>
-        );
-      })}
-    </ul>
-  </div>
+  <ol className={cn("flex flex-col-reverse gap-1", className)}>
+    {PATAMARES.map(({ numero, valorKz }) => {
+      const ativo = numero === patamarAtual;
+      const superado = numero < patamarAtual;
+      return (
+        <li
+          key={numero}
+          aria-current={ativo ? "step" : undefined}
+          className={cn(
+            "flex items-center justify-center gap-2 rounded-controlo px-3 py-1.5 text-legenda tabular-nums",
+            ativo && "border-2 border-accao bg-accao-suave font-medium text-tinta",
+            superado && "text-tinta",
+            !ativo && !superado && "text-tinta-suave",
+          )}
+        >
+          {superado && <Check className="size-4 shrink-0 text-sucesso" aria-hidden />}
+          {formatarKz(valorKz)}
+        </li>
+      );
+    })}
+  </ol>
 );

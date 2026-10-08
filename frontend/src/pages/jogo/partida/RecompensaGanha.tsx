@@ -16,11 +16,11 @@ export const RecompensaGanha = ({ recompensa, modo, comPerguntasOffline = false 
   const { t } = useTranslation();
   if (modo !== "servidor") {
     return (
-      <div className="rounded-xl bg-muted/60 border border-border/50 p-4 text-sm text-muted-foreground">
+      <div className="rounded-controlo bg-superficie-alt p-4 text-legenda text-tinta-suave">
         {modo === "convidado" ? (
           <>
             {t("JogoCuriosidades.semPremioConvidado")}{" "}
-            <Link to={localizar("/auth")} className="font-semibold text-teal hover:underline">
+            <Link to={localizar("/auth")} className="font-medium text-accao underline underline-offset-2">
               {t("JogoCuriosidades.entrarParaGanhar")}
             </Link>
           </>
@@ -32,18 +32,18 @@ export const RecompensaGanha = ({ recompensa, modo, comPerguntasOffline = false 
   }
   if (!recompensa) return null;
   return (
-    <div className="rounded-xl bg-muted/60 border border-border/50 p-4 space-y-2">
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("JogoCuriosidades.premioGanho")}</p>
+    <div className="space-y-2 rounded-controlo bg-superficie-alt p-4 text-center">
+      <p className="text-legenda text-tinta-suave">{t("JogoCuriosidades.premioGanho")}</p>
       <div className="flex items-center justify-center gap-6">
-        <span className="inline-flex items-center gap-1.5 font-bold text-gold">
-          <Coins className="w-4 h-4" />+{recompensa.moedas}
+        <span className="inline-flex items-center gap-1.5 text-corpo-g font-medium text-tinta">
+          <Coins className="size-5 text-aviso" role="img" aria-label={t("JogoCuriosidades.moedas")} />+{recompensa.moedas}
         </span>
-        <span className="inline-flex items-center gap-1.5 font-bold text-teal">
-          <Gem className="w-4 h-4" />+{recompensa.diamantes}
+        <span className="inline-flex items-center gap-1.5 text-corpo-g font-medium text-tinta">
+          <Gem className="size-5 text-accao" role="img" aria-label={t("JogoCuriosidades.diamantes")} />+{recompensa.diamantes}
         </span>
       </div>
       {comPerguntasOffline && (
-        <p className="text-xs text-muted-foreground text-center">{t("JogoCuriosidades.respostasOfflineNaoContam")}</p>
+        <p className="text-legenda text-tinta-suave">{t("JogoCuriosidades.respostasOfflineNaoContam")}</p>
       )}
     </div>
   );

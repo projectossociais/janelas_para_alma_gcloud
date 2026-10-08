@@ -274,6 +274,20 @@ Acrescentar abaixo, com data, o que for decidido ou detalhado em cada conversa s
 redesenho (referências visuais, páginas a priorizar, gostos e recusas do dono do
 projecto, feedback do Lukeny). Mais recente em cima.
 
+- **2026-10-08** — **Fase 4, o jogo: a partida (`JogoCuriosidades.tsx`, ramo `redesenho/jogo`).**
+  Primeiro **decomposto sem mudar nada do que se vê**: a lógica toda (temporizador, ajudas, vida
+  extra, sequências, fim de partida) passou a `partida/usePartidaJogo.ts`, os testes do jogo sem
+  alteração. Antes disso, um defeito encontrado e corrigido com teste: no jogo sem servidor
+  (convidado), **esgotar o tempo podia contar como acerto** se a resposta certa fosse a A. Depois, o
+  ecrã passa ao arquétipo Tarefa, como os exercícios: sem navegação do site, o passo diz o patamar e
+  o prémio ("Patamar 3 de 15 · Kz 2.000"), e "Sair" **pede confirmação a meio** (a partida termina e
+  não se volta à pergunta). Uma coluna; a escada de prémios abre-se num diálogo, a partir do prémio.
+  Respostas com alvo grande (72 px, há crianças), o estado dito por cor, ícone **e** texto para
+  leitores de ecrã. Sem conta, a carteira (0 e 0) deixa de aparecer. O × dos diálogos passou a
+  "Fechar" (era o "Close" em inglês fixo do componente antigo). **Não muda:** as regras, a API, os
+  prémios, os tempos, o ecrã de apresentação de 2,5 s. **Falta do jogo:** os diálogos próprios
+  (Vida Extra, Sequência, Consultório), o menu, as lojas e o perfil do jogador.
+
 - **2026-10-08** — **Fase 4, progresso e relatórios (ramo `redesenho/progresso-relatorio`).** O
   progresso passa ao arquétipo App (o separador "Progresso" do painel; a moldura da app passou a um
   componente partilhado, `MolduraApp`). Corrigido o que estava mal: separadores falsos dos

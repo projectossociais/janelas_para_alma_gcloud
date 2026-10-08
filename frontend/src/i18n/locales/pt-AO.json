@@ -768,7 +768,21 @@
     "modoConvidado": "Está a jogar como convidado, com perguntas de treino e sem prémios.",
     "modoTreinoIngles": "Modo de treino: as perguntas em inglês não dão moedas nem diamantes. Os prémios estão na versão portuguesa do jogo.",
     "entrarParaGanhar": "Entre para ganhar moedas e diamantes.",
-    "semPremioConvidado": "Como convidado, esta partida não dá moedas nem diamantes."
+    "semPremioConvidado": "Como convidado, esta partida não dá moedas nem diamantes.",
+    "rotuloPatamar": "Patamar {{patamar}} de {{total}} · {{valor}}",
+    "sair": "Sair",
+    "confirmarSaidaTitulo": "Sair da partida?",
+    "confirmarSaidaTexto": "A partida termina aqui e não pode voltar a esta pergunta.",
+    "fechar": "Fechar",
+    "saltar": "Saltar para a pergunta",
+    "aCarregarPergunta": "A carregar a pergunta…",
+    "verEscada": "Ver a escada de prémios",
+    "ajudas": "Ajudas",
+    "estadoCerta": "Resposta certa",
+    "estadoErrada": "A sua resposta, errada",
+    "moedas": "moedas",
+    "diamantes": "diamantes",
+    "premioEmJogo": "Prémio deste patamar"
   },
   "KambaHeroCarousel": {
     "programaMeuKambaEstrabico": "Programa Meu Kamba Estrábico",
