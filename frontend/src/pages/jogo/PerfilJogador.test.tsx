@@ -39,6 +39,7 @@ vi.mock("sonner", () => ({ toast: { error: (...a: unknown[]) => toastError(...a)
 
 import PerfilJogador from "./PerfilJogador";
 import { CarteiraJogoProvider } from "@/contexts/CarteiraJogoContext";
+import { violacoesAcessibilidade } from "@/design/testes/acessibilidade";
 
 const Envoltorio = ({ children }: { children: ReactNode }) => (
   <MemoryRouter>
@@ -174,10 +175,19 @@ describe("PerfilJogador", () => {
       .mockResolvedValueOnce(ESTATISTICAS);
     render(<PerfilJogador />, { wrapper: Envoltorio });
 
-    await waitFor(() => expect(toastError).toHaveBeenCalledWith("falhou"));
+    // O erro fica escrito na página (com o motivo), não num aviso que desaparece.
+    expect(await screen.findByRole("alert")).toHaveTextContent("falhou");
     expect(screen.getByRole("link", { name: /Jogar agora/i })).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
     expect(await screen.findByTestId("cracha-nivel")).toBeInTheDocument();
+  });
+
+  it("sem violações de acessibilidade", async () => {
+    mockUseAuth.mockReturnValue({ isLoggedIn: true, loading: false });
+    obterEstatisticas.mockResolvedValue(ESTATISTICAS);
+    const { container } = render(<PerfilJogador />, { wrapper: Envoltorio });
+    await screen.findByTestId("cracha-nivel");
+    expect(await violacoesAcessibilidade(container)).toEqual([]);
   });
 });

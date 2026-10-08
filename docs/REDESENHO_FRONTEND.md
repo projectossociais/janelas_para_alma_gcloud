@@ -274,6 +274,15 @@ Acrescentar abaixo, com data, o que for decidido ou detalhado em cada conversa s
 redesenho (referências visuais, páginas a priorizar, gostos e recusas do dono do
 projecto, feedback do Lukeny). Mais recente em cima.
 
+- **2026-10-08** — **Fase 4, o jogo: menu, lojas e perfil (ramo `redesenho/jogo-menu`).** Com isto
+  **o jogo fica todo redesenhado.** As quatro páginas passam ao cabeçalho e rodapé novos do site (como a
+  lista dos exercícios: convidados também jogam) e ao sistema de design. No menu, os modos "Em breve"
+  deixam de ser botões que só abriam uma janela: a explicação fica à vista. Sem conta, a carteira não
+  aparece. Nas lojas, o pagamento por transferência usa os mesmos componentes do Premium e os erros de
+  compra ficam escritos na janela de compra (antes: um aviso que desaparecia sozinho). Corrigido o texto
+  da Loja de Moedas, que dizia "Os diamantes são creditados" numa compra de moedas. No perfil, as
+  categorias passam de anéis com uma cor cada a uma lista com barras, mais fácil de comparar.
+
 - **2026-10-08** — **Fase 4, o jogo: os diálogos da partida (ramo `redesenho/jogo-dialogos`).** Vida
   Extra, "Level Up!" (sequência) e Consultório passam ao `Dialogo` do sistema de design, com as cores
   dos tokens e sem brilhos animados. O `DialogoConteudo` ganhou `obrigaEscolha` (sem ×, Esc e clique
