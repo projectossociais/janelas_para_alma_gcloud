@@ -1,13 +1,23 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { adminApi, mensagemDeErroApi, type AdminUtilizador } from "@/lib/apiClient";
+import { Search } from "lucide-react";
 import { toast } from "sonner";
+import { EstadoDadosAdmin, useDadosAdmin } from "@/components/admin/DadosAdmin";
 import { ROLE_LABEL, type UserRole } from "@/contexts/AuthContext";
+import { Campo } from "@/design/componentes/Campo";
+import { Seleccao } from "@/design/componentes/Seleccao";
+import {
+  Estado,
+  Tabela,
+  TabelaCabecalho,
+  TabelaCelula,
+  TabelaCorpo,
+  TabelaLinha,
+  TabelaTitulo,
+} from "@/design/componentes/Tabela";
+import { CabecalhoConsola } from "@/design/layouts/LayoutConsola";
+import { formatarData } from "@/i18n/formatar";
+import { adminApi, mensagemDeErroApi } from "@/lib/apiClient";
 
 // "admin" fica de fora do selector genérico de propósito -- essa transição
 // tem o seu próprio fluxo em Administradores (com protecção contra ficar
@@ -22,31 +32,22 @@ const PAPEIS_ATRIBUIVEIS: Exclude<UserRole, "admin">[] = [
 
 const AdminUsers = () => {
   const [searchParams] = useSearchParams();
-  // Vem do card "Novos utilizadores" do dashboard: mesma janela de dias.
+  // Vem do cartão "Novos utilizadores" da visão geral: a mesma janela de dias.
   const dias = searchParams.get("dias") ? Number(searchParams.get("dias")) : undefined;
-  const [rows, setRows] = useState<AdminUtilizador[]>([]);
+  const { dados, erro, aCarregar, recarregar } = useDadosAdmin(
+    () => adminApi.listarUtilizadores(undefined, dias),
+    "Não foi possível carregar os utilizadores.",
+    [dias],
+  );
   const [q, setQ] = useState("");
   const [aGuardar, setAGuardar] = useState<string | null>(null);
 
-  const load = async () => {
-    try {
-      setRows(await adminApi.listarUtilizadores(undefined, dias));
-    } catch (err) {
-      toast.error(mensagemDeErroApi(err, "Não foi possível carregar os utilizadores."));
-    }
-  };
-
-  useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dias]);
-
-  const changeRole = async (userId: string, novoPapel: string) => {
+  const mudarPapel = async (userId: string, novoPapel: string) => {
     setAGuardar(userId);
     try {
       await adminApi.definirPapel(userId, novoPapel);
       toast.success("Perfil actualizado.");
-      await load();
+      await recarregar();
     } catch (err) {
       toast.error(mensagemDeErroApi(err, "Não foi possível actualizar o perfil."));
     } finally {
@@ -54,83 +55,101 @@ const AdminUsers = () => {
     }
   };
 
-  const filtered = rows.filter((r) => {
+  const linhas = (dados ?? []).filter((r) => {
     const s = q.toLowerCase();
     return !s || r.nome_completo?.toLowerCase().includes(s) || r.email?.toLowerCase().includes(s);
   });
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
-        <div>
-          <CardTitle>Utilizadores ({filtered.length})</CardTitle>
-          {dias && (
-            <p className="text-xs text-muted-foreground mt-1">
-              Registados nos últimos {dias} dias · <Link to="/admin/utilizadores" className="underline">ver todos</Link>
-            </p>
-          )}
-        </div>
-        <Input placeholder="Pesquisar por nome ou email…" value={q} onChange={(e) => setQ(e.target.value)} className="max-w-sm" />
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Perfil actual</TableHead>
-                <TableHead>Mudar para</TableHead>
-                <TableHead>Premium</TableHead>
-                <TableHead>Registado em</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((u) => (
-                <TableRow key={u.id}>
-                  <TableCell className="font-medium">{u.nome_completo || "—"}</TableCell>
-                  <TableCell>{u.email}</TableCell>
-                  <TableCell>
-                    <Badge variant={u.papel === "admin" ? "default" : "secondary"}>
-                      {ROLE_LABEL[u.papel as UserRole] ?? u.papel}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {u.papel === "admin" ? (
-                      <span className="text-xs text-muted-foreground">
-                        Gerido em <Link to="/admin/administradores" className="underline">Administradores</Link>
+    <>
+      <CabecalhoConsola
+        titulo="Utilizadores"
+        descricao={
+          dias ? (
+            <>
+              Registados nos últimos {dias} dias ·{" "}
+              <Link to="/admin/utilizadores" className="text-accao underline underline-offset-2">
+                ver todos
+              </Link>
+            </>
+          ) : (
+            "Todas as contas registadas."
+          )
+        }
+      />
+
+      <Campo
+        rotulo="Pesquisar"
+        type="search"
+        placeholder="Nome ou email"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        sufixo={<Search className="size-4 text-tinta-suave" aria-hidden />}
+        className="mb-4 max-w-sm"
+      />
+
+      <EstadoDadosAdmin aCarregar={aCarregar} erro={erro} aoTentarDeNovo={() => void recarregar()} temDados={!!dados}>
+        <p className="mb-2 text-legenda text-tinta-suave" aria-live="polite">
+          {linhas.length === 1 ? "1 utilizador" : `${linhas.length} utilizadores`}
+          {q && dados ? ` de ${dados.length}` : ""}
+        </p>
+        <Tabela legenda="Utilizadores">
+          <TabelaCabecalho>
+            <TabelaLinha>
+              <TabelaTitulo>Nome</TabelaTitulo>
+              <TabelaTitulo>Email</TabelaTitulo>
+              <TabelaTitulo>Perfil</TabelaTitulo>
+              <TabelaTitulo>Premium</TabelaTitulo>
+              <TabelaTitulo>Registado em</TabelaTitulo>
+            </TabelaLinha>
+          </TabelaCabecalho>
+          <TabelaCorpo>
+            {linhas.map((u) => (
+              <TabelaLinha key={u.id}>
+                <TabelaCelula className="font-medium">{u.nome_completo || "—"}</TabelaCelula>
+                <TabelaCelula className="break-all">{u.email}</TabelaCelula>
+                <TabelaCelula>
+                  {u.papel === "admin" ? (
+                    <span className="flex flex-col gap-1">
+                      <Estado tom="info">{ROLE_LABEL.admin}</Estado>
+                      <span className="text-legenda text-tinta-suave">
+                        Gerido em{" "}
+                        <Link to="/admin/administradores" className="text-accao underline underline-offset-2">
+                          Administradores
+                        </Link>
                       </span>
-                    ) : (
-                      <Select
-                        value={u.papel}
-                        onValueChange={(v) => changeRole(u.id, v)}
-                        disabled={aGuardar === u.id}
-                      >
-                        <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {PAPEIS_ATRIBUIVEIS.map((r) => (
-                            <SelectItem key={r} value={r}>{ROLE_LABEL[r]}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {u.premium_ativo ? <Badge>Activo</Badge> : <span className="text-xs text-muted-foreground">—</span>}
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {new Date(u.criado_em).toLocaleDateString("pt-PT")}
-                  </TableCell>
-                </TableRow>
-              ))}
-              {!filtered.length && (
-                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">Sem utilizadores.</TableCell></TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+                    </span>
+                  ) : (
+                    <Seleccao
+                      rotulo={`Perfil de ${u.nome_completo || u.email}`}
+                      rotuloOculto
+                      tamanho="compacto"
+                      marcador="Escolher…"
+                      value={u.papel}
+                      disabled={aGuardar === u.id}
+                      onChange={(e) => void mudarPapel(u.id, e.target.value)}
+                      opcoes={PAPEIS_ATRIBUIVEIS.map((r) => ({ valor: r, rotulo: ROLE_LABEL[r] }))}
+                      className="w-48"
+                    />
+                  )}
+                </TabelaCelula>
+                <TabelaCelula>
+                  {u.premium_ativo ? <Estado tom="sucesso">Activo</Estado> : <span className="text-tinta-suave">—</span>}
+                </TabelaCelula>
+                <TabelaCelula className="whitespace-nowrap text-tinta-suave">{formatarData(u.criado_em)}</TabelaCelula>
+              </TabelaLinha>
+            ))}
+            {!linhas.length && (
+              <TabelaLinha>
+                <TabelaCelula colSpan={5} className="py-8 text-center text-tinta-suave">
+                  {q ? "Nenhum utilizador corresponde à pesquisa." : "Ainda não há utilizadores."}
+                </TabelaCelula>
+              </TabelaLinha>
+            )}
+          </TabelaCorpo>
+        </Tabela>
+      </EstadoDadosAdmin>
+    </>
   );
 };
 

@@ -17,10 +17,14 @@ export interface SeleccaoProps extends Omit<SelectHTMLAttributes<HTMLSelectEleme
   erro?: ReactNode;
   marcador: string;
   opcoes: readonly { valor: string; rotulo: string }[];
+  /** O rótulo fica só para leitores de ecrã (ex.: numa tabela, onde o cabeçalho da coluna já o diz). */
+  rotuloOculto?: boolean;
+  /** `compacto`: 32 px de altura, para a Consola (linhas de tabela). */
+  tamanho?: "normal" | "compacto";
 }
 
 export const Seleccao = forwardRef<HTMLSelectElement, SeleccaoProps>(
-  ({ rotulo, ajuda, erro, marcador, opcoes, id, className, ...props }, ref) => {
+  ({ rotulo, ajuda, erro, marcador, opcoes, rotuloOculto = false, tamanho = "normal", id, className, ...props }, ref) => {
     const idGerado = useId();
     const idCampo = id ?? idGerado;
     const idAjuda = ajuda ? `${idCampo}-ajuda` : undefined;
@@ -29,7 +33,7 @@ export const Seleccao = forwardRef<HTMLSelectElement, SeleccaoProps>(
 
     return (
       <div className={cn("flex flex-col gap-2", className)}>
-        <label htmlFor={idCampo} className="text-corpo font-medium text-tinta">
+        <label htmlFor={idCampo} className={rotuloOculto ? "sr-only" : "text-corpo font-medium text-tinta"}>
           {rotulo}
         </label>
         {ajuda && (
@@ -51,7 +55,8 @@ export const Seleccao = forwardRef<HTMLSelectElement, SeleccaoProps>(
             aria-describedby={descritoPor}
             {...props}
             className={cn(
-              "min-h-12 w-full appearance-none rounded-controlo border border-linha-forte bg-superficie py-0 pl-4 pr-11 text-corpo text-tinta",
+              "w-full appearance-none rounded-controlo border border-linha-forte bg-superficie py-0 text-tinta",
+              tamanho === "compacto" ? "min-h-alvo-consola pl-3 pr-9 text-legenda" : "min-h-12 pl-4 pr-11 text-corpo",
               "transition-colors duration-feedback ease-padrao",
               "focus-visible:border-accao focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco",
               "disabled:cursor-not-allowed disabled:bg-superficie-alt disabled:opacity-70",
@@ -70,7 +75,10 @@ export const Seleccao = forwardRef<HTMLSelectElement, SeleccaoProps>(
             ))}
           </select>
           <ChevronDown
-            className="pointer-events-none absolute right-4 top-1/2 size-5 -translate-y-1/2 text-tinta-suave"
+            className={cn(
+              "pointer-events-none absolute top-1/2 -translate-y-1/2 text-tinta-suave",
+              tamanho === "compacto" ? "right-2.5 size-4" : "right-4 size-5",
+            )}
             aria-hidden
           />
         </div>
