@@ -11,7 +11,7 @@ import ResumoTendencia from "@/components/visao/ResumoTendencia";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatarData, formatarDecimal } from "@/i18n/formatar";
 import { localizar } from "@/i18n/rotas";
-import { minutosPorDia, sequenciaDeDias, ultimosDias } from "@/lib/visao/progresso";
+import { minutosPorDia, sequenciaDeDias, sessoesDoGrafico, ultimosDias } from "@/lib/visao/progresso";
 import { cn } from "@/lib/utils";
 
 /** Exercícios com uma curva de limiar por olho. */
@@ -33,9 +33,7 @@ const ProgressoVisao = () => {
   const escuro = typeof document !== "undefined" && document.documentElement.classList.contains("dark");
 
   const dados = useMemo(() => {
-    const s = (sessoes ?? [])
-      .filter((x) => x.exercicio_id === exercicio && x.limiar !== null && (x.olho === "direito" || x.olho === "esquerdo"))
-      .sort((a, b) => a.created_at.localeCompare(b.created_at));
+    const s = sessoesDoGrafico(sessoes ?? [], exercicio);
     return s.map((x) => ({
       data: formatarData(x.created_at),
       direito: x.olho === "direito" ? x.limiar : undefined,

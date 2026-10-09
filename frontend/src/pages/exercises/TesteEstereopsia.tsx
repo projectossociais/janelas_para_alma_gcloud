@@ -11,7 +11,7 @@ import { useCalibracao, useDevicePixelRatio, useRegistoSessao, useTempoActivo } 
 import { escolhaAleatoria, iniciarEscadaTeste, responderTeste } from "@/lib/visao/escada";
 import { FORMAS, gerarEstereograma, type Forma } from "@/lib/visao/estereograma";
 import { DISTANCIA_OMISSAO_MM, arcsegParaPx, desenhavel } from "@/lib/visao/geometria";
-import { DISPARIDADES_ARCSEG } from "@/lib/visao/resultados";
+import { DISPARIDADES_ARCSEG, sinalEstereopsia } from "@/lib/visao/resultados";
 import { PX_POR_MM_NOMINAL } from "@/lib/visao/calibracao";
 import { ID_ESTEREOPSIA } from "@/lib/visao/ids";
 
@@ -274,7 +274,12 @@ const ResultadoEstereoEcra = ({
     ]);
   }, [calibrado, distanciaMm, gravar, oculosOk, pxPorMm, res]);
 
-  const sinais = res.limiar === null ? [t("Visao.estereoSinalNaoViu")] : [];
+  const sinais =
+    res.limiar === null
+      ? [t("Visao.estereoSinalNaoViu")]
+      : sinalEstereopsia(res.limiar)
+        ? [t("Visao.estereoSinalDiferencaGrande", { valor: res.limiar })]
+        : [];
   return (
     <EcraResultado
       titulo={t("Visao.resultadoEstereoTitulo")}
@@ -282,7 +287,7 @@ const ResultadoEstereoEcra = ({
       aoTentarDeNovo={() => void tentarDeNovo()}
       sinais={sinais}
       cartoes={
-        <CartaoOlho titulo={t("Visao.doisOlhos")} estado={res.limiar === null ? "sinal" : "ok"}>
+        <CartaoOlho titulo={t("Visao.doisOlhos")} estado={sinalEstereopsia(res.limiar) ? "sinal" : "ok"}>
           {res.limiar === null ? (
             t("Visao.estereoNaoViu")
           ) : (

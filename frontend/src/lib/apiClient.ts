@@ -888,6 +888,15 @@ export interface SessaoExercicioAdmin {
   pontuacao: number;
   precisao_percentual: number;
   created_at: string;
+  /** 2 = exercícios sem webcam (desde 2026-09-28): pontuação e precisão ficam a 0; o resultado é o limiar. */
+  versao: number;
+  olho: string | null;
+  segundos_activos: number | null;
+  limiar: number | null;
+  unidade: string | null;
+  baixa_atencao: boolean;
+  /** Teste de Astigmatismo: sem limiar, o resultado é sim/não. */
+  astigmatismo: boolean | null;
 }
 
 export interface UtilizadorAtivoAdmin {

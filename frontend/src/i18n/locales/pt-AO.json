@@ -1517,7 +1517,12 @@
     "pdfColEspecialidade": "Especialidade",
     "pdfColContacto": "Contacto",
     "pdfColPreco": "Preço",
-    "pdfAviso": "Aviso"
+    "pdfAviso": "Aviso",
+    "inconclusivoEtiqueta": "Medição inconclusiva",
+    "inconclusivoTitulo": "Não conseguimos medir bem",
+    "inconclusivoTexto": "Pelo menos uma das fotografias não deu para medir: o rosto não apareceu inteiro ou a imagem não estava nítida.",
+    "inconclusivoDica": "Repita com luz de frente, o telemóvel parado à altura dos olhos e o rosto dentro do oval.",
+    "repetirRastreio": "Fazer o rastreio de novo"
   },
   "SiteBanner": {
     "fechar": "Fechar"
@@ -2247,7 +2252,10 @@
     "partilhaErroRevogar": "Não foi possível revogar o link. Tente de novo.",
     "partilhadoAviso": "Relatório partilhado pela família através da plataforma Janelas Para a Alma. Link válido até {{expira}}.",
     "partilhadoInvalidoTitulo": "Este link já não é válido",
-    "partilhadoInvalidoTexto": "O link expirou ou foi revogado. Peça um novo à família."
+    "partilhadoInvalidoTexto": "O link expirou ou foi revogado. Peça um novo à família.",
+    "aneisSemLimiar": "Esta sessão não chegou a medir o limiar: houve poucas respostas, ou erros mesmo nos anéis maiores. Nenhum valor foi registado no progresso.",
+    "contrasteBlocosSemLimiar": "Esta sessão não chegou a medir a sensibilidade ao contraste: houve poucas respostas, ou erros mesmo nos anéis mais escuros. Nenhum valor foi registado no progresso.",
+    "estereoSinalDiferencaGrande": "Só identificou a forma com as diferenças maiores ({{valor}}″): visão em profundidade abaixo do esperado, sinal a investigar."
   },
   "ConsentimentoSaude": {
     "titulo": "Autorização para tratar dados de saúde",
