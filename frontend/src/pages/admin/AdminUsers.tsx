@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Search } from "lucide-react";
 import { toast } from "sonner";
-import { EstadoDadosAdmin, useDadosAdmin } from "@/components/admin/DadosAdmin";
+import { EstadoDadosAdmin } from "@/components/admin/DadosAdmin";
+import { useDadosAdmin } from "@/components/admin/useDadosAdmin";
 import { ROLE_LABEL, type UserRole } from "@/contexts/AuthContext";
 import { Campo } from "@/design/componentes/Campo";
 import { Seleccao } from "@/design/componentes/Seleccao";
@@ -93,7 +94,7 @@ const AdminUsers = () => {
           {linhas.length === 1 ? "1 utilizador" : `${linhas.length} utilizadores`}
           {q && dados ? ` de ${dados.length}` : ""}
         </p>
-        <Tabela legenda="Utilizadores">
+        <Tabela legenda="Utilizadores" className="min-w-[48rem]">
           <TabelaCabecalho>
             <TabelaLinha>
               <TabelaTitulo>Nome</TabelaTitulo>
@@ -107,7 +108,7 @@ const AdminUsers = () => {
             {linhas.map((u) => (
               <TabelaLinha key={u.id}>
                 <TabelaCelula className="font-medium">{u.nome_completo || "—"}</TabelaCelula>
-                <TabelaCelula className="break-all">{u.email}</TabelaCelula>
+                <TabelaCelula>{u.email}</TabelaCelula>
                 <TabelaCelula>
                   {u.papel === "admin" ? (
                     <span className="flex flex-col gap-1">

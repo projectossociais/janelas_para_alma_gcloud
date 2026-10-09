@@ -3,6 +3,7 @@ import { Menu, X } from "lucide-react";
 import { cn } from "../cn";
 import { Ligacao } from "../Ligacao";
 import { SaltarConteudo } from "./Contentor";
+import { estiloDestino } from "./estiloConsola";
 
 /**
  * Arquétipo Consola (docs/LAYOUTS.md §2.5): portal da clínica e painel admin.
@@ -39,17 +40,6 @@ export interface LayoutConsolaProps {
   textosMenu: { abrir: string; fechar: string };
   children: ReactNode;
 }
-
-const estiloDestino = cn(
-  "flex min-h-alvo-consola items-center gap-3 rounded-controlo px-3 py-2 text-corpo text-tinta-suave",
-  "transition-colors duration-feedback hover:bg-superficie-alt hover:text-tinta",
-  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco",
-  "aria-[current=page]:bg-accao-suave aria-[current=page]:font-medium aria-[current=page]:text-accao",
-  "[&_svg]:size-4 [&_svg]:shrink-0",
-);
-
-/** Estilo de uma acção no fim da navegação (botão ou ligação), igual aos destinos. */
-export const estiloAccaoConsola = estiloDestino;
 
 export const LayoutConsola = ({
   nome,

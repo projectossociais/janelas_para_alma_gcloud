@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { act, render, renderHook, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { EstadoDadosAdmin, useDadosAdmin } from "./DadosAdmin";
+import { EstadoDadosAdmin } from "./DadosAdmin";
+import { useDadosAdmin } from "./useDadosAdmin";
 
 vi.mock("@/lib/apiClient", () => ({
   mensagemDeErroApi: (err: unknown, fallback: string) => (err as { message?: string })?.message || fallback,

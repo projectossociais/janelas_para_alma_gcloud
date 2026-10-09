@@ -13,7 +13,8 @@ import {
   Users,
 } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { EstadoDadosAdmin, useDadosAdmin } from "@/components/admin/DadosAdmin";
+import { EstadoDadosAdmin } from "@/components/admin/DadosAdmin";
+import { useDadosAdmin } from "@/components/admin/useDadosAdmin";
 import { GrupoEscolha } from "@/design/componentes/Escolha";
 import { cn } from "@/design/cn";
 import { CabecalhoConsola } from "@/design/layouts/LayoutConsola";
@@ -210,7 +211,7 @@ const AdminOverview = () => {
               </ul>
               <div className="mt-3 h-64" aria-hidden>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={s?.serie ?? []} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
+                  <BarChart data={s?.serie ?? []} margin={{ top: 4, right: 4, left: -16, bottom: 0 }} barCategoryGap="20%">
                     <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-linha" vertical={false} />
                     <XAxis
                       dataKey="dia"
@@ -226,9 +227,10 @@ const AdminOverview = () => {
                       className="text-tinta-suave"
                     />
                     <Tooltip />
-                    <Bar dataKey="registos" name="Registos" fill="currentColor" className="text-accao" />
-                    <Bar dataKey="sessoes" name="Sessões de exercício" fill="currentColor" className="text-acento" />
-                    <Bar dataKey="pedidos_premium" name="Pedidos Premium" fill="currentColor" className="text-aviso" />
+                    {/* Uma barra por dia, empilhada: 30 dias com três barras lado a lado davam 4 px cada. */}
+                    <Bar stackId="dia" isAnimationActive={false} dataKey="registos" name="Registos" fill="currentColor" className="text-accao" />
+                    <Bar stackId="dia" isAnimationActive={false} dataKey="sessoes" name="Sessões de exercício" fill="currentColor" className="text-acento" />
+                    <Bar stackId="dia" isAnimationActive={false} dataKey="pedidos_premium" name="Pedidos Premium" fill="currentColor" className="text-aviso" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

@@ -18,7 +18,8 @@ import RequireAdmin from "@/components/admin/RequireAdmin";
 import { LigacaoRouter } from "@/components/site/LigacaoRouter";
 import { useAuth } from "@/contexts/AuthContext";
 import { Ligacao, ProvedorLigacao } from "@/design/Ligacao";
-import { LayoutConsola, estiloAccaoConsola, type GrupoConsola } from "@/design/layouts/LayoutConsola";
+import { estiloAccaoConsola } from "@/design/layouts/estiloConsola";
+import { LayoutConsola, type GrupoConsola } from "@/design/layouts/LayoutConsola";
 import { Simbolo } from "@/design/marca/Simbolo";
 
 // W-11: "admin" é binário na API própria (uma coluna `papel`), não uma matriz

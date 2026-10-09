@@ -1,5 +1,6 @@
 import { useSearchParams } from "react-router-dom";
-import { EstadoDadosAdmin, useDadosAdmin } from "@/components/admin/DadosAdmin";
+import { EstadoDadosAdmin } from "@/components/admin/DadosAdmin";
+import { useDadosAdmin } from "@/components/admin/useDadosAdmin";
 import { limiarFormatado, nomeDoExercicio, nomeDoOlho } from "@/components/visao/rotulos";
 import { GrupoEscolha } from "@/design/componentes/Escolha";
 import {
@@ -83,7 +84,7 @@ const AdminAtividade = () => {
           aoTentarDeNovo={() => void sessoes.recarregar()}
           temDados={!!sessoes.dados}
         >
-          <Tabela legenda="Sessões de exercício">
+          <Tabela legenda="Sessões de exercício" className="min-w-[52rem]">
             <TabelaCabecalho>
               <TabelaLinha>
                 <TabelaTitulo>Utilizador</TabelaTitulo>

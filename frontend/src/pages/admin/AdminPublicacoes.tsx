@@ -1,17 +1,13 @@
-import { useEffect, useRef, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { ConfirmarAccao } from "@/components/admin/ConfirmarAccao";
+import { EstadoDadosAdmin } from "@/components/admin/DadosAdmin";
+import { useDadosAdmin } from "@/components/admin/useDadosAdmin";
+import { Aviso } from "@/design/componentes/Aviso";
+import { Botao } from "@/design/componentes/Botao";
+import { Campo, CampoTexto } from "@/design/componentes/Campo";
+import { Dialogo, DialogoConteudo } from "@/design/componentes/Dialogo";
+import { Estado } from "@/design/componentes/Tabela";
+import { CabecalhoConsola } from "@/design/layouts/LayoutConsola";
 import {
   publicacoesApi,
   mensagemDeErroApi,
@@ -20,38 +16,51 @@ import {
   type MidiaPublicacao,
 } from "@/lib/apiClient";
 import { toast } from "sonner";
-import { Plus, Trash2, ImagePlus, Eye, EyeOff, Loader2, Calendar, MapPin } from "lucide-react";
+import { Calendar, Eye, EyeOff, ImagePlus, MapPin, Pencil, Plus, Trash2 } from "lucide-react";
 
 const FORM_VAZIO = { titulo: "", resumo: "", corpo: "", local: "", data_evento: "" };
 
 type TipoMidiaAceite = (typeof TIPOS_DE_MIDIA_ACEITES)[number];
+
+/**
+ * "2026-10-08" -> "08/10/2026", sem passar por `new Date()`: um dia sem hora lia-se
+ * como meia-noite UTC e, num computador a oeste de UTC, mostrava o dia anterior.
+ */
+const formatarDiaEvento = (dia: string) => {
+  const [a, m, d] = dia.slice(0, 10).split("-");
+  return d && m && a ? `${d}/${m}/${a}` : dia;
+};
+
+const erroCampos = (f: typeof FORM_VAZIO) => ({
+  titulo: !f.titulo.trim() ? "Escreva um título." : undefined,
+  resumo: !f.resumo.trim() ? "Escreva o resumo." : undefined,
+  corpo: !f.corpo.trim() ? "Escreva o texto completo." : undefined,
+});
 
 function tipoAceite(ficheiro: File): ficheiro is File & { type: TipoMidiaAceite } {
   return (TIPOS_DE_MIDIA_ACEITES as readonly string[]).includes(ficheiro.type);
 }
 
 const AdminPublicacoes = () => {
-  const [publicacoes, setPublicacoes] = useState<PublicacaoAdmin[]>([]);
+  const { dados, erro, aCarregar, recarregar: carregar } = useDadosAdmin(
+    () => publicacoesApi.listarTodas(),
+    "Não foi possível carregar as publicações.",
+    [],
+  );
+  const publicacoes = dados ?? [];
   const [form, setForm] = useState(FORM_VAZIO);
+  const [tentou, setTentou] = useState(false);
+  const [erroCriar, setErroCriar] = useState<string | null>(null);
   const [aCriar, setACriar] = useState(false);
   const [emEdicao, setEmEdicao] = useState<PublicacaoAdmin | null>(null);
+  const [ocupado, setOcupado] = useState<string | null>(null);
+  const erros: Partial<ReturnType<typeof erroCampos>> = tentou ? erroCampos(form) : {};
 
-  const carregar = async () => {
-    try {
-      setPublicacoes(await publicacoesApi.listarTodas());
-    } catch (err) {
-      toast.error(mensagemDeErroApi(err, "Não foi possível carregar as publicações."));
-    }
-  };
-  useEffect(() => {
-    carregar();
-  }, []);
-
-  const criar = async () => {
-    if (!form.titulo || !form.resumo || !form.corpo) {
-      toast.error("Título, resumo e texto completo são obrigatórios.");
-      return;
-    }
+  const criar = async (e: FormEvent) => {
+    e.preventDefault();
+    setTentou(true);
+    setErroCriar(null);
+    if (Object.values(erroCampos(form)).some(Boolean)) return;
     setACriar(true);
     try {
       const nova = await publicacoesApi.criar({
@@ -63,16 +72,18 @@ const AdminPublicacoes = () => {
       });
       toast.success("Publicação criada em rascunho. Adicione fotos e publique quando estiver pronta.");
       setForm(FORM_VAZIO);
+      setTentou(false);
       await carregar();
       setEmEdicao(nova);
     } catch (err) {
-      toast.error(mensagemDeErroApi(err, "Não foi possível criar a publicação."));
+      setErroCriar(mensagemDeErroApi(err, "Não foi possível criar a publicação."));
     } finally {
       setACriar(false);
     }
   };
 
   const alternarPublicacao = async (p: PublicacaoAdmin) => {
+    setOcupado(p.id);
     try {
       if (p.estado === "publicada") {
         await publicacoesApi.despublicar(p.id);
@@ -84,11 +95,12 @@ const AdminPublicacoes = () => {
       await carregar();
     } catch (err) {
       toast.error(mensagemDeErroApi(err, "Não foi possível actualizar o estado."));
+    } finally {
+      setOcupado(null);
     }
   };
 
   const apagar = async (id: string) => {
-    if (!confirm("Apagar esta publicação e todas as suas fotos? Esta acção não pode ser desfeita.")) return;
     try {
       await publicacoesApi.apagar(id);
       toast.success("Publicação apagada.");
@@ -99,148 +111,135 @@ const AdminPublicacoes = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold">Publicações & Mural de Actividades</h2>
-        <p className="text-sm text-muted-foreground">
-          O que aparece como "Acções Recentes" no site,
-          crie, adicione fotos e publique aqui. Nasce sempre em rascunho: só fica visível ao
-          público depois de premir "Publicar".
-        </p>
-      </div>
+    <>
+      <CabecalhoConsola
+        titulo="Publicações"
+        descricao={'O que aparece como "Acções Recentes" no site. Nasce sempre em rascunho: só fica visível depois de "Publicar".'}
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Nova publicação</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div>
-            <Label htmlFor="pub-titulo">Título</Label>
-            <Input
-              id="pub-titulo"
-              value={form.titulo}
-              onChange={(e) => setForm({ ...form, titulo: e.target.value })}
-              placeholder="Campanha de Consciencialização sobre o Estrabismo"
-            />
-          </div>
-          <div>
-            <Label htmlFor="pub-resumo">Resumo (aparece na listagem)</Label>
-            <Textarea
-              id="pub-resumo"
-              value={form.resumo}
-              onChange={(e) => setForm({ ...form, resumo: e.target.value })}
-              rows={2}
-            />
-          </div>
-          <div>
-            <Label htmlFor="pub-corpo">Texto completo</Label>
-            <Textarea
-              id="pub-corpo"
-              value={form.corpo}
-              onChange={(e) => setForm({ ...form, corpo: e.target.value })}
-              rows={5}
-            />
-          </div>
-          <div className="grid md:grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="pub-local">Local (opcional)</Label>
-              <Input
-                id="pub-local"
-                value={form.local}
-                onChange={(e) => setForm({ ...form, local: e.target.value })}
-                placeholder="Gamek, Luanda"
-              />
-            </div>
-            <div>
-              <Label htmlFor="pub-data">Data do evento (opcional)</Label>
-              <Input
-                id="pub-data"
-                type="date"
-                value={form.data_evento}
-                onChange={(e) => setForm({ ...form, data_evento: e.target.value })}
-              />
-            </div>
-          </div>
-          <Button onClick={criar} disabled={aCriar}>
-            <Plus className="w-4 h-4" /> {aCriar ? "A criar..." : "Criar rascunho"}
-          </Button>
-        </CardContent>
-      </Card>
+      <form onSubmit={(e) => void criar(e)} noValidate className="max-w-3xl space-y-4 rounded-cartao border border-linha bg-superficie p-5">
+        <h2 className="text-titulo-p text-tinta">Nova publicação</h2>
+        <Campo
+          rotulo="Título"
+          value={form.titulo}
+          erro={erros.titulo}
+          placeholder="Campanha de Consciencialização sobre o Estrabismo"
+          onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+        />
+        <CampoTexto
+          rotulo="Resumo (aparece na listagem)"
+          rows={2}
+          value={form.resumo}
+          erro={erros.resumo}
+          onChange={(e) => setForm({ ...form, resumo: e.target.value })}
+        />
+        <CampoTexto
+          rotulo="Texto completo"
+          rows={5}
+          value={form.corpo}
+          erro={erros.corpo}
+          onChange={(e) => setForm({ ...form, corpo: e.target.value })}
+        />
+        <div className="grid gap-4 md:grid-cols-2">
+          <Campo
+            rotulo="Local (opcional)"
+            placeholder="Gamek, Luanda"
+            value={form.local}
+            onChange={(e) => setForm({ ...form, local: e.target.value })}
+          />
+          <Campo
+            rotulo="Data do evento (opcional)"
+            type="date"
+            value={form.data_evento}
+            onChange={(e) => setForm({ ...form, data_evento: e.target.value })}
+          />
+        </div>
+        {erroCriar && (
+          <Aviso variante="erro" anunciar titulo="A publicação não foi criada">
+            {erroCriar}
+          </Aviso>
+        )}
+        <Botao type="submit" aCarregar={aCriar}>
+          <Plus aria-hidden /> Criar rascunho
+        </Botao>
+      </form>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Publicações ({publicacoes.length})</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {publicacoes.map((p) => (
-            <div key={p.id} className="flex items-center justify-between border rounded-lg p-3 gap-3 flex-wrap">
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                {p.capa_url ? (
-                  <img src={p.capa_url} alt="" className="w-14 h-14 rounded-lg object-cover shrink-0" />
-                ) : (
-                  <div className="w-14 h-14 rounded-lg bg-muted shrink-0 flex items-center justify-center">
-                    <ImagePlus className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                )}
-                <div className="min-w-0">
-                  <div className="font-semibold flex items-center gap-2 flex-wrap">
-                    {p.titulo}
-                    <Badge variant={p.estado === "publicada" ? "default" : "secondary"}>
-                      {p.estado === "publicada" ? "Publicada" : "Rascunho"}
-                    </Badge>
-                  </div>
-                  <div className="text-xs text-muted-foreground flex gap-3 flex-wrap mt-0.5">
-                    {p.local && (
-                      <span className="inline-flex items-center gap-1">
-                        <MapPin className="w-3 h-3" />
-                        {p.local}
+      <section aria-labelledby="publicacoes-lista" className="mt-8">
+        <h2 id="publicacoes-lista" className="mb-3 text-titulo-p text-tinta">
+          Publicações{dados ? ` (${publicacoes.length})` : ""}
+        </h2>
+        <EstadoDadosAdmin aCarregar={aCarregar} erro={erro} aoTentarDeNovo={() => void carregar()} temDados={!!dados}>
+          {publicacoes.length ? (
+            <ul className="divide-y divide-linha rounded-cartao border border-linha bg-superficie">
+              {publicacoes.map((p) => (
+                <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    {p.capa_url ? (
+                      <img src={p.capa_url} alt="" className="size-14 shrink-0 rounded-controlo object-cover" />
+                    ) : (
+                      <span aria-hidden className="flex size-14 shrink-0 items-center justify-center rounded-controlo bg-superficie-alt text-tinta-suave">
+                        <ImagePlus className="size-5" />
                       </span>
                     )}
-                    {p.data_evento && (
-                      <span className="inline-flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        {new Date(p.data_evento).toLocaleDateString("pt-PT")}
-                      </span>
-                    )}
-                    <span>
-                      {p.midias.length} foto{p.midias.length === 1 ? "" : "s"}
-                    </span>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-medium">{p.titulo}</span>
+                        <Estado tom={p.estado === "publicada" ? "sucesso" : "neutro"}>
+                          {p.estado === "publicada" ? "Publicada" : "Rascunho"}
+                        </Estado>
+                      </div>
+                      <p className="mt-0.5 flex flex-wrap gap-x-3 gap-y-1 text-legenda text-tinta-suave">
+                        {p.local && (
+                          <span className="inline-flex items-center gap-1">
+                            <MapPin className="size-3.5" aria-hidden />
+                            {p.local}
+                          </span>
+                        )}
+                        {p.data_evento && (
+                          <span className="inline-flex items-center gap-1">
+                            <Calendar className="size-3.5" aria-hidden />
+                            {formatarDiaEvento(p.data_evento)}
+                          </span>
+                        )}
+                        <span>
+                          {p.midias.length} foto{p.midias.length === 1 ? "" : "s"}
+                        </span>
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </div>
-              <div className="flex gap-2 shrink-0">
-                <Button size="sm" variant="outline" onClick={() => setEmEdicao(p)}>
-                  Editar
-                </Button>
-                <Button
-                  size="sm"
-                  variant={p.estado === "publicada" ? "outline" : "default"}
-                  onClick={() => alternarPublicacao(p)}
-                >
-                  {p.estado === "publicada" ? (
-                    <>
-                      <EyeOff className="w-3 h-3" /> Despublicar
-                    </>
-                  ) : (
-                    <>
-                      <Eye className="w-3 h-3" /> Publicar
-                    </>
-                  )}
-                </Button>
-                <Button size="icon" variant="ghost" aria-label="Apagar publicação" onClick={() => apagar(p.id)}>
-                  <Trash2 className="w-4 h-4 text-destructive" />
-                </Button>
-              </div>
-            </div>
-          ))}
-          {!publicacoes.length && (
-            <p className="text-center text-muted-foreground py-6">Nenhuma publicação ainda.</p>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <Botao variante="secundario" onClick={() => setEmEdicao(p)}>
+                      <Pencil aria-hidden /> Editar
+                    </Botao>
+                    <Botao
+                      variante={p.estado === "publicada" ? "secundario" : "primario"}
+                      aCarregar={ocupado === p.id}
+                      onClick={() => void alternarPublicacao(p)}
+                    >
+                      {p.estado === "publicada" ? <EyeOff aria-hidden /> : <Eye aria-hidden />}
+                      {p.estado === "publicada" ? "Despublicar" : "Publicar"}
+                    </Botao>
+                    <ConfirmarAccao
+                      soIcone
+                      icone={<Trash2 aria-hidden />}
+                      rotulo={`Apagar publicação «${p.titulo}»`}
+                      titulo={`Apagar «${p.titulo}»?`}
+                      descricao="A publicação e todas as suas fotos saem do site. Não se pode desfazer."
+                      confirmar="Apagar"
+                      aoConfirmar={() => void apagar(p.id)}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-tinta-suave">Nenhuma publicação ainda.</p>
           )}
-        </CardContent>
-      </Card>
+        </EstadoDadosAdmin>
+      </section>
 
       <EditorDialog publicacao={emEdicao} onClose={() => setEmEdicao(null)} onChanged={carregar} />
-    </div>
+    </>
   );
 };
 
@@ -257,6 +256,10 @@ const EditorDialog = ({ publicacao, onClose, onChanged }: EditorDialogProps) => 
   const [aEnviarFoto, setAEnviarFoto] = useState(false);
   const [capaUrl, setCapaUrl] = useState<string | null>(null);
   const [midias, setMidias] = useState<MidiaPublicacao[]>([]);
+  const [tentou, setTentou] = useState(false);
+  const [erroGravar, setErroGravar] = useState<string | null>(null);
+  // O erro de uma imagem fica junto dela, no diálogo -- não num aviso que desaparece.
+  const [erroImagem, setErroImagem] = useState<string | null>(null);
   const capaInputRef = useRef<HTMLInputElement>(null);
   const fotoInputRef = useRef<HTMLInputElement>(null);
 
@@ -282,8 +285,12 @@ const EditorDialog = ({ publicacao, onClose, onChanged }: EditorDialogProps) => 
     setMidias(publicacao.midias);
   }, [publicacao]);
 
-  const gravar = async () => {
+  const gravar = async (e: FormEvent) => {
+    e.preventDefault();
     if (!publicacao) return;
+    setTentou(true);
+    setErroGravar(null);
+    if (Object.values(erroCampos(form)).some(Boolean)) return;
     setAGravar(true);
     try {
       await publicacoesApi.atualizar(publicacao.id, {
@@ -296,15 +303,16 @@ const EditorDialog = ({ publicacao, onClose, onChanged }: EditorDialogProps) => 
       toast.success("Alterações guardadas.");
       await onChanged();
     } catch (err) {
-      toast.error(mensagemDeErroApi(err, "Não foi possível guardar as alterações."));
+      setErroGravar(mensagemDeErroApi(err, "Não foi possível guardar as alterações."));
     } finally {
       setAGravar(false);
     }
   };
 
   const enviarCapa = async (ficheiro: File) => {
+    setErroImagem(null);
     if (!publicacao || !tipoAceite(ficheiro)) {
-      toast.error("Formato não suportado. Use PNG, JPEG ou WebP.");
+      setErroImagem("Formato não suportado. Use PNG, JPEG ou WebP.");
       return;
     }
     setAEnviarCapa(true);
@@ -316,15 +324,16 @@ const EditorDialog = ({ publicacao, onClose, onChanged }: EditorDialogProps) => 
       toast.success("Capa actualizada.");
       await onChanged();
     } catch (err) {
-      toast.error(mensagemDeErroApi(err, "Não foi possível enviar a capa."));
+      setErroImagem(mensagemDeErroApi(err, "Não foi possível enviar a capa."));
     } finally {
       setAEnviarCapa(false);
     }
   };
 
   const enviarFoto = async (ficheiro: File) => {
+    setErroImagem(null);
     if (!publicacao || !tipoAceite(ficheiro)) {
-      toast.error("Formato não suportado. Use PNG, JPEG ou WebP.");
+      setErroImagem("Formato não suportado. Use PNG, JPEG ou WebP.");
       return;
     }
     setAEnviarFoto(true);
@@ -336,7 +345,7 @@ const EditorDialog = ({ publicacao, onClose, onChanged }: EditorDialogProps) => 
       toast.success("Foto adicionada à galeria.");
       await onChanged();
     } catch (err) {
-      toast.error(mensagemDeErroApi(err, "Não foi possível enviar a foto."));
+      setErroImagem(mensagemDeErroApi(err, "Não foi possível enviar a foto."));
     } finally {
       setAEnviarFoto(false);
     }
@@ -350,138 +359,121 @@ const EditorDialog = ({ publicacao, onClose, onChanged }: EditorDialogProps) => 
       toast.success("Foto removida.");
       await onChanged();
     } catch (err) {
-      toast.error(mensagemDeErroApi(err, "Não foi possível remover a foto."));
+      setErroImagem(mensagemDeErroApi(err, "Não foi possível remover a foto."));
     }
   };
 
+  const erros: Partial<Record<"titulo" | "resumo" | "corpo", string>> = tentou ? erroCampos(form) : {};
+
   return (
-    <Dialog open={!!publicacao} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Editar publicação</DialogTitle>
-          <DialogDescription>
-            {publicacao?.estado === "publicada"
-              ? "Já está visível no site. As alterações ficam visíveis assim que guardar."
-              : 'Ainda em rascunho. Só fica visível no site depois de "Publicar".'}
-          </DialogDescription>
-        </DialogHeader>
+    <Dialogo open={!!publicacao} onOpenChange={(open) => !open && onClose()}>
+      <DialogoConteudo
+        className="max-w-2xl"
+        titulo="Editar publicação"
+        descricao={
+          publicacao?.estado === "publicada"
+            ? "Já está visível no site. As alterações ficam visíveis assim que guardar."
+            : 'Ainda em rascunho. Só fica visível no site depois de "Publicar".'
+        }
+        rotuloFechar="Fechar"
+      >
+        <form onSubmit={(e) => void gravar(e)} noValidate className="space-y-4">
+          <Campo rotulo="Título" value={form.titulo} erro={erros.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} />
+          <CampoTexto rotulo="Resumo" rows={2} value={form.resumo} erro={erros.resumo} onChange={(e) => setForm({ ...form, resumo: e.target.value })} />
+          <CampoTexto rotulo="Texto completo" rows={6} value={form.corpo} erro={erros.corpo} onChange={(e) => setForm({ ...form, corpo: e.target.value })} />
+          <div className="grid gap-4 md:grid-cols-2">
+            <Campo rotulo="Local" value={form.local} onChange={(e) => setForm({ ...form, local: e.target.value })} />
+            <Campo rotulo="Data do evento" type="date" value={form.data_evento} onChange={(e) => setForm({ ...form, data_evento: e.target.value })} />
+          </div>
+          {erroGravar && (
+            <Aviso variante="erro" anunciar titulo="As alterações não foram guardadas">
+              {erroGravar}
+            </Aviso>
+          )}
+          <Botao type="submit" aCarregar={aGravar}>
+            Guardar alterações
+          </Botao>
+        </form>
 
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="edit-titulo">Título</Label>
-            <Input id="edit-titulo" value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} />
-          </div>
-          <div>
-            <Label htmlFor="edit-resumo">Resumo</Label>
-            <Textarea
-              id="edit-resumo"
-              value={form.resumo}
-              onChange={(e) => setForm({ ...form, resumo: e.target.value })}
-              rows={2}
-            />
-          </div>
-          <div>
-            <Label htmlFor="edit-corpo">Texto completo</Label>
-            <Textarea
-              id="edit-corpo"
-              value={form.corpo}
-              onChange={(e) => setForm({ ...form, corpo: e.target.value })}
-              rows={6}
-            />
-          </div>
-          <div className="grid md:grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="edit-local">Local</Label>
-              <Input id="edit-local" value={form.local} onChange={(e) => setForm({ ...form, local: e.target.value })} />
-            </div>
-            <div>
-              <Label htmlFor="edit-data">Data do evento</Label>
-              <Input
-                id="edit-data"
-                type="date"
-                value={form.data_evento}
-                onChange={(e) => setForm({ ...form, data_evento: e.target.value })}
-              />
-            </div>
-          </div>
-          <Button onClick={gravar} disabled={aGravar}>
-            {aGravar ? "A guardar..." : "Guardar alterações"}
-          </Button>
-
-          <div className="border-t pt-4">
-            <Label>Foto de capa</Label>
-            <div className="flex items-center gap-3 mt-2">
+        <section aria-labelledby="editor-capa" className="mt-6 border-t border-linha pt-5">
+          <h3 id="editor-capa" className="text-corpo font-medium text-tinta">
+            Foto de capa
+          </h3>
+          <div className="mt-2 flex items-center gap-3">
+            {/* `object-contain`: as capas são tipicamente paisagem; um quadrado forçado recortava-as. */}
+            <div className="flex h-24 w-32 shrink-0 items-center justify-center overflow-hidden rounded-controlo bg-superficie-alt">
               {capaUrl ? (
-                // `object-contain` -- um quadrado forçado (`object-cover`)
-                // recortava sempre fotos de capa, que são tipicamente
-                // paisagem, não quadradas.
-                <div className="w-32 h-24 rounded-lg bg-muted overflow-hidden shrink-0">
-                  <img src={capaUrl} alt="Capa" className="w-full h-full object-contain" />
-                </div>
+                <img src={capaUrl} alt="Capa actual" className="size-full object-contain" />
               ) : (
-                <div className="w-32 h-24 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                  <ImagePlus className="w-6 h-6 text-muted-foreground" />
-                </div>
+                <ImagePlus className="size-6 text-tinta-suave" aria-hidden />
               )}
-              <input
-                ref={capaInputRef}
-                type="file"
-                accept={TIPOS_DE_MIDIA_ACEITES.join(",")}
-                className="hidden"
-                aria-label="Carregar foto de capa"
-                onChange={(e) => e.target.files?.[0] && enviarCapa(e.target.files[0])}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={aEnviarCapa}
-                onClick={() => capaInputRef.current?.click()}
-              >
-                {aEnviarCapa ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImagePlus className="w-4 h-4" />}
-                {aEnviarCapa ? "A enviar..." : "Alterar capa"}
-              </Button>
             </div>
+            <input
+              ref={capaInputRef}
+              type="file"
+              accept={TIPOS_DE_MIDIA_ACEITES.join(",")}
+              className="hidden"
+              aria-label="Carregar foto de capa"
+              onChange={(e) => e.target.files?.[0] && void enviarCapa(e.target.files[0])}
+            />
+            <Botao variante="secundario" aCarregar={aEnviarCapa} onClick={() => capaInputRef.current?.click()}>
+              <ImagePlus aria-hidden /> {capaUrl ? "Alterar capa" : "Adicionar capa"}
+            </Botao>
           </div>
+        </section>
 
-          <div className="border-t pt-4">
-            <Label>Galeria de fotos</Label>
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mt-2">
-              {midias.map((m) => (
-                <div key={m.id} className="relative group">
-                  <img src={m.url} alt="" className="w-full aspect-square rounded-lg object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => removerFoto(m.id)}
-                    className="absolute top-1 right-1 bg-black/60 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                    aria-label="Remover foto"
-                  >
-                    <Trash2 className="w-3 h-3 text-white" />
-                  </button>
+        <section aria-labelledby="editor-galeria" className="mt-6 border-t border-linha pt-5">
+          <h3 id="editor-galeria" className="text-corpo font-medium text-tinta">
+            Galeria de fotos
+          </h3>
+          <ul className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4">
+            {midias.map((m, i) => (
+              <li key={m.id} className="relative">
+                <img src={m.url} alt={`Foto ${i + 1} da galeria`} className="aspect-square w-full rounded-controlo object-cover" />
+                {/* Sempre visível: só ao passar o rato, não existia no telemóvel nem com teclado. */}
+                <div className="absolute right-1 top-1 rounded-pilula bg-superficie/90">
+                  <ConfirmarAccao
+                    soIcone
+                    icone={<Trash2 aria-hidden />}
+                    rotulo={`Remover a foto ${i + 1} da galeria`}
+                    titulo="Remover esta foto?"
+                    descricao="Sai da galeria da publicação. Não se pode desfazer."
+                    confirmar="Remover"
+                    aoConfirmar={() => void removerFoto(m.id)}
+                  />
                 </div>
-              ))}
+              </li>
+            ))}
+            <li>
               <input
                 ref={fotoInputRef}
                 type="file"
                 accept={TIPOS_DE_MIDIA_ACEITES.join(",")}
                 className="hidden"
                 aria-label="Carregar foto para a galeria"
-                onChange={(e) => e.target.files?.[0] && enviarFoto(e.target.files[0])}
+                onChange={(e) => e.target.files?.[0] && void enviarFoto(e.target.files[0])}
               />
               <button
                 type="button"
                 disabled={aEnviarFoto}
+                aria-busy={aEnviarFoto || undefined}
                 onClick={() => fotoInputRef.current?.click()}
-                className="w-full aspect-square rounded-lg border-2 border-dashed flex items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                className="flex aspect-square w-full items-center justify-center rounded-controlo border-2 border-dashed border-linha-forte text-tinta-suave transition-colors duration-feedback hover:border-accao hover:text-accao focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco disabled:opacity-60"
                 aria-label="Adicionar foto à galeria"
               >
-                {aEnviarFoto ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
+                <Plus className="size-5" aria-hidden />
               </button>
-            </div>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+            </li>
+          </ul>
+        </section>
+
+        {erroImagem && (
+          <Aviso variante="erro" anunciar className="mt-4">
+            {erroImagem}
+          </Aviso>
+        )}
+      </DialogoConteudo>
+    </Dialogo>
   );
 };
 

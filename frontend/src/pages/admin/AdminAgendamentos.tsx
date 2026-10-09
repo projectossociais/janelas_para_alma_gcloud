@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Check, Crown, Mail, MapPinned, Phone, Video, X } from "lucide-react";
 import { toast } from "sonner";
-import { EstadoDadosAdmin, useDadosAdmin } from "@/components/admin/DadosAdmin";
+import { EstadoDadosAdmin } from "@/components/admin/DadosAdmin";
+import { useDadosAdmin } from "@/components/admin/useDadosAdmin";
 import { Botao } from "@/design/componentes/Botao";
 import {
   Estado,

@@ -3,7 +3,8 @@ import { useSearchParams } from "react-router-dom";
 import { Archive, Ban, Check, Mail, Phone, Plus, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmarAccao } from "@/components/admin/ConfirmarAccao";
-import { EstadoDadosAdmin, useDadosAdmin } from "@/components/admin/DadosAdmin";
+import { EstadoDadosAdmin } from "@/components/admin/DadosAdmin";
+import { useDadosAdmin } from "@/components/admin/useDadosAdmin";
 import { Aviso } from "@/design/componentes/Aviso";
 import { Botao } from "@/design/componentes/Botao";
 import { Campo, CampoTexto } from "@/design/componentes/Campo";
@@ -196,7 +197,10 @@ const AdminVoluntariado = () => {
 
   return (
     <>
-      <CabecalhoConsola titulo="Voluntariado" descricao="Candidaturas a voluntário e actividades publicadas." />
+      <CabecalhoConsola
+        titulo="Voluntariado"
+        descricao="Candidaturas a voluntário (entre parênteses, as que estão por decidir) e actividades publicadas."
+      />
 
       <GrupoEscolha<Vista>
         legenda="Mostrar"
@@ -206,7 +210,7 @@ const AdminVoluntariado = () => {
         aoMudar={mudarVista}
         className="mb-5"
         opcoes={[
-          { valor: "candidaturas", rotulo: `Candidaturas${candidaturasDados.dados ? ` (${pendentes.length} por decidir)` : ""}` },
+          { valor: "candidaturas", rotulo: `Candidaturas${candidaturasDados.dados ? ` (${pendentes.length})` : ""}` },
           { valor: "atividades", rotulo: `Actividades${atividadesDados.dados ? ` (${atividades.length})` : ""}` },
         ]}
       />
