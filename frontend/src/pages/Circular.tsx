@@ -44,7 +44,7 @@ const Circular = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
-      <div className="flex-1">
+      <main className="flex-1">
         {/* Hero */}
         <section className="relative min-h-[70vh] flex items-center overflow-hidden">
           <img
@@ -114,7 +114,7 @@ const Circular = () => {
             </div>
           </div>
         </section>
-      </div>
+      </main>
       <Footer />
     </div>
   );

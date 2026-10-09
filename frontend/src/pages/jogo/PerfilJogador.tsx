@@ -1,27 +1,25 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Coins, Flame, Play, RefreshCw, Shield, Swords, Trophy } from "lucide-react";
+import { Coins, Flame, Loader2, Play, RefreshCw, Shield, Swords, Trophy } from "lucide-react";
+import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import BackButton from "@/components/BackButton";
 import CarteiraJogo from "@/components/jogo/CarteiraJogo";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useCarteiraJogo } from "@/contexts/CarteiraJogoContext";
-import { Aviso } from "@/design/componentes/Aviso";
-import { Botao } from "@/design/componentes/Botao";
-import { Cartao } from "@/design/componentes/Cartao";
-import { Contentor } from "@/design/layouts/Contentor";
 import { jogoApi, mensagemDeErroApi, type EstatisticasJogador } from "@/lib/apiClient";
 import { localizar } from "@/i18n/rotas";
+import { cn } from "@/lib/utils";
 import { TOTAL_PATAMARES, formatarKz, valorDoPatamar } from "./jogoConfig";
-import { ICONE_CATEGORIA, emPercentagem } from "./perfilJogoConfig";
+import { CATEGORIAS_VISUAIS, NIVEIS_VISUAIS, emPercentagem } from "./perfilJogoConfig";
 
 const formatarNumero = (valor: number) => valor.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
-/**
- * Perfil do jogador no Inclusivamente (só com sessão): o nível e quanto falta
- * para o próximo, os números gerais e os acertos por categoria. Tudo vem da
- * API (`GET /jogo/perfil/estatisticas`).
- */
 const PerfilJogador = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -30,7 +28,7 @@ const PerfilJogador = () => {
   const { definirPerfil } = useCarteiraJogo();
   const [estatisticas, setEstatisticas] = useState<EstatisticasJogador | null>(null);
   const [aCarregar, setACarregar] = useState(true);
-  const [erro, setErro] = useState<string | null>(null);
+  const [erro, setErro] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isLoggedIn) navigate(localizar("/auth"));
@@ -38,14 +36,15 @@ const PerfilJogador = () => {
 
   const carregar = async () => {
     setACarregar(true);
-    setErro(null);
+    setErro(false);
     try {
       const resposta = await jogoApi.obterEstatisticas();
       setEstatisticas(resposta);
       // Aproveita para acertar a barra da carteira com o saldo mais recente.
       definirPerfil(resposta.perfil);
     } catch (err) {
-      setErro(mensagemDeErroApi(err, t("PerfilJogador.naoFoiPossivelCarregar")));
+      setErro(true);
+      toast.error(mensagemDeErroApi(err, t("PerfilJogador.naoFoiPossivelCarregar")));
     } finally {
       setACarregar(false);
     }
@@ -60,147 +59,152 @@ const PerfilJogador = () => {
   const nome = profile?.nome_completo || profile?.email || "";
 
   return (
-    <Contentor className="py-12 lg:py-16">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <Botao asChild variante="fantasma" className="-ml-3 px-3">
-          <Link to={localizar("/jogo-curiosidades")}>
-            <ArrowLeft aria-hidden /> {t("PerfilJogador.voltarAoMenu")}
-          </Link>
-        </Botao>
-        <CarteiraJogo />
-      </div>
+    <div className="min-h-screen flex flex-col bg-background">
+      <Navbar />
+      <BackButton fallbackPath={localizar("/jogo-curiosidades")} label={t("PerfilJogador.voltarAoMenu")} />
 
-      <header className="mt-6 flex items-center gap-4">
-        {profile &&
-          (profile.avatar_url ? (
-            <img src={profile.avatar_url} alt="" className="size-16 shrink-0 rounded-pilula object-cover" />
-          ) : (
-            <span
-              aria-hidden
-              className="flex size-16 shrink-0 items-center justify-center rounded-pilula bg-accao text-titulo-p font-medium text-sobre-accao"
-            >
-              {nome[0]?.toUpperCase() ?? "?"}
-            </span>
-          ))}
-        <div className="min-w-0">
-          <p className="text-legenda font-medium text-accao">{t("PerfilJogador.inclusivamente")}</p>
-          {profile && <h1 className="truncate text-titulo-m text-tinta">{nome}</h1>}
-        </div>
-      </header>
+      <main className="flex-1">
+        <div className="container pb-16 max-w-2xl mx-auto space-y-5">
+          <div className="flex justify-center">
+            <CarteiraJogo />
+          </div>
 
-      <div className="mt-8 space-y-8">
-        {aCarregar && !estatisticas && (
-          <p role="status" className="text-corpo text-tinta-suave">
-            {t("PerfilJogador.aCarregar")}
-          </p>
-        )}
+          {/* Cabeçalho: avatar, nome e crachá do nível */}
+          <section className="rounded-3xl bg-gradient-to-b from-navy to-navy/85 text-white shadow-elevated p-6 text-center space-y-4">
+            <span className="text-xs font-medium tracking-widest uppercase text-teal">{t("PerfilJogador.inclusivamente")}</span>
+            {profile && (
+              <div className="flex flex-col items-center gap-2">
+                <Avatar className="h-20 w-20 ring-4 ring-teal/60">
+                  {profile.avatar_url && <AvatarImage src={profile.avatar_url} alt={nome} />}
+                  <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-semibold">
+                    {nome[0]?.toUpperCase() ?? "?"}
+                  </AvatarFallback>
+                </Avatar>
+                <h1 className="text-xl font-bold truncate max-w-full">{nome}</h1>
+              </div>
+            )}
 
-        {erro && !aCarregar && !estatisticas && (
-          <Aviso
-            variante="erro"
-            anunciar
-            titulo={t("PerfilJogador.naoFoiPossivelCarregar")}
-            accao={
-              <Botao variante="secundario" onClick={() => void carregar()}>
-                <RefreshCw aria-hidden />
+            {estatisticas && <CrachaNivel nivel={estatisticas.nivel} />}
+          </section>
+
+          {aCarregar && !estatisticas && (
+            <div className="rounded-2xl bg-card border border-border/60 shadow-card p-16 flex justify-center">
+              <Loader2 className="w-8 h-8 animate-spin text-teal" aria-label={t("PerfilJogador.aCarregar")} />
+            </div>
+          )}
+
+          {erro && !aCarregar && !estatisticas && (
+            <div className="rounded-2xl bg-card border border-border/60 shadow-card p-6 text-center space-y-3">
+              <p className="text-sm text-muted-foreground">{t("PerfilJogador.naoFoiPossivelCarregar")}</p>
+              <Button variant="outline" onClick={() => void carregar()}>
+                <RefreshCw className="w-4 h-4" />
                 {t("PerfilJogador.tentarNovamente")}
-              </Botao>
-            }
-          >
-            {erro !== t("PerfilJogador.naoFoiPossivelCarregar") ? erro : null}
-          </Aviso>
-        )}
+              </Button>
+            </div>
+          )}
 
-        {estatisticas && (
-          <>
-            <CrachaNivel nivel={estatisticas.nivel} />
+          {estatisticas && (
+            <>
+              {/* Estatísticas gerais */}
+              <section className="grid grid-cols-2 gap-3">
+                <Estatistica
+                  icone={<Coins className="w-5 h-5 text-gold" />}
+                  valor={formatarNumero(estatisticas.perfil.moedas_ganhas_total ?? 0)}
+                  rotulo={t("PerfilJogador.moedasGanhas")}
+                />
+                <Estatistica
+                  icone={<Flame className="w-5 h-5 text-orange-500" />}
+                  valor={String(estatisticas.perfil.melhor_sequencia ?? 0)}
+                  rotulo={t("PerfilJogador.melhorSequencia")}
+                />
+                <Estatistica
+                  icone={<Swords className="w-5 h-5 text-navy" />}
+                  valor={String(estatisticas.perfil.partidas_jogadas)}
+                  rotulo={t("PerfilJogador.partidasJogadas")}
+                />
+                <Estatistica
+                  icone={<Trophy className="w-5 h-5 text-gold" />}
+                  valor={
+                    estatisticas.perfil.patamar_maximo_alcancado
+                      ? formatarKz(valorDoPatamar(estatisticas.perfil.patamar_maximo_alcancado))
+                      : "--"
+                  }
+                  rotulo={t("PerfilJogador.melhorResultado", {
+                    patamar: estatisticas.perfil.patamar_maximo_alcancado,
+                    total: TOTAL_PATAMARES,
+                  })}
+                />
+              </section>
 
-            <dl className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              <Estatistica
-                icone={<Coins className="text-aviso" />}
-                valor={formatarNumero(estatisticas.perfil.moedas_ganhas_total ?? 0)}
-                rotulo={t("PerfilJogador.moedasGanhas")}
-              />
-              <Estatistica
-                icone={<Flame className="text-aviso" />}
-                valor={String(estatisticas.perfil.melhor_sequencia ?? 0)}
-                rotulo={t("PerfilJogador.melhorSequencia")}
-              />
-              <Estatistica
-                icone={<Swords className="text-accao" />}
-                valor={String(estatisticas.perfil.partidas_jogadas)}
-                rotulo={t("PerfilJogador.partidasJogadas")}
-              />
-              <Estatistica
-                icone={<Trophy className="text-aviso" />}
-                valor={
-                  estatisticas.perfil.patamar_maximo_alcancado
-                    ? formatarKz(valorDoPatamar(estatisticas.perfil.patamar_maximo_alcancado))
-                    : "--"
-                }
-                rotulo={t("PerfilJogador.melhorResultado", {
-                  patamar: estatisticas.perfil.patamar_maximo_alcancado,
-                  total: TOTAL_PATAMARES,
-                })}
-              />
-            </dl>
+              {/* Estatísticas por categoria */}
+              <section className="rounded-3xl bg-card border border-border/60 shadow-card p-5 space-y-4">
+                <h2 className="text-center text-sm font-bold tracking-widest uppercase text-foreground">
+                  {t("PerfilJogador.estatisticasPorCategoria")}
+                </h2>
+                <ul className="grid grid-cols-2 min-[480px]:grid-cols-3 gap-x-3 gap-y-5">
+                  {estatisticas.categorias.map((c) => (
+                    <CategoriaCartao
+                      key={c.categoria}
+                      categoria={c.categoria}
+                      respostas={c.respostas}
+                      acertos={c.acertos}
+                      taxa={c.taxa_acerto}
+                    />
+                  ))}
+                </ul>
+                {estatisticas.categorias.every((c) => c.respostas === 0) && (
+                  <p className="text-center text-xs text-muted-foreground">{t("PerfilJogador.semRespostasAinda")}</p>
+                )}
+              </section>
+            </>
+          )}
 
-            <section aria-labelledby="perfil-categorias">
-              <h2 id="perfil-categorias" className="text-titulo-p text-tinta">
-                {t("PerfilJogador.estatisticasPorCategoria")}
-              </h2>
-              {estatisticas.categorias.every((c) => c.respostas === 0) && (
-                <p className="mt-2 text-corpo text-tinta-suave">{t("PerfilJogador.semRespostasAinda")}</p>
-              )}
-              <ul className="mt-4 divide-y divide-linha rounded-cartao border border-linha bg-superficie">
-                {estatisticas.categorias.map((c) => (
-                  <CategoriaLinha
-                    key={c.categoria}
-                    categoria={c.categoria}
-                    respostas={c.respostas}
-                    acertos={c.acertos}
-                    taxa={c.taxa_acerto}
-                  />
-                ))}
-              </ul>
-            </section>
-          </>
-        )}
+          <Button asChild size="lg" className="w-full bg-teal text-teal-foreground hover:bg-teal/90">
+            <Link to={localizar("/jogo-curiosidades/jogar")}>
+              <Play className="w-4 h-4" />
+              {t("PerfilJogador.jogarAgora")}
+            </Link>
+          </Button>
+        </div>
+      </main>
 
-        <Botao asChild tamanho="g" larguraTotal className="sm:w-auto">
-          <Link to={localizar("/jogo-curiosidades/jogar")}>
-            <Play aria-hidden />
-            {t("PerfilJogador.jogarAgora")}
-          </Link>
-        </Botao>
-      </div>
-    </Contentor>
+      <Footer />
+    </div>
   );
 };
 
 const CrachaNivel = ({ nivel }: { nivel: EstatisticasJogador["nivel"] }) => {
   const { t } = useTranslation();
+  const nomeNivel = t(`PerfilJogador.niveis.${nivel.id}`);
   const percentagem = emPercentagem(nivel.progresso);
   return (
-    <Cartao className="flex items-center gap-4 border-0 bg-accao-suave" data-testid="cracha-nivel">
-      <span aria-hidden className="relative flex size-16 shrink-0 items-center justify-center text-accao">
-        <Shield className="size-16" strokeWidth={1.5} />
-        <span className="absolute text-corpo-g font-medium text-tinta">{nivel.numero}</span>
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="text-legenda text-tinta-suave">{t("PerfilJogador.nivelNumero", { numero: nivel.numero })}</p>
-        <p className="text-titulo-p text-tinta">{t(`PerfilJogador.niveis.${nivel.id}`)}</p>
+    <div className="flex items-center gap-4 rounded-2xl bg-white/10 p-4 text-left" data-testid="cracha-nivel">
+      <div
+        className={cn(
+          "relative w-16 h-16 shrink-0 rounded-2xl bg-gradient-to-br flex items-center justify-center shadow-elevated",
+          NIVEIS_VISUAIS[nivel.id].cor
+        )}
+        aria-hidden
+      >
+        <Shield className="w-10 h-10 text-white/90" />
+        <span className="absolute text-lg font-extrabold text-navy">{nivel.numero}</span>
+      </div>
+      <div className="flex-1 min-w-0 space-y-1.5">
+        <p className="text-[11px] uppercase tracking-widest text-white/70">
+          {t("PerfilJogador.nivelNumero", { numero: nivel.numero })}
+        </p>
+        <p className="text-lg font-bold leading-tight">{nomeNivel}</p>
         <div
-          className="mt-2 h-2.5 overflow-hidden rounded-pilula bg-superficie"
+          className="h-2.5 rounded-full bg-white/20 overflow-hidden"
           role="progressbar"
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={percentagem}
           aria-label={t("PerfilJogador.progressoNivel")}
         >
-          <div className="h-full rounded-pilula bg-accao" style={{ width: `${percentagem}%` }} />
+          <div className="h-full rounded-full bg-gold" style={{ width: `${percentagem}%` }} />
         </div>
-        <p className="mt-2 text-legenda text-tinta-suave">
+        <p className="text-xs text-white/80">
           {nivel.proximo_minimo === null
             ? t("PerfilJogador.nivelMaximo", { total: nivel.patamares_total })
             : t("PerfilJogador.faltamPatamares", {
@@ -209,21 +213,24 @@ const CrachaNivel = ({ nivel }: { nivel: EstatisticasJogador["nivel"] }) => {
               })}
         </p>
       </div>
-    </Cartao>
+    </div>
   );
 };
 
 const Estatistica = ({ icone, valor, rotulo }: { icone: ReactNode; valor: string; rotulo: string }) => (
-  <div className="flex flex-col rounded-cartao border border-linha bg-superficie p-4">
-    <span aria-hidden className="order-1 [&_svg]:size-5">
-      {icone}
-    </span>
-    <dt className="order-3 mt-1 text-legenda text-tinta-suave">{rotulo}</dt>
-    <dd className="order-2 mt-2 text-titulo-p font-medium tabular-nums text-tinta">{valor}</dd>
+  <div className="rounded-2xl bg-card border border-border/60 shadow-card p-4 flex flex-col items-center text-center gap-1.5">
+    {icone}
+    <p className="text-xl font-bold text-foreground">{valor}</p>
+    <p className="text-[11px] text-muted-foreground uppercase tracking-wide leading-tight">{rotulo}</p>
   </div>
 );
 
-const CategoriaLinha = ({
+const TAMANHO_ANEL = 72;
+const ESPESSURA_ANEL = 6;
+const RAIO_ANEL = (TAMANHO_ANEL - ESPESSURA_ANEL) / 2;
+const CIRCUNFERENCIA_ANEL = 2 * Math.PI * RAIO_ANEL;
+
+const CategoriaCartao = ({
   categoria,
   respostas,
   acertos,
@@ -235,28 +242,42 @@ const CategoriaLinha = ({
   taxa: number;
 }) => {
   const { t } = useTranslation();
-  const Icone = ICONE_CATEGORIA[categoria];
+  const { icone: Icone, cor, anel } = CATEGORIAS_VISUAIS[categoria];
   const percentagem = emPercentagem(taxa);
   const nome = t(`PerfilJogador.categorias.${categoria}`);
   return (
-    <li className="flex items-center gap-3 px-4 py-3" data-testid={`categoria-${categoria}`}>
-      <span aria-hidden className="flex size-9 shrink-0 items-center justify-center rounded-pilula bg-accao-suave text-accao">
-        <Icone className="size-5" />
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-          <p className="text-corpo font-medium text-tinta">{nome}</p>
-          <p
-            className="text-legenda tabular-nums text-tinta-suave"
-            aria-label={t("PerfilJogador.acertosCategoria", { nome, acertos, respostas, percentagem })}
-          >
-            {respostas > 0 ? `${acertos}/${respostas} · ${percentagem}%` : t("PerfilJogador.semRespostas")}
-          </p>
-        </div>
-        <div className="mt-1.5 h-2 overflow-hidden rounded-pilula bg-superficie-alt" aria-hidden>
-          <div className="h-full rounded-pilula bg-accao" style={{ width: `${respostas > 0 ? percentagem : 0}%` }} />
-        </div>
+    <li className="flex flex-col items-center text-center gap-1.5" data-testid={`categoria-${categoria}`}>
+      <div className="relative" style={{ width: TAMANHO_ANEL, height: TAMANHO_ANEL }}>
+        <svg width={TAMANHO_ANEL} height={TAMANHO_ANEL} className="-rotate-90" aria-hidden>
+          <circle
+            cx={TAMANHO_ANEL / 2}
+            cy={TAMANHO_ANEL / 2}
+            r={RAIO_ANEL}
+            strokeWidth={ESPESSURA_ANEL}
+            className="fill-none stroke-muted"
+          />
+          <circle
+            cx={TAMANHO_ANEL / 2}
+            cy={TAMANHO_ANEL / 2}
+            r={RAIO_ANEL}
+            strokeWidth={ESPESSURA_ANEL}
+            strokeDasharray={CIRCUNFERENCIA_ANEL}
+            strokeDashoffset={CIRCUNFERENCIA_ANEL * (1 - percentagem / 100)}
+            strokeLinecap="round"
+            className={cn("fill-none", anel)}
+          />
+        </svg>
+        <span className={cn("absolute inset-2 rounded-full flex items-center justify-center", cor)}>
+          <Icone className="w-6 h-6" />
+        </span>
       </div>
+      <p className="text-sm font-semibold text-foreground leading-tight">{nome}</p>
+      <p
+        className="text-xs text-muted-foreground"
+        aria-label={t("PerfilJogador.acertosCategoria", { nome, acertos, respostas, percentagem })}
+      >
+        {respostas > 0 ? `${acertos}/${respostas} · ${percentagem}%` : t("PerfilJogador.semRespostas")}
+      </p>
     </li>
   );
 };

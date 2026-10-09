@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { ArrowRight, CheckCircle2, XCircle } from "lucide-react";
-import { useTranslation } from "react-i18next";
-import { MolduraEntrada } from "@/components/auth/MolduraEntrada";
-import { PedirNovoLink } from "@/components/auth/PedirNovoLink";
-import { Botao } from "@/design/componentes/Botao";
-import { localizar } from "@/i18n/rotas";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { CheckCircle2, XCircle, ArrowRight } from "lucide-react";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { authApi, mensagemDeErroApi } from "@/lib/apiClient";
+import { useTranslation } from "react-i18next";
+import { localizar } from "@/i18n/rotas";
 
 type Estado = "a-confirmar" | "confirmado" | "erro";
 
@@ -16,10 +17,10 @@ type Estado = "a-confirmar" | "confirmado" | "erro";
  * Só confirma a conta -- nunca inicia sessão automaticamente, para manter o
  * mesmo modelo mental do resto do fluxo de auth (confirmar é um passo à
  * parte de entrar). Depois de confirmada, a pessoa faz login normalmente.
- * Com o link inválido ou expirado, pede-se outro aqui mesmo.
  */
 const ConfirmarEmail = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token") ?? "";
   const [estado, setEstado] = useState<Estado>("a-confirmar");
@@ -48,57 +49,38 @@ const ConfirmarEmail = () => {
   }, [token, t]);
 
   return (
-    <MolduraEntrada>
-      {estado === "a-confirmar" && (
-        <>
-          <h1 className="text-titulo-m text-tinta">{t("ConfirmarEmail.aConfirmarASua")}</h1>
-          <p role="status" className="mt-2 text-corpo text-tinta-suave">
-            {t("ConfirmarEmail.umMomento")}
-          </p>
-        </>
-      )}
-
-      {estado === "confirmado" && (
-        <>
-          <span aria-hidden className="flex size-12 items-center justify-center rounded-pilula bg-sucesso-suave text-sucesso [&_svg]:size-6">
-            <CheckCircle2 />
-          </span>
-          <h1 className="mt-5 text-titulo-m text-tinta">{t("ConfirmarEmail.contaConfirmada")}</h1>
-          <p className="mt-2 text-corpo text-tinta-suave">{t("ConfirmarEmail.jaPodeEntrarCom")}</p>
-          <Botao asChild tamanho="g" larguraTotal className="mt-8">
-            <Link to={localizar("/auth")} replace>
-              {t("ConfirmarEmail.irParaOLogin")} <ArrowRight aria-hidden />
-            </Link>
-          </Botao>
-        </>
-      )}
-
-      {estado === "erro" && (
-        <>
-          <span aria-hidden className="flex size-12 items-center justify-center rounded-pilula bg-erro-suave text-erro [&_svg]:size-6">
-            <XCircle />
-          </span>
-          <h1 className="mt-5 text-titulo-m text-tinta">{t("ConfirmarEmail.naoFoiPossivelConfirmar")}</h1>
-          <p role="alert" className="mt-2 text-corpo text-tinta-suave">
-            {mensagemErro}
-          </p>
-          <PedirNovoLink
-            aoPedir={(email) => authApi.reenviarConfirmacao(email)}
-            textos={{
-              titulo: t("ConfirmarEmail.pedirNovoTitulo"),
-              explicacao: t("ConfirmarEmail.pedirNovoTexto"),
-              enviado: t("ConfirmarEmail.pedirNovoEnviado"),
-              botao: t("ConfirmarEmail.pedirNovoBotao"),
-            }}
-          />
-          <p className="mt-6 text-corpo">
-            <Link to={localizar("/auth")} className="font-medium text-accao underline underline-offset-2">
-              {t("ConfirmarEmail.irParaOLogin")}
-            </Link>
-          </p>
-        </>
-      )}
-    </MolduraEntrada>
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-muted/40">
+      <Navbar />
+      <main className="flex-1 container max-w-md pt-28 pb-16 flex items-center">
+        <Card className="w-full shadow-lg border-border/60">
+          <CardHeader className="text-center space-y-2">
+            {estado === "confirmado" ? (
+              <CheckCircle2 className="w-10 h-10 text-green-600 mx-auto" />
+            ) : estado === "erro" ? (
+              <XCircle className="w-10 h-10 text-destructive mx-auto" />
+            ) : null}
+            <CardTitle className="text-2xl md:text-3xl font-bold">
+              {estado === "a-confirmar" && t("ConfirmarEmail.aConfirmarASua")}
+              {estado === "confirmado" && t("ConfirmarEmail.contaConfirmada")}
+              {estado === "erro" && t("ConfirmarEmail.naoFoiPossivelConfirmar")}
+            </CardTitle>
+            <CardDescription>
+              {estado === "a-confirmar" && t("ConfirmarEmail.umMomento")}
+              {estado === "confirmado" && t("ConfirmarEmail.jaPodeEntrarCom")}
+              {estado === "erro" && mensagemErro}
+            </CardDescription>
+          </CardHeader>
+          {estado !== "a-confirmar" && (
+            <CardContent>
+              <Button size="lg" className="w-full" onClick={() => navigate(localizar("/auth"), { replace: true })}>
+                {t("ConfirmarEmail.irParaOLogin")}{" "}<ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </CardContent>
+          )}
+        </Card>
+      </main>
+      <Footer />
+    </div>
   );
 };
 

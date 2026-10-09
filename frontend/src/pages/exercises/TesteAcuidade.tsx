@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Ruler } from "lucide-react";
-import { Botao } from "@/design/componentes/Botao";
+import { Button } from "@/components/ui/button";
 import AnelLandolt from "@/components/visao/AnelLandolt";
 import AssistenteTeste, { type ContextoTeste } from "@/components/visao/AssistenteTeste";
+import PaginaExercicio from "@/components/visao/PaginaExercicio";
 import { CartaoOlho, EcraResultado } from "@/components/visao/Resultados";
 import TarefaAnelTeste, { type FimTarefaAnel } from "@/components/visao/TarefaAnelTeste";
 import { useRegistoSessao } from "@/components/visao/hooks";
 import { formatarDecimal, separadorDecimal } from "@/i18n/formatar";
-import { indiceMaisProximo, limiarFinoTeste } from "@/lib/visao/escada";
+import { indiceMaisProximo } from "@/lib/visao/escada";
 import {
   DISTANCIA_LONGE_MM,
   NIVEIS_TESTE_ACUIDADE,
@@ -33,8 +34,6 @@ export interface ResultadoAcuidade {
   segundosActivos: number;
   duracaoSegundos: number;
 }
-
-const arredondar2 = (v: number | null) => (v === null ? null : Math.round(v * 100) / 100);
 
 /** Níveis desenháveis neste ecrã/distância, sem anéis maiores do que o palco. */
 function niveisAcuidade(ctx: ContextoTeste): number[] {
@@ -61,8 +60,7 @@ const TarefaAcuidade = ({ ctx, aoTerminar }: { ctx: ContextoTeste; aoTerminar: (
       estimulo={(i, d) => <AnelLandolt aberturaPx={aberturaPx(niveis[i], ctx.distanciaMm, ctx.pxPorMm)} direccao={d} />}
       aoTerminar={({ escada, segundosActivos, duracaoSegundos }: FimTarefaAnel) =>
         aoTerminar({
-          // Anel a anel: os erros contam, não só o último nível passado.
-          limiar: arredondar2(limiarFinoTeste(escada, niveis)),
+          limiar: escada.limiar === null ? null : niveis[escada.limiar],
           limiteEcra: escada.atingiuLimite,
           segundosActivos,
           duracaoSegundos,
@@ -139,7 +137,7 @@ const ResultadoAcuidadeEcra = ({
             </p>
             <p>
               {t("Visao.decimal")}: {prefixo}
-              {formatarDecimal(logmarParaDecimal(r.limiar), 2)} · logMAR {formatarDecimal(r.limiar, 2)}
+              {formatarDecimal(logmarParaDecimal(r.limiar), 2)} · logMAR {formatarDecimal(r.limiar, 1)}
             </p>
           </CartaoOlho>
         );
@@ -152,10 +150,10 @@ const ResultadoAcuidadeEcra = ({
       }
       accoesExtra={
         algumLimite && ctx.distanciaMm < DISTANCIA_LONGE_MM ? (
-          <Botao variante="secundario" tamanho="g" className="w-full sm:w-auto" onClick={() => repetirA(DISTANCIA_LONGE_MM)}>
+          <Button variant="outline" size="lg" className="w-full gap-2 sm:w-auto" onClick={() => repetirA(DISTANCIA_LONGE_MM)}>
             <Ruler className="h-4 w-4" />
             {t("Visao.repetirAUmMetro")}
-          </Botao>
+          </Button>
         ) : undefined
       }
     />
@@ -165,14 +163,16 @@ const ResultadoAcuidadeEcra = ({
 const TesteAcuidade = () => {
   const { t } = useTranslation();
   return (
-    <AssistenteTeste<ResultadoAcuidade>
-      exercicioId={EXERCICIO_ID}
-      grupo="trial"
-      titulo={t("Visao.acuidadeTitulo")}
-      descricao={t("Visao.acuidadeDescricao")}
-      tarefa={(_olho, ctx, aoTerminar) => <TarefaAcuidade ctx={ctx} aoTerminar={aoTerminar} />}
-      resultado={(res, ctx, repetirA) => <ResultadoAcuidadeEcra res={res} ctx={ctx} repetirA={repetirA} />}
-    />
+    <PaginaExercicio>
+      <AssistenteTeste<ResultadoAcuidade>
+        exercicioId={EXERCICIO_ID}
+        grupo="trial"
+        titulo={t("Visao.acuidadeTitulo")}
+        descricao={t("Visao.acuidadeDescricao")}
+        tarefa={(_olho, ctx, aoTerminar) => <TarefaAcuidade ctx={ctx} aoTerminar={aoTerminar} />}
+        resultado={(res, ctx, repetirA) => <ResultadoAcuidadeEcra res={res} ctx={ctx} repetirA={repetirA} />}
+      />
+    </PaginaExercicio>
   );
 };
 

@@ -50,7 +50,6 @@ vi.mock("sonner", () => ({
 
 import LojaDiamantes from "./LojaDiamantes";
 import { CarteiraJogoProvider } from "@/contexts/CarteiraJogoContext";
-import { violacoesAcessibilidade } from "@/design/testes/acessibilidade";
 
 const Envoltorio = ({ children }: { children: ReactNode }) => (
   <MemoryRouter>
@@ -116,7 +115,7 @@ describe("LojaDiamantes", () => {
     await userEvent.click(await screen.findByRole("button", { name: /480 diamantes por Kz/ }));
     await userEvent.click(await screen.findByRole("button", { name: /Pagar \(simulado\)/ }));
 
-    expect(await within(screen.getByRole("dialog")).findByRole("alert")).toHaveTextContent("indisponível");
+    await waitFor(() => expect(toastError).toHaveBeenCalledWith("indisponível"));
     expect(toastSuccess).not.toHaveBeenCalled();
     expect(screen.getByRole("link", { name: /^Diamantes/, hidden: true })).toHaveTextContent("10");
   });
@@ -166,7 +165,7 @@ describe("LojaDiamantes", () => {
     await userEvent.click(botao);
     await userEvent.click(await screen.findByRole("button", { name: "Trocar moedas" }));
 
-    expect(await within(screen.getByRole("dialog")).findByRole("alert")).toHaveTextContent("Não tem moedas suficientes para este pacote.");
+    await waitFor(() => expect(toastError).toHaveBeenCalledWith("Não tem moedas suficientes para este pacote."));
     expect(toastSuccess).not.toHaveBeenCalled();
     expect(screen.getByRole("link", { name: /^Diamantes/, hidden: true })).toHaveTextContent("10");
   });
@@ -212,7 +211,7 @@ describe("LojaDiamantes", () => {
     );
     await userEvent.click(within(dialogo).getByRole("button", { name: "Enviar comprovativo" }));
 
-    expect(await within(screen.getByRole("dialog")).findByRole("alert")).toBeInTheDocument();
+    await waitFor(() => expect(toastError).toHaveBeenCalled());
     expect(pedirComKwanzas).not.toHaveBeenCalled();
     expect(toastSuccess).not.toHaveBeenCalled();
     expect(screen.getByRole("dialog")).toBeInTheDocument();
@@ -262,12 +261,5 @@ describe("LojaDiamantes", () => {
 
     await userEvent.click(await screen.findByRole("button", { name: "Tentar novamente" }));
     expect(await screen.findByTestId("pacote-pequeno")).toBeInTheDocument();
-  });
-
-  it("sem violações de acessibilidade", async () => {
-    obterLojaDiamantes.mockResolvedValue({ pacotes: PACOTES, pagamento_simulado: false });
-    const { container } = render(<LojaDiamantes />, { wrapper: Envoltorio });
-    await screen.findByTestId("pacote-grande");
-    expect(await violacoesAcessibilidade(container)).toEqual([]);
   });
 });

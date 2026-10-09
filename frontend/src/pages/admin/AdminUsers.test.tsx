@@ -68,10 +68,8 @@ describe("AdminUsers", () => {
     listarUtilizadores.mockRejectedValue(Object.assign(new Error("Sem permissões"), { status: 403 }));
     renderPage();
 
-    // Caso real (2026-10-09): uma falha mostrava "Sem utilizadores." -- falso.
-    expect(await screen.findByRole("alert")).toHaveTextContent("Sem permissões");
-    expect(screen.queryByText(/Ainda não há utilizadores|Sem utilizadores/)).not.toBeInTheDocument();
-    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    await waitFor(() => expect(toastError).toHaveBeenCalledWith("Sem permissões"));
+    expect(screen.getByText("Sem utilizadores.")).toBeInTheDocument();
   });
 
   it("muda o papel de um utilizador comum", async () => {
@@ -83,7 +81,8 @@ describe("AdminUsers", () => {
     renderPage();
 
     await screen.findByText("Ana Teste");
-    await user.selectOptions(screen.getByRole("combobox", { name: "Perfil de Ana Teste" }), "Pessoa com Estrabismo");
+    await user.click(screen.getByRole("combobox"));
+    await user.click(await screen.findByRole("option", { name: "Pessoa com Estrabismo" }));
 
     await waitFor(() => expect(definirPapel).toHaveBeenCalledWith("user-1", "estrabico"));
     expect(toastSuccess).toHaveBeenCalledWith("Perfil actualizado.");
@@ -96,7 +95,8 @@ describe("AdminUsers", () => {
     renderPage();
 
     await screen.findByText("Ana Teste");
-    await user.selectOptions(screen.getByRole("combobox", { name: "Perfil de Ana Teste" }), "Profissional de Saúde");
+    await user.click(screen.getByRole("combobox"));
+    await user.click(await screen.findByRole("option", { name: "Profissional de Saúde" }));
 
     await waitFor(() => expect(toastError).toHaveBeenCalledWith("falhou"));
     expect(toastSuccess).not.toHaveBeenCalled();

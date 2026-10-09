@@ -44,7 +44,7 @@ const Tecnologia = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <div className="flex-1">
+      <main className="flex-1">
         {/* Hero */}
         <section className="relative min-h-[70vh] flex items-center overflow-hidden">
           <img
@@ -215,7 +215,7 @@ const Tecnologia = () => {
             </div>
           </div>
         </section>
-      </div>
+      </main>
       <Footer />
     </div>
   );

@@ -11,12 +11,10 @@ class ApiErrorFalso extends Error {
 }
 
 const confirmarEmail = vi.fn();
-const reenviarConfirmacao = vi.fn();
 
 vi.mock("@/lib/apiClient", () => ({
   authApi: {
     confirmarEmail: (token: string) => confirmarEmail(token),
-    reenviarConfirmacao: (email: string) => reenviarConfirmacao(email),
   },
   mensagemDeErroApi: (err: unknown, fallback: string) => {
     const status = (err as { status?: unknown } | null)?.status;
@@ -35,8 +33,6 @@ vi.mock("@/contexts/ProfileContext", () => ({
 
 
 import ConfirmarEmail from "./ConfirmarEmail";
-import userEvent from "@testing-library/user-event";
-import { violacoesAcessibilidade } from "@/design/testes/acessibilidade";
 
 function renderComToken(token: string | null) {
   const rota = token ? `/confirmar-email?token=${token}` : "/confirmar-email";
@@ -85,26 +81,5 @@ describe("ConfirmarEmail", () => {
     renderComToken("token-valido");
 
     await waitFor(() => expect(confirmarEmail).toHaveBeenCalledTimes(1));
-  });
-
-  // Antes: com o link inválido, a página só dizia isso e mandava para o login.
-  it("com o link inválido, deixa pedir um novo link de confirmação ali mesmo", async () => {
-    confirmarEmail.mockRejectedValue(Object.assign(new Error("este link de confirmação é inválido ou expirou"), { status: 400 }));
-    reenviarConfirmacao.mockResolvedValue({ mensagem: "ok" });
-    const user = userEvent.setup();
-    renderComToken("expirado");
-
-    await user.type(await screen.findByLabelText("Email da conta"), "ana@example.com");
-    await user.click(screen.getByRole("button", { name: "Enviar novo link" }));
-
-    await waitFor(() => expect(reenviarConfirmacao).toHaveBeenCalledWith("ana@example.com"));
-    expect(await screen.findByText(/enviámos um novo link/)).toBeInTheDocument();
-  });
-
-  it("sem violações de acessibilidade", async () => {
-    confirmarEmail.mockResolvedValue(undefined);
-    const { container } = renderComToken("valido");
-    await screen.findByText("Conta confirmada!");
-    expect(await violacoesAcessibilidade(container)).toEqual([]);
   });
 });

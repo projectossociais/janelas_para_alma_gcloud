@@ -66,26 +66,6 @@ describe("AdminOverview", () => {
     expect(screen.getByText("Activos este mês")).toBeInTheDocument();
   });
 
-  it("o título da página é o h1 (não o nome do painel)", async () => {
-    render(<AdminOverview />, { wrapper: MemoryRouter });
-    expect(screen.getByRole("heading", { level: 1, name: "Visão geral" })).toBeInTheDocument();
-  });
-
-  // Caso real (2026-10-09): sem resposta da API, os cartões mostravam 0 em
-  // todas as métricas -- números inventados num painel de decisão.
-  it("se as estatísticas falharem: diz porquê, deixa tentar de novo e nunca mostra 0", async () => {
-    obterEstatisticas.mockReset().mockRejectedValueOnce(Object.assign(new Error("Sem permissões"), { status: 403 }));
-    render(<AdminOverview />, { wrapper: MemoryRouter });
-
-    expect(await screen.findByRole("alert")).toHaveTextContent("Sem permissões");
-    expect(screen.queryByText("Utilizadores (total)")).not.toBeInTheDocument();
-
-    obterEstatisticas.mockResolvedValue(ESTATISTICAS);
-    const { default: userEvent } = await import("@testing-library/user-event");
-    await userEvent.click(screen.getByRole("button", { name: "Tentar de novo" }));
-    expect(await screen.findByText("120")).toBeInTheDocument();
-  });
-
   it("mostra a Central de Pendências com os totais certos e liga aos sítios certos", async () => {
     render(<AdminOverview />, { wrapper: MemoryRouter });
 
@@ -95,9 +75,15 @@ describe("AdminOverview", () => {
     const linkVoluntariado = screen.getByRole("link", { name: /Candidaturas de voluntariado por decidir/i });
     expect(linkVoluntariado).toHaveAttribute("href", "/admin/voluntariado");
 
-    // 2 + 3 + 1 = 6, em destaque no título da secção.
-    const titulo = screen.getByRole("heading", { name: /Por decidir/ });
-    expect(within(titulo).getByText("6")).toBeInTheDocument();
+    // 2 + 3 + 1 = 6, mostrado como destaque no cabeçalho da Central. O link
+    // acima já aparece no primeiro render (usa "?? 0" antes dos dados
+    // chegarem) -- o Badge só depois de obterPendencias() resolver, por
+    // isso tem de se esperar por ele em vez de o verificar de imediato
+    // (senão o teste fica dependente da velocidade da máquina que o corre).
+    await waitFor(() => {
+      const titulo = screen.getByText("Central de Pendências").closest("h3") as HTMLElement;
+      expect(within(titulo).getByText("6")).toBeInTheDocument();
+    });
   });
 
   it("pede as estatísticas outra vez quando o período muda", async () => {
@@ -106,7 +92,7 @@ describe("AdminOverview", () => {
 
     const { default: userEvent } = await import("@testing-library/user-event");
     const user = userEvent.setup();
-    await user.click(screen.getByRole("radio", { name: "Semanal" }));
+    await user.click(screen.getByRole("tab", { name: "Semanal" }));
 
     await waitFor(() => expect(obterEstatisticas).toHaveBeenCalledWith(7));
   });

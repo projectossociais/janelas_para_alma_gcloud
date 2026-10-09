@@ -21,7 +21,7 @@ vi.mock("@/contexts/AcessoExerciciosContext", () => ({
   useAcessoExercicios: () => ({ temAcesso: () => true, loading: false }),
 }));
 vi.mock("@/components/exercises/useAcaoDesbloqueio", () => ({
-  useAcaoDesbloqueio: () => ({ tipoPara: () => null, executar: () => undefined }),
+  useAcaoDesbloqueio: () => ({ tipoPara: () => null, executar: () => undefined, aIniciarTrial: false }),
 }));
 
 describe("BaseExercise sem consentimento para dados de saúde", () => {

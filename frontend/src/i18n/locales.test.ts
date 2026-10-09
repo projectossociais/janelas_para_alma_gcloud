@@ -84,6 +84,7 @@ describe("tradução en-US (Fase 3)", () => {
     /Urbanização Nova Vida, Rua 54( \(rua do tribunal provincial\))?, Centro Empresarial Living-Luanda(, Lote 9, Luanda, Angola\.)?/g,
     /Rua do assalto ao quartel da Moncada/g,
     /Benfica \/ Zona Verde \/ Condomínio Villa Israel/g,
+    /Clínica Sagrada Esperança|Centro Óptico Angolano|Clínica Multiperfil|Ilha de Luanda/g,
     /Palco Universitário|Estudante Blindado|ASG Conexão Mulheres/g,
     /Agência de Protecção de Dados/g,
     /Olhar Alinhado - Comércio & Prestação de Serviços, Lda\./g,

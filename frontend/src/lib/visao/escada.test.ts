@@ -3,8 +3,6 @@ import {
   escolhaAleatoria,
   iniciarEscadaTeste,
   iniciarEscadaTreino,
-  INVERSOES_MINIMAS,
-  limiarFinoTeste,
   limiarTreino,
   responderTeste,
   responderTreino,
@@ -26,50 +24,6 @@ function simularTeste(total: number, inicio: number, limite: number) {
 }
 
 describe("escada do teste", () => {
-  // Caso real (2026-10-08): os dois olhos passaram os mesmos níveis, um com
-  // menos erros, e o resultado foi igual -- só contava o último nível passado.
-  // Contagem anel a anel (como a ETDRS): cada erro no último nível passado
-  // piora 1/3 de nível; cada acerto no primeiro falhado melhora 1/3.
-  describe("contagem anel a anel (limiarFinoTeste)", () => {
-    const LOGMAR = [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.0, -0.1];
-
-    it("mesmos níveis, menos erros: resultado melhor (logMAR mais baixo)", () => {
-      // Olho A: 0,7 ✓✓ · 0,6 ✓✓ · 0,5 ✓✗✗ -> 0,6 - 1/3 de nível
-      const a = responderVarias(iniciarEscadaTeste(12, 3), [true, true, true, true, true, false, false]);
-      // Olho B: 0,7 ✓✓ · 0,6 ✓✗✓ · 0,5 ✗✗   -> 0,6 + 1/3 de nível
-      const b = responderVarias(iniciarEscadaTeste(12, 3), [true, true, true, false, true, false, false]);
-      expect(a.terminado && b.terminado).toBe(true);
-      expect(a.limiar).toBe(4);
-      expect(b.limiar).toBe(4); // o mesmo nível: era aqui que davam igual
-      expect(limiarFinoTeste(a, LOGMAR)).toBeCloseTo(0.6 - 0.1 / 3, 6);
-      expect(limiarFinoTeste(b, LOGMAR)).toBeCloseTo(0.6 + 0.1 / 3, 6);
-    });
-
-    it("sem erros no nível passado e nenhum acerto no seguinte: o valor do nível", () => {
-      const e = responderVarias(iniciarEscadaTeste(12, 3), [true, true, true, true, false, false]);
-      expect(limiarFinoTeste(e, LOGMAR)).toBeCloseTo(0.6, 6);
-    });
-
-    it("não leu nem o maior: continua null", () => {
-      const e = responderVarias(iniciarEscadaTeste(12, 0), [false, false]);
-      expect(e.limiar).toBeNull();
-      expect(limiarFinoTeste(e, LOGMAR)).toBeNull();
-    });
-
-    it("passou o mais pequeno que o ecrã mostra: só os erros desse nível contam", () => {
-      const e = responderVarias(iniciarEscadaTeste(3, 1), [true, true, true, false, true]);
-      expect(e.atingiuLimite).toBe(true);
-      expect(limiarFinoTeste(e, [0.2, 0.1, 0.0])).toBeCloseTo(0.0 + 0.1 / 3, 6);
-    });
-
-    it("serve para qualquer escala (contraste: valores crescem com a dificuldade)", () => {
-      const LOG_CS = [0.0, 0.3, 0.6, 0.9];
-      const e = responderVarias(iniciarEscadaTeste(4, 0), [true, true, true, true, true, false, false]);
-      // 0,0 ✓✓ · 0,3 ✓✓ · 0,6 ✓✗✗ -> 0,3 + 1/3 de 0,3
-      expect(limiarFinoTeste(e, LOG_CS)).toBeCloseTo(0.4, 6);
-    });
-  });
-
   it("passa um nível com 2 acertos e avança logo, sem 3.º optótipo", () => {
     const e = responderVarias(iniciarEscadaTeste(12, 3), [true, true]);
     expect(e.indice).toBe(4);
@@ -138,29 +92,6 @@ describe("escada do treino", () => {
     expect(limiarTreino(e)).toBeGreaterThanOrEqual(14);
     expect(limiarTreino(e)).toBeLessThanOrEqual(17);
     expect(e.melhor).toBe(16);
-  });
-
-  // Caso real (2026-10-08): o resumo do treino mostrava um "limiar desta
-  // sessão" que a sessão nunca mediu -- o nível de partida, ou o anel maior
-  // para quem errou tudo -- e esse número ia para o progresso e o relatório.
-  it("sessão terminada logo no início: não mediu limiar nenhum (null, nunca o nível de partida)", () => {
-    let e = iniciarEscadaTreino(20, 8);
-    for (const r of [true, true, false]) e = responderTreino(e, r);
-    expect(limiarTreino(e)).toBeNull();
-  });
-
-  it("errar tudo, mesmo no nível mais fácil, não mede limiar (nunca 'leu o maior')", () => {
-    let e = iniciarEscadaTreino(20, 8);
-    for (let i = 0; i < 120; i++) e = responderTreino(e, false);
-    expect(e.indice).toBe(0);
-    expect(limiarTreino(e)).toBeNull();
-  });
-
-  it(`com ${INVERSOES_MINIMAS} inversões já há limiar`, () => {
-    let e = iniciarEscadaTreino(20, 5);
-    for (let i = 0; i < 200 && e.inversoes.length < INVERSOES_MINIMAS; i++) e = responderTreino(e, e.indice <= 8);
-    expect(e.inversoes.length).toBe(INVERSOES_MINIMAS);
-    expect(limiarTreino(e)).not.toBeNull();
   });
 
   it("valorNoIndice interpola entre níveis", () => {

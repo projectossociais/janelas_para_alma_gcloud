@@ -2,12 +2,12 @@ import { useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import AnelLandolt from "@/components/visao/AnelLandolt";
 import AssistenteTeste, { type ContextoTeste } from "@/components/visao/AssistenteTeste";
+import PaginaExercicio from "@/components/visao/PaginaExercicio";
 import { CartaoOlho, EcraResultado } from "@/components/visao/Resultados";
 import TarefaAnelTeste from "@/components/visao/TarefaAnelTeste";
 import { useHistoricoVisao, useRegistoSessao } from "@/components/visao/hooks";
 import { formatarData, formatarDecimal } from "@/i18n/formatar";
 import { DEGRAUS_TESTE_CONTRASTE, corCinzento, degrausMostraveis, sensibilidade } from "@/lib/visao/contraste";
-import { limiarFinoTeste } from "@/lib/visao/escada";
 import { aberturaPx } from "@/lib/visao/geometria";
 import { OLHOS, diferencaContraste, type Olho } from "@/lib/visao/resultados";
 import { LOGMAR_TESTE_CONTRASTE } from "@/lib/visao/treino";
@@ -25,8 +25,6 @@ interface ResultadoContraste {
 }
 
 const DEGRAUS = degrausMostraveis(DEGRAUS_TESTE_CONTRASTE);
-/** Sensibilidade (log CS) de cada degrau, para a contagem anel a anel. */
-const LOG_CS = DEGRAUS.map((d) => sensibilidade(d.real));
 
 const TarefaContraste = ({ ctx, aoTerminar }: { ctx: ContextoTeste; aoTerminar: (r: ResultadoContraste) => void }) => {
   // Tamanho fixo, bem acima do limiar de acuidade (~0,5 logMAR), e nunca
@@ -39,10 +37,7 @@ const TarefaContraste = ({ ctx, aoTerminar }: { ctx: ContextoTeste; aoTerminar: 
       estimulo={(i, d) => <AnelLandolt aberturaPx={gap} direccao={d} cor={corCinzento(DEGRAUS[i].cinzento)} />}
       aoTerminar={({ escada, segundosActivos, duracaoSegundos }) =>
         aoTerminar({
-          logCs: (() => {
-            const v = limiarFinoTeste(escada, LOG_CS);
-            return v === null ? null : Math.round(v * 100) / 100;
-          })(),
+          logCs: escada.limiar === null ? null : sensibilidade(DEGRAUS[escada.limiar].real),
           limiteEcra: escada.atingiuLimite,
           segundosActivos,
           duracaoSegundos,
@@ -105,10 +100,7 @@ const ResultadoContrasteEcra = ({ res, ctx }: { res: Record<Olho, ResultadoContr
           <CartaoOlho
             key={olho}
             titulo={olho === "direito" ? t("Visao.olhoDireito") : t("Visao.olhoEsquerdo")}
-            // Sem valores de referência (ver a nota no fim), um valor é para
-            // comparar, nunca "Sem sinais": até 2026-10-08 quem só viu o anel
-            // mais escuro (0,00) recebia o cartão verde.
-            estado={r.logCs === null ? "sinal" : "indeterminado"}
+            estado={r.logCs === null ? "sinal" : diferenca ? "indeterminado" : "ok"}
           >
             {r.logCs === null ? (
               t("Visao.contrasteNaoViu")
@@ -143,14 +135,16 @@ const ResultadoContrasteEcra = ({ res, ctx }: { res: Record<Olho, ResultadoContr
 const TesteContraste = () => {
   const { t } = useTranslation();
   return (
-    <AssistenteTeste<ResultadoContraste>
-      exercicioId={EXERCICIO_ID}
-      grupo="trial"
-      titulo={t("Visao.contrasteTitulo")}
-      descricao={t("Visao.contrasteDescricao")}
-      tarefa={(_olho, ctx, aoTerminar) => <TarefaContraste ctx={ctx} aoTerminar={aoTerminar} />}
-      resultado={(res, ctx) => <ResultadoContrasteEcra res={res} ctx={ctx} />}
-    />
+    <PaginaExercicio>
+      <AssistenteTeste<ResultadoContraste>
+        exercicioId={EXERCICIO_ID}
+        grupo="trial"
+        titulo={t("Visao.contrasteTitulo")}
+        descricao={t("Visao.contrasteDescricao")}
+        tarefa={(_olho, ctx, aoTerminar) => <TarefaContraste ctx={ctx} aoTerminar={aoTerminar} />}
+        resultado={(res, ctx) => <ResultadoContrasteEcra res={res} ctx={ctx} />}
+      />
+    </PaginaExercicio>
   );
 };
 

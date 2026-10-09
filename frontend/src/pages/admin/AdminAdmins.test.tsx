@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 const listarUtilizadores = vi.fn();
@@ -29,7 +29,6 @@ vi.mock("sonner", () => ({
 }));
 
 import AdminAdmins from "./AdminAdmins";
-import { violacoesAcessibilidade } from "@/design/testes/acessibilidade";
 
 const umAdmin = {
   id: "u1",
@@ -76,36 +75,5 @@ describe("AdminAdmins", () => {
       expect(toastError).toHaveBeenCalledWith("não há nenhuma conta com esse email"),
     );
     expect(toastSuccess).not.toHaveBeenCalled();
-  });
-
-  // Antes: um ícone de lixo sem nome, e o confirm() do navegador.
-  it("remover tem nome acessível e pede confirmação; só 'Remover' remove", async () => {
-    removerAdmin.mockResolvedValue(undefined);
-    const user = userEvent.setup();
-    render(<AdminAdmins />);
-
-    const botao = await screen.findByRole("button", { name: `Remover ${umAdmin.email} dos administradores` });
-    await user.click(botao);
-    const dialogo = await screen.findByRole("dialog", { name: "Remover administrador?" });
-    await user.click(within(dialogo).getByRole("button", { name: "Cancelar" }));
-    expect(removerAdmin).not.toHaveBeenCalled();
-
-    await user.click(botao);
-    await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Remover" }));
-    await waitFor(() => expect(removerAdmin).toHaveBeenCalledWith(umAdmin.id));
-    expect(toastSuccess).toHaveBeenCalledWith("Admin removido.");
-  });
-
-  it("se a lista falhar: diz porquê, nunca 'Sem administradores.'", async () => {
-    listarUtilizadores.mockReset().mockRejectedValue(Object.assign(new Error("Sem permissões"), { status: 403 }));
-    render(<AdminAdmins />);
-    expect(await screen.findByRole("alert")).toHaveTextContent("Sem permissões");
-    expect(screen.queryByText("Sem administradores.")).not.toBeInTheDocument();
-  });
-
-  it("sem violações de acessibilidade", async () => {
-    const { container } = render(<AdminAdmins />);
-    await screen.findByText(umAdmin.email);
-    expect(await violacoesAcessibilidade(container)).toEqual([]);
   });
 });

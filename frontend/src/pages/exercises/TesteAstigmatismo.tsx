@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Botao } from "@/design/componentes/Botao";
+import { Button } from "@/components/ui/button";
 import AssistenteTeste, { type ContextoTeste } from "@/components/visao/AssistenteTeste";
+import PaginaExercicio from "@/components/visao/PaginaExercicio";
 import PalcoVisual from "@/components/visao/PalcoVisual";
 import { CartaoOlho, EcraResultado } from "@/components/visao/Resultados";
 import { useRegistoSessao } from "@/components/visao/hooks";
@@ -77,12 +78,12 @@ const TarefaAstigmatismo = ({
       </PalcoVisual>
       <p className="text-center font-semibold text-foreground">{t("Visao.astigmatismoPergunta")}</p>
       <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-        <Botao tamanho="g" className="sm:min-w-40" onClick={() => responder(true)}>
+        <Button size="lg" className="bg-teal text-teal-foreground hover:bg-teal/90 sm:min-w-40" onClick={() => responder(true)}>
           {t("Visao.sim")}
-        </Botao>
-        <Botao tamanho="g" variante="secundario" className="sm:min-w-40" onClick={() => responder(false)}>
+        </Button>
+        <Button size="lg" variant="outline" className="sm:min-w-40" onClick={() => responder(false)}>
           {t("Visao.naoHaLinhasMaisEscuras")}
-        </Botao>
+        </Button>
       </div>
     </div>
   );
@@ -135,14 +136,16 @@ const ResultadoAstigmatismoEcra = ({ res, ctx }: { res: Record<Olho, ResultadoAs
 const TesteAstigmatismo = () => {
   const { t } = useTranslation();
   return (
-    <AssistenteTeste<ResultadoAstigmatismo>
-      exercicioId={EXERCICIO_ID}
-      grupo="trial"
-      titulo={t("Visao.astigmatismoTitulo")}
-      descricao={t("Visao.astigmatismoDescricao")}
-      tarefa={(_olho, ctx, aoTerminar) => <TarefaAstigmatismo ctx={ctx} aoTerminar={aoTerminar} />}
-      resultado={(res, ctx) => <ResultadoAstigmatismoEcra res={res} ctx={ctx} />}
-    />
+    <PaginaExercicio>
+      <AssistenteTeste<ResultadoAstigmatismo>
+        exercicioId={EXERCICIO_ID}
+        grupo="trial"
+        titulo={t("Visao.astigmatismoTitulo")}
+        descricao={t("Visao.astigmatismoDescricao")}
+        tarefa={(_olho, ctx, aoTerminar) => <TarefaAstigmatismo ctx={ctx} aoTerminar={aoTerminar} />}
+        resultado={(res, ctx) => <ResultadoAstigmatismoEcra res={res} ctx={ctx} />}
+      />
+    </PaginaExercicio>
   );
 };
 

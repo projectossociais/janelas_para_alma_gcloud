@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Glasses } from "lucide-react";
-import { Botao } from "@/design/componentes/Botao";
+import { Button } from "@/components/ui/button";
 import BaseExercise from "@/components/exercises/BaseExercise";
+import PaginaExercicio from "@/components/visao/PaginaExercicio";
 import PalcoVisual from "@/components/visao/PalcoVisual";
 import { CartaoOlho, EcraResultado } from "@/components/visao/Resultados";
 import { BotaoContinuar, EcraPasso, PassoBrilho, PassoCalibracao, PassoDistancia } from "@/components/visao/Passos";
@@ -10,7 +11,7 @@ import { useCalibracao, useDevicePixelRatio, useRegistoSessao, useTempoActivo } 
 import { escolhaAleatoria, iniciarEscadaTeste, responderTeste } from "@/lib/visao/escada";
 import { FORMAS, gerarEstereograma, type Forma } from "@/lib/visao/estereograma";
 import { DISTANCIA_OMISSAO_MM, arcsegParaPx, desenhavel } from "@/lib/visao/geometria";
-import { DISPARIDADES_ARCSEG, sinalEstereopsia } from "@/lib/visao/resultados";
+import { DISPARIDADES_ARCSEG } from "@/lib/visao/resultados";
 import { PX_POR_MM_NOMINAL } from "@/lib/visao/calibracao";
 import { ID_ESTEREOPSIA } from "@/lib/visao/ids";
 
@@ -129,9 +130,9 @@ const VerificarOculos = ({ aoContinuar }: { aoContinuar: (ok: boolean) => void }
             >
               {t("Visao.tentarDeNovo")}
             </BotaoContinuar>
-            <Botao variante="fantasma" onClick={() => aoContinuar(false)}>
+            <Button variant="ghost" onClick={() => aoContinuar(false)}>
               {t("Visao.continuarMesmoAssim")}
-            </Botao>
+            </Button>
           </>
         }
       >
@@ -151,13 +152,13 @@ const VerificarOculos = ({ aoContinuar }: { aoContinuar: (ok: boolean) => void }
       </p>
       <div className="grid w-full grid-cols-3 gap-2 sm:grid-cols-5">
         {opcoes.map((l) => (
-          <Botao key={`${fase}-${l}`} tamanho="g" variante="secundario" className="text-xl font-bold" onClick={() => responder(l)}>
+          <Button key={`${fase}-${l}`} size="lg" variant="outline" className="text-xl font-bold" onClick={() => responder(l)}>
             {l}
-          </Botao>
+          </Button>
         ))}
-        <Botao tamanho="g" variante="secundario" className="col-span-3 sm:col-span-1" onClick={() => responder(null)}>
+        <Button size="lg" variant="outline" className="col-span-3 sm:col-span-1" onClick={() => responder(null)}>
           {t("Visao.vejoAsDuas")}
-        </Botao>
+        </Button>
       </div>
     </EcraPasso>
   );
@@ -227,10 +228,10 @@ const TarefaEstereo = ({
       </PalcoVisual>
       <div className="grid w-full max-w-md grid-cols-2 gap-2 sm:grid-cols-4">
         {FORMAS.map((f, i) => (
-          <Botao key={f} tamanho="g" variante="secundario" className="h-auto flex-col gap-1 py-3" onClick={() => responder(i)}>
+          <Button key={f} size="lg" variant="outline" className="h-auto flex-col gap-1 py-3" onClick={() => responder(i)}>
             <IconeForma forma={f} />
             <span className="text-xs">{t(CHAVES_FORMA[f])}</span>
-          </Botao>
+          </Button>
         ))}
       </div>
       {tempo.emPausa && <p className="text-xs text-muted-foreground">{t("Visao.emPausaAutomatica")}</p>}
@@ -273,12 +274,7 @@ const ResultadoEstereoEcra = ({
     ]);
   }, [calibrado, distanciaMm, gravar, oculosOk, pxPorMm, res]);
 
-  const sinais =
-    res.limiar === null
-      ? [t("Visao.estereoSinalNaoViu")]
-      : sinalEstereopsia(res.limiar)
-        ? [t("Visao.estereoSinalDiferencaGrande", { valor: res.limiar })]
-        : [];
+  const sinais = res.limiar === null ? [t("Visao.estereoSinalNaoViu")] : [];
   return (
     <EcraResultado
       titulo={t("Visao.resultadoEstereoTitulo")}
@@ -286,7 +282,7 @@ const ResultadoEstereoEcra = ({
       aoTentarDeNovo={() => void tentarDeNovo()}
       sinais={sinais}
       cartoes={
-        <CartaoOlho titulo={t("Visao.doisOlhos")} estado={sinalEstereopsia(res.limiar) ? "sinal" : "ok"}>
+        <CartaoOlho titulo={t("Visao.doisOlhos")} estado={res.limiar === null ? "sinal" : "ok"}>
           {res.limiar === null ? (
             t("Visao.estereoNaoViu")
           ) : (
@@ -331,57 +327,59 @@ const TesteEstereopsia = () => {
   ];
 
   return (
-    <BaseExercise
-      title={t("Visao.estereoTitulo")}
-      description={t("Visao.estereoDescricao")}
-      exercicioId={EXERCICIO_ID}
-      grupo="premium"
-      tipo="teste"
-      passos={nomes}
-      passoActual={ETAPAS.indexOf(etapa)}
-    >
-      {etapa === "brilho" && <PassoBrilho aoContinuar={() => setEtapa("calibracao")} />}
-      {etapa === "calibracao" && (
-        <PassoCalibracao calibracao={calibracao} aoGuardar={guardar} aoContinuar={() => setEtapa("distancia")} />
-      )}
-      {etapa === "distancia" && (
-        <PassoDistancia
-          distanciaMm={distanciaMm}
-          aoEscolher={(mm) => {
-            setDistanciaMm(mm);
-            setEtapa("oculos");
-          }}
-        />
-      )}
-      {etapa === "oculos" && (
-        <VerificarOculos
-          aoContinuar={(ok) => {
-            setOculosOk(ok);
-            setEtapa("tarefa");
-          }}
-        />
-      )}
-      {etapa === "tarefa" && (
-        <TarefaEstereo
-          distanciaMm={distanciaMm}
-          pxPorMm={pxPorMm}
-          dpr={dpr}
-          aoTerminar={(r) => {
-            setResultado(r);
-            setEtapa("resultado");
-          }}
-        />
-      )}
-      {etapa === "resultado" && resultado && (
-        <ResultadoEstereoEcra
-          res={resultado}
-          oculosOk={oculosOk}
-          distanciaMm={distanciaMm}
-          pxPorMm={pxPorMm}
-          calibrado={calibracao?.calibrado ?? false}
-        />
-      )}
-    </BaseExercise>
+    <PaginaExercicio>
+      <BaseExercise
+        title={t("Visao.estereoTitulo")}
+        description={t("Visao.estereoDescricao")}
+        exercicioId={EXERCICIO_ID}
+        grupo="premium"
+        tipo="teste"
+        passos={nomes}
+        passoActual={ETAPAS.indexOf(etapa)}
+      >
+        {etapa === "brilho" && <PassoBrilho aoContinuar={() => setEtapa("calibracao")} />}
+        {etapa === "calibracao" && (
+          <PassoCalibracao calibracao={calibracao} aoGuardar={guardar} aoContinuar={() => setEtapa("distancia")} />
+        )}
+        {etapa === "distancia" && (
+          <PassoDistancia
+            distanciaMm={distanciaMm}
+            aoEscolher={(mm) => {
+              setDistanciaMm(mm);
+              setEtapa("oculos");
+            }}
+          />
+        )}
+        {etapa === "oculos" && (
+          <VerificarOculos
+            aoContinuar={(ok) => {
+              setOculosOk(ok);
+              setEtapa("tarefa");
+            }}
+          />
+        )}
+        {etapa === "tarefa" && (
+          <TarefaEstereo
+            distanciaMm={distanciaMm}
+            pxPorMm={pxPorMm}
+            dpr={dpr}
+            aoTerminar={(r) => {
+              setResultado(r);
+              setEtapa("resultado");
+            }}
+          />
+        )}
+        {etapa === "resultado" && resultado && (
+          <ResultadoEstereoEcra
+            res={resultado}
+            oculosOk={oculosOk}
+            distanciaMm={distanciaMm}
+            pxPorMm={pxPorMm}
+            calibrado={calibracao?.calibrado ?? false}
+          />
+        )}
+      </BaseExercise>
+    </PaginaExercicio>
   );
 };
 

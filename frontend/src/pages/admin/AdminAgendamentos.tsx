@@ -1,51 +1,39 @@
-import { useState } from "react";
-import { Check, Crown, Mail, MapPinned, Phone, Video, X } from "lucide-react";
-import { toast } from "sonner";
-import { EstadoDadosAdmin } from "@/components/admin/DadosAdmin";
-import { useDadosAdmin } from "@/components/admin/useDadosAdmin";
-import { Botao } from "@/design/componentes/Botao";
+import { useEffect, useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
-  Estado,
-  Tabela,
-  TabelaCabecalho,
-  TabelaCelula,
-  TabelaCorpo,
-  TabelaLinha,
-  TabelaTitulo,
-} from "@/design/componentes/Tabela";
-import { CabecalhoConsola } from "@/design/layouts/LayoutConsola";
-import { agendamentosApi, mensagemDeErroApi, type AgendamentoClinicoAdmin } from "@/lib/apiClient";
-import { formatarDiaLongo, formatarHora } from "@/lib/marcacao/horarios";
+  agendamentosApi,
+  mensagemDeErroApi,
+  type AgendamentoClinicoAdmin,
+} from "@/lib/apiClient";
+import { toast } from "sonner";
+import { Check, X, Mail, Phone, MapPinned, Video, Crown } from "lucide-react";
 
-const ESTADO: Record<string, { rotulo: string; tom: "aviso" | "sucesso" | "erro" | "neutro" }> = {
-  pendente: { rotulo: "Por decidir", tom: "aviso" },
-  confirmada: { rotulo: "Confirmada", tom: "sucesso" },
-  recusada: { rotulo: "Recusada", tom: "erro" },
-};
-
-const EstadoAgendamento = ({ estado }: { estado: string }) => {
-  const e = ESTADO[estado] ?? { rotulo: estado, tom: "neutro" as const };
-  return <Estado tom={e.tom}>{e.rotulo}</Estado>;
-};
-
-/**
- * Quando é a consulta. Sempre em hora de Luanda (o horário que o paciente
- * escolheu), nunca no fuso do computador de quem abre o painel. Pedidos
- * antigos (antes dos horários reais) só têm o dia e o período preferidos.
- */
-const quando = (a: AgendamentoClinicoAdmin) => {
-  if (a.horario_inicio) return `${formatarDiaLongo(a.horario_inicio, "pt-PT")}, ${formatarHora(a.horario_inicio, "pt-PT")} (hora de Luanda)`;
-  if (a.data_preferida) return `${a.data_preferida}${a.periodo_preferido ? ` · ${a.periodo_preferido}` : ""} (preferência)`;
-  return "—";
+const estadoBadge = (estado: string) => {
+  const variantes: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+    confirmada: "default",
+    pendente: "secondary",
+    recusada: "destructive",
+  };
+  return <Badge variant={variantes[estado] ?? "outline"}>{estado}</Badge>;
 };
 
 const AdminAgendamentos = () => {
-  const { dados, erro, aCarregar, recarregar } = useDadosAdmin(
-    () => agendamentosApi.listarAgendamentos(),
-    "Não foi possível carregar os agendamentos.",
-    [],
-  );
+  const [agendamentos, setAgendamentos] = useState<AgendamentoClinicoAdmin[]>([]);
   const [ocupado, setOcupado] = useState<string | null>(null);
+
+  const carregar = async () => {
+    try {
+      setAgendamentos(await agendamentosApi.listarAgendamentos());
+    } catch (err) {
+      toast.error(mensagemDeErroApi(err, "Não foi possível carregar os agendamentos."));
+    }
+  };
+
+  useEffect(() => {
+    carregar();
+  }, []);
 
   const decidir = async (id: string, confirmar: boolean) => {
     setOcupado(id);
@@ -53,7 +41,7 @@ const AdminAgendamentos = () => {
       if (confirmar) await agendamentosApi.confirmar(id);
       else await agendamentosApi.recusar(id);
       toast.success(confirmar ? "Consulta confirmada. O paciente foi notificado." : "Pedido recusado.");
-      await recarregar();
+      await carregar();
     } catch (err) {
       toast.error(mensagemDeErroApi(err, "Não foi possível decidir o agendamento."));
     } finally {
@@ -61,99 +49,85 @@ const AdminAgendamentos = () => {
     }
   };
 
-  const pendentes = (dados ?? []).filter((a) => a.estado === "pendente");
-  const decididos = (dados ?? []).filter((a) => a.estado !== "pendente");
+  const pendentes = agendamentos.filter((a) => a.estado === "pendente");
+  const decididos = agendamentos.filter((a) => a.estado !== "pendente");
 
   return (
-    <>
-      <CabecalhoConsola titulo="Agendamentos clínicos" descricao="Pedidos de consulta recebidos pelas clínicas parceiras." />
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold">Agendamentos clínicos</h2>
+        <p className="text-sm text-muted-foreground">
+          Pedidos de consulta recebidos pelas clínicas parceiras.
+        </p>
+      </div>
 
-      <EstadoDadosAdmin aCarregar={aCarregar} erro={erro} aoTentarDeNovo={() => void recarregar()} temDados={!!dados}>
-        <section aria-labelledby="agendamentos-pendentes">
-          <h2 id="agendamentos-pendentes" className="text-titulo-p text-tinta">
-            Por decidir ({pendentes.length})
-          </h2>
-          {pendentes.length ? (
-            <ul className="mt-3 space-y-3">
-              {pendentes.map((a) => (
-                <li key={a.id} className="rounded-cartao border border-linha bg-superficie p-4">
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-corpo font-medium text-tinta">{a.nome}</span>
-                        {a.premium && (
-                          <Estado tom="info">
-                            <Crown className="mr-1 size-3.5" aria-hidden />
-                            Premium
-                          </Estado>
-                        )}
-                        <span className="inline-flex items-center gap-1 text-legenda text-tinta-suave">
-                          {a.modalidade === "online" ? <Video className="size-3.5" aria-hidden /> : <MapPinned className="size-3.5" aria-hidden />}
-                          {a.modalidade === "online" ? "Teleconsulta" : "Presencial"}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-corpo text-tinta">{quando(a)}</p>
-                      <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-legenda text-tinta-suave">
-                        <a href={`mailto:${a.email}`} className="inline-flex items-center gap-1 underline-offset-2 hover:underline">
-                          <Mail className="size-3.5" aria-hidden />
-                          {a.email}
-                        </a>
-                        <a href={`tel:${a.telefone}`} className="inline-flex items-center gap-1 underline-offset-2 hover:underline">
-                          <Phone className="size-3.5" aria-hidden />
-                          {a.telefone}
-                        </a>
-                      </p>
-                      {a.motivo && <p className="mt-2 whitespace-pre-wrap text-corpo text-tinta-suave">{a.motivo}</p>}
-                    </div>
-                    <div className="flex shrink-0 gap-2">
-                      <Botao aCarregar={ocupado === a.id} disabled={ocupado !== null && ocupado !== a.id} onClick={() => void decidir(a.id, true)}>
-                        <Check aria-hidden /> Confirmar
-                      </Botao>
-                      <Botao variante="secundario" disabled={ocupado !== null} onClick={() => void decidir(a.id, false)}>
-                        <X aria-hidden /> Recusar
-                      </Botao>
-                    </div>
+      <div className="space-y-3">
+        {pendentes.map((a) => (
+          <Card key={a.id}>
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between gap-3 flex-wrap">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold">{a.nome}</span>
+                    {estadoBadge(a.estado)}
+                    {a.premium && (
+                      <Badge className="bg-gold text-navy hover:bg-gold gap-1">
+                        <Crown className="w-3 h-3" /> Premium
+                      </Badge>
+                    )}
+                    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                      {a.modalidade === "online" ? <Video className="w-3 h-3" /> : <MapPinned className="w-3 h-3" />}
+                      {a.modalidade}
+                    </span>
                   </div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="mt-3 text-corpo text-tinta-suave">Sem pedidos pendentes.</p>
-          )}
-        </section>
+                  <div className="text-xs text-muted-foreground flex gap-3 mt-1 flex-wrap">
+                    <span className="inline-flex items-center gap-1"><Mail className="w-3 h-3" />{a.email}</span>
+                    <span className="inline-flex items-center gap-1"><Phone className="w-3 h-3" />{a.telefone}</span>
+                    {a.horario_inicio ? (
+                      <span>{new Date(a.horario_inicio).toLocaleString("pt-AO")}</span>
+                    ) : (
+                      a.data_preferida && (
+                        <span>
+                          {a.data_preferida}
+                          {a.periodo_preferido && ` · ${a.periodo_preferido}`}
+                        </span>
+                      )
+                    )}
+                  </div>
+                  {a.motivo && <p className="text-sm text-muted-foreground mt-2 whitespace-pre-wrap">{a.motivo}</p>}
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <Button size="sm" disabled={ocupado === a.id} onClick={() => decidir(a.id, true)}>
+                    <Check className="w-3 h-3" /> Confirmar
+                  </Button>
+                  <Button size="sm" variant="outline" disabled={ocupado === a.id} onClick={() => decidir(a.id, false)}>
+                    <X className="w-3 h-3" /> Recusar
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+        {!pendentes.length && <p className="text-center text-muted-foreground py-6">Sem pedidos pendentes.</p>}
 
         {decididos.length > 0 && (
-          <section aria-labelledby="agendamentos-decididos" className="mt-10">
-            <h2 id="agendamentos-decididos" className="mb-3 text-titulo-p text-tinta">
-              Já decididos
-            </h2>
-            <Tabela legenda="Agendamentos já decididos">
-              <TabelaCabecalho>
-                <TabelaLinha>
-                  <TabelaTitulo>Paciente</TabelaTitulo>
-                  <TabelaTitulo>Consulta</TabelaTitulo>
-                  <TabelaTitulo>Estado</TabelaTitulo>
-                </TabelaLinha>
-              </TabelaCabecalho>
-              <TabelaCorpo>
-                {decididos.map((a) => (
-                  <TabelaLinha key={a.id}>
-                    <TabelaCelula>
-                      <span className="block font-medium">{a.nome}</span>
-                      <span className="block text-legenda text-tinta-suave">{a.email}</span>
-                    </TabelaCelula>
-                    <TabelaCelula className="text-tinta-suave">{quando(a)}</TabelaCelula>
-                    <TabelaCelula>
-                      <EstadoAgendamento estado={a.estado} />
-                    </TabelaCelula>
-                  </TabelaLinha>
-                ))}
-              </TabelaCorpo>
-            </Tabela>
-          </section>
+          <div className="pt-4">
+            <h3 className="text-sm font-semibold text-muted-foreground mb-2">Já decididos</h3>
+            <div className="space-y-2">
+              {decididos.map((a) => (
+                <div key={a.id} className="flex items-center justify-between border rounded-lg p-3 gap-3 flex-wrap">
+                  <div>
+                    <span className="font-medium">{a.nome}</span>
+                    <span className="text-xs text-muted-foreground ml-2">{a.email}</span>
+                  </div>
+                  {estadoBadge(a.estado)}
+                </div>
+              ))}
+            </div>
+          </div>
         )}
-      </EstadoDadosAdmin>
-    </>
+      </div>
+    </div>
   );
 };
 

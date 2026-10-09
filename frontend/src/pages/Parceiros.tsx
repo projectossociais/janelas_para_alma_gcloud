@@ -1,4 +1,4 @@
-import { Navigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { Eye, Tag, Handshake } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -6,7 +6,6 @@ import BackButton from "@/components/BackButton";
 import PartnerDialog from "@/components/PartnerDialog";
 import ClinicalPartners from "@/components/ClinicalPartners";
 import { useAuth } from "@/contexts/AuthContext";
-import { localizar } from "@/i18n/rotas";
 import heroImg from "@/assets/parceiros-hero.jpg";
 import { Trans, useTranslation } from "react-i18next";
 import i18n from "@/i18n";
@@ -46,8 +45,7 @@ const Parceiros = () => {
   const { user, loading } = useAuth();
   const canViewPartnerSections = !loading && (user?.role === "admin" || user?.role === "profissional");
   const [searchParams] = useSearchParams();
-  // Endereço antigo da marcação (links já partilhados, emails): segue para a página nova.
-  if (searchParams.get("agendar") === "optiotica") return <Navigate to={localizar("/marcar-consulta")} replace />;
+  const abrirAgendamentoOptiotica = searchParams.get("agendar") === "optiotica";
 
   return (
     <div className="min-h-screen bg-background">
@@ -79,7 +77,7 @@ const Parceiros = () => {
       <BackButton className="pb-4 md:pb-6" />
 
       {/* Clinical Partners (Óptica Optioptika) */}
-      <ClinicalPartners />
+      <ClinicalPartners defaultOpen={abrirAgendamentoOptiotica} />
 
       {canViewPartnerSections && (
         <section className="py-20 md:py-28 bg-hero-gradient">

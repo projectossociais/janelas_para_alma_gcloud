@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ClipboardCheck } from "lucide-react";
-import { Botao } from "@/design/componentes/Botao";
+import { Button } from "@/components/ui/button";
 import { EcraPasso } from "@/components/visao/Passos";
 import { localizar } from "@/i18n/rotas";
 import type { SessaoExercicioPublica } from "@/lib/apiClient";
@@ -23,9 +23,9 @@ export const RequisitoTeste = ({ caminho, nomeDoTeste }: { caminho: string; nome
       icone={<ClipboardCheck className="h-7 w-7" />}
       titulo={t("Visao.primeiroOTeste", { teste: nomeDoTeste })}
       accao={
-        <Botao asChild tamanho="g" className="w-full sm:w-auto">
+        <Button asChild size="lg" className="w-full bg-teal text-teal-foreground hover:bg-teal/90 sm:w-auto">
           <Link to={localizar(caminho)}>{t("Visao.fazerOTeste", { teste: nomeDoTeste })}</Link>
-        </Botao>
+        </Button>
       }
     >
       <p className="text-sm text-muted-foreground">{t("Visao.primeiroOTesteTexto")}</p>
