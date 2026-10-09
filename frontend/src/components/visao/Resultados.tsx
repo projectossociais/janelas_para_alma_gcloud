@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { AlertTriangle, CalendarPlus, CheckCircle2, Eye, Loader2, RotateCcw } from "lucide-react";
-import { Botao } from "@/design/componentes/Botao";
+import { Button } from "@/components/ui/button";
 import { localizar } from "@/i18n/rotas";
 import type { EstadoGravacao } from "@/components/visao/hooks";
 import { cn } from "@/lib/utils";
@@ -27,13 +27,13 @@ export const CartaoOlho = ({
     <article
       className={cn(
         "flex flex-1 flex-col items-center gap-2 rounded-xl border p-4 text-center",
-        estado === "ok" && "border-linha bg-sucesso-suave",
-        estado === "sinal" && "border-linha bg-aviso-suave",
+        estado === "ok" && "border-teal/40 bg-teal/5",
+        estado === "sinal" && "border-gold/60 bg-gold/10",
         estado === "indeterminado" && "border-border bg-muted/30",
       )}
     >
       <Icone
-        className={cn("h-8 w-8", estado === "ok" ? "text-sucesso" : estado === "sinal" ? "text-aviso" : "text-muted-foreground")}
+        className={cn("h-8 w-8", estado === "ok" ? "text-teal" : estado === "sinal" ? "text-gold" : "text-muted-foreground")}
         aria-hidden
       />
       <h3 className="font-semibold text-foreground">{titulo}</h3>
@@ -57,9 +57,9 @@ export const EstadoDaGravacao = ({ estado, aoTentarDeNovo }: { estado: EstadoGra
     return (
       <div className="flex flex-col items-center gap-2 text-center text-xs text-destructive" role="alert">
         <p>{t("Visao.erroAGuardar")}</p>
-        <Botao variante="secundario" onClick={aoTentarDeNovo} >
+        <Button size="sm" variant="outline" onClick={aoTentarDeNovo} className="gap-1.5">
           <RotateCcw className="h-3.5 w-3.5" /> {t("Visao.tentarDeNovo")}
-        </Botao>
+        </Button>
       </div>
     );
   return null;
@@ -89,7 +89,7 @@ export const EcraResultado = ({
       <h2 className="text-center text-xl font-bold text-foreground">{titulo}</h2>
       <div className="flex flex-col gap-3 sm:flex-row">{cartoes}</div>
       {sinais.length > 0 ? (
-        <div className="rounded-xl border border-linha bg-aviso-suave p-4 text-sm text-foreground" role="status">
+        <div className="rounded-xl border border-gold/60 bg-gold/10 p-4 text-sm text-foreground" role="status">
           <p className="mb-1 font-semibold">{t("Visao.sinaisTitulo")}</p>
           <ul className="list-disc space-y-1 pl-5">
             {sinais.map((s) => (
@@ -103,16 +103,16 @@ export const EcraResultado = ({
       )}
       {notas}
       <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
-        <Botao asChild tamanho="g" className="w-full sm:w-auto">
-          <Link to={localizar("/marcar-consulta")}>
+        <Button asChild size="lg" className="w-full gap-2 bg-navy text-navy-foreground hover:bg-navy/90 sm:w-auto">
+          <Link to={localizar("/parceiros?agendar=optiotica")}>
             <CalendarPlus className="h-4 w-4" />
             {t("Visao.marcarConsulta")}
           </Link>
-        </Botao>
+        </Button>
         {accoesExtra}
-        <Botao asChild variante="secundario" tamanho="g" className="w-full sm:w-auto">
+        <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
           <Link to={localizar("/exercicios")}>{t("Visao.voltarAosExercicios")}</Link>
-        </Botao>
+        </Button>
       </div>
       <EstadoDaGravacao estado={gravacao} aoTentarDeNovo={aoTentarDeNovo} />
     </section>

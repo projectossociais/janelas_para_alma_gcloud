@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { EyeOff } from "lucide-react";
-import { Botao } from "@/design/componentes/Botao";
+import { Button } from "@/components/ui/button";
 import type { Direccao } from "@/lib/visao/escada";
 
 interface SeletorDireccaoProps {
@@ -109,7 +109,7 @@ const SeletorDireccao = ({ aoResponder, desactivado = false }: SeletorDireccaoPr
             >
               <path
                 d={caminhoSector(d)}
-                className="fill-accao-suave stroke-superficie transition-colors group-hover:fill-accao/25 group-focus-visible:fill-accao/40 group-active:fill-accao/50"
+                className="fill-teal/10 stroke-background transition-colors group-hover:fill-teal/25 group-focus-visible:fill-teal/40 group-active:fill-teal/50"
                 strokeWidth={3}
               />
               <g transform={`translate(${x} ${y}) rotate(${-d * 45})`} className="pointer-events-none">
@@ -117,7 +117,7 @@ const SeletorDireccao = ({ aoResponder, desactivado = false }: SeletorDireccaoPr
                 <path
                   d="M 8.16 -3.8 A 9 9 0 1 0 8.16 3.8"
                   fill="none"
-                  className="stroke-tinta"
+                  className="stroke-navy dark:stroke-foreground"
                   strokeWidth={4}
                 />
               </g>
@@ -125,17 +125,17 @@ const SeletorDireccao = ({ aoResponder, desactivado = false }: SeletorDireccaoPr
           );
         })}
       </svg>
-      <Botao
+      <Button
         type="button"
-        variante="secundario"
-        tamanho="g"
+        variant="outline"
+        size="lg"
         disabled={desactivado}
         onClick={() => aoResponder(null)}
-        className="min-w-40"
+        className="min-w-40 gap-2"
       >
         <EyeOff className="h-4 w-4" />
         {t("Visao.naoVejo")}
-      </Botao>
+      </Button>
     </div>
   );
 };

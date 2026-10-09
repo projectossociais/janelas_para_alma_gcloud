@@ -19,13 +19,6 @@ const fontes = import.meta.glob(
     "!/src/lib/rastreio/analise/relatorioV1.ts", // relatório interno da fase V1 (validação do motor), nunca no site, só PT
     "!/src/pages/jogo/perguntasOffline.ts", // banco de perguntas offline, fora da Fase 3
     "!/src/i18n/**",
-    // laboratório de identidade: só existe em desenvolvimento (import.meta.env.DEV
-    // em App.tsx), nunca chega ao site. O resto de src/redesenho não está excluído.
-    "!/src/redesenho/laboratorio/**",
-    // montra do sistema de design: documentação viva, só em desenvolvimento.
-    "!/src/design/montra/**",
-    // tokens: só valores e os comentários do CSS que gera; nenhum texto de interface.
-    "!/src/design/tokens.ts",
   ],
   { query: "?raw", import: "default", eager: true },
 ) as Record<string, string>;

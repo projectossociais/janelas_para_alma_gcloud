@@ -15,11 +15,9 @@ interface Props {
   onLandmarks?: (found: boolean) => void;
   /** Receives the latest raw FaceMesh landmarks for the detected face (read-only mirror). */
   landmarksRef?: { current: Array<{ x: number; y: number; z?: number }> | null };
-  /** `false`: só detecta (onLandmarks), sem desenhar pontos sobre o rosto. */
-  desenhar?: boolean;
 }
 
-const EyeLandmarkOverlay = ({ videoRef, active, onLandmarks, landmarksRef, desenhar = true }: Props) => {
+const EyeLandmarkOverlay = ({ videoRef, active, onLandmarks, landmarksRef }: Props) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number | null>(null);
 
@@ -46,7 +44,7 @@ const EyeLandmarkOverlay = ({ videoRef, active, onLandmarks, landmarksRef, desen
       const face = results.multiFaceLandmarks?.[0];
       onLandmarks?.(!!face);
       if (landmarksRef) landmarksRef.current = face ?? null;
-      if (!face || !desenhar) return;
+      if (!face) return;
 
       // The video uses object-cover + mirrored preview; compute cover mapping.
       const vw = video.videoWidth || w;
@@ -117,7 +115,7 @@ const EyeLandmarkOverlay = ({ videoRef, active, onLandmarks, landmarksRef, desen
         /* noop */
       }
     };
-  }, [active, videoRef, onLandmarks, landmarksRef, desenhar]);
+  }, [active, videoRef, onLandmarks, landmarksRef]);
 
   if (!active) return null;
 

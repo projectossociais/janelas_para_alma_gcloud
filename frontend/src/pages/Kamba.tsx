@@ -8,11 +8,11 @@ const Kamba = () => {
   return (
     <div className="min-h-screen flex flex-col bg-navy">
       <Navbar />
-      <div className="flex-1">
+      <main className="flex-1 pt-14 md:pt-16">
         <VolunteerSection />
         <UpcomingActivities />
         <ActivitiesFeed />
-      </div>
+      </main>
       <Footer />
     </div>
   );

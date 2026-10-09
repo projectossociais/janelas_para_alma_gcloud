@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Botao } from "@/design/componentes/Botao";
+import { Button } from "@/components/ui/button";
 import { faseRespiracao, type FaseRespiracao } from "@/lib/visao/respiracao";
 
 const CHAVES_FASE: Record<FaseRespiracao, string> = {
@@ -61,16 +61,16 @@ const PausaRespiracao = ({
       <div className="relative h-44 w-44">
         <div
           ref={orbe}
-          className="absolute left-1/2 top-1/2 h-24 w-24 rounded-full bg-gradient-to-br from-acento to-accao opacity-80"
+          className="absolute left-1/2 top-1/2 h-24 w-24 rounded-full bg-gradient-to-br from-teal to-navy opacity-80"
           style={{ transform: "translate(-50%, -50%) scale(1)" }}
           aria-hidden
         />
       </div>
       <p className="text-lg font-semibold text-foreground">{t(CHAVES_FASE[fase])}</p>
       <p className="text-xs tabular-nums text-muted-foreground">{t("Visao.pausaFaltam", { segundos: restantes })}</p>
-      <Botao variante="fantasma" onClick={aoTerminar}>
+      <Button variant="ghost" onClick={aoTerminar}>
         {t("Visao.saltarPausa")}
-      </Botao>
+      </Button>
     </section>
   );
 };

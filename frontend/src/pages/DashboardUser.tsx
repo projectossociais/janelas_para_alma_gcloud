@@ -1,239 +1,113 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { Link } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import { Activity, ChevronRight, Dumbbell, ScanFace } from "lucide-react";
-import { MolduraApp } from "@/components/app/MolduraApp";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import PremiumRequestBanner from "@/components/PremiumRequestBanner";
-import { useAcessoExercicios } from "@/contexts/AcessoExerciciosContext";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Eye, Activity, Sparkles, Calendar, Play, Video } from "lucide-react";
+import { screeningsApi, agendamentosApi, linkDaSalaVideo, type ProximaTeleconsulta } from "@/lib/apiClient";
 import { useAuth } from "@/contexts/AuthContext";
-import { useProfile } from "@/contexts/ProfileContext";
-import { Botao } from "@/design/componentes/Botao";
-import { Cartao, CartaoLigacao, CartaoTexto, CartaoTitulo } from "@/design/componentes/Cartao";
-import { formatarData, formatarDataHora } from "@/i18n/formatar";
+import { useAcessoExercicios } from "@/contexts/AcessoExerciciosContext";
+import { useTranslation } from "react-i18next";
 import { localizar } from "@/i18n/rotas";
-import {
-  agendamentosApi,
-  linkDaSalaVideo,
-  screeningsApi,
-  type ProximaTeleconsulta,
-  type ScreeningPublica,
-} from "@/lib/apiClient";
-import { proximoPasso, type ProximoPasso } from "@/lib/painel/proximoPasso";
-
-/**
- * O painel de quem tem conta, no arquétipo App (docs/LAYOUTS.md §2.4): voltar
- * todos os dias e saber logo o que fazer. No topo, **um** próximo passo
- * (`proximoPasso`, por ordem de importância); por baixo, o resumo real (rastreios,
- * o último resultado, exercícios abertos) e os atalhos.
- *
- * Tudo o que se mostra vem da API: se uma chamada falha, esse número aparece como
- * "—" (nunca um 0 inventado) e o próximo passo não afirma o que não sabe.
- */
-
-const ROTULO_RESULTADO: Record<string, string> = {
-  requer_avaliacao: "ResultadoRastreio.rotuloAvaliacao",
-  normal: "ResultadoRastreio.rotuloNormal",
-  inconclusivo: "ResultadoRastreio.rotuloInconclusivo",
-};
-
-const TOTAL_EXERCICIOS = 8;
+import { formatarDataHora } from "@/i18n/formatar";
 
 const DashboardUser = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { user } = useAuth();
-  const { profile } = useProfile();
+  // 8 exercícios, todos pagos: 4 com o teste de 7 dias activo, os 8 com
+  // Premium (ou admin), 0 sem nenhum dos dois -- o número vem da API.
   const { acesso } = useAcessoExercicios();
+  const [scanCount, setScanCount] = useState(0);
+  const [proximaTeleconsulta, setProximaTeleconsulta] = useState<ProximaTeleconsulta | null>(null);
+  const primeiroNome = user?.name?.split(" ")[0];
 
-  const [historico, setHistorico] = useState<ScreeningPublica[] | null>(null);
-  const [historicoFalhou, setHistoricoFalhou] = useState(false);
-  const [teleconsulta, setTeleconsulta] = useState<ProximaTeleconsulta | null>(null);
-  const [carregado, setCarregado] = useState(false);
+  const exerciciosDisponiveis = acesso.exercicios_desbloqueados.length;
 
   useEffect(() => {
     if (!user) return;
-    let activo = true;
-    void Promise.all([
-      screeningsApi.listarMinhas().then(
-        (h) => ({ h }),
-        () => ({ h: null }),
-      ),
-      agendamentosApi.minhaProximaTeleconsulta().catch(() => null),
-    ]).then(([{ h }, tele]) => {
-      if (!activo) return;
-      setHistorico(h);
-      setHistoricoFalhou(h === null);
-      setTeleconsulta(tele);
-      setCarregado(true);
-    });
-    return () => {
-      activo = false;
-    };
+    screeningsApi
+      .listarMinhas()
+      .then((screenings) => setScanCount(screenings.length))
+      .catch(() => setScanCount(0));
+    agendamentosApi
+      .minhaProximaTeleconsulta()
+      .then(setProximaTeleconsulta)
+      .catch(() => setProximaTeleconsulta(null));
   }, [user]);
 
-  const nome = profile?.nome_completo || user?.name || "";
-  const primeiroNome = nome.split(" ")[0];
-  const ultimo = historico?.[0] ?? null;
-  const exerciciosDisponiveis = acesso.exercicios_desbloqueados.length;
-
-  const passo: ProximoPasso = proximoPasso({
-    temTeleconsulta: !!teleconsulta,
-    ultimoRastreio: ultimo ? { id: ultimo.id, diagnostico: ultimo.diagnostico } : null,
-    exerciciosDisponiveis,
-    estadoAcesso: acesso.estado,
-  });
-
-  const accaoDoPasso = (): ReactNode => {
-    const ir = (para: string, texto: string) => (
-      <Botao asChild tamanho="g">
-        <Link to={localizar(para)}>{texto}</Link>
-      </Botao>
-    );
-    switch (passo.tipo) {
-      case "teleconsulta":
-        return (
-          <Botao asChild tamanho="g">
-            <a href={linkDaSalaVideo(teleconsulta!.sala_video)} target="_blank" rel="noopener noreferrer">
-              {t("PainelApp.entrarNaSala")}
-            </a>
-          </Botao>
-        );
-      case "marcar-consulta":
-        return ir(`/marcar-consulta?rastreio=${encodeURIComponent(passo.rastreioId)}`, t("PainelApp.marcarConsulta"));
-      case "primeiro-rastreio":
-        return ir("/scanner", t("PainelApp.fazerRastreio"));
-      case "repetir-rastreio":
-        return ir("/scanner", t("PainelApp.repetirRastreio"));
-      case "treinar":
-        return ir("/exercicios", t("PainelApp.verTreinos"));
-      case "teste-7-dias":
-        return ir("/teste-de-7-dias", t("PainelApp.comecarTeste"));
-      case "premium":
-        return ir("/registo-premium", t("PainelApp.verPremium"));
-    }
-  };
-
-  const textoDoPasso = (): { titulo: string; texto: ReactNode } => {
-    switch (passo.tipo) {
-      case "teleconsulta":
-        return {
-          titulo: t("PainelApp.passoTeleconsultaTitulo"),
-          texto: `${formatarDataHora(teleconsulta!.horario_inicio)} · ${teleconsulta!.clinica_nome}`,
-        };
-      case "marcar-consulta":
-        return { titulo: t("PainelApp.passoMarcarTitulo"), texto: t("PainelApp.passoMarcarTexto") };
-      case "primeiro-rastreio":
-        return { titulo: t("PainelApp.passoRastreioTitulo"), texto: t("PainelApp.passoRastreioTexto") };
-      case "repetir-rastreio":
-        return { titulo: t("PainelApp.passoRepetirTitulo"), texto: t("PainelApp.passoRepetirTexto") };
-      case "treinar":
-        return { titulo: t("PainelApp.passoTreinarTitulo"), texto: t("PainelApp.passoTreinarTexto") };
-      case "teste-7-dias":
-        return { titulo: t("PainelApp.passoTesteTitulo"), texto: t("PainelApp.passoTesteTexto") };
-      case "premium":
-        return { titulo: t("PainelApp.passoPremiumTitulo"), texto: t("PainelApp.passoPremiumTexto") };
-    }
-  };
-
-  const factos: { rotulo: string; valor: ReactNode }[] = [
-    {
-      rotulo: t("PainelApp.rastreiosFeitos"),
-      valor: historicoFalhou ? "—" : (historico?.length ?? "—"),
-    },
-    {
-      rotulo: t("PainelApp.ultimoRastreio"),
-      valor: ultimo ? (
-        <>
-          {formatarData(ultimo.criado_em)}
-          <span className="mt-1 block text-corpo font-normal text-tinta-suave">
-            {ROTULO_RESULTADO[ultimo.diagnostico] ? t(ROTULO_RESULTADO[ultimo.diagnostico]!) : ""}
-          </span>
-        </>
-      ) : (
-        "—"
-      ),
-    },
-    {
-      rotulo: t("PainelApp.exerciciosAbertos"),
-      valor: t("PainelApp.exerciciosDe", { abertos: exerciciosDisponiveis, total: TOTAL_EXERCICIOS }),
-    },
-  ];
-
-  const atalhos = [
-    { icone: <ScanFace />, titulo: t("PainelApp.atalhoRastreio"), texto: t("PainelApp.atalhoRastreioTexto"), href: "/scanner" },
-    { icone: <Dumbbell />, titulo: t("PainelApp.atalhoTreinos"), texto: t("PainelApp.atalhoTreinosTexto"), href: "/exercicios" },
-    { icone: <Activity />, titulo: t("PainelApp.atalhoProgresso"), texto: t("PainelApp.atalhoProgressoTexto"), href: "/exercicios/progresso" },
-  ];
-
-  const { titulo, texto } = carregado ? textoDoPasso() : { titulo: "", texto: "" };
-
   return (
-    <MolduraApp
-      activo="inicio"
-      titulo={primeiroNome ? t("DashboardUser.saudacao", { nome: primeiroNome }) : t("DashboardUser.saudacaoSemNome")}
-      subtitulo={t("DashboardUser.oSeuEspacoDe")}
-    >
-        <div className="flex flex-col gap-8">
-          <PremiumRequestBanner />
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-muted/40">
+      <Navbar />
+      <main className="flex-1 container pt-28 pb-16 space-y-8">
+        <div>
+          <h1 className="text-3xl font-bold">{primeiroNome ? t("DashboardUser.saudacao", { nome: primeiroNome }) : t("DashboardUser.saudacaoSemNome")} 👋</h1>
+          <p className="text-muted-foreground">{t("DashboardUser.oSeuEspacoDe")}</p>
+        </div>
 
-          <section aria-labelledby="proximo-passo">
-            <Cartao className="border-0 bg-accao-suave p-6 sm:p-8">
-              <h2 id="proximo-passo" className="text-legenda font-medium uppercase tracking-wide text-tinta-suave">
-                {t("PainelApp.proximoPasso")}
-              </h2>
-              {carregado ? (
+        <PremiumRequestBanner />
+
+        <div className="grid md:grid-cols-3 gap-4">
+          <Card>
+            <CardContent className="p-6">
+              <Activity className="w-6 h-6 text-teal mb-2" />
+              <div className="text-2xl font-bold">{scanCount}</div>
+              <div className="text-sm text-muted-foreground">{t("DashboardUser.analisesRealizadas")}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <Eye className="w-6 h-6 text-navy mb-2" />
+              <div className="text-2xl font-bold">{exerciciosDisponiveis}</div>
+              <div className="text-sm text-muted-foreground">{t("DashboardUser.exerciciosDisponiveis")}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <Calendar className="w-6 h-6 text-gold mb-2" />
+              {proximaTeleconsulta ? (
                 <>
-                  <p className="mt-3 text-titulo-m text-tinta">{titulo}</p>
-                  <p className="mt-2 max-w-prose text-corpo text-tinta-suave">{texto}</p>
-                  <div className="mt-6">{accaoDoPasso()}</div>
+                  <div className="text-lg font-bold">{formatarDataHora(proximaTeleconsulta.horario_inicio)}</div>
+                  <div className="text-sm text-muted-foreground mb-2">{proximaTeleconsulta.clinica_nome}</div>
+                  <a href={linkDaSalaVideo(proximaTeleconsulta.sala_video)} target="_blank" rel="noreferrer">
+                    <Button size="sm" variant="outline"><Video className="w-4 h-4" />{" "}{t("DashboardUser.entrarNaSala")}</Button>
+                  </a>
                 </>
               ) : (
-                <p role="status" className="mt-3 text-corpo text-tinta-suave">
-                  {t("PainelApp.aPreparar")}
-                </p>
+                <>
+                  {/* Sem teleconsulta marcada -- um "—" ao lado de números
+                      verdadeiros parecia uma métrica vazia, não uma que
+                      ainda não existe. */}
+                  <div className="text-2xl font-bold text-muted-foreground">{t("DashboardUser.emBreve")}</div>
+                  <div className="text-sm text-muted-foreground">{t("DashboardUser.proximaTeleconsulta")}</div>
+                </>
               )}
-            </Cartao>
-          </section>
-
-          <section aria-labelledby="resumo">
-            <h2 id="resumo" className="sr-only">
-              {t("PainelApp.resumo")}
-            </h2>
-            <dl className="grid gap-4 sm:grid-cols-3">
-              {factos.map((f) => (
-                // Telemóvel: uma linha (nome à esquerda, valor à direita); a partir do tablet, um cartão.
-                <Cartao key={f.rotulo} className="flex items-baseline justify-between gap-4 p-4 sm:block sm:p-5">
-                  <dt className="text-legenda text-tinta-suave">{f.rotulo}</dt>
-                  <dd className="text-right text-titulo-p text-tinta sm:mt-2 sm:text-left">{f.valor}</dd>
-                </Cartao>
-              ))}
-            </dl>
-          </section>
-
-          <section aria-labelledby="atalhos">
-            <h2 id="atalhos" className="text-titulo-p text-tinta">
-              {t("PainelApp.atalhos")}
-            </h2>
-            <ul className="mt-4 grid gap-4 sm:grid-cols-3">
-              {atalhos.map((a) => (
-                <li key={a.href}>
-                  <Cartao interactivo className="h-full">
-                    <span aria-hidden className="flex size-10 items-center justify-center rounded-pilula bg-superficie-alt text-accao [&_svg]:size-5">
-                      {a.icone}
-                    </span>
-                    <CartaoTitulo como="h3" className="mt-4 flex items-center justify-between gap-2">
-                      <CartaoLigacao asChild>
-                        <Link to={localizar(a.href)}>{a.titulo}</Link>
-                      </CartaoLigacao>
-                      <ChevronRight className="size-5 shrink-0 text-tinta-suave" aria-hidden />
-                    </CartaoTitulo>
-                    <CartaoTexto>{a.texto}</CartaoTexto>
-                  </Cartao>
-                </li>
-              ))}
-            </ul>
-          </section>
+            </CardContent>
+          </Card>
         </div>
-    </MolduraApp>
+
+        <div className="grid md:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader><CardTitle>{t("DashboardUser.fazerNovaAnalise")}</CardTitle></CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">{t("DashboardUser.useOScannerPara")}</p>
+              <Button onClick={() => navigate(localizar("/scanner"))}><Eye className="w-4 h-4" />{" "}{t("DashboardUser.abrirScanner")}</Button>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader><CardTitle>{t("DashboardUser.continuarExercicios")}</CardTitle></CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">{t("DashboardUser.treineACoordenacaoOcular")}</p>
+              <Button variant="secondary" onClick={() => navigate(localizar("/exercicios"))}><Play className="w-4 h-4" />{" "}{t("DashboardUser.verExercicios")}</Button>
+            </CardContent>
+          </Card>
+        </div>
+
+      </main>
+      <Footer />
+    </div>
   );
 };
 

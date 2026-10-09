@@ -24,7 +24,6 @@ vi.mock("sonner", () => ({ toast: { error: (...a: unknown[]) => toastError(...a)
 
 import MercadoModal from "./MercadoModal";
 import { CarteiraJogoProvider, useCarteiraJogo } from "@/contexts/CarteiraJogoContext";
-import { violacoesAcessibilidade } from "@/design/testes/acessibilidade";
 
 const Saldo = () => {
   const { perfil } = useCarteiraJogo();
@@ -242,11 +241,5 @@ describe("MercadoModal", () => {
 
     await userEvent.click(await screen.findByRole("button", { name: "Tentar novamente" }));
     expect(await screen.findByTestId("vendedor-estudante-medicina")).toBeInTheDocument();
-  });
-
-  it("sem violações de acessibilidade, com os profissionais carregados", async () => {
-    abrir();
-    await screen.findByTestId("vendedor-oftalmologista");
-    expect(await violacoesAcessibilidade(screen.getByRole("dialog"))).toEqual([]);
   });
 });

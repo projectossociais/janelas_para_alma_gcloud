@@ -58,7 +58,7 @@ interface AuthContextValue {
 
 const paraAuthUser = (u: UtilizadorPublico): AuthUser => ({
   id: u.id,
-  name: u.nome_completo ?? u.email.split("@")[0] ?? u.email,
+  name: u.nome_completo ?? u.email.split("@")[0],
   email: u.email,
   province: u.provincia ?? "",
   role: (u.papel as UserRole) || "comum",

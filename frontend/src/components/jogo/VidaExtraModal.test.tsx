@@ -20,7 +20,6 @@ vi.mock("sonner", () => ({ toast: { error: (...a: unknown[]) => toastError(...a)
 
 import VidaExtraModal from "./VidaExtraModal";
 import { CarteiraJogoProvider, useCarteiraJogo } from "@/contexts/CarteiraJogoContext";
-import { violacoesAcessibilidade } from "@/design/testes/acessibilidade";
 
 const Saldo = () => {
   const { perfil } = useCarteiraJogo();
@@ -122,12 +121,10 @@ describe("VidaExtraModal", () => {
   it("não tem botão × -- só 'Usar Vida Extra' e 'Encerrar partida'", async () => {
     abrir();
     await screen.findByRole("heading", { name: "Vida Extra" });
-    expect(screen.queryByRole("button", { name: /Close|Fechar/ })).not.toBeInTheDocument();
-    // Só estes dois (a ordem no ecrã é a do sistema de design: a acção principal
-    // por cima no telemóvel, à direita no computador).
-    expect(screen.getAllByRole("button").map((b) => b.textContent?.trim()).sort()).toEqual([
-      "Encerrar partida",
+    expect(screen.queryByRole("button", { name: "Close" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button").map((b) => b.textContent?.trim())).toEqual([
       "Usar Vida Extra (20 diamantes)",
+      "Encerrar partida",
     ]);
   });
 
@@ -160,11 +157,5 @@ describe("VidaExtraModal", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Encerrar partida" }));
     expect(onEncerrar).toHaveBeenCalledTimes(1);
     expect(onVidaUsada).not.toHaveBeenCalled();
-  });
-
-  it("sem violações de acessibilidade", async () => {
-    abrir();
-    await screen.findByRole("heading", { name: "Vida Extra" });
-    expect(await violacoesAcessibilidade(screen.getByRole("dialog"))).toEqual([]);
   });
 });

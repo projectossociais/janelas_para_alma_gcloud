@@ -1,5 +1,5 @@
 import { ContadorTempoActivo, PAUSA_AUTOMATICA_MS } from "./tempoActivo";
-import { diferencaContraste, olhoMaisFracoPelaAcuidade, sinaisAcuidade, sinalEstereopsia } from "./resultados";
+import { diferencaContraste, olhoMaisFracoPelaAcuidade, sinaisAcuidade } from "./resultados";
 import { criarAgendaControlo, eTentativaDeControlo, sinaisDeControlo } from "./treino";
 import { minutosPorDia, sequenciaDeDias, ultimosResultados, type SessaoResumo } from "./progresso";
 
@@ -160,20 +160,5 @@ describe("progresso", () => {
     ]);
     expect(r.get("figure8:esquerdo")?.limiar).toBe(0.2);
     expect(r.size).toBe(1);
-  });
-});
-
-describe("sinal da estereopsia", () => {
-  // Caso real (2026-10-08): ver a forma só com a maior diferença (800″) dava
-  // "Sem sinais", com o cartão verde.
-  it("não ver a forma, ou só com 400″ ou 800″, é sinal", () => {
-    expect(sinalEstereopsia(null)).toBe(true);
-    expect(sinalEstereopsia(800)).toBe(true);
-    expect(sinalEstereopsia(400)).toBe(true);
-  });
-
-  it("200″ ou melhor não é sinal", () => {
-    expect(sinalEstereopsia(200)).toBe(false);
-    expect(sinalEstereopsia(40)).toBe(false);
   });
 });

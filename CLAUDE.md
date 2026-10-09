@@ -76,8 +76,9 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   `encaminhar` / `sem_sinais` / `nao_mediu`. Aberto a convidados (resultado sem gravar); com
   sessão e consentimento grava em `screenings.diagnostico` `requer_avaliacao` / `normal` /
   **`inconclusivo`** (`nao_mediu`; desde 2026-10-07, sem migração: coluna de texto) — nunca
-  "normal" sem medição fiável. O resultado guardado em `sessionStorage` leva o bloco `motor`
-  (`ResultadoMotor`), e `ScannerResultados` e o PDF mostram os Δ. O `/scanner` e o
+  "normal" sem medição fiável. O resultado (com os Δ medidos) mostra-se na própria página,
+  no último passo: não passa pelo `ScannerResultados` nem tem PDF (desde a reversão do
+  redesenho, 2026-10-09, a página usa o visual antigo). O `/scanner` e o
   `janelas-scanner-api` continuam a ser o rastreio em produção
 - **Exercícios visuais sem webcam** (desde 2026-09-28) — testes de triagem e treinos de
   apoio feitos só com resposta do utilizador (toque, Sim/Não). **Nenhum exercício usa câmara
@@ -211,11 +212,13 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   Conhecedor, 91-150 Especialista, 151+ Mestre da Visão (`estatisticas_jogador_service.py`,
   exposto em `GET /jogo/perfil/estatisticas`)
 
-**Redesenho total do frontend planeado (Sprint 7, 2026-09-28, não iniciado):** o visual
-actual é considerado genérico/herdado do Lovable e vai ser redesenhado por inteiro. Antes
-de qualquer trabalho visual ou de UX no frontend, ler `docs/REDESENHO_FRONTEND.md` —
-princípios, arquitectura (tokens, layouts partilhados, migração por jornada) e decisões já
-tomadas. Não introduzir padrões visuais novos fora desse plano.
+**Redesenho do frontend revertido (2026-10-09, decisão da equipa):** o redesenho da
+Sprint 7 (PRs #134 a #150, `docs/REDESENHO_FRONTEND.md`) chegou a produção, mas a equipa
+não gostou do resultado e o frontend voltou ao visual de 2026-10-06 (antes do PR #134).
+Do redesenho ficou só o rastreio completo para voluntários, refeito no visual antigo. Os
+documentos do redesenho (`REDESENHO_FRONTEND.md`, `SISTEMA_DESIGN.md`, `LAYOUTS.md`,
+`MARCA.md`, `ESTRUTURA_SITE.md`) ficam como histórico — não retomar nem introduzir padrões
+visuais novos sem nova decisão da equipa.
 
 Público-alvo inclui **crianças**. Todo o tratamento de dados deve assumir isso.
 
@@ -256,10 +259,7 @@ com câmara (exige https), encaminhar a porta 8080 no VS Code como pública (o
 `vite.config.ts` aceita os endereços `*.devtunnels.ms`) e servir com `npm run telemovel`
 em vez de `npm run dev`: o modo de desenvolvimento pelo túnel é lento demais (centenas de
 módulos sem compressão); o `telemovel` compila e serve como em produção, com o mesmo
-encaminhamento de `/api/*`. A análise do rastreio (`janelas-scanner-api`, serviço à
-parte) também vai pela mesma origem em local: sem `VITE_API_SCANNER_URL`, o frontend
-chama `/scanner/*` e o Vite reencaminha para o serviço de produção (o CORS dele só aceita
-produção e `localhost`, não o túnel); `SCANNER_ALVO` aponta para outro. Um IP da rede (`http://192.168…`) não serve: sem https, o
+encaminhamento de `/api/*`. Um IP da rede (`http://192.168…`) não serve: sem https, o
 browser esconde a câmara.
 
 O browser fala **sempre com `/api/*` na mesma origem** — nunca com um URL absoluto da
@@ -457,15 +457,6 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
 - **Tempo activo só com respostas.** Conta intervalos entre respostas até 8 s e com o
   separador visível (`tempoActivo.ts`). Treinos com um estímulo de controlo errado ficam
   `sinais.baixa_atencao` e não contam para a dose.
-- **Nunca mostrar um resultado que a sessão não mediu.** O limiar de um treino só existe com
-  pelo menos 4 inversões da escada (`INVERSOES_MINIMAS`, `lib/visao/escada.ts`); sem isso o
-  resumo diz que não houve medição e grava `limiar: null` (até 2026-10-08 mostrava o nível de
-  partida, ou o anel maior a quem errou tudo, e isso chegava ao relatório do médico). Sem
-  valores de referência (contraste), um valor é "a comparar", nunca "Sem sinais".
-- **Testes de acuidade e contraste contam anel a anel** (`limiarFinoTeste`, como a ETDRS conta
-  letra a letra): cada erro no último nível passado piora 1/3 de nível, cada acerto no primeiro
-  falhado melhora 1/3. Só com o último nível passado, dois olhos com erros diferentes davam o
-  mesmo resultado (caso real, 2026-10-08).
 - **Sessões novas gravam `versao: 2`** e nunca mostram "guardado" antes da resposta da API
   (`useRegistoSessao`, com "Tentar de novo" que reenvia só o que falhou).
 
@@ -570,9 +561,7 @@ chore(infra): adiciona docker-compose para desenvolvimento local
 
 **Portão de entrada para `main`:**
 1. PR obrigatório — nunca commit directo em `main`
-2. CI verde: `npm run lint` + `npm run typecheck:redesenho` + `npm run test` +
-   `npm run build` + `npm run orcamento` (frontend; o último falha se o pacote principal
-   passar de 320 KB gzip ou uma imagem publicada de 400 KB);
+2. CI verde: `npm run lint` + `npm run test` + `npm run build` (frontend);
    `ruff check` + `pytest` + `alembic upgrade head` contra um Postgres real (api);
    `docker build` da imagem da API (imagens) — ver `.github/workflows/ci.yml`. O deploy
    do frontend em si é o Vercel, fora deste CI — o `npm run build` aqui é só o portão de
@@ -618,8 +607,11 @@ Não imitar estes padrões enquanto a migração módulo-a-módulo decorre (ver 
 | Onde | Problema |
 |---|---|
 | `ScannerAnalysis` (`orm_models.py`) | Modelo e tabela `scanner_analyses` ficaram órfãos depois de `analises_scanner` passar a contar `screenings` (corrigido 2026-09-23) — nada mais lê nem escreve esta tabela. Não apagada agora (dropar tabela é decisão à parte, ver CLAUDE.md §10); útil só se algum dado antigo lá dentro precisar de ser consultado uma vez |
+| `ScannerResultados.tsx` | Define 6 categorias de diagnóstico (`Esotropia`/`Exotropia`/`Hipertropia`/`Hipotropia`/etc.), mas o pipeline real (`Scanner.tsx`) só produz 2 — as 4 subcategorias eram do antigo `Math.random()` (removido no PR #61) e nunca foram atribuídas pelo cálculo real. Ver `docs/BACKLOG.md`, W-09. Também não há resultado "inconclusivo": um "normal" tirado de fotografias fracas mostra-se como normal. Ambos estavam corrigidos no redesenho (PR #134) e voltaram com a reversão de 2026-10-09 |
+| `lib/visao/escada.ts` e testes/treinos | Resultados que não batem com o que a pessoa fez: o limiar de um treino existe mesmo sem inversões suficientes da escada (mostra o nível de partida, ou o anel maior a quem errou tudo, e chega ao relatório do médico), e os testes de acuidade e contraste só contam o último nível passado (dois olhos com erros diferentes dão o mesmo resultado — caso real, 2026-10-08). Corrigido no PR #145 e revertido com o redesenho em 2026-10-09, por decisão da equipa; para repor, partir do #145 |
+| `admin/AdminAtividade` | Sessões de exercício versão 2 aparecem como "0 %" (a API já devolve `versao`, `limiar`, `olho`, etc. desde o PR #148, mas o painel antigo não os mostra) |
 
-Itens antigos desta tabela já confirmados como resolvidos ou obsoletos: `ScannerResultados.tsx` deixou de mostrar as 4 subcategorias de estrabismo que o analisador nunca calcula (redesenho, 2026-09-30: três conclusões reais em `conclusaoDoRastreio`, `lib/rastreio/rastreio.ts`; distinguir subtipos a sério continua em `docs/BACKLOG.md`, W-09); `ProfileContext.tsx` já usa `perfilApi` por completo (não é Supabase); `Produto.tsx` foi apagado do projecto num refactor antigo e já não existe (2026-09-17); o pedido de consulta persiste-se via `POST /agendamentos` (Sprint 4, Fase 0, PR #86, 2026-09-24), hoje na página `MarcarConsulta.tsx` (`/marcar-consulta`; o diálogo `OptioptikaBookingDialog.tsx` foi retirado no redesenho, 2026-09-30, e `/parceiros?agendar=optiotica` redirecciona para lá).
+Itens antigos desta tabela já confirmados como resolvidos ou obsoletos: `ProfileContext.tsx` já usa `perfilApi` por completo (não é Supabase); `Produto.tsx` foi apagado do projecto num refactor antigo e já não existe (2026-09-17); `ClinicalPartners.tsx`/`OptioptikaBookingDialog.tsx` já persistem o pedido de consulta via `POST /agendamentos` (Sprint 4, Fase 0, PR #86, 2026-09-24).
 
 ---
 

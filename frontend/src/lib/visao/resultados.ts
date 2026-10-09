@@ -70,16 +70,3 @@ export function diferencaContraste(res: Partial<Record<Olho, number>>): boolean 
 
 /** Disparidades do teste de estereopsia, em segundos de arco (fácil -> difícil). */
 export const DISPARIDADES_ARCSEG = [800, 400, 200, 140, 100, 70, 50, 40];
-
-/**
- * Pior do que isto (só viu a forma a 400″ ou 800″) é sinal a investigar.
- * Aprovado pelo dono do projecto a 2026-10-08 (PR #145): os testes de pontos
- * aleatórios em papel encaminham a partir de 100-200″ nas crianças; aqui, com
- * óculos de papel e ecrã (cross-talk), fica-se pelo lado tolerante.
- */
-export const ESTEREO_SINAL_ACIMA_ARCSEG = 200;
-
-/** Sinal no teste de estereopsia: não viu a forma, ou só com as diferenças maiores. */
-export function sinalEstereopsia(limiar: number | null): boolean {
-  return limiar === null || limiar > ESTEREO_SINAL_ACIMA_ARCSEG;
-}

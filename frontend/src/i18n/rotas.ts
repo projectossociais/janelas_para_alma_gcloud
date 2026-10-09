@@ -49,10 +49,9 @@ export const ROTAS = [
   // Link temporário que a família envia ao médico (Fase B): público, fora do sitemap, noindex.
   { chave: "relatorioPartilhado", pt: "/relatorio-partilhado/:token", en: "/en/shared-report/:token", foraDoSitemap: true },
   { chave: "scanner", pt: "/scanner", en: "/en/scanner" },
-  // Rastreio com o motor próprio: só em teste local (ver App.tsx), nunca no sitemap.
-  { chave: "rastreioCompleto", pt: "/rastreio-completo", en: "/en/complete-screening", foraDoSitemap: true },
   { chave: "scannerResultados", pt: "/scanner/resultados", en: "/en/scanner/results", foraDoSitemap: true },
-  { chave: "marcarConsulta", pt: "/marcar-consulta", en: "/en/book-appointment", foraDoSitemap: true },
+  // Rastreio com o motor próprio: só para testes com voluntários, sem ligação nos menus, nunca no sitemap.
+  { chave: "rastreioCompleto", pt: "/rastreio-completo", en: "/en/complete-screening", foraDoSitemap: true },
   { chave: "entrar", pt: "/login", en: "/en/sign-in", foraDoSitemap: true },
   { chave: "atualizarPassword", pt: "/atualizar-password", en: "/en/reset-password", foraDoSitemap: true },
   { chave: "confirmarEmail", pt: "/confirmar-email", en: "/en/confirm-email", foraDoSitemap: true },
@@ -64,7 +63,6 @@ export const ROTAS = [
   { chave: "faq", pt: "/faq", en: "/en/faq" },
   { chave: "impacto", pt: "/impacto", en: "/en/impact" },
   { chave: "junteSe", pt: "/junte-se", en: "/en/contact" },
-  { chave: "testeSeteDias", pt: "/teste-de-7-dias", en: "/en/7-day-trial", foraDoSitemap: true },
   { chave: "registoPremium", pt: "/registo-premium", en: "/en/premium-sign-up", foraDoSitemap: true },
   { chave: "dashboard", pt: "/dashboard", en: "/en/dashboard", foraDoSitemap: true },
   { chave: "dashboardPro", pt: "/dashboard-pro", en: "/en/dashboard-pro", foraDoSitemap: true },

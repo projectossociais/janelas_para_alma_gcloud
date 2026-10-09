@@ -1,5 +1,12 @@
 # Redesenho total do frontend — "Da visão turva à visão nítida"
 
+> **REVERTIDO (2026-10-09, decisão da equipa).** As fases 1 a 5 chegaram a produção
+> (PRs #134 a #150), a equipa viu o resultado e não gostou ("deixou o site meio
+> antiquado"). O frontend voltou ao visual de 2026-10-06, antes do PR #134; do redesenho
+> ficou só o rastreio completo para voluntários (`/rastreio-completo`), refeito no visual
+> antigo. Este documento fica como histórico do que foi tentado e porquê. Não retomar sem
+> nova decisão da equipa (ver CLAUDE.md §1 e §11).
+
 > **Sprint 7 do backlog** (`docs/BACKLOG.md`). Documento de referência vivo: quando alguém
 > falar do "sprint de redesenho", "reengenharia do frontend" ou "novo visual", é este o
 > ponto de partida. Actualizar aqui cada decisão tomada — nunca decidir de memória.

@@ -1,0 +1,93 @@
+import { Check, Lock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
+import { localizar } from "@/i18n/rotas";
+
+interface PremiumPaywallModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+// Só o que existe de facto na plataforma (Fase B, docs/ANALISE_EXERCICIOS.md):
+// o Premium vende acompanhamento do tratamento, não "mais exercícios".
+const benefits = () => [
+  i18n.t("PremiumPaywallModal.beneficioTodosOsExercicios"),
+  i18n.t("PremiumPaywallModal.beneficioEvolucao"),
+  i18n.t("PremiumPaywallModal.beneficioRelatorio"),
+  i18n.t("PremiumPaywallModal.beneficioClinicas"),
+];
+
+const PremiumPaywallModal = ({ open, onOpenChange }: PremiumPaywallModalProps) => {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const goToRegistration = () => {
+    onOpenChange(false);
+    navigate(localizar("/registo-premium"));
+  };
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader className="text-center items-center">
+          <div className="w-12 h-12 rounded-full bg-navy/10 text-navy flex items-center justify-center mb-3">
+            <Lock className="w-6 h-6" />
+          </div>
+          <DialogTitle className="text-2xl md:text-3xl font-bold text-center">
+            {t("PremiumPaywallModal.tituloAcompanhamento")}
+          </DialogTitle>
+          <DialogDescription className="text-center text-base">
+            {t("PremiumPaywallModal.subtituloAcompanhamento")}
+          </DialogDescription>
+        </DialogHeader>
+
+        <ul className="space-y-3 my-4">
+          {benefits().map((b) => (
+            <li key={b} className="flex items-start gap-3">
+              <span className="mt-0.5 shrink-0 w-6 h-6 rounded-full bg-teal/15 text-teal flex items-center justify-center">
+                <Check className="w-4 h-4" strokeWidth={3} />
+              </span>
+              <span className="text-sm text-foreground leading-relaxed">{b}</span>
+            </li>
+          ))}
+        </ul>
+
+        {/* Preço visível antes de sair do modal -- os mesmos valores do passo
+            "Escolha do Plano" em RegistoPremium.tsx (mesmas chaves). */}
+        <div className="grid grid-cols-2 gap-3" aria-label={t("PremiumPaywallModal.precos")}>
+          <div className="rounded-lg border border-border p-3 text-center">
+            <p className="text-xs font-medium text-muted-foreground">{t("RegistoPremium.planoMensal")}</p>
+            <p className="mt-1 text-lg font-bold text-navy">{t("RegistoPremium.n15000Kz")}</p>
+            <p className="text-xs text-muted-foreground">{t("PremiumPaywallModal.porMes")}</p>
+          </div>
+          <div className="rounded-lg border border-border p-3 text-center">
+            <p className="text-xs font-medium text-muted-foreground">{t("RegistoPremium.planoAnual")}</p>
+            <p className="mt-1 text-lg font-bold text-navy">{t("RegistoPremium.n150000Kz")}</p>
+            <p className="text-xs text-muted-foreground">{t("PremiumPaywallModal.porAnoPoupe2Meses")}</p>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button
+            size="lg"
+            onClick={goToRegistration}
+            className="w-full bg-navy text-navy-foreground hover:bg-navy/90"
+          >
+            {t("PremiumPaywallModal.registarParaAcessoPremium")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default PremiumPaywallModal;

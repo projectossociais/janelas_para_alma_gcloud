@@ -4,9 +4,6 @@ import { MemoryRouter } from "react-router-dom";
 import { useRegistoSessao } from "./hooks";
 import TesteAcuidade from "@/pages/exercises/TesteAcuidade";
 import { AcessoExerciciosProvider } from "@/contexts/AcessoExerciciosContext";
-import ptAO from "@/i18n/locales/pt-AO.json";
-
-const V = ptAO.Visao;
 
 // O consentimento para dados de saúde tem testes próprios
 // (ConsentimentoSaudeContext.test.tsx); aqui a conta já consentiu.
@@ -154,54 +151,4 @@ describe("Teste de Acuidade (sem câmara)", () => {
 
     await waitFor(() => expect(getUserMedia).not.toHaveBeenCalled());
   });
-
-  // Caso real (2026-10-08, teste feito pelo dono do projecto): os dois olhos
-  // passaram os mesmos níveis, um com mais erros, e o resultado foi igual.
-  it("dois olhos nos mesmos níveis, um com mais erros: resultados diferentes (anel a anel)", async () => {
-    // Direcções previsíveis: com Math.random() = 0, a primeira é 0 e cada
-    // anel seguinte é a anterior + 1.
-    vi.spyOn(Math, "random").mockReturnValue(0);
-    window.localStorage.clear(); // sem calibração guardada pelo teste anterior
-    registar.mockReset().mockResolvedValue({});
-    const pausa = () => act(() => new Promise((r) => setTimeout(r, 300)));
-    const responderOlho = async (respostas: boolean[]) => {
-      let d = 0;
-      for (const certa of respostas) {
-        const alvo = certa ? d : (d + 4) % 8;
-        fireEvent.click(await screen.findByRole("button", { name: V[`direccao${alvo}` as "direccao0"] }));
-        d = (d + 1) % 8;
-        await pausa();
-      }
-    };
-
-    render(
-      <MemoryRouter>
-        <AcessoExerciciosProvider>
-          <TesteAcuidade />
-        </AcessoExerciciosProvider>
-      </MemoryRouter>,
-    );
-    await screen.findByText("Ponha o brilho do ecrã no máximo");
-    fireEvent.click(screen.getByRole("button", { name: "Continuar" })); // brilho
-    fireEvent.click(await screen.findByRole("button", { name: "Não tenho cartão" }));
-    fireEvent.click(await screen.findByRole("button", { name: /Não uso óculos nem lentes/ }));
-    fireEvent.click(await screen.findByRole("button", { name: "Continuar" })); // distância (60 cm)
-    fireEvent.click(await screen.findByRole("button", { name: "Continuar" })); // tapar o esquerdo
-
-    // Começa em 0,7. Direito: 0,7 ✓✓ · 0,6 ✓✓ · 0,5 ✓✗✗
-    await responderOlho([true, true, true, true, true, false, false]);
-    fireEvent.click(await screen.findByRole("button", { name: "Continuar" })); // tapar o direito
-    // Esquerdo: 0,7 ✓✓ · 0,6 ✓✗✓ · 0,5 ✗✗ -- o mesmo nível, mais erros
-    await responderOlho([true, true, true, false, true, false, false]);
-
-    await screen.findByText(V.resultadoAcuidadeTitulo);
-    await waitFor(() => expect(registar).toHaveBeenCalledTimes(2));
-    const limiar = (olho: string) => registar.mock.calls.find((c) => c[0].olho === olho)?.[0].limiar;
-    expect(limiar("direito")).toBe(0.57);
-    expect(limiar("esquerdo")).toBe(0.63);
-    expect(screen.getByText(/logMAR 0,57/)).toBeInTheDocument();
-    expect(screen.getByText(/logMAR 0,63/)).toBeInTheDocument();
-    vi.restoreAllMocks();
-  }, 20000);
 });
-

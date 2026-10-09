@@ -21,21 +21,6 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (caminho) => caminho.replace(/^\/api/, ""),
       },
-      // Só em teste local: a análise do rastreio (janelas-scanner-api, serviço
-      // à parte) também passa pela mesma origem. O serviço só aceita CORS de
-      // origens conhecidas (produção e localhost), e o telemóvel pelo túnel tem
-      // outra origem: por aqui nem há CORS. O alvo por omissão é o mesmo serviço
-      // que a produção usa; `SCANNER_ALVO` aponta para outro (ex.: um local em
-      // http://localhost:8001). Em produção o frontend fala com ele directamente
-      // (VITE_API_SCANNER_URL no Vercel).
-      "/scanner": {
-        target: process.env.SCANNER_ALVO || "https://janelas-scanner-api.onrender.com",
-        changeOrigin: true,
-        rewrite: (caminho) => caminho.replace(/^\/scanner/, ""),
-        configure: (proxy) => {
-          proxy.on("proxyReq", (pedido) => pedido.removeHeader("origin"));
-        },
-      },
     },
     hmr: {
       overlay: false,

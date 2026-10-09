@@ -24,8 +24,7 @@ export function formatarDataHora(data: Data): string {
   const d = new Date(data);
   return emIngles()
     ? d.toLocaleString("en-US", { month: "long", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })
-    : // Sem segundos, como em inglês: num relatório ou num aviso são só ruído.
-      d.toLocaleString("pt-PT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    : d.toLocaleString("pt-PT");
 }
 
 /** Número decimal com `casas` casas, vírgula em português, ponto em inglês. */

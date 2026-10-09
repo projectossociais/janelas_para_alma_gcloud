@@ -84,7 +84,7 @@ const TermosUtilizacao = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
-      <div className="flex-1 pt-10 pb-16 px-4">
+      <main className="flex-1 pt-24 pb-16 px-4">
         <div className="max-w-3xl mx-auto">
           <BackButton />
 
@@ -191,7 +191,7 @@ const TermosUtilizacao = () => {
             <Trans i18nKey="TermosUtilizacao.ultimaActualizacaoSetembroDe" components={{ a: <a href="mailto:janelasparaalma18@gmail.com" className="text-primary hover:underline font-medium" /> }} />
           </p>
         </div>
-      </div>
+      </main>
       <Footer />
     </div>
   );

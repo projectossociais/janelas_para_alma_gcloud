@@ -1,63 +1,68 @@
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, KeyRound, Lock, ShieldAlert, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { Trans, useTranslation } from "react-i18next";
-import { MolduraApp } from "@/components/app/MolduraApp";
-import ConsentimentoSaudeDefinicoes from "@/components/ConsentimentoSaudeDefinicoes";
-import { useAuth } from "@/contexts/AuthContext";
-import { useProfile } from "@/contexts/ProfileContext";
-import { Aviso } from "@/design/componentes/Aviso";
-import { Botao } from "@/design/componentes/Botao";
-import { CampoPassword } from "@/design/componentes/CampoPassword";
-import { Dialogo, DialogoConteudo, DialogoFechar } from "@/design/componentes/Dialogo";
-import { OpcaoConfirmar } from "@/design/componentes/OpcaoConfirmar";
-import { localizar } from "@/i18n/rotas";
 import { perfilApi, contaApi, mensagemDeErroApi } from "@/lib/apiClient";
 import { erroDePasswordFraca } from "@/lib/validarPassword";
+import { useProfile } from "@/contexts/ProfileContext";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import BackButton from "@/components/BackButton";
+import ConsentimentoSaudeDefinicoes from "@/components/ConsentimentoSaudeDefinicoes";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Bell, Lock, ShieldAlert, KeyRound, Trash2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Trans, useTranslation } from "react-i18next";
+import { localizar } from "@/i18n/rotas";
 
-type ChaveNotificacao = "notificacoes_projetos" | "notificacoes_lembretes" | "notificacoes_comunidade";
-
-const Seccao = ({ id, icone, titulo, descricao, children }: { id: string; icone: ReactNode; titulo: string; descricao?: string; children: ReactNode }) => (
-  <section aria-labelledby={id} className="rounded-cartao border border-linha bg-superficie p-5">
-    <h2 id={id} className="flex items-center gap-2 text-titulo-p text-tinta">
-      <span aria-hidden className="text-accao [&_svg]:size-5">
-        {icone}
-      </span>
-      {titulo}
-    </h2>
-    {descricao && <p className="mt-1 text-corpo text-tinta-suave">{descricao}</p>}
-    <div className="mt-4">{children}</div>
-  </section>
-);
-
-/**
- * Definições da conta (arquétipo App). Notificações gravadas uma a uma, a
- * palavra-passe, o consentimento para dados de saúde e a eliminação da conta.
- *
- * Até 2026-10-09 havia um interruptor "Perfil público" (ligado por omissão,
- * "a equipa médica e outros utilizadores vêem o meu progresso") que não
- * gravava nada nem existia na API: mostrava "Preferências guardadas" e mais
- * nada. Saiu -- o progresso só se partilha pelo link do médico, que a pessoa
- * cria e revoga no relatório.
- */
 const Configuracoes = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { isLoggedIn, loading: authLoading, logout } = useAuth();
+  const { isLoggedIn, logout } = useAuth();
   const { profile, setProfile } = useProfile();
 
-  const [notif, setNotif] = useState<Record<ChaveNotificacao, boolean>>({
+  const [notif, setNotif] = useState({
     notificacoes_projetos: true,
     notificacoes_lembretes: true,
     notificacoes_comunidade: true,
   });
-  const [erroNotif, setErroNotif] = useState<string | null>(null);
+  const [publicProfile, setPublicProfile] = useState(true);
+  const [passwordOpen, setPasswordOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [currentPw, setCurrentPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
-  // Hidrata só uma vez a partir de `profile` (CLAUDE.md §6): sem isto, a
-  // resposta de um pedido revertia o estado optimista de outra opção mudada
-  // entretanto.
+  // Hidrata só uma vez a partir de `profile`. Sem isto, cada `setProfile`
+  // (incluindo o que o próprio `handleToggle` de UM switch dispara) reset a
+  // cópia local dos TRÊS switches -- se o utilizador alternar um segundo
+  // switch enquanto o primeiro pedido ainda está em curso, a resposta do
+  // primeiro reverte visualmente o estado optimista do segundo.
   const hidratadoRef = useRef(false);
+
   useEffect(() => {
     if (profile && !hidratadoRef.current) {
       hidratadoRef.current = true;
@@ -69,221 +74,272 @@ const Configuracoes = () => {
     }
   }, [profile]);
 
-  // As definições são da conta: sem sessão, entrar primeiro e voltar aqui.
-  useEffect(() => {
-    if (!authLoading && !isLoggedIn) navigate(localizar(`/auth?next=${encodeURIComponent("/configuracoes")}`));
-  }, [authLoading, isLoggedIn, navigate]);
+  const handleToggle = async (key: keyof typeof notif) => {
+    if (!profile) {
+      toast.error(t("Configuracoes.inicieSessaoParaGuardar2"));
+      return;
+    }
 
-  const mudarNotificacao = async (chave: ChaveNotificacao, novoValor: boolean) => {
-    if (!profile) return;
-    setErroNotif(null);
-    setNotif((p) => ({ ...p, [chave]: novoValor })); // optimista
+    const novoValor = !notif[key];
+    setNotif((p) => ({ ...p, [key]: novoValor })); // optimista
+
     try {
-      const data = await perfilApi.atualizar({ [chave]: novoValor });
+      const data = await perfilApi.atualizar({ [key]: novoValor });
       setProfile({ ...profile, ...data, nome_completo: data.nome_completo ?? "" });
       toast.success(t("Configuracoes.preferenciaGuardada"), { duration: 1800 });
     } catch {
-      setNotif((p) => ({ ...p, [chave]: !novoValor })); // reverte: nunca fica marcado o que não se gravou
-      setErroNotif(t("Configuracoes.naoFoiPossivelGuardar"));
+      setNotif((p) => ({ ...p, [key]: !novoValor })); // reverte
+      toast.error(t("Configuracoes.naoFoiPossivelGuardar"));
     }
   };
 
-  // --- Palavra-passe ---
-  const [passwordAberto, setPasswordAberto] = useState(false);
-  const [currentPw, setCurrentPw] = useState("");
-  const [newPw, setNewPw] = useState("");
-  const [confirmPw, setConfirmPw] = useState("");
-  const [tentouPw, setTentouPw] = useState(false);
-  const [erroPw, setErroPw] = useState<string | null>(null);
-  const [passwordLoading, setPasswordLoading] = useState(false);
-
-  const errosPw = {
-    actual: !currentPw ? t("Configuracoes.escrevaAPalavraPasseActual") : undefined,
-    nova: !newPw ? t("Configuracoes.escrevaANovaPalavraPasse") : (erroDePasswordFraca(newPw) ?? undefined),
-    confirmar: newPw !== confirmPw ? t("Configuracoes.asNovasNaoCoincidem") : undefined,
+  const handlePublicToggle = () => {
+    setPublicProfile((v) => !v);
+    toast.success(t("Configuracoes.preferenciasGuardadas"));
   };
 
-  const fecharPassword = () => {
-    if (passwordLoading) return;
-    setPasswordAberto(false);
-    setCurrentPw("");
-    setNewPw("");
-    setConfirmPw("");
-    setTentouPw(false);
-    setErroPw(null);
-  };
+  const handlePasswordSubmit = async () => {
+    if (!currentPw || !newPw || newPw !== confirmPw) {
+      toast.error(t("Configuracoes.verifiqueOsCamposDa"));
+      return;
+    }
+    const erroPassword = erroDePasswordFraca(newPw);
+    if (erroPassword) {
+      toast.error(erroPassword);
+      return;
+    }
 
-  const mudarPassword = async (e: FormEvent) => {
-    e.preventDefault();
-    setTentouPw(true);
-    setErroPw(null);
-    if (Object.values(errosPw).some(Boolean)) return;
     setPasswordLoading(true);
     try {
-      // A API verifica a palavra-passe actual antes de a mudar (ContaService).
+      // A API verifica a palavra-passe atual antes de a mudar — nunca
+      // avança para sucesso sem essa confirmação (ver ContaService).
       await contaApi.mudarPassword(currentPw, newPw);
-      setPasswordLoading(false);
-      fecharPassword();
+
+      setPasswordOpen(false);
+      setCurrentPw("");
+      setNewPw("");
+      setConfirmPw("");
       toast.success(t("Configuracoes.palavraPasseActualizadaCom"));
     } catch (err) {
-      setErroPw(mensagemDeErroApi(err, t("Configuracoes.naoFoiPossivelActualizar")));
+      toast.error(mensagemDeErroApi(err, t("Configuracoes.naoFoiPossivelActualizar")));
+    } finally {
       setPasswordLoading(false);
     }
   };
 
-  // --- Eliminar conta ---
-  const [eliminarAberto, setEliminarAberto] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [erroEliminar, setErroEliminar] = useState<string | null>(null);
+  const handleDelete = async (e: React.MouseEvent) => {
+    // Impede o AlertDialog de fechar sozinho — só fecha depois de confirmarmos
+    // que o pedido foi agendado com sucesso. Ver W-02: nunca avançar para
+    // sucesso sem verificar o resultado real da chamada.
+    e.preventDefault();
+    if (!profile?.id) {
+      toast.error(t("Configuracoes.naoFoiPossivelConfirmar"));
+      return;
+    }
 
-  const agendarEliminacao = async () => {
     setDeleteLoading(true);
-    setErroEliminar(null);
     try {
-      // Não apaga já: a API agenda para daqui a 30 dias e termina a sessão.
-      // Voltar a entrar antes dessa data cancela o pedido (AuthContext.tsx).
+      // Não apaga já — a API agenda para daqui a 30 dias e termina a
+      // sessão. Voltar a entrar antes dessa data cancela o pedido
+      // automaticamente (ver AuthContext.tsx).
       await contaApi.eliminar();
-      setEliminarAberto(false);
+
+      setDeleteOpen(false);
       logout();
-      toast.success(t("Configuracoes.contaAgendadaParaEliminacao"));
+      toast.success(
+        t("Configuracoes.contaAgendadaParaEliminacao")
+      );
       navigate(localizar("/"));
     } catch (err) {
-      setErroEliminar(mensagemDeErroApi(err, t("Configuracoes.naoFoiPossivelAgendar")));
+      toast.error(mensagemDeErroApi(err, t("Configuracoes.naoFoiPossivelAgendar")));
     } finally {
       setDeleteLoading(false);
     }
   };
 
-  const textosPassword = { mostrar: t("Auth.mostrar"), esconder: t("Auth.esconder") };
-  const NOTIFICACOES: { chave: ChaveNotificacao; rotulo: string; descricao: string }[] = [
-    { chave: "notificacoes_lembretes", rotulo: t("Configuracoes.lembretesDeExerciciosVisuais"), descricao: t("Configuracoes.lembretesSemanaisParaPraticar") },
-    { chave: "notificacoes_projetos", rotulo: t("Configuracoes.actualizacoesDeProjectosE"), descricao: t("Configuracoes.recebaEmailsSobreO") },
-    { chave: "notificacoes_comunidade", rotulo: t("Configuracoes.novasHistoriasDaComunidade"), descricao: t("Configuracoes.alertasParaNovasPublicacoes") },
-  ];
-
   return (
-    <MolduraApp titulo={t("Configuracoes.configuracoesDaConta")} subtitulo={t("Configuracoes.giraAsSuasPreferencias")}>
-      <div className="max-w-3xl space-y-6">
-        <Seccao id="definicoes-notificacoes" icone={<Bell />} titulo={t("Configuracoes.preferenciasDeNotificacao")} descricao={t("Configuracoes.escolhaOsEmailsQue")}>
-          <div className="space-y-3">
-            {NOTIFICACOES.map((n) => (
-              <OpcaoConfirmar
-                key={n.chave}
-                rotulo={n.rotulo}
-                descricao={n.descricao}
-                marcada={notif[n.chave]}
-                aoMudar={(v) => void mudarNotificacao(n.chave, v)}
-              />
-            ))}
-          </div>
-          {erroNotif && (
-            <Aviso variante="erro" anunciar className="mt-4">
-              {erroNotif}
-            </Aviso>
+    <div className="min-h-screen flex flex-col bg-background">
+      <Navbar />
+      <main className="flex-1 pt-24 pb-16">
+        <div className="container max-w-3xl">
+          <BackButton />
+          <header className="mb-8 mt-4">
+            <h1 className="text-3xl md:text-4xl font-bold text-primary">{t("Configuracoes.configuracoesDaConta")}</h1>
+            <p className="text-muted-foreground mt-2">
+              {t("Configuracoes.giraAsSuasPreferencias")}
+            </p>
+          </header>
+
+          {!isLoggedIn && (
+            <Card className="mb-6 border-teal/40 bg-teal/5">
+              <CardContent className="py-4 flex items-center justify-between gap-4">
+                <p className="text-sm text-foreground">
+                  {t("Configuracoes.inicieSessaoParaGuardar")}
+                </p>
+                <Button size="sm" onClick={() => navigate(localizar("/auth"))}>{t("Configuracoes.entrar")}</Button>
+              </CardContent>
+            </Card>
           )}
-        </Seccao>
 
-        <Seccao id="definicoes-seguranca" icone={<Lock />} titulo={t("Configuracoes.palavraPasse")} descricao={t("Configuracoes.altereASuaPalavra")}>
-          <Dialogo open={passwordAberto} onOpenChange={(v) => (v ? setPasswordAberto(true) : fecharPassword())}>
-            <Botao variante="secundario" onClick={() => setPasswordAberto(true)}>
-              <KeyRound aria-hidden /> {t("Configuracoes.mudarPalavraPasse")}
-            </Botao>
-            <DialogoConteudo
-              titulo={t("Configuracoes.mudarPalavraPasse")}
-              descricao={t("Configuracoes.introduzaASuaPalavra")}
-              rotuloFechar={t("Configuracoes.fechar")}
-            >
-              <form onSubmit={(e) => void mudarPassword(e)} noValidate className="flex flex-col gap-5">
-                <CampoPassword
-                  rotulo={t("Configuracoes.palavraPasseActual")}
-                  autoComplete="current-password"
-                  textos={textosPassword}
-                  value={currentPw}
-                  erro={tentouPw ? errosPw.actual : undefined}
-                  onChange={(e) => setCurrentPw(e.target.value)}
-                />
-                <CampoPassword
-                  rotulo={t("Configuracoes.novaPalavraPasse")}
-                  ajuda={t("Auth.peloMenos8Caracteres")}
-                  autoComplete="new-password"
-                  textos={textosPassword}
-                  value={newPw}
-                  erro={tentouPw ? errosPw.nova : undefined}
-                  onChange={(e) => setNewPw(e.target.value)}
-                />
-                <CampoPassword
-                  rotulo={t("Configuracoes.confirmarNovaPalavraPasse")}
-                  autoComplete="new-password"
-                  textos={textosPassword}
-                  value={confirmPw}
-                  erro={tentouPw ? errosPw.confirmar : undefined}
-                  onChange={(e) => setConfirmPw(e.target.value)}
-                />
-                {erroPw && (
-                  <Aviso variante="erro" anunciar>
-                    {erroPw}
-                  </Aviso>
-                )}
-                <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                  <DialogoFechar asChild>
-                    <Botao variante="secundario" disabled={passwordLoading}>
-                      {t("Configuracoes.cancelar")}
-                    </Botao>
-                  </DialogoFechar>
-                  <Botao type="submit" aCarregar={passwordLoading}>
-                    {t("Configuracoes.guardar")}
-                  </Botao>
+          {/* Notificações */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-primary">
+                <Bell className="w-5 h-5 text-teal" />{" "}{t("Configuracoes.preferenciasDeNotificacao")}
+              </CardTitle>
+              <CardDescription>{t("Configuracoes.escolhaOsEmailsQue")}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <Label htmlFor="n-updates" className="font-medium">{t("Configuracoes.actualizacoesDeProjectosE")}</Label>
+                  <p className="text-xs text-muted-foreground mt-1">{t("Configuracoes.recebaEmailsSobreO")}</p>
                 </div>
-              </form>
-            </DialogoConteudo>
-          </Dialogo>
-        </Seccao>
+                <Switch
+                  id="n-updates"
+                  checked={notif.notificacoes_projetos}
+                  onCheckedChange={() => handleToggle("notificacoes_projetos")}
+                />
+              </div>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <Label htmlFor="n-ex" className="font-medium">{t("Configuracoes.lembretesDeExerciciosVisuais")}</Label>
+                  <p className="text-xs text-muted-foreground mt-1">{t("Configuracoes.lembretesSemanaisParaPraticar")}</p>
+                </div>
+                <Switch
+                  id="n-ex"
+                  checked={notif.notificacoes_lembretes}
+                  onCheckedChange={() => handleToggle("notificacoes_lembretes")}
+                />
+              </div>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <Label htmlFor="n-com" className="font-medium">{t("Configuracoes.novasHistoriasDaComunidade")}</Label>
+                  <p className="text-xs text-muted-foreground mt-1">{t("Configuracoes.alertasParaNovasPublicacoes")}</p>
+                </div>
+                <Switch
+                  id="n-com"
+                  checked={notif.notificacoes_comunidade}
+                  onCheckedChange={() => handleToggle("notificacoes_comunidade")}
+                />
+              </div>
+            </CardContent>
+          </Card>
 
-        {isLoggedIn && <ConsentimentoSaudeDefinicoes />}
+          {/* Privacidade e Segurança */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-primary">
+                <Lock className="w-5 h-5 text-teal" />{" "}{t("Configuracoes.privacidadeESeguranca")}
+              </CardTitle>
+              <CardDescription>{t("Configuracoes.controleOAcessoA")}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="font-medium">{t("Configuracoes.palavraPasse")}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t("Configuracoes.altereASuaPalavra")}</p>
+                </div>
+                <Button variant="outline" onClick={() => setPasswordOpen(true)}>
+                  <KeyRound className="w-4 h-4 mr-2" />{" "}{t("Configuracoes.mudarPalavraPasse")}
+                </Button>
+              </div>
+              <div className="flex items-start justify-between gap-4 pt-2 border-t border-border/50">
+                <div className="pt-4">
+                  <Label htmlFor="pub" className="font-medium">{t("Configuracoes.perfilPublico")}</Label>
+                  <p className="text-xs text-muted-foreground mt-1 max-w-md">
+                    {t("Configuracoes.permitirQueAEquipa")}
+                  </p>
+                </div>
+                <div className="pt-4">
+                  <Switch id="pub" checked={publicProfile} onCheckedChange={handlePublicToggle} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-        <section aria-labelledby="definicoes-eliminar" className="rounded-cartao border border-erro/40 bg-superficie p-5">
-          <h2 id="definicoes-eliminar" className="flex items-center gap-2 text-titulo-p text-tinta">
-            <ShieldAlert className="size-5 text-erro" aria-hidden /> {t("Configuracoes.eliminarConta")}
-          </h2>
-          <p className="mt-1 text-corpo text-tinta-suave">{t("Configuracoes.apagaPermanentementeOSeu")}</p>
-          <Dialogo
-            open={eliminarAberto}
-            onOpenChange={(v) => {
-              if (deleteLoading) return;
-              setEliminarAberto(v);
-              setErroEliminar(null);
-            }}
-          >
-            <Botao variante="perigo" className="mt-4" onClick={() => setEliminarAberto(true)}>
-              <Trash2 aria-hidden /> {t("Configuracoes.eliminarConta")}
-            </Botao>
-            <DialogoConteudo
-              titulo={t("Configuracoes.temACerteza")}
-              descricao={<Trans i18nKey="Configuracoes.aSuaContaFicara" components={{ strong: <strong /> }} />}
-              rotuloFechar={t("Configuracoes.fechar")}
-              rodape={
-                <>
-                  <DialogoFechar asChild>
-                    <Botao variante="secundario" disabled={deleteLoading}>
-                      {t("Configuracoes.cancelar")}
-                    </Botao>
-                  </DialogoFechar>
-                  <Botao variante="perigo" aCarregar={deleteLoading} onClick={() => void agendarEliminacao()}>
-                    {t("Configuracoes.agendarEliminacao")}
-                  </Botao>
-                </>
-              }
+          {/* Danger Zone */}
+          {isLoggedIn && <ConsentimentoSaudeDefinicoes />}
+
+          <Card className="border-destructive/50 bg-destructive/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-destructive">
+                <ShieldAlert className="w-5 h-5" />{" "}{t("Configuracoes.zonaDePerigo")}
+              </CardTitle>
+              <CardDescription>{t("Configuracoes.accoesIrreversiveisRelacionadasCom")}</CardDescription>
+            </CardHeader>
+            <CardContent className="flex items-center justify-between gap-4">
+              <div>
+                <p className="font-medium text-foreground">{t("Configuracoes.eliminarConta")}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t("Configuracoes.apagaPermanentementeOSeu")}
+                </p>
+              </div>
+              <Button variant="destructive" onClick={() => setDeleteOpen(true)}>
+                <Trash2 className="w-4 h-4 mr-2" />{" "}{t("Configuracoes.eliminarConta")}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+      <Footer />
+
+      {/* Password dialog */}
+      <Dialog open={passwordOpen} onOpenChange={setPasswordOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("Configuracoes.mudarPalavraPasse")}</DialogTitle>
+            <DialogDescription>
+              {t("Configuracoes.introduzaASuaPalavra")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label htmlFor="cur">{t("Configuracoes.palavraPasseActual")}</Label>
+              <Input id="cur" type="password" value={currentPw} onChange={(e) => setCurrentPw(e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="new">{t("Configuracoes.novaPalavraPasse")}</Label>
+              <Input id="new" type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="conf">{t("Configuracoes.confirmarNovaPalavraPasse")}</Label>
+              <Input id="conf" type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPasswordOpen(false)} disabled={passwordLoading}>
+              {t("Configuracoes.cancelar")}
+            </Button>
+            <Button onClick={handlePasswordSubmit} disabled={passwordLoading}>
+              {passwordLoading ? t("Configuracoes.aGuardar") : t("Configuracoes.guardar")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("Configuracoes.temACerteza")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              <Trans i18nKey="Configuracoes.aSuaContaFicara" components={{ strong: <strong /> }} />
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteLoading}>{t("Configuracoes.cancelar")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleteLoading}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {erroEliminar && (
-                <Aviso variante="erro" anunciar>
-                  {erroEliminar}
-                </Aviso>
-              )}
-            </DialogoConteudo>
-          </Dialogo>
-        </section>
-      </div>
-    </MolduraApp>
+              {deleteLoading ? t("Configuracoes.aAgendar") : t("Configuracoes.agendarEliminacao")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   );
 };
 

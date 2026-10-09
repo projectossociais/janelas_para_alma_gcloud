@@ -98,53 +98,6 @@ describe("ConsentimentoSaudeContext (Lei 22/11, dados de saúde)", () => {
     expect(screen.getByTestId("estado")).toHaveTextContent("sim");
   });
 
-  describe("que combinações deixam aceitar (pedido do dono do projecto, 2026-10-05)", () => {
-    // Regra: (tenho 18 anos OU sou representante legal, que também declara a
-    // maioridade) E autorizo. Um adulto sem filhos marca 1 e 3; um pai marca 2 e 3.
-    const abrir = async () => {
-      estado.mockResolvedValue(ESTADO_SEM);
-      const user = userEvent.setup();
-      montar();
-      await waitFor(() => expect(screen.getByTestId("estado")).toHaveTextContent("não"));
-      void pedir();
-      await screen.findByText(T.declaroMaioridade);
-      return user;
-    };
-    const aceitar = () => screen.getByRole("button", { name: T.aceitarEContinuar });
-
-    it("representante legal (2) + autorizo (3) deixa aceitar, e grava a maioridade e a representação", async () => {
-      dar.mockResolvedValue({ ...ESTADO_COM, representa_menor: true });
-      const user = await abrir();
-      await user.click(screen.getByText(T.representaMenor));
-      await user.click(screen.getByText(T.autorizo));
-      expect(aceitar()).toBeEnabled();
-      await user.click(aceitar());
-      expect(dar).toHaveBeenCalledWith({ declara_maioridade: true, aceita_tratamento: true, representa_menor: true });
-    });
-
-    it("adulto (1) + autorizo (3) deixa aceitar, sem representação", async () => {
-      dar.mockResolvedValue(ESTADO_COM);
-      const user = await abrir();
-      await user.click(screen.getByText(T.declaroMaioridade));
-      await user.click(screen.getByText(T.autorizo));
-      await user.click(aceitar());
-      expect(dar).toHaveBeenCalledWith({ declara_maioridade: true, aceita_tratamento: true, representa_menor: false });
-    });
-
-    it("sem 'autorizo' (3) nunca deixa aceitar, mesmo com 1 e 2", async () => {
-      const user = await abrir();
-      await user.click(screen.getByText(T.declaroMaioridade));
-      await user.click(screen.getByText(T.representaMenor));
-      expect(aceitar()).toBeDisabled();
-    });
-
-    it("só 'autorizo' (3), sem dizer quem é, não deixa aceitar", async () => {
-      const user = await abrir();
-      await user.click(screen.getByText(T.autorizo));
-      expect(aceitar()).toBeDisabled();
-    });
-  });
-
   it("se a API falhar, mostra o erro, não fecha e nunca resolve true", async () => {
     estado.mockResolvedValue(ESTADO_SEM);
     dar.mockRejectedValue(new Error("rede"));

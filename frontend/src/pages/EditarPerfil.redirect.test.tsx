@@ -22,7 +22,6 @@ vi.mock("@/lib/apiClient", () => ({
 }));
 
 vi.mock("@/components/Navbar", () => ({ default: () => null }));
-vi.mock("@/components/NotificationBell", () => ({ default: () => null }));
 vi.mock("@/components/Footer", () => ({ default: () => null }));
 
 vi.mock("@/contexts/ProfileContext", () => ({
@@ -57,8 +56,7 @@ describe("EditarPerfil — guarda de sessão espera o AuthContext resolver", () 
     mockUseAuth.mockReturnValue({ isLoggedIn: false, loading: false, user: null, updateUserProfile: vi.fn() });
     render(<EditarPerfil />, { wrapper: MemoryRouter });
 
-    // Volta ao perfil depois de entrar.
-    await waitFor(() => expect(navigateMock).toHaveBeenCalledWith("/auth?next=%2Feditar-perfil"));
+    await waitFor(() => expect(navigateMock).toHaveBeenCalledWith("/auth"));
   });
 
   it("não redireciona quando o AuthContext confirma sessão válida", async () => {

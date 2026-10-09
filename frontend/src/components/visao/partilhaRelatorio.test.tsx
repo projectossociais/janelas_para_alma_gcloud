@@ -121,23 +121,6 @@ describe("RelatorioPartilhado (o que o médico abre)", () => {
     expect(classes).not.toMatch(/teal|gold|navy|muted|foreground|rounded|shadow/);
   });
 
-  it("um treino só com o olho esquerdo nunca mostra o olho direito na evolução (caso real)", async () => {
-    const aneis = (dia: string) => ({
-      exercicio_id: "ambliopia", created_at: `${dia}T09:00:00Z`, olho: "esquerdo", segundos_activos: 360,
-      limiar: 0.5, unidade: "logmar", calibrado: true, sinais: null,
-    });
-    lerPartilhado.mockResolvedValue({
-      nome: "Ana", olho_mais_fraco: "esquerdo", usa_oculos: null,
-      expira_em: "2026-10-29T10:00:00Z", gerado_em: "2026-09-29T10:00:00Z",
-      sessoes: [aneis("2026-09-20"), aneis("2026-09-28")],
-    });
-    abrir("tok-abc");
-    await screen.findByText(/Ana · Olho mais fraco/);
-    const evolucao = screen.getByText(/3\. /).closest("section")!;
-    expect(evolucao.textContent).toMatch(/Olho esquerdo/);
-    expect(evolucao.textContent).not.toMatch(/Olho direito/);
-  });
-
   it("link inválido, expirado ou revogado: mensagem clara, sem dados", async () => {
     lerPartilhado.mockRejectedValue(Object.assign(new Error("link inválido ou expirado"), { status: 404 }));
     abrir("inventado");

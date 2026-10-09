@@ -39,7 +39,7 @@ const Publicacoes = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
       <BackButton fallbackPath={localizar("/")} label={t("Publicacoes.voltar")} />
-      <div className="flex-1">
+      <main className="flex-1">
         <div className="container py-10">
           <header className="max-w-2xl mx-auto text-center space-y-4 mb-12">
             <span className="text-sm font-medium tracking-widest uppercase text-teal">
@@ -102,7 +102,7 @@ const Publicacoes = () => {
             ))}
           </div>
         </div>
-      </div>
+      </main>
       <Footer />
     </div>
   );

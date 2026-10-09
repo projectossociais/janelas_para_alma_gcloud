@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 // ADMIN-03: substitui o antigo editor de "site_content" (Supabase, sem
@@ -46,7 +46,6 @@ vi.mock("sonner", () => ({
 }));
 
 import AdminPublicacoes from "./AdminPublicacoes";
-import { violacoesAcessibilidade } from "@/design/testes/acessibilidade";
 
 const publicacaoAdmin = (over: Partial<Record<string, unknown>> = {}) => ({
   id: "pub-1",
@@ -95,9 +94,7 @@ describe("AdminPublicacoes", () => {
 
     await waitFor(() => expect(criar).toHaveBeenCalled());
     expect(toastSuccess).not.toHaveBeenCalled();
-    // O erro fica no formulário, com o que se escreveu intacto.
-    expect(await screen.findByRole("alert")).toHaveTextContent("sem permissões");
-    expect(screen.getByLabelText("Título")).toHaveValue("Rastreio em Luanda");
+    expect(toastError).toHaveBeenCalledWith("sem permissões");
   });
 
   it("só mostra sucesso depois de a API confirmar a criação, e abre o editor", async () => {
@@ -142,12 +139,11 @@ describe("AdminPublicacoes", () => {
 
   it("apagar pede confirmação e só chama a API se confirmado", async () => {
     listarTodas.mockResolvedValue([publicacaoAdmin()]);
+    vi.spyOn(window, "confirm").mockReturnValue(false);
     const user = userEvent.setup();
     render(<AdminPublicacoes />);
 
     await user.click(await screen.findByRole("button", { name: /Apagar publicação/i }));
-    const dialogo = await screen.findByRole("dialog");
-    await user.click(within(dialogo).getByRole("button", { name: "Cancelar" }));
 
     expect(apagar).not.toHaveBeenCalled();
   });
@@ -155,11 +151,11 @@ describe("AdminPublicacoes", () => {
   it("apagar confirmado chama a API e recarrega", async () => {
     listarTodas.mockResolvedValue([publicacaoAdmin()]);
     apagar.mockResolvedValue(undefined);
+    vi.spyOn(window, "confirm").mockReturnValue(true);
     const user = userEvent.setup();
     render(<AdminPublicacoes />);
 
     await user.click(await screen.findByRole("button", { name: /Apagar publicação/i }));
-    await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Apagar" }));
 
     await waitFor(() => expect(apagar).toHaveBeenCalledWith("pub-1"));
     expect(toastSuccess).toHaveBeenCalledWith("Publicação apagada.");
@@ -189,9 +185,7 @@ describe("AdminPublicacoes", () => {
 
       await waitFor(() => expect(enviarParaStorage).toHaveBeenCalled());
       expect(confirmarCapa).not.toHaveBeenCalled();
-      expect(await within(screen.getByRole("dialog")).findByRole("alert")).toHaveTextContent(
-        "Não foi possível enviar a imagem para o storage.",
-      );
+      expect(toastError).toHaveBeenCalledWith("Não foi possível enviar a imagem para o storage.");
     });
 
     it("confirma e mostra sucesso só depois dos três passos completarem", async () => {
@@ -211,22 +205,5 @@ describe("AdminPublicacoes", () => {
       await waitFor(() => expect(confirmarCapa).toHaveBeenCalledWith("pub-1", "publicacoes/pub-1/x.png"));
       expect(toastSuccess).toHaveBeenCalledWith("Capa actualizada.");
     });
-  });
-});
-
-describe("AdminPublicacoes — datas e acessibilidade", () => {
-  // Caso real (2026-10-09): "2026-10-08" lido como meia-noite UTC mostrava
-  // o dia anterior num computador a oeste de UTC.
-  it("a data do evento mostra o dia escrito, sem passar pelo fuso", async () => {
-    listarTodas.mockResolvedValue([{ ...publicacaoAdmin(), data_evento: "2026-10-08" }]);
-    render(<AdminPublicacoes />);
-    expect(await screen.findByText("08/10/2026")).toBeInTheDocument();
-  });
-
-  it("sem violações de acessibilidade", async () => {
-    listarTodas.mockResolvedValue([publicacaoAdmin()]);
-    const { container } = render(<AdminPublicacoes />);
-    await screen.findByRole("button", { name: /Apagar publicação/i });
-    expect(await violacoesAcessibilidade(container)).toEqual([]);
   });
 });

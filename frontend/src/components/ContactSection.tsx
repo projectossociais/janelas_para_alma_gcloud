@@ -6,7 +6,7 @@ import ProgramModal from "@/components/ProgramModal";
 import benefitTeamwork from "@/assets/benefit-teamwork.jpg";
 import benefitPortrait from "@/assets/benefit-portrait.jpg";
 import benefitMeeting from "@/assets/benefit-meeting.jpg";
-import benefitCertificate from "@/assets/benefit-certificate.jpg";
+import benefitCertificate from "@/assets/benefit-certificate.png";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";

@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { ArrowRight, CreditCard, Glasses, Ruler, Sun } from "lucide-react";
-import { Botao } from "@/design/componentes/Botao";
+import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import {
   CARTAO_ALTURA_MM,
@@ -28,13 +28,11 @@ export const EcraPasso = ({
 }) => (
   <section className="mx-auto flex max-w-xl flex-col items-center gap-4 text-center">
     {icone && (
-      <div aria-hidden className="flex size-14 items-center justify-center rounded-pilula bg-accao-suave text-accao">
-        {icone}
-      </div>
+      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-teal/10 text-teal">{icone}</div>
     )}
-    <h2 className="text-titulo-p text-tinta">{titulo}</h2>
+    <h2 className="text-xl font-bold text-foreground">{titulo}</h2>
     {children}
-    {accao && <div className="mt-2 flex w-full flex-col items-stretch gap-3 sm:w-auto sm:items-center">{accao}</div>}
+    {accao && <div className="mt-2 flex w-full flex-col items-center gap-2 sm:w-auto">{accao}</div>}
   </section>
 );
 
@@ -49,15 +47,15 @@ export const BotaoContinuar = ({
 }) => {
   const { t } = useTranslation();
   return (
-    <Botao
-      tamanho="g"
+    <Button
+      size="lg"
       onClick={aoClicar}
       disabled={desactivado}
-      className="w-full sm:w-auto sm:min-w-48"
+      className="w-full gap-2 bg-teal text-teal-foreground hover:bg-teal/90 sm:w-auto sm:min-w-48"
     >
       {children ?? t("Visao.continuar")}
       <ArrowRight className="h-4 w-4" />
-    </Botao>
+    </Button>
   );
 };
 
@@ -118,9 +116,9 @@ export const PassoCalibracao = ({
         accao={
           <>
             <BotaoContinuar aoClicar={aoContinuar} />
-            <Botao variante="fantasma" onClick={() => setARecalibrar(true)}>
+            <Button variant="ghost" onClick={() => setARecalibrar(true)}>
               {t("Visao.calibrarDeNovo")}
-            </Botao>
+            </Button>
           </>
         }
       >
@@ -152,8 +150,8 @@ export const PassoCalibracao = ({
           >
             {t("Visao.calibracaoConfirmar")}
           </BotaoContinuar>
-          <Botao
-            variante="fantasma"
+          <Button
+            variant="ghost"
             onClick={() => {
               aoGuardar({ pxPorMm: PX_POR_MM_NOMINAL, calibrado: false });
               setARecalibrar(false);
@@ -161,7 +159,7 @@ export const PassoCalibracao = ({
             }}
           >
             {t("Visao.naoTenhoCartao")}
-          </Botao>
+          </Button>
         </>
       }
     >
@@ -183,7 +181,7 @@ export const PassoCalibracao = ({
       </div>
       {/* A moldura mede-se em px CSS: nada de max-width nem escala aqui. */}
       <div
-        className="rounded-xl border-2 border-dashed border-accao bg-accao-suave"
+        className="rounded-xl border-2 border-dashed border-navy bg-teal/10 dark:border-foreground"
         style={{ width: largura, height: altura, maxWidth: "none", flexShrink: 0 }}
         aria-hidden
       />
@@ -206,12 +204,12 @@ export const PassoOculos = ({
         {exercicioDePerto ? t("Visao.oculosTextoPerto") : t("Visao.oculosTexto")}
       </p>
       <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-        <Botao tamanho="g" variante="secundario" onClick={() => aoResponder(true)}>
+        <Button size="lg" variant="outline" onClick={() => aoResponder(true)}>
           {t("Visao.oculosComCorreccao")}
-        </Botao>
-        <Botao tamanho="g" variante="secundario" onClick={() => aoResponder(false)}>
+        </Button>
+        <Button size="lg" variant="outline" onClick={() => aoResponder(false)}>
           {t("Visao.oculosSemCorreccao")}
-        </Botao>
+        </Button>
       </div>
     </EcraPasso>
   );
@@ -226,11 +224,11 @@ const DoisOlhos = ({ tapado }: { tapado: Olho }) => (
       const coberto = o === tapado;
       return (
         <g key={o}>
-          <ellipse cx={cx} cy={25} rx={24} ry={14} className="fill-superficie stroke-tinta" strokeWidth={3} />
+          <ellipse cx={cx} cy={25} rx={24} ry={14} className="fill-background stroke-navy dark:stroke-foreground" strokeWidth={3} />
           {coberto ? (
-            <ellipse cx={cx} cy={25} rx={26} ry={17} className="fill-tinta" />
+            <ellipse cx={cx} cy={25} rx={26} ry={17} className="fill-navy dark:fill-foreground" />
           ) : (
-            <circle cx={cx} cy={25} r={7} className="fill-acento" />
+            <circle cx={cx} cy={25} r={7} className="fill-teal" />
           )}
         </g>
       );
@@ -257,7 +255,7 @@ export const PassoTaparOlho = ({
     <EcraPasso icone={<DoisOlhos tapado={olhoATapar} />} titulo={titulo} accao={<BotaoContinuar aoClicar={aoContinuar} />}>
       <p className="text-sm text-muted-foreground">{tapaOlho ? t("Visao.tapaOlhoTexto") : t("Visao.taparComAMao")}</p>
       {tapaOlho && (
-        <p className="rounded-lg bg-aviso-suave px-3 py-2 text-sm font-medium text-foreground">{t("Visao.aMaoNaoBasta")}</p>
+        <p className="rounded-lg bg-gold/10 px-3 py-2 text-sm font-medium text-foreground">{t("Visao.aMaoNaoBasta")}</p>
       )}
     </EcraPasso>
   );
@@ -292,7 +290,7 @@ export const PassoDistancia = ({
             onClick={() => setEscolha(mm)}
             className={cn(
               "flex-1 rounded-xl border-2 px-4 py-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              escolha === mm ? "border-accao bg-accao-suave text-tinta" : "border-linha-forte text-tinta-suave hover:border-accao",
+              escolha === mm ? "border-teal bg-teal/10 text-foreground" : "border-border text-muted-foreground hover:border-teal/50",
             )}
           >
             {rotulo(mm)}
@@ -343,16 +341,16 @@ export const PassoRapido = ({
       accao={
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
           <BotaoContinuar aoClicar={aoComecar}>{t("Visao.rapidoComecar")}</BotaoContinuar>
-          <Botao tamanho="g" variante="secundario" onClick={aoAlterar}>
+          <Button size="lg" variant="outline" onClick={aoAlterar}>
             {t("Visao.rapidoAlterar")}
-          </Botao>
+          </Button>
         </div>
       }
     >
       <ul className="w-full space-y-2 text-left text-sm text-foreground">
         {itens.map((item) => (
           <li key={item} className="flex items-start gap-2 rounded-lg bg-muted/40 px-3 py-2">
-            <span aria-hidden className="text-sucesso">✓</span>
+            <span aria-hidden className="text-teal">✓</span>
             {item}
           </li>
         ))}

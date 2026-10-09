@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Gem, Heart } from "lucide-react";
+import { Gem, Heart, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
-import { Botao } from "@/design/componentes/Botao";
-import { Dialogo, DialogoConteudo } from "@/design/componentes/Dialogo";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useCarteiraJogo } from "@/contexts/CarteiraJogoContext";
 import { jogoApi, mensagemDeErroApi, type OfertaVidaExtra, type VidaExtraJogo } from "@/lib/apiClient";
 
@@ -12,6 +12,7 @@ interface VidaExtraModalProps {
   oferta: OfertaVidaExtra | null;
   tempoEsgotado: boolean;
   onVidaUsada: (vida: VidaExtraJogo) => void;
+  /** Recusou (ou fechou o modal): a partida termina normalmente. */
   /** "Encerrar partida" -- a única saída do modal além de usar a vida extra.
    *  Leva sempre ao ecrã da resposta certa e da explicação. */
   onEncerrar: () => void;
@@ -54,66 +55,72 @@ const VidaExtraModal = ({ oferta, tempoEsgotado, onVidaUsada, onEncerrar }: Vida
   };
 
   return (
-    // Sem "×", sem Esc, sem clique fora (`obrigaEscolha`): o jogador escolhe
-    // usar a vida extra ou "Encerrar partida" -- e encerrar passa sempre pelo
-    // ecrã educativo (resposta certa + explicação). Até 2026-09-24 o "×" ia
-    // directo ao menu e saltava esse ecrã.
-    <Dialogo open={oferta !== null}>
-      <DialogoConteudo
-        className="max-w-md"
-        obrigaEscolha
-        titulo={t("VidaExtra.titulo")}
-        descricao={tempoEsgotado ? t("VidaExtra.tempoEsgotou") : t("VidaExtra.errou")}
-        rodape={
-          <>
-            <Botao variante="secundario" onClick={onEncerrar} disabled={aUsar}>
-              {t("VidaExtra.encerrar")}
-            </Botao>
-            <Botao onClick={() => void usar()} disabled={semSaldo} aCarregar={aUsar}>
-              {semSaldo ? t("VidaExtra.diamantesInsuficientesBotao") : t("VidaExtra.usar", { custo })}
-            </Botao>
-          </>
-        }
+    // Sem "×", sem Esc, sem clique fora: o jogador escolhe usar a vida extra
+    // ou "Encerrar partida" -- e encerrar passa sempre pelo ecrã educativo
+    // (resposta certa + explicação). Até 2026-09-24 o "×" ia directo ao
+    // menu e saltava esse ecrã.
+    <Dialog open={oferta !== null}>
+      <DialogContent
+        className="sm:max-w-md text-center"
+        semBotaoFechar
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
       >
-        <div className="flex items-start gap-4">
-          <span aria-hidden className="relative flex size-14 shrink-0 items-center justify-center rounded-pilula bg-erro-suave text-erro">
-            <Heart className="size-7" />
+        <DialogHeader className="sm:text-center">
+          <DialogTitle className="text-2xl text-center">{t("VidaExtra.titulo")}</DialogTitle>
+          <DialogDescription className="text-center text-base text-foreground">
+            {tempoEsgotado ? t("VidaExtra.tempoEsgotou") : t("VidaExtra.errou")}
+          </DialogDescription>
+        </DialogHeader>
+
+        <p className="text-sm text-muted-foreground">{t("VidaExtra.explicacao")}</p>
+
+        <div className="relative mx-auto my-2 w-24 h-24 rounded-full bg-destructive/10 border-2 border-destructive/30 flex items-center justify-center">
+          <Heart className="w-12 h-12 text-destructive fill-destructive/20" />
+          <Plus className="absolute w-5 h-5 text-destructive" strokeWidth={3} />
+          <span
+            className="absolute -top-1 -right-1 min-w-7 h-7 px-1.5 rounded-full bg-gold text-navy text-sm font-bold flex items-center justify-center"
+            aria-label={t("VidaExtra.restantes", { restantes: oferta?.restantes ?? 0 })}
+          >
+            {oferta?.restantes ?? 0}
           </span>
-          <p className="text-corpo text-tinta-suave">{t("VidaExtra.explicacao")}</p>
         </div>
 
-        <dl className="mt-5 grid grid-cols-3 gap-3 text-center">
-          <div className="rounded-controlo bg-superficie-alt p-3">
-            <dt className="text-legenda text-tinta-suave">{t("VidaExtra.custo")}</dt>
-            <dd className="mt-1 inline-flex items-center gap-1 text-corpo-g font-medium tabular-nums text-tinta">
-              <Gem className="size-4 text-accao" aria-hidden />
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="rounded-xl bg-muted/60 p-3">
+            <p className="text-muted-foreground">{t("VidaExtra.custo")}</p>
+            <p className="inline-flex items-center gap-1 font-bold text-teal text-lg">
+              <Gem className="w-4 h-4" />
               {custo}
-            </dd>
+            </p>
           </div>
-          <div className="rounded-controlo bg-superficie-alt p-3">
-            <dt className="text-legenda text-tinta-suave">{t("VidaExtra.oSeuSaldo")}</dt>
-            <dd
-              className="mt-1 inline-flex items-center gap-1 text-corpo-g font-medium tabular-nums text-tinta"
-              data-testid="saldo-vida-extra"
-            >
-              <Gem className="size-4 text-accao" aria-hidden />
+          <div className="rounded-xl bg-muted/60 p-3">
+            <p className="text-muted-foreground">{t("VidaExtra.oSeuSaldo")}</p>
+            <p className="inline-flex items-center gap-1 font-bold text-teal text-lg" data-testid="saldo-vida-extra">
+              <Gem className="w-4 h-4" />
               {saldo}
-            </dd>
+            </p>
           </div>
-          <div className="rounded-controlo bg-superficie-alt p-3">
-            <dt className="text-legenda text-tinta-suave">{t("VidaExtra.restantesCurto")}</dt>
-            <dd
-              className="mt-1 text-corpo-g font-medium tabular-nums text-tinta"
-              aria-label={t("VidaExtra.restantes", { restantes: oferta?.restantes ?? 0 })}
-            >
-              {oferta?.restantes ?? 0}
-            </dd>
-          </div>
-        </dl>
+        </div>
 
-        {semSaldo && <p className="mt-4 text-legenda text-erro">{t("VidaExtra.saldoInsuficienteAviso")}</p>}
-      </DialogoConteudo>
-    </Dialogo>
+        {semSaldo && <p className="text-xs text-destructive">{t("VidaExtra.saldoInsuficienteAviso")}</p>}
+
+        <div className="flex flex-col gap-2 pt-1">
+          <Button
+            size="lg"
+            onClick={() => void usar()}
+            disabled={semSaldo || aUsar}
+            className="w-full bg-green text-green-foreground hover:bg-green/90 text-base font-bold"
+          >
+            {aUsar && <Loader2 className="w-4 h-4 animate-spin" />}
+            {semSaldo ? t("VidaExtra.diamantesInsuficientesBotao") : t("VidaExtra.usar", { custo })}
+          </Button>
+          <Button variant="outline" onClick={onEncerrar} disabled={aUsar} className="w-full">
+            {t("VidaExtra.encerrar")}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 

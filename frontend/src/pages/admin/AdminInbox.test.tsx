@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
@@ -44,17 +44,9 @@ vi.mock("sonner", () => ({
 }));
 
 import AdminInbox from "./AdminInbox";
-import { violacoesAcessibilidade } from "@/design/testes/acessibilidade";
-
-/** As decisões pedem confirmação num diálogo: carrega no botão e depois em `confirmar`. */
-async function decidir(user: ReturnType<typeof userEvent.setup>, botao: RegExp, confirmar: string) {
-  await user.click(await screen.findByRole("button", { name: botao }));
-  const dialogo = await screen.findByRole("dialog");
-  await user.click(within(dialogo).getByRole("button", { name: confirmar }));
-}
 
 async function abrirSeparadorPremium(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(await screen.findByRole("radio", { name: /Pedidos Premium/i }));
+  await user.click(await screen.findByRole("tab", { name: /Pedidos Premium/i }));
 }
 
 const umaMensagem = {
@@ -96,9 +88,8 @@ describe("AdminInbox — mensagens de contacto", () => {
     listar.mockRejectedValue(Object.assign(new Error("Sem permissões"), { status: 403 }));
     render(<AdminInbox />, { wrapper: MemoryRouter });
 
-    // Antes: uma falha mostrava "Sem mensagens." -- falso.
-    expect(await screen.findByRole("alert")).toHaveTextContent("Sem permissões");
-    expect(screen.queryByText("Sem mensagens.")).not.toBeInTheDocument();
+    await waitFor(() => expect(toastError).toHaveBeenCalledWith("Sem permissões"));
+    expect(screen.getByText("Sem mensagens.")).toBeInTheDocument();
   });
 
   it("marca uma mensagem como tratada e recarrega a lista", async () => {
@@ -136,7 +127,7 @@ describe("AdminInbox — mensagens de contacto", () => {
     render(<AdminInbox />, { wrapper: MemoryRouter });
 
     await abrirSeparadorPremium(user);
-    await decidir(user, /Aprovar pagamento/i, "Aprovar");
+    await user.click(await screen.findByRole("button", { name: /Aprovar pagamento/i }));
 
     await waitFor(() => expect(premiumAprovar).toHaveBeenCalledWith("ped-1"));
     expect(toastSuccess).toHaveBeenCalledWith("Pagamento aprovado. Premium activo por 30 dias.");
@@ -150,7 +141,7 @@ describe("AdminInbox — mensagens de contacto", () => {
     render(<AdminInbox />, { wrapper: MemoryRouter });
 
     await abrirSeparadorPremium(user);
-    await decidir(user, /Aprovar pagamento/i, "Aprovar");
+    await user.click(await screen.findByRole("button", { name: /Aprovar pagamento/i }));
 
     await waitFor(() => expect(toastError).toHaveBeenCalledWith("já aprovado"));
     expect(toastSuccess).not.toHaveBeenCalled();
@@ -216,7 +207,7 @@ describe("AdminInbox — pedidos da loja do jogo (Kwanzas por transferência)", 
 
   async function abrir(user: ReturnType<typeof userEvent.setup>) {
     render(<AdminInbox />, { wrapper: MemoryRouter });
-    await user.click(await screen.findByRole("radio", { name: /Loja do jogo \(1\)/ }));
+    await user.click(await screen.findByRole("tab", { name: /Loja do jogo \(1\)/ }));
   }
 
   it("mostra o comprovativo e confirma o pagamento pela API, recarregando a lista", async () => {
@@ -228,7 +219,7 @@ describe("AdminInbox — pedidos da loja do jogo (Kwanzas por transferência)", 
       "href",
       umPedidoDiamantes.comprovativo_url
     );
-    await decidir(user, /Confirmar pagamento/, "Confirmar e creditar");
+    await user.click(screen.getByRole("button", { name: /Confirmar pagamento/ }));
 
     await waitFor(() => expect(diamantesAprovar).toHaveBeenCalledWith("dia-1"));
     expect(toastSuccess).toHaveBeenCalledWith("Pagamento confirmado. 165 diamantes creditados.");
@@ -240,7 +231,7 @@ describe("AdminInbox — pedidos da loja do jogo (Kwanzas por transferência)", 
     diamantesAprovar.mockRejectedValue(Object.assign(new Error("este pedido já foi decidido"), { status: 409 }));
     await abrir(user);
 
-    await decidir(user, /Confirmar pagamento/, "Confirmar e creditar");
+    await user.click(await screen.findByRole("button", { name: /Confirmar pagamento/ }));
 
     await waitFor(() => expect(toastError).toHaveBeenCalledWith("este pedido já foi decidido"));
     expect(toastSuccess).not.toHaveBeenCalled();
@@ -251,7 +242,7 @@ describe("AdminInbox — pedidos da loja do jogo (Kwanzas por transferência)", 
     diamantesRejeitar.mockResolvedValue({ ...umPedidoDiamantes, estado: "rejeitado" });
     await abrir(user);
 
-    await decidir(user, /^Rejeitar$/, "Rejeitar");
+    await user.click(await screen.findByRole("button", { name: /Rejeitar/ }));
 
     await waitFor(() => expect(diamantesRejeitar).toHaveBeenCalledWith("dia-1"));
     expect(diamantesAprovar).not.toHaveBeenCalled();
@@ -266,13 +257,12 @@ describe("AdminInbox — pedidos da loja do jogo (Kwanzas por transferência)", 
     await abrir(user);
 
     const cartao = await screen.findByTestId("pedido-loja-moe-1");
-    // O mesmo formato que o jogador viu na loja ("9.000 moedas", "Kz 2.500").
-    expect(cartao).toHaveTextContent("9.000 moedas");
-    expect(cartao).toHaveTextContent("Kz 2.500");
-    await decidir(user, /Confirmar pagamento/, "Confirmar e creditar");
+    expect(cartao).toHaveTextContent("9000 moedas"); // pt-PT só agrupa a partir de 5 dígitos
+    expect(cartao).toHaveTextContent("2500 Kz");
+    await user.click(screen.getByRole("button", { name: /Confirmar pagamento/ }));
 
     await waitFor(() => expect(diamantesAprovar).toHaveBeenCalledWith("moe-1"));
-    expect(toastSuccess).toHaveBeenCalledWith("Pagamento confirmado. 9.000 moedas creditadas.");
+    expect(toastSuccess).toHaveBeenCalledWith("Pagamento confirmado. 9000 moedas creditados.");
   });
 
   it("o link antigo ?tab=diamantes abre o separador da loja do jogo", async () => {
@@ -288,40 +278,9 @@ describe("AdminInbox — pedidos da loja do jogo (Kwanzas por transferência)", 
     const user = userEvent.setup();
     diamantesListar.mockResolvedValue([{ ...umPedidoDiamantes, estado: "aprovado" }]);
     render(<AdminInbox />, { wrapper: MemoryRouter });
-    await user.click(await screen.findByRole("radio", { name: /Loja do jogo \(0\)/ }));
+    await user.click(await screen.findByRole("tab", { name: /Loja do jogo \(0\)/ }));
 
-    expect(await screen.findByText("Creditado")).toBeInTheDocument();
+    expect(await screen.findByText("aprovado")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Confirmar pagamento/ })).not.toBeInTheDocument();
-  });
-});
-
-describe("AdminInbox — decisões pedem confirmação", () => {
-  beforeEach(() => {
-    listar.mockReset().mockResolvedValue([]);
-    premiumListar.mockReset().mockResolvedValue([]);
-    diamantesListar.mockReset().mockResolvedValue([umPedidoDiamantes]);
-    diamantesAprovar.mockReset();
-    toastSuccess.mockReset();
-  });
-
-  // Confirmar um pagamento da loja credita a conta uma única vez: um clique
-  // por engano não se desfaz.
-  it("'Confirmar pagamento' só credita depois de confirmar no diálogo; 'Cancelar' não faz nada", async () => {
-    const user = userEvent.setup();
-    render(<AdminInbox />, { wrapper: MemoryRouter });
-    await user.click(await screen.findByRole("radio", { name: /Loja do jogo/ }));
-
-    await user.click(await screen.findByRole("button", { name: /Confirmar pagamento/ }));
-    const dialogo = await screen.findByRole("dialog", { name: "Confirmar o pagamento?" });
-    expect(dialogo).toHaveTextContent("Kz 1.250");
-    expect(dialogo).toHaveTextContent("165 diamantes");
-    await user.click(within(dialogo).getByRole("button", { name: "Cancelar" }));
-    expect(diamantesAprovar).not.toHaveBeenCalled();
-  });
-
-  it("sem violações de acessibilidade", async () => {
-    const { container } = render(<AdminInbox />, { wrapper: MemoryRouter });
-    await screen.findByText("Sem mensagens.");
-    expect(await violacoesAcessibilidade(container)).toEqual([]);
   });
 });

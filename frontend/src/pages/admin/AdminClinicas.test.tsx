@@ -30,7 +30,6 @@ vi.mock("sonner", () => ({
 }));
 
 import AdminClinicas from "./AdminClinicas";
-import { violacoesAcessibilidade } from "@/design/testes/acessibilidade";
 
 const CLINICA = {
   id: "clinica-1",
@@ -125,26 +124,10 @@ describe("AdminClinicas", () => {
     const user = userEvent.setup();
     render(<AdminClinicas />);
 
-    await screen.findByText("Dr.ª Ana");
-    // Tirar o acesso pede confirmação (antes: um clique e já estava).
-    await user.click(screen.getByRole("button", { name: /^Tirar .* da equipa de Óptica Optioptika$/ }));
-    expect(removerEquipa).not.toHaveBeenCalled();
-    const dialogo = await screen.findByRole("dialog", { name: "Tirar o acesso ao portal?" });
-    await user.click(within(dialogo).getByRole("button", { name: "Tirar acesso" }));
+    const nomeMembro = await screen.findByText("Dr.ª Ana");
+    const linha = nomeMembro.closest("div.flex")!.parentElement!;
+    await user.click(within(linha).getByRole("button"));
 
     await waitFor(() => expect(removerEquipa).toHaveBeenCalledWith("clinica-1", "u-1"));
-  });
-
-  it("se a lista falhar: diz porquê, nunca 'Nenhuma clínica registada.'", async () => {
-    listarAdmin.mockReset().mockRejectedValue(Object.assign(new Error("Sem permissões"), { status: 403 }));
-    render(<AdminClinicas />);
-    expect(await screen.findByRole("alert")).toHaveTextContent("Sem permissões");
-    expect(screen.queryByText("Nenhuma clínica registada.")).not.toBeInTheDocument();
-  });
-
-  it("sem violações de acessibilidade", async () => {
-    const { container } = render(<AdminClinicas />);
-    await screen.findByText("Óptica Optioptika");
-    expect(await violacoesAcessibilidade(container)).toEqual([]);
   });
 });

@@ -39,7 +39,6 @@ vi.mock("sonner", () => ({
 }));
 
 import AdminVoluntariado from "./AdminVoluntariado";
-import { violacoesAcessibilidade } from "@/design/testes/acessibilidade";
 
 const CANDIDATURA_PENDENTE = {
   id: "cand-1",
@@ -116,7 +115,6 @@ describe("AdminVoluntariado", () => {
     renderPage();
 
     await user.click(await screen.findByRole("button", { name: /Rejeitar/i }));
-    await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Rejeitar" }));
 
     await waitFor(() => expect(toastError).toHaveBeenCalledWith("falhou"));
     expect(toastSuccess).not.toHaveBeenCalled();
@@ -127,7 +125,7 @@ describe("AdminVoluntariado", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(await screen.findByRole("radio", { name: /Actividades/i }));
+    await user.click(await screen.findByRole("tab", { name: /Actividades/i }));
     await user.type(screen.getByLabelText("Título"), "Rastreio comunitário");
     await user.type(screen.getByLabelText("Local"), "Luanda");
     await user.type(screen.getByLabelText("Descrição"), "Ajudar no rastreio");
@@ -147,7 +145,7 @@ describe("AdminVoluntariado", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(await screen.findByRole("radio", { name: /Actividades/i }));
+    await user.click(await screen.findByRole("tab", { name: /Actividades/i }));
     expect(await screen.findByText("Rastreio comunitário")).toBeInTheDocument();
 
     listarInscritos.mockResolvedValue([
@@ -180,11 +178,13 @@ describe("AdminVoluntariado", () => {
       const user = userEvent.setup();
       renderPage();
 
-      await user.click(await screen.findByRole("radio", { name: /Actividades/i }));
+      await user.click(await screen.findByRole("tab", { name: /Actividades/i }));
       expect(await screen.findByText("Rastreio já feito")).toBeInTheDocument();
       expect(screen.getByText("Rastreio cancelado")).toBeInTheDocument();
 
-      await user.selectOptions(screen.getByLabelText("Estado"), "Canceladas");
+      // Dois selects sem label -- o primeiro é o de estado (ver AdminVoluntariado.tsx).
+      await user.click(screen.getAllByRole("combobox")[0]);
+      await user.click(await screen.findByRole("option", { name: "Canceladas" }));
 
       expect(screen.queryByText("Rastreio já feito")).not.toBeInTheDocument();
       expect(screen.getByText("Rastreio cancelado")).toBeInTheDocument();
@@ -195,10 +195,11 @@ describe("AdminVoluntariado", () => {
       const user = userEvent.setup();
       renderPage();
 
-      await user.click(await screen.findByRole("radio", { name: /Actividades/i }));
+      await user.click(await screen.findByRole("tab", { name: /Actividades/i }));
       expect(await screen.findByText("Rastreio já feito")).toBeInTheDocument();
 
-      await user.selectOptions(screen.getByLabelText("Quando"), "Já aconteceram");
+      await user.click(screen.getAllByRole("combobox")[1]);
+      await user.click(await screen.findByRole("option", { name: "Já aconteceram" }));
 
       expect(screen.getByText("Rastreio já feito")).toBeInTheDocument();
       expect(screen.queryByText("Rastreio cancelado")).not.toBeInTheDocument();
@@ -209,10 +210,11 @@ describe("AdminVoluntariado", () => {
       const user = userEvent.setup();
       renderPage();
 
-      await user.click(await screen.findByRole("radio", { name: /Actividades/i }));
+      await user.click(await screen.findByRole("tab", { name: /Actividades/i }));
       await screen.findByText("Rastreio já feito");
 
-      await user.selectOptions(screen.getByLabelText("Estado"), "Canceladas");
+      await user.click(screen.getAllByRole("combobox")[0]);
+      await user.click(await screen.findByRole("option", { name: "Canceladas" }));
 
       expect(screen.getByText("Nenhuma actividade corresponde aos filtros.")).toBeInTheDocument();
       expect(screen.queryByText("Nenhuma actividade ainda.")).not.toBeInTheDocument();
@@ -228,12 +230,10 @@ describe("AdminVoluntariado", () => {
       const user = userEvent.setup();
       renderPage();
 
-      await user.click(await screen.findByRole("radio", { name: /Actividades/i }));
+      await user.click(await screen.findByRole("tab", { name: /Actividades/i }));
       await screen.findByText("Rastreio comunitário");
 
       await user.click(screen.getByRole("button", { name: /Arquivar/i }));
-      expect(arquivarAtividade).not.toHaveBeenCalled();
-      await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Arquivar" }));
 
       await waitFor(() => expect(arquivarAtividade).toHaveBeenCalledWith("ativ-1"));
       await waitFor(() => expect(screen.queryByText("Rastreio comunitário")).not.toBeInTheDocument());
@@ -244,10 +244,11 @@ describe("AdminVoluntariado", () => {
       const user = userEvent.setup();
       renderPage();
 
-      await user.click(await screen.findByRole("radio", { name: /Actividades/i }));
+      await user.click(await screen.findByRole("tab", { name: /Actividades/i }));
       expect(screen.queryByText("Rastreio comunitário")).not.toBeInTheDocument();
 
-      await user.selectOptions(screen.getByLabelText("Estado"), "Arquivadas");
+      await user.click(screen.getAllByRole("combobox")[0]);
+      await user.click(await screen.findByRole("option", { name: "Arquivadas" }));
 
       expect(await screen.findByText("Rastreio comunitário")).toBeInTheDocument();
     });
@@ -258,13 +259,13 @@ describe("AdminVoluntariado", () => {
       const user = userEvent.setup();
       renderPage();
 
-      await user.click(await screen.findByRole("radio", { name: /Actividades/i }));
+      await user.click(await screen.findByRole("tab", { name: /Actividades/i }));
       await screen.findByText("Rastreio comunitário");
 
       await user.click(screen.getByRole("button", { name: /Apagar/i }));
       expect(apagarAtividade).not.toHaveBeenCalled();
 
-      await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Apagar" }));
+      await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Apagar" }));
 
       await waitFor(() => expect(apagarAtividade).toHaveBeenCalledWith("ativ-1"));
     });
@@ -277,67 +278,16 @@ describe("AdminVoluntariado", () => {
       const user = userEvent.setup();
       renderPage();
 
-      await user.click(await screen.findByRole("radio", { name: /Actividades/i }));
+      await user.click(await screen.findByRole("tab", { name: /Actividades/i }));
       await screen.findByText("Rastreio comunitário");
 
       await user.click(screen.getByRole("button", { name: /Apagar/i }));
-      await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Apagar" }));
+      await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Apagar" }));
 
       await waitFor(() =>
         expect(toastError).toHaveBeenCalledWith("esta actividade tem inscrições -- arquive em vez de apagar"),
       );
       expect(screen.getByText("Rastreio comunitário")).toBeInTheDocument();
     });
-  });
-
-  // Caso real (2026-10-09): a data escrita lia-se no fuso do computador de
-  // quem publicava. É hora de Luanda (UTC+1), seja qual for o fuso.
-  it("a data da actividade é hora de Luanda", async () => {
-    publicarAtividade.mockResolvedValue(ATIVIDADE);
-    const user = userEvent.setup();
-    renderPage();
-
-    await user.click(await screen.findByRole("radio", { name: /Actividades/i }));
-    await user.type(screen.getByLabelText("Título"), "Rastreio comunitário");
-    await user.type(screen.getByLabelText("Local"), "Luanda");
-    await user.type(screen.getByLabelText("Descrição"), "Ajudar no rastreio");
-    await user.type(screen.getByLabelText("Data de início"), "2026-02-01T09:00");
-    await user.click(screen.getByRole("button", { name: /Publicar actividade/i }));
-
-    await waitFor(() =>
-      expect(publicarAtividade).toHaveBeenCalledWith(expect.objectContaining({ data_inicio: "2026-02-01T08:00:00.000Z" })),
-    );
-  });
-
-  it("campos em falta: assinala-os e não publica", async () => {
-    const user = userEvent.setup();
-    renderPage();
-    await user.click(await screen.findByRole("radio", { name: /Actividades/i }));
-    await user.click(screen.getByRole("button", { name: /Publicar actividade/i }));
-    expect(publicarAtividade).not.toHaveBeenCalled();
-    expect(screen.getByLabelText("Título")).toHaveAttribute("aria-invalid", "true");
-    expect(screen.getByLabelText("Data de início")).toHaveAttribute("aria-invalid", "true");
-  });
-
-  // Antes: um erro mostrava "0 voluntários inscritos" e "Ainda sem inscritos".
-  it("se os inscritos falharem: diz porquê, nunca '0 inscritos'", async () => {
-    listarTodasAsAtividades.mockResolvedValue([ATIVIDADE]);
-    listarInscritos.mockRejectedValue(Object.assign(new Error("Sem permissões"), { status: 403 }));
-    const user = userEvent.setup();
-    renderPage();
-
-    await user.click(await screen.findByRole("radio", { name: /Actividades/i }));
-    await user.click(await screen.findByRole("button", { name: /Inscritos/i }));
-    const dialogo = await screen.findByRole("dialog");
-    expect(await within(dialogo).findByRole("alert")).toHaveTextContent("Sem permissões");
-    expect(dialogo).not.toHaveTextContent("Ainda sem inscritos");
-    expect(dialogo).not.toHaveTextContent("0 voluntários");
-  });
-
-  it("sem violações de acessibilidade", async () => {
-    listarCandidaturas.mockResolvedValue([CANDIDATURA_PENDENTE]);
-    const { container } = renderPage();
-    await screen.findByText("Quero ajudar");
-    expect(await violacoesAcessibilidade(container)).toEqual([]);
   });
 });

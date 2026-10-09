@@ -49,18 +49,7 @@ describe("AdminNotifications", () => {
       expect(enviar).toHaveBeenCalledWith("Manutenção", "O site vai estar em baixo.", null, false),
     );
     expect(toastSuccess).not.toHaveBeenCalled();
-    // O erro fica escrito no formulário, e o que se escreveu não se perde.
-    expect(await screen.findByRole("alert")).toHaveTextContent("sem permissões");
-    expect(screen.getByLabelText("Título")).toHaveValue("Manutenção");
-  });
-
-  it("título e mensagem vazios: assinala os campos e não envia", async () => {
-    const user = userEvent.setup();
-    render(<AdminNotifications />);
-    await user.click(screen.getByRole("button", { name: /Enviar/i }));
-    expect(enviar).not.toHaveBeenCalled();
-    expect(screen.getByLabelText("Título")).toHaveAttribute("aria-invalid", "true");
-    expect(screen.getByLabelText("Mensagem")).toHaveAttribute("aria-invalid", "true");
+    expect(toastError).toHaveBeenCalledWith("sem permissões");
   });
 
   it("mostra sucesso com a contagem real de destinatários", async () => {

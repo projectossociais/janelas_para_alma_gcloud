@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   MapPin,
   Phone,
@@ -17,11 +18,11 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
 import { Button } from "@/components/ui/button";
+import OptioptikaBookingDialog from "@/components/OptioptikaBookingDialog";
 import { OPTIOPTIKA_YELLOW } from "@/data/optioptika";
 import optioptikaAppQr from "@/assets/optioptika-app-qr.png";
 import { Trans, useTranslation } from "react-i18next";
 import i18n from "@/i18n";
-import { Link } from "react-router-dom";
 import { localizar } from "@/i18n/rotas";
 
 const consultasBasicas = [
@@ -93,13 +94,14 @@ const mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURICom
 
 const PortalClinicoOptioptika = () => {
   const { t } = useTranslation();
+  const [bookingOpen, setBookingOpen] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
       <BackButton fallbackPath={localizar("/portal-clinico")} label={t("PortalClinicoOptioptika.voltarAoPortalClinico")} />
 
-      <div className="flex-1">
+      <main className="flex-1">
         {/* Hero */}
         <section
           className="relative overflow-hidden py-16 md:py-24"
@@ -352,15 +354,13 @@ const PortalClinicoOptioptika = () => {
             </div>
             <div className="flex justify-center">
               <Button
-                asChild
                 size="lg"
+                onClick={() => setBookingOpen(true)}
                 className="font-semibold text-black hover:opacity-90"
                 style={{ backgroundColor: OPTIOPTIKA_YELLOW }}
               >
-                <Link to={localizar("/marcar-consulta")}>
-                  <CalendarPlus className="w-5 h-5 mr-2" />
-                  {t("PortalClinicoOptioptika.agendarAMinhaConsulta")}
-                </Link>
+                <CalendarPlus className="w-5 h-5 mr-2" />
+                {t("PortalClinicoOptioptika.agendarAMinhaConsulta")}
               </Button>
             </div>
           </div>
@@ -382,10 +382,11 @@ const PortalClinicoOptioptika = () => {
             </div>
           </div>
         </section>
-      </div>
+      </main>
 
       <Footer />
 
+      <OptioptikaBookingDialog open={bookingOpen} onOpenChange={setBookingOpen} />
     </div>
   );
 };

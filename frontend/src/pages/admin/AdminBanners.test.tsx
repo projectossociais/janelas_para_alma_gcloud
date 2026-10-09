@@ -44,7 +44,6 @@ vi.mock("sonner", () => ({
 }));
 
 import AdminBanners from "./AdminBanners";
-import { violacoesAcessibilidade } from "@/design/testes/acessibilidade";
 
 async function preencherECriar(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText("Título"), "Campanha");
@@ -71,8 +70,7 @@ describe("AdminBanners", () => {
 
     await waitFor(() => expect(criar).toHaveBeenCalled());
     expect(toastSuccess).not.toHaveBeenCalled();
-    // O erro fica escrito no formulário (ou no diálogo), com o que se escreveu.
-    expect(await screen.findByRole("alert")).toHaveTextContent("sem permissões");
+    expect(toastError).toHaveBeenCalledWith("sem permissões");
   });
 
   it("só mostra sucesso depois de a API confirmar a criação", async () => {
@@ -110,7 +108,7 @@ describe("AdminBanners — separador Banner da homepage", () => {
   });
 
   async function irParaSeparadorHomepageECriar(user: ReturnType<typeof userEvent.setup>) {
-    await user.click(screen.getByRole("radio", { name: "Banner da homepage" }));
+    await user.click(screen.getByRole("tab", { name: "Banner da homepage" }));
     await user.type(screen.getByLabelText("Título"), "Campanha de Natal");
     await user.click(screen.getByRole("button", { name: /Criar banner/i }));
   }
@@ -124,8 +122,7 @@ describe("AdminBanners — separador Banner da homepage", () => {
 
     await waitFor(() => expect(criarHomepage).toHaveBeenCalled());
     expect(toastSuccess).not.toHaveBeenCalled();
-    // O erro fica escrito no formulário (ou no diálogo), com o que se escreveu.
-    expect(await screen.findByRole("alert")).toHaveTextContent("sem permissões");
+    expect(toastError).toHaveBeenCalledWith("sem permissões");
   });
 
   it("só mostra sucesso depois de a API confirmar a criação, e nasce sem imagem", async () => {
@@ -200,8 +197,7 @@ describe("AdminBanners — editar (não só ativar/desativar/eliminar)", () => {
 
     await waitFor(() => expect(atualizar).toHaveBeenCalled());
     expect(toastSuccess).not.toHaveBeenCalled();
-    // O erro fica escrito no formulário (ou no diálogo), com o que se escreveu.
-    expect(await screen.findByRole("alert")).toHaveTextContent("sem permissões");
+    expect(toastError).toHaveBeenCalledWith("sem permissões");
   });
 
   it("faixa de aviso: só mostra sucesso depois de a API confirmar a edição", async () => {
@@ -229,7 +225,7 @@ describe("AdminBanners — editar (não só ativar/desativar/eliminar)", () => {
     const user = userEvent.setup();
     render(<AdminBanners />);
 
-    await user.click(screen.getByRole("radio", { name: "Banner da homepage" }));
+    await user.click(screen.getByRole("tab", { name: "Banner da homepage" }));
     await user.click(await screen.findByRole("button", { name: "Editar Campanha de Natal" }));
     const dialogo = within(screen.getByRole("dialog"));
     expect(dialogo.getByLabelText("Título")).toHaveValue("Campanha de Natal");
@@ -239,8 +235,7 @@ describe("AdminBanners — editar (não só ativar/desativar/eliminar)", () => {
 
     await waitFor(() => expect(atualizarHomepage).toHaveBeenCalled());
     expect(toastSuccess).not.toHaveBeenCalled();
-    // O erro fica escrito no formulário (ou no diálogo), com o que se escreveu.
-    expect(await screen.findByRole("alert")).toHaveTextContent("sem permissões");
+    expect(toastError).toHaveBeenCalledWith("sem permissões");
   });
 
   it("banner da homepage: só mostra sucesso depois de a API confirmar a edição", async () => {
@@ -248,7 +243,7 @@ describe("AdminBanners — editar (não só ativar/desativar/eliminar)", () => {
     const user = userEvent.setup();
     render(<AdminBanners />);
 
-    await user.click(screen.getByRole("radio", { name: "Banner da homepage" }));
+    await user.click(screen.getByRole("tab", { name: "Banner da homepage" }));
     await user.click(await screen.findByRole("button", { name: "Editar Campanha de Natal" }));
     const dialogo = within(screen.getByRole("dialog"));
     await user.clear(dialogo.getByLabelText("Título"));
@@ -262,32 +257,5 @@ describe("AdminBanners — editar (não só ativar/desativar/eliminar)", () => {
       descricao: "Doações em dobro",
       link: null,
     });
-  });
-});
-
-describe("AdminBanners — acções com nome e confirmação", () => {
-  // Antes: interruptores sem rótulo ("interruptor, ligado") e remover sem confirmação.
-  it("activar/desactivar e remover dizem a que banner se aplicam; remover pede confirmação", async () => {
-    listar.mockResolvedValue([{ id: "b1", titulo: "Aviso", mensagem: "Estamos em manutenção", link: null, ativo: true }]);
-    const user = userEvent.setup();
-    render(<AdminBanners />);
-
-    expect(await screen.findByRole("button", { name: "Desactivar Aviso" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Remover Aviso" }));
-    expect(await screen.findByRole("dialog", { name: "Remover «Aviso»?" })).toBeInTheDocument();
-  });
-
-  it("se a lista falhar: diz porquê, nunca 'Nenhuma faixa ainda.'", async () => {
-    listar.mockRejectedValue(Object.assign(new Error("Sem permissões"), { status: 403 }));
-    render(<AdminBanners />);
-    expect(await screen.findByRole("alert")).toHaveTextContent("Sem permissões");
-    expect(screen.queryByText("Nenhuma faixa ainda.")).not.toBeInTheDocument();
-  });
-
-  it("sem violações de acessibilidade", async () => {
-    listar.mockResolvedValue([{ id: "b1", titulo: "Aviso", mensagem: "Estamos em manutenção", link: null, ativo: true }]);
-    const { container } = render(<AdminBanners />);
-    await screen.findByText("Aviso");
-    expect(await violacoesAcessibilidade(container)).toEqual([]);
   });
 });

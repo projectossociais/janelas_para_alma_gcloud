@@ -1,0 +1,171 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { ArrowUpRight, FileBadge, Gamepad2 } from "lucide-react";
+import FirmaOlharAlinhadoModal from "@/components/FirmaOlharAlinhadoModal";
+import teamGroupPhoto from "@/assets/team-group-stairs.jpg";
+import saudeMundialPhoto from "@/assets/novidade-saude-mundial.jpg";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
+import { disponivelNoIdiomaActual, localizar } from "@/i18n/rotas";
+
+type Novidade = {
+  readonly title: string;
+  /** Destino do cartão; ausente quando o cartão abre um modal. */
+  readonly to?: string;
+  external: boolean;
+  image: string | null;
+  /** Ícone mostrado no lugar da imagem, quando não há imagem. */
+  icon?: typeof Gamepad2;
+  readonly tag?: string;
+  readonly resumo?: string;
+  modal?: "firma";
+};
+
+const novidades: Novidade[] = [
+  {
+    get title() {
+      return i18n.t("NovidadesSection.oficializacaoDaFirma");
+    },
+    get tag() {
+      return i18n.t("NovidadesSection.tagInstitucional");
+    },
+    get resumo() {
+      return i18n.t("NovidadesSection.oficializacaoDaFirmaResumo");
+    },
+    external: false,
+    image: null,
+    icon: FileBadge,
+    modal: "firma",
+  },
+  {
+    get title() {
+      return i18n.t("NovidadesSection.campanhaDeConsciencializacaoNa");
+    },
+    get to() {
+      return localizar("/meu-kamba/campanha-gamek");
+    },
+    external: false,
+    image: teamGroupPhoto,
+  },
+  {
+    get title() {
+      return i18n.t("NovidadesSection.noticiasSobreASaude");
+    },
+    to: "https://www.cnnbrasil.com.br/tudo-sobre/saude-ocular/",
+    external: true,
+    image: saudeMundialPhoto,
+  },
+  {
+    get title() {
+      return i18n.t("NovidadesSection.lancamentoDoNossoJogo");
+    },
+    get to() {
+      return localizar("/jogo-curiosidades");
+    },
+    external: false,
+    image: null,
+  },
+];
+
+const NovidadesSection = () => {
+  const { t } = useTranslation();
+  const [modalAberto, setModalAberto] = useState<Novidade["modal"] | null>(null);
+  return (
+    <section className="py-16 md:py-24 bg-background">
+      <div className="container">
+        <div className="text-center mb-12 space-y-4">
+          <span className="text-sm font-medium tracking-widest uppercase text-teal">
+            {t("NovidadesSection.fiquePorDentro")}
+          </span>
+          <h2 className="text-3xl md:text-5xl font-bold text-foreground">{t("NovidadesSection.novidades")}</h2>
+        </div>
+
+        <div className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-4 scrollbar-hide touch-pan-x">
+          {novidades.filter((item) => !item.to || disponivelNoIdiomaActual(item.to)).map((item) => {
+            const Icone = item.icon ?? Gamepad2;
+            const cardContent = (
+              <>
+                <div className="relative w-full h-48 overflow-hidden">
+                  {item.image ? (
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="w-full h-48 object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-48 bg-gradient-to-br from-gold/20 to-navy/10 flex items-center justify-center">
+                      <Icone className="w-10 h-10 text-navy/40" />
+                    </div>
+                  )}
+                  {item.external && (
+                    <span className="absolute top-4 left-4 bg-navy text-navy-foreground px-3 py-1 rounded-lg font-semibold text-xs">
+                      {t("NovidadesSection.externo")}
+                    </span>
+                  )}
+                  {item.tag && (
+                    <span className="absolute top-4 left-4 bg-navy text-navy-foreground px-3 py-1 rounded-lg font-semibold text-xs">
+                      {item.tag}
+                    </span>
+                  )}
+                </div>
+                <div className="p-6 space-y-3 flex flex-col flex-1">
+                  <h3 className="text-lg font-bold text-foreground leading-snug">
+                    {item.title}
+                  </h3>
+                  {item.resumo && (
+                    <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">{item.resumo}</p>
+                  )}
+                  <span className="inline-flex items-center gap-1 text-sm text-teal font-medium mt-auto pt-2">
+                    {t("NovidadesSection.saibaMais")}
+                    {item.external && <ArrowUpRight className="w-4 h-4" />}
+                  </span>
+                </div>
+              </>
+            );
+
+            const cardClass =
+              "snap-start shrink-0 w-[85%] sm:w-[70%] md:w-[45%] lg:w-[32%] xl:w-[calc(25%-1.125rem)] rounded-2xl overflow-hidden bg-card shadow-card border border-border/50 transition-all hover:shadow-elevated hover:scale-[1.02] cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 flex flex-col";
+
+            if (item.modal) {
+              const modal = item.modal;
+              return (
+                <button
+                  key={item.title}
+                  type="button"
+                  onClick={() => setModalAberto(modal)}
+                  className={cardClass}
+                >
+                  {cardContent}
+                </button>
+              );
+            }
+
+            return item.external ? (
+              <a
+                key={item.title}
+                href={item.to}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cardClass}
+              >
+                {cardContent}
+              </a>
+            ) : (
+              <Link key={item.title} to={item.to ?? "/"} className={cardClass}>
+                {cardContent}
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
+      <FirmaOlharAlinhadoModal
+        open={modalAberto === "firma"}
+        onOpenChange={(aberto) => setModalAberto(aberto ? "firma" : null)}
+      />
+    </section>
+  );
+};
+
+export default NovidadesSection;

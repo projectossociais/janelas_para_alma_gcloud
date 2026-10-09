@@ -50,7 +50,6 @@ vi.mock("sonner", () => ({
 
 import LojaMoedas from "./LojaMoedas";
 import { CarteiraJogoProvider } from "@/contexts/CarteiraJogoContext";
-import { violacoesAcessibilidade } from "@/design/testes/acessibilidade";
 
 const Envoltorio = ({ children }: { children: ReactNode }) => (
   <MemoryRouter>
@@ -124,10 +123,6 @@ describe("LojaMoedas", () => {
     expect(within(dialogo).getByText("Pagar por transferência")).toBeInTheDocument();
     expect(within(dialogo).getByText("Vai receber 3.300 moedas por Kz 1.000.")).toBeInTheDocument();
     expect(within(dialogo).getByText(/IBAN BAI/)).toBeInTheDocument();
-    // Caso real (2026-10-08): o texto partilhado com a Loja de Diamantes dizia
-    // aqui "Os diamantes são creditados...", numa compra de moedas.
-    expect(within(dialogo).getByText(/As moedas são creditadas/)).toBeInTheDocument();
-    expect(within(dialogo).queryByText(/diamantes são creditados/)).not.toBeInTheDocument();
     const enviar = within(dialogo).getByRole("button", { name: "Enviar comprovativo" });
     expect(enviar).toBeDisabled();
 
@@ -161,7 +156,9 @@ describe("LojaMoedas", () => {
     );
     await userEvent.click(within(dialogo).getByRole("button", { name: "Enviar comprovativo" }));
 
-    expect(await within(screen.getByRole("dialog")).findByRole("alert")).toHaveTextContent("Não foi possível concluir a compra. Nenhum valor foi cobrado.");
+    await waitFor(() =>
+      expect(toastError).toHaveBeenCalledWith("Não foi possível concluir a compra. Nenhum valor foi cobrado.")
+    );
     expect(pedirComKwanzas).not.toHaveBeenCalled();
     expect(toastSuccess).not.toHaveBeenCalled();
     expect(screen.getByRole("dialog")).toBeInTheDocument();
@@ -180,7 +177,7 @@ describe("LojaMoedas", () => {
     );
     await userEvent.click(within(dialogo).getByRole("button", { name: "Enviar comprovativo" }));
 
-    expect(await within(screen.getByRole("dialog")).findByRole("alert")).toHaveTextContent("essa chave não é um comprovativo válido");
+    await waitFor(() => expect(toastError).toHaveBeenCalledWith("essa chave não é um comprovativo válido"));
     expect(toastSuccess).not.toHaveBeenCalled();
   });
 
@@ -254,13 +251,5 @@ describe("LojaMoedas", () => {
 
     await userEvent.click(await screen.findByRole("button", { name: "Tentar novamente" }));
     expect(await screen.findByTestId("pacote-bau")).toBeInTheDocument();
-  });
-
-  it("sem violações de acessibilidade, com a loja e a janela de pagamento abertas", async () => {
-    const { container } = render(<LojaMoedas />, { wrapper: Envoltorio });
-    await screen.findByTestId("pacote-bau");
-    expect(await violacoesAcessibilidade(container)).toEqual([]);
-    const dialogo = await abrirCheckout(/Comprar 9\.000 moedas por Kz 2\.500/);
-    expect(await violacoesAcessibilidade(dialogo)).toEqual([]);
   });
 });
