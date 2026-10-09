@@ -37,6 +37,23 @@ export function diaLocal(data: Date): string {
 export const contaParaDose = (s: SessaoResumo): boolean =>
   IDS_TREINOS.includes(s.exercicio_id) && s.sinais?.baixa_atencao !== true;
 
+/**
+ * As sessões que entram no gráfico do progresso de um exercício: com limiar
+ * medido, de um olho, e sem baixa atenção (não é medição fiável -- já ficava
+ * fora da tendência; até 2026-10-08 o gráfico contradizia-a). Por ordem.
+ */
+export function sessoesDoGrafico<S extends SessaoResumo>(sessoes: readonly S[], exercicioId: string): S[] {
+  return sessoes
+    .filter(
+      (s) =>
+        s.exercicio_id === exercicioId &&
+        s.limiar !== null &&
+        (s.olho === "direito" || s.olho === "esquerdo") &&
+        s.sinais?.baixa_atencao !== true,
+    )
+    .sort((a, b) => a.created_at.localeCompare(b.created_at));
+}
+
 /** Minutos activos de treino por dia (só o que conta para a dose). */
 export function minutosPorDia(sessoes: readonly SessaoResumo[]): Map<string, number> {
   const out = new Map<string, number>();

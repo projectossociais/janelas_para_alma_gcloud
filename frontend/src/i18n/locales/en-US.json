@@ -2247,7 +2247,10 @@
     "partilhaErroRevogar": "The link could not be revoked. Please try again.",
     "partilhadoAviso": "Report shared by the family through the Janelas Para a Alma platform. Link valid until {{expira}}.",
     "partilhadoInvalidoTitulo": "This link is no longer valid",
-    "partilhadoInvalidoTexto": "The link has expired or was revoked. Ask the family for a new one."
+    "partilhadoInvalidoTexto": "The link has expired or was revoked. Ask the family for a new one.",
+    "aneisSemLimiar": "This session did not measure a threshold: there were too few answers, or mistakes even with the largest rings. No value was added to your progress.",
+    "contrasteBlocosSemLimiar": "This session did not measure contrast sensitivity: there were too few answers, or mistakes even with the darkest rings. No value was added to your progress.",
+    "estereoSinalDiferencaGrande": "You only identified the shape with the largest differences ({{valor}}″): depth perception below what is expected, a sign worth checking."
   },
   "ConsentimentoSaude": {
     "titulo": "Permission to process health data",

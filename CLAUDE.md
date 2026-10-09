@@ -457,6 +457,15 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
 - **Tempo activo só com respostas.** Conta intervalos entre respostas até 8 s e com o
   separador visível (`tempoActivo.ts`). Treinos com um estímulo de controlo errado ficam
   `sinais.baixa_atencao` e não contam para a dose.
+- **Nunca mostrar um resultado que a sessão não mediu.** O limiar de um treino só existe com
+  pelo menos 4 inversões da escada (`INVERSOES_MINIMAS`, `lib/visao/escada.ts`); sem isso o
+  resumo diz que não houve medição e grava `limiar: null` (até 2026-10-08 mostrava o nível de
+  partida, ou o anel maior a quem errou tudo, e isso chegava ao relatório do médico). Sem
+  valores de referência (contraste), um valor é "a comparar", nunca "Sem sinais".
+- **Testes de acuidade e contraste contam anel a anel** (`limiarFinoTeste`, como a ETDRS conta
+  letra a letra): cada erro no último nível passado piora 1/3 de nível, cada acerto no primeiro
+  falhado melhora 1/3. Só com o último nível passado, dois olhos com erros diferentes davam o
+  mesmo resultado (caso real, 2026-10-08).
 - **Sessões novas gravam `versao: 2`** e nunca mostram "guardado" antes da resposta da API
   (`useRegistoSessao`, com "Tentar de novo" que reenvia só o que falhou).
 
@@ -608,7 +617,6 @@ Não imitar estes padrões enquanto a migração módulo-a-módulo decorre (ver 
 |---|---|
 | `ScannerAnalysis` (`orm_models.py`) | Modelo e tabela `scanner_analyses` ficaram órfãos depois de `analises_scanner` passar a contar `screenings` (corrigido 2026-09-23) — nada mais lê nem escreve esta tabela. Não apagada agora (dropar tabela é decisão à parte, ver CLAUDE.md §10); útil só se algum dado antigo lá dentro precisar de ser consultado uma vez |
 | `ScannerResultados.tsx` | Define 6 categorias de diagnóstico (`Esotropia`/`Exotropia`/`Hipertropia`/`Hipotropia`/etc.), mas o pipeline real (`Scanner.tsx`) só produz 2 — as 4 subcategorias eram do antigo `Math.random()` (removido no PR #61) e nunca foram atribuídas pelo cálculo real. Ver `docs/BACKLOG.md`, W-09. Também não há resultado "inconclusivo": um "normal" tirado de fotografias fracas mostra-se como normal. Ambos estavam corrigidos no redesenho (PR #134) e voltaram com a reversão de 2026-10-09 |
-| `lib/visao/escada.ts` e testes/treinos | Resultados que não batem com o que a pessoa fez: o limiar de um treino existe mesmo sem inversões suficientes da escada (mostra o nível de partida, ou o anel maior a quem errou tudo, e chega ao relatório do médico), e os testes de acuidade e contraste só contam o último nível passado (dois olhos com erros diferentes dão o mesmo resultado — caso real, 2026-10-08). Corrigido no PR #145 e revertido com o redesenho em 2026-10-09, por decisão da equipa; para repor, partir do #145 |
 | `admin/AdminAtividade` | Sessões de exercício versão 2 aparecem como "0 %" (a API já devolve `versao`, `limiar`, `olho`, etc. desde o PR #148, mas o painel antigo não os mostra) |
 
 Itens antigos desta tabela já confirmados como resolvidos ou obsoletos: `ProfileContext.tsx` já usa `perfilApi` por completo (não é Supabase); `Produto.tsx` foi apagado do projecto num refactor antigo e já não existe (2026-09-17); `ClinicalPartners.tsx`/`OptioptikaBookingDialog.tsx` já persistem o pedido de consulta via `POST /agendamentos` (Sprint 4, Fase 0, PR #86, 2026-09-24).
