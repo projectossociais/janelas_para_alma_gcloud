@@ -491,7 +491,6 @@
   },
   "DashboardPro": {
     "areaClinica": "Área Clínica",
-    "bemVindoADr": "Bem-vindo(a), Dr(a).",
     "pacientesAtribuidos": "Pacientes atribuídos",
     "pedidosPorDecidir": "Pedidos por decidir",
     "pedidosDeConsulta": "Pedidos de consulta",
@@ -500,8 +499,8 @@
     "teleconsultasAgendadas": "Teleconsultas agendadas",
     "relatoriosPendentes": "Relatórios pendentes",
     "emBreve": "Em breve",
-    "listaDePacientesQue": "• Lista de pacientes que autorizaram partilha de dados.",
-    "visualizacaoDeRelatoriosDo": "• Visualização de relatórios do scanner por paciente.",
+    "listaDePacientesQue": "Lista de pacientes que autorizaram partilha de dados.",
+    "visualizacaoDeRelatoriosDo": "Visualização de relatórios do scanner por paciente.",
     "agendaIntegradaDeTeleconsultas": "• Agenda integrada de teleconsultas.",
     "emissaoDeRecomendacoesClinicas": "• Emissão de recomendações clínicas.",
     "disponibilidadeSemanal": "Disponibilidade semanal",
@@ -539,7 +538,36 @@
       "agendada": "Agendada",
       "em_curso": "Em curso",
       "concluida": "Concluída"
-    }
+    },
+    "bemVindo": "Bem-vindo(a), {{nome}}. {{clinica}}.",
+    "proximasConsultas": "Próximas consultas",
+    "semProximas": "Sem consultas confirmadas por acontecer.",
+    "porConfirmar": "Por confirmar",
+    "porConfirmarAjuda": "A equipa Janelas Para a Alma confirma cada pedido e avisa o paciente.",
+    "anteriores": "Anteriores e recusadas",
+    "quandoHora": "{{dia}}, {{hora}} (hora de Luanda)",
+    "quandoPreferencia": "{{dia}} {{periodo}} (preferência do paciente)",
+    "estado": {
+      "pendente": "Por confirmar",
+      "confirmada": "Confirmada",
+      "recusada": "Recusada"
+    },
+    "horasDeLuanda": "Horas de Luanda.",
+    "fimDepoisDoInicio": "O fim tem de ser depois do início.",
+    "removerHorario": "Remover o horário de {{dia}}, {{inicio}}–{{fim}} ({{modalidade}})",
+    "removerHorarioTitulo": "Remover este horário?",
+    "removerHorarioTexto": "Os pacientes deixam de poder marcar neste horário. As consultas já marcadas mantêm-se.",
+    "remover": "Remover",
+    "cancelar": "Cancelar",
+    "fechar": "Fechar",
+    "escolher": "Escolher…",
+    "navegacao": "Navegação do portal",
+    "saltar": "Saltar para o conteúdo",
+    "menu": "Menu",
+    "fecharMenu": "Fechar",
+    "voltarAoSite": "Voltar ao site",
+    "terminarSessao": "Terminar sessão",
+    "pedidosPorConfirmar": "Pedidos por confirmar"
   },
   "DashboardUser": {
     "saudacao": "Olá, {{nome}}",
@@ -2477,5 +2505,11 @@
     "tabelaValores": "Resultados de {{exercicio}} por dia e por olho",
     "relatorioTitulo": "Para a consulta",
     "relatorioTexto": "Um relatório da semana para imprimir, guardar em PDF ou enviar ao oftalmologista por um link temporário."
+  },
+  "RequireClinica": {
+    "aVerificar": "A verificar o acesso ao portal…",
+    "naoFoiPossivelVerificar": "Não foi possível verificar o acesso ao portal",
+    "verifiqueALigacao": "Verifique a ligação à internet e tente de novo.",
+    "tentarDeNovo": "Tentar de novo"
   }
 }
