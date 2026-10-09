@@ -25,7 +25,8 @@ export const MolduraApp = ({
   subtitulo,
   children,
 }: {
-  activo: SeparadorApp;
+  /** O separador do ecrã; sem ele (ex.: definições, perfil), nenhum fica marcado. */
+  activo?: SeparadorApp;
   /** O `h1` do ecrã (no painel, a saudação). */
   titulo: ReactNode;
   subtitulo?: ReactNode;

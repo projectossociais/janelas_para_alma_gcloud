@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
@@ -59,7 +59,7 @@ vi.mock("@/contexts/ProfileContext", () => ({
 
 const logout = vi.fn();
 vi.mock("@/contexts/AuthContext", () => ({
-  useAuth: () => ({ isLoggedIn: true, logout: (...a: unknown[]) => logout(...a) }),
+  useAuth: () => ({ isLoggedIn: true, loading: false, user: { name: "Ana Teste" }, logout: (...a: unknown[]) => logout(...a) }),
 }));
 
 const toastError = vi.fn();
@@ -68,7 +68,10 @@ vi.mock("sonner", () => ({
   toast: { error: (...a: unknown[]) => toastError(...a), success: (...a: unknown[]) => toastSuccess(...a) },
 }));
 
+vi.mock("@/components/NotificationBell", () => ({ default: () => null }));
+
 import Configuracoes from "./Configuracoes";
+import { violacoesAcessibilidade } from "@/design/testes/acessibilidade";
 
 // O consentimento para dados de saúde tem testes próprios
 // (ConsentimentoSaudeContext.test.tsx); aqui a conta já consentiu.
@@ -83,7 +86,7 @@ vi.mock("@/contexts/ConsentimentoSaudeContext", () => ({
 
 
 async function abrirDialogoPassword(user: ReturnType<typeof userEvent.setup>) {
-  const botao = await screen.findByText("Mudar Palavra-passe");
+  const botao = await screen.findByRole("button", { name: "Mudar Palavra-passe" });
   await user.click(botao);
   return {
     actual: await screen.findByLabelText("Palavra-passe actual"),
@@ -112,7 +115,7 @@ describe("Configuracoes — mudar palavra-passe", () => {
     await user.click(guardar);
 
     await waitFor(() => expect(mudarPassword).toHaveBeenCalledWith("palavra-errada", "novaSenha123"));
-    expect(toastError).toHaveBeenCalledWith("password actual incorrecta");
+    expect(await within(screen.getByRole("dialog")).findByRole("alert")).toHaveTextContent("password actual incorrecta");
     expect(toastSuccess).not.toHaveBeenCalled();
     // o dialogo continua aberto — o utilizador nunca viu "sucesso" para algo que falhou
     expect(screen.getByLabelText("Palavra-passe actual")).toBeInTheDocument();
@@ -145,7 +148,8 @@ describe("Configuracoes — mudar palavra-passe", () => {
     await user.click(guardar);
 
     expect(mudarPassword).not.toHaveBeenCalled();
-    expect(toastError).toHaveBeenCalledWith("Verifique os campos da palavra-passe.");
+    // O erro fica no campo, não num aviso que desaparece.
+    expect(screen.getByText("As duas palavras-passe novas não coincidem.")).toBeInTheDocument();
   });
 
   it("nunca chama a API se a nova palavra-passe for demasiado curta", async () => {
@@ -159,7 +163,7 @@ describe("Configuracoes — mudar palavra-passe", () => {
     await user.click(guardar);
 
     expect(mudarPassword).not.toHaveBeenCalled();
-    expect(toastError).toHaveBeenCalledWith("A palavra-passe deve ter pelo menos 8 caracteres.");
+    expect(screen.getByText("A palavra-passe deve ter pelo menos 8 caracteres.")).toBeInTheDocument();
   });
 
   it("nunca chama a API se a nova palavra-passe não tiver letras nem números (AUTH-01)", async () => {
@@ -173,7 +177,7 @@ describe("Configuracoes — mudar palavra-passe", () => {
     await user.click(guardar);
 
     expect(mudarPassword).not.toHaveBeenCalled();
-    expect(toastError).toHaveBeenCalledWith("A palavra-passe precisa de pelo menos uma letra.");
+    expect(screen.getByText("A palavra-passe precisa de pelo menos uma letra.")).toBeInTheDocument();
   });
 });
 
@@ -205,7 +209,7 @@ describe("Configuracoes — eliminar conta (agendada a 30 dias)", () => {
     await waitFor(() => expect(eliminar).toHaveBeenCalled());
     expect(logout).not.toHaveBeenCalled();
     expect(toastSuccess).not.toHaveBeenCalled();
-    expect(toastError).toHaveBeenCalledWith("boom");
+    expect(await within(screen.getByRole("dialog")).findByRole("alert")).toHaveTextContent("boom");
     // o dialogo de confirmação continua visível — não fechou sozinho
     expect(screen.getByRole("button", { name: /^Agendar eliminação$/ })).toBeInTheDocument();
   });
@@ -225,5 +229,42 @@ describe("Configuracoes — eliminar conta (agendada a 30 dias)", () => {
     );
     // Nunca chama uma função de eliminação imediata — só agenda.
     expect(eliminar).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("Configuracoes — sem controlos que não gravam nada", () => {
+  // Caso real (2026-10-09): "Perfil público" mostrava "Preferências guardadas"
+  // sem gravar nada -- nem existe na API.
+  it("não há o interruptor 'Perfil público'", async () => {
+    render(<Configuracoes />, { wrapper: MemoryRouter });
+    await screen.findByRole("heading", { level: 1 });
+    expect(screen.queryByText(/Perfil Público/i)).not.toBeInTheDocument();
+  });
+
+  it("uma notificação que não se grava volta ao estado anterior e diz porquê", async () => {
+    atualizarPerfil.mockReset().mockRejectedValue(new ApiErrorFalso(500, "falhou"));
+    const user = userEvent.setup();
+    render(<Configuracoes />, { wrapper: MemoryRouter });
+
+    const opcao = await screen.findByRole("checkbox", { name: /Lembretes de Exercícios Visuais/i });
+    expect(opcao).not.toBeChecked();
+    await user.click(opcao);
+
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    expect(opcao).not.toBeChecked();
+  });
+
+  // O texto da eliminação diz o que acontece de facto (anonimização, CLAUDE.md §4.7).
+  it("a eliminação diz que os resultados ficam guardados sem identificação", async () => {
+    const user = userEvent.setup();
+    render(<Configuracoes />, { wrapper: MemoryRouter });
+    await user.click(await screen.findByRole("button", { name: /Eliminar Conta/i }));
+    expect(await screen.findByRole("dialog")).toHaveTextContent(/ficam guardados sem nada que o identifique/);
+  });
+
+  it("sem violações de acessibilidade", async () => {
+    const { container } = render(<Configuracoes />, { wrapper: MemoryRouter });
+    await screen.findByRole("heading", { level: 1 });
+    expect(await violacoesAcessibilidade(container)).toEqual([]);
   });
 });

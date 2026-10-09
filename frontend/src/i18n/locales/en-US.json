@@ -223,7 +223,12 @@
     "esteLinkDeRecuperacao2": "This recovery link is invalid or has expired. Please request a new one.",
     "escolhaUmaNovaPalavra": "Choose a new password for your account.",
     "esteLinkDeRecuperacao3": "This recovery link is invalid.",
-    "aGuardar": "Saving..."
+    "aGuardar": "Saving...",
+    "pedirNovoTitulo": "Ask for a new reset link",
+    "pedirNovoTexto": "Enter your account email and we'll send another link to set your password.",
+    "pedirNovoEnviado": "If there's an account with that email, we've sent a new link. Check your inbox and spam.",
+    "pedirNovoBotao": "Send new link",
+    "voltarAoLogin": "Back to sign in"
   },
   "Auth": {
     "aEntrar": "Signing in…",
@@ -375,8 +380,6 @@
   "Configuracoes": {
     "configuracoesDaConta": "Account Settings",
     "giraAsSuasPreferencias": "Manage your preferences, notifications and personal data.",
-    "inicieSessaoParaGuardar": "Sign in to save your preferences permanently.",
-    "entrar": "Sign In",
     "preferenciasDeNotificacao": "Notification Preferences",
     "escolhaOsEmailsQue": "Choose which emails you would like to receive from us.",
     "actualizacoesDeProjectosE": "Project and Donation Updates",
@@ -385,38 +388,30 @@
     "lembretesSemanaisParaPraticar": "One email a day, only on days you have not trained yet.",
     "novasHistoriasDaComunidade": "New Community Stories",
     "alertasParaNovasPublicacoes": "Alerts for new community posts.",
-    "privacidadeESeguranca": "Privacy and Security",
-    "controleOAcessoA": "Control access to your account and profile.",
     "palavraPasse": "Password",
     "altereASuaPalavra": "Change your password regularly.",
     "mudarPalavraPasse": "Change Password",
-    "perfilPublico": "Public Profile",
-    "permitirQueAEquipa": "Allow the medical team and other users to see my basic progress.",
-    "zonaDePerigo": "Danger Zone",
-    "accoesIrreversiveisRelacionadasCom": "Irreversible actions related to your account.",
     "eliminarConta": "Delete Account",
-    "apagaPermanentementeOSeu": "Permanently deletes your profile, history and preferences.",
+    "apagaPermanentementeOSeu": "Deletes your personal data: name, email, contact details, photo and profile.",
     "introduzaASuaPalavra": "Enter your current password and choose a new one.",
     "palavraPasseActual": "Current password",
     "novaPalavraPasse": "New password",
     "confirmarNovaPalavraPasse": "Confirm new password",
     "cancelar": "Cancel",
     "temACerteza": "Are you sure?",
-    "aSuaContaFicara": "Your account will be scheduled for permanent deletion in <strong>30 days</strong>. Your profile, your exercise history and the link between your donation or Premium requests and your identity will be deleted. If you sign in again before then, the request is canceled automatically.",
-    "inicieSessaoParaGuardar2": "Sign in to save your preferences.",
+    "aSuaContaFicara": "Your account will be scheduled for deletion in <strong>30 days</strong>. On that date we delete your personal data (name, email, contact details, photo and profile) and the link between your donation or Premium requests and you. Exercise and screening results are kept with nothing that identifies you. If you sign in again before then, the request is canceled automatically.",
     "preferenciaGuardada": "Preference saved",
     "naoFoiPossivelGuardar": "We couldn't save that. Please try again.",
-    "preferenciasGuardadas": "Preferences saved",
-    "verifiqueOsCamposDa": "Check the password fields.",
     "palavraPasseActualizadaCom": "Password updated successfully.",
     "naoFoiPossivelActualizar": "We couldn't update your password. Please try again.",
-    "naoFoiPossivelConfirmar": "We couldn't confirm your account. Please try again later.",
     "contaAgendadaParaEliminacao": "Account scheduled for deletion in 30 days. Signing in again before then cancels the request.",
     "naoFoiPossivelAgendar": "We couldn't schedule the deletion. Please try again.",
-    "aGuardar": "Saving…",
     "guardar": "Save",
-    "aAgendar": "Scheduling…",
-    "agendarEliminacao": "Schedule deletion"
+    "agendarEliminacao": "Schedule deletion",
+    "fechar": "Close",
+    "escrevaAPalavraPasseActual": "Enter your current password.",
+    "escrevaANovaPalavraPasse": "Enter the new password.",
+    "asNovasNaoCoincidem": "The two new passwords don't match."
   },
   "ConfirmarEmail": {
     "irParaOLogin": "Go to sign-in",
@@ -426,7 +421,11 @@
     "contaConfirmada": "Account confirmed!",
     "naoFoiPossivelConfirmar": "We couldn't confirm your account",
     "umMomento": "One moment.",
-    "jaPodeEntrarCom": "You can now sign in with your email and password."
+    "jaPodeEntrarCom": "You can now sign in with your email and password.",
+    "pedirNovoTitulo": "Ask for a new confirmation link",
+    "pedirNovoTexto": "Enter the email you signed up with and we'll send another link.",
+    "pedirNovoEnviado": "If there's an unconfirmed account with that email, we've sent a new link. Check your inbox and spam.",
+    "pedirNovoBotao": "Send new link"
   },
   "ContactSection": {
     "junteSeANos": "Join Us",
@@ -586,7 +585,7 @@
     "personalizeASuaIdentidade": "Personalize how you look and introduce yourself.",
     "aEnviar": "Uploading...",
     "alterarFoto": "Change Photo",
-    "jpgOuPngMaximo": "JPG or PNG. Maximum 2 MB.",
+    "jpgOuPngMaximo": "PNG, JPEG or WebP, up to 5 MB.",
     "biografia": "Bio",
     "dadosPessoais": "Personal Information",
     "asSuasInformacoesBasicas": "Your basic identification details.",
@@ -615,7 +614,9 @@
     "oSeuNomeCompleto": "Your full name",
     "seleccione": "Select",
     "seleccioneASuaProvincia": "Select your province",
-    "salvarAlteracoes": "Save Changes"
+    "salvarAlteracoes": "Save Changes",
+    "escrevaONome": "Enter your name.",
+    "aCarregar": "Loading your profile…"
   },
   "Exercicios": {
     "exerciciosVisuaisPraticos": "Vision tests and training",
@@ -2511,5 +2512,10 @@
     "naoFoiPossivelVerificar": "We couldn't check your portal access",
     "verifiqueALigacao": "Check your internet connection and try again.",
     "tentarDeNovo": "Try again"
+  },
+  "PedirNovoLink": {
+    "email": "Account email",
+    "emailInvalido": "Enter a valid email.",
+    "erro": "We couldn't send the request. Please try again."
   }
 }

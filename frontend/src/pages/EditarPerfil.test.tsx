@@ -28,6 +28,7 @@ vi.mock("@/lib/apiClient", () => ({
 }));
 
 vi.mock("@/components/Navbar", () => ({ default: () => null }));
+vi.mock("@/components/NotificationBell", () => ({ default: () => null }));
 vi.mock("@/components/Footer", () => ({ default: () => null }));
 
 const mockProfile = {
@@ -54,7 +55,7 @@ vi.mock("@/contexts/ProfileContext", () => ({
 
 const updateUserProfile = vi.fn();
 vi.mock("@/contexts/AuthContext", () => ({
-  useAuth: () => ({ isLoggedIn: true, user: { id: "user-1" }, updateUserProfile }),
+  useAuth: () => ({ isLoggedIn: true, loading: false, user: { id: "user-1", email: "ana@example.com" }, updateUserProfile, logout: vi.fn() }),
   PROVINCES: ["Luanda", "Benguela"],
 }));
 
@@ -69,6 +70,7 @@ vi.mock("sonner", () => ({
 }));
 
 import EditarPerfil from "./EditarPerfil";
+import { violacoesAcessibilidade } from "@/design/testes/acessibilidade";
 
 const ficheiro = () => new File([new Uint8Array([1, 2, 3])], "foto.png", { type: "image/png" });
 
@@ -105,7 +107,8 @@ describe("EditarPerfil — foto de perfil", () => {
     expect(confirmarAvatar).not.toHaveBeenCalled();
     expect(toastSuccess).not.toHaveBeenCalled();
     expect(setProfile).not.toHaveBeenCalled();
-    expect(toastError).toHaveBeenCalledWith("Não foi possível enviar a imagem para o storage.");
+    // O erro fica junto da foto, não num aviso que desaparece.
+    expect(await screen.findByRole("alert")).toHaveTextContent("Não foi possível enviar a imagem para o storage.");
   });
 
   it("nunca mostra sucesso se a confirmação na API falhar", async () => {
@@ -126,7 +129,7 @@ describe("EditarPerfil — foto de perfil", () => {
     await waitFor(() => expect(confirmarAvatar).toHaveBeenCalled());
     expect(toastSuccess).not.toHaveBeenCalled();
     expect(setProfile).not.toHaveBeenCalled();
-    expect(toastError).toHaveBeenCalledWith("essa chave não pertence a este utilizador");
+    expect(await screen.findByRole("alert")).toHaveTextContent("essa chave não pertence a este utilizador");
   });
 
   it("só grava e mostra sucesso depois de os três passos correrem", async () => {
@@ -153,3 +156,35 @@ describe("EditarPerfil — foto de perfil", () => {
     expect(toastError).not.toHaveBeenCalled();
   });
 });
+
+describe("EditarPerfil — dados", () => {
+  beforeEach(() => {
+    toastSuccess.mockReset();
+    toastError.mockReset();
+  });
+
+  // Caso real (2026-10-09): apagar o nome e guardar mostrava "perfil
+  // actualizado" e mantinha o nome antigo sem dizer nada.
+  it("nome vazio: assinala o campo e não grava", async () => {
+    const user = userEvent.setup();
+    render(<EditarPerfil />, { wrapper: MemoryRouter });
+    const nome = await screen.findByLabelText("Nome Completo");
+    await user.clear(nome);
+    await user.click(screen.getByRole("button", { name: /Salvar Alterações/i }));
+    expect(nome).toHaveAttribute("aria-invalid", "true");
+    expect(toastSuccess).not.toHaveBeenCalled();
+  });
+
+  it("o género escolhe-se com botões de opção numa linha (decisão de 2026-10-07)", async () => {
+    render(<EditarPerfil />, { wrapper: MemoryRouter });
+    const grupo = await screen.findByRole("group", { name: "Género" });
+    expect(grupo.querySelectorAll('input[type="radio"]')).toHaveLength(3);
+  });
+
+  it("sem violações de acessibilidade", async () => {
+    const { container } = render(<EditarPerfil />, { wrapper: MemoryRouter });
+    await screen.findByLabelText("Nome Completo");
+    expect(await violacoesAcessibilidade(container)).toEqual([]);
+  });
+});
+
