@@ -274,6 +274,23 @@ Acrescentar abaixo, com data, o que for decidido ou detalhado em cada conversa s
 redesenho (referências visuais, páginas a priorizar, gostos e recusas do dono do
 projecto, feedback do Lukeny). Mais recente em cima.
 
+- **2026-10-09** — **Fase 5 começa: o painel admin no arquétipo Consola (ramo `redesenho/fase-5-consola`).**
+  Novo `LayoutConsola` no sistema de design (uma só navegação: barra lateral no computador, "Menu" no
+  telemóvel), `Tabela` semântica com scroll próprio, `CabecalhoConsola`; o `Seleccao` ganhou
+  `rotuloOculto` e `tamanho="compacto"` (32 px, alvo da Consola) e o `DialogoConteudo` serve as
+  confirmações (`ConfirmarAccao`). As 11 páginas do admin redesenhadas. **O h1 é o título de cada
+  página** (antes: "Janelas Para a Alma · Admin" em todas, com o título real num h2). Corrigidos dados
+  enganadores: sem resposta da API, a visão geral mostrava 0 em todas as métricas e as listas diziam
+  "Sem utilizadores/mensagens" (`useDadosAdmin` separa a carregar, erro e dados); as sessões dos
+  exercícios novos apareciam com pontuação "0" e precisão "0 %" (a API passa a enviar olho, limiar e
+  tempo activo); horas das consultas e datas das actividades no fuso do computador de quem abria o
+  painel (agora sempre hora de Luanda); a data das publicações podia mostrar o dia anterior. Decisões
+  que não se desfazem (aprovar ou revogar Premium, creditar ou rejeitar um pedido da loja, tirar acesso,
+  apagar) pedem confirmação num diálogo; botões só com ícone e interruptores passaram a ter nome; o
+  remover foto da galeria deixou de existir só ao passar o rato. **Falta da Fase 5:** o portal da
+  clínica (`DashboardPro`), as páginas da conta e de entrada que escaparam à Fase 4 (Editar perfil,
+  Definições, Confirmar email, Nova palavra-passe), as institucionais e legais, e remover os tokens antigos.
+
 - **2026-10-08** — **Fase 4, o jogo: menu, lojas e perfil (ramo `redesenho/jogo-menu`).** Com isto
   **o jogo fica todo redesenhado.** As quatro páginas passam ao cabeçalho e rodapé novos do site (como a
   lista dos exercícios: convidados também jogam) e ao sistema de design. No menu, os modos "Em breve"

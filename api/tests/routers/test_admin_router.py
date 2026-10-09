@@ -56,7 +56,24 @@ class RepositorioStatsFalso:
                 pontuacao=80,
                 precisao_percentual=91.5,
                 created_at=datetime.now(UTC),
-            )
+            ),
+            SessaoExercicioAdminRegisto(
+                id="s2",
+                user_id="u-comum",
+                utilizador_nome="Rui",
+                utilizador_email="rui@example.com",
+                exercicio_id="figure8",
+                duracao_segundos=90,
+                pontuacao=0,
+                precisao_percentual=0,
+                created_at=datetime.now(UTC),
+                versao=2,
+                olho="direito",
+                segundos_activos=75,
+                limiar=0.3,
+                unidade="logmar",
+                baixa_atencao=True,
+            ),
         ]
 
     def listar_ativos(self, desde) -> list[UtilizadorAtivoRegisto]:
@@ -278,9 +295,25 @@ def test_admin_lista_sessoes_exercicio(ambiente) -> None:
     r = c.get("/admin/sessoes-exercicio")
     assert r.status_code == 200
     corpo = r.json()
-    assert len(corpo) == 1
+    assert len(corpo) == 2
     assert corpo[0]["exercicio_id"] == "convergencia"
     assert corpo[0]["utilizador_email"] == "rui@example.com"
+    assert corpo[0]["versao"] == 1
+
+
+def test_admin_sessoes_v2_trazem_o_resultado_real(ambiente) -> None:
+    # Caso real (2026-10-09): as sessões versão 2 têm pontuação e precisão a 0
+    # por omissão; sem limiar, olho e tempo activo, o admin via "0" e "0 %".
+    c, _, token_admin, _, _ = ambiente
+    c.cookies.set("access_token", token_admin)
+    v2 = c.get("/admin/sessoes-exercicio").json()[1]
+    assert v2["versao"] == 2
+    assert v2["olho"] == "direito"
+    assert v2["segundos_activos"] == 75
+    assert v2["limiar"] == 0.3
+    assert v2["unidade"] == "logmar"
+    assert v2["baixa_atencao"] is True
+    assert v2["astigmatismo"] is None
 
 
 def test_ativos_sem_sessao_401(ambiente) -> None:

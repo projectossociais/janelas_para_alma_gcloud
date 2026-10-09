@@ -49,3 +49,27 @@ export const formatarDiaCurto = (iso: string, idioma: string) => ({
 /** "segunda-feira, 6 de outubro" */
 export const formatarDiaLongo = (iso: string, idioma: string) =>
   partes(iso, idioma, { weekday: "long", day: "numeric", month: "long" });
+
+/**
+ * Angola não muda a hora: Luanda está sempre a UTC+1. Um campo
+ * `datetime-local` ("2026-10-20T15:00") não tem fuso; o `new Date()` lia-o
+ * no fuso do computador de quem o preenche -- num admin fora de Angola, a
+ * actividade ficava publicada com outra hora.
+ */
+const DESVIO_LUANDA = "+01:00";
+
+/** "2026-10-20T15:00" escrito como hora de Luanda -> ISO em UTC. `null` se não for uma data. */
+export function deHoraDeLuanda(valor: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(valor)) return null;
+  const d = new Date(`${valor}:00${DESVIO_LUANDA}`);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+/** O contrário: um ISO para preencher um `datetime-local` em hora de Luanda. */
+export const paraHoraDeLuanda = (iso: string): string =>
+  `${chaveDoDia(iso)}T${partes(iso, "en-GB", { hour: "2-digit", minute: "2-digit", hourCycle: "h23" })}`;
+
+/** "20/10/2026, 15:00", sempre em hora de Luanda. */
+export const formatarDataHoraLuanda = (iso: string, idioma = "pt-PT") =>
+  partes(iso, idioma, { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+

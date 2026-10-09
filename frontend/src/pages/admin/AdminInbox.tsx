@@ -1,66 +1,91 @@
-import { useEffect, useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  contactMessagesApi,
-  jogoApi,
-  premiumApi,
-  mensagemDeErroApi,
-  type ContactMessageAdmin,
-  type PedidoLojaAdmin,
-  type PedidoPremiumAdmin,
-} from "@/lib/apiClient";
-import { toast } from "sonner";
 import { Check, Coins, FileText, Gem, Mail, Phone, X } from "lucide-react";
+import { toast } from "sonner";
+import { ConfirmarAccao } from "@/components/admin/ConfirmarAccao";
+import { EstadoDadosAdmin } from "@/components/admin/DadosAdmin";
+import { useDadosAdmin } from "@/components/admin/useDadosAdmin";
+import { Botao } from "@/design/componentes/Botao";
+import { GrupoEscolha } from "@/design/componentes/Escolha";
+import { Estado } from "@/design/componentes/Tabela";
+import { CabecalhoConsola } from "@/design/layouts/LayoutConsola";
+import { formatarDataHora } from "@/i18n/formatar";
+import { contactMessagesApi, jogoApi, premiumApi, mensagemDeErroApi } from "@/lib/apiClient";
+import { formatarKz } from "@/pages/jogo/jogoConfig";
 
 // "diamantes" mantém-se como alias antigo do separador da loja do jogo.
-const TABS_VALIDAS = ["messages", "premium", "loja", "diamantes"] as const;
-type Tab = (typeof TABS_VALIDAS)[number];
+const VISTAS_VALIDAS = ["messages", "premium", "loja", "diamantes"] as const;
+type Vista = "messages" | "premium" | "loja";
+
+const ESTADO_PREMIUM: Record<string, { rotulo: string; tom: "aviso" | "sucesso" | "erro" | "neutro" }> = {
+  pendente: { rotulo: "Por decidir", tom: "aviso" },
+  aprovado: { rotulo: "Aprovado", tom: "sucesso" },
+  revogado: { rotulo: "Revogado", tom: "erro" },
+};
+const ESTADO_LOJA: Record<string, { rotulo: string; tom: "aviso" | "sucesso" | "erro" | "neutro" }> = {
+  pendente: { rotulo: "Por decidir", tom: "aviso" },
+  aprovado: { rotulo: "Creditado", tom: "sucesso" },
+  rejeitado: { rotulo: "Rejeitado", tom: "erro" },
+};
+const EstadoDe = ({ mapa, estado }: { mapa: typeof ESTADO_PREMIUM; estado: string }) => {
+  const e = mapa[estado] ?? { rotulo: estado, tom: "neutro" as const };
+  return <Estado tom={e.tom}>{e.rotulo}</Estado>;
+};
+
+// Como nas lojas: o toLocaleString("pt-PT") escreve "9000" (só agrupa a partir de 5 algarismos).
+const numero = (n: number) => n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+/** "165 diamantes" / "9.000 moedas" -- e o particípio concorda ("creditadas" para moedas). */
+const quantidadeLoja = (n: number, tipo: string) => `${numero(n)} ${tipo}`;
+const creditados = (tipo: string) => (tipo === "moedas" ? "creditadas" : "creditados");
+
+const Item = ({ children, accoes, testId }: { children: ReactNode; accoes?: ReactNode; testId?: string }) => (
+  <li data-testid={testId} className="rounded-cartao border border-linha bg-superficie p-4">
+    <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="min-w-0 flex-1">{children}</div>
+      {accoes && <div className="flex shrink-0 flex-col gap-2 sm:items-end">{accoes}</div>}
+    </div>
+  </li>
+);
+
+const Contacto = ({ email, telefone }: { email: string; telefone?: string | null }) => (
+  <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-legenda text-tinta-suave">
+    <a href={`mailto:${email}`} className="inline-flex items-center gap-1 underline-offset-2 hover:underline">
+      <Mail className="size-3.5" aria-hidden />
+      {email}
+    </a>
+    {telefone && (
+      <a href={`tel:${telefone}`} className="inline-flex items-center gap-1 underline-offset-2 hover:underline">
+        <Phone className="size-3.5" aria-hidden />
+        {telefone}
+      </a>
+    )}
+  </p>
+);
+
+const VerComprovativo = ({ url }: { url: string }) => (
+  <Botao asChild variante="secundario">
+    <a href={url} target="_blank" rel="noopener noreferrer">
+      <FileText aria-hidden /> Ver comprovativo
+    </a>
+  </Botao>
+);
 
 const AdminInbox = () => {
-  // Permite a Central de Pendências (AdminOverview) linkar directamente ao
-  // separador certo -- ex.: /admin/mensagens?tab=premium.
-  const [searchParams] = useSearchParams();
+  // A visão geral liga directamente à vista certa (ex.: ?tab=premium).
+  const [searchParams, setSearchParams] = useSearchParams();
   const pedida = searchParams.get("tab");
-  const tabPedida: Tab = TABS_VALIDAS.includes(pedida as Tab) ? (pedida as Tab) : "messages";
-  const tabInicial = tabPedida === "diamantes" ? "loja" : tabPedida;
-  const [msgs, setMsgs] = useState<ContactMessageAdmin[]>([]);
-  const [premium, setPremium] = useState<PedidoPremiumAdmin[]>([]);
-  const [pedidosLoja, setPedidosLoja] = useState<PedidoLojaAdmin[]>([]);
+  const valida = VISTAS_VALIDAS.includes(pedida as (typeof VISTAS_VALIDAS)[number]) ? pedida : "messages";
+  const vista: Vista = valida === "diamantes" ? "loja" : (valida as Vista);
+  const mudarVista = (v: Vista) => {
+    const p = new URLSearchParams(searchParams);
+    p.set("tab", v);
+    setSearchParams(p, { replace: true });
+  };
+
+  const mensagens = useDadosAdmin(() => contactMessagesApi.listar(), "Não foi possível carregar as mensagens.", []);
+  const premium = useDadosAdmin(() => premiumApi.listar(), "Não foi possível carregar os pedidos Premium.", []);
+  const loja = useDadosAdmin(() => jogoApi.listarPedidosLoja(), "Não foi possível carregar os pedidos da loja do jogo.", []);
   const [ocupado, setOcupado] = useState<string | null>(null);
-
-  const carregarMensagens = async () => {
-    try {
-      setMsgs(await contactMessagesApi.listar());
-    } catch (err) {
-      toast.error(mensagemDeErroApi(err, "Não foi possível carregar as mensagens."));
-    }
-  };
-
-  const carregarPremium = async () => {
-    try {
-      setPremium(await premiumApi.listar());
-    } catch (err) {
-      toast.error(mensagemDeErroApi(err, "Não foi possível carregar os pedidos Premium."));
-    }
-  };
-
-  const carregarPedidosLoja = async () => {
-    try {
-      setPedidosLoja(await jogoApi.listarPedidosLoja());
-    } catch (err) {
-      toast.error(mensagemDeErroApi(err, "Não foi possível carregar os pedidos da loja do jogo."));
-    }
-  };
-
-  useEffect(() => {
-    carregarMensagens();
-    carregarPremium();
-    carregarPedidosLoja();
-  }, []);
 
   // Aprovar = pagamento confirmado: a API credita os diamantes ou as moedas
   // do pedido uma única vez (um segundo clique ou outro admin recebe 409).
@@ -69,12 +94,12 @@ const AdminInbox = () => {
     try {
       if (decisao === "aprovar") {
         const pedido = await jogoApi.aprovarPedidoLoja(id);
-        toast.success(`Pagamento confirmado. ${pedido.quantidade} ${pedido.tipo_item} creditados.`);
+        toast.success(`Pagamento confirmado. ${quantidadeLoja(pedido.quantidade, pedido.tipo_item)} ${creditados(pedido.tipo_item)}.`);
       } else {
         await jogoApi.rejeitarPedidoLoja(id);
         toast.success("Pedido rejeitado. Nada foi creditado.");
       }
-      await carregarPedidosLoja();
+      await loja.recarregar();
     } catch (err) {
       toast.error(mensagemDeErroApi(err, "Não foi possível decidir o pedido."));
     } finally {
@@ -83,12 +108,15 @@ const AdminInbox = () => {
   };
 
   const marcarMensagemLida = async (id: string) => {
+    setOcupado(id);
     try {
       await contactMessagesApi.marcarLida(id);
       toast.success("Marcada como tratada.");
-      await carregarMensagens();
+      await mensagens.recarregar();
     } catch (err) {
       toast.error(mensagemDeErroApi(err, "Não foi possível marcar a mensagem."));
+    } finally {
+      setOcupado(null);
     }
   };
 
@@ -97,7 +125,7 @@ const AdminInbox = () => {
     try {
       await premiumApi.aprovar(id);
       toast.success("Pagamento aprovado. Premium activo por 30 dias.");
-      await carregarPremium();
+      await premium.recarregar();
     } catch (err) {
       toast.error(mensagemDeErroApi(err, "Não foi possível aprovar o pagamento."));
     } finally {
@@ -110,7 +138,7 @@ const AdminInbox = () => {
     try {
       await premiumApi.revogar(id);
       toast.success("Acesso Premium revogado.");
-      await carregarPremium();
+      await premium.recarregar();
     } catch (err) {
       toast.error(mensagemDeErroApi(err, "Não foi possível revogar o acesso."));
     } finally {
@@ -118,214 +146,202 @@ const AdminInbox = () => {
     }
   };
 
+  // Entre parênteses, o que ainda pede trabalho -- o mesmo critério nas três.
+  const porTratar = (n: number | undefined) => (n === undefined ? "" : ` (${n})`);
+  const ocupadoOutro = (id: string) => ocupado !== null && ocupado !== id;
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Mensagens & Pedidos</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue={tabInicial}>
-          <TabsList>
-            <TabsTrigger value="messages">Mensagens ({msgs.length})</TabsTrigger>
-            <TabsTrigger value="premium">Pedidos Premium ({premium.length})</TabsTrigger>
-            <TabsTrigger value="loja">
-              Loja do jogo ({pedidosLoja.filter((d) => d.estado === "pendente").length})
-            </TabsTrigger>
-          </TabsList>
+    <>
+      <CabecalhoConsola titulo="Mensagens e pedidos" descricao="Entre parênteses, o que ainda está por tratar." />
 
-          <TabsContent value="messages" className="space-y-3 mt-4">
-            {msgs.map((m) => (
-              <Card key={m.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-3 flex-wrap">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold">{m.nome}</span>
-                        <Badge variant="outline" className="text-xs">contacto</Badge>
-                        {m.lida && (
-                          <Badge variant="secondary" className="text-xs">tratada</Badge>
-                        )}
-                      </div>
-                      <div className="text-xs text-muted-foreground flex gap-3 mt-1">
-                        <span className="inline-flex items-center gap-1">
-                          <Mail className="w-3 h-3" />
-                          {m.email}
-                        </span>
-                      </div>
-                      {m.assunto && <div className="text-sm font-medium mt-2">{m.assunto}</div>}
-                      <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">
-                        {m.mensagem}
-                      </p>
-                      <div className="text-xs text-muted-foreground mt-2">
-                        {new Date(m.created_at).toLocaleString("pt-PT")}
-                      </div>
-                    </div>
-                    {!m.lida && (
-                      <Button size="sm" variant="outline" onClick={() => marcarMensagemLida(m.id)}>
-                        <Check className="w-3 h-3" /> Marcar tratada
-                      </Button>
-                    )}
+      <GrupoEscolha<Vista>
+        legenda="Mostrar"
+        legendaOculta
+        aparencia="pastilha"
+        valor={vista}
+        aoMudar={mudarVista}
+        className="mb-5"
+        opcoes={[
+          { valor: "messages", rotulo: `Mensagens${porTratar(mensagens.dados?.filter((m) => !m.lida).length)}` },
+          { valor: "premium", rotulo: `Pedidos Premium${porTratar(premium.dados?.filter((p) => p.status === "pendente").length)}` },
+          { valor: "loja", rotulo: `Loja do jogo${porTratar(loja.dados?.filter((d) => d.estado === "pendente").length)}` },
+        ]}
+      />
+
+      {vista === "messages" && (
+        <EstadoDadosAdmin
+          aCarregar={mensagens.aCarregar}
+          erro={mensagens.erro}
+          aoTentarDeNovo={() => void mensagens.recarregar()}
+          temDados={!!mensagens.dados}
+        >
+          {mensagens.dados?.length ? (
+            <ul className="space-y-3">
+              {mensagens.dados.map((m) => (
+                <Item
+                  key={m.id}
+                  accoes={
+                    !m.lida && (
+                      <Botao variante="secundario" aCarregar={ocupado === m.id} disabled={ocupadoOutro(m.id)} onClick={() => void marcarMensagemLida(m.id)}>
+                        <Check aria-hidden /> Marcar tratada
+                      </Botao>
+                    )
+                  }
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-medium">{m.nome}</span>
+                    {m.lida ? <Estado>Tratada</Estado> : <Estado tom="aviso">Por ler</Estado>}
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-            {!msgs.length && (
-              <p className="text-center text-muted-foreground py-6">Sem mensagens.</p>
-            )}
-          </TabsContent>
+                  <Contacto email={m.email} />
+                  {m.assunto && <p className="mt-2 font-medium">{m.assunto}</p>}
+                  <p className="mt-1 whitespace-pre-wrap text-tinta-suave">{m.mensagem}</p>
+                  <p className="mt-2 text-legenda text-tinta-suave">{formatarDataHora(m.created_at)}</p>
+                </Item>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-tinta-suave">Sem mensagens.</p>
+          )}
+        </EstadoDadosAdmin>
+      )}
 
-          <TabsContent value="premium" className="space-y-3 mt-4">
-            {premium.map((p) => (
-              <Card key={p.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-3 flex-wrap">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold">{p.nome}</span>
-                        <Badge
-                          variant={
-                            p.status === "aprovado"
-                              ? "default"
-                              : p.status === "revogado"
-                                ? "destructive"
-                                : "secondary"
-                          }
-                          className="text-xs"
-                        >
-                          {p.status}
-                        </Badge>
-                        {!p.user_id && (
-                          <Badge variant="outline" className="text-xs">sem conta ligada</Badge>
-                        )}
-                      </div>
-                      <div className="text-xs text-muted-foreground flex gap-3 mt-1 flex-wrap">
-                        <span className="inline-flex items-center gap-1">
-                          <Mail className="w-3 h-3" />
-                          {p.email}
-                        </span>
-                        {p.telefone && (
-                          <span className="inline-flex items-center gap-1">
-                            <Phone className="w-3 h-3" />
-                            {p.telefone}
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-sm mt-2">
-                        <span className="text-muted-foreground">Plano: </span>
-                        {p.plano || "—"}
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-2">
-                        {new Date(p.created_at).toLocaleString("pt-PT")}
-                        {p.aprovado_em &&
-                          ` · decidido ${new Date(p.aprovado_em).toLocaleString("pt-PT")}`}
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-2 shrink-0">
-                      {p.comprovativo_url && (
-                        <Button size="sm" variant="outline" asChild>
-                          <a href={p.comprovativo_url} target="_blank" rel="noopener noreferrer">
-                            <FileText className="w-3 h-3" /> Ver comprovativo
-                          </a>
-                        </Button>
-                      )}
+      {vista === "premium" && (
+        <EstadoDadosAdmin
+          aCarregar={premium.aCarregar}
+          erro={premium.erro}
+          aoTentarDeNovo={() => void premium.recarregar()}
+          temDados={!!premium.dados}
+        >
+          {premium.dados?.length ? (
+            <ul className="space-y-3">
+              {premium.dados.map((p) => (
+                <Item
+                  key={p.id}
+                  accoes={
+                    <>
+                      {p.comprovativo_url && <VerComprovativo url={p.comprovativo_url} />}
                       {p.status !== "aprovado" && (
-                        <Button
-                          size="sm"
-                          onClick={() => aprovarPagamento(p.id)}
-                          disabled={ocupado === p.id || !p.user_id}
-                          title={!p.user_id ? "O pedido não está ligado a uma conta" : undefined}
-                        >
-                          <Check className="w-3 h-3" /> Aprovar pagamento
-                        </Button>
+                        <ConfirmarAccao
+                          tom="accao"
+                          icone={<Check aria-hidden />}
+                          rotulo="Aprovar pagamento"
+                          titulo="Aprovar o pagamento?"
+                          descricao={`Confirme que o pagamento de ${p.nome} chegou. O Premium fica activo por 30 dias.`}
+                          confirmar="Aprovar"
+                          aCarregar={ocupado === p.id}
+                          desactivado={ocupadoOutro(p.id) || !p.user_id}
+                          aoConfirmar={() => void aprovarPagamento(p.id)}
+                        />
                       )}
                       {p.status === "aprovado" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => revogarPremium(p.id)}
-                          disabled={ocupado === p.id}
-                        >
-                          <X className="w-3 h-3" /> Revogar
-                        </Button>
+                        <ConfirmarAccao
+                          icone={<X aria-hidden />}
+                          rotulo="Revogar"
+                          titulo="Revogar o Premium?"
+                          descricao={`${p.nome} perde já o acesso aos exercícios Premium.`}
+                          confirmar="Revogar"
+                          aCarregar={ocupado === p.id}
+                          desactivado={ocupadoOutro(p.id)}
+                          aoConfirmar={() => void revogarPremium(p.id)}
+                        />
                       )}
-                    </div>
+                    </>
+                  }
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-medium">{p.nome}</span>
+                    <EstadoDe mapa={ESTADO_PREMIUM} estado={p.status} />
+                    {!p.user_id && <Estado>Sem conta ligada: não se pode aprovar</Estado>}
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-            {!premium.length && (
-              <p className="text-center text-muted-foreground py-6">Sem pedidos.</p>
-            )}
-          </TabsContent>
+                  <Contacto email={p.email} telefone={p.telefone} />
+                  <p className="mt-2">
+                    <span className="text-tinta-suave">Plano: </span>
+                    {p.plano || "—"}
+                  </p>
+                  <p className="mt-2 text-legenda text-tinta-suave">
+                    Pedido em {formatarDataHora(p.created_at)}
+                    {p.aprovado_em && ` · decidido em ${formatarDataHora(p.aprovado_em)}`}
+                  </p>
+                </Item>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-tinta-suave">Sem pedidos.</p>
+          )}
+        </EstadoDadosAdmin>
+      )}
 
-          <TabsContent value="loja" className="space-y-3 mt-4">
-            {pedidosLoja.map((d) => (
-              <Card key={d.id} data-testid={`pedido-loja-${d.id}`}>
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-3 flex-wrap">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold inline-flex items-center gap-1">
-                          {d.tipo_item === "moedas" ? <Coins className="w-4 h-4" /> : <Gem className="w-4 h-4" />}{" "}
-                          {d.quantidade.toLocaleString("pt-PT")} {d.tipo_item} · {d.preco_kz.toLocaleString("pt-PT")} Kz
-                        </span>
-                        <Badge
-                          variant={
-                            d.estado === "aprovado" ? "default" : d.estado === "rejeitado" ? "destructive" : "secondary"
-                          }
-                          className="text-xs"
-                        >
-                          {d.estado}
-                        </Badge>
-                        {!d.utilizador_id && (
-                          <Badge variant="outline" className="text-xs">conta apagada</Badge>
-                        )}
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Pacote {d.pacote_id} · conta {d.utilizador_id ?? "—"}
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-2">
-                        {new Date(d.created_at).toLocaleString("pt-PT")}
-                        {d.decidido_em && ` · decidido ${new Date(d.decidido_em).toLocaleString("pt-PT")}`}
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-2 shrink-0">
-                      <Button size="sm" variant="outline" asChild>
-                        <a href={d.comprovativo_url} target="_blank" rel="noopener noreferrer">
-                          <FileText className="w-3 h-3" /> Ver comprovativo
-                        </a>
-                      </Button>
+      {vista === "loja" && (
+        <EstadoDadosAdmin
+          aCarregar={loja.aCarregar}
+          erro={loja.erro}
+          aoTentarDeNovo={() => void loja.recarregar()}
+          temDados={!!loja.dados}
+        >
+          {loja.dados?.length ? (
+            <ul className="space-y-3">
+              {loja.dados.map((d) => (
+                <Item
+                  key={d.id}
+                  testId={`pedido-loja-${d.id}`}
+                  accoes={
+                    <>
+                      <VerComprovativo url={d.comprovativo_url} />
                       {d.estado === "pendente" && (
                         <>
-                          <Button
-                            size="sm"
-                            onClick={() => decidirPedidoLoja(d.id, "aprovar")}
-                            disabled={ocupado === d.id || !d.utilizador_id}
-                          >
-                            <Check className="w-3 h-3" /> Confirmar pagamento
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => decidirPedidoLoja(d.id, "rejeitar")}
-                            disabled={ocupado === d.id}
-                          >
-                            <X className="w-3 h-3" /> Rejeitar
-                          </Button>
+                          <ConfirmarAccao
+                            tom="accao"
+                            icone={<Check aria-hidden />}
+                            rotulo="Confirmar pagamento"
+                            titulo="Confirmar o pagamento?"
+                            descricao={`Confirme que os ${formatarKz(d.preco_kz)} chegaram. ${quantidadeLoja(d.quantidade, d.tipo_item)} são ${creditados(d.tipo_item)} nesta conta, uma única vez; não se pode desfazer.`}
+                            confirmar="Confirmar e creditar"
+                            aCarregar={ocupado === d.id}
+                            desactivado={ocupadoOutro(d.id) || !d.utilizador_id}
+                            aoConfirmar={() => void decidirPedidoLoja(d.id, "aprovar")}
+                          />
+                          <ConfirmarAccao
+                            icone={<X aria-hidden />}
+                            rotulo="Rejeitar"
+                            titulo="Rejeitar o pedido?"
+                            descricao="Nada é creditado. Use quando o pagamento não chegou ou o comprovativo não serve."
+                            confirmar="Rejeitar"
+                            desactivado={ocupado !== null}
+                            aoConfirmar={() => void decidirPedidoLoja(d.id, "rejeitar")}
+                          />
                         </>
                       )}
-                    </div>
+                    </>
+                  }
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 font-medium">
+                      {d.tipo_item === "moedas" ? (
+                        <Coins className="size-4 text-aviso" aria-hidden />
+                      ) : (
+                        <Gem className="size-4 text-accao" aria-hidden />
+                      )}
+                      {quantidadeLoja(d.quantidade, d.tipo_item)} · {formatarKz(d.preco_kz)}
+                    </span>
+                    <EstadoDe mapa={ESTADO_LOJA} estado={d.estado} />
+                    {!d.utilizador_id && <Estado>Conta apagada</Estado>}
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-            {!pedidosLoja.length && (
-              <p className="text-center text-muted-foreground py-6">Sem pedidos da loja do jogo.</p>
-            )}
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+                  <p className="mt-1 text-legenda text-tinta-suave">
+                    Pacote {d.pacote_id} · conta {d.utilizador_id ?? "—"}
+                  </p>
+                  <p className="mt-2 text-legenda text-tinta-suave">
+                    Pedido em {formatarDataHora(d.created_at)}
+                    {d.decidido_em && ` · decidido em ${formatarDataHora(d.decidido_em)}`}
+                  </p>
+                </Item>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-tinta-suave">Sem pedidos da loja do jogo.</p>
+          )}
+        </EstadoDadosAdmin>
+      )}
+    </>
   );
 };
 

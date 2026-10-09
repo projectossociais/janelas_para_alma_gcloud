@@ -59,6 +59,14 @@ class SessaoExercicioAdmin(BaseModel):
     pontuacao: int
     precisao_percentual: float
     created_at: datetime
+    # Versão 2 (exercícios sem webcam): o resultado é o limiar de um olho.
+    versao: int = 1
+    olho: str | None = None
+    segundos_activos: int | None = None
+    limiar: float | None = None
+    unidade: str | None = None
+    baixa_atencao: bool = False
+    astigmatismo: bool | None = None
 
     model_config = {"from_attributes": True}
 

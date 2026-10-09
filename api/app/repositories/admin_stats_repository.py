@@ -64,6 +64,21 @@ class SessaoExercicioAdminRegisto:
     pontuacao: int
     precisao_percentual: float
     created_at: datetime
+    # Exercícios sem webcam (versão 2, desde 2026-09-28): não usam pontuação
+    # nem precisão (ficam a 0 por omissão); o resultado é o limiar de um olho.
+    # Sem estes campos, o admin via "0" e "0 %" em todas as sessões novas.
+    versao: int = 1
+    olho: str | None = None
+    segundos_activos: int | None = None
+    limiar: float | None = None
+    unidade: str | None = None
+    baixa_atencao: bool = False
+    # Teste de Astigmatismo: sem limiar, o resultado é sim/não.
+    astigmatismo: bool | None = None
+
+
+def _booleano_ou_nada(valor: object) -> bool | None:
+    return valor if isinstance(valor, bool) else None
 
 
 @dataclass(frozen=True)
@@ -173,6 +188,13 @@ class SQLAlchemyAdminStatsRepository:
                 pontuacao=sessao.pontuacao,
                 precisao_percentual=float(sessao.precisao_percentual),
                 created_at=sessao.created_at,
+                versao=sessao.versao,
+                olho=sessao.olho,
+                segundos_activos=sessao.segundos_activos,
+                limiar=float(sessao.limiar) if sessao.limiar is not None else None,
+                unidade=sessao.unidade,
+                baixa_atencao=bool((sessao.sinais or {}).get("baixa_atencao", False)),
+                astigmatismo=_booleano_ou_nada((sessao.sinais or {}).get("astigmatismo")),
             )
             for sessao, utilizador in linhas
         ]
