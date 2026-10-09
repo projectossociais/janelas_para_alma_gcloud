@@ -491,7 +491,6 @@
   },
   "DashboardPro": {
     "areaClinica": "Clinical Area",
-    "bemVindoADr": "Welcome, Dr.",
     "pacientesAtribuidos": "Assigned patients",
     "pedidosPorDecidir": "Pending requests",
     "pedidosDeConsulta": "Appointment requests",
@@ -500,8 +499,8 @@
     "teleconsultasAgendadas": "Scheduled teleconsultations",
     "relatoriosPendentes": "Pending reports",
     "emBreve": "Coming soon",
-    "listaDePacientesQue": "• List of patients who have agreed to share their data.",
-    "visualizacaoDeRelatoriosDo": "• View scanner reports by patient.",
+    "listaDePacientesQue": "List of patients who have agreed to share their data.",
+    "visualizacaoDeRelatoriosDo": "View scanner reports by patient.",
     "agendaIntegradaDeTeleconsultas": "• Integrated teleconsultation calendar.",
     "emissaoDeRecomendacoesClinicas": "• Issue clinical recommendations.",
     "disponibilidadeSemanal": "Weekly availability",
@@ -539,7 +538,36 @@
       "agendada": "Scheduled",
       "em_curso": "In progress",
       "concluida": "Completed"
-    }
+    },
+    "bemVindo": "Welcome, {{nome}}. {{clinica}}.",
+    "proximasConsultas": "Upcoming appointments",
+    "semProximas": "No confirmed appointments coming up.",
+    "porConfirmar": "Awaiting confirmation",
+    "porConfirmarAjuda": "The Janelas Para a Alma team confirms each request and lets the patient know.",
+    "anteriores": "Past and declined",
+    "quandoHora": "{{dia}}, {{hora}} (Luanda time)",
+    "quandoPreferencia": "{{dia}} {{periodo}} (patient's preference)",
+    "estado": {
+      "pendente": "Awaiting confirmation",
+      "confirmada": "Confirmed",
+      "recusada": "Declined"
+    },
+    "horasDeLuanda": "Luanda time.",
+    "fimDepoisDoInicio": "The end must be after the start.",
+    "removerHorario": "Remove the {{dia}} slot, {{inicio}}–{{fim}} ({{modalidade}})",
+    "removerHorarioTitulo": "Remove this slot?",
+    "removerHorarioTexto": "Patients can no longer book this slot. Appointments already booked stay.",
+    "remover": "Remove",
+    "cancelar": "Cancel",
+    "fechar": "Close",
+    "escolher": "Choose…",
+    "navegacao": "Portal navigation",
+    "saltar": "Skip to content",
+    "menu": "Menu",
+    "fecharMenu": "Close",
+    "voltarAoSite": "Back to the site",
+    "terminarSessao": "Sign out",
+    "pedidosPorConfirmar": "Requests awaiting confirmation"
   },
   "DashboardUser": {
     "saudacao": "Hello, {{nome}}",
@@ -2477,5 +2505,11 @@
     "tabelaValores": "Results of {{exercicio}} per day and per eye",
     "relatorioTitulo": "For the appointment",
     "relatorioTexto": "A weekly report to print, save as PDF or send to the eye doctor through a temporary link."
+  },
+  "RequireClinica": {
+    "aVerificar": "Checking portal access…",
+    "naoFoiPossivelVerificar": "We couldn't check your portal access",
+    "verifiqueALigacao": "Check your internet connection and try again.",
+    "tentarDeNovo": "Try again"
   }
 }

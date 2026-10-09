@@ -19,6 +19,7 @@ export const ConfirmarAccao = ({
   aCarregar = false,
   soIcone = false,
   tom = "perigo",
+  textos = { cancelar: "Cancelar", fechar: "Fechar" },
 }: {
   /** Texto do botão; com `soIcone`, fica só como nome acessível. */
   rotulo: string;
@@ -36,6 +37,8 @@ export const ConfirmarAccao = ({
    * `accao`: aprovar ou creditar -- não é destrutivo, mas também não se desfaz.
    */
   tom?: "perigo" | "accao";
+  /** O admin só existe em português; o portal da clínica passa os textos traduzidos. */
+  textos?: { cancelar: string; fechar: string };
 }) => (
   <Dialogo>
     <DialogoGatilho asChild>
@@ -56,11 +59,11 @@ export const ConfirmarAccao = ({
     <DialogoConteudo
       titulo={titulo}
       descricao={descricao}
-      rotuloFechar="Fechar"
+      rotuloFechar={textos.fechar}
       rodape={
         <>
           <DialogoFechar asChild>
-            <Botao variante="secundario">Cancelar</Botao>
+            <Botao variante="secundario">{textos.cancelar}</Botao>
           </DialogoFechar>
           <DialogoFechar asChild>
             <Botao variante={tom === "accao" ? "primario" : "perigo"} onClick={aoConfirmar}>

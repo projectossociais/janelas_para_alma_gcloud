@@ -274,6 +274,17 @@ Acrescentar abaixo, com data, o que for decidido ou detalhado em cada conversa s
 redesenho (referências visuais, páginas a priorizar, gostos e recusas do dono do
 projecto, feedback do Lukeny). Mais recente em cima.
 
+- **2026-10-09** — **Fase 5, o portal da clínica (`DashboardPro.tsx`, ramo `redesenho/portal-clinica`).**
+  Arquétipo Consola, como o admin (traduzido: o portal existe em inglês). Corrigido: a lista de consultas
+  **não dizia quando era a consulta** (agora dia e hora de Luanda, modalidade, motivo), agrupada em próximas,
+  por confirmar (quem confirma é a equipa Janelas, e diz-se) e anteriores; "Teleconsultas agendadas"
+  contava todas as confirmadas, presenciais e passadas incluídas; saiu o cartão de métrica falso
+  "Relatórios pendentes: Em breve"; "Bem-vindo(a), Dr(a)." supunha que toda a equipa é médica; remover um
+  horário pede confirmação e o botão diz qual (dia, horas e modalidade); um horário que acaba antes de
+  começar já não se envia. `RequireClinica`: uma falha de rede deixa de mandar a pessoa para a página
+  inicial sem explicação ("não foi possível verificar" + tentar de novo); o portal continua a nunca abrir
+  sem a API confirmar a clínica.
+
 - **2026-10-09** — **Fase 5 começa: o painel admin no arquétipo Consola (ramo `redesenho/fase-5-consola`).**
   Novo `LayoutConsola` no sistema de design (uma só navegação: barra lateral no computador, "Menu" no
   telemóvel), `Tabela` semântica com scroll próprio, `CabecalhoConsola`; o `Seleccao` ganhou
