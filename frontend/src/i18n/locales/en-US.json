@@ -1479,7 +1479,8 @@
     "semPerguntas": "There are no questions available right now."
   },
   "legal": {
-    "notaTraducao": "This English translation is provided for convenience. The Portuguese version prevails."
+    "notaTraducao": "This English translation is provided for convenience. The Portuguese version prevails.",
+    "nestaPagina": "On this page"
   },
   "CarteiraJogo": {
     "moedas": "Coins",

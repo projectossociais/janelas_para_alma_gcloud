@@ -1479,7 +1479,8 @@
     "semPerguntas": "Não há perguntas disponíveis de momento."
   },
   "legal": {
-    "notaTraducao": "Esta tradução inglesa é disponibilizada por conveniência. Prevalece a versão portuguesa."
+    "notaTraducao": "Esta tradução inglesa é disponibilizada por conveniência. Prevalece a versão portuguesa.",
+    "nestaPagina": "Nesta página"
   },
   "CarteiraJogo": {
     "moedas": "Moedas",
