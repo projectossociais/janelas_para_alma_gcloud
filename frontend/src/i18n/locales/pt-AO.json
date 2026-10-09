@@ -1517,7 +1517,12 @@
     "pdfColEspecialidade": "Especialidade",
     "pdfColContacto": "Contacto",
     "pdfColPreco": "Preço",
-    "pdfAviso": "Aviso"
+    "pdfAviso": "Aviso",
+    "inconclusivoEtiqueta": "Medição inconclusiva",
+    "inconclusivoTitulo": "Não conseguimos medir bem",
+    "inconclusivoTexto": "Pelo menos uma das fotografias não deu para medir: o rosto não apareceu inteiro ou a imagem não estava nítida.",
+    "inconclusivoDica": "Repita com luz de frente, o telemóvel parado à altura dos olhos e o rosto dentro do oval.",
+    "repetirRastreio": "Fazer o rastreio de novo"
   },
   "SiteBanner": {
     "fechar": "Fechar"

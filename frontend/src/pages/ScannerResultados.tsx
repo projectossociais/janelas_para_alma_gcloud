@@ -24,7 +24,8 @@ import { Trans, useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { localizar } from "@/i18n/rotas";
 import { formatarData, formatarDataHora } from "@/i18n/formatar";
-import { textoDoScannerNoIdioma } from "@/services/api/screeningApi";
+import { textoDoScannerNoIdioma, type ScreeningResponse } from "@/services/api/screeningApi";
+import { conclusaoDoRastreio } from "@/lib/rastreio/rastreio";
 
 interface LogoBitmap {
   dataUrl: string;
@@ -536,6 +537,43 @@ const Resultados = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background text-muted-foreground">
         {tr("ScannerResultados.aCarregarResultados")}
+      </div>
+    );
+  }
+
+  // Fotografias fracas sem sinal nenhum não são "normal": pede-se para repetir
+  // (lib/rastreio/rastreio.ts). Sem os dados da análise, decide o diagnóstico guardado.
+  const inconclusivo = conclusaoDoRastreio(result.diagnosis, (result.apiData as ScreeningResponse | null) ?? null) === "inconclusivo";
+  if (inconclusivo) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navbar />
+        <BackButton fallbackPath={localizar("/scanner")} label={tr("ScannerResultados.novaAnalise")} />
+        <main className="flex-1">
+          <section className="container py-8 md:py-12">
+            <div className="max-w-3xl mx-auto rounded-3xl bg-gradient-to-br from-navy to-navy/80 text-navy-foreground p-6 md:p-10 shadow-elevated animate-fade-in">
+              <div className="flex items-center gap-2 text-gold text-xs font-bold uppercase tracking-widest">
+                <AlertCircle className="w-4 h-4" />{" "}{tr("ScannerResultados.inconclusivoEtiqueta")}
+              </div>
+              <h1 className="mt-3 text-3xl md:text-4xl font-bold leading-tight">{tr("ScannerResultados.inconclusivoTitulo")}</h1>
+              <p className="mt-3 text-sm md:text-base text-white/80 max-w-2xl">{tr("ScannerResultados.inconclusivoTexto")}</p>
+              <p className="mt-3 text-sm md:text-base text-white max-w-2xl">{tr("ScannerResultados.inconclusivoDica")}</p>
+              <button
+                onClick={() => navigate(localizar("/scanner"))}
+                className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-teal text-teal-foreground font-bold hover:opacity-90"
+              >
+                {tr("ScannerResultados.repetirRastreio")}
+              </button>
+            </div>
+            <div className="max-w-3xl mx-auto mt-5 flex items-start gap-3 p-4 rounded-2xl bg-gold/10 border border-gold/30 text-sm text-foreground">
+              <AlertCircle className="w-5 h-5 text-gold shrink-0 mt-0.5" />
+              <p>
+                <Trans i18nKey="ScannerResultados.estaAnaliseEOrientadora" components={{ strong: <strong /> }} />
+              </p>
+            </div>
+          </section>
+        </main>
+        <Footer />
       </div>
     );
   }

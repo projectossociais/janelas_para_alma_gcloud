@@ -13,6 +13,7 @@ import { screeningsApi, mensagemDeErroApi } from "@/lib/apiClient";
 import { Trans, useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { localizar } from "@/i18n/rotas";
+import { paraRegistoScreening } from "@/lib/rastreio/rastreio";
 
 
 type TrackingStage = 0 | 1 | 2;
@@ -68,22 +69,8 @@ const dataUrlToBlob = (dataUrl: string): Blob | null => {
  *  o novo id, ou `null` se o utilizador não tiver sessão (o rastreio em si
  *  já correu; falhar aqui não pode apagar o resultado que a pessoa vê). */
 const persistirScreening = async (apiResult: ScreeningResponse): Promise<string | null> => {
-  const posCentro = apiResult.posicoes?.find((p) => p.posicao.toUpperCase() === "CENTRO");
-  const registado = await screeningsApi.registar({
-    estado: apiResult.estado,
-    rosto_detetado: apiResult.posicoes?.some((p) => p.rosto_detetado) ?? false,
-    requer_avaliacao_humana: apiResult.requer_avaliacao_humana ?? false,
-    // Mesmo critério do ecrã de resultado (ver mais abaixo, finishScan) --
-    // único sinal real que o janelas-scanner-api de facto calcula hoje.
-    diagnostico:
-      apiResult.motilidade?.incomitante || apiResult.requer_avaliacao_humana ? "requer_avaliacao" : "normal",
-    assimetria_horizontal: apiResult.motilidade?.variacao_desalinhamento ?? null,
-    qualidade_captura: posCentro?.qualidade_captura?.pontuacao ?? null,
-    qualidade_fiavel: posCentro?.qualidade_captura?.fiavel ?? null,
-    qualidade_motivos: posCentro?.qualidade_captura?.motivos ?? [],
-    medicoes: apiResult as unknown as Record<string, unknown>,
-    versao_analise: "janelas-scanner-api/multi-gaze",
-  });
+  // O histórico diz o que a pessoa viu: "inconclusivo" nunca se grava como "normal".
+  const registado = await screeningsApi.registar(paraRegistoScreening(apiResult));
   return registado.id;
 };
 

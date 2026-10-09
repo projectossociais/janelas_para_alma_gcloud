@@ -1517,7 +1517,12 @@
     "pdfColEspecialidade": "Specialty",
     "pdfColContacto": "Contact",
     "pdfColPreco": "Price",
-    "pdfAviso": "Notice"
+    "pdfAviso": "Notice",
+    "inconclusivoEtiqueta": "Inconclusive measurement",
+    "inconclusivoTitulo": "We could not measure properly",
+    "inconclusivoTexto": "At least one of the photos could not be measured: the face was not fully visible or the image was not sharp.",
+    "inconclusivoDica": "Try again with light in front of you, the phone held still at eye level and the face inside the oval.",
+    "repetirRastreio": "Take the screening again"
   },
   "SiteBanner": {
     "fechar": "Close"

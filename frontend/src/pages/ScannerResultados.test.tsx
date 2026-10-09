@@ -12,6 +12,15 @@ import ScannerResultados from "./ScannerResultados";
 const RECOMENDACAO_PT =
   "Não foi possível comparar as posições do olhar. Para repetir: na foto esquerda e direita, olhe para o lado pedido.";
 
+// Uma resposta real do serviço traz sempre as três posições do olhar.
+const posicao = (posicao: string, fiavel = true) => ({
+  posicao,
+  rosto_detetado: true,
+  utilizavel: fiavel,
+  qualidade_captura: { pontuacao: fiavel ? 0.8 : 0.39, fiavel, motivos: [] },
+});
+const POSICOES_BOAS = [posicao("CENTRO"), posicao("ESQUERDA"), posicao("DIREITA")];
+
 function guardarResultado(recomendacao?: string) {
   sessionStorage.setItem(
     "scanResult",
@@ -19,8 +28,22 @@ function guardarResultado(recomendacao?: string) {
       diagnosis: "Necessária Avaliação Oftalmológica",
       confidence: 60,
       date: "2026-09-24T10:00:00Z",
-      apiData: recomendacao ? { recomendacao } : null,
+      apiData: recomendacao
+        ? {
+            recomendacao,
+            requer_avaliacao_humana: true,
+            motilidade: { variacao_desalinhamento: 0.12, incomitante: false },
+            posicoes: POSICOES_BOAS,
+          }
+        : null,
     }),
+  );
+}
+
+function guardarAnalise(diagnosis: string, apiData: Record<string, unknown>) {
+  sessionStorage.setItem(
+    "scanResult",
+    JSON.stringify({ diagnosis, confidence: 39, date: "2026-10-09T10:00:00Z", apiData }),
   );
 }
 
@@ -66,5 +89,40 @@ describe("ScannerResultados -- recomendação vinda do microserviço", () => {
       await screen.findByText(/An eye exam with an ophthalmologist is recommended/);
       expect(document.body.textContent).not.toMatch(/Recomenda-se nova captura/);
     });
+  });
+});
+
+describe("ScannerResultados -- fotografias fracas nunca dão 'normal'", () => {
+  it("sem sinal mas com uma fotografia não fiável: diz que não conseguiu medir e pede para repetir", async () => {
+    guardarAnalise("Alinhamento Fisiológico Normal", {
+      requer_avaliacao_humana: false,
+      motilidade: { variacao_desalinhamento: 0.02, incomitante: false },
+      posicoes: [posicao("CENTRO"), posicao("ESQUERDA"), posicao("DIREITA", false)],
+    });
+    abrir("/scanner/resultados");
+    expect(await screen.findByRole("heading", { name: "Não conseguimos medir bem" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Fazer o rastreio de novo" })).toBeInTheDocument();
+    expect(screen.queryByText(/Alinhamento Fisiológico Normal/)).not.toBeInTheDocument();
+  });
+
+  it("pedido de avaliação só porque não comparou as posições, com fotografia fraca: também inconclusivo (caso real 2026-10-06)", async () => {
+    guardarAnalise("Necessária Avaliação Oftalmológica", {
+      requer_avaliacao_humana: true,
+      motilidade: null,
+      posicoes: [posicao("CENTRO"), posicao("ESQUERDA"), posicao("DIREITA", false)],
+    });
+    abrir("/scanner/resultados");
+    expect(await screen.findByRole("heading", { name: "Não conseguimos medir bem" })).toBeInTheDocument();
+  });
+
+  it("sem sinal e com as três fotografias fiáveis: continua normal", async () => {
+    guardarAnalise("Alinhamento Fisiológico Normal", {
+      requer_avaliacao_humana: false,
+      motilidade: { variacao_desalinhamento: 0.02, incomitante: false },
+      posicoes: POSICOES_BOAS,
+    });
+    abrir("/scanner/resultados");
+    expect((await screen.findAllByText(/Alinhamento Fisiológico Normal/)).length).toBeGreaterThan(0);
+    expect(screen.queryByText("Não conseguimos medir bem")).not.toBeInTheDocument();
   });
 });
