@@ -274,6 +274,16 @@ Acrescentar abaixo, com data, o que for decidido ou detalhado em cada conversa s
 redesenho (referências visuais, páginas a priorizar, gostos e recusas do dono do
 projecto, feedback do Lukeny). Mais recente em cima.
 
+- **2026-10-09** — **Fase 5, páginas da conta e de entrada (ramo `redesenho/conta-entrada`).** Confirmar email e
+  Nova palavra-passe passam ao arquétipo Entrada (a moldura do login); com o link inválido ou expirado deixam de
+  ser um beco sem saída: pede-se outro ali mesmo (`PedirNovoLink`). Editar perfil e Definições passam ao
+  arquétipo App (`MolduraApp`, sem separador marcado). Corrigido: o interruptor **"Perfil público" não gravava
+  nada** (nem existe na API) e mostrava "Preferências guardadas" -- saiu; o texto da eliminação de conta dizia que o
+  histórico de exercícios era apagado, quando a eliminação é uma anonimização que o mantém sem identidade (§4.7);
+  apagar o nome no perfil mostrava "perfil actualizado" e mantinha o antigo; "JPG ou PNG, máximo 2MB" quando o
+  código aceita WebP e 5 MB; género com botões de opção numa linha (decisão de 2026-10-07). Erros nos campos e nos
+  diálogos, não em avisos que desaparecem.
+
 - **2026-10-09** — **Fase 5, o portal da clínica (`DashboardPro.tsx`, ramo `redesenho/portal-clinica`).**
   Arquétipo Consola, como o admin (traduzido: o portal existe em inglês). Corrigido: a lista de consultas
   **não dizia quando era a consulta** (agora dia e hora de Luanda, modalidade, motivo), agrupada em próximas,
