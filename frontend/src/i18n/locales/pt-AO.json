@@ -830,7 +830,10 @@
     "moedas": "Moedas",
     "diamantes": "Diamantes",
     "estamosAConstruirO": "Estamos a construir o sistema de salas para desafiar outros jogadores em tempo real. Volte em breve!",
-    "emBreveVaiPoder": "Em breve vai poder desafiar um amigo no mesmo dispositivo, à vez, na mesma escada de perguntas."
+    "emBreveVaiPoder": "Em breve vai poder desafiar um amigo no mesmo dispositivo, à vez, na mesma escada de perguntas.",
+    "modosDeJogo": "Modos de jogo",
+    "jogar": "Jogar",
+    "entrar": "Entrar"
   },
   "Navbar": {
     "entrar": "Entrar",
@@ -1493,7 +1496,9 @@
     "enviarComprovativo": "Enviar comprovativo",
     "anexeOComprovativo": "Anexe o comprovativo da transferência.",
     "tipoDeComprovativoInvalido": "O comprovativo tem de ser uma imagem (PNG, JPG, WEBP) ou um PDF.",
-    "pedidoEnviado": "Pedido enviado! Os {{quantidade}} diamantes chegam assim que confirmarmos o pagamento."
+    "pedidoEnviado": "Pedido enviado! Os {{quantidade}} diamantes chegam assim que confirmarmos o pagamento.",
+    "aCarregar": "A carregar a loja…",
+    "fechar": "Fechar"
   },
   "LojaJogo": {
     "n1Transfira": "1. Transfira o valor para",
@@ -1509,7 +1514,17 @@
     "quantidade": {
       "diamantes": "{{quantidade}} diamantes",
       "moedas": "{{quantidade}} moedas"
-    }
+    },
+    "copiar": "Copiar",
+    "copiado": "Copiado",
+    "comprovativoAjuda": "PDF, PNG, JPEG ou WebP, até 5 MB.",
+    "escolherFicheiro": "Escolher ficheiro",
+    "trocarFicheiro": "Escolher outro ficheiro",
+    "removerFicheiro": "Remover {{nome}}",
+    "erroTipo": "Formato não suportado. Use PDF, PNG, JPEG ou WebP.",
+    "erroTamanho": "O ficheiro tem mais de 5 MB.",
+    "tamanhoKb": "{{kb}} KB",
+    "moedasCreditadasAposConfirmacao": "As moedas são creditadas na sua conta assim que confirmarmos o pagamento."
   },
   "LojaMoedas": {
     "inclusivamente": "Inclusivamente",
@@ -1542,7 +1557,9 @@
     "tipoDeComprovativoInvalido": "O comprovativo tem de ser uma imagem (PNG, JPG, WEBP) ou um PDF.",
     "pagamentosEmBreve": "Pagamentos reais disponíveis em breve.",
     "naoFoiPossivelComprar": "Não foi possível concluir a compra. Nenhum valor foi cobrado.",
-    "irParaDiamantes": "Trocar moedas por diamantes"
+    "irParaDiamantes": "Trocar moedas por diamantes",
+    "aCarregar": "A carregar a loja…",
+    "fechar": "Fechar"
   },
   "Mercado": {
     "titulo": "Consultório",

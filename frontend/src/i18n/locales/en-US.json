@@ -830,7 +830,10 @@
     "moedas": "Coins",
     "diamantes": "Diamonds",
     "estamosAConstruirO": "We're building a room system so you can challenge other players in real time. Check back soon!",
-    "emBreveVaiPoder": "Soon you'll be able to challenge a friend on the same device, taking turns on the same question ladder."
+    "emBreveVaiPoder": "Soon you'll be able to challenge a friend on the same device, taking turns on the same question ladder.",
+    "modosDeJogo": "Game modes",
+    "jogar": "Play",
+    "entrar": "Sign in"
   },
   "Navbar": {
     "entrar": "Sign In",
@@ -1493,7 +1496,9 @@
     "enviarComprovativo": "Send proof of payment",
     "anexeOComprovativo": "Please attach the proof of transfer.",
     "tipoDeComprovativoInvalido": "The proof must be an image (PNG, JPG, WEBP) or a PDF.",
-    "pedidoEnviado": "Request sent! Your {{quantidade}} diamonds will arrive as soon as we confirm the payment."
+    "pedidoEnviado": "Request sent! Your {{quantidade}} diamonds will arrive as soon as we confirm the payment.",
+    "aCarregar": "Loading the shop…",
+    "fechar": "Close"
   },
   "LojaJogo": {
     "n1Transfira": "1. Transfer the amount to",
@@ -1509,7 +1514,17 @@
     "quantidade": {
       "diamantes": "{{quantidade}} diamonds",
       "moedas": "{{quantidade}} coins"
-    }
+    },
+    "copiar": "Copy",
+    "copiado": "Copied",
+    "comprovativoAjuda": "PDF, PNG, JPEG or WebP, up to 5 MB.",
+    "escolherFicheiro": "Choose file",
+    "trocarFicheiro": "Choose another file",
+    "removerFicheiro": "Remove {{nome}}",
+    "erroTipo": "Unsupported format. Use PDF, PNG, JPEG or WebP.",
+    "erroTamanho": "The file is larger than 5 MB.",
+    "tamanhoKb": "{{kb}} KB",
+    "moedasCreditadasAposConfirmacao": "The coins are added to your account as soon as we confirm the payment."
   },
   "LojaMoedas": {
     "inclusivamente": "Inclusivamente",
@@ -1542,7 +1557,9 @@
     "tipoDeComprovativoInvalido": "The proof must be an image (PNG, JPG, WEBP) or a PDF.",
     "pagamentosEmBreve": "Real payments available soon.",
     "naoFoiPossivelComprar": "We couldn't complete the purchase. You were not charged.",
-    "irParaDiamantes": "Trade coins for diamonds"
+    "irParaDiamantes": "Trade coins for diamonds",
+    "aCarregar": "Loading the shop…",
+    "fechar": "Close"
   },
   "Mercado": {
     "titulo": "Eye Clinic",
