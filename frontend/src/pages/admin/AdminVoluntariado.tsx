@@ -1,91 +1,79 @@
-import { useEffect, useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { Archive, Ban, Check, Mail, Phone, Plus, Trash2, Users } from "lucide-react";
+import { toast } from "sonner";
+import { ConfirmarAccao } from "@/components/admin/ConfirmarAccao";
+import { EstadoDadosAdmin, useDadosAdmin } from "@/components/admin/DadosAdmin";
+import { Aviso } from "@/design/componentes/Aviso";
+import { Botao } from "@/design/componentes/Botao";
+import { Campo, CampoTexto } from "@/design/componentes/Campo";
+import { Dialogo, DialogoConteudo } from "@/design/componentes/Dialogo";
+import { GrupoEscolha } from "@/design/componentes/Escolha";
+import { Seleccao } from "@/design/componentes/Seleccao";
+import { Estado } from "@/design/componentes/Tabela";
+import { CabecalhoConsola } from "@/design/layouts/LayoutConsola";
 import {
   voluntariadoApi,
   mensagemDeErroApi,
-  type CandidaturaVoluntariadoAdmin,
   type AtividadeVoluntariadoAdmin,
   type InscricaoAtividadeAdmin,
 } from "@/lib/apiClient";
-import { toast } from "sonner";
-import { Check, X, Plus, Users, Ban, Mail, Phone, Archive, Trash2 } from "lucide-react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { deHoraDeLuanda, formatarDataHoraLuanda } from "@/lib/marcacao/horarios";
 
-const estadoBadge = (estado: string) => {
-  const variantes: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-    aprovada: "default",
-    publicada: "default",
-    pendente: "secondary",
-    rejeitada: "destructive",
-    cancelada: "destructive",
-  };
-  return <Badge variant={variantes[estado] ?? "outline"}>{estado}</Badge>;
+type Vista = "candidaturas" | "atividades";
+
+const ESTADO: Record<string, { rotulo: string; tom: "aviso" | "sucesso" | "erro" | "neutro" }> = {
+  pendente: { rotulo: "Por decidir", tom: "aviso" },
+  aprovada: { rotulo: "Aprovada", tom: "sucesso" },
+  rejeitada: { rotulo: "Rejeitada", tom: "erro" },
+  publicada: { rotulo: "Publicada", tom: "sucesso" },
+  cancelada: { rotulo: "Cancelada", tom: "erro" },
+  arquivada: { rotulo: "Arquivada", tom: "neutro" },
+};
+const EstadoDe = ({ estado }: { estado: string }) => {
+  const e = ESTADO[estado] ?? { rotulo: estado, tom: "neutro" as const };
+  return <Estado tom={e.tom}>{e.rotulo}</Estado>;
 };
 
 const FORM_VAZIO = { titulo: "", descricao: "", local: "", data_inicio: "", data_fim: "", vagas: "" };
 
 const AdminVoluntariado = () => {
-  const [searchParams] = useSearchParams();
-  const tabInicial = searchParams.get("tab") === "atividades" ? "atividades" : "candidaturas";
+  const [searchParams, setSearchParams] = useSearchParams();
+  const vista: Vista = searchParams.get("tab") === "atividades" ? "atividades" : "candidaturas";
+  const mudarVista = (v: Vista) => {
+    const p = new URLSearchParams(searchParams);
+    p.set("tab", v);
+    setSearchParams(p, { replace: true });
+  };
 
-  const [candidaturas, setCandidaturas] = useState<CandidaturaVoluntariadoAdmin[]>([]);
-  const [atividades, setAtividades] = useState<AtividadeVoluntariadoAdmin[]>([]);
+  const candidaturasDados = useDadosAdmin(
+    () => voluntariadoApi.listarCandidaturas(),
+    "Não foi possível carregar as candidaturas.",
+    [],
+  );
+  const atividadesDados = useDadosAdmin(
+    () => voluntariadoApi.listarTodasAsAtividades(),
+    "Não foi possível carregar as actividades.",
+    [],
+  );
+  const candidaturas = candidaturasDados.dados ?? [];
+  const atividades = atividadesDados.dados ?? [];
+  const carregarCandidaturas = candidaturasDados.recarregar;
+  const carregarAtividades = atividadesDados.recarregar;
   const [form, setForm] = useState(FORM_VAZIO);
+  const [tentouPublicar, setTentouPublicar] = useState(false);
+  const [erroPublicar, setErroPublicar] = useState<string | null>(null);
   const [aPublicar, setAPublicar] = useState(false);
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [inscritosDe, setInscritosDe] = useState<AtividadeVoluntariadoAdmin | null>(null);
-  const [inscritos, setInscritos] = useState<InscricaoAtividadeAdmin[]>([]);
+  // `null` = a carregar; nunca a lista de outra actividade nem "0" por causa de um erro.
+  const [inscritos, setInscritos] = useState<InscricaoAtividadeAdmin[] | null>(null);
+  const [erroInscritos, setErroInscritos] = useState<string | null>(null);
   // Filtros só do lado do cliente -- a lista já vem inteira da API
   // (gestão de admin, volume baixo); não há razão para um endpoint novo
   // só para isto. "Este mês" e "Futuras/Passadas" olham a `data_inicio`.
   const [filtroEstado, setFiltroEstado] = useState<"todas" | "publicada" | "cancelada" | "arquivada">("todas");
   const [filtroPeriodo, setFiltroPeriodo] = useState<"todas" | "mes" | "futuras" | "passadas">("todas");
-
-  const carregarCandidaturas = async () => {
-    try {
-      setCandidaturas(await voluntariadoApi.listarCandidaturas());
-    } catch (err) {
-      toast.error(mensagemDeErroApi(err, "Não foi possível carregar as candidaturas."));
-    }
-  };
-
-  const carregarAtividades = async () => {
-    try {
-      setAtividades(await voluntariadoApi.listarTodasAsAtividades());
-    } catch (err) {
-      toast.error(mensagemDeErroApi(err, "Não foi possível carregar as actividades."));
-    }
-  };
-
-  useEffect(() => {
-    carregarCandidaturas();
-    carregarAtividades();
-  }, []);
 
   const decidirCandidatura = async (id: string, aprovar: boolean) => {
     setOcupado(id);
@@ -101,33 +89,45 @@ const AdminVoluntariado = () => {
     }
   };
 
-  const publicarAtividade = async () => {
-    if (!form.titulo || !form.descricao || !form.local || !form.data_inicio) {
-      toast.error("Título, descrição, local e data de início são obrigatórios.");
-      return;
-    }
+  // As datas escrevem-se em hora de Luanda, seja qual for o fuso deste computador.
+  const inicioIso = deHoraDeLuanda(form.data_inicio);
+  const fimIso = form.data_fim ? deHoraDeLuanda(form.data_fim) : null;
+  const errosForm = {
+    titulo: !form.titulo.trim() ? "Escreva um título." : undefined,
+    local: !form.local.trim() ? "Diga onde é." : undefined,
+    descricao: !form.descricao.trim() ? "Descreva a actividade." : undefined,
+    data_inicio: !inicioIso ? "Escolha o dia e a hora de início." : undefined,
+    data_fim: form.data_fim && fimIso && inicioIso && fimIso <= inicioIso ? "O fim tem de ser depois do início." : undefined,
+  };
+
+  const publicarAtividade = async (e: FormEvent) => {
+    e.preventDefault();
+    setTentouPublicar(true);
+    setErroPublicar(null);
+    if (Object.values(errosForm).some(Boolean) || !inicioIso) return;
     setAPublicar(true);
     try {
       await voluntariadoApi.publicarAtividade({
         titulo: form.titulo,
         descricao: form.descricao,
         local: form.local,
-        data_inicio: new Date(form.data_inicio).toISOString(),
-        data_fim: form.data_fim ? new Date(form.data_fim).toISOString() : null,
+        data_inicio: inicioIso,
+        data_fim: fimIso,
         vagas: form.vagas ? Number(form.vagas) : null,
       });
       toast.success("Actividade publicada. Os voluntários activos foram notificados por email.");
       setForm(FORM_VAZIO);
+      setTentouPublicar(false);
       await carregarAtividades();
     } catch (err) {
-      toast.error(mensagemDeErroApi(err, "Não foi possível publicar a actividade."));
+      setErroPublicar(mensagemDeErroApi(err, "Não foi possível publicar a actividade."));
     } finally {
       setAPublicar(false);
     }
   };
+  const erroDe = (campo: keyof typeof errosForm) => (tentouPublicar ? errosForm[campo] : undefined);
 
   const cancelarAtividade = async (id: string) => {
-    if (!confirm("Cancelar esta actividade? Os voluntários já inscritos não são notificados automaticamente.")) return;
     try {
       await voluntariadoApi.cancelarAtividade(id);
       toast.success("Actividade cancelada.");
@@ -161,10 +161,12 @@ const AdminVoluntariado = () => {
 
   const verInscritos = async (atividade: AtividadeVoluntariadoAdmin) => {
     setInscritosDe(atividade);
+    setInscritos(null);
+    setErroInscritos(null);
     try {
       setInscritos(await voluntariadoApi.listarInscritos(atividade.id));
     } catch (err) {
-      toast.error(mensagemDeErroApi(err, "Não foi possível carregar os inscritos."));
+      setErroInscritos(mensagemDeErroApi(err, "Não foi possível carregar os inscritos."));
     }
   };
 
@@ -193,214 +195,298 @@ const AdminVoluntariado = () => {
     .sort((a, b) => new Date(a.data_inicio).getTime() - new Date(b.data_inicio).getTime());
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold">Voluntariado</h2>
-        <p className="text-sm text-muted-foreground">Candidaturas a voluntário e actividades publicadas.</p>
-      </div>
+    <>
+      <CabecalhoConsola titulo="Voluntariado" descricao="Candidaturas a voluntário e actividades publicadas." />
 
-      <Tabs defaultValue={tabInicial}>
-        <TabsList>
-          <TabsTrigger value="candidaturas">
-            Candidaturas {pendentes.length > 0 && <Badge variant="destructive" className="ml-2">{pendentes.length}</Badge>}
-          </TabsTrigger>
-          <TabsTrigger value="atividades">Actividades ({atividades.length})</TabsTrigger>
-        </TabsList>
+      <GrupoEscolha<Vista>
+        legenda="Mostrar"
+        legendaOculta
+        aparencia="pastilha"
+        valor={vista}
+        aoMudar={mudarVista}
+        className="mb-5"
+        opcoes={[
+          { valor: "candidaturas", rotulo: `Candidaturas${candidaturasDados.dados ? ` (${pendentes.length} por decidir)` : ""}` },
+          { valor: "atividades", rotulo: `Actividades${atividadesDados.dados ? ` (${atividades.length})` : ""}` },
+        ]}
+      />
 
-        <TabsContent value="candidaturas" className="space-y-3 mt-4">
-          {pendentes.map((c) => (
-            <Card key={c.id}>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-3 flex-wrap">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold">{c.utilizador_nome || c.utilizador_email}</span>
-                      {estadoBadge(c.status)}
+      {vista === "candidaturas" && (
+        <EstadoDadosAdmin
+          aCarregar={candidaturasDados.aCarregar}
+          erro={candidaturasDados.erro}
+          aoTentarDeNovo={() => void carregarCandidaturas()}
+          temDados={!!candidaturasDados.dados}
+        >
+          {pendentes.length ? (
+            <ul className="space-y-3">
+              {pendentes.map((c) => (
+                <li key={c.id} className="rounded-cartao border border-linha bg-superficie p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-medium">{c.utilizador_nome || c.utilizador_email}</span>
+                        <EstadoDe estado={c.status} />
+                      </div>
+                      <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-legenda text-tinta-suave">
+                        <a href={`mailto:${c.utilizador_email}`} className="inline-flex items-center gap-1 underline-offset-2 hover:underline">
+                          <Mail className="size-3.5" aria-hidden />
+                          {c.utilizador_email}
+                        </a>
+                        {c.telefone && (
+                          <a href={`tel:${c.telefone}`} className="inline-flex items-center gap-1 underline-offset-2 hover:underline">
+                            <Phone className="size-3.5" aria-hidden />
+                            {c.telefone}
+                          </a>
+                        )}
+                      </p>
+                      <p className="mt-2 whitespace-pre-wrap text-tinta-suave">{c.motivacao}</p>
                     </div>
-                    <div className="text-xs text-muted-foreground flex gap-3 mt-1 flex-wrap">
-                      <span className="inline-flex items-center gap-1"><Mail className="w-3 h-3" />{c.utilizador_email}</span>
-                      {c.telefone && <span className="inline-flex items-center gap-1"><Phone className="w-3 h-3" />{c.telefone}</span>}
+                    <div className="flex shrink-0 gap-2">
+                      <Botao aCarregar={ocupado === c.id} disabled={ocupado !== null && ocupado !== c.id} onClick={() => void decidirCandidatura(c.id, true)}>
+                        <Check aria-hidden /> Aprovar
+                      </Botao>
+                      <ConfirmarAccao
+                        rotulo="Rejeitar"
+                        titulo="Rejeitar a candidatura?"
+                        descricao={`${c.utilizador_nome || c.utilizador_email} não passa a voluntário.`}
+                        confirmar="Rejeitar"
+                        desactivado={ocupado !== null}
+                        aoConfirmar={() => void decidirCandidatura(c.id, false)}
+                      />
                     </div>
-                    <p className="text-sm text-muted-foreground mt-2 whitespace-pre-wrap">{c.motivacao}</p>
                   </div>
-                  <div className="flex gap-2 shrink-0">
-                    <Button size="sm" disabled={ocupado === c.id} onClick={() => decidirCandidatura(c.id, true)}>
-                      <Check className="w-3 h-3" /> Aprovar
-                    </Button>
-                    <Button size="sm" variant="outline" disabled={ocupado === c.id} onClick={() => decidirCandidatura(c.id, false)}>
-                      <X className="w-3 h-3" /> Rejeitar
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-          {!pendentes.length && <p className="text-center text-muted-foreground py-6">Sem candidaturas pendentes.</p>}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-tinta-suave">Sem candidaturas pendentes.</p>
+          )}
 
           {decididas.length > 0 && (
-            <div className="pt-4">
-              <h3 className="text-sm font-semibold text-muted-foreground mb-2">Já decididas</h3>
-              <div className="space-y-2">
+            <section aria-labelledby="voluntariado-decididas" className="mt-8">
+              <h2 id="voluntariado-decididas" className="mb-3 text-titulo-p text-tinta">
+                Já decididas
+              </h2>
+              <ul className="divide-y divide-linha rounded-cartao border border-linha bg-superficie">
                 {decididas.map((c) => (
-                  <div key={c.id} className="flex items-center justify-between border rounded-lg p-3 gap-3 flex-wrap">
-                    <div>
-                      <span className="font-medium">{c.utilizador_nome || c.utilizador_email}</span>
-                      <span className="text-xs text-muted-foreground ml-2">{c.utilizador_email}</span>
-                    </div>
-                    {estadoBadge(c.status)}
-                  </div>
+                  <li key={c.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+                    <span className="min-w-0">
+                      <span className="block font-medium">{c.utilizador_nome || c.utilizador_email}</span>
+                      <span className="block text-legenda text-tinta-suave">{c.utilizador_email}</span>
+                    </span>
+                    <EstadoDe estado={c.status} />
+                  </li>
                 ))}
+              </ul>
+            </section>
+          )}
+        </EstadoDadosAdmin>
+      )}
+
+      {vista === "atividades" && (
+        <div className="space-y-8">
+          <form
+            onSubmit={(e) => void publicarAtividade(e)}
+            noValidate
+            className="max-w-3xl space-y-4 rounded-cartao border border-linha bg-superficie p-5"
+          >
+            <h2 className="text-titulo-p text-tinta">Publicar actividade</h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Campo rotulo="Título" value={form.titulo} erro={erroDe("titulo")} onChange={(e) => setForm({ ...form, titulo: e.target.value })} />
+              <Campo rotulo="Local" value={form.local} erro={erroDe("local")} onChange={(e) => setForm({ ...form, local: e.target.value })} />
+            </div>
+            <CampoTexto
+              rotulo="Descrição"
+              value={form.descricao}
+              erro={erroDe("descricao")}
+              onChange={(e) => setForm({ ...form, descricao: e.target.value })}
+            />
+            <div className="grid gap-4 md:grid-cols-3">
+              <Campo
+                rotulo="Data de início"
+                ajuda="Hora de Luanda."
+                type="datetime-local"
+                value={form.data_inicio}
+                erro={erroDe("data_inicio")}
+                onChange={(e) => setForm({ ...form, data_inicio: e.target.value })}
+              />
+              <Campo
+                rotulo="Data de fim (opcional)"
+                ajuda="Hora de Luanda."
+                type="datetime-local"
+                value={form.data_fim}
+                erro={erroDe("data_fim")}
+                onChange={(e) => setForm({ ...form, data_fim: e.target.value })}
+              />
+              <Campo
+                rotulo="Vagas (opcional)"
+                ajuda="Vazio: sem limite."
+                type="number"
+                min={1}
+                value={form.vagas}
+                onChange={(e) => setForm({ ...form, vagas: e.target.value })}
+              />
+            </div>
+            {erroPublicar && (
+              <Aviso variante="erro" anunciar titulo="A actividade não foi publicada">
+                {erroPublicar}
+              </Aviso>
+            )}
+            <Botao type="submit" aCarregar={aPublicar}>
+              <Plus aria-hidden /> Publicar actividade
+            </Botao>
+          </form>
+
+          <section aria-labelledby="voluntariado-atividades">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <h2 id="voluntariado-atividades" className="text-titulo-p text-tinta">
+                Actividades
+                {atividadesDados.dados && (
+                  <span className="text-corpo font-normal text-tinta-suave">
+                    {" "}
+                    ({atividadesFiltradas.length}
+                    {atividadesFiltradas.length !== atividades.length ? ` de ${atividades.length}` : ""})
+                  </span>
+                )}
+              </h2>
+              <div className="flex flex-wrap gap-3">
+                <Seleccao
+                  rotulo="Estado"
+                  tamanho="compacto"
+                  marcador="Escolher…"
+                  value={filtroEstado}
+                  onChange={(e) => setFiltroEstado(e.target.value as typeof filtroEstado)}
+                  opcoes={[
+                    { valor: "todas", rotulo: "Todos os estados" },
+                    { valor: "publicada", rotulo: "Publicadas" },
+                    { valor: "cancelada", rotulo: "Canceladas" },
+                    { valor: "arquivada", rotulo: "Arquivadas" },
+                  ]}
+                  className="w-44"
+                />
+                <Seleccao
+                  rotulo="Quando"
+                  tamanho="compacto"
+                  marcador="Escolher…"
+                  value={filtroPeriodo}
+                  onChange={(e) => setFiltroPeriodo(e.target.value as typeof filtroPeriodo)}
+                  opcoes={[
+                    { valor: "todas", rotulo: "Qualquer altura" },
+                    { valor: "mes", rotulo: "Este mês" },
+                    { valor: "futuras", rotulo: "Por acontecer" },
+                    { valor: "passadas", rotulo: "Já aconteceram" },
+                  ]}
+                  className="w-44"
+                />
               </div>
             </div>
-          )}
-        </TabsContent>
 
-        <TabsContent value="atividades" className="space-y-6 mt-4">
-          <Card>
-            <CardHeader><CardTitle>Publicar actividade</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid md:grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="ativ-titulo">Título</Label>
-                  <Input id="ativ-titulo" value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} />
-                </div>
-                <div>
-                  <Label htmlFor="ativ-local">Local</Label>
-                  <Input id="ativ-local" value={form.local} onChange={(e) => setForm({ ...form, local: e.target.value })} />
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="ativ-descricao">Descrição</Label>
-                <Textarea id="ativ-descricao" value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} />
-              </div>
-              <div className="grid md:grid-cols-3 gap-3">
-                <div>
-                  <Label htmlFor="ativ-data-inicio">Data de início</Label>
-                  <Input id="ativ-data-inicio" type="datetime-local" value={form.data_inicio} onChange={(e) => setForm({ ...form, data_inicio: e.target.value })} />
-                </div>
-                <div>
-                  <Label htmlFor="ativ-data-fim">Data de fim (opcional)</Label>
-                  <Input id="ativ-data-fim" type="datetime-local" value={form.data_fim} onChange={(e) => setForm({ ...form, data_fim: e.target.value })} />
-                </div>
-                <div>
-                  <Label htmlFor="ativ-vagas">Vagas (opcional)</Label>
-                  <Input id="ativ-vagas" type="number" min={1} value={form.vagas} onChange={(e) => setForm({ ...form, vagas: e.target.value })} placeholder="Sem limite" />
-                </div>
-              </div>
-              <Button onClick={publicarAtividade} disabled={aPublicar}>
-                <Plus className="w-4 h-4" /> {aPublicar ? "A publicar..." : "Publicar actividade"}
-              </Button>
-            </CardContent>
-          </Card>
+            <div className="mt-4">
+              <EstadoDadosAdmin
+                aCarregar={atividadesDados.aCarregar}
+                erro={atividadesDados.erro}
+                aoTentarDeNovo={() => void carregarAtividades()}
+                temDados={!!atividadesDados.dados}
+              >
+                {atividadesFiltradas.length > 0 && (
+                  <ul className="divide-y divide-linha rounded-cartao border border-linha bg-superficie">
+                    {atividadesFiltradas.map((a) => (
+                      <li key={a.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-medium">{a.titulo}</span>
+                            <EstadoDe estado={a.estado} />
+                          </div>
+                          <p className="mt-1 text-legenda text-tinta-suave">
+                            {a.local} · {formatarDataHoraLuanda(a.data_inicio)} (hora de Luanda) · {a.inscritos} inscrito
+                            {a.inscritos === 1 ? "" : "s"}
+                            {a.vagas != null && ` de ${a.vagas}`}
+                          </p>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-1">
+                          <Botao variante="secundario" onClick={() => void verInscritos(a)}>
+                            <Users aria-hidden /> Inscritos
+                          </Botao>
+                          {a.estado === "publicada" && (
+                            <ConfirmarAccao
+                              soIcone
+                              icone={<Ban aria-hidden />}
+                              rotulo={`Cancelar «${a.titulo}»`}
+                              titulo="Cancelar a actividade?"
+                              descricao="Os voluntários já inscritos não são avisados automaticamente: avise-os."
+                              confirmar="Cancelar actividade"
+                              aoConfirmar={() => void cancelarAtividade(a.id)}
+                            />
+                          )}
+                          {a.estado !== "arquivada" && (
+                            <ConfirmarAccao
+                              soIcone
+                              icone={<Archive aria-hidden />}
+                              rotulo={`Arquivar «${a.titulo}»`}
+                              titulo="Arquivar a actividade?"
+                              descricao="Sai da lista por omissão; continua em «Arquivadas», com o histórico de inscrições."
+                              confirmar="Arquivar"
+                              aoConfirmar={() => void arquivarAtividade(a.id)}
+                            />
+                          )}
+                          <ConfirmarAccao
+                            soIcone
+                            icone={<Trash2 aria-hidden />}
+                            rotulo={`Apagar «${a.titulo}»`}
+                            titulo={`Apagar «${a.titulo}»?`}
+                            descricao="Não se pode desfazer. Se a actividade já tiver inscrições, a API recusa apagar: arquive-a, para não perder o histórico de quem se inscreveu."
+                            confirmar="Apagar"
+                            aoConfirmar={() => void apagarAtividade(a.id)}
+                          />
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {!atividades.length && <p className="text-tinta-suave">Nenhuma actividade ainda.</p>}
+                {!!atividades.length && !atividadesFiltradas.length && (
+                  <p className="text-tinta-suave">Nenhuma actividade corresponde aos filtros.</p>
+                )}
+              </EstadoDadosAdmin>
+            </div>
+          </section>
+        </div>
+      )}
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-3">
-              <CardTitle>
-                Actividades ({atividadesFiltradas.length}
-                {atividadesFiltradas.length !== atividades.length ? ` de ${atividades.length}` : ""})
-              </CardTitle>
-              <div className="flex gap-2 flex-wrap">
-                <Select value={filtroEstado} onValueChange={(v) => setFiltroEstado(v as typeof filtroEstado)}>
-                  <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todas">Todos os estados</SelectItem>
-                    <SelectItem value="publicada">Publicadas</SelectItem>
-                    <SelectItem value="cancelada">Canceladas</SelectItem>
-                    <SelectItem value="arquivada">Arquivadas</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={filtroPeriodo} onValueChange={(v) => setFiltroPeriodo(v as typeof filtroPeriodo)}>
-                  <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todas">Qualquer altura</SelectItem>
-                    <SelectItem value="mes">Este mês</SelectItem>
-                    <SelectItem value="futuras">Por acontecer</SelectItem>
-                    <SelectItem value="passadas">Já aconteceram</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {atividadesFiltradas.map((a) => (
-                <div key={a.id} className="flex items-center justify-between border rounded-lg p-3 gap-3 flex-wrap">
-                  <div className="min-w-0 flex-1">
-                    <div className="font-semibold flex items-center gap-2 flex-wrap">
-                      {a.titulo}
-                      {estadoBadge(a.estado)}
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {a.local} · {new Date(a.data_inicio).toLocaleString("pt-PT")} · {a.inscritos} inscrito{a.inscritos === 1 ? "" : "s"}
-                      {a.vagas != null && ` de ${a.vagas}`}
-                    </div>
-                  </div>
-                  <div className="flex gap-2 shrink-0">
-                    <Button size="sm" variant="outline" onClick={() => verInscritos(a)}>
-                      <Users className="w-3 h-3" /> Inscritos
-                    </Button>
-                    {a.estado === "publicada" && (
-                      <Button size="sm" variant="ghost" onClick={() => cancelarAtividade(a.id)} title="Cancelar">
-                        <Ban className="w-3 h-3 text-destructive" />
-                      </Button>
-                    )}
-                    {a.estado !== "arquivada" && (
-                      <Button size="sm" variant="ghost" onClick={() => arquivarAtividade(a.id)} title="Arquivar">
-                        <Archive className="w-3 h-3" />
-                      </Button>
-                    )}
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button size="sm" variant="ghost" title="Apagar">
-                          <Trash2 className="w-3 h-3 text-destructive" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Apagar "{a.titulo}"?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Esta acção não se pode desfazer. Se a actividade já tiver alguma inscrição, a API recusa
-                            apagar -- use "Arquivar" nesse caso, para não perder o histórico de quem se inscreveu.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => apagarAtividade(a.id)}>Apagar</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </div>
+      <Dialogo open={!!inscritosDe} onOpenChange={(open) => !open && setInscritosDe(null)}>
+        <DialogoConteudo
+          titulo={`Inscritos em ${inscritosDe?.titulo ?? ""}`}
+          descricao={
+            inscritos
+              ? `${inscritos.length} voluntário${inscritos.length === 1 ? "" : "s"} inscrito${inscritos.length === 1 ? "" : "s"}.`
+              : undefined
+          }
+          rotuloFechar="Fechar"
+        >
+          {erroInscritos ? (
+            <Aviso variante="erro" anunciar titulo="Não foi possível carregar os inscritos">
+              {erroInscritos}
+            </Aviso>
+          ) : inscritos === null ? (
+            <p role="status" className="text-tinta-suave">
+              A carregar…
+            </p>
+          ) : inscritos.length ? (
+            <ul className="max-h-96 divide-y divide-linha overflow-y-auto rounded-controlo border border-linha">
+              {inscritos.map((i) => (
+                <li key={i.id} className="px-3 py-2">
+                  <span className="block font-medium">{i.utilizador_nome || "—"}</span>
+                  <span className="block text-legenda text-tinta-suave">{i.utilizador_email}</span>
+                </li>
               ))}
-              {!atividades.length && (
-                <p className="text-center text-muted-foreground py-6">Nenhuma actividade ainda.</p>
-              )}
-              {!!atividades.length && !atividadesFiltradas.length && (
-                <p className="text-center text-muted-foreground py-6">Nenhuma actividade corresponde aos filtros.</p>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      <Dialog open={!!inscritosDe} onOpenChange={(open) => !open && setInscritosDe(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Inscritos em {inscritosDe?.titulo}</DialogTitle>
-            <DialogDescription>{inscritos.length} voluntário{inscritos.length === 1 ? "" : "s"} inscrito{inscritos.length === 1 ? "" : "s"}.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2 max-h-96 overflow-y-auto">
-            {inscritos.map((i) => (
-              <div key={i.id} className="flex items-center justify-between border rounded-lg p-3">
-                <div>
-                  <div className="font-medium">{i.utilizador_nome || "—"}</div>
-                  <div className="text-xs text-muted-foreground">{i.utilizador_email}</div>
-                </div>
-              </div>
-            ))}
-            {!inscritos.length && <p className="text-center text-muted-foreground py-4">Ainda sem inscritos.</p>}
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+            </ul>
+          ) : (
+            <p className="text-tinta-suave">Ainda sem inscritos.</p>
+          )}
+        </DialogoConteudo>
+      </Dialogo>
+    </>
   );
 };
 

@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { agruparPorDia, chaveDoDia, formatarDiaCurto, formatarDiaLongo, formatarHora } from "./horarios";
+import {
+  agruparPorDia,
+  chaveDoDia,
+  deHoraDeLuanda,
+  formatarDataHoraLuanda,
+  formatarDiaCurto,
+  formatarDiaLongo,
+  formatarHora,
+  paraHoraDeLuanda,
+} from "./horarios";
 
 // Segunda-feira, 5 de Outubro de 2026. 08:00Z = 09:00 em Luanda.
 const H = (inicio: string) => ({ inicio, fim: inicio });
@@ -32,3 +41,23 @@ describe("horários na hora de Luanda", () => {
     expect(formatarDiaCurto("2026-10-05T08:00:00Z", "pt-AO").data).toBe("05/10");
   });
 });
+
+describe("hora de Luanda nos formulários do admin", () => {
+  it("o que se escreve é hora de Luanda, seja qual for o fuso do computador", () => {
+    expect(deHoraDeLuanda("2026-10-20T15:00")).toBe("2026-10-20T14:00:00.000Z");
+  });
+
+  it("valor vazio ou incompleto não vira uma data", () => {
+    expect(deHoraDeLuanda("")).toBeNull();
+    expect(deHoraDeLuanda("2026-10-20")).toBeNull();
+  });
+
+  it("ida e volta dá o mesmo valor", () => {
+    expect(paraHoraDeLuanda(deHoraDeLuanda("2026-01-05T08:30") as string)).toBe("2026-01-05T08:30");
+  });
+
+  it("mostra a data e a hora de Luanda", () => {
+    expect(formatarDataHoraLuanda("2026-10-20T14:00:00.000Z")).toBe("20/10/2026, 15:00");
+  });
+});
+
