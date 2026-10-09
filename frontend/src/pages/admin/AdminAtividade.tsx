@@ -10,6 +10,19 @@ import {
   type UtilizadorAtivoAdmin,
 } from "@/lib/apiClient";
 import { toast } from "sonner";
+import { limiarFormatado, nomeDoExercicio, nomeDoOlho } from "@/components/visao/rotulos";
+
+/**
+ * O resultado de uma sessão como o exercício o mede. Versão 2 (sem webcam):
+ * o limiar, como no progresso e no relatório. Versão 1: pontuação e precisão
+ * dos exercícios antigos -- até 2026-10-09 eram as únicas colunas, e as
+ * sessões novas apareciam todas com "0" e "0%".
+ */
+const resultadoDaSessao = (s: SessaoExercicioAdmin): string => {
+  if (s.versao < 2) return `${s.pontuacao} pts · ${s.precisao_percentual.toFixed(0)}%`;
+  const sinais = s.astigmatismo === null ? null : { astigmatismo: s.astigmatismo };
+  return limiarFormatado(s.limiar, s.unidade, sinais);
+};
 
 const AdminAtividade = () => {
   // A Visão Geral (AdminOverview) linka directamente ao separador e ao
@@ -55,8 +68,8 @@ const AdminAtividade = () => {
                     <TableHead>Utilizador</TableHead>
                     <TableHead>Exercício</TableHead>
                     <TableHead>Duração</TableHead>
-                    <TableHead>Pontuação</TableHead>
-                    <TableHead>Precisão</TableHead>
+                    <TableHead>Olho</TableHead>
+                    <TableHead>Resultado</TableHead>
                     <TableHead>Quando</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -64,10 +77,13 @@ const AdminAtividade = () => {
                   {sessoes.map((s) => (
                     <TableRow key={s.id}>
                       <TableCell className="font-medium">{s.utilizador_nome || s.utilizador_email}</TableCell>
-                      <TableCell>{s.exercicio_id}</TableCell>
+                      <TableCell>{nomeDoExercicio(s.exercicio_id)}</TableCell>
                       <TableCell>{s.duracao_segundos}s</TableCell>
-                      <TableCell>{s.pontuacao}</TableCell>
-                      <TableCell>{s.precisao_percentual.toFixed(0)}%</TableCell>
+                      <TableCell>{s.versao < 2 ? "—" : nomeDoOlho(s.olho)}</TableCell>
+                      <TableCell>
+                        {resultadoDaSessao(s)}
+                        {s.baixa_atencao && <span className="ml-2 text-xs text-gold">(baixa atenção)</span>}
+                      </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         {new Date(s.created_at).toLocaleString("pt-PT")}
                       </TableCell>
