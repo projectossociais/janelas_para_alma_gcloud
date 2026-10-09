@@ -223,7 +223,12 @@
     "esteLinkDeRecuperacao2": "This recovery link is invalid or has expired. Please request a new one.",
     "escolhaUmaNovaPalavra": "Choose a new password for your account.",
     "esteLinkDeRecuperacao3": "This recovery link is invalid.",
-    "aGuardar": "Saving..."
+    "aGuardar": "Saving...",
+    "pedirNovoTitulo": "Ask for a new reset link",
+    "pedirNovoTexto": "Enter your account email and we'll send another link to set your password.",
+    "pedirNovoEnviado": "If there's an account with that email, we've sent a new link. Check your inbox and spam.",
+    "pedirNovoBotao": "Send new link",
+    "voltarAoLogin": "Back to sign in"
   },
   "Auth": {
     "aEntrar": "Signing in…",
@@ -426,7 +431,11 @@
     "contaConfirmada": "Account confirmed!",
     "naoFoiPossivelConfirmar": "We couldn't confirm your account",
     "umMomento": "One moment.",
-    "jaPodeEntrarCom": "You can now sign in with your email and password."
+    "jaPodeEntrarCom": "You can now sign in with your email and password.",
+    "pedirNovoTitulo": "Ask for a new confirmation link",
+    "pedirNovoTexto": "Enter the email you signed up with and we'll send another link.",
+    "pedirNovoEnviado": "If there's an unconfirmed account with that email, we've sent a new link. Check your inbox and spam.",
+    "pedirNovoBotao": "Send new link"
   },
   "ContactSection": {
     "junteSeANos": "Join Us",
@@ -2511,5 +2520,10 @@
     "naoFoiPossivelVerificar": "We couldn't check your portal access",
     "verifiqueALigacao": "Check your internet connection and try again.",
     "tentarDeNovo": "Try again"
+  },
+  "PedirNovoLink": {
+    "email": "Account email",
+    "emailInvalido": "Enter a valid email.",
+    "erro": "We couldn't send the request. Please try again."
   }
 }

@@ -223,7 +223,12 @@
     "esteLinkDeRecuperacao2": "Este link de recuperação é inválido ou expirou. Peça um novo.",
     "escolhaUmaNovaPalavra": "Escolha uma nova palavra-passe para a sua conta.",
     "esteLinkDeRecuperacao3": "Este link de recuperação é inválido.",
-    "aGuardar": "A guardar..."
+    "aGuardar": "A guardar...",
+    "pedirNovoTitulo": "Pedir um novo link de recuperação",
+    "pedirNovoTexto": "Escreva o email da conta e enviamos outro link para definir a palavra-passe.",
+    "pedirNovoEnviado": "Se houver uma conta com esse email, enviámos um novo link. Veja a caixa de entrada e o spam.",
+    "pedirNovoBotao": "Enviar novo link",
+    "voltarAoLogin": "Voltar a entrar"
   },
   "Auth": {
     "aEntrar": "A entrar…",
@@ -426,7 +431,11 @@
     "contaConfirmada": "Conta confirmada!",
     "naoFoiPossivelConfirmar": "Não foi possível confirmar",
     "umMomento": "Um momento.",
-    "jaPodeEntrarCom": "Já pode entrar com o seu email e palavra-passe."
+    "jaPodeEntrarCom": "Já pode entrar com o seu email e palavra-passe.",
+    "pedirNovoTitulo": "Pedir um novo link de confirmação",
+    "pedirNovoTexto": "Escreva o email com que criou a conta e enviamos outro link.",
+    "pedirNovoEnviado": "Se houver uma conta por confirmar com esse email, enviámos um novo link. Veja a caixa de entrada e o spam.",
+    "pedirNovoBotao": "Enviar novo link"
   },
   "ContactSection": {
     "junteSeANos": "Junte-se a Nós",
@@ -2511,5 +2520,10 @@
     "naoFoiPossivelVerificar": "Não foi possível verificar o acesso ao portal",
     "verifiqueALigacao": "Verifique a ligação à internet e tente de novo.",
     "tentarDeNovo": "Tentar de novo"
+  },
+  "PedirNovoLink": {
+    "email": "Email da conta",
+    "emailInvalido": "Escreva um email válido.",
+    "erro": "Não foi possível enviar o pedido. Tente de novo."
   }
 }

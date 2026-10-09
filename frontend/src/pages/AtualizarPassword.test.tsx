@@ -12,10 +12,12 @@ class ApiErrorFalso extends Error {
 }
 
 const redefinirPassword = vi.fn();
+const recuperarPassword = vi.fn();
 
 vi.mock("@/lib/apiClient", () => ({
   authApi: {
     redefinirPassword: (token: string, senha: string) => redefinirPassword(token, senha),
+    recuperarPassword: (email: string) => recuperarPassword(email),
   },
   mensagemDeErroApi: (err: unknown, fallback: string) => {
     const status = (err as { status?: unknown } | null)?.status;
@@ -40,6 +42,7 @@ vi.mock("sonner", () => ({
 }));
 
 import AtualizarPassword from "./AtualizarPassword";
+import { violacoesAcessibilidade } from "@/design/testes/acessibilidade";
 
 function renderComToken(token: string | null) {
   const rota = token ? `/atualizar-password?token=${token}` : "/atualizar-password";
@@ -61,18 +64,31 @@ async function preencherEsubmeter(user: ReturnType<typeof userEvent.setup>, senh
 describe("Actualizarpassword", () => {
   beforeEach(() => {
     redefinirPassword.mockReset();
+    recuperarPassword.mockReset();
     toastError.mockReset();
     toastSuccess.mockReset();
   });
 
-  it("sem token na URL, bloqueia o formulário em vez de deixar submeter", () => {
+  it("sem token na URL: diz que o link é inválido, não mostra o formulário e deixa pedir outro", () => {
     renderComToken(null);
 
-    expect(screen.getByText("Este link de recuperação é inválido.")).toBeInTheDocument();
-    expect(screen.getByLabelText("Nova Palavra-passe")).toBeDisabled();
-    expect(screen.getByLabelText("Confirmar Palavra-passe")).toBeDisabled();
-    expect(screen.getByRole("button", { name: /Guardar Nova Palavra-passe/ })).toBeDisabled();
+    expect(screen.getByRole("alert")).toHaveTextContent("Este link de recuperação é inválido.");
+    expect(screen.queryByLabelText("Nova Palavra-passe")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Enviar novo link" })).toBeInTheDocument();
     expect(redefinirPassword).not.toHaveBeenCalled();
+  });
+
+  // Antes: um beco sem saída -- a página dizia que o link não servia e mais nada.
+  it("pedir um novo link chama a API e confirma de forma neutra (não revela se a conta existe)", async () => {
+    recuperarPassword.mockResolvedValue({ mensagem: "ok" });
+    const user = userEvent.setup();
+    renderComToken(null);
+
+    await user.type(screen.getByLabelText("Email da conta"), "ana@example.com");
+    await user.click(screen.getByRole("button", { name: "Enviar novo link" }));
+
+    await waitFor(() => expect(recuperarPassword).toHaveBeenCalledWith("ana@example.com"));
+    expect(await screen.findByText(/Se houver uma conta com esse email, enviámos um novo link/)).toBeInTheDocument();
   });
 
   it("nunca mostra sucesso quando o token é inválido ou expirou", async () => {
@@ -83,7 +99,8 @@ describe("Actualizarpassword", () => {
     await preencherEsubmeter(user, "password-nova-123", "password-nova-123");
 
     await waitFor(() => expect(redefinirPassword).toHaveBeenCalledWith("token-expirado", "password-nova-123"));
-    expect(toastError).toHaveBeenCalledWith("este link de recuperação é inválido ou expirou");
+    expect(await screen.findByRole("alert")).toHaveTextContent("este link de recuperação é inválido ou expirou");
+    expect(screen.getByRole("button", { name: "Enviar novo link" })).toBeInTheDocument();
     expect(toastSuccess).not.toHaveBeenCalled();
   });
 
@@ -106,7 +123,9 @@ describe("Actualizarpassword", () => {
     await preencherEsubmeter(user, "password-nova-123", "outra-coisa-456");
 
     expect(redefinirPassword).not.toHaveBeenCalled();
-    expect(toastError).toHaveBeenCalledWith("As palavras-passe não coincidem.");
+    // O erro fica no campo, não num aviso que desaparece.
+    expect(screen.getByText("As palavras-passe não coincidem.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Confirmar Palavra-passe")).toHaveAttribute("aria-invalid", "true");
   });
 
   it("recusa uma palavra-passe curta demais, sem chamar a API", async () => {
@@ -116,6 +135,11 @@ describe("Actualizarpassword", () => {
     await preencherEsubmeter(user, "curta", "curta");
 
     expect(redefinirPassword).not.toHaveBeenCalled();
-    expect(toastError).toHaveBeenCalledWith("A palavra-passe deve ter pelo menos 8 caracteres.");
+    expect(screen.getByText("A palavra-passe deve ter pelo menos 8 caracteres.")).toBeInTheDocument();
+  });
+
+  it("sem violações de acessibilidade", async () => {
+    const { container } = renderComToken("token-valido");
+    expect(await violacoesAcessibilidade(container)).toEqual([]);
   });
 });
