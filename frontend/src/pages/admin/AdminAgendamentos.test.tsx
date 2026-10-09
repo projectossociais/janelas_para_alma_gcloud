@@ -26,6 +26,7 @@ vi.mock("sonner", () => ({
 }));
 
 import AdminAgendamentos from "./AdminAgendamentos";
+import { violacoesAcessibilidade } from "@/design/testes/acessibilidade";
 
 const PEDIDO_PENDENTE = {
   id: "ag-1",
@@ -123,5 +124,27 @@ describe("AdminAgendamentos", () => {
 
     await screen.findByText("Ana Silva");
     expect(screen.queryByText("Premium")).not.toBeInTheDocument();
+  });
+
+  // A hora é a de Luanda (UTC+1), a que o paciente escolheu -- nunca a do
+  // fuso do computador de quem abre o painel.
+  it("mostra a hora da consulta em hora de Luanda", async () => {
+    listarAgendamentos.mockResolvedValue([PEDIDO_PENDENTE]); // 09:00 UTC
+    render(<AdminAgendamentos />);
+    expect(await screen.findByText(/10:00 \(hora de Luanda\)/)).toBeInTheDocument();
+  });
+
+  it("se a lista falhar: diz porquê, nunca 'Sem pedidos pendentes.'", async () => {
+    listarAgendamentos.mockRejectedValue(Object.assign(new Error("Sem permissões"), { status: 403 }));
+    render(<AdminAgendamentos />);
+    expect(await screen.findByRole("alert")).toHaveTextContent("Sem permissões");
+    expect(screen.queryByText("Sem pedidos pendentes.")).not.toBeInTheDocument();
+  });
+
+  it("sem violações de acessibilidade", async () => {
+    listarAgendamentos.mockResolvedValue([PEDIDO_PENDENTE]);
+    const { container } = render(<AdminAgendamentos />);
+    await screen.findByText("Ana Silva");
+    expect(await violacoesAcessibilidade(container)).toEqual([]);
   });
 });

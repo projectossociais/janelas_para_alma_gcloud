@@ -1,127 +1,135 @@
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { adminApi, mensagemDeErroApi, type AdminUtilizador } from "@/lib/apiClient";
+import { useState, type FormEvent } from "react";
+import { ShieldPlus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { Trash2, ShieldPlus } from "lucide-react";
+import { ConfirmarAccao } from "@/components/admin/ConfirmarAccao";
+import { EstadoDadosAdmin, useDadosAdmin } from "@/components/admin/DadosAdmin";
+import { Botao } from "@/design/componentes/Botao";
+import { Campo } from "@/design/componentes/Campo";
+import {
+  Tabela,
+  TabelaCabecalho,
+  TabelaCelula,
+  TabelaCorpo,
+  TabelaLinha,
+  TabelaTitulo,
+} from "@/design/componentes/Tabela";
+import { CabecalhoConsola } from "@/design/layouts/LayoutConsola";
+import { formatarData } from "@/i18n/formatar";
+import { adminApi, mensagemDeErroApi, type AdminUtilizador } from "@/lib/apiClient";
 
 // W-11: no modelo novo "admin" é binário (uma coluna `papel`), não uma
-// matriz de permissões. Saíram o `is_super`, os `can_*` e o `useAdminScope`
-// (que liam a tabela `admin_permissions` do Supabase). O primeiro admin
-// cria-se por linha de comando: `python -m app.criar_admin <email>`.
+// matriz de permissões. O primeiro admin cria-se por linha de comando:
+// `python -m app.criar_admin <email>`.
 
 const AdminAdmins = () => {
-  const [rows, setRows] = useState<AdminUtilizador[]>([]);
+  const { dados, erro, aCarregar, recarregar } = useDadosAdmin(
+    () => adminApi.listarUtilizadores("admin"),
+    "Não foi possível carregar os administradores.",
+    [],
+  );
   const [email, setEmail] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [aAdicionar, setAAdicionar] = useState(false);
+  const [aRemover, setARemover] = useState<string | null>(null);
 
-  const load = async () => {
+  const adicionar = async (e: FormEvent) => {
+    e.preventDefault();
+    const limpo = email.trim();
+    if (!limpo) return;
+    setAAdicionar(true);
     try {
-      setRows(await adminApi.listarUtilizadores("admin"));
-    } catch (err) {
-      toast.error(mensagemDeErroApi(err, "Não foi possível carregar os administradores."));
-    }
-  };
-
-  useEffect(() => {
-    load();
-  }, []);
-
-  const addAdmin = async () => {
-    const clean = email.trim();
-    if (!clean) return;
-    setBusy(true);
-    try {
-      await adminApi.promover(clean);
+      await adminApi.promover(limpo);
       toast.success("Admin adicionado.");
       setEmail("");
-      await load();
+      await recarregar();
     } catch (err) {
       toast.error(mensagemDeErroApi(err, "Não foi possível adicionar o administrador."));
     } finally {
-      setBusy(false);
+      setAAdicionar(false);
     }
   };
 
-  const removeAdmin = async (row: AdminUtilizador) => {
-    if (!confirm(`Remover o acesso de admin de ${row.email}?`)) return;
+  const remover = async (linha: AdminUtilizador) => {
+    setARemover(linha.id);
     try {
-      await adminApi.removerAdmin(row.id);
+      await adminApi.removerAdmin(linha.id);
       toast.success("Admin removido.");
-      await load();
+      await recarregar();
     } catch (err) {
       toast.error(mensagemDeErroApi(err, "Não foi possível remover o administrador."));
+    } finally {
+      setARemover(null);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ShieldPlus className="w-5 h-5" /> Adicionar administrador
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col sm:flex-row gap-3">
-          <Input
-            placeholder="email@exemplo.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={busy}
-          />
-          <Button onClick={addAdmin} disabled={busy || !email.trim()}>
-            Adicionar
-          </Button>
-        </CardContent>
-      </Card>
+    <>
+      <CabecalhoConsola titulo="Administradores" descricao="Quem tem acesso a este painel." />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Administradores ({rows.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Utilizador</TableHead>
-                  <TableHead>Desde</TableHead>
-                  <TableHead />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map((r) => (
-                  <TableRow key={r.id}>
-                    <TableCell>
-                      <div className="font-medium">{r.nome_completo || "—"}</div>
-                      <div className="text-xs text-muted-foreground">{r.email}</div>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {new Date(r.criado_em).toLocaleDateString("pt-PT")}
-                    </TableCell>
-                    <TableCell>
-                      <Button size="icon" variant="ghost" onClick={() => removeAdmin(r)}>
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {!rows.length && (
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-center text-muted-foreground py-6">
-                      <Badge variant="outline">Sem administradores</Badge>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+      <form
+        onSubmit={(e) => void adicionar(e)}
+        className="mb-8 flex max-w-xl flex-col gap-3 rounded-cartao border border-linha bg-superficie p-5 sm:flex-row sm:items-end"
+      >
+        <Campo
+          rotulo="Adicionar administrador"
+          ajuda="A conta tem de já existir."
+          type="email"
+          placeholder="email@exemplo.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          disabled={aAdicionar}
+          className="flex-1"
+        />
+        <Botao type="submit" aCarregar={aAdicionar} disabled={!email.trim()}>
+          <ShieldPlus aria-hidden />
+          Adicionar
+        </Botao>
+      </form>
+
+      <EstadoDadosAdmin aCarregar={aCarregar} erro={erro} aoTentarDeNovo={() => void recarregar()} temDados={!!dados}>
+        <Tabela legenda="Administradores">
+          <TabelaCabecalho>
+            <TabelaLinha>
+              <TabelaTitulo>Utilizador</TabelaTitulo>
+              <TabelaTitulo>Conta criada em</TabelaTitulo>
+              <TabelaTitulo>
+                <span className="sr-only">Acções</span>
+              </TabelaTitulo>
+            </TabelaLinha>
+          </TabelaCabecalho>
+          <TabelaCorpo>
+            {(dados ?? []).map((r) => (
+              <TabelaLinha key={r.id}>
+                <TabelaCelula>
+                  <span className="block font-medium">{r.nome_completo || "—"}</span>
+                  <span className="block text-legenda text-tinta-suave">{r.email}</span>
+                </TabelaCelula>
+                <TabelaCelula className="whitespace-nowrap text-tinta-suave">{formatarData(r.criado_em)}</TabelaCelula>
+                <TabelaCelula className="text-right">
+                  <ConfirmarAccao
+                    soIcone
+                    icone={<Trash2 aria-hidden />}
+                    rotulo={`Remover ${r.email} dos administradores`}
+                    titulo="Remover administrador?"
+                    descricao={`${r.email} deixa de ter acesso a este painel. A conta continua a existir.`}
+                    confirmar="Remover"
+                    aCarregar={aRemover === r.id}
+                    desactivado={aRemover !== null && aRemover !== r.id}
+                    aoConfirmar={() => void remover(r)}
+                  />
+                </TabelaCelula>
+              </TabelaLinha>
+            ))}
+            {dados?.length === 0 && (
+              <TabelaLinha>
+                <TabelaCelula colSpan={3} className="py-8 text-center text-tinta-suave">
+                  Sem administradores.
+                </TabelaCelula>
+              </TabelaLinha>
+            )}
+          </TabelaCorpo>
+        </Tabela>
+      </EstadoDadosAdmin>
+    </>
   );
 };
 
