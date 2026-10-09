@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { cn } from "@/design/cn";
 import { Botao } from "@/design/componentes/Botao";
 import { Dialogo, DialogoConteudo, DialogoFechar, DialogoGatilho } from "@/design/componentes/Dialogo";
 
@@ -17,6 +18,7 @@ export const ConfirmarAccao = ({
   desactivado = false,
   aCarregar = false,
   soIcone = false,
+  tom = "perigo",
 }: {
   /** Texto do botão; com `soIcone`, fica só como nome acessível. */
   rotulo: string;
@@ -29,15 +31,23 @@ export const ConfirmarAccao = ({
   desactivado?: boolean;
   aCarregar?: boolean;
   soIcone?: boolean;
+  /**
+   * `perigo` (por omissão): tirar, apagar, revogar -- a vermelho.
+   * `accao`: aprovar ou creditar -- não é destrutivo, mas também não se desfaz.
+   */
+  tom?: "perigo" | "accao";
 }) => (
   <Dialogo>
     <DialogoGatilho asChild>
       <Botao
-        variante="fantasma"
+        variante={tom === "accao" ? "primario" : "fantasma"}
         disabled={desactivado}
         aCarregar={aCarregar}
         aria-label={soIcone ? rotulo : undefined}
-        className={soIcone ? "min-w-alvo-app px-2 text-erro hover:bg-erro-suave" : "text-erro hover:bg-erro-suave"}
+        className={cn(
+          soIcone && "min-w-alvo-app px-2",
+          tom === "perigo" && "text-erro hover:bg-erro-suave",
+        )}
       >
         {icone}
         {!soIcone && rotulo}
@@ -53,7 +63,7 @@ export const ConfirmarAccao = ({
             <Botao variante="secundario">Cancelar</Botao>
           </DialogoFechar>
           <DialogoFechar asChild>
-            <Botao variante="perigo" onClick={aoConfirmar}>
+            <Botao variante={tom === "accao" ? "primario" : "perigo"} onClick={aoConfirmar}>
               {confirmar}
             </Botao>
           </DialogoFechar>
