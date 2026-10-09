@@ -78,8 +78,9 @@ describe("PublicacaoDetalhe", () => {
     obterPorSlug.mockRejectedValue(Object.assign(new Error("falhou"), { status: 500 }));
     renderComSlug("campanha-gamek");
 
-    await screen.findByText(/Voltar às publicações/i);
-    expect(toastError).toHaveBeenCalledWith("falhou");
+    // Antes: a página ficava em branco, com um aviso que desaparecia.
+    expect(await screen.findByRole("alert")).toHaveTextContent("falhou");
+    expect(screen.getByRole("button", { name: "Tentar de novo" })).toBeInTheDocument();
   });
 
   it("em português não mostra o aviso de idioma", async () => {

@@ -20,6 +20,17 @@ export function formatarData(data: Data): string {
     : d.toLocaleDateString("pt-PT");
 }
 
+/**
+ * Um dia do calendário sem hora ("2026-10-08", ex.: a data de um evento) no
+ * formato do idioma. Não passa por `new Date("2026-10-08")`, que o lê como
+ * meia-noite UTC: num aparelho a oeste de UTC mostrava o dia anterior.
+ */
+export function formatarDiaCivil(dia: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(dia);
+  if (!m) return dia;
+  return formatarData(new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+}
+
 export function formatarDataHora(data: Data): string {
   const d = new Date(data);
   return emIngles()

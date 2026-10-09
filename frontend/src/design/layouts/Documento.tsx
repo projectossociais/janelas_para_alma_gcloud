@@ -83,14 +83,14 @@ export const Documento = ({
           </div>
         </nav>
 
-        <article className="max-w-[65ch]">
+        <article className="max-w-prose">
           <header>
             <h1 className="text-titulo-g text-tinta">{titulo}</h1>
             {introducao && <p className="mt-4 text-corpo-g text-tinta-suave">{introducao}</p>}
             {nota && <div className="mt-4">{nota}</div>}
           </header>
 
-          <div className="mt-10 space-y-10 text-corpo leading-[1.7] text-tinta [&_a]:font-medium [&_a]:text-accao [&_a]:underline [&_a]:underline-offset-2 [&_li]:mt-1.5 [&_p+p]:mt-3 [&_strong]:font-medium [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:pl-5">
+          <div className="mt-10 space-y-10 text-corpo leading-relaxed text-tinta [&_a]:font-medium [&_a]:text-accao [&_a]:underline [&_a]:underline-offset-2 [&_li]:mt-1.5 [&_p+p]:mt-3 [&_strong]:font-medium [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:pl-5">
             {seccoes.map((s) => (
               <section key={s.id} id={s.id} aria-labelledby={`${s.id}-titulo`} className="scroll-mt-24">
                 <h2 id={`${s.id}-titulo`} className="text-titulo-p text-tinta">
@@ -101,7 +101,8 @@ export const Documento = ({
             ))}
           </div>
 
-          {rodape && <footer className="mt-12 border-t border-linha pt-6 text-legenda text-tinta-suave">{rodape}</footer>}
+          {/* Um <p>, não <footer>: o rodapé da página é o do site, e há quem leia um <footer> como tal. */}
+          {rodape && <p className="mt-12 border-t border-linha pt-6 text-legenda text-tinta-suave">{rodape}</p>}
         </article>
       </div>
     </Contentor>

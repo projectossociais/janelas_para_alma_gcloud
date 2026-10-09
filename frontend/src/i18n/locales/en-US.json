@@ -1160,7 +1160,10 @@
     "galeriaDeFotos": "Photo Gallery",
     "naoFoiPossivelCarregar": "We couldn't load this post.",
     "voltarAsPublicacoes": "Back to posts",
-    "disponivelSoEmPortugues": "This post is available in Portuguese only."
+    "disponivelSoEmPortugues": "This post is available in Portuguese only.",
+    "aCarregar": "Loading the post…",
+    "tentarDeNovo": "Try again",
+    "fotoDaGaleria": "Photo {{n}} of {{total}} from the gallery (opens full size)"
   },
   "Publicacoes": {
     "accoesRecentes": "Recent Activities",
@@ -1169,7 +1172,9 @@
     "aindaNaoHaPublicacoes": "No posts yet. Check back soon to follow our activities.",
     "naoFoiPossivelCarregar": "We couldn't load the posts.",
     "voltar": "Back",
-    "emPortugues": "In Portuguese"
+    "emPortugues": "In Portuguese",
+    "aCarregar": "Loading posts…",
+    "tentarDeNovo": "Try again"
   },
   "RegistoPremium": {
     "voltar": "Back",

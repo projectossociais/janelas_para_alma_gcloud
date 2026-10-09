@@ -1160,7 +1160,10 @@
     "galeriaDeFotos": "Galeria de Fotos",
     "naoFoiPossivelCarregar": "Não foi possível carregar esta publicação.",
     "voltarAsPublicacoes": "Voltar às publicações",
-    "disponivelSoEmPortugues": "Esta publicação só está disponível em português."
+    "disponivelSoEmPortugues": "Esta publicação só está disponível em português.",
+    "aCarregar": "A carregar a publicação…",
+    "tentarDeNovo": "Tentar de novo",
+    "fotoDaGaleria": "Foto {{n}} de {{total}} da galeria (abre em tamanho grande)"
   },
   "Publicacoes": {
     "accoesRecentes": "Acções Recentes",
@@ -1169,7 +1172,9 @@
     "aindaNaoHaPublicacoes": "Ainda não há publicações. Volte em breve para acompanhar as nossas actividades.",
     "naoFoiPossivelCarregar": "Não foi possível carregar as publicações.",
     "voltar": "Voltar",
-    "emPortugues": "Em português"
+    "emPortugues": "Em português",
+    "aCarregar": "A carregar as publicações…",
+    "tentarDeNovo": "Tentar de novo"
   },
   "RegistoPremium": {
     "voltar": "Voltar",

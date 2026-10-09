@@ -66,7 +66,9 @@ describe("Publicacoes (lista pública)", () => {
     listarPublicadas.mockRejectedValue(Object.assign(new Error("falhou"), { status: 500 }));
     render(<Publicacoes />, { wrapper: MemoryRouter });
 
-    await waitFor(() => expect(toastError).toHaveBeenCalledWith("falhou"));
+    // Antes: um aviso que desaparecia e depois "Ainda não há publicações" (falso).
+    expect(await screen.findByRole("alert")).toHaveTextContent("falhou");
+    expect(screen.queryByText(/Ainda não há publicações/i)).not.toBeInTheDocument();
   });
 
   it("em português não mostra aviso de idioma nem marca o conteúdo com lang", async () => {

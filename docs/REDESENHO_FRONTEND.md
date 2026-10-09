@@ -274,6 +274,15 @@ Acrescentar abaixo, com data, o que for decidido ou detalhado em cada conversa s
 redesenho (referências visuais, páginas a priorizar, gostos e recusas do dono do
 projecto, feedback do Lukeny). Mais recente em cima.
 
+- **2026-10-09** — **Fase 5, páginas legais, FAQ e Publicações (ramo `redesenho/institucionais`).** Novo
+  arquétipo **Documento** (`design/layouts/Documento.tsx`, LAYOUTS §2.6): coluna de leitura, títulos numerados e
+  um índice fixo no computador que marca a secção que se lê. Privacidade e Termos passam a ele sem mudar uma
+  palavra (as mesmas 48 + 27 chaves). FAQ com `<details>` nativo. Publicações em cartões do sistema. Corrigido:
+  datas de eventos ("2026-10-08") lidas como meia-noite UTC mostravam o dia anterior a oeste de UTC (novo
+  `formatarDiaCivil`, com teste que reproduz o caso); uma falha da API nas publicações terminava em "Ainda não
+  há publicações" ou numa página em branco; a galeria era um carrossel que mudava sozinho sem pausa (WCAG 2.2.2)
+  e passa a grelha. A Política foi conferida contra o texto da eliminação aprovado: dizem o mesmo.
+
 - **2026-10-09** — **Fase 5, páginas da conta e de entrada (ramo `redesenho/conta-entrada`).** Confirmar email e
   Nova palavra-passe passam ao arquétipo Entrada (a moldura do login); com o link inválido ou expirado deixam de
   ser um beco sem saída: pede-se outro ali mesmo (`PedirNovoLink`). Editar perfil e Definições passam ao

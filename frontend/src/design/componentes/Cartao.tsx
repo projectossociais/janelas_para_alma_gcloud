@@ -41,12 +41,19 @@ Cartao.displayName = "Cartao";
 export const CartaoTitulo = ({
   como: Titulo = "h3",
   className,
+  lang,
   children,
 }: {
   como?: "h2" | "h3" | "h4";
   className?: string;
+  /** Idioma do título, quando não é o da página (ex.: conteúdo só em português no site inglês). */
+  lang?: string;
   children: ReactNode;
-}) => <Titulo className={cn("text-titulo-p text-tinta", className)}>{children}</Titulo>;
+}) => (
+  <Titulo lang={lang} className={cn("text-titulo-p text-tinta", className)}>
+    {children}
+  </Titulo>
+);
 
 export const CartaoTexto = ({ className, children }: { className?: string; children: ReactNode }) => (
   <p className={cn("mt-2 text-corpo text-tinta-suave", className)}>{children}</p>
