@@ -45,6 +45,46 @@ class Settings(BaseSettings):
     r2_bucket_videos: str = ""
     r2_video_url_expira_segundos: int = 900
 
+    # Comprovativos de pagamento do Premium validados automaticamente
+    # (`ValidacaoComprovativoService`): bucket **privado** à parte -- são
+    # documentos bancários com nome e conta de quem pagou, nunca no bucket
+    # público. Vazio até o bucket existir -- os endpoints de validação
+    # respondem 503 nesse caso.
+    r2_bucket_comprovativos: str = ""
+
+    # Validação instantânea do pagamento Premium (BAI Directo / Multicaixa
+    # Express). Os dados de destino são os da conta que recebe -- vazios por
+    # omissão de propósito: sem eles, nenhum comprovativo pode ser aprovado
+    # (a validação responde 503, nunca "aprova tudo" por falta de config).
+    subscription_price_kz: int = 15000
+    # IBAN de destino -- comparado sem espaços nem pontos.
+    payment_dest_iban: str = ""
+    # Número associado ao Multicaixa Express (9 dígitos, com ou sem +244).
+    payment_dest_phone: str = ""
+    # Palavras do nome do titular, separadas por espaço -- todas têm de
+    # aparecer no comprovativo (sem acentos, sem distinguir maiúsculas).
+    payment_dest_name_keywords: str = ""
+    # Só aceita comprovativos emitidos nos últimos N dias.
+    payment_max_age_days: int = 3
+    # Interruptor de emergência: `false` manda todos os comprovativos que
+    # passam a validação para revisão manual em vez de os aprovar sozinho
+    # (ex.: se aparecerem comprovativos forjados).
+    payment_auto_aprovacao: bool = True
+    # `/Producer` dos PDFs que o BAI Directo e o Multicaixa Express geram,
+    # separados por vírgula (ex.: "iText,JasperReports"). Vazio = não
+    # verificar; preenchido = um PDF de outro gerador vai para revisão manual.
+    payment_producers_confiaveis: str = ""
+    # Capturas de ecrã (PNG/JPEG/WebP) lidas por OCR. Uma imagem prova ainda
+    # menos do que um PDF (não tem estrutura nem metadados de origem): `false`
+    # manda todas as imagens que passam a validação para revisão manual.
+    payment_auto_aprovar_imagens: bool = True
+    # Transferência de outro banco para o BAI que ainda aparece como "Aceite",
+    # "Registada" ou "Em processamento": `true` aprova-a se tiver número de
+    # operação e for de hoje; `false` (omissão) manda-a para revisão manual.
+    payment_aceitar_interbancario_pendente: bool = False
+    # Idiomas do Tesseract (OCR das capturas de ecrã).
+    ocr_idiomas: str = "por+eng"
+
     # CORS — origens do frontend com permissão para pedidos com cookies.
     # Em dev sem Docker, frontend (npm run dev, porta 8080) e API (porta
     # 8000) são origens diferentes; em produção, o rewrite de

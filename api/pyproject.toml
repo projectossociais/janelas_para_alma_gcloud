@@ -21,6 +21,15 @@ dependencies = [
     # google-auth. Só passou despercebido em dev porque outra biblioteca já
     # o tinha instalado por acaso; o CI, num ambiente limpo, apanhou logo.
     "requests>=2.32",
+    # Leitura dos comprovativos de pagamento em PDF (validação instantânea do
+    # Premium). `[crypto]` para abrir PDFs cifrados com password vazia.
+    "pypdf[crypto]>=5.0",
+    # Capturas de ecrã dos comprovativos: Pillow abre a imagem (e as imagens
+    # dentro de um PDF), pytesseract chama o Tesseract instalado na imagem
+    # Docker (infra/docker/api.Dockerfile). OCR local -- a captura nunca sai
+    # dos nossos servidores.
+    "Pillow>=10.0",
+    "pytesseract>=0.3.10",
 ]
 
 [project.optional-dependencies]

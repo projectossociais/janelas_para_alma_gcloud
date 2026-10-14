@@ -24,6 +24,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import FileDropzone from "@/components/FileDropzone";
 import CopyRow from "@/components/CopyRow";
+import CheckoutInstantaneo from "@/components/CheckoutInstantaneo";
 import { toast } from "@/hooks/use-toast";
 import {
   comprovativosApi,
@@ -592,7 +593,11 @@ const RegistoPremium = () => {
               </div>
             )}
 
-            {step === 4 && (
+            {/* Plano mensal: validação instantânea do comprovativo (PDF do
+                banco). O anual continua manual -- o automático só dá 30 dias. */}
+            {step === 4 && plano === "mensal" && <CheckoutInstantaneo onVoltar={() => setStep(3)} />}
+
+            {step === 4 && plano !== "mensal" && (
               <div className="flex flex-col space-y-6 animate-fade-in">
                 <div>
                   <h1 className="text-2xl md:text-3xl font-bold text-foreground">

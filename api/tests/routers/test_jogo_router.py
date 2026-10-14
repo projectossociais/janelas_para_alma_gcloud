@@ -222,7 +222,7 @@ def loja_sem_pagamentos(ambiente):
 def loja_producao(ambiente, monkeypatch):
     """Sem pagamentos simulados, com o repositório de pedidos à vista."""
     monkeypatch.setattr(
-        "app.services.loja_jogo_service.url_publico_do_comprovativo",
+        "app.services.loja_jogo_service.referencia_do_comprovativo",
         lambda chave: (_ for _ in ()).throw(ChaveDeComprovativoInvalidaError(chave))
         if not chave.startswith("comprovativos/")
         else f"https://r2/{chave}",

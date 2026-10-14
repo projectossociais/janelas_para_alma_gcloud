@@ -24,6 +24,7 @@ BASE_PUBLICA = "https://cdn.exemplo.test"
 @pytest.fixture(autouse=True)
 def _base_publica(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(obter_settings(), "r2_public_base_url", BASE_PUBLICA)
+    monkeypatch.setattr(obter_settings(), "r2_bucket_comprovativos", "")
 
 
 class RepositorioFalso:
@@ -144,7 +145,7 @@ class TestRegistarDoacaoMateriais:
 
 
 class TestRegistarDoacaoFinanceira:
-    def test_grava_com_o_url_publico_do_comprovativo(self) -> None:
+    def test_sem_bucket_privado_grava_o_url_publico_antigo(self) -> None:
         repo = RepositorioFalso()
         service = DoacaoService(repo, EmailSenderFalso())
         chave = "comprovativos/abc.pdf"
@@ -154,6 +155,13 @@ class TestRegistarDoacaoFinanceira:
         assert doacao.recibo_id.startswith("FIN-")
         assert doacao.status == "comprovativo_enviado"
         assert doacao.comprovativo_url == f"{BASE_PUBLICA}/{chave}"
+
+    def test_com_bucket_privado_grava_a_chave_e_nao_um_url_publico(self, monkeypatch) -> None:
+        monkeypatch.setattr(obter_settings(), "r2_bucket_comprovativos", "jpa-comprovativos")
+        doacao = DoacaoService(RepositorioFalso(), EmailSenderFalso()).registar_doacao_financeira(
+            "ana@example.com", None, "comprovativos/abc.pdf"
+        )
+        assert doacao.comprovativo_url == "comprovativos/abc.pdf"
 
     def test_recusa_chave_fora_do_prefixo_comprovativos(self) -> None:
         service = DoacaoService(RepositorioFalso(), EmailSenderFalso())

@@ -29,9 +29,15 @@ vi.mock("@/lib/apiClient", () => ({
 const toastFn = vi.fn();
 vi.mock("@/hooks/use-toast", () => ({ toast: (...a: unknown[]) => toastFn(...a) }));
 
+// O plano mensal usa a validação instantânea (testada à parte em
+// CheckoutInstantaneo.test.tsx); aqui só importa que é ela que aparece.
+vi.mock("@/components/CheckoutInstantaneo", () => ({
+  default: () => <div data-testid="checkout-instantaneo" />,
+}));
+
 import RegistoPremium from "./RegistoPremium";
 
-async function chegarAoPassoDePagamento(user: ReturnType<typeof userEvent.setup>) {
+async function chegarAoPlano(user: ReturnType<typeof userEvent.setup>, plano: RegExp) {
   render(<RegistoPremium />, { wrapper: MemoryRouter });
 
   await user.type(screen.getByLabelText("Nome Completo"), "Ana Silva");
@@ -44,9 +50,14 @@ async function chegarAoPassoDePagamento(user: ReturnType<typeof userEvent.setup>
   await user.click(screen.getByLabelText("Sim"));
   await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
 
-  await user.click(await screen.findByRole("button", { name: /^Plano Mensal/i }));
+  await user.click(await screen.findByRole("button", { name: plano }));
   await user.click(screen.getByRole("button", { name: /Continuar para Pagamento/i }));
+}
 
+// O envio manual do comprovativo (aprovado depois por um admin) ficou só
+// para o plano anual -- o mensal valida na hora.
+async function chegarAoPassoDePagamento(user: ReturnType<typeof userEvent.setup>) {
+  await chegarAoPlano(user, /Plano Anual/i);
   return screen.findByTestId("file-input");
 }
 
@@ -121,7 +132,7 @@ describe("RegistoPremium — comprovativo via R2 (CROSS-02)", () => {
       nome: "Ana Silva",
       email: "ana@example.com",
       telefone: "+244 900 000 000",
-      plano: "mensal",
+      plano: "anual",
       status: "pendente",
       created_at: "2026-01-01T00:00:00.000Z",
     });
@@ -136,9 +147,16 @@ describe("RegistoPremium — comprovativo via R2 (CROSS-02)", () => {
       nome: "Ana Silva",
       email: "ana@example.com",
       telefone: "+244 900 000 000",
-      plano: "mensal",
+      plano: "anual",
       comprovativo_chave: "comprovativos/x.pdf",
     });
+  }, 15000);
+
+  it("o plano mensal mostra a validação instantânea em vez do envio manual", async () => {
+    const user = userEvent.setup();
+    await chegarAoPlano(user, /^Plano Mensal/i);
+    expect(await screen.findByTestId("checkout-instantaneo")).toBeInTheDocument();
+    expect(screen.queryByTestId("file-input")).not.toBeInTheDocument();
   }, 15000);
 });
 

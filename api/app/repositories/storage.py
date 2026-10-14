@@ -65,3 +65,35 @@ class R2VideosPresigner(R2Presigner):
             Params={"Bucket": self._bucket, "Key": chave},
             ExpiresIn=self._expira,
         )
+
+
+class R2ComprovativosStorage(R2Presigner):
+    """Bucket **privado** dos comprovativos de pagamento validados
+    automaticamente (`r2_bucket_comprovativos`). O browser continua a enviar
+    os bytes directamente ao R2 (URL de `PUT` assinado, como o avatar); a API
+    só os lê de volta para validar -- tem mesmo de os ler, a validação é
+    sobre o conteúdo do PDF. O admin vê o original por URL de leitura
+    assinado, de curta duração; nunca há URL público."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._bucket = obter_settings().r2_bucket_comprovativos
+
+    def ler_bytes(self, chave: str, limite: int) -> bytes | None:
+        """`None` se o objecto não existir. Lê no máximo `limite + 1` bytes
+        -- o suficiente para saber que o ficheiro passa do limite sem
+        carregar um ficheiro enorme em memória."""
+        try:
+            resposta = self._cliente.get_object(
+                Bucket=self._bucket, Key=chave, Range=f"bytes=0-{limite}"
+            )
+        except self._cliente.exceptions.NoSuchKey:
+            return None
+        return resposta["Body"].read(limite + 1)
+
+    def url_de_leitura(self, chave: str) -> str:
+        return self._cliente.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": self._bucket, "Key": chave},
+            ExpiresIn=self._expira,
+        )

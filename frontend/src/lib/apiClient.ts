@@ -75,6 +75,25 @@ const DETALHES_CONHECIDOS: readonly [RegExp, string][] = [
   [/^(esta actividade já não está disponível|actividade não encontrada)$/i, "erroApi.actividadeIndisponivel"],
   [/^publicação não encontrada$/i, "erroApi.publicacaoNaoEncontrada"],
   [/^sem perguntas disponíveis$/i, "erroApi.semPerguntas"],
+  // Validação instantânea do comprovativo do Premium (validacao_comprovativo_service.py)
+  [/^O ficheiro tem mais de 5 MB/i, "erroApi.comprovativoGrande"],
+  [/^O ficheiro não é um PDF nem uma imagem válida/i, "erroApi.comprovativoNaoPdf"],
+  [/^Não foi possível abrir esta imagem/i, "erroApi.comprovativoImagemInvalida"],
+  [/^Este comprovativo já foi utilizado anteriormente/i, "erroApi.comprovativoJaUtilizado"],
+  [/^Este comprovativo já foi enviado e está a ser confirmado/i, "erroApi.comprovativoEmAnalise"],
+  [/^O PDF está protegido por password/i, "erroApi.comprovativoProtegido"],
+  [/^Este ficheiro foi criado ou alterado com um editor/i, "erroApi.comprovativoEditado"],
+  [/^Não foi possível ler este PDF/i, "erroApi.comprovativoSemTexto"],
+  [/^O destinatário do comprovativo não corresponde/i, "erroApi.comprovativoDestinatario"],
+  [/^Valor inferior ao da subscrição/i, "erroApi.comprovativoValorInsuficiente"],
+  [/^Esta transação bancária já foi validada/i, "erroApi.comprovativoTransacaoUsada"],
+  [/^A data do comprovativo está no futuro/i, "erroApi.comprovativoDataFutura"],
+  [/^O comprovativo tem mais de \d+ dias/i, "erroApi.comprovativoAntigo"],
+  [/^O comprovativo não mostra uma operação concluída/i, "erroApi.comprovativoNaoConcluido"],
+  [/^a validação automática de comprovativos ainda não está disponível$/i, "erroApi.validacaoIndisponivel"],
+  [/^essa chave não é um comprovativo seu$/i, "erroApi.comprovativoInvalido"],
+  [/^o ficheiro do comprovativo não chegou/i, "erroApi.comprovativoNaoChegou"],
+  [/^tipo de ficheiro não permitido \(PDF, PNG, JPEG ou WebP\)$/i, "erroApi.tipoFicheiroComprovativo"],
   // janelas-scanner-api (microserviço à parte, ver services/api/screeningApi.ts)
   ...TEXTOS_CONHECIDOS_SCANNER,
 ];
@@ -468,7 +487,8 @@ export const bannerHomepageApi = {
 export interface ComprovativoUploadPreparado {
   url_de_upload: string;
   chave: string;
-  url_publico: string;
+  /** `null` com o bucket privado de comprovativos (não há URL público). */
+  url_publico: string | null;
 }
 
 export const TIPOS_DE_COMPROVATIVO_ACEITES = [
@@ -843,6 +863,92 @@ export const premiumApi = {
     pedido<PedidoPremiumAdmin>(`/premium-requests/${id}/revogar`, { method: "POST" }),
 };
 
+// --- Validação instantânea do comprovativo do Premium -----------------------
+// O PDF vai directamente ao bucket privado (URL de PUT assinado), e a API
+// valida-o -- ver api/app/services/validacao_comprovativo_service.py.
+
+export type EstadoComprovativo = "aprovado" | "rejeitado" | "revisao_manual" | "revogado";
+
+export interface ResultadoValidacaoComprovativo {
+  id: string;
+  /** "aprovado" (200) ou "revisao_manual" (202). Rejeitado chega como erro
+   *  (422, ou 409 se o comprovativo/a operação já foi usado). */
+  estado: EstadoComprovativo;
+  motivo_codigo: string | null;
+  motivo: string | null;
+  referencia_transacao: string | null;
+  montante_kz: string | null;
+  premium_expira_em: string | null;
+}
+
+export interface ComprovativoPagamentoAdmin {
+  id: string;
+  utilizador_id: string | null;
+  utilizador_email: string | null;
+  utilizador_nome: string | null;
+  estado: EstadoComprovativo;
+  referencia_transacao: string | null;
+  montante_kz: string | null;
+  origem: string | null;
+  destinatario_detectado: string | null;
+  data_transacao: string | null;
+  motivo_codigo: string | null;
+  motivo: string | null;
+  premium_expira_em: string | null;
+  decidido_por: string | null;
+  decidido_em: string | null;
+  criado_em: string;
+}
+
+export interface ComprovativoPagamentoDetalhe extends ComprovativoPagamentoAdmin {
+  hash_sha256: string;
+  /** dHash de uma captura de ecrã (null num PDF com texto). */
+  hash_perceptual: string | null;
+  metadados_ficheiro: Record<string, unknown> | null;
+  texto_extraido: string | null;
+}
+
+export const pagamentosApi = {
+  /** Passo 1: URL de PUT assinado para o PDF ou a captura de ecrã, sob a
+   *  chave do próprio. O tipo verdadeiro decide-se pelos bytes, na API. */
+  prepararComprovativo: (contentType: string) =>
+    pedido<{ url_de_upload: string; chave: string }>("/pagamentos/comprovativos/upload", {
+      method: "POST",
+      body: JSON.stringify({ content_type: contentType }),
+    }),
+
+  /** Passo 2: o ficheiro vai directo ao R2 -- o mesmo envio do avatar. */
+  enviarParaStorage: uploadsApi.enviarParaStorage,
+
+  /** Passo 3: a API lê o PDF e decide. Nunca envia o id do utilizador. */
+  validarComprovativo: (chave: string) =>
+    pedido<ResultadoValidacaoComprovativo>("/pagamentos/comprovativos/validar", {
+      method: "POST",
+      body: JSON.stringify({ chave }),
+    }),
+
+  // Só admin.
+  listar: (estado?: EstadoComprovativo) =>
+    pedido<ComprovativoPagamentoAdmin[]>(
+      `/admin/comprovativos-pagamento${estado ? `?estado=${estado}` : ""}`,
+    ),
+  obter: (id: string) => pedido<ComprovativoPagamentoDetalhe>(`/admin/comprovativos-pagamento/${id}`),
+  urlDoFicheiro: (id: string) =>
+    pedido<{ url: string }>(`/admin/comprovativos-pagamento/${id}/ficheiro`),
+  aprovar: (id: string) =>
+    pedido<ComprovativoPagamentoAdmin>(`/admin/comprovativos-pagamento/${id}/aprovar`, { method: "POST" }),
+  rejeitar: (id: string, motivo: string) =>
+    pedido<ComprovativoPagamentoAdmin>(`/admin/comprovativos-pagamento/${id}/rejeitar`, {
+      method: "POST",
+      body: JSON.stringify({ motivo }),
+    }),
+  revogar: (id: string, motivo: string) =>
+    pedido<ComprovativoPagamentoAdmin>(`/admin/comprovativos-pagamento/${id}/revogar`, {
+      method: "POST",
+      body: JSON.stringify({ motivo }),
+    }),
+};
+
 // --- Administração de contas (W-11) --------------------------------------
 
 export interface AdminUtilizador {
@@ -945,6 +1051,11 @@ export const adminApi = {
   obterEstatisticas: (dias: number) => pedido<EstatisticasAdmin>(`/admin/estatisticas?dias=${dias}`),
 
   obterPendencias: () => pedido<PendenciasAdmin>("/admin/pendencias"),
+
+  /** URL para abrir o `comprovativo_url` de um pedido/doação: assinado (bucket
+   *  privado) ou o URL público antigo, tal como está. */
+  urlDoComprovativoManual: (referencia: string) =>
+    pedido<{ url: string }>(`/admin/comprovativos-manuais/url?referencia=${encodeURIComponent(referencia)}`),
 };
 
 // --- Voluntariado (W-12) ---------------------------------------------------

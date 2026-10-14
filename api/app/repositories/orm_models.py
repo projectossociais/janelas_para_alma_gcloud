@@ -343,6 +343,108 @@ class PremiumRequest(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+ESTADOS_COMPROVATIVO_PAGAMENTO = ("aprovado", "rejeitado", "revisao_manual", "revogado")
+# Quem emitiu o comprovativo: a conta de destino é sempre a do projecto (no
+# BAI), mas paga-se a partir de qualquer banco angolano ou do Express.
+ORIGENS_COMPROVATIVO_PAGAMENTO = (
+    "bai_directo",
+    "multicaixa_express",
+    "bfa",
+    "bic",
+    "atlantico",
+    "banco_sol",
+    "standard_bank",
+    "keve",
+    "access_bank",
+    "bni",
+    "caixa_angola",
+    "outro",
+)
+
+
+class ComprovativoPagamento(Base):
+    """Comprovativo bancário (PDF ou captura de ecrã, de qualquer banco
+    angolano ou do Multicaixa Express) que o próprio utilizador envia para activar o Premium sem esperar por um admin
+    (`ValidacaoComprovativoService`). Fica uma linha por tentativa, aprovada
+    ou não -- é o registo de auditoria e a base do anti-replay.
+
+    Anti-replay: `hash_sha256` (o mesmo ficheiro) e `referencia_transacao` (a
+    mesma operação bancária, noutro ficheiro) são únicos entre os
+    comprovativos que contam -- tudo menos `rejeitado`. Um índice parcial em
+    vez de `UNIQUE` simples: uma tentativa rejeitada não pode impedir quem a
+    fez de corrigir e reenviar, mas um comprovativo aprovado, revogado ou em
+    revisão nunca pode voltar a entrar. É a base de dados a garantir isto,
+    não só o service -- dois pedidos em simultâneo com o mesmo ficheiro
+    perdem a corrida aqui.
+
+    O acesso que um comprovativo aprovado dá vive onde sempre viveu
+    (`utilizadores.premium_ativo` + `premium_expira_em`) -- não há uma
+    segunda fonte de verdade da subscrição."""
+
+    __tablename__ = "comprovativos_pagamento"
+    __table_args__ = (
+        CheckConstraint(
+            "estado IN ('aprovado', 'rejeitado', 'revisao_manual', 'revogado')",
+            name="ck_comprovativos_pagamento_estado",
+        ),
+        CheckConstraint(
+            "origem IS NULL OR origem IN ("
+            + ", ".join(f"'{o}'" for o in ORIGENS_COMPROVATIVO_PAGAMENTO)
+            + ")",
+            name="ck_comprovativos_pagamento_origem",
+        ),
+        Index(
+            "uq_comprovativos_pagamento_hash_activo",
+            "hash_sha256",
+            unique=True,
+            postgresql_where=text("estado <> 'rejeitado'"),
+        ),
+        Index(
+            "uq_comprovativos_pagamento_referencia_activa",
+            "referencia_transacao",
+            unique=True,
+            postgresql_where=text("estado <> 'rejeitado' AND referencia_transacao IS NOT NULL"),
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    # SET NULL e não CASCADE: é um registo financeiro -- sobrevive à conta.
+    utilizador_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="SET NULL"), index=True
+    )
+    # Número de operação / transacção extraído do PDF. Nulo quando não foi
+    # encontrado (vai para revisão manual ou é rejeitado antes disso).
+    referencia_transacao: Mapped[str | None] = mapped_column(Text)
+    hash_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    # dHash 16x16 (64 hex) de uma captura de ecrã -- apanha a mesma imagem
+    # cortada ou recomprimida (outro SHA-256). Nulo num PDF com texto.
+    hash_perceptual: Mapped[str | None] = mapped_column(String(64))
+    montante_kz: Mapped[float | None] = mapped_column(Numeric(14, 2))
+    origem: Mapped[str | None] = mapped_column(Text)
+    # IBAN, telefone ou nome do destinatário que coincidiu com a conta oficial.
+    destinatario_detectado: Mapped[str | None] = mapped_column(Text)
+    data_transacao: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Auditoria do ficheiro: tipo, /Producer, /Creator e datas de um PDF, ou
+    # EXIF/XMP e dimensões de uma imagem, e a confiança do OCR quando houve.
+    metadados_ficheiro: Mapped[dict | None] = mapped_column(JSONB)
+    # Texto do PDF ou lido por OCR, só para auditoria interna (admin). Apagado
+    # na anonimização da conta (W-03); referência, montante e hash ficam.
+    texto_extraido: Mapped[str | None] = mapped_column(Text)
+    # Chave do ficheiro original (PDF ou imagem) no bucket privado
+    # `r2_bucket_comprovativos`.
+    chave_ficheiro: Mapped[str] = mapped_column(Text, nullable=False)
+    estado: Mapped[str] = mapped_column(Text, nullable=False)
+    # Código estável (ex.: "valor_insuficiente") + texto mostrado ao utilizador.
+    motivo_codigo: Mapped[str | None] = mapped_column(Text)
+    motivo: Mapped[str | None] = mapped_column(Text)
+    # Fim do Premium depois de aplicar este comprovativo (só se aprovado).
+    premium_expira_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Decisão humana sobre um comprovativo (aprovar/rejeitar uma revisão
+    # manual, revogar um aprovado). Nulos numa decisão automática.
+    decidido_por: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("utilizadores.id", ondelete="SET NULL"))
+    decidido_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
 class ScannerAnalysis(Base):
     """Só medições/diagnóstico — nunca a imagem. Ver CLAUDE.md secção 4."""
 

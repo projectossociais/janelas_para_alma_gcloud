@@ -11,6 +11,7 @@ const premiumRevogar = vi.fn();
 const diamantesListar = vi.fn();
 const diamantesAprovar = vi.fn();
 const diamantesRejeitar = vi.fn();
+const urlDoComprovativo = vi.fn();
 
 vi.mock("@/lib/apiClient", () => ({
   contactMessagesApi: {
@@ -22,6 +23,7 @@ vi.mock("@/lib/apiClient", () => ({
     aprovarPedidoLoja: (...a: unknown[]) => diamantesAprovar(...a),
     rejeitarPedidoLoja: (...a: unknown[]) => diamantesRejeitar(...a),
   },
+  adminApi: { urlDoComprovativoManual: (...a: unknown[]) => urlDoComprovativo(...a) },
   premiumApi: {
     listar: (...a: unknown[]) => premiumListar(...a),
     aprovar: (...a: unknown[]) => premiumAprovar(...a),
@@ -157,16 +159,21 @@ describe("AdminInbox — mensagens de contacto", () => {
     expect(botao).toBeDisabled();
   });
 
-  it("mostra um link para o comprovativo quando o pedido tem um (CROSS-02)", async () => {
-    premiumListar.mockResolvedValue([
-      { ...umPedido, comprovativo_url: "https://cdn.exemplo.test/comprovativos/x.pdf" },
-    ]);
+  it("abre o comprovativo pedindo o URL (assinado) à API, nunca por um link guardado", async () => {
+    premiumListar.mockResolvedValue([{ ...umPedido, comprovativo_url: "comprovativos/x.pdf" }]);
+    urlDoComprovativo.mockResolvedValue({ url: "https://r2.privado.test/comprovativos/x.pdf?assinado=1" });
+    const janela = { location: { href: "" }, close: vi.fn() };
+    const abrirJanela = vi.spyOn(window, "open").mockReturnValue(janela as unknown as Window);
     const user = userEvent.setup();
     render(<AdminInbox />, { wrapper: MemoryRouter });
 
     await abrirSeparadorPremium(user);
-    const link = await screen.findByRole("link", { name: /Ver comprovativo/i });
-    expect(link).toHaveAttribute("href", "https://cdn.exemplo.test/comprovativos/x.pdf");
+    expect(screen.queryByRole("link", { name: /Ver comprovativo/i })).not.toBeInTheDocument();
+    await user.click(await screen.findByRole("button", { name: /Ver comprovativo/i }));
+
+    expect(urlDoComprovativo).toHaveBeenCalledWith("comprovativos/x.pdf");
+    await waitFor(() => expect(janela.location.href).toBe("https://r2.privado.test/comprovativos/x.pdf?assinado=1"));
+    abrirJanela.mockRestore();
   });
 
   it("não mostra o link de comprovativo quando o pedido não tem um", async () => {
@@ -176,7 +183,7 @@ describe("AdminInbox — mensagens de contacto", () => {
 
     await abrirSeparadorPremium(user);
     await screen.findByText(umPedido.nome);
-    expect(screen.queryByRole("link", { name: /Ver comprovativo/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Ver comprovativo/i })).not.toBeInTheDocument();
   });
 });
 
@@ -215,10 +222,7 @@ describe("AdminInbox — pedidos da loja do jogo (Kwanzas por transferência)", 
     diamantesAprovar.mockResolvedValue({ ...umPedidoDiamantes, estado: "aprovado" });
     await abrir(user);
 
-    expect(await screen.findByRole("link", { name: /Ver comprovativo/ })).toHaveAttribute(
-      "href",
-      umPedidoDiamantes.comprovativo_url
-    );
+    expect(await screen.findByRole("button", { name: /Ver comprovativo/ })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /Confirmar pagamento/ }));
 
     await waitFor(() => expect(diamantesAprovar).toHaveBeenCalledWith("dia-1"));
