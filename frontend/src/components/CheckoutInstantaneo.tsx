@@ -29,8 +29,9 @@ interface CheckoutInstantaneoProps {
 
 /**
  * Checkout do plano mensal com validação instantânea do comprovativo: o
- * utilizador paga no BAI Directo / Multicaixa Express, envia o PDF original
- * e a API decide na hora (ver `validacao_comprovativo_service.py`).
+ * utilizador paga a partir de qualquer banco ou do Multicaixa Express, envia
+ * o PDF do comprovativo ou uma captura de ecrã, e a API decide na hora (ver
+ * `validacao_comprovativo_service.py`; as imagens são lidas por OCR).
  *
  * Três passos, como o avatar: a API assina o URL, o PDF vai directo ao R2,
  * e só depois se pede a validação. Nunca mostra sucesso a partir de um
@@ -59,7 +60,7 @@ const CheckoutInstantaneo = ({ onVoltar }: CheckoutInstantaneoProps) => {
     setErro(null);
     setFase("a_validar");
     try {
-      const { url_de_upload, chave } = await pagamentosApi.prepararComprovativo();
+      const { url_de_upload, chave } = await pagamentosApi.prepararComprovativo(ficheiro.type);
       await pagamentosApi.enviarParaStorage(url_de_upload, ficheiro);
       const r = await pagamentosApi.validarComprovativo(chave);
       setResultado(r);
@@ -197,7 +198,7 @@ const CheckoutInstantaneo = ({ onVoltar }: CheckoutInstantaneoProps) => {
               <ShieldCheck className="w-4 h-4 shrink-0 text-teal mt-0.5" />
               {t("CheckoutInstantaneo.usaOPdfOriginal")}
             </p>
-            <FileDropzone file={ficheiro} onFileChange={setFicheiro} apenasPdf />
+            <FileDropzone file={ficheiro} onFileChange={setFicheiro} />
             {erro && (
               <div
                 role="alert"

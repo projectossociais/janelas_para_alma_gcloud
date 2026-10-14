@@ -79,8 +79,7 @@ describe("CheckoutInstantaneo", () => {
     expect(screen.getByText("AO06 0040 0000 9103 4094 1018 9")).toBeInTheDocument();
     expect(screen.getByText("+244 946 538 507")).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: /Copiar/i })).toHaveLength(3);
-    expect(screen.getByText(/Faz a transferência no BAI Directo ou Multicaixa Express/)).toBeInTheDocument();
-    expect(screen.getByText(/não uses capturas de ecrã\/fotos/)).toBeInTheDocument();
+    expect(screen.getByText(/de qualquer banco \(BAI, BFA, BIC, Atlântico/)).toBeInTheDocument();
   });
 
   it("aprovado: mostra a operação e a validade, recarrega o acesso e abre os exercícios em 2 segundos", async () => {
@@ -92,6 +91,7 @@ describe("CheckoutInstantaneo", () => {
     expect(await screen.findByText("Pagamento confirmado!")).toBeInTheDocument();
     expect(screen.getByText("202610140001234")).toBeInTheDocument();
     expect(screen.getByText("13/11/2026")).toBeInTheDocument();
+    expect(prepararComprovativo).toHaveBeenCalledWith("application/pdf");
     expect(enviarParaStorage).toHaveBeenCalledWith("https://r2.test/put", expect.any(File));
     expect(validarComprovativo).toHaveBeenCalledWith("comprovativos-pagamento/u/x.pdf");
     expect(recarregarAcesso).toHaveBeenCalled();
@@ -145,12 +145,25 @@ describe("CheckoutInstantaneo", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Não foi possível validar o comprovativo");
   });
 
-  it("só aceita PDF", async () => {
+  it("aceita uma captura de ecrã e pede o upload com o tipo da imagem", async () => {
+    validarComprovativo.mockResolvedValue(APROVADO);
+    const user = userEvent.setup();
+    montar();
+    expect(screen.getByTestId("file-input").getAttribute("accept")).toContain("image/png");
+    expect(screen.getByText(/captura de ecrã \(screenshot\) do pagamento/)).toBeInTheDocument();
+
+    await user.upload(screen.getByTestId("file-input"), new File(["png"], "ecra.png", { type: "image/png" }));
+    await user.click(screen.getByRole("button", { name: /Validar Comprovativo e Liberar Acesso/i }));
+
+    expect(await screen.findByText("Pagamento confirmado!")).toBeInTheDocument();
+    expect(prepararComprovativo).toHaveBeenCalledWith("image/png");
+  });
+
+  it("recusa ficheiros que não são PDF nem imagem", async () => {
     const user = userEvent.setup({ applyAccept: false });
     montar();
-    await user.upload(screen.getByTestId("file-input"), new File(["x"], "foto.png", { type: "image/png" }));
+    await user.upload(screen.getByTestId("file-input"), new File(["x"], "doc.zip", { type: "application/zip" }));
     expect(screen.getByRole("button", { name: /Validar Comprovativo e Liberar Acesso/i })).toBeDisabled();
-    expect(screen.getByTestId("file-input")).toHaveAttribute("accept", "application/pdf");
   });
 
   it("sem sessão: pede para entrar na conta e não deixa validar", () => {

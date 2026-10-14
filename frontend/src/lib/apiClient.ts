@@ -77,13 +77,13 @@ const DETALHES_CONHECIDOS: readonly [RegExp, string][] = [
   [/^sem perguntas disponíveis$/i, "erroApi.semPerguntas"],
   // Validação instantânea do comprovativo do Premium (validacao_comprovativo_service.py)
   [/^O ficheiro tem mais de 5 MB/i, "erroApi.comprovativoGrande"],
-  [/^O ficheiro não é um PDF válido/i, "erroApi.comprovativoNaoPdf"],
+  [/^O ficheiro não é um PDF nem uma imagem válida/i, "erroApi.comprovativoNaoPdf"],
+  [/^Não foi possível abrir esta imagem/i, "erroApi.comprovativoImagemInvalida"],
   [/^Este comprovativo já foi utilizado anteriormente/i, "erroApi.comprovativoJaUtilizado"],
   [/^Este comprovativo já foi enviado e está a ser confirmado/i, "erroApi.comprovativoEmAnalise"],
   [/^O PDF está protegido por password/i, "erroApi.comprovativoProtegido"],
-  [/^Este PDF foi criado ou alterado com um editor/i, "erroApi.comprovativoEditado"],
-  [/^Este PDF tem texto escondido/i, "erroApi.comprovativoTextoOculto"],
-  [/^Não foi possível ler texto neste PDF/i, "erroApi.comprovativoSemTexto"],
+  [/^Este ficheiro foi criado ou alterado com um editor/i, "erroApi.comprovativoEditado"],
+  [/^Não foi possível ler este PDF/i, "erroApi.comprovativoSemTexto"],
   [/^O destinatário do comprovativo não corresponde/i, "erroApi.comprovativoDestinatario"],
   [/^Valor inferior ao da subscrição/i, "erroApi.comprovativoValorInsuficiente"],
   [/^Esta transação bancária já foi validada/i, "erroApi.comprovativoTransacaoUsada"],
@@ -93,6 +93,7 @@ const DETALHES_CONHECIDOS: readonly [RegExp, string][] = [
   [/^a validação automática de comprovativos ainda não está disponível$/i, "erroApi.validacaoIndisponivel"],
   [/^essa chave não é um comprovativo seu$/i, "erroApi.comprovativoInvalido"],
   [/^o ficheiro do comprovativo não chegou/i, "erroApi.comprovativoNaoChegou"],
+  [/^tipo de ficheiro não permitido \(PDF, PNG, JPEG ou WebP\)$/i, "erroApi.tipoFicheiroComprovativo"],
   // janelas-scanner-api (microserviço à parte, ver services/api/screeningApi.ts)
   ...TEXTOS_CONHECIDOS_SCANNER,
 ];
@@ -901,18 +902,22 @@ export interface ComprovativoPagamentoAdmin {
 
 export interface ComprovativoPagamentoDetalhe extends ComprovativoPagamentoAdmin {
   hash_sha256: string;
-  metadados_pdf: Record<string, unknown> | null;
+  /** dHash de uma captura de ecrã (null num PDF com texto). */
+  hash_perceptual: string | null;
+  metadados_ficheiro: Record<string, unknown> | null;
   texto_extraido: string | null;
 }
 
 export const pagamentosApi = {
-  /** Passo 1: URL de PUT assinado para o PDF, sob a chave do próprio. */
-  prepararComprovativo: () =>
+  /** Passo 1: URL de PUT assinado para o PDF ou a captura de ecrã, sob a
+   *  chave do próprio. O tipo verdadeiro decide-se pelos bytes, na API. */
+  prepararComprovativo: (contentType: string) =>
     pedido<{ url_de_upload: string; chave: string }>("/pagamentos/comprovativos/upload", {
       method: "POST",
+      body: JSON.stringify({ content_type: contentType }),
     }),
 
-  /** Passo 2: o PDF vai directo ao R2 -- o mesmo envio do avatar. */
+  /** Passo 2: o ficheiro vai directo ao R2 -- o mesmo envio do avatar. */
   enviarParaStorage: uploadsApi.enviarParaStorage,
 
   /** Passo 3: a API lê o PDF e decide. Nunca envia o id do utilizador. */

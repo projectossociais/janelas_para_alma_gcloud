@@ -40,6 +40,15 @@ const ESTADO: Record<EstadoComprovativo, { rotulo: string; variante: "default" |
 const ORIGEM: Record<string, string> = {
   bai_directo: "BAI Directo",
   multicaixa_express: "Multicaixa Express",
+  bfa: "BFA",
+  bic: "Banco BIC",
+  atlantico: "Millennium Atlântico",
+  banco_sol: "Banco Sol",
+  standard_bank: "Standard Bank",
+  keve: "Banco Keve",
+  access_bank: "Access Bank",
+  bni: "BNI",
+  caixa_angola: "Caixa Geral Angola",
   outro: "Origem desconhecida",
 };
 
@@ -140,8 +149,8 @@ const AdminComprovativos = () => {
       <div>
         <h1 className="text-2xl font-bold text-foreground">Comprovativos de pagamento</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Validação automática do Premium (BAI Directo / Multicaixa Express). Os aprovados
-          automaticamente devem ser conferidos no extracto bancário: a validação lê o PDF, não vê a conta.
+          Validação automática do Premium (PDF ou captura de ecrã, de qualquer banco ou do Multicaixa Express). Os aprovados
+          automaticamente devem ser conferidos no extracto bancário: a validação lê o ficheiro, não vê a conta.
         </p>
       </div>
 
@@ -191,7 +200,7 @@ const AdminComprovativos = () => {
                 {c.motivo && <p className="rounded-md bg-muted/50 p-2 text-muted-foreground">{c.motivo}</p>}
                 <div className="flex flex-wrap gap-2">
                   <Button size="sm" variant="outline" onClick={() => void abrirPdf(c.id)}>
-                    <FileText className="w-4 h-4" /> Ver PDF
+                    <FileText className="w-4 h-4" /> Ver ficheiro
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => void verDetalhe(c.id)}>
                     <Eye className="w-4 h-4" /> Texto e metadados
@@ -221,11 +230,11 @@ const AdminComprovativos = () => {
       <Dialog open={!!detalhe} onOpenChange={(aberto) => !aberto && setDetalhe(null)}>
         <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Texto e metadados do PDF</DialogTitle>
+            <DialogTitle>Texto e metadados do ficheiro</DialogTitle>
             <DialogDescription className="break-all">SHA-256: {detalhe?.hash_sha256}</DialogDescription>
           </DialogHeader>
           <pre className="whitespace-pre-wrap rounded-md bg-muted p-3 text-xs">
-            {JSON.stringify(detalhe?.metadados_pdf ?? {}, null, 2)}
+            {JSON.stringify(detalhe?.metadados_ficheiro ?? {}, null, 2)}
           </pre>
           <pre className="whitespace-pre-wrap rounded-md bg-muted p-3 text-xs">
             {detalhe?.texto_extraido ?? "(sem texto extraído)"}
