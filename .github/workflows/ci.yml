@@ -144,6 +144,9 @@ jobs:
             echo "R2_ENDPOINT_URL=${{ vars.GCP_R2_ENDPOINT_URL }}"
             echo "R2_BUCKET=${{ vars.GCP_R2_BUCKET }}"
             echo "R2_PUBLIC_BASE_URL=${{ vars.GCP_R2_PUBLIC_BASE_URL }}"
+            # Bucket privado dos vídeos (GET /exercicios/{id}/video) -- sem
+            # isto, cada deploy automático apagava-o (--set-env-vars substitui).
+            echo "R2_BUCKET_VIDEOS=${{ vars.GCP_R2_BUCKET_VIDEOS }}"
           } >> "$GITHUB_ENV"
 
       # 05 ANTES do 04, sempre -- uma migração tem de aplicar-se contra o

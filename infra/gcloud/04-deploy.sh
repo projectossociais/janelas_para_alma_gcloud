@@ -44,6 +44,7 @@ fi
 if [ -n "${R2_ENDPOINT_URL:-}" ]; then
   API_ENV="${API_ENV};R2_ENDPOINT_URL=${R2_ENDPOINT_URL};R2_BUCKET=${R2_BUCKET}"
   [ -n "${R2_PUBLIC_BASE_URL:-}" ] && API_ENV="${API_ENV};R2_PUBLIC_BASE_URL=${R2_PUBLIC_BASE_URL}"
+  [ -n "${R2_BUCKET_VIDEOS:-}" ] && API_ENV="${API_ENV};R2_BUCKET_VIDEOS=${R2_BUCKET_VIDEOS}"
 fi
 # FRONTEND_BASE_URL é só para montar o link de recuperação de password que
 # vai por email (ver core/email.py) — nada a ver com CORS. Normalmente vazio

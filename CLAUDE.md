@@ -114,7 +114,9 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   (`POST /sessoes-exercicio`) e vídeos (`GET /exercicios/{id}/video`) sem direito de acesso.
   O frontend (`AcessoExerciciosContext`) só espelha `GET /exercicios/acesso`. Os vídeos vivem
   num bucket R2 **privado** à parte (`r2_bucket_videos`), nunca no bucket público; o frontend
-  não os usa (botão retirado em 2026-09-28), o endpoint mantém-se
+  não os usa (botão retirado em 2026-09-28), o endpoint mantém-se. Em produção o bucket
+  chega por `R2_BUCKET_VIDEOS` (`00-config.sh` → `04-deploy.sh`; no deploy automático pela
+  variável `GCP_R2_BUCKET_VIDEOS`, publicada por `06-ci-cd-setup.sh`); vazio → 503
 - **Rede de clínicas parceiras**, doações, programa de voluntariado, painel administrativo
 - **Jogo "Inclusivamente"** (`frontend/src/pages/jogo/`, API `routers/jogo.py`) — quiz com
   economia virtual: moedas (ganhas a jogar) e diamantes. Saldo sempre decidido pela API

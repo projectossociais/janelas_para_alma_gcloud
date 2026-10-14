@@ -61,6 +61,10 @@ export R2_SECRET_ACCESS_KEY="${R2_SECRET_ACCESS_KEY:-}"
 # https://pub-xxxx.r2.dev). URL final de um ficheiro = {base}/{chave}. Não é
 # segredo — vai como env var normal, não pelo Secret Manager.
 export R2_PUBLIC_BASE_URL="${R2_PUBLIC_BASE_URL:-}"
+# Bucket PRIVADO dos vídeos dos exercícios (GET /exercicios/{id}/video, URL
+# assinado de curta duração) -- criar no R2 sem domínio público ligado.
+# Vazio = esse endpoint responde 503.
+export R2_BUCKET_VIDEOS="${R2_BUCKET_VIDEOS:-}"
 
 # --- Derivados (não editar) --------------------------------------------
 export SQL_CONNECTION_NAME="${PROJECT_ID}:${REGION}:${SQL_INSTANCE}"
