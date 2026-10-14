@@ -1,19 +1,26 @@
 """Upload de comprovativos de pagamento/transferência (CROSS-02) — mesmo
-padrão de três passos do avatar (`upload_service.py`) e das fotos de
-publicações (`publicacao_midia_service.py`): a API só assina um URL de
-`PUT`, o browser envia os bytes directamente ao R2.
+padrão de três passos do avatar (`upload_service.py`): a API só assina um
+URL de `PUT`, o browser envia os bytes directamente ao R2.
 
-Diferença deliberada em relação ao avatar: aqui não há "dono" a validar no
-momento da preparação — quem doa ou pede Premium pode não ter sessão
-nenhuma. A chave nasce sob um prefixo fixo (`comprovativos/`) só para se
-poder confirmar, no momento de criar a doação/pedido, que a chave
-apresentada é mesmo um comprovativo e não um caminho arbitrário dentro do
-bucket (ver `doacao_service.py`/`premium_service.py`)."""
+Diferenças deliberadas em relação ao avatar:
+
+- Não há "dono" a validar no momento da preparação — quem doa ou pede
+  Premium pode não ter sessão nenhuma. A chave nasce sob um prefixo fixo
+  (`comprovativos/`) só para se poder confirmar, no momento de criar a
+  doação/pedido, que a chave apresentada é mesmo um comprovativo e não um
+  caminho arbitrário (ver `doacao_service.py`/`premium_service.py`/
+  `loja_jogo_service.py`).
+- O bucket é **privado** (`r2_bucket_comprovativos`), nunca o público: são
+  comprovativos bancários, com o nome e a conta de quem pagou. Grava-se a
+  chave, nunca um URL; um admin lê o ficheiro por um URL assinado de vida
+  curta (`comprovativo_leitura_service.py`). Sem o bucket privado
+  configurado, o upload é recusado — nunca cai para o bucket público.
+  Até 2026-10-14 iam para o bucket público, com o URL gravado em
+  `comprovativo_url`; ver `migracao_comprovativos_service.py`."""
 
 import uuid
 from dataclasses import dataclass
 
-from app.core.config import obter_settings
 from app.repositories.storage import Presigner
 
 PREFIXO_COMPROVATIVOS = "comprovativos/"
@@ -35,34 +42,43 @@ class ChaveDeComprovativoInvalidaError(Exception):
     aceitar um caminho arbitrário do bucket como se fosse um comprovativo."""
 
 
+class ArmazenamentoPrivadoIndisponivelError(Exception):
+    """O bucket privado dos comprovativos não está configurado."""
+
+
 @dataclass(frozen=True)
 class ComprovativoPreparado:
     url_de_upload: str
     chave: str
-    url_publico: str
 
 
-def url_publico_do_comprovativo(chave: str) -> str:
-    """Valida o prefixo e devolve o URL público -- usado por quem cria a
-    doação/pedido depois do upload já ter corrido."""
-    if not chave.startswith(PREFIXO_COMPROVATIVOS):
+def chave_de_comprovativo_valida(chave: str) -> bool:
+    return chave.startswith(PREFIXO_COMPROVATIVOS) and ".." not in chave and len(chave) > len(PREFIXO_COMPROVATIVOS)
+
+
+def validar_chave_de_comprovativo(chave: str) -> str:
+    """Confirma que a chave é mesmo um comprovativo e devolve-a -- usado por
+    quem cria a doação/pedido depois do upload já ter corrido."""
+    if not chave_de_comprovativo_valida(chave):
         raise ChaveDeComprovativoInvalidaError(chave)
-    base = obter_settings().r2_public_base_url.rstrip("/")
-    return f"{base}/{chave}"
+    return chave
 
 
 class ComprovativoUploadService:
-    def __init__(self, presigner: Presigner) -> None:
+    def __init__(self, presigner: Presigner | None) -> None:
+        # `None` = bucket privado por configurar (ver
+        # `R2ComprovativosStorage.se_configurado`).
         self._presigner = presigner
 
     def preparar(self, content_type: str) -> ComprovativoPreparado:
         extensao = EXTENSAO_POR_CONTENT_TYPE.get(content_type)
         if extensao is None:
             raise TipoDeFicheiroNaoPermitidoError(content_type)
+        if self._presigner is None:
+            raise ArmazenamentoPrivadoIndisponivelError()
 
         chave = f"{PREFIXO_COMPROVATIVOS}{uuid.uuid4()}.{extensao}"
         return ComprovativoPreparado(
             url_de_upload=self._presigner.url_de_upload(chave, content_type),
             chave=chave,
-            url_publico=url_publico_do_comprovativo(chave),
         )

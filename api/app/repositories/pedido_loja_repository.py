@@ -30,11 +30,19 @@ class PedidoLojaRegisto:
     pacote_id: str
     quantidade: int
     preco_kz: int
-    comprovativo_url: str
+    comprovativo_url: str | None
     estado: str
     decidido_por: str | None
     decidido_em: datetime | None
     created_at: datetime
+    # `comprovativo_url` só existe em linhas anteriores ao bucket privado
+    # (2026-10-14), até serem migradas; as novas guardam só a chave. Nenhum
+    # dos dois sai na API -- o admin pede um URL assinado ao abrir.
+    comprovativo_chave: str | None = None
+
+    @property
+    def tem_comprovativo(self) -> bool:
+        return bool(self.comprovativo_chave or self.comprovativo_url)
 
 
 @dataclass(frozen=True)
@@ -51,7 +59,7 @@ class PedidoLojaRepository(Protocol):
         pacote_id: str,
         quantidade: int,
         preco_kz: int,
-        comprovativo_url: str,
+        comprovativo_chave: str,
     ) -> PedidoLojaRegisto: ...
     def obter(self, pedido_id: str) -> PedidoLojaRegisto | None: ...
     def listar_do_utilizador(self, utilizador_id: str) -> list[PedidoLojaRegisto]: ...
@@ -69,6 +77,7 @@ def _para_registo(row: PedidoLojaJogo) -> PedidoLojaRegisto:
         quantidade=row.quantidade,
         preco_kz=row.preco_kz,
         comprovativo_url=row.comprovativo_url,
+        comprovativo_chave=row.comprovativo_chave,
         estado=row.estado,
         decidido_por=str(row.decidido_por) if row.decidido_por else None,
         decidido_em=row.decidido_em,
@@ -87,7 +96,7 @@ class SQLAlchemyPedidoLojaRepository:
         pacote_id: str,
         quantidade: int,
         preco_kz: int,
-        comprovativo_url: str,
+        comprovativo_chave: str,
     ) -> PedidoLojaRegisto:
         row = PedidoLojaJogo(
             utilizador_id=uuid.UUID(utilizador_id),
@@ -95,7 +104,7 @@ class SQLAlchemyPedidoLojaRepository:
             pacote_id=pacote_id,
             quantidade=quantidade,
             preco_kz=preco_kz,
-            comprovativo_url=comprovativo_url,
+            comprovativo_chave=comprovativo_chave,
             estado="pendente",
         )
         self._sessao.add(row)

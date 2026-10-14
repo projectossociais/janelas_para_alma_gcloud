@@ -5,11 +5,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  comprovativosApi,
   contactMessagesApi,
   jogoApi,
   premiumApi,
   mensagemDeErroApi,
   type ContactMessageAdmin,
+  type OrigemComprovativo,
   type PedidoLojaAdmin,
   type PedidoPremiumAdmin,
 } from "@/lib/apiClient";
@@ -79,6 +81,26 @@ const AdminInbox = () => {
       toast.error(mensagemDeErroApi(err, "Não foi possível decidir o pedido."));
     } finally {
       setOcupado(null);
+    }
+  };
+
+  // Os comprovativos vivem num bucket privado: pede-se um URL assinado de
+  // vida curta a cada abertura. O separador abre-se já, no clique -- depois
+  // de um `await` o browser bloquearia o pop-up -- e só recebe o URL quando
+  // a API responder; `opener = null` faz o mesmo que `noopener`.
+  const abrirComprovativo = async (origem: OrigemComprovativo, id: string) => {
+    const separador = window.open("", "_blank");
+    try {
+      const { url } = await comprovativosApi.abrirComoAdmin(origem, id);
+      if (separador) {
+        separador.opener = null;
+        separador.location.href = url;
+      } else {
+        window.open(url, "_blank", "noopener,noreferrer");
+      }
+    } catch (err) {
+      separador?.close();
+      toast.error(mensagemDeErroApi(err, "Não foi possível abrir o comprovativo."));
     }
   };
 
@@ -221,11 +243,9 @@ const AdminInbox = () => {
                       </div>
                     </div>
                     <div className="flex flex-col gap-2 shrink-0">
-                      {p.comprovativo_url && (
-                        <Button size="sm" variant="outline" asChild>
-                          <a href={p.comprovativo_url} target="_blank" rel="noopener noreferrer">
-                            <FileText className="w-3 h-3" /> Ver comprovativo
-                          </a>
+                      {p.tem_comprovativo && (
+                        <Button size="sm" variant="outline" onClick={() => abrirComprovativo("premium", p.id)}>
+                          <FileText className="w-3 h-3" /> Ver comprovativo
                         </Button>
                       )}
                       {p.status !== "aprovado" && (
@@ -290,11 +310,11 @@ const AdminInbox = () => {
                       </div>
                     </div>
                     <div className="flex flex-col gap-2 shrink-0">
-                      <Button size="sm" variant="outline" asChild>
-                        <a href={d.comprovativo_url} target="_blank" rel="noopener noreferrer">
+                      {d.tem_comprovativo && (
+                        <Button size="sm" variant="outline" onClick={() => abrirComprovativo("loja", d.id)}>
                           <FileText className="w-3 h-3" /> Ver comprovativo
-                        </a>
-                      </Button>
+                        </Button>
+                      )}
                       {d.estado === "pendente" && (
                         <>
                           <Button

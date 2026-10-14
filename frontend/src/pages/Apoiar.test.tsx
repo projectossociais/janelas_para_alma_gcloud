@@ -173,7 +173,6 @@ describe("Apoiar — doação financeira (comprovativo via R2, CROSS-02)", () =>
     prepararComprovativo.mockResolvedValue({
       url_de_upload: "https://r2.exemplo.test/comprovativos/x.pdf?sig=1",
       chave: "comprovativos/x.pdf",
-      url_publico: "https://cdn.exemplo.test/comprovativos/x.pdf",
     });
     enviarParaStorage.mockRejectedValue(
       Object.assign(new Error("Não foi possível enviar a imagem para o storage."), { status: 500 }),
@@ -194,7 +193,6 @@ describe("Apoiar — doação financeira (comprovativo via R2, CROSS-02)", () =>
     prepararComprovativo.mockResolvedValue({
       url_de_upload: "https://r2.exemplo.test/comprovativos/x.pdf?sig=1",
       chave: "comprovativos/x.pdf",
-      url_publico: "https://cdn.exemplo.test/comprovativos/x.pdf",
     });
     enviarParaStorage.mockResolvedValue(undefined);
     registarFinanceira.mockRejectedValue(
@@ -215,7 +213,6 @@ describe("Apoiar — doação financeira (comprovativo via R2, CROSS-02)", () =>
     prepararComprovativo.mockResolvedValue({
       url_de_upload: "https://r2.exemplo.test/comprovativos/x.pdf?sig=1",
       chave: "comprovativos/x.pdf",
-      url_publico: "https://cdn.exemplo.test/comprovativos/x.pdf",
     });
     enviarParaStorage.mockResolvedValue(undefined);
     registarFinanceira.mockResolvedValue({
@@ -226,7 +223,6 @@ describe("Apoiar — doação financeira (comprovativo via R2, CROSS-02)", () =>
       materiais: null,
       detalhes: "Aliado (R$ 10-30)",
       status: "comprovativo_enviado",
-      comprovativo_url: "https://cdn.exemplo.test/comprovativos/x.pdf",
       created_at: "2026-01-01T00:00:00.000Z",
     });
     const user = userEvent.setup();
@@ -268,7 +264,6 @@ describe("Apoiar -- em inglês, o que vai para a API continua em português", ()
     prepararComprovativo.mockResolvedValue({
       url_de_upload: "https://r2.exemplo.test/comprovativos/x.pdf?sig=1",
       chave: "comprovativos/x.pdf",
-      url_publico: "https://cdn.exemplo.test/comprovativos/x.pdf",
     });
     enviarParaStorage.mockResolvedValue(undefined);
     registarFinanceira.mockResolvedValue({ id: "doacao-3", recibo_id: "FIN-EN", tipo: "financeiro" });

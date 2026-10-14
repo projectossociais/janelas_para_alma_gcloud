@@ -101,6 +101,8 @@ def test_regista_doacao_financeira_com_comprovativo_valido(client_ok: TestClient
     corpo = resposta.json()
     assert corpo["recibo_id"].startswith("FIN-")
     assert corpo["status"] == "comprovativo_enviado"
+    # Quem doa não recebe de volta nenhum URL do comprovativo.
+    assert "comprovativo_url" not in corpo
 
 
 def test_recusa_comprovativo_fora_do_prefixo_com_403(client_ok: TestClient) -> None:

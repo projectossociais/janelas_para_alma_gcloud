@@ -44,6 +44,14 @@ class Settings(BaseSettings):
     # os vídeos existirem — o endpoint responde 503 nesse caso.
     r2_bucket_videos: str = ""
     r2_video_url_expira_segundos: int = 900
+    # Comprovativos de pagamento (Premium, doações, loja do jogo): bucket
+    # **privado** à parte, pela mesma razão dos vídeos -- são comprovativos
+    # bancários com o nome e a conta de quem pagou. O browser envia-os por
+    # `PUT` assinado; um admin lê-os por `GET` assinado de vida curta,
+    # emitido por `GET /admin/comprovativos/{origem}/{id}`. Vazio = upload
+    # de comprovativos recusado com 503 -- nunca cai para o bucket público.
+    r2_bucket_comprovativos: str = ""
+    r2_comprovativo_url_expira_segundos: int = 300
 
     # CORS — origens do frontend com permissão para pedidos com cookies.
     # Em dev sem Docker, frontend (npm run dev, porta 8080) e API (porta

@@ -15,7 +15,7 @@ O que o utilizador podia falsear e é recusado aqui:
 from datetime import UTC, datetime, timedelta
 
 from app.repositories.premium_repository import PedidoPremiumRegisto, PremiumRepository
-from app.services.comprovativo_upload_service import url_publico_do_comprovativo
+from app.services.comprovativo_upload_service import validar_chave_de_comprovativo
 
 PREMIUM_DURACAO_DIAS = 30
 
@@ -50,14 +50,14 @@ class PremiumService:
         mesmo um comprovativo (nunca um caminho arbitrário do bucket)
         antes de a gravar. Um admin só aprova o pagamento depois de ver
         este ficheiro (ver `AdminInbox.tsx`)."""
-        comprovativo_url = url_publico_do_comprovativo(comprovativo_chave)
+        comprovativo_chave = validar_chave_de_comprovativo(comprovativo_chave)
         return self._repo.criar(
             nome=nome,
             email=email,
             telefone=telefone,
             plano=plano,
             user_id=user_id,
-            comprovativo_url=comprovativo_url,
+            comprovativo_chave=comprovativo_chave,
         )
 
     def aprovar_pagamento(self, pedido_id: str, admin_id: str) -> PedidoPremiumRegisto:

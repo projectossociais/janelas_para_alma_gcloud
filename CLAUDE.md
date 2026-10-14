@@ -123,7 +123,7 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   **moedas** (`POST /jogo/loja/compras` com `metodo_pagamento: "moedas"` — débito das
   moedas e crédito dos diamantes numa só instrução atómica, só com saldo; 402 sem ele) ou
   por **Kwanzas**, com o mesmo fluxo do Premium (não há gateway nem webhook no projecto):
-  transferência + comprovativo no R2 → `POST /jogo/loja/pedidos` grava um pedido pendente
+  transferência + comprovativo no R2 privado (§4, 4c) → `POST /jogo/loja/pedidos` grava um pedido pendente
   em `pedidos_loja_jogo` (`tipo_item` diamantes | moedas; quantidade e preço copiados do
   catálogo) → um admin confirma o pagamento em `/admin/mensagens?tab=loja`
   (`POST /admin/jogo/pedidos-loja/{id}/aprovar`) e só aí a quantidade é creditada no saldo
@@ -342,6 +342,17 @@ activa; verificar e testar isso explicitamente.**
    confirmar. A API valida que a chave a confirmar pertence ao próprio utilizador
    (`avatares/{utilizador_id}/...`) antes de a gravar. Menos uma cópia de imagens de
    crianças a passar pelos nossos servidores e logs.
+4c. **Comprovativos de pagamento vivem num bucket R2 privado, nunca no público
+   (2026-10-14).** São comprovativos bancários (nome e conta de quem pagou). Premium,
+   doações e loja do jogo enviam-nos para `r2_bucket_comprovativos` (`R2ComprovativosStorage`),
+   e as tabelas gravam só a chave (`comprovativo_chave`), nunca um URL. Um admin abre-os por
+   `GET /admin/comprovativos/{premium|doacao|loja}/{id}` (`obter_utilizador_admin`;
+   `ComprovativoLeituraService`), que devolve um `GET` assinado de 5 minutos com
+   `Cache-Control: no-store`; as listagens só dizem `tem_comprovativo`. Sem o bucket
+   configurado, o upload responde 503 — nunca cai para o bucket público.
+   `comprovativo_url` só existe em linhas antigas por migrar
+   (`infra/gcloud/08-migrar-comprovativos.sh`, ver `infra/gcloud/README.md`); nunca voltar
+   a escrevê-lo.
 5. **Nunca escrever segredos no frontend nem os comitar em `.env`.** O repositório antigo
    teve `.env` rastreado em `main` durante meses (chave pública do Supabase — não crítico
    por ser uma chave `anon`, mas errado de qualquer forma). Este repositório nasce com

@@ -464,11 +464,21 @@ export const bannerHomepageApi = {
 // Premium não exige sessão. Mesmo fluxo de 3 passos do avatar; o passo 3
 // aqui não é "confirmar" (nada fica gravado ainda) — a chave devolvida no
 // passo 1 vai directamente no pedido que cria a doação/o pedido Premium.
+// O ficheiro vai para um bucket privado (são comprovativos bancários): não
+// há URL público. Um admin abre-o com `abrirComoAdmin`, que devolve um URL
+// assinado de vida curta.
 
 export interface ComprovativoUploadPreparado {
   url_de_upload: string;
   chave: string;
-  url_publico: string;
+}
+
+export type OrigemComprovativo = "premium" | "doacao" | "loja";
+
+export interface ComprovativoParaLer {
+  url: string;
+  /** `null` só para comprovativos antigos ainda por migrar do bucket público. */
+  expira_em_segundos: number | null;
 }
 
 export const TIPOS_DE_COMPROVATIVO_ACEITES = [
@@ -487,6 +497,11 @@ export const comprovativosApi = {
 
   /** Mesmo passo 2 do avatar — reutilizado tal e qual. */
   enviarParaStorage: uploadsApi.enviarParaStorage,
+
+  /** Só admin (403 a qualquer outro papel). Pedir de cada vez que se abre:
+   *  o URL expira em minutos. */
+  abrirComoAdmin: (origem: OrigemComprovativo, id: string) =>
+    pedido<ComprovativoParaLer>(`/admin/comprovativos/${origem}/${encodeURIComponent(id)}`),
 };
 
 /** Unidade do `limiar` de uma sessão de exercício (versão 2). */
@@ -721,7 +736,6 @@ export interface DoacaoPublica {
   detalhes: string | null;
   provincia: string | null;
   status: string;
-  comprovativo_url: string | null;
   created_at: string;
 }
 
@@ -815,7 +829,8 @@ export interface PedidoPremiumPublico {
 
 export interface PedidoPremiumAdmin extends PedidoPremiumPublico {
   user_id: string | null;
-  comprovativo_url: string | null;
+  /** Abre-se com `comprovativosApi.abrirComoAdmin("premium", id)`. */
+  tem_comprovativo: boolean;
   aprovado_por: string | null;
   aprovado_em: string | null;
 }
@@ -1566,7 +1581,8 @@ export interface PedidoLoja {
 
 export interface PedidoLojaAdmin extends PedidoLoja {
   utilizador_id: string | null;
-  comprovativo_url: string;
+  /** Abre-se com `comprovativosApi.abrirComoAdmin("loja", id)`. */
+  tem_comprovativo: boolean;
   decidido_por: string | null;
 }
 

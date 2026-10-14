@@ -10,7 +10,6 @@ from app.repositories.jogo_repository import PerguntaJogoRegisto
 from app.repositories.utilizadores_repository import UtilizadorRegisto
 from app.routers import jogo as jogo_router
 from app.services.auth_service import AuthService
-from app.services.comprovativo_upload_service import ChaveDeComprovativoInvalidaError
 from app.services.estatisticas_jogador_service import EstatisticasJogadorService
 from app.services.loja_jogo_service import PACOTES_DIAMANTES, PACOTES_MOEDAS, LojaJogoService
 from app.services.mercado_jogo_service import VENDEDORES, MercadoJogoService
@@ -219,14 +218,8 @@ def loja_sem_pagamentos(ambiente):
 
 
 @pytest.fixture
-def loja_producao(ambiente, monkeypatch):
+def loja_producao(ambiente):
     """Sem pagamentos simulados, com o repositório de pedidos à vista."""
-    monkeypatch.setattr(
-        "app.services.loja_jogo_service.url_publico_do_comprovativo",
-        lambda chave: (_ for _ in ()).throw(ChaveDeComprovativoInvalidaError(chave))
-        if not chave.startswith("comprovativos/")
-        else f"https://r2/{chave}",
-    )
     c, _repo, token_admin, token_comum, repo_perfil = ambiente
     pedidos = RepositorioPedidosLojaFalso(repo_perfil)
     app.dependency_overrides[jogo_router.obter_loja_jogo_service] = lambda: LojaJogoService(
@@ -387,7 +380,11 @@ def test_admin_aprova_uma_vez_e_os_diamantes_sao_creditados_uma_vez(loja_produca
 
     c.cookies.set("access_token", token_admin)
     lista = c.get("/admin/jogo/pedidos-loja").json()
-    assert lista[0]["comprovativo_url"] == "https://r2/comprovativos/x.png"
+    # Nunca um URL na listagem: o admin abre o comprovativo por
+    # GET /admin/comprovativos/loja/{id}, que emite um URL assinado.
+    assert lista[0]["tem_comprovativo"] is True
+    assert "comprovativo_url" not in lista[0]
+    assert "comprovativo_chave" not in lista[0]
     aprovado = c.post(f"/admin/jogo/pedidos-loja/{pedido_id}/aprovar")
     assert aprovado.status_code == 200
     assert (aprovado.json()["estado"], aprovado.json()["decidido_por"]) == ("aprovado", "id-admin")
@@ -461,7 +458,7 @@ def test_pedido_de_moedas_fica_pendente_e_o_admin_credita_moedas_uma_vez(loja_pr
 
     c.cookies.set("access_token", token_admin)
     lista = c.get("/admin/jogo/pedidos-loja").json()
-    assert [(p["tipo_item"], p["comprovativo_url"]) for p in lista] == [("moedas", "https://r2/comprovativos/x.png")]
+    assert [(p["tipo_item"], p["tem_comprovativo"]) for p in lista] == [("moedas", True)]
     assert c.post(f"/admin/jogo/pedidos-loja/{corpo['id']}/aprovar").status_code == 200
     assert c.post(f"/admin/jogo/pedidos-loja/{corpo['id']}/aprovar").status_code == 409
     perfil = repo_perfil.obter_ou_criar("id-comum")

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.dependencies import obter_utilizador_atual
 from app.db import obter_sessao
 from app.repositories.perfil_repository import SQLAlchemyPerfilRepository
-from app.repositories.storage import R2Presigner
+from app.repositories.storage import R2ComprovativosStorage, R2Presigner
 from app.repositories.utilizadores_repository import UtilizadorRegisto
 from app.schemas.upload import (
     AvatarConfirmado,
@@ -15,6 +15,7 @@ from app.schemas.upload import (
     ComprovativoUploadPreparado,
 )
 from app.services.comprovativo_upload_service import (
+    ArmazenamentoPrivadoIndisponivelError,
     ComprovativoUploadService,
 )
 from app.services.comprovativo_upload_service import (
@@ -34,7 +35,8 @@ def obter_upload_service(sessao: Session = Depends(obter_sessao)) -> UploadServi
 
 
 def obter_comprovativo_upload_service() -> ComprovativoUploadService:
-    return ComprovativoUploadService(R2Presigner())
+    # Bucket privado, nunca o público -- ver comprovativo_upload_service.py.
+    return ComprovativoUploadService(R2ComprovativosStorage.se_configurado())
 
 
 @router.post("/avatar", response_model=AvatarUploadPreparado)
@@ -87,5 +89,10 @@ def preparar_upload_de_comprovativo(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="tipo de ficheiro não permitido (PNG, JPEG, WebP ou PDF)",
+        ) from exc
+    except ArmazenamentoPrivadoIndisponivelError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="o envio de comprovativos está temporariamente indisponível",
         ) from exc
     return ComprovativoUploadPreparado(**preparado.__dict__)

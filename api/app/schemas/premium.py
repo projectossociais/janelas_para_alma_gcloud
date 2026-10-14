@@ -35,6 +35,8 @@ class PedidoPremiumAdmin(PedidoPremiumPublico):
     comprovativo (um admin só aprova depois de o conferir)."""
 
     user_id: str | None
-    comprovativo_url: str | None
+    # Nunca o URL nem a chave: o admin abre o comprovativo por
+    # `GET /admin/comprovativos/premium/{id}` (URL assinado, vida curta).
+    tem_comprovativo: bool
     aprovado_por: str | None
     aprovado_em: datetime | None

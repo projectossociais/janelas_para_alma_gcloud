@@ -29,7 +29,6 @@ class DoacaoPublica(BaseModel):
     detalhes: str | None
     provincia: str | None
     status: str
-    comprovativo_url: str | None
     created_at: datetime
 
     model_config = {"from_attributes": True}

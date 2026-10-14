@@ -271,7 +271,11 @@ class Doacao(Base):
     status: Mapped[str | None] = mapped_column(Text, server_default="pendente")
     # Comprovativo de transferência (doação financeira) -- upload directo ao
     # R2, mesmo padrão do avatar (CROSS-02). Nunca os bytes pela API.
+    # `comprovativo_chave`: chave no bucket **privado** (desde 2026-10-14).
+    # `comprovativo_url`: URL público antigo, só em linhas por migrar
+    # (`scripts/migrar_comprovativos_privados.py`); nunca escrito de novo.
     comprovativo_url: Mapped[str | None] = mapped_column(Text)
+    comprovativo_chave: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -339,7 +343,9 @@ class PremiumRequest(Base):
     aprovado_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # Comprovativo de pagamento -- upload directo ao R2, mesmo padrão do
     # avatar (CROSS-02). Um admin só aprova depois de confirmar isto.
+    # Chave no bucket privado vs. URL público antigo: ver `Doacao`.
     comprovativo_url: Mapped[str | None] = mapped_column(Text)
+    comprovativo_chave: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -723,6 +729,10 @@ class PedidoLojaJogo(Base):
         CheckConstraint("tipo_item IN ('diamantes', 'moedas')", name="ck_pedidos_loja_jogo_tipo_item"),
         CheckConstraint("quantidade > 0", name="ck_pedidos_loja_jogo_quantidade_positiva"),
         CheckConstraint("preco_kz > 0", name="ck_pedidos_loja_jogo_preco_positivo"),
+        CheckConstraint(
+            "comprovativo_url IS NOT NULL OR comprovativo_chave IS NOT NULL",
+            name="ck_pedidos_loja_jogo_comprovativo",
+        ),
     )
 
     id: Mapped[uuid.UUID] = _uuid_pk()
@@ -734,7 +744,10 @@ class PedidoLojaJogo(Base):
     pacote_id: Mapped[str] = mapped_column(Text, nullable=False)
     quantidade: Mapped[int] = mapped_column(nullable=False)
     preco_kz: Mapped[int] = mapped_column(nullable=False)
-    comprovativo_url: Mapped[str] = mapped_column(Text, nullable=False)
+    # Chave no bucket privado vs. URL público antigo: ver `Doacao`. Um dos
+    # dois existe sempre (CHECK); nullable desde 2026-10-14.
+    comprovativo_url: Mapped[str | None] = mapped_column(Text)
+    comprovativo_chave: Mapped[str | None] = mapped_column(Text)
     estado: Mapped[str] = mapped_column(Text, nullable=False, server_default="pendente")
     decidido_por: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("utilizadores.id", ondelete="SET NULL"))
     decidido_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

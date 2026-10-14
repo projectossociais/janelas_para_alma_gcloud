@@ -19,7 +19,7 @@ class RepositorioPremiumFalso:
         self._pedidos: dict[str, PedidoPremiumRegisto] = {}
         self._seq = 0
 
-    def criar(self, nome, email, telefone, plano, user_id, comprovativo_url=None) -> PedidoPremiumRegisto:
+    def criar(self, nome, email, telefone, plano, user_id, comprovativo_chave=None) -> PedidoPremiumRegisto:
         self._seq += 1
         reg = PedidoPremiumRegisto(
             id=f"ped-{self._seq}",
@@ -29,7 +29,8 @@ class RepositorioPremiumFalso:
             telefone=telefone,
             plano=plano,
             status="pendente",
-            comprovativo_url=comprovativo_url,
+            comprovativo_url=None,
+            comprovativo_chave=comprovativo_chave,
             aprovado_por=None,
             aprovado_em=None,
             created_at=datetime.now(UTC),
@@ -153,6 +154,18 @@ def test_listar_papel_comum_403(ambiente) -> None:
     c, _, _, token_comum = ambiente
     c.cookies.set("access_token", token_comum)
     assert c.get("/premium-requests").status_code == 403
+
+
+def test_listagem_do_admin_nao_expoe_url_nem_chave_do_comprovativo(ambiente) -> None:
+    c, repo, token_admin, _ = ambiente
+    repo.criar("Ana", "ana@example.com", None, "mensal", "id-comum", "comprovativos/abc.pdf")
+    repo.criar("Rui", "rui@example.com", None, "mensal", "id-comum")
+    c.cookies.set("access_token", token_admin)
+
+    lista = c.get("/premium-requests").json()
+
+    assert [p["tem_comprovativo"] for p in lista] == [True, False]
+    assert all("comprovativo_url" not in p and "comprovativo_chave" not in p for p in lista)
 
 
 def test_admin_aprova_pagamento(ambiente) -> None:

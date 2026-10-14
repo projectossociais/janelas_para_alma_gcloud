@@ -122,10 +122,47 @@ def test_preparar_comprovativo_nao_exige_sessao(client) -> None:
     assert resposta.status_code == 200
     corpo = resposta.json()
     assert corpo["chave"].startswith("comprovativos/")
-    assert corpo["url_publico"] == f"{BASE_PUBLICA}/{corpo['chave']}"
+    # Comprovativos bancários nunca têm URL público (bucket privado).
+    assert "url_publico" not in corpo
 
 
 def test_preparar_comprovativo_recusa_tipo_invalido(client) -> None:
     c, _ = client
     resposta = c.post("/uploads/comprovativo", json={"content_type": "application/zip"})
     assert resposta.status_code == 422
+
+
+# --- Comprovativo: sempre no bucket privado, nunca no público ---------------
+
+
+@pytest.fixture
+def r2_configurado(monkeypatch: pytest.MonkeyPatch):
+    s = obter_settings()
+    monkeypatch.setattr(s, "r2_endpoint_url", "https://conta.r2.test")
+    monkeypatch.setattr(s, "r2_access_key_id", "id-teste")
+    monkeypatch.setattr(s, "r2_secret_access_key", "segredo-teste")
+    monkeypatch.setattr(s, "r2_bucket", "bucket-publico")
+    monkeypatch.setattr(s, "r2_bucket_comprovativos", "bucket-comprovativos")
+    return s
+
+
+def test_comprovativo_e_assinado_para_o_bucket_privado(r2_configurado) -> None:
+    """Sem override: a dependência real assina o PUT no bucket privado."""
+    with TestClient(app) as c:
+        resposta = c.post("/uploads/comprovativo", json={"content_type": "application/pdf"})
+
+    assert resposta.status_code == 200
+    url = resposta.json()["url_de_upload"]
+    assert "bucket-comprovativos" in url
+    assert "bucket-publico" not in url
+
+
+def test_sem_bucket_privado_o_upload_de_comprovativo_devolve_503(
+    r2_configurado, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Nunca cair para o bucket público por falta de configuração."""
+    monkeypatch.setattr(r2_configurado, "r2_bucket_comprovativos", "")
+    with TestClient(app) as c:
+        resposta = c.post("/uploads/comprovativo", json={"content_type": "application/pdf"})
+
+    assert resposta.status_code == 503

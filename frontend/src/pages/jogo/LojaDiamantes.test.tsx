@@ -77,7 +77,7 @@ describe("LojaDiamantes", () => {
     obterPerfil.mockResolvedValue(PERFIL);
     pedirComKwanzas.mockReset();
     listarMeusPedidosLoja.mockReset().mockResolvedValue([]);
-    prepararComprovativo.mockReset().mockResolvedValue({ url_de_upload: "https://r2/put", chave: "comprovativos/x.png", url_publico: "https://r2/x.png" });
+    prepararComprovativo.mockReset().mockResolvedValue({ url_de_upload: "https://r2/put", chave: "comprovativos/x.png" });
     enviarParaStorage.mockReset().mockResolvedValue(undefined);
   });
 

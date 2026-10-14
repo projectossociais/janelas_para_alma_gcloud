@@ -144,6 +144,10 @@ jobs:
             echo "R2_ENDPOINT_URL=${{ vars.GCP_R2_ENDPOINT_URL }}"
             echo "R2_BUCKET=${{ vars.GCP_R2_BUCKET }}"
             echo "R2_PUBLIC_BASE_URL=${{ vars.GCP_R2_PUBLIC_BASE_URL }}"
+            # Bucket privado dos comprovativos de pagamento -- sem esta
+            # variável no repositório, o upload de comprovativos fica a 503
+            # em produção (nunca cai para o bucket público).
+            echo "R2_BUCKET_COMPROVATIVOS=${{ vars.GCP_R2_BUCKET_COMPROVATIVOS }}"
           } >> "$GITHUB_ENV"
 
       # 05 ANTES do 04, sempre -- uma migração tem de aplicar-se contra o

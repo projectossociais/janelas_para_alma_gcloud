@@ -175,7 +175,8 @@ class PedidoLojaPublico(BaseModel):
 
 class PedidoLojaAdmin(PedidoLojaPublico):
     utilizador_id: str | None
-    comprovativo_url: str
+    # Abre-se por `GET /admin/comprovativos/loja/{id}` -- ver PedidoPremiumAdmin.
+    tem_comprovativo: bool
     decidido_por: str | None
 
 

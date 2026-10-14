@@ -32,6 +32,14 @@ class PedidoPremiumRegisto:
     aprovado_por: str | None
     aprovado_em: datetime | None
     created_at: datetime
+    # `comprovativo_url` só existe em linhas anteriores ao bucket privado
+    # (2026-10-14), até serem migradas; as novas guardam só a chave. Nenhum
+    # dos dois sai na API -- o admin pede um URL assinado ao abrir.
+    comprovativo_chave: str | None = None
+
+    @property
+    def tem_comprovativo(self) -> bool:
+        return bool(self.comprovativo_chave or self.comprovativo_url)
 
 
 class PremiumRepository(Protocol):
@@ -42,7 +50,7 @@ class PremiumRepository(Protocol):
         telefone: str | None,
         plano: str | None,
         user_id: str | None,
-        comprovativo_url: str | None = None,
+        comprovativo_chave: str | None = None,
     ) -> PedidoPremiumRegisto: ...
     def obter(self, pedido_id: str) -> PedidoPremiumRegisto | None: ...
     def obter_mais_recente_por_utilizador(self, user_id: str) -> PedidoPremiumRegisto | None: ...
@@ -63,6 +71,7 @@ def _para_registo(row: PremiumRequest) -> PedidoPremiumRegisto:
         plano=row.plano,
         status=row.status or "pendente",
         comprovativo_url=row.comprovativo_url,
+        comprovativo_chave=row.comprovativo_chave,
         aprovado_por=str(row.aprovado_por) if row.aprovado_por else None,
         aprovado_em=row.aprovado_em,
         created_at=row.created_at,
@@ -80,7 +89,7 @@ class SQLAlchemyPremiumRepository:
         telefone: str | None,
         plano: str | None,
         user_id: str | None,
-        comprovativo_url: str | None = None,
+        comprovativo_chave: str | None = None,
     ) -> PedidoPremiumRegisto:
         row = PremiumRequest(
             nome=nome,
@@ -89,7 +98,7 @@ class SQLAlchemyPremiumRepository:
             plano=plano,
             user_id=uuid.UUID(user_id) if user_id else None,
             status="pendente",
-            comprovativo_url=comprovativo_url,
+            comprovativo_chave=comprovativo_chave,
         )
         self._sessao.add(row)
         self._sessao.commit()

@@ -44,6 +44,13 @@ fi
 if [ -n "${R2_ENDPOINT_URL:-}" ]; then
   API_ENV="${API_ENV};R2_ENDPOINT_URL=${R2_ENDPOINT_URL};R2_BUCKET=${R2_BUCKET}"
   [ -n "${R2_PUBLIC_BASE_URL:-}" ] && API_ENV="${API_ENV};R2_PUBLIC_BASE_URL=${R2_PUBLIC_BASE_URL}"
+  # Sem isto, o upload de comprovativos de pagamento responde 503 (nunca
+  # cai para o bucket público) -- ver 00-config.example.sh.
+  if [ -n "${R2_BUCKET_COMPROVATIVOS:-}" ]; then
+    API_ENV="${API_ENV};R2_BUCKET_COMPROVATIVOS=${R2_BUCKET_COMPROVATIVOS}"
+  else
+    echo "    AVISO: R2_BUCKET_COMPROVATIVOS vazio -- comprovativos de pagamento ficam sem upload (503)."
+  fi
 fi
 # FRONTEND_BASE_URL é só para montar o link de recuperação de password que
 # vai por email (ver core/email.py) — nada a ver com CORS. Normalmente vazio

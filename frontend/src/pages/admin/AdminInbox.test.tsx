@@ -11,6 +11,7 @@ const premiumRevogar = vi.fn();
 const diamantesListar = vi.fn();
 const diamantesAprovar = vi.fn();
 const diamantesRejeitar = vi.fn();
+const abrirComprovativo = vi.fn();
 
 vi.mock("@/lib/apiClient", () => ({
   contactMessagesApi: {
@@ -21,6 +22,9 @@ vi.mock("@/lib/apiClient", () => ({
     listarPedidosLoja: (...a: unknown[]) => diamantesListar(...a),
     aprovarPedidoLoja: (...a: unknown[]) => diamantesAprovar(...a),
     rejeitarPedidoLoja: (...a: unknown[]) => diamantesRejeitar(...a),
+  },
+  comprovativosApi: {
+    abrirComoAdmin: (...a: unknown[]) => abrirComprovativo(...a),
   },
   premiumApi: {
     listar: (...a: unknown[]) => premiumListar(...a),
@@ -45,6 +49,14 @@ vi.mock("sonner", () => ({
 
 import AdminInbox from "./AdminInbox";
 
+/** O separador abre-se logo no clique (depois de um `await` o browser
+ *  bloqueava o pop-up) e só depois recebe o URL assinado. */
+function separadorFalso() {
+  const separador = { opener: {} as unknown, location: { href: "" }, close: vi.fn() };
+  const open = vi.spyOn(window, "open").mockReturnValue(separador as unknown as Window);
+  return { separador, open };
+}
+
 async function abrirSeparadorPremium(user: ReturnType<typeof userEvent.setup>) {
   await user.click(await screen.findByRole("tab", { name: /Pedidos Premium/i }));
 }
@@ -68,6 +80,7 @@ const umPedido = {
   status: "pendente",
   created_at: "2026-01-02T10:00:00.000Z",
   user_id: "user-9",
+  tem_comprovativo: false,
   aprovado_por: null,
   aprovado_em: null,
 };
@@ -82,6 +95,7 @@ describe("AdminInbox — mensagens de contacto", () => {
     diamantesListar.mockReset().mockResolvedValue([]);
     toastSuccess.mockReset();
     toastError.mockReset();
+    abrirComprovativo.mockReset();
   });
 
   it("mostra um erro (e não rebenta) quando a listagem falha", async () => {
@@ -157,26 +171,48 @@ describe("AdminInbox — mensagens de contacto", () => {
     expect(botao).toBeDisabled();
   });
 
-  it("mostra um link para o comprovativo quando o pedido tem um (CROSS-02)", async () => {
-    premiumListar.mockResolvedValue([
-      { ...umPedido, comprovativo_url: "https://cdn.exemplo.test/comprovativos/x.pdf" },
-    ]);
+  it("abre o comprovativo por um URL assinado pedido à API, nunca por um link fixo", async () => {
+    premiumListar.mockResolvedValue([{ ...umPedido, tem_comprovativo: true }]);
+    abrirComprovativo.mockResolvedValue({ url: "https://privado.r2.test/comprovativos/x.pdf?sig=1", expira_em_segundos: 300 });
+    const { separador, open } = separadorFalso();
     const user = userEvent.setup();
     render(<AdminInbox />, { wrapper: MemoryRouter });
 
     await abrirSeparadorPremium(user);
-    const link = await screen.findByRole("link", { name: /Ver comprovativo/i });
-    expect(link).toHaveAttribute("href", "https://cdn.exemplo.test/comprovativos/x.pdf");
+    expect(screen.queryByRole("link", { name: /Ver comprovativo/i })).not.toBeInTheDocument();
+    await user.click(await screen.findByRole("button", { name: /Ver comprovativo/i }));
+
+    expect(abrirComprovativo).toHaveBeenCalledWith("premium", umPedido.id);
+    expect(open).toHaveBeenCalledWith("", "_blank");
+    await waitFor(() => expect(separador.location.href).toBe("https://privado.r2.test/comprovativos/x.pdf?sig=1"));
+    expect(separador.opener).toBeNull();
+    open.mockRestore();
   });
 
-  it("não mostra o link de comprovativo quando o pedido não tem um", async () => {
-    premiumListar.mockResolvedValue([umPedido]);
+  it("se a API recusar o comprovativo, fecha o separador e mostra erro", async () => {
+    premiumListar.mockResolvedValue([{ ...umPedido, tem_comprovativo: true }]);
+    abrirComprovativo.mockRejectedValue(Object.assign(new Error("comprovativo não encontrado"), { status: 404 }));
+    const { separador, open } = separadorFalso();
+    const user = userEvent.setup();
+    render(<AdminInbox />, { wrapper: MemoryRouter });
+
+    await abrirSeparadorPremium(user);
+    await user.click(await screen.findByRole("button", { name: /Ver comprovativo/i }));
+
+    await waitFor(() => expect(toastError).toHaveBeenCalledWith("comprovativo não encontrado"));
+    expect(separador.close).toHaveBeenCalled();
+    expect(separador.location.href).toBe("");
+    open.mockRestore();
+  });
+
+  it("não mostra o botão de comprovativo quando o pedido não tem um", async () => {
+    premiumListar.mockResolvedValue([{ ...umPedido, tem_comprovativo: false }]);
     const user = userEvent.setup();
     render(<AdminInbox />, { wrapper: MemoryRouter });
 
     await abrirSeparadorPremium(user);
     await screen.findByText(umPedido.nome);
-    expect(screen.queryByRole("link", { name: /Ver comprovativo/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Ver comprovativo/i })).not.toBeInTheDocument();
   });
 });
 
@@ -187,7 +223,7 @@ const umPedidoDiamantes = {
   pacote_id: "medio",
   quantidade: 165,
   preco_kz: 1250,
-  comprovativo_url: "https://r2.example/comprovativos/x.png",
+  tem_comprovativo: true,
   estado: "pendente",
   decidido_por: null,
   decidido_em: null,
@@ -203,6 +239,7 @@ describe("AdminInbox — pedidos da loja do jogo (Kwanzas por transferência)", 
     diamantesRejeitar.mockReset();
     toastSuccess.mockReset();
     toastError.mockReset();
+    abrirComprovativo.mockReset();
   });
 
   async function abrir(user: ReturnType<typeof userEvent.setup>) {
@@ -215,10 +252,13 @@ describe("AdminInbox — pedidos da loja do jogo (Kwanzas por transferência)", 
     diamantesAprovar.mockResolvedValue({ ...umPedidoDiamantes, estado: "aprovado" });
     await abrir(user);
 
-    expect(await screen.findByRole("link", { name: /Ver comprovativo/ })).toHaveAttribute(
-      "href",
-      umPedidoDiamantes.comprovativo_url
-    );
+    abrirComprovativo.mockResolvedValue({ url: "https://privado.r2.test/comprovativos/x.png?sig=2", expira_em_segundos: 300 });
+    const { separador, open } = separadorFalso();
+    await user.click(await screen.findByRole("button", { name: /Ver comprovativo/ }));
+    expect(abrirComprovativo).toHaveBeenCalledWith("loja", "dia-1");
+    await waitFor(() => expect(separador.location.href).toBe("https://privado.r2.test/comprovativos/x.png?sig=2"));
+    open.mockRestore();
+
     await user.click(screen.getByRole("button", { name: /Confirmar pagamento/ }));
 
     await waitFor(() => expect(diamantesAprovar).toHaveBeenCalledWith("dia-1"));

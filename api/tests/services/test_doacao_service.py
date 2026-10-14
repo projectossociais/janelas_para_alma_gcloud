@@ -12,18 +12,10 @@ from datetime import UTC, datetime
 
 import pytest
 
-from app.core.config import obter_settings
 from app.core.email import EmailEnvioFalhouError
 from app.repositories.doacoes_repository import DoacaoRegisto
 from app.services.comprovativo_upload_service import ChaveDeComprovativoInvalidaError
 from app.services.doacao_service import DoacaoService, MateriaisNaoSelecionadosError
-
-BASE_PUBLICA = "https://cdn.exemplo.test"
-
-
-@pytest.fixture(autouse=True)
-def _base_publica(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(obter_settings(), "r2_public_base_url", BASE_PUBLICA)
 
 
 class RepositorioFalso:
@@ -39,7 +31,7 @@ class RepositorioFalso:
         materiais=None,
         detalhes=None,
         provincia=None,
-        comprovativo_url=None,
+        comprovativo_chave=None,
     ) -> DoacaoRegisto:
         self.chamadas.append(
             {
@@ -49,7 +41,7 @@ class RepositorioFalso:
                 "status": status,
                 "materiais": materiais,
                 "provincia": provincia,
-                "comprovativo_url": comprovativo_url,
+                "comprovativo_chave": comprovativo_chave,
             }
         )
         return DoacaoRegisto(
@@ -61,7 +53,8 @@ class RepositorioFalso:
             detalhes=detalhes,
             provincia=provincia,
             status=status,
-            comprovativo_url=comprovativo_url,
+            comprovativo_url=None,
+            comprovativo_chave=comprovativo_chave,
             created_at=datetime.now(UTC),
         )
 
@@ -144,7 +137,7 @@ class TestRegistarDoacaoMateriais:
 
 
 class TestRegistarDoacaoFinanceira:
-    def test_grava_com_o_url_publico_do_comprovativo(self) -> None:
+    def test_grava_a_chave_privada_e_nunca_um_url_publico(self) -> None:
         repo = RepositorioFalso()
         service = DoacaoService(repo, EmailSenderFalso())
         chave = "comprovativos/abc.pdf"
@@ -153,7 +146,9 @@ class TestRegistarDoacaoFinanceira:
 
         assert doacao.recibo_id.startswith("FIN-")
         assert doacao.status == "comprovativo_enviado"
-        assert doacao.comprovativo_url == f"{BASE_PUBLICA}/{chave}"
+        assert doacao.comprovativo_chave == chave
+        assert doacao.comprovativo_url is None
+        assert repo.chamadas[0]["comprovativo_chave"] == chave
 
     def test_recusa_chave_fora_do_prefixo_comprovativos(self) -> None:
         service = DoacaoService(RepositorioFalso(), EmailSenderFalso())

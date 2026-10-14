@@ -24,6 +24,12 @@ class ComprovativoUploadPedido(BaseModel):
 
 
 class ComprovativoUploadPreparado(BaseModel):
+    # Sem `url_publico`, de propósito: o comprovativo vive num bucket privado.
     url_de_upload: str
     chave: str
-    url_publico: str
+
+
+class ComprovativoParaLer(BaseModel):
+    url: str
+    # `None` só para comprovativos antigos ainda no bucket público, por migrar.
+    expira_em_segundos: int | None

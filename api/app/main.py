@@ -15,6 +15,7 @@ from app.routers import (
     banner_homepage,
     banners,
     clinicas,
+    comprovativos,
     consentimento,
     conta,
     contact_messages,
@@ -81,6 +82,7 @@ app.include_router(sessoes_exercicio.router)
 app.include_router(exercicios.router)
 app.include_router(contact_messages.router)
 app.include_router(premium.router)
+app.include_router(comprovativos.router)
 app.include_router(admin.router)
 app.include_router(voluntariado.router)
 app.include_router(publicacoes.router)

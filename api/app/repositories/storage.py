@@ -65,3 +65,65 @@ class R2VideosPresigner(R2Presigner):
             Params={"Bucket": self._bucket, "Key": chave},
             ExpiresIn=self._expira,
         )
+
+
+class R2ComprovativosStorage(R2Presigner):
+    """Comprovativos de pagamento no bucket privado (`r2_bucket_comprovativos`)
+    — nunca no bucket público. Assina o `PUT` do browser (validade de
+    `r2_upload_url_expira_segundos`, herdada) e o `GET` de um admin
+    (`r2_comprovativo_url_expira_segundos`)."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        s = obter_settings()
+        self._bucket = s.r2_bucket_comprovativos
+        self._expira_leitura = s.r2_comprovativo_url_expira_segundos
+
+    @classmethod
+    def se_configurado(cls) -> "R2ComprovativosStorage | None":
+        """`None` sem bucket privado configurado — quem chama recusa (503)
+        em vez de usar o bucket público."""
+        return cls() if obter_settings().r2_bucket_comprovativos else None
+
+    def url_de_leitura(self, chave: str) -> str:
+        return self._cliente.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": self._bucket, "Key": chave},
+            ExpiresIn=self._expira_leitura,
+        )
+
+
+class R2CopiadorComprovativos:
+    """Só para a migração única dos comprovativos antigos
+    (`scripts/migrar_comprovativos_privados.py`): copia um objecto do bucket
+    público para o privado, com a mesma chave e o mesmo Content-Type, e
+    apaga o original público. Os bytes passam pela máquina que corre o
+    script (lidos e escritos de seguida, nunca gravados em disco) -- não se
+    depende de cópias entre buckets do lado do R2."""
+
+    def __init__(self) -> None:
+        s = obter_settings()
+        if not s.r2_bucket_comprovativos:
+            raise RuntimeError("R2_BUCKET_COMPROVATIVOS por configurar")
+        self._publico = s.r2_bucket
+        self._privado = s.r2_bucket_comprovativos
+        self._cliente = boto3.client(
+            "s3",
+            endpoint_url=s.r2_endpoint_url,
+            aws_access_key_id=s.r2_access_key_id,
+            aws_secret_access_key=s.r2_secret_access_key,
+            config=Config(signature_version="s3v4"),
+            region_name="auto",
+        )
+
+    def copiar_para_privado(self, chave: str) -> None:
+        original = self._cliente.get_object(Bucket=self._publico, Key=chave)
+        self._cliente.put_object(
+            Bucket=self._privado,
+            Key=chave,
+            Body=original["Body"].read(),
+            ContentType=original.get("ContentType", "application/octet-stream"),
+        )
+
+    def apagar_publico(self, chave: str) -> None:
+        self._cliente.delete_object(Bucket=self._publico, Key=chave)

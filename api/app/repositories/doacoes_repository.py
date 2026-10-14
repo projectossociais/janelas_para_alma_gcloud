@@ -24,6 +24,14 @@ class DoacaoRegisto:
     status: str
     comprovativo_url: str | None
     created_at: datetime
+    # `comprovativo_url` só existe em linhas anteriores ao bucket privado
+    # (2026-10-14), até serem migradas; as novas guardam só a chave. Nenhum
+    # dos dois sai na API -- o admin pede um URL assinado ao abrir.
+    comprovativo_chave: str | None = None
+
+    @property
+    def tem_comprovativo(self) -> bool:
+        return bool(self.comprovativo_chave or self.comprovativo_url)
 
 
 class DoacoesRepository(Protocol):
@@ -36,7 +44,7 @@ class DoacoesRepository(Protocol):
         materiais: list[str] | None = None,
         detalhes: str | None = None,
         provincia: str | None = None,
-        comprovativo_url: str | None = None,
+        comprovativo_chave: str | None = None,
     ) -> DoacaoRegisto: ...
 
 
@@ -53,7 +61,7 @@ class SQLAlchemyDoacoesRepository:
         materiais: list[str] | None = None,
         detalhes: str | None = None,
         provincia: str | None = None,
-        comprovativo_url: str | None = None,
+        comprovativo_chave: str | None = None,
     ) -> DoacaoRegisto:
         row = Doacao(
             recibo_id=recibo_id,
@@ -63,7 +71,7 @@ class SQLAlchemyDoacoesRepository:
             detalhes=detalhes,
             provincia=provincia,
             status=status,
-            comprovativo_url=comprovativo_url,
+            comprovativo_chave=comprovativo_chave,
         )
         self._sessao.add(row)
         # Se isto falhar (constraint, ligação perdida, o que for), a
@@ -81,5 +89,6 @@ class SQLAlchemyDoacoesRepository:
             provincia=row.provincia,
             status=row.status,
             comprovativo_url=row.comprovativo_url,
+            comprovativo_chave=row.comprovativo_chave,
             created_at=row.created_at,
         )

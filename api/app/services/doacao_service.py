@@ -20,7 +20,7 @@ import uuid
 
 from app.core.email import EmailSender
 from app.repositories.doacoes_repository import DoacaoRegisto, DoacoesRepository
-from app.services.comprovativo_upload_service import url_publico_do_comprovativo
+from app.services.comprovativo_upload_service import validar_chave_de_comprovativo
 
 
 class MateriaisNaoSelecionadosError(Exception):
@@ -80,7 +80,7 @@ class DoacaoService:
         `uploads.py`/`comprovativo_upload_service.py`) — aqui só se
         confirma que a chave apresentada é mesmo um comprovativo (nunca um
         caminho arbitrário do bucket) antes de a gravar."""
-        comprovativo_url = url_publico_do_comprovativo(comprovativo_chave)
+        comprovativo_chave = validar_chave_de_comprovativo(comprovativo_chave)
 
         doacao = self._repo.criar(
             recibo_id=_gerar_recibo_id("FIN"),
@@ -88,7 +88,7 @@ class DoacaoService:
             email=email,
             status="comprovativo_enviado",
             detalhes=detalhes,
-            comprovativo_url=comprovativo_url,
+            comprovativo_chave=comprovativo_chave,
         )
 
         self._email.enviar(

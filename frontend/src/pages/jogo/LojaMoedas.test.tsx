@@ -79,7 +79,7 @@ describe("LojaMoedas", () => {
     listarMeusPedidosLoja.mockReset().mockResolvedValue([]);
     prepararComprovativo
       .mockReset()
-      .mockResolvedValue({ url_de_upload: "https://r2/put", chave: "comprovativos/m.png", url_publico: "https://r2/m.png" });
+      .mockResolvedValue({ url_de_upload: "https://r2/put", chave: "comprovativos/m.png" });
     enviarParaStorage.mockReset().mockResolvedValue(undefined);
     toastError.mockReset();
     toastSuccess.mockReset();

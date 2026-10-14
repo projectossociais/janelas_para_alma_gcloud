@@ -65,7 +65,6 @@ describe("RegistoPremium — comprovativo via R2 (CROSS-02)", () => {
     prepararComprovativo.mockResolvedValue({
       url_de_upload: "https://r2.exemplo.test/comprovativos/x.pdf?sig=1",
       chave: "comprovativos/x.pdf",
-      url_publico: "https://cdn.exemplo.test/comprovativos/x.pdf",
     });
     enviarParaStorage.mockRejectedValue(
       Object.assign(new Error("Não foi possível enviar a imagem para o storage."), { status: 500 }),
@@ -93,7 +92,6 @@ describe("RegistoPremium — comprovativo via R2 (CROSS-02)", () => {
     prepararComprovativo.mockResolvedValue({
       url_de_upload: "https://r2.exemplo.test/comprovativos/x.pdf?sig=1",
       chave: "comprovativos/x.pdf",
-      url_publico: "https://cdn.exemplo.test/comprovativos/x.pdf",
     });
     enviarParaStorage.mockResolvedValue(undefined);
     pedirPremium.mockRejectedValue(
@@ -113,7 +111,6 @@ describe("RegistoPremium — comprovativo via R2 (CROSS-02)", () => {
     prepararComprovativo.mockResolvedValue({
       url_de_upload: "https://r2.exemplo.test/comprovativos/x.pdf?sig=1",
       chave: "comprovativos/x.pdf",
-      url_publico: "https://cdn.exemplo.test/comprovativos/x.pdf",
     });
     enviarParaStorage.mockResolvedValue(undefined);
     pedirPremium.mockResolvedValue({

@@ -61,6 +61,11 @@ export R2_SECRET_ACCESS_KEY="${R2_SECRET_ACCESS_KEY:-}"
 # https://pub-xxxx.r2.dev). URL final de um ficheiro = {base}/{chave}. Não é
 # segredo — vai como env var normal, não pelo Secret Manager.
 export R2_PUBLIC_BASE_URL="${R2_PUBLIC_BASE_URL:-}"
+# Bucket PRIVADO dos comprovativos de pagamento (Premium, doações, loja do
+# jogo) -- criado à parte no R2, SEM domínio público nem r2.dev ligado. São
+# comprovativos bancários: nunca no bucket acima. Vazio = a API recusa o
+# upload de comprovativos (503) em vez de os pôr no bucket público.
+export R2_BUCKET_COMPROVATIVOS="${R2_BUCKET_COMPROVATIVOS:-}"
 
 # --- Derivados (não editar) --------------------------------------------
 export SQL_CONNECTION_NAME="${PROJECT_ID}:${REGION}:${SQL_INSTANCE}"

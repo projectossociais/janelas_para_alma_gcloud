@@ -38,6 +38,7 @@ export SQL_PASSWORD='<password forte da DB>'
                        # credenciais e endpoint correctos (ver o próprio script)
 ./05-migrate.sh       # alembic upgrade head -- primeiro esquema, ANTES do primeiro deploy
 ./04-deploy.sh        # build da imagem + deploy da API
+# ./08-migrar-comprovativos.sh -- só uma vez, ver "Comprovativos" abaixo
 
 export GITHUB_REPO='projectossociais/janelas_para_alma_gcloud'
 ./06-ci-cd-setup.sh   # liga o GitHub Actions ao GCP -- só depois disto o push/merge
@@ -111,6 +112,26 @@ Corre-se uma vez, depois do `01`–`03`. A partir daí, o job `deploy-api` do
    domínio próprio — o browser nunca o vê directamente, só através do rewrite).
 2. ~~**Cloudflare R2**~~ — **resolvido**: credenciais, env vars e CORS do bucket
    (`07-r2-cors.sh`) configurados; avatar e comprovativos usam upload directo.
+
+## Comprovativos de pagamento num bucket privado (2026-10-14)
+
+Os comprovativos (Premium, doações, loja do jogo) são bancários — nome e conta de quem
+pagou — e deixaram de ir para o bucket público. Vivem em `R2_BUCKET_COMPROVATIVOS`, um
+bucket **sem domínio público nem `r2.dev`**, e um admin abre-os por um URL assinado de
+5 minutos (`GET /admin/comprovativos/{origem}/{id}`). Sem a variável, a API recusa o
+upload com 503 — nunca cai para o bucket público. Passos, **por esta ordem**:
+
+1. Criar o bucket privado no R2 (ex.: `janelasparaalma-comprovativos`), sem acesso
+   público; confirmar que a chave de API do R2 tem leitura/escrita nele.
+2. `R2_BUCKET_COMPROVATIVOS=<nome>` em `00-config.sh`, e `./07-r2-cors.sh` (CORS de
+   `PUT` para o upload do browser).
+3. Variável do repositório `GCP_R2_BUCKET_COMPROVATIVOS` (`./06-ci-cd-setup.sh` ou
+   `gh variable set`) — **antes do merge**: o deploy automático passa-a ao Cloud Run;
+   sem ela, os pagamentos manuais ficam sem upload até ao deploy seguinte.
+4. Merge → deploy normal (migração Alembic `b8e4f2a6c9d1` + API).
+5. `./08-migrar-comprovativos.sh` (ensaio), depois `--executar`, e por fim
+   `--executar --apagar-publicos` (ou logo esta, depois de conferir o ensaio). Até lá, os
+   comprovativos antigos continuam a abrir pelo URL público antigo.
 3. **`--allow-unauthenticated`** está ligado no serviço da API (é um site público).
    Rever se algum dia houver endpoints que não devam ser expostos directamente.
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Configura o CORS do bucket R2 -- sem isto, o upload directo ao storage
-# (avatar, comprovativos de doação/Premium) falha sempre no browser: o R2
+# (avatar, publicações; comprovativos no bucket privado R2_BUCKET_COMPROVATIVOS)
+# falha sempre no browser: o R2
 # responde 403 "CORS not configured for this bucket" ao preflight OPTIONS
 # que o fetch() dispara antes do PUT, e isso aparece como "não foi possível
 # enviar a foto/o comprovativo" (ver EditarPerfil.tsx/Apoiar.tsx). É um
@@ -36,29 +37,41 @@ client = boto3.client(
     region_name="auto",
 )
 
-cors_config = {
-    "CORSRules": [
-        {
-            # O apex (sem "www.") faz 308 para "www." em produção -- aos
-            # olhos do browser são origens diferentes, por isso as duas têm
-            # de estar aqui, não só o domínio "canónico". Confirmar com
-            # `curl -sI https://<dominio>` se algum dia isto mudar.
-            "AllowedOrigins": [
-                "https://${FRONTEND_DOMAIN}",
-                "https://www.${FRONTEND_DOMAIN}",
-                "http://localhost:8080",
-                "http://localhost:5173",
-            ],
-            "AllowedMethods": ["PUT", "GET", "HEAD"],
-            "AllowedHeaders": ["content-type"],
-            "MaxAgeSeconds": 3600,
-        }
-    ]
-}
+def regras(metodos):
+    return {
+        "CORSRules": [
+            {
+                # O apex (sem "www.") faz 308 para "www." em produção -- aos
+                # olhos do browser são origens diferentes, por isso as duas têm
+                # de estar aqui, não só o domínio "canónico". Confirmar com
+                # `curl -sI https://<dominio>` se algum dia isto mudar.
+                "AllowedOrigins": [
+                    "https://${FRONTEND_DOMAIN}",
+                    "https://www.${FRONTEND_DOMAIN}",
+                    "http://localhost:8080",
+                    "http://localhost:5173",
+                ],
+                "AllowedMethods": metodos,
+                "AllowedHeaders": ["content-type"],
+                "MaxAgeSeconds": 3600,
+            }
+        ]
+    }
 
-client.put_bucket_cors(Bucket="${R2_BUCKET}", CORSConfiguration=cors_config)
+
+client.put_bucket_cors(Bucket="${R2_BUCKET}", CORSConfiguration=regras(["PUT", "GET", "HEAD"]))
 print("CORS aplicado a ${R2_BUCKET}:")
 print(client.get_bucket_cors(Bucket="${R2_BUCKET}"))
+
+# Bucket privado dos comprovativos: o browser só faz o PUT do upload. Um
+# admin abre o comprovativo por navegação normal (URL assinado num separador
+# novo), que não passa por CORS -- por isso só PUT.
+if "${R2_BUCKET_COMPROVATIVOS:-}":
+    client.put_bucket_cors(Bucket="${R2_BUCKET_COMPROVATIVOS:-}", CORSConfiguration=regras(["PUT"]))
+    print("CORS aplicado a ${R2_BUCKET_COMPROVATIVOS:-}:")
+    print(client.get_bucket_cors(Bucket="${R2_BUCKET_COMPROVATIVOS:-}"))
+else:
+    print("AVISO: R2_BUCKET_COMPROVATIVOS vazio -- CORS do bucket privado por aplicar.")
 PYEOF
 
 echo "==> Feito."
