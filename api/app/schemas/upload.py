@@ -26,4 +26,9 @@ class ComprovativoUploadPedido(BaseModel):
 class ComprovativoUploadPreparado(BaseModel):
     url_de_upload: str
     chave: str
-    url_publico: str
+    # `None` com o bucket privado de comprovativos (não há URL público).
+    url_publico: str | None
+
+
+class UrlDeComprovativo(BaseModel):
+    url: str

@@ -49,7 +49,7 @@ from app.repositories.pedido_loja_repository import (
     TipoItemLoja,
 )
 from app.repositories.perfil_jogador_repository import PerfilJogadorRegisto, PerfilJogadorRepository
-from app.services.comprovativo_upload_service import url_publico_do_comprovativo
+from app.services.comprovativo_upload_service import referencia_do_comprovativo
 
 MetodoPagamento = Literal["moedas", "kwanzas"]
 
@@ -207,7 +207,7 @@ class LojaJogoService:
         else:
             pacote = self._pacote(pacote_id)
             quantidade, preco_kz = pacote.total_diamantes, pacote.preco_kz
-        comprovativo_url = url_publico_do_comprovativo(comprovativo_chave)
+        comprovativo_url = referencia_do_comprovativo(comprovativo_chave)
         return self._pedidos.criar(
             utilizador_id=utilizador_id,
             tipo_item=tipo_item,

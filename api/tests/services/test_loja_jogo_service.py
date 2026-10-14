@@ -184,7 +184,7 @@ def test_pacote_inexistente_e_recusado_sem_creditar_nada(metodo) -> None:
 
 def test_pedido_kwanzas_fica_pendente_com_valores_do_catalogo_e_nao_credita(monkeypatch) -> None:
     monkeypatch.setattr(
-        "app.services.loja_jogo_service.url_publico_do_comprovativo", lambda chave: f"https://r2/{chave}"
+        "app.services.loja_jogo_service.referencia_do_comprovativo", lambda chave: f"https://r2/{chave}"
     )
     servico, perfis, _ = _servico()
 
@@ -203,7 +203,7 @@ def test_pedido_com_chave_que_nao_e_comprovativo_e_recusado() -> None:
 
 
 def _pedido_pendente(servico, utilizador_id="u1", pacote="medio", monkeypatch=None):
-    monkeypatch.setattr("app.services.loja_jogo_service.url_publico_do_comprovativo", lambda c: f"https://r2/{c}")
+    monkeypatch.setattr("app.services.loja_jogo_service.referencia_do_comprovativo", lambda c: f"https://r2/{c}")
     return servico.pedir_com_kwanzas(utilizador_id, pacote, "comprovativos/x.png")
 
 
@@ -289,7 +289,7 @@ def test_comprar_moedas_para_trocar_por_diamantes_nunca_sai_mais_barato() -> Non
 
 
 def test_pedido_de_moedas_usa_o_catalogo_de_moedas_e_nao_credita(monkeypatch) -> None:
-    monkeypatch.setattr("app.services.loja_jogo_service.url_publico_do_comprovativo", lambda c: f"https://r2/{c}")
+    monkeypatch.setattr("app.services.loja_jogo_service.referencia_do_comprovativo", lambda c: f"https://r2/{c}")
     servico, perfis, _ = _servico()
 
     pedido = servico.pedir_com_kwanzas("u1", "saco", "comprovativos/x.png", tipo_item="moedas")
@@ -302,7 +302,7 @@ def test_pedido_de_moedas_usa_o_catalogo_de_moedas_e_nao_credita(monkeypatch) ->
 def test_pacote_do_outro_catalogo_e_recusado(monkeypatch, pacote_id, tipo_item) -> None:
     # Um "bau" pedido como diamantes (ou "pequeno" como moedas) não existe --
     # nunca se mistura o preço de um catálogo com a quantidade do outro.
-    monkeypatch.setattr("app.services.loja_jogo_service.url_publico_do_comprovativo", lambda c: f"https://r2/{c}")
+    monkeypatch.setattr("app.services.loja_jogo_service.referencia_do_comprovativo", lambda c: f"https://r2/{c}")
     servico, _, pedidos = _servico()
     with pytest.raises(PacoteInexistenteError):
         servico.pedir_com_kwanzas("u1", pacote_id, "comprovativos/x.png", tipo_item=tipo_item)
@@ -317,7 +317,7 @@ def test_pedido_de_moedas_com_chave_invalida_e_recusado() -> None:
 
 
 def test_aprovar_pedido_de_moedas_credita_moedas_uma_so_vez_e_nao_diamantes(monkeypatch) -> None:
-    monkeypatch.setattr("app.services.loja_jogo_service.url_publico_do_comprovativo", lambda c: f"https://r2/{c}")
+    monkeypatch.setattr("app.services.loja_jogo_service.referencia_do_comprovativo", lambda c: f"https://r2/{c}")
     servico, perfis, pedidos = _servico()
     pedido = servico.pedir_com_kwanzas("u1", "bau", "comprovativos/x.png", tipo_item="moedas")
 
@@ -333,7 +333,7 @@ def test_aprovar_pedido_de_moedas_credita_moedas_uma_so_vez_e_nao_diamantes(monk
 
 
 def test_rejeitar_pedido_de_moedas_nao_credita(monkeypatch) -> None:
-    monkeypatch.setattr("app.services.loja_jogo_service.url_publico_do_comprovativo", lambda c: f"https://r2/{c}")
+    monkeypatch.setattr("app.services.loja_jogo_service.referencia_do_comprovativo", lambda c: f"https://r2/{c}")
     servico, perfis, _ = _servico()
     pedido = servico.pedir_com_kwanzas("u1", "pilha", "comprovativos/x.png", tipo_item="moedas")
     servico.rejeitar_pedido(pedido.id, "admin-1")
@@ -341,7 +341,7 @@ def test_rejeitar_pedido_de_moedas_nao_credita(monkeypatch) -> None:
 
 
 def test_moedas_compradas_servem_para_trocar_por_diamantes(monkeypatch) -> None:
-    monkeypatch.setattr("app.services.loja_jogo_service.url_publico_do_comprovativo", lambda c: f"https://r2/{c}")
+    monkeypatch.setattr("app.services.loja_jogo_service.referencia_do_comprovativo", lambda c: f"https://r2/{c}")
     servico, _, _ = _servico()
     pedido = servico.pedir_com_kwanzas("u1", "saco", "comprovativos/x.png", tipo_item="moedas")
     servico.aprovar_pedido(pedido.id, "admin-1")

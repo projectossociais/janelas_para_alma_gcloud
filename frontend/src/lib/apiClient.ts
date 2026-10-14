@@ -486,7 +486,8 @@ export const bannerHomepageApi = {
 export interface ComprovativoUploadPreparado {
   url_de_upload: string;
   chave: string;
-  url_publico: string;
+  /** `null` com o bucket privado de comprovativos (não há URL público). */
+  url_publico: string | null;
 }
 
 export const TIPOS_DE_COMPROVATIVO_ACEITES = [
@@ -1045,6 +1046,11 @@ export const adminApi = {
   obterEstatisticas: (dias: number) => pedido<EstatisticasAdmin>(`/admin/estatisticas?dias=${dias}`),
 
   obterPendencias: () => pedido<PendenciasAdmin>("/admin/pendencias"),
+
+  /** URL para abrir o `comprovativo_url` de um pedido/doação: assinado (bucket
+   *  privado) ou o URL público antigo, tal como está. */
+  urlDoComprovativoManual: (referencia: string) =>
+    pedido<{ url: string }>(`/admin/comprovativos-manuais/url?referencia=${encodeURIComponent(referencia)}`),
 };
 
 // --- Voluntariado (W-12) ---------------------------------------------------

@@ -7,9 +7,10 @@ a partir daí, um admin promove outros por aqui.
 
 from datetime import UTC, datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from app.core.config import obter_settings
 from app.core.dependencies import obter_utilizador_admin
 from app.db import obter_sessao
 from app.repositories.admin_repository import AdminUtilizadorRegisto, SQLAlchemyAdminRepository
@@ -20,6 +21,7 @@ from app.repositories.admin_stats_repository import (
     SQLAlchemyAdminStatsRepository,
     UtilizadorAtivoRegisto,
 )
+from app.repositories.storage import R2ComprovativosStorage
 from app.repositories.utilizadores_repository import UtilizadorRegisto
 from app.schemas.admin import (
     AdminUtilizadorPublico,
@@ -30,6 +32,7 @@ from app.schemas.admin import (
     SessaoExercicioAdmin,
     UtilizadorAtivoAdmin,
 )
+from app.schemas.upload import UrlDeComprovativo
 from app.services.admin_service import (
     AdminService,
     NaoPodeAlterarAdminPorAquiError,
@@ -37,6 +40,10 @@ from app.services.admin_service import (
     PapelInvalidoError,
     UltimoAdminError,
     UtilizadorNaoEncontradoError,
+)
+from app.services.comprovativo_upload_service import (
+    ChaveDeComprovativoInvalidaError,
+    url_de_leitura_do_comprovativo,
 )
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(obter_utilizador_admin)])
@@ -162,3 +169,28 @@ def remover_admin(
         ) from exc
     except UtilizadorNaoEncontradoError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="conta não encontrada") from exc
+
+
+def obter_leitor_comprovativos():
+    """Leitura assinada no bucket privado dos comprovativos. Sem o bucket
+    configurado não há nada privado para ler (só URLs públicos antigos)."""
+    return R2ComprovativosStorage() if obter_settings().r2_bucket_comprovativos else None
+
+
+@router.get("/comprovativos-manuais/url", response_model=UrlDeComprovativo)
+def url_de_comprovativo_manual(
+    referencia: str = Query(min_length=1, max_length=500),
+    leitor=Depends(obter_leitor_comprovativos),
+) -> UrlDeComprovativo:
+    """URL para abrir o comprovativo de um pedido Premium (plano anual), de
+    uma doação ou de um pedido da loja -- o valor de `comprovativo_url` tal
+    como a listagem o devolve. Chave privada → URL assinado de curta
+    duração; URL público antigo → o próprio URL (retrocompatível)."""
+    try:
+        if leitor is None and not referencia.startswith(("http://", "https://")):
+            raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, detail="bucket de comprovativos não configurado")
+        return UrlDeComprovativo(url=url_de_leitura_do_comprovativo(referencia, leitor))
+    except ChaveDeComprovativoInvalidaError as exc:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT, detail="essa referência não é um comprovativo"
+        ) from exc

@@ -14,7 +14,8 @@ import {
   type PedidoPremiumAdmin,
 } from "@/lib/apiClient";
 import { toast } from "sonner";
-import { Check, Coins, FileText, Gem, Mail, Phone, X } from "lucide-react";
+import BotaoVerComprovativo from "@/components/admin/BotaoVerComprovativo";
+import { Check, Coins, Gem, Mail, Phone, X } from "lucide-react";
 
 // "diamantes" mantém-se como alias antigo do separador da loja do jogo.
 const TABS_VALIDAS = ["messages", "premium", "loja", "diamantes"] as const;
@@ -221,13 +222,7 @@ const AdminInbox = () => {
                       </div>
                     </div>
                     <div className="flex flex-col gap-2 shrink-0">
-                      {p.comprovativo_url && (
-                        <Button size="sm" variant="outline" asChild>
-                          <a href={p.comprovativo_url} target="_blank" rel="noopener noreferrer">
-                            <FileText className="w-3 h-3" /> Ver comprovativo
-                          </a>
-                        </Button>
-                      )}
+                      {p.comprovativo_url && <BotaoVerComprovativo referencia={p.comprovativo_url} />}
                       {p.status !== "aprovado" && (
                         <Button
                           size="sm"
@@ -290,11 +285,7 @@ const AdminInbox = () => {
                       </div>
                     </div>
                     <div className="flex flex-col gap-2 shrink-0">
-                      <Button size="sm" variant="outline" asChild>
-                        <a href={d.comprovativo_url} target="_blank" rel="noopener noreferrer">
-                          <FileText className="w-3 h-3" /> Ver comprovativo
-                        </a>
-                      </Button>
+                      <BotaoVerComprovativo referencia={d.comprovativo_url} />
                       {d.estado === "pendente" && (
                         <>
                           <Button

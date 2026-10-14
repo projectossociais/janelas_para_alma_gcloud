@@ -26,6 +26,7 @@ BASE_PUBLICA = "https://cdn.exemplo.test"
 @pytest.fixture(autouse=True)
 def _base_publica(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(obter_settings(), "r2_public_base_url", BASE_PUBLICA)
+    monkeypatch.setattr(obter_settings(), "r2_bucket_comprovativos", "")
 
 
 def _pedido(**over) -> PedidoPremiumRegisto:
@@ -85,7 +86,7 @@ class RepositorioPremiumFalso:
 
 
 class TestCriarPedido:
-    def test_cria_com_o_url_publico_do_comprovativo(self) -> None:
+    def test_sem_bucket_privado_grava_o_url_publico_antigo(self) -> None:
         repo = RepositorioPremiumFalso(None)
         chave = "comprovativos/abc.pdf"
 
@@ -95,6 +96,14 @@ class TestCriarPedido:
 
         assert resultado.comprovativo_url == f"{BASE_PUBLICA}/{chave}"
         assert repo.criado["comprovativo_url"] == f"{BASE_PUBLICA}/{chave}"
+
+    def test_com_bucket_privado_grava_a_chave_e_nao_um_url_publico(self, monkeypatch) -> None:
+        monkeypatch.setattr(obter_settings(), "r2_bucket_comprovativos", "jpa-comprovativos")
+        repo = RepositorioPremiumFalso(None)
+
+        PremiumService(repo).criar_pedido("Ana", "ana@example.com", None, "anual", "user-1", "comprovativos/abc.pdf")
+
+        assert repo.criado["comprovativo_url"] == "comprovativos/abc.pdf"
 
     def test_recusa_chave_fora_do_prefixo_comprovativos(self) -> None:
         repo = RepositorioPremiumFalso(None)

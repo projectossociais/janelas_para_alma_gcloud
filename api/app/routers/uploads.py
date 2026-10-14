@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.dependencies import obter_utilizador_atual
 from app.db import obter_sessao
 from app.repositories.perfil_repository import SQLAlchemyPerfilRepository
-from app.repositories.storage import R2Presigner
+from app.repositories.storage import R2ComprovativosStorage, R2Presigner
 from app.repositories.utilizadores_repository import UtilizadorRegisto
 from app.schemas.upload import (
     AvatarConfirmado,
@@ -16,6 +16,7 @@ from app.schemas.upload import (
 )
 from app.services.comprovativo_upload_service import (
     ComprovativoUploadService,
+    bucket_privado_configurado,
 )
 from app.services.comprovativo_upload_service import (
     TipoDeFicheiroNaoPermitidoError as TipoDeComprovativoNaoPermitidoError,
@@ -34,7 +35,10 @@ def obter_upload_service(sessao: Session = Depends(obter_sessao)) -> UploadServi
 
 
 def obter_comprovativo_upload_service() -> ComprovativoUploadService:
-    return ComprovativoUploadService(R2Presigner())
+    # Com o bucket privado configurado, o comprovativo nunca toca o bucket
+    # público (ver comprovativo_upload_service.py).
+    privado = bucket_privado_configurado()
+    return ComprovativoUploadService(R2ComprovativosStorage() if privado else R2Presigner(), privado)
 
 
 @router.post("/avatar", response_model=AvatarUploadPreparado)
