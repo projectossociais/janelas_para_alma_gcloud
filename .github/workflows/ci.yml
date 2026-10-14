@@ -147,6 +147,7 @@ jobs:
             # Validação instantânea do comprovativo do Premium -- mesma
             # razão: sem isto, cada deploy automático desligava-a.
             echo "R2_BUCKET_COMPROVATIVOS=${{ vars.GCP_R2_BUCKET_COMPROVATIVOS }}"
+            echo "R2_BUCKET_VIDEOS=${{ vars.GCP_R2_BUCKET_VIDEOS }}"
             echo "SUBSCRIPTION_PRICE_KZ=${{ vars.GCP_SUBSCRIPTION_PRICE_KZ }}"
             echo "PAYMENT_DEST_IBAN=${{ vars.GCP_PAYMENT_DEST_IBAN }}"
             echo "PAYMENT_DEST_PHONE=${{ vars.GCP_PAYMENT_DEST_PHONE }}"

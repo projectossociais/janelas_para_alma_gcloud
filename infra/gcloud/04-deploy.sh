@@ -45,6 +45,9 @@ if [ -n "${R2_ENDPOINT_URL:-}" ]; then
   API_ENV="${API_ENV};R2_ENDPOINT_URL=${R2_ENDPOINT_URL};R2_BUCKET=${R2_BUCKET}"
   [ -n "${R2_PUBLIC_BASE_URL:-}" ] && API_ENV="${API_ENV};R2_PUBLIC_BASE_URL=${R2_PUBLIC_BASE_URL}"
   [ -n "${R2_BUCKET_COMPROVATIVOS:-}" ] && API_ENV="${API_ENV};R2_BUCKET_COMPROVATIVOS=${R2_BUCKET_COMPROVATIVOS}"
+  # Sem isto, cada deploy apagava o bucket dos vídeos do serviço e o
+  # GET /exercicios/{id}/video passava a responder 503.
+  [ -n "${R2_BUCKET_VIDEOS:-}" ] && API_ENV="${API_ENV};R2_BUCKET_VIDEOS=${R2_BUCKET_VIDEOS}"
 fi
 # Validação instantânea do comprovativo do Premium -- sem conta de destino,
 # os endpoints respondem 503 (nunca aprovam nada). Ver api/.env.example.

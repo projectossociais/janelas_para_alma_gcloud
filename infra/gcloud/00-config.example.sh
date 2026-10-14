@@ -64,6 +64,8 @@ export R2_PUBLIC_BASE_URL="${R2_PUBLIC_BASE_URL:-}"
 # Bucket PRIVADO dos comprovativos de pagamento (validação instantânea do
 # Premium) -- criar no R2 sem domínio público ligado, e correr 07-r2-cors.sh.
 export R2_BUCKET_COMPROVATIVOS="${R2_BUCKET_COMPROVATIVOS:-}"
+# Bucket PRIVADO dos vídeos dos exercícios (GET /exercicios/{id}/video).
+export R2_BUCKET_VIDEOS="${R2_BUCKET_VIDEOS:-}"
 
 # --- Validação instantânea do comprovativo do Premium ---------------------
 # Não são secretos (o site mostra-os a quem vai pagar), mas têm de bater
