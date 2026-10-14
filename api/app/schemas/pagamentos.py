@@ -2,8 +2,16 @@
 
 from datetime import datetime
 from decimal import Decimal
+from typing import Literal
 
 from pydantic import BaseModel, Field
+
+
+class PrepararUploadComprovativo(BaseModel):
+    """PDF do comprovativo ou captura de ecrã. O tipo verdadeiro decide-se
+    pelos bytes na validação -- este só escolhe a extensão e assina o PUT."""
+
+    content_type: Literal["application/pdf", "image/png", "image/jpeg", "image/webp"]
 
 
 class UploadComprovativoPreparado(BaseModel):
@@ -57,7 +65,8 @@ class ComprovativoAdminDetalhe(ComprovativoAdmin):
     """Auditoria completa de um comprovativo -- só no detalhe, não na lista."""
 
     hash_sha256: str
-    metadados_pdf: dict | None
+    hash_perceptual: str | None
+    metadados_ficheiro: dict | None
     texto_extraido: str | None
 
 

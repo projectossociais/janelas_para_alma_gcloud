@@ -1,34 +1,44 @@
-"""Validação instantânea do comprovativo de pagamento do Premium (BAI Directo
-e Multicaixa Express) -- lógica de dinheiro e de acesso, por isso vive num
-service com testes e nunca confia num id vindo do corpo do pedido (CLAUDE.md
-§3/§4/§10). Decidido pelo dono do projecto em 2026-10-14: substitui o envio
-do comprovativo por email e a espera pela aprovação de um admin.
+"""Validação instantânea do comprovativo de pagamento do Premium -- lógica de
+dinheiro e de acesso, por isso vive num service com testes e nunca confia
+num id vindo do corpo do pedido (CLAUDE.md §3/§4/§10). Decidido pelo dono do
+projecto em 2026-10-14: substitui o envio do comprovativo por email e a
+espera pela aprovação de um admin.
 
-O utilizador envia o PDF original da app do banco directamente ao bucket
-privado (URL de `PUT` assinado, como o avatar -- CLAUDE.md §4b) e pede a
-validação com a chave. A API lê o ficheiro e passa-o por camadas:
+A conta de destino é a do projecto (no BAI); quem paga pode usar **qualquer
+banco angolano** (BAI, BFA, BIC, Atlântico, Sol, Standard Bank, Keve,
+Access, BNI, Caixa Geral...) ou o **Multicaixa Express**, e enviar o **PDF**
+do comprovativo ou uma **captura de ecrã** (PNG/JPEG/WebP) -- muita gente
+não sabe descarregar o PDF no telemóvel. O ficheiro vai do browser
+directamente ao bucket privado (URL de `PUT` assinado, CLAUDE.md §4b) e a
+API lê-o e passa-o por camadas:
 
-1. **Ficheiro** -- é mesmo um PDF (`%PDF-`), até 5 MB; o SHA-256 dos bytes
-   nunca pode já contar noutro comprovativo.
-2. **Adulteração** -- /Producer e /Creator sem ferramentas de edição
-   (Canva, Word, iLovePDF...), sem texto invisível por cima de uma imagem,
-   com texto que se consiga ler (uma captura de ecrã em PDF não tem).
-3. **Conteúdo** -- destinatário = conta oficial (IBAN, telefone Express ou
-   nome do titular), montante >= preço, número da operação nunca usado,
-   data dos últimos N dias e não no futuro, operação concluída.
+1. **Ficheiro** -- PDF ou imagem pelos bytes (nunca pela extensão), até
+   5 MB; o SHA-256 nunca pode já contar noutro comprovativo.
+2. **Adulteração e leitura** -- sem ferramentas de edição nos metadados
+   (/Producer de um PDF, EXIF/XMP de uma imagem). O texto sai da camada de
+   texto do PDF ou, numa imagem (ou num PDF que é só uma imagem), do OCR
+   local (`app/core/ocr.py`). Uma captura quase igual a outra já usada
+   (hash perceptual) com o mesmo número de operação, ou sem ele legível,
+   vai para revisão.
+3. **Conteúdo** -- destinatário = conta oficial (IBAN, NBA, conta, telefone
+   Express ou nome do titular), montante >= preço, número da operação
+   nunca usado, data dos últimos N dias e não no futuro, operação concluída.
 4. **Gravação atómica** -- comprovativo aprovado e +30 dias de Premium na
    mesma transacção (somados à validade actual, se ainda houver).
 
-O que é claramente errado (valor, conta, ficheiro, repetido) é **rejeitado**
-com o motivo exacto. O que só não se conseguiu ler com certeza (um layout
-novo do banco, um PDF regravado) vai para **revisão manual** e avisa os
-admins -- nunca é aprovado por omissão.
+O que é claramente errado num PDF (valor, conta, ficheiro, repetido) é
+**rejeitado** com o motivo exacto. Numa imagem, o OCR pode ter lido mal --
+por isso valor, conta e data errados **lidos por OCR** vão para revisão em
+vez de rejeitar quem acabou de pagar; só o repetido e a operação falhada se
+rejeitam. O que não se conseguiu ler com certeza (layout novo, imagem
+desfocada, PDF regravado) vai para **revisão manual** e avisa os admins --
+nunca é aprovado por omissão.
 
-O que isto não garante: um PDF forjado com cuidado (texto, metadados e
-número de operação inventados) passa as camadas 1-3 -- só o extracto
-bancário prova que o dinheiro entrou. Por isso cada aprovação automática fica
-no painel para reconciliar e pode ser revogada, e `payment_auto_aprovacao`
-desliga a aprovação automática de uma vez se aparecerem fraudes.
+O que isto não garante: um PDF ou uma captura forjados com cuidado passam
+as camadas 1-3 -- só o extracto bancário prova que o dinheiro entrou. Por
+isso cada aprovação automática fica no painel para reconciliar e pode ser
+revogada, e `payment_auto_aprovacao` / `payment_auto_aprovar_imagens`
+desligam a aprovação automática se aparecerem fraudes.
 """
 
 import hashlib
@@ -41,7 +51,10 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Protocol
 
+from PIL import Image
+
 from app.core.config import Settings
+from app.core.ocr import LeitorOcr, OcrIndisponivelError
 from app.repositories.comprovativos_pagamento_repository import (
     AjustePremium,
     ComprovativoDuplicadoError,
@@ -49,7 +62,9 @@ from app.repositories.comprovativos_pagamento_repository import (
     ComprovativosPagamentoRepository,
     NovoComprovativo,
 )
+from app.services import comprovativo_imagem as imagem
 from app.services import comprovativo_pdf as pdf
+from app.services import comprovativo_texto as txt
 from app.services.premium_service import PREMIUM_DURACAO_DIAS
 
 logger = logging.getLogger(__name__)
@@ -58,6 +73,11 @@ PREFIXO_COMPROVATIVOS_PAGAMENTO = "comprovativos-pagamento"
 TAMANHO_MAXIMO_BYTES = 5 * 1024 * 1024
 # Menos caracteres visíveis do que isto = não há texto (imagem/captura).
 MINIMO_CARACTERES_TEXTO = 40
+# Confiança média do OCR abaixo da qual a leitura não serve para decidir.
+CONFIANCA_MINIMA_OCR = 60.0
+# Duas referências a esta distância (ou menos) são a mesma lida duas vezes
+# pelo OCR com um carácter trocado.
+DISTANCIA_MAXIMA_REFERENCIA = 2
 # Margem para relógios ligeiramente desacertados (telemóvel vs servidor).
 TOLERANCIA_FUTURO = timedelta(minutes=15)
 # Um PDF gravado outra vez mais de X depois de criado foi mexido.
@@ -73,8 +93,24 @@ ESTADO_REVOGADO = "revogado"
 CODIGOS_DUPLICADO = frozenset(
     {"comprovativo_ja_utilizado", "comprovativo_em_analise", "transacao_ja_utilizada"}
 )
+# Numa leitura por OCR, estes erros podem ser o OCR a ler mal (um "1" que
+# some de 15.000, um dígito do IBAN trocado) -- vão para revisão em vez de
+# rejeitar quem acabou de pagar.
+CODIGOS_SUAVES_NO_OCR = frozenset(
+    {"destinatario_invalido", "valor_insuficiente", "data_futura", "comprovativo_antigo"}
+)
 
-_PEDIR_ORIGINAL = "Envia o PDF original gerado pela aplicação BAI Directo ou Multicaixa Express."
+CONTENT_TYPES_ACEITES = {
+    "application/pdf": "pdf",
+    "image/png": "png",
+    "image/jpeg": "jpg",
+    "image/webp": "webp",
+}
+
+_PEDIR_ORIGINAL = (
+    "Envia o PDF do comprovativo ou uma captura de ecrã nítida do pagamento "
+    "(de qualquer banco ou do Multicaixa Express)."
+)
 
 
 # --- dependências (Protocols) -------------------------------------------------
@@ -99,6 +135,8 @@ class ConfigPagamento:
     max_dias: int
     auto_aprovacao: bool
     producers_confiaveis: tuple[str, ...] = ()
+    auto_aprovar_imagens: bool = True
+    aceitar_interbancario_pendente: bool = False
 
     @classmethod
     def das_settings(cls, s: Settings) -> "ConfigPagamento":
@@ -112,6 +150,8 @@ class ConfigPagamento:
             producers_confiaveis=tuple(
                 p.strip().lower() for p in s.payment_producers_confiaveis.split(",") if p.strip()
             ),
+            auto_aprovar_imagens=s.payment_auto_aprovar_imagens,
+            aceitar_interbancario_pendente=s.payment_aceitar_interbancario_pendente,
         )
 
     @property
@@ -129,6 +169,10 @@ class ValidacaoIndisponivelError(Exception):
 class ChaveDeComprovativoInvalidaError(Exception):
     """A chave não está sob `comprovativos-pagamento/{utilizador_id}/` --
     ninguém valida um ficheiro que não foi o próprio a enviar."""
+
+
+class TipoDeFicheiroNaoPermitidoError(Exception):
+    pass
 
 
 class FicheiroNaoEnviadoError(Exception):
@@ -160,10 +204,30 @@ class _Rejeicao(Exception):
         self.mensagem = mensagem
 
 
+@dataclass
+class _Leitura:
+    """O texto a validar e de onde veio. `texto=None` = não se conseguiu ler
+    (OCR desfocado/indisponível) -- vai para revisão sem olhar ao conteúdo."""
+
+    texto: str | None
+    via_ocr: bool
+
+
 def formatar_kz(valor: Decimal) -> str:
     """15000 -> "15.000,00 Kz" (formato angolano)."""
     inteiro, decimal = f"{valor:,.2f}".split(".")
     return f"{inteiro.replace(',', '.')},{decimal} Kz"
+
+
+def _distancia_edicao(a: str, b: str) -> int:
+    """Levenshtein -- quantos caracteres separam duas referências."""
+    anterior = list(range(len(b) + 1))
+    for i, ca in enumerate(a, 1):
+        actual = [i]
+        for j, cb in enumerate(b, 1):
+            actual.append(min(anterior[j] + 1, actual[j - 1] + 1, anterior[j - 1] + (ca != cb)))
+        anterior = actual
+    return anterior[-1]
 
 
 # --- service --------------------------------------------------------------------
@@ -177,21 +241,26 @@ class ValidacaoComprovativoService:
         config: ConfigPagamento,
         notificador: NotificadorAdmins | None = None,
         relogio: Callable[[], datetime] = lambda: datetime.now(UTC),
+        ocr: LeitorOcr | None = None,
     ) -> None:
         self._repo = repositorio
         self._storage = armazenamento
         self._config = config
         self._notificador = notificador
         self._agora = relogio
+        self._ocr = ocr
 
     # -- upload --------------------------------------------------------------
 
-    def preparar_upload(self, utilizador_id: str) -> UploadPreparado:
+    def preparar_upload(self, utilizador_id: str, content_type: str) -> UploadPreparado:
         if not self._config.destino_configurado:
             raise ValidacaoIndisponivelError
-        chave = f"{PREFIXO_COMPROVATIVOS_PAGAMENTO}/{utilizador_id}/{uuid.uuid4()}.pdf"
+        extensao = CONTENT_TYPES_ACEITES.get(content_type)
+        if extensao is None:
+            raise TipoDeFicheiroNaoPermitidoError(content_type)
+        chave = f"{PREFIXO_COMPROVATIVOS_PAGAMENTO}/{utilizador_id}/{uuid.uuid4()}.{extensao}"
         return UploadPreparado(
-            url_de_upload=self._storage.url_de_upload(chave, "application/pdf"), chave=chave
+            url_de_upload=self._storage.url_de_upload(chave, content_type), chave=chave
         )
 
     # -- validação -----------------------------------------------------------
@@ -225,14 +294,22 @@ class ValidacaoComprovativoService:
             )
 
         try:
-            self._camada_ficheiro(conteudo, hash_sha256)
-            texto = self._camada_adulteracao(conteudo, campos, avisos)
-            self._camada_conteudo(texto, campos, avisos)
+            tipo = self._camada_ficheiro(conteudo, hash_sha256)
+            campos["metadados_ficheiro"] = {"tipo": tipo}
+            if tipo == imagem.TIPO_PDF:
+                leitura = self._ler_pdf(conteudo, campos, avisos)
+            else:
+                leitura = self._ler_imagem(conteudo, campos, avisos)
+            if leitura.texto is not None:
+                self._camada_conteudo(leitura.texto, campos, avisos, leitura.via_ocr)
+                self._captura_repetida(campos, avisos)
         except _Rejeicao as r:
             return gravar(ESTADO_REJEITADO, r.codigo, r.mensagem)
 
         if not self._config.auto_aprovacao:
             avisos.append("a aprovação automática está desligada")
+        elif leitura.via_ocr and not self._config.auto_aprovar_imagens:
+            avisos.append("a aprovação automática de capturas de ecrã está desligada")
         if avisos:
             motivo = "A equipa vai confirmar o pagamento manualmente: " + "; ".join(avisos) + "."
             try:
@@ -257,13 +334,14 @@ class ValidacaoComprovativoService:
         )
 
     # Camada 1
-    def _camada_ficheiro(self, conteudo: bytes, hash_sha256: str) -> None:
+    def _camada_ficheiro(self, conteudo: bytes, hash_sha256: str) -> str:
         if len(conteudo) > TAMANHO_MAXIMO_BYTES:
+            raise _Rejeicao("ficheiro_grande", f"O ficheiro tem mais de 5 MB. {_PEDIR_ORIGINAL}")
+        tipo = imagem.detectar_tipo(conteudo)
+        if tipo is None:
             raise _Rejeicao(
-                "ficheiro_grande", f"O ficheiro tem mais de 5 MB. {_PEDIR_ORIGINAL}"
+                "ficheiro_invalido", f"O ficheiro não é um PDF nem uma imagem válida. {_PEDIR_ORIGINAL}"
             )
-        if not conteudo.lstrip()[:5] == b"%PDF-":
-            raise _Rejeicao("ficheiro_invalido", f"O ficheiro não é um PDF válido. {_PEDIR_ORIGINAL}")
         estado = self._repo.estado_por_hash(hash_sha256)
         if estado == ESTADO_REVISAO:
             raise _Rejeicao(
@@ -274,9 +352,10 @@ class ValidacaoComprovativoService:
             raise _Rejeicao(
                 "comprovativo_ja_utilizado", "Este comprovativo já foi utilizado anteriormente."
             )
+        return tipo
 
-    # Camada 2
-    def _camada_adulteracao(self, conteudo: bytes, campos: dict, avisos: list[str]) -> str:
+    # Camada 2 -- PDF
+    def _ler_pdf(self, conteudo: bytes, campos: dict, avisos: list[str]) -> _Leitura:
         try:
             lido = pdf.ler_pdf(conteudo)
         except pdf.PdfCifradoError as exc:
@@ -286,36 +365,23 @@ class ValidacaoComprovativoService:
             ) from exc
         except pdf.PdfIlegivelError as exc:
             raise _Rejeicao(
-                "ficheiro_invalido", f"O ficheiro não é um PDF válido. {_PEDIR_ORIGINAL}"
+                "ficheiro_invalido", f"O ficheiro não é um PDF nem uma imagem válida. {_PEDIR_ORIGINAL}"
             ) from exc
 
-        campos["metadados_pdf"] = {
-            **lido.metadados,
-            "paginas": lido.paginas,
-            "actualizacoes_incrementais": lido.actualizacoes_incrementais,
-            "cifrado": lido.cifrado,
-            "texto_invisivel": lido.texto_invisivel,
-        }
-        campos["texto_extraido"] = lido.texto[:LIMITE_TEXTO_GUARDADO] or None
-
+        campos["metadados_ficheiro"].update(
+            {
+                **lido.metadados,
+                "paginas": lido.paginas,
+                "actualizacoes_incrementais": lido.actualizacoes_incrementais,
+                "cifrado": lido.cifrado,
+                "texto_invisivel": lido.texto_invisivel,
+            }
+        )
         editor = pdf.editor_suspeito(lido.metadados)
         if editor:
             raise _Rejeicao(
                 "edicao_suspeita",
-                f"Este PDF foi criado ou alterado com um editor de documentos ({editor}). "
-                f"{_PEDIR_ORIGINAL}",
-            )
-        if lido.texto_invisivel:
-            raise _Rejeicao(
-                "texto_oculto",
-                "Este PDF tem texto escondido por cima de uma imagem (digitalização ou "
-                f"captura de ecrã). {_PEDIR_ORIGINAL}",
-            )
-        if len(re.sub(r"\s", "", lido.texto)) < MINIMO_CARACTERES_TEXTO:
-            raise _Rejeicao(
-                "sem_texto",
-                "Não foi possível ler texto neste PDF -- parece uma imagem ou uma captura de "
-                f"ecrã. {_PEDIR_ORIGINAL} Não envies capturas de ecrã nem fotografias.",
+                f"Este ficheiro foi criado ou alterado com um editor ({editor}). {_PEDIR_ORIGINAL}",
             )
 
         # Sinais fracos: um PDF legítimo raramente os tem, mas não chegam
@@ -326,84 +392,172 @@ class ValidacaoComprovativoService:
         modificado = pdf.data_de_metadado_pdf(lido.metadados.get("ModDate"))
         if criado and modificado and modificado - criado > TOLERANCIA_MODIFICACAO:
             avisos.append("o PDF foi modificado depois de emitido")
-        produtor = lido.metadados.get("Producer", "").lower()
-        if self._config.producers_confiaveis and not any(
-            p in produtor for p in self._config.producers_confiaveis
-        ):
-            avisos.append("o gerador do PDF não é o habitual do banco")
         if lido.paginas > pdf.MAX_PAGINAS_LIDAS:
             avisos.append("o PDF tem demasiadas páginas para um comprovativo")
-        return lido.texto
+
+        texto_nativo = len(re.sub(r"\s", "", lido.texto)) >= MINIMO_CARACTERES_TEXTO
+        if texto_nativo and not lido.texto_invisivel:
+            produtor = lido.metadados.get("Producer", "").lower()
+            if self._config.producers_confiaveis and not any(
+                p in produtor for p in self._config.producers_confiaveis
+            ):
+                avisos.append("o gerador do PDF não é o habitual do banco")
+            campos["texto_extraido"] = lido.texto[:LIMITE_TEXTO_GUARDADO]
+            return _Leitura(lido.texto, via_ocr=False)
+
+        # Sem texto nativo (captura de ecrã exportada em PDF, digitalização) ou
+        # com texto invisível por cima de uma imagem: a camada de texto não
+        # merece confiança -- lê-se a própria imagem.
+        if lido.maior_imagem is None:
+            raise _Rejeicao(
+                "sem_texto",
+                f"Não foi possível ler este PDF: não tem texto nem imagem. {_PEDIR_ORIGINAL}",
+            )
+        return self._ler_por_ocr(lido.maior_imagem, campos, avisos)
+
+    # Camada 2 -- imagem
+    def _ler_imagem(self, conteudo: bytes, campos: dict, avisos: list[str]) -> _Leitura:
+        try:
+            lida = imagem.abrir_imagem(conteudo)
+        except imagem.ImagemIlegivelError as exc:
+            raise _Rejeicao(
+                "imagem_invalida", f"Não foi possível abrir esta imagem. {_PEDIR_ORIGINAL}"
+            ) from exc
+        campos["metadados_ficheiro"].update(
+            {**lida.metadados, "formato": lida.formato, "largura": lida.largura, "altura": lida.altura}
+        )
+        editor = imagem.editor_suspeito_imagem(lida.metadados)
+        if editor:
+            raise _Rejeicao(
+                "edicao_suspeita",
+                f"Este ficheiro foi criado ou alterado com um editor ({editor}). {_PEDIR_ORIGINAL}",
+            )
+        return self._ler_por_ocr(lida.imagem, campos, avisos)
+
+    def _ler_por_ocr(self, img: Image.Image, campos: dict, avisos: list[str]) -> _Leitura:
+        campos["hash_perceptual"] = imagem.hash_perceptual(img)
+        if self._ocr is None:
+            avisos.append("a leitura automática de imagens não está disponível")
+            return _Leitura(None, via_ocr=True)
+        try:
+            lido = self._ocr.ler(imagem.preparar_para_ocr(img))
+        except OcrIndisponivelError:
+            avisos.append("a leitura automática de imagens falhou")
+            return _Leitura(None, via_ocr=True)
+        campos["metadados_ficheiro"]["ocr_confianca"] = round(lido.confianca, 1)
+        campos["texto_extraido"] = lido.texto[:LIMITE_TEXTO_GUARDADO] or None
+        legivel = len(re.sub(r"\s", "", lido.texto)) >= MINIMO_CARACTERES_TEXTO
+        if not legivel or lido.confianca < CONFIANCA_MINIMA_OCR:
+            avisos.append("a imagem está desfocada ou não se consegue ler com clareza")
+            return _Leitura(None, via_ocr=True)
+        return _Leitura(lido.texto, via_ocr=True)
+
+    def _captura_repetida(self, campos: dict, avisos: list[str]) -> None:
+        """A mesma captura de ecrã cortada ou recomprimida tem outro SHA-256 mas
+        quase o mesmo hash perceptual. Duas capturas *diferentes* do mesmo
+        ecrã da mesma app também ficam parecidas -- por isso só conta como
+        suspeita se o número da operação não se leu, ou se é quase igual ao
+        da outra (o OCR trocou um carácter). Vai para revisão, não é rejeitada."""
+        phash = campos.get("hash_perceptual")
+        if not phash:
+            return
+        referencia = campos.get("referencia_transacao")
+        for outro_hash, outra_ref in self._repo.capturas_activas():
+            if imagem.distancia_hamming(phash, outro_hash) > imagem.LIMIAR_HASH_PERCEPTUAL:
+                continue
+            if referencia is None or outra_ref is None or (
+                _distancia_edicao(referencia, outra_ref) <= DISTANCIA_MAXIMA_REFERENCIA
+            ):
+                avisos.append("a imagem é quase igual à de um comprovativo já enviado")
+                return
 
     # Camada 3
-    def _camada_conteudo(self, texto: str, campos: dict, avisos: list[str]) -> None:
+    def _camada_conteudo(self, texto: str, campos: dict, avisos: list[str], ocr: bool) -> None:
         cfg = self._config
-        normalizado = pdf.normalizar(texto)
+        normalizado = txt.normalizar(texto)
+        lido_na_imagem = " (lido na imagem)" if ocr else ""
 
-        campos["origem"] = pdf.extrair_origem(normalizado)
-        if campos["origem"] == pdf.ORIGEM_OUTRA:
-            avisos.append("não foi possível confirmar que é do BAI Directo ou do Multicaixa Express")
+        def falhar(codigo: str, mensagem: str, aviso: str) -> None:
+            if ocr and codigo in CODIGOS_SUAVES_NO_OCR:
+                avisos.append(aviso + lido_na_imagem)
+                return
+            raise _Rejeicao(codigo, mensagem)
 
-        destinatario = pdf.destinatario_coincide(texto, cfg.iban, cfg.telefone, cfg.palavras_nome)
+        campos["origem"] = txt.extrair_origem(normalizado)
+        if campos["origem"] == txt.ORIGEM_OUTRA:
+            avisos.append("não foi possível identificar o banco ou o Multicaixa Express")
+
+        destinatario = txt.destinatario_coincide(
+            texto, cfg.iban, cfg.telefone, cfg.palavras_nome, ocr=ocr
+        )
+        campos["destinatario_detectado"] = destinatario
         if destinatario is None:
-            raise _Rejeicao(
+            falhar(
                 "destinatario_invalido",
                 "O destinatário do comprovativo não corresponde à conta oficial do projeto.",
+                "o destinatário não corresponde à conta oficial",
             )
-        campos["destinatario_detectado"] = destinatario
 
-        montante = pdf.extrair_montante(normalizado)
+        montante = txt.extrair_montante(normalizado)
         campos["montante_kz"] = montante
         if montante is None:
-            avisos.append("não foi possível ler o montante")
+            avisos.append("não foi possível ler o montante" + lido_na_imagem)
         elif montante < cfg.preco_kz:
-            raise _Rejeicao(
+            falhar(
                 "valor_insuficiente",
                 f"Valor inferior ao da subscrição: o comprovativo mostra {formatar_kz(montante)} "
                 f"e são precisos {formatar_kz(cfg.preco_kz)}.",
+                f"o montante ({formatar_kz(montante)}) é inferior a {formatar_kz(cfg.preco_kz)}",
             )
         elif montante >= 2 * cfg.preco_kz:
             # O automático só dá 30 dias -- quem pagou mais (ex.: plano anual)
             # tem de ser visto por uma pessoa para não perder o que pagou.
             avisos.append(f"o montante ({formatar_kz(montante)}) é superior ao de um mês")
 
-        referencia = pdf.extrair_referencia(normalizado, ignorar=(cfg.iban, cfg.telefone))
+        referencia = txt.extrair_referencia(normalizado, ignorar=(cfg.iban, cfg.telefone))
         campos["referencia_transacao"] = referencia
         if referencia is None:
-            avisos.append("não foi possível ler o número da operação")
-        else:
-            estado = self._repo.estado_por_referencia(referencia)
-            if estado is not None:
-                raise _Rejeicao(
-                    "transacao_ja_utilizada",
-                    "Esta transação bancária já foi validada anteriormente.",
-                )
+            avisos.append("não foi possível ler o número da operação" + lido_na_imagem)
+        elif self._repo.estado_por_referencia(referencia) is not None:
+            raise _Rejeicao(
+                "transacao_ja_utilizada",
+                "Esta transação bancária já foi validada anteriormente.",
+            )
 
-        data = pdf.extrair_data(normalizado)
+        data = txt.extrair_data(normalizado)
         campos["data_transacao"] = data
         agora = self._agora()
+        hoje = agora.astimezone(txt.FUSO_LUANDA).date()
         if data is None:
-            avisos.append("não foi possível ler a data da operação")
-        else:
-            if data > agora + TOLERANCIA_FUTURO:
-                raise _Rejeicao("data_futura", "A data do comprovativo está no futuro.")
-            hoje = agora.astimezone(pdf.FUSO_LUANDA).date()
-            if (hoje - data.astimezone(pdf.FUSO_LUANDA).date()).days > cfg.max_dias:
-                raise _Rejeicao(
-                    "comprovativo_antigo",
-                    f"O comprovativo tem mais de {cfg.max_dias} dias. Só são aceites "
-                    f"comprovativos de pagamentos feitos nos últimos {cfg.max_dias} dias -- "
-                    "se pagaste antes disso, contacta a equipa.",
-                )
+            avisos.append("não foi possível ler a data da operação" + lido_na_imagem)
+        elif data > agora + TOLERANCIA_FUTURO:
+            falhar(
+                "data_futura",
+                "A data do comprovativo está no futuro.",
+                "a data do comprovativo está no futuro",
+            )
+        elif (hoje - data.astimezone(txt.FUSO_LUANDA).date()).days > cfg.max_dias:
+            falhar(
+                "comprovativo_antigo",
+                f"O comprovativo tem mais de {cfg.max_dias} dias. Só são aceites "
+                f"comprovativos de pagamentos feitos nos últimos {cfg.max_dias} dias -- "
+                "se pagaste antes disso, contacta a equipa.",
+                f"o comprovativo tem mais de {cfg.max_dias} dias",
+            )
 
-        estado_operacao = pdf.extrair_estado(normalizado)
-        if estado_operacao == "nao_concluida":
+        estado_operacao = txt.extrair_estado(normalizado)
+        if estado_operacao == txt.ESTADO_NAO_CONCLUIDA:
             raise _Rejeicao(
                 "operacao_nao_concluida",
                 "O comprovativo não mostra uma operação concluída (parece um agendamento ou "
-                "uma operação pendente). Envia o comprovativo depois de a transferência ser executada.",
+                "uma operação falhada ou cancelada). Envia o comprovativo depois de a "
+                "transferência ser executada.",
             )
-        if estado_operacao is None:
+        if estado_operacao == txt.ESTADO_EM_PROCESSAMENTO:
+            de_hoje = data is not None and data.astimezone(txt.FUSO_LUANDA).date() == hoje
+            if not (cfg.aceitar_interbancario_pendente and referencia and de_hoje):
+                avisos.append("a transferência ainda aparece como aceite / em processamento")
+        elif estado_operacao is None:
             avisos.append("o comprovativo não indica que a operação foi concluída")
 
     # -- Premium ---------------------------------------------------------------

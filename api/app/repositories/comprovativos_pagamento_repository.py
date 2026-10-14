@@ -38,12 +38,13 @@ class NovoComprovativo:
     chave_ficheiro: str
     hash_sha256: str
     estado: str
+    hash_perceptual: str | None = None
     referencia_transacao: str | None = None
     montante_kz: Decimal | None = None
     origem: str | None = None
     destinatario_detectado: str | None = None
     data_transacao: datetime | None = None
-    metadados_pdf: dict | None = None
+    metadados_ficheiro: dict | None = None
     texto_extraido: str | None = None
     motivo_codigo: str | None = None
     motivo: str | None = None
@@ -58,11 +59,12 @@ class ComprovativoRegisto:
     estado: str
     referencia_transacao: str | None
     hash_sha256: str
+    hash_perceptual: str | None
     montante_kz: Decimal | None
     origem: str | None
     destinatario_detectado: str | None
     data_transacao: datetime | None
-    metadados_pdf: dict | None
+    metadados_ficheiro: dict | None
     texto_extraido: str | None
     chave_ficheiro: str
     motivo_codigo: str | None
@@ -85,6 +87,7 @@ class ComprovativoNaoEncontradoError(Exception):
 class ComprovativosPagamentoRepository(Protocol):
     def estado_por_hash(self, hash_sha256: str) -> str | None: ...
     def estado_por_referencia(self, referencia: str) -> str | None: ...
+    def capturas_activas(self) -> list[tuple[str, str | None]]: ...
     def registar(
         self, dados: NovoComprovativo, ajustar_premium: AjustePremium | None = None
     ) -> ComprovativoRegisto: ...
@@ -111,11 +114,12 @@ def _para_registo(row: ComprovativoPagamento, utilizador: Utilizador | None) -> 
         estado=row.estado,
         referencia_transacao=row.referencia_transacao,
         hash_sha256=row.hash_sha256,
+        hash_perceptual=row.hash_perceptual,
         montante_kz=Decimal(row.montante_kz) if row.montante_kz is not None else None,
         origem=row.origem,
         destinatario_detectado=row.destinatario_detectado,
         data_transacao=row.data_transacao,
-        metadados_pdf=row.metadados_pdf,
+        metadados_ficheiro=row.metadados_ficheiro,
         texto_extraido=row.texto_extraido,
         chave_ficheiro=row.chave_ficheiro,
         motivo_codigo=row.motivo_codigo,
@@ -144,6 +148,17 @@ class SQLAlchemyComprovativosPagamentoRepository:
 
     def estado_por_referencia(self, referencia: str) -> str | None:
         return self._estado_activo(ComprovativoPagamento.referencia_transacao == referencia)
+
+    def capturas_activas(self) -> list[tuple[str, str | None]]:
+        """(hash perceptual, referência) das imagens que contam -- para
+        apanhar a mesma captura de ecrã cortada ou recomprimida."""
+        linhas = self._sessao.execute(
+            select(ComprovativoPagamento.hash_perceptual, ComprovativoPagamento.referencia_transacao).where(
+                ComprovativoPagamento.hash_perceptual.is_not(None),
+                ComprovativoPagamento.estado != "rejeitado",
+            )
+        ).all()
+        return [(h, r) for h, r in linhas]
 
     def _aplicar_premium(self, utilizador_id: uuid.UUID, ajustar: AjustePremium) -> datetime | None:
         utilizador = self._sessao.scalars(
@@ -178,13 +193,14 @@ class SQLAlchemyComprovativosPagamentoRepository:
                 utilizador_id=uuid.UUID(dados.utilizador_id),
                 chave_ficheiro=dados.chave_ficheiro,
                 hash_sha256=dados.hash_sha256,
+                hash_perceptual=dados.hash_perceptual,
                 estado=dados.estado,
                 referencia_transacao=dados.referencia_transacao,
                 montante_kz=dados.montante_kz,
                 origem=dados.origem,
                 destinatario_detectado=dados.destinatario_detectado,
                 data_transacao=dados.data_transacao,
-                metadados_pdf=dados.metadados_pdf,
+                metadados_ficheiro=dados.metadados_ficheiro,
                 texto_extraido=dados.texto_extraido,
                 motivo_codigo=dados.motivo_codigo,
                 motivo=dados.motivo,

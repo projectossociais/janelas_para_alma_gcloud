@@ -4,8 +4,8 @@ Revision ID: 87f3ac3f0e85
 Revises: a7d3e9c1f5b2
 Create Date: 2026-10-14 20:43:42.356799
 
-Validação instantânea do comprovativo do Premium (BAI Directo / Multicaixa
-Express): uma linha por tentativa, para auditoria e anti-replay. Tabela nova,
+Validação instantânea do comprovativo do Premium (PDF ou captura de ecrã,
+de qualquer banco angolano ou do Multicaixa Express): uma linha por tentativa, para auditoria e anti-replay. Tabela nova,
 aditiva -- o acesso continua em `utilizadores.premium_ativo`/`premium_expira_em`.
 Os índices únicos são parciais (`estado <> 'rejeitado'`): o mesmo ficheiro ou
 a mesma operação bancária nunca contam duas vezes, mas uma tentativa rejeitada
@@ -36,11 +36,12 @@ def upgrade() -> None:
         sa.Column("utilizador_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("referencia_transacao", sa.Text(), nullable=True),
         sa.Column("hash_sha256", sa.String(length=64), nullable=False),
+    sa.Column("hash_perceptual", sa.String(length=64), nullable=True),
         sa.Column("montante_kz", sa.Numeric(precision=14, scale=2), nullable=True),
         sa.Column("origem", sa.Text(), nullable=True),
         sa.Column("destinatario_detectado", sa.Text(), nullable=True),
         sa.Column("data_transacao", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("metadados_pdf", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+        sa.Column("metadados_ficheiro", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
         sa.Column("texto_extraido", sa.Text(), nullable=True),
         sa.Column("chave_ficheiro", sa.Text(), nullable=False),
         sa.Column("estado", sa.Text(), nullable=False),
@@ -57,7 +58,7 @@ def upgrade() -> None:
             name="ck_comprovativos_pagamento_estado",
         ),
         sa.CheckConstraint(
-            "origem IS NULL OR origem IN ('bai_directo', 'multicaixa_express', 'outro')",
+            "origem IS NULL OR origem IN ('bai_directo', 'multicaixa_express', 'bfa', 'bic', 'atlantico', 'banco_sol', 'standard_bank', 'keve', 'access_bank', 'bni', 'caixa_angola', 'outro')",
             name="ck_comprovativos_pagamento_origem",
         ),
         sa.ForeignKeyConstraint(["decidido_por"], ["utilizadores.id"], ondelete="SET NULL"),

@@ -66,13 +66,22 @@ def _validar(c, token, chave):
 
 def test_upload_exige_sessao(ambiente) -> None:
     c, *_ = ambiente
-    assert c.post("/pagamentos/comprovativos/upload").status_code == 401
+    assert c.post("/pagamentos/comprovativos/upload", json={"content_type": "application/pdf"}).status_code == 401
+
+
+def test_upload_aceita_capturas_de_ecra_e_recusa_outros_tipos(ambiente) -> None:
+    c, _, _, _, token = ambiente
+    c.cookies.set("access_token", token)
+    r = c.post("/pagamentos/comprovativos/upload", json={"content_type": "image/jpeg"})
+    assert r.status_code == 200 and r.json()["chave"].endswith(".jpg")
+    assert c.post("/pagamentos/comprovativos/upload", json={"content_type": "application/zip"}).status_code == 422
+    assert c.post("/pagamentos/comprovativos/upload", json={}).status_code == 422
 
 
 def test_upload_devolve_chave_do_proprio(ambiente) -> None:
     c, _, _, _, token = ambiente
     c.cookies.set("access_token", token)
-    r = c.post("/pagamentos/comprovativos/upload")
+    r = c.post("/pagamentos/comprovativos/upload", json={"content_type": "application/pdf"})
     assert r.status_code == 200
     assert r.json()["chave"].startswith("comprovativos-pagamento/id-comum/")
 
@@ -92,7 +101,7 @@ def test_aprovado_devolve_200_com_a_nova_validade(ambiente) -> None:
     assert corpo["referencia_transacao"] == "202610140001234"
     assert corpo["premium_expira_em"].startswith("2026-11-13")
     # Nunca o texto extraído nem os metadados para o utilizador.
-    assert "texto_extraido" not in corpo and "metadados_pdf" not in corpo
+    assert "texto_extraido" not in corpo and "metadados_ficheiro" not in corpo
 
 
 def test_revisao_manual_devolve_202(ambiente) -> None:
@@ -146,7 +155,7 @@ def test_sem_bucket_configurado_responde_503(monkeypatch) -> None:
     try:
         with TestClient(app) as c:
             c.cookies.set("access_token", token)
-            assert c.post("/pagamentos/comprovativos/upload").status_code == 503
+            assert c.post("/pagamentos/comprovativos/upload", json={"content_type": "application/pdf"}).status_code == 503
     finally:
         app.dependency_overrides.clear()
         config.obter_settings.cache_clear()
@@ -186,7 +195,7 @@ def test_admin_lista_filtra_e_ve_o_detalhe(ambiente) -> None:
 
     detalhe = c.get(f"/admin/comprovativos-pagamento/{todos[0]['id']}").json()
     assert "Montante" in detalhe["texto_extraido"]
-    assert detalhe["metadados_pdf"]["Producer"] == "BAI Directo"
+    assert detalhe["metadados_ficheiro"]["Producer"] == "BAI Directo"
     assert c.get("/admin/comprovativos-pagamento/nao-existe").status_code == 404
 
     url = c.get(f"/admin/comprovativos-pagamento/{todos[0]['id']}/ficheiro").json()["url"]

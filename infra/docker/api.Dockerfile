@@ -11,6 +11,13 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
+# Tesseract (OCR local) para ler as capturas de ecrã dos comprovativos de
+# pagamento -- `por` para o texto em português, `eng` vem incluído. Sem
+# isto, as capturas vão todas para revisão manual (nunca são aprovadas).
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-por \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY api/ ./
 RUN pip install --no-cache-dir .
 

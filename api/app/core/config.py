@@ -74,6 +74,16 @@ class Settings(BaseSettings):
     # separados por vírgula (ex.: "iText,JasperReports"). Vazio = não
     # verificar; preenchido = um PDF de outro gerador vai para revisão manual.
     payment_producers_confiaveis: str = ""
+    # Capturas de ecrã (PNG/JPEG/WebP) lidas por OCR. Uma imagem prova ainda
+    # menos do que um PDF (não tem estrutura nem metadados de origem): `false`
+    # manda todas as imagens que passam a validação para revisão manual.
+    payment_auto_aprovar_imagens: bool = True
+    # Transferência de outro banco para o BAI que ainda aparece como "Aceite",
+    # "Registada" ou "Em processamento": `true` aprova-a se tiver número de
+    # operação e for de hoje; `false` (omissão) manda-a para revisão manual.
+    payment_aceitar_interbancario_pendente: bool = False
+    # Idiomas do Tesseract (OCR das capturas de ecrã).
+    ocr_idiomas: str = "por+eng"
 
     # CORS — origens do frontend com permissão para pedidos com cookies.
     # Em dev sem Docker, frontend (npm run dev, porta 8080) e API (porta

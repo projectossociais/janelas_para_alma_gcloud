@@ -1,5 +1,6 @@
-"""Validação instantânea do comprovativo do Premium (BAI Directo / Multicaixa
-Express) e o painel de auditoria dos admins.
+"""Validação instantânea do comprovativo do Premium (PDF ou captura de ecrã,
+de qualquer banco angolano ou do Multicaixa Express) e o painel de
+auditoria dos admins.
 
 Toda a decisão vive no `ValidacaoComprovativoService` (CLAUDE.md §3/§10); aqui
 só se traduz para HTTP:
@@ -17,6 +18,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import obter_settings
 from app.core.dependencies import obter_utilizador_admin, obter_utilizador_atual
+from app.core.ocr import TesseractLeitorOcr
 from app.db import obter_sessao
 from app.repositories.admin_repository import SQLAlchemyAdminRepository
 from app.repositories.comprovativos_pagamento_repository import (
@@ -31,6 +33,7 @@ from app.schemas.pagamentos import (
     ComprovativoAdmin,
     ComprovativoAdminDetalhe,
     DecisaoComMotivo,
+    PrepararUploadComprovativo,
     ResultadoValidacao,
     UploadComprovativoPreparado,
     UrlFicheiro,
@@ -46,6 +49,7 @@ from app.services.validacao_comprovativo_service import (
     ConfigPagamento,
     DecisaoInvalidaError,
     FicheiroNaoEnviadoError,
+    TipoDeFicheiroNaoPermitidoError,
     ValidacaoComprovativoService,
     ValidacaoIndisponivelError,
 )
@@ -84,6 +88,7 @@ def obter_validacao_service(sessao: Session = Depends(obter_sessao)) -> Validaca
         R2ComprovativosStorage(),
         ConfigPagamento.das_settings(settings),
         NotificadorAdminsNaApp(sessao),
+        ocr=TesseractLeitorOcr(settings.ocr_idiomas),
     )
 
 
@@ -95,13 +100,19 @@ def obter_comprovativos_repository(
 
 @router.post("/upload", response_model=UploadComprovativoPreparado)
 def preparar_upload(
+    dados: PrepararUploadComprovativo,
     utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
     servico: ValidacaoComprovativoService = Depends(obter_validacao_service),
 ):
     try:
-        return servico.preparar_upload(utilizador.id)
+        return servico.preparar_upload(utilizador.id, dados.content_type)
     except ValidacaoIndisponivelError as exc:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, detail=_INDISPONIVEL) from exc
+    except TipoDeFicheiroNaoPermitidoError as exc:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="tipo de ficheiro não permitido (PDF, PNG, JPEG ou WebP)",
+        ) from exc
 
 
 @router.post(

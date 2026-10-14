@@ -7,7 +7,11 @@ incrementais -- para reproduzir cada caso sem precisar de comprovativos
 verdadeiros (que têm dados pessoais e não podem entrar no repositório).
 """
 
+import io
 from datetime import datetime, timedelta
+
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from PIL.PngImagePlugin import PngInfo
 
 
 def _escapar(linha: str) -> bytes:
@@ -28,11 +32,15 @@ def criar_pdf(
     modificado_em: datetime | None = None,
     texto_invisivel: bool = False,
     actualizacao_incremental: bool = False,
+    imagem: Image.Image | None = None,
 ) -> bytes:
+    """`imagem` põe uma imagem a ocupar a página (um PDF que é só uma
+    captura de ecrã ou uma digitalização); com `linhas=[]` fica sem texto."""
     criado_em = criado_em or datetime(2026, 10, 14, 9, 30)
     modificado_em = modificado_em or criado_em
 
-    conteudo = [b"BT", b"/F1 10 Tf", b"14 TL", b"50 800 Td"]
+    conteudo = [b"q 595 0 0 842 0 0 cm /Im1 Do Q"] if imagem is not None else []
+    conteudo += [b"BT", b"/F1 10 Tf", b"14 TL", b"50 800 Td"]
     if texto_invisivel:
         conteudo.append(b"3 Tr")
     for linha in linhas:
@@ -51,12 +59,23 @@ def criar_pdf(
     objectos = [
         b"<< /Type /Catalog /Pages 2 0 R >>",
         b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-        (b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] "
-        b"/Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>"),
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >>"
+        + (b" /XObject << /Im1 7 0 R >>" if imagem is not None else b"")
+        + b" >> /Contents 5 0 R >>",
         b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>",
         b"<< /Length " + str(len(stream)).encode() + b" >>\nstream\n" + stream + b"\nendstream",
         ("<< " + " ".join(info) + " >>").encode("cp1252"),
     ]
+    if imagem is not None:
+        jpeg = io.BytesIO()
+        imagem.convert("RGB").save(jpeg, format="JPEG", quality=92)
+        dados = jpeg.getvalue()
+        objectos.append(
+            f"<< /Type /XObject /Subtype /Image /Width {imagem.width} /Height {imagem.height} "
+            f"/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length {len(dados)} >>\nstream\n".encode()
+            + dados
+            + b"\nendstream"
+        )
 
     saida = bytearray(b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n")
     offsets = []
@@ -79,7 +98,7 @@ def criar_pdf(
         saida += info_nova
         xref2 = len(saida)
         saida += (
-            f"xref\n6 1\n{off:010d} 00000 n \ntrailer\n<< /Size 7 /Root 1 0 R /Info 6 0 R "
+            f"xref\n6 1\n{off:010d} 00000 n \ntrailer\n<< /Size {len(objectos) + 1} /Root 1 0 R /Info 6 0 R "
             f"/Prev {xref} >>\nstartxref\n{xref2}\n%%EOF\n"
         ).encode()
     return bytes(saida)
@@ -134,3 +153,47 @@ def linhas_express(
 
 def daqui_a(dias: int, base: datetime | None = None) -> datetime:
     return (base or datetime(2026, 10, 14, 9, 30)) + timedelta(days=dias)
+
+
+# --- capturas de ecrã -----------------------------------------------------------
+
+_FONTE = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+
+
+def desenhar_ecra(linhas: list[str], escuro: bool = False, largura: int = 1080, altura: int = 1500) -> Image.Image:
+    """Um ecrã de telemóvel com o texto do comprovativo (barra de topo
+    colorida, como as apps dos bancos)."""
+    fundo, letra = ((18, 18, 18), (235, 235, 235)) if escuro else ((255, 255, 255), (30, 30, 30))
+    img = Image.new("RGB", (largura, altura), fundo)
+    desenho = ImageDraw.Draw(img)
+    try:
+        fonte = ImageFont.truetype(_FONTE, 40)
+    except OSError:  # sem DejaVu: a de omissão do Pillow (o OCR falso não precisa de a ler)
+        fonte = ImageFont.load_default()
+    desenho.rectangle([0, 0, largura, 90], fill=(0, 90, 160))
+    y = 120
+    for linha in linhas:
+        desenho.text((60, y), linha, font=fonte, fill=letra)
+        y += 78
+    return img
+
+
+def em_bytes(img: Image.Image, formato: str = "PNG", software: str | None = None) -> bytes:
+    """Grava a imagem. `software` põe a assinatura de um editor nos
+    metadados (PNG: chunk `Software`; JPEG/WebP: EXIF `Software`)."""
+    saida = io.BytesIO()
+    if formato == "PNG":
+        info = PngInfo()
+        if software:
+            info.add_text("Software", software)
+        img.save(saida, format="PNG", pnginfo=info)
+    else:
+        exif = Image.Exif()
+        if software:
+            exif[0x0131] = software
+        img.save(saida, format=formato, quality=90, exif=exif.tobytes())
+    return saida.getvalue()
+
+
+def desfocar(img: Image.Image, raio: int = 9) -> Image.Image:
+    return img.filter(ImageFilter.GaussianBlur(raio))

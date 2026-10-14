@@ -116,20 +116,40 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   num bucket R2 **privado** à parte (`r2_bucket_videos`), nunca no bucket público; o frontend
   não os usa (botão retirado em 2026-09-28), o endpoint mantém-se
 - **Validação instantânea do pagamento Premium** (decidido pelo dono do projecto,
-  2026-10-14) — no plano mensal, o utilizador envia o PDF original do BAI Directo /
-  Multicaixa Express e a API decide na hora (`ValidacaoComprovativoService`): ficheiro e
-  hash, sinais de edição (Canva, Word, iLovePDF, texto invisível, sem texto), destinatário =
-  conta oficial (`PAYMENT_DEST_*`), montante, número da operação, data (`PAYMENT_MAX_AGE_DAYS`)
-  e estado. Aprovado = +30 dias **somados** à validade actual, na mesma transacção que grava o
-  comprovativo. Erro claro → rejeitado com o motivo; dúvida (layout novo, PDF regravado,
-  campo ilegível, montante de mais de um mês) → `revisao_manual` e notificação aos admins —
-  nunca aprovado por omissão. Tabela `comprovativos_pagamento` (uma linha por tentativa);
-  anti-replay por índices únicos **parciais** (hash e referência, `estado <> 'rejeitado'`).
-  PDFs num bucket R2 **privado** à parte (`r2_bucket_comprovativos`). **Limite conhecido:**
-  ler o PDF não prova que o dinheiro entrou — um PDF forjado com cuidado passa; por isso os
-  aprovados automáticos ficam em `/admin/comprovativos` para conferir no extracto e revogar
-  (tira só os 30 dias desse comprovativo), e `PAYMENT_AUTO_APROVACAO=false` manda tudo para
-  revisão manual. O plano anual continua manual (`premium_requests`)
+  2026-10-14) — no plano mensal, o utilizador envia o **PDF do comprovativo ou uma captura de
+  ecrã** (PNG/JPEG/WebP) de um pagamento feito a partir de **qualquer banco angolano** (BAI,
+  BFA, BIC, Atlântico, Sol, Standard Bank, Keve, Access, BNI, Caixa Geral) ou do Multicaixa
+  Express, para a conta do projecto no BAI, e a API decide na hora
+  (`ValidacaoComprovativoService`; texto em `comprovativo_texto.py`, PDF em
+  `comprovativo_pdf.py`, imagens em `comprovativo_imagem.py`): tipo pelos bytes e hash,
+  sinais de edição (/Producer de PDF, EXIF/XMP de imagem: Canva, Word, Photoshop, GIMP...),
+  destinatário = conta oficial (`PAYMENT_DEST_*`: IBAN com ou sem `AO06`, NBA, número de conta,
+  telefone Express ou nome), montante, número da operação, data (`PAYMENT_MAX_AGE_DAYS`) e
+  estado. Imagens e PDFs sem texto (ou com texto invisível) são lidos por **OCR local**
+  (Tesseract, `app/core/ocr.py`, instalado no Dockerfile e no CI — a captura nunca sai dos
+  nossos servidores). Aprovado = +30 dias **somados** à validade actual, na mesma transacção
+  que grava o comprovativo. Erro claro → rejeitado com o motivo; numa leitura por OCR, valor,
+  destinatário e data errados vão para revisão em vez de rejeitar (o OCR pode ter lido mal);
+  dúvida (layout novo, imagem desfocada, PDF regravado, campo ilegível, interbancária ainda
+  "aceite/em processamento", montante de mais de um mês) → `revisao_manual` e notificação aos
+  admins — nunca aprovado por omissão. Tabela `comprovativos_pagamento` (uma linha por
+  tentativa); anti-replay por índices únicos **parciais** (SHA-256 e referência, `estado <>
+  'rejeitado'`) e, para capturas, `hash_perceptual` (dHash): uma imagem quase igual a outra
+  já usada só vai para revisão se o número da operação não se leu ou é quase igual — duas
+  capturas legítimas do mesmo ecrã da app têm hashes quase iguais, por isso o hash sozinho
+  nunca bloqueia. Ficheiros num bucket R2 **privado** (`r2_bucket_comprovativos`). **Limite
+  conhecido:** ler o ficheiro não prova que o dinheiro entrou — um PDF ou uma captura forjados
+  com cuidado passam; por isso os aprovados automáticos ficam em `/admin/comprovativos` para
+  conferir no extracto e revogar (tira só os 30 dias desse comprovativo), e
+  `PAYMENT_AUTO_APROVACAO=false` / `PAYMENT_AUTO_APROVAR_IMAGENS=false` mandam tudo (ou só as
+  imagens) para revisão manual; `PAYMENT_ACEITAR_INTERBANCARIO_PENDENTE=true` aprova uma
+  interbancária "aceite" do próprio dia. O plano anual continua manual (`premium_requests`)
+- **Comprovativos manuais no bucket privado** (2026-10-14) — os do plano anual, das doações e
+  da loja do jogo também vão para `r2_bucket_comprovativos` quando está configurado:
+  `comprovativo_url` passa a guardar a **chave** (`comprovativos/<uuid>.<ext>`), e um admin
+  abre-o por `GET /admin/comprovativos-manuais/url` (URL assinado, curto). Linhas antigas com
+  URL público continuam a abrir tal como estão (nenhum registo é reescrito; os ficheiros
+  antigos continuam no bucket público). Sem o bucket configurado, fica o comportamento antigo
 - **Rede de clínicas parceiras**, doações, programa de voluntariado, painel administrativo
 - **Jogo "Inclusivamente"** (`frontend/src/pages/jogo/`, API `routers/jogo.py`) — quiz com
   economia virtual: moedas (ganhas a jogar) e diamantes. Saldo sempre decidido pela API
@@ -357,9 +377,11 @@ activa; verificar e testar isso explicitamente.**
    confirmar. A API valida que a chave a confirmar pertence ao próprio utilizador
    (`avatares/{utilizador_id}/...`) antes de a gravar. Menos uma cópia de imagens de
    crianças a passar pelos nossos servidores e logs. Excepção deliberada: o comprovativo
-   de pagamento validado automaticamente também sobe directo ao R2, mas a API **lê-o de
-   volta** (`R2ComprovativosStorage.ler_bytes`) — a validação é sobre o conteúdo do PDF.
-   Nunca uma imagem facial; nunca o bucket público.
+   de pagamento validado automaticamente (PDF ou captura de ecrã) também sobe directo ao R2,
+   mas a API **lê-o de volta** (`R2ComprovativosStorage.ler_bytes`) — a validação é sobre o
+   conteúdo do ficheiro, e o OCR corre localmente. Nunca uma imagem facial; nunca o bucket
+   público. **Comprovativos de pagamento (todos) nunca no bucket público** quando
+   `r2_bucket_comprovativos` existe — têm o nome e a conta de quem pagou.
 5. **Nunca escrever segredos no frontend nem os comitar em `.env`.** O repositório antigo
    teve `.env` rastreado em `main` durante meses (chave pública do Supabase — não crítico
    por ser uma chave `anon`, mas errado de qualquer forma). Este repositório nasce com

@@ -3,10 +3,12 @@ parciais (o anti-replay que sobrevive a uma corrida) e a activação do
 Premium na mesma transacção. Um repositório falso não apanha nada disto."""
 
 import uuid
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 import pytest
+from sqlalchemy.exc import IntegrityError
 
 from app.repositories.comprovativos_pagamento_repository import (
     ComprovativoDuplicadoError,
@@ -28,7 +30,7 @@ def _novo(utilizador_id: str, estado: str, hash_: str = "a" * 64, referencia: st
         referencia_transacao=referencia,
         montante_kz=Decimal("15000.00"),
         texto_extraido="Montante: 15.000,00 Kz Beneficiário: Fulano",
-        metadados_pdf={"Producer": "BAI Directo"},
+        metadados_ficheiro={"Producer": "BAI Directo"},
     )
 
 
@@ -123,3 +125,24 @@ def test_anonimizar_a_conta_apaga_o_texto_mas_guarda_o_registo(sessao_pg, ana) -
     c = sessao_pg.query(ComprovativoPagamento).one()
     assert c.texto_extraido is None
     assert (c.referencia_transacao, c.hash_sha256) == ("OP1", "a" * 64)
+
+
+def test_capturas_activas_e_origens_dos_outros_bancos(sessao_pg, ana) -> None:
+    repo = SQLAlchemyComprovativosPagamentoRepository(sessao_pg)
+    captura = replace(_novo(ana, "aprovado"), hash_perceptual="f" * 64, origem="bfa", metadados_ficheiro={"tipo": "png"})
+    reg = repo.registar(captura, ajustar_premium=_mais_30)
+    assert (reg.hash_perceptual, reg.origem) == ("f" * 64, "bfa")
+    repo.registar(replace(_novo(ana, "rejeitado", hash_="b" * 64, referencia="OP2"), hash_perceptual="e" * 64))
+    repo.registar(_novo(ana, "revisao_manual", hash_="c" * 64, referencia="OP3"))  # PDF: sem hash perceptual
+
+    # Só as imagens que contam (a rejeitada e o PDF ficam de fora).
+    assert repo.capturas_activas() == [("f" * 64, "OP1")]
+
+    with pytest.raises(IntegrityError):
+        sessao_pg.add(
+            ComprovativoPagamento(
+                utilizador_id=uuid.UUID(ana), hash_sha256="d" * 64, chave_ficheiro="x", estado="rejeitado", origem="banco_inventado"
+            )
+        )
+        sessao_pg.commit()
+    sessao_pg.rollback()

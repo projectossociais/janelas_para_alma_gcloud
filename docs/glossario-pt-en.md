@@ -19,6 +19,7 @@ Convenções fixas: *color, behavior, organize, center, meter, license, canceled
 | Visão da Banda | Visão da Banda | Programa de rádio da Optioptika. |
 | Olhar Alinhado - Comércio & Prestação de Serviços, Lda. | igual | Denominação legal da firma; "Olhar Alinhado" sozinho quando basta o nome curto. |
 | Optioptika, Centroptico, Gamek, MULTICAIXA EXPRESS | iguais | Marcas e lugares. |
+| BAI, BFA, Banco BIC, Millennium Atlântico, Banco Sol, Standard Bank, Keve, Access Bank, BNI, Caixa Geral Angola, BAI Directo | iguais | Bancos angolanos e as suas apps (nomes próprios, com o acento de "Atlântico"). |
 | Províncias, bairros, moradas | iguais | Ex.: *Luanda Sul*, *Ingombotas*, *Urbanização Nova Vida*. |
 | Kz / AOA | Kz / AOA | Não se converte nem se reformata (`10.000 Kz` fica `10.000 Kz`). |
 

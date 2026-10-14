@@ -1,6 +1,8 @@
 """`ValidacaoComprovativoService` -- dinheiro e acesso, sem base de dados:
-repositório e storage falsos (CLAUDE.md §7/§8). Os PDFs são reais (bytes
-que o pypdf abre), gerados por `pdf_falso.py` com dados fictícios."""
+repositório, storage e OCR falsos (CLAUDE.md §7/§8). Os PDFs e as imagens
+são reais (bytes que o pypdf/Pillow abrem), gerados por `pdf_falso.py` com
+dados fictícios. O OCR falso devolve o texto que cada teste decide -- o
+Tesseract verdadeiro corre em `test_validacao_comprovativo_ocr_real.py`."""
 
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
@@ -8,6 +10,7 @@ from decimal import Decimal
 
 import pytest
 
+from app.core.ocr import OcrIndisponivelError, TextoOcr
 from app.repositories.comprovativos_pagamento_repository import (
     ComprovativoDuplicadoError,
     ComprovativoRegisto,
@@ -19,6 +22,7 @@ from app.services.validacao_comprovativo_service import (
     ConfigPagamento,
     DecisaoInvalidaError,
     FicheiroNaoEnviadoError,
+    TipoDeFicheiroNaoPermitidoError,
     ValidacaoComprovativoService,
     ValidacaoIndisponivelError,
     formatar_kz,
@@ -28,6 +32,7 @@ from tests.services.pdf_falso import (
     NOME_OFICIAL,
     TELEFONE_OFICIAL,
     criar_pdf,
+    desenhar_ecra,
     linhas_bai,
     linhas_express,
 )
@@ -70,6 +75,9 @@ class RepositorioFalso:
             (r.estado for r in self._activos() if r.referencia_transacao == referencia), None
         )
 
+    def capturas_activas(self):
+        return [(r.hash_perceptual, r.referencia_transacao) for r in self._activos() if r.hash_perceptual]
+
     def _ajustar(self, utilizador_id, ajustar):
         nova = ajustar(self.premium.get(utilizador_id))
         self.premium[utilizador_id] = nova
@@ -84,11 +92,12 @@ class RepositorioFalso:
             estado=dados.estado,
             referencia_transacao=dados.referencia_transacao,
             hash_sha256=dados.hash_sha256,
+            hash_perceptual=dados.hash_perceptual,
             montante_kz=dados.montante_kz,
             origem=dados.origem,
             destinatario_detectado=dados.destinatario_detectado,
             data_transacao=dados.data_transacao,
-            metadados_pdf=dados.metadados_pdf,
+            metadados_ficheiro=dados.metadados_ficheiro,
             texto_extraido=dados.texto_extraido,
             chave_ficheiro=dados.chave_ficheiro,
             motivo_codigo=dados.motivo_codigo,
@@ -153,6 +162,22 @@ class NotificadorFalso:
         self.mensagens.append((titulo, mensagem))
 
 
+class OcrFalso:
+    """Devolve o texto definido pelo teste (o "que está na imagem")."""
+
+    def __init__(self) -> None:
+        self.texto = ""
+        self.confianca = 95.0
+        self.falhar = False
+        self.chamadas = 0
+
+    def ler(self, imagem):
+        self.chamadas += 1
+        if self.falhar:
+            raise OcrIndisponivelError("tesseract não instalado")
+        return TextoOcr(self.texto, self.confianca)
+
+
 CONFIG = ConfigPagamento(
     preco_kz=Decimal(15000),
     iban=IBAN_OFICIAL,
@@ -164,13 +189,22 @@ CONFIG = ConfigPagamento(
 
 
 @pytest.fixture
-def ambiente():
+def ocr() -> OcrFalso:
+    return OcrFalso()
+
+
+def montar_ambiente(ocr: OcrFalso):
     repo, storage, notificador = RepositorioFalso(), StorageFalso(), NotificadorFalso()
     relogio = {"agora": AGORA}
     servico = ValidacaoComprovativoService(
-        repo, storage, CONFIG, notificador, relogio=lambda: relogio["agora"]
+        repo, storage, CONFIG, notificador, relogio=lambda: relogio["agora"], ocr=ocr
     )
     return servico, repo, storage, notificador, relogio
+
+
+@pytest.fixture
+def ambiente(ocr):
+    return montar_ambiente(ocr)
 
 
 def _enviar(storage: StorageFalso, conteudo: bytes, utilizador: str = UTILIZADOR, nome: str = "a") -> str:
@@ -179,9 +213,9 @@ def _enviar(storage: StorageFalso, conteudo: bytes, utilizador: str = UTILIZADOR
     return chave
 
 
-def _servico_com(config: ConfigPagamento, repo=None, storage=None, notificador=None):
+def _servico_com(config: ConfigPagamento, repo=None, storage=None, notificador=None, ocr=None):
     return ValidacaoComprovativoService(
-        repo or RepositorioFalso(), storage or StorageFalso(), config, notificador, relogio=lambda: AGORA
+        repo or RepositorioFalso(), storage or StorageFalso(), config, notificador, relogio=lambda: AGORA, ocr=ocr
     )
 
 
@@ -201,7 +235,7 @@ def test_comprovativo_bai_valido_aprova_e_da_30_dias_de_premium(ambiente) -> Non
     assert reg.data_transacao == datetime(2026, 10, 14, 8, 25, tzinfo=UTC)
     assert reg.premium_expira_em == AGORA + timedelta(days=30)
     assert repo.premium[UTILIZADOR] == AGORA + timedelta(days=30)
-    assert reg.metadados_pdf["Producer"] == "BAI Directo"
+    assert reg.metadados_ficheiro["Producer"] == "BAI Directo"
     assert "N.º de Operação" in reg.texto_extraido
     assert notificador.mensagens == []
 
@@ -283,10 +317,16 @@ def test_pdf_feito_num_editor_e_bloqueado_por_edicao_suspeita(ambiente, producer
 # --- camada 1: ficheiro -------------------------------------------------------
 
 
-def test_ficheiro_que_nao_e_pdf_e_rejeitado(ambiente) -> None:
+def test_ficheiro_que_nao_e_pdf_nem_imagem_e_rejeitado(ambiente) -> None:
+    servico, _, storage, *_ = ambiente
+    reg = servico.validar(UTILIZADOR, _enviar(storage, b"PK\x03\x04 um zip qualquer" + b"0" * 100))
+    assert (reg.estado, reg.motivo_codigo) == ("rejeitado", "ficheiro_invalido")
+
+
+def test_imagem_corrompida_e_rejeitada(ambiente) -> None:
     servico, _, storage, *_ = ambiente
     reg = servico.validar(UTILIZADOR, _enviar(storage, b"\x89PNG\r\n\x1a\n" + b"0" * 100))
-    assert (reg.estado, reg.motivo_codigo) == ("rejeitado", "ficheiro_invalido")
+    assert (reg.estado, reg.motivo_codigo) == ("rejeitado", "imagem_invalida")
 
 
 def test_pdf_corrompido_e_rejeitado_como_ficheiro_invalido(ambiente) -> None:
@@ -326,17 +366,27 @@ def test_uma_tentativa_rejeitada_nao_impede_o_reenvio_do_mesmo_ficheiro(ambiente
 # --- camada 2: adulteração ----------------------------------------------------
 
 
-def test_pdf_sem_texto_pede_o_original_em_vez_de_imagem(ambiente) -> None:
+def test_pdf_sem_texto_nem_imagem_e_rejeitado(ambiente) -> None:
     servico, _, storage, *_ = ambiente
     reg = servico.validar(UTILIZADOR, _enviar(storage, criar_pdf([" "])))
     assert (reg.estado, reg.motivo_codigo) == ("rejeitado", "sem_texto")
-    assert "PDF original" in reg.motivo
+    assert "captura de ecrã" in reg.motivo
 
 
-def test_texto_invisivel_por_cima_de_imagem_e_rejeitado(ambiente) -> None:
-    servico, _, storage, *_ = ambiente
-    reg = servico.validar(UTILIZADOR, _enviar(storage, criar_pdf(linhas_bai(), texto_invisivel=True)))
-    assert (reg.estado, reg.motivo_codigo) == ("rejeitado", "texto_oculto")
+def test_texto_invisivel_por_cima_de_imagem_ignora_essa_camada_e_le_a_imagem(ambiente, ocr) -> None:
+    """Texto invisível por cima de uma imagem é o que um OCR (ou alguém a
+    esconder texto falso) põe num PDF -- não se confia nele: lê-se a imagem."""
+    servico, _repo, storage, *_ = ambiente
+    ocr.texto = "\n".join(linhas_express())
+    falso_por_cima = linhas_bai(montante="999.999,00 Kz", operacao="FALSO123456")
+    pdf = criar_pdf(falso_por_cima, texto_invisivel=True, imagem=desenhar_ecra(linhas_express()))
+
+    reg = servico.validar(UTILIZADOR, _enviar(storage, pdf))
+
+    assert ocr.chamadas == 1
+    assert reg.estado == "aprovado", reg.motivo
+    assert reg.referencia_transacao == "MCX88776655"
+    assert reg.montante_kz == Decimal("15000.00")
 
 
 def test_pdf_regravado_depois_de_emitido_vai_para_revisao_manual(ambiente) -> None:
@@ -450,7 +500,10 @@ def test_data_no_futuro_e_rejeitada(ambiente) -> None:
     assert (reg.estado, reg.motivo_codigo) == ("rejeitado", "data_futura")
 
 
-@pytest.mark.parametrize("estado", ["Transferência agendada para 20/10/2026", "Operação pendente", "Não efectuada"])
+@pytest.mark.parametrize(
+    "estado",
+    ["Transferência agendada para 20/10/2026", "Não efectuada", "Operação cancelada", "Transferência estornada"],
+)
 def test_operacao_nao_concluida_e_rejeitada(ambiente, estado) -> None:
     servico, _, storage, *_ = ambiente
     reg = servico.validar(UTILIZADOR, _enviar(storage, criar_pdf(linhas_bai(estado=estado))))
@@ -522,17 +575,29 @@ def test_ficheiro_que_nao_chegou_ao_storage(ambiente) -> None:
 def test_sem_conta_de_destino_configurada_nunca_valida_nada() -> None:
     servico = _servico_com(replace(CONFIG, iban="", telefone="", palavras_nome=""))
     with pytest.raises(ValidacaoIndisponivelError):
-        servico.preparar_upload(UTILIZADOR)
+        servico.preparar_upload(UTILIZADOR, "application/pdf")
     with pytest.raises(ValidacaoIndisponivelError):
         servico.validar(UTILIZADOR, "comprovativos-pagamento/u-1/a.pdf")
 
 
 def test_preparar_upload_assina_uma_chave_do_proprio_utilizador(ambiente) -> None:
     servico, *_ = ambiente
-    preparado = servico.preparar_upload(UTILIZADOR)
+    preparado = servico.preparar_upload(UTILIZADOR, "application/pdf")
     assert preparado.chave.startswith("comprovativos-pagamento/u-1/")
     assert preparado.chave.endswith(".pdf")
     assert "application/pdf" in preparado.url_de_upload
+
+
+@pytest.mark.parametrize(("tipo", "extensao"), [("image/png", ".png"), ("image/jpeg", ".jpg"), ("image/webp", ".webp")])
+def test_preparar_upload_aceita_capturas_de_ecra(ambiente, tipo, extensao) -> None:
+    servico, *_ = ambiente
+    assert servico.preparar_upload(UTILIZADOR, tipo).chave.endswith(extensao)
+
+
+def test_preparar_upload_recusa_outros_tipos(ambiente) -> None:
+    servico, *_ = ambiente
+    with pytest.raises(TipoDeFicheiroNaoPermitidoError):
+        servico.preparar_upload(UTILIZADOR, "application/zip")
 
 
 def test_falha_a_avisar_os_admins_nao_perde_o_registo(ambiente) -> None:

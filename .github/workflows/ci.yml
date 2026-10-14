@@ -50,6 +50,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      # OCR das capturas de ecrã dos comprovativos -- sem o Tesseract, os
+      # testes com o motor verdadeiro (test_validacao_comprovativo_ocr_real.py)
+      # saltavam em silêncio.
+      - name: Tesseract (OCR)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-por fonts-dejavu-core
       - run: pip install -e ".[dev]"
       - run: ruff check app tests
       - run: pytest -v
@@ -155,6 +160,8 @@ jobs:
             echo "PAYMENT_MAX_AGE_DAYS=${{ vars.GCP_PAYMENT_MAX_AGE_DAYS }}"
             echo "PAYMENT_AUTO_APROVACAO=${{ vars.GCP_PAYMENT_AUTO_APROVACAO }}"
             echo "PAYMENT_PRODUCERS_CONFIAVEIS=${{ vars.GCP_PAYMENT_PRODUCERS_CONFIAVEIS }}"
+            echo "PAYMENT_AUTO_APROVAR_IMAGENS=${{ vars.GCP_PAYMENT_AUTO_APROVAR_IMAGENS }}"
+            echo "PAYMENT_ACEITAR_INTERBANCARIO_PENDENTE=${{ vars.GCP_PAYMENT_ACEITAR_INTERBANCARIO_PENDENTE }}"
           } >> "$GITHUB_ENV"
 
       # 05 ANTES do 04, sempre -- uma migração tem de aplicar-se contra o

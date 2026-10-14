@@ -344,12 +344,27 @@ class PremiumRequest(Base):
 
 
 ESTADOS_COMPROVATIVO_PAGAMENTO = ("aprovado", "rejeitado", "revisao_manual", "revogado")
-ORIGENS_COMPROVATIVO_PAGAMENTO = ("bai_directo", "multicaixa_express", "outro")
+# Quem emitiu o comprovativo: a conta de destino é sempre a do projecto (no
+# BAI), mas paga-se a partir de qualquer banco angolano ou do Express.
+ORIGENS_COMPROVATIVO_PAGAMENTO = (
+    "bai_directo",
+    "multicaixa_express",
+    "bfa",
+    "bic",
+    "atlantico",
+    "banco_sol",
+    "standard_bank",
+    "keve",
+    "access_bank",
+    "bni",
+    "caixa_angola",
+    "outro",
+)
 
 
 class ComprovativoPagamento(Base):
-    """Comprovativo bancário (PDF do BAI Directo / Multicaixa Express) que o
-    próprio utilizador envia para activar o Premium sem esperar por um admin
+    """Comprovativo bancário (PDF ou captura de ecrã, de qualquer banco
+    angolano ou do Multicaixa Express) que o próprio utilizador envia para activar o Premium sem esperar por um admin
     (`ValidacaoComprovativoService`). Fica uma linha por tentativa, aprovada
     ou não -- é o registo de auditoria e a base do anti-replay.
 
@@ -373,7 +388,9 @@ class ComprovativoPagamento(Base):
             name="ck_comprovativos_pagamento_estado",
         ),
         CheckConstraint(
-            "origem IS NULL OR origem IN ('bai_directo', 'multicaixa_express', 'outro')",
+            "origem IS NULL OR origem IN ("
+            + ", ".join(f"'{o}'" for o in ORIGENS_COMPROVATIVO_PAGAMENTO)
+            + ")",
             name="ck_comprovativos_pagamento_origem",
         ),
         Index(
@@ -399,17 +416,22 @@ class ComprovativoPagamento(Base):
     # encontrado (vai para revisão manual ou é rejeitado antes disso).
     referencia_transacao: Mapped[str | None] = mapped_column(Text)
     hash_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    # dHash 16x16 (64 hex) de uma captura de ecrã -- apanha a mesma imagem
+    # cortada ou recomprimida (outro SHA-256). Nulo num PDF com texto.
+    hash_perceptual: Mapped[str | None] = mapped_column(String(64))
     montante_kz: Mapped[float | None] = mapped_column(Numeric(14, 2))
     origem: Mapped[str | None] = mapped_column(Text)
     # IBAN, telefone ou nome do destinatário que coincidiu com a conta oficial.
     destinatario_detectado: Mapped[str | None] = mapped_column(Text)
     data_transacao: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    # /Producer, /Creator, /CreationDate, /ModDate -- auditoria.
-    metadados_pdf: Mapped[dict | None] = mapped_column(JSONB)
-    # Texto extraído do PDF, só para auditoria interna (admin). Apagado na
-    # anonimização da conta (W-03); referência, montante e hash ficam.
+    # Auditoria do ficheiro: tipo, /Producer, /Creator e datas de um PDF, ou
+    # EXIF/XMP e dimensões de uma imagem, e a confiança do OCR quando houve.
+    metadados_ficheiro: Mapped[dict | None] = mapped_column(JSONB)
+    # Texto do PDF ou lido por OCR, só para auditoria interna (admin). Apagado
+    # na anonimização da conta (W-03); referência, montante e hash ficam.
     texto_extraido: Mapped[str | None] = mapped_column(Text)
-    # Chave do PDF original no bucket privado `r2_bucket_comprovativos`.
+    # Chave do ficheiro original (PDF ou imagem) no bucket privado
+    # `r2_bucket_comprovativos`.
     chave_ficheiro: Mapped[str] = mapped_column(Text, nullable=False)
     estado: Mapped[str] = mapped_column(Text, nullable=False)
     # Código estável (ex.: "valor_insuficiente") + texto mostrado ao utilizador.
