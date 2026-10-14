@@ -144,6 +144,16 @@ jobs:
             echo "R2_ENDPOINT_URL=${{ vars.GCP_R2_ENDPOINT_URL }}"
             echo "R2_BUCKET=${{ vars.GCP_R2_BUCKET }}"
             echo "R2_PUBLIC_BASE_URL=${{ vars.GCP_R2_PUBLIC_BASE_URL }}"
+            # Validação instantânea do comprovativo do Premium -- mesma
+            # razão: sem isto, cada deploy automático desligava-a.
+            echo "R2_BUCKET_COMPROVATIVOS=${{ vars.GCP_R2_BUCKET_COMPROVATIVOS }}"
+            echo "SUBSCRIPTION_PRICE_KZ=${{ vars.GCP_SUBSCRIPTION_PRICE_KZ }}"
+            echo "PAYMENT_DEST_IBAN=${{ vars.GCP_PAYMENT_DEST_IBAN }}"
+            echo "PAYMENT_DEST_PHONE=${{ vars.GCP_PAYMENT_DEST_PHONE }}"
+            echo "PAYMENT_DEST_NAME_KEYWORDS=${{ vars.GCP_PAYMENT_DEST_NAME_KEYWORDS }}"
+            echo "PAYMENT_MAX_AGE_DAYS=${{ vars.GCP_PAYMENT_MAX_AGE_DAYS }}"
+            echo "PAYMENT_AUTO_APROVACAO=${{ vars.GCP_PAYMENT_AUTO_APROVACAO }}"
+            echo "PAYMENT_PRODUCERS_CONFIAVEIS=${{ vars.GCP_PAYMENT_PRODUCERS_CONFIAVEIS }}"
           } >> "$GITHUB_ENV"
 
       # 05 ANTES do 04, sempre -- uma migração tem de aplicar-se contra o

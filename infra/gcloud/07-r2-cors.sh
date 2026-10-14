@@ -56,9 +56,12 @@ cors_config = {
     ]
 }
 
-client.put_bucket_cors(Bucket="${R2_BUCKET}", CORSConfiguration=cors_config)
-print("CORS aplicado a ${R2_BUCKET}:")
-print(client.get_bucket_cors(Bucket="${R2_BUCKET}"))
+# O bucket privado dos comprovativos de pagamento também recebe PUT directo
+# do browser (validação instantânea do Premium) -- precisa do mesmo CORS.
+for bucket in [b for b in ("${R2_BUCKET}", "${R2_BUCKET_COMPROVATIVOS:-}") if b]:
+    client.put_bucket_cors(Bucket=bucket, CORSConfiguration=cors_config)
+    print(f"CORS aplicado a {bucket}:")
+    print(client.get_bucket_cors(Bucket=bucket))
 PYEOF
 
 echo "==> Feito."

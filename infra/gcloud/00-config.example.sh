@@ -61,6 +61,20 @@ export R2_SECRET_ACCESS_KEY="${R2_SECRET_ACCESS_KEY:-}"
 # https://pub-xxxx.r2.dev). URL final de um ficheiro = {base}/{chave}. Não é
 # segredo — vai como env var normal, não pelo Secret Manager.
 export R2_PUBLIC_BASE_URL="${R2_PUBLIC_BASE_URL:-}"
+# Bucket PRIVADO dos comprovativos de pagamento (validação instantânea do
+# Premium) -- criar no R2 sem domínio público ligado, e correr 07-r2-cors.sh.
+export R2_BUCKET_COMPROVATIVOS="${R2_BUCKET_COMPROVATIVOS:-}"
+
+# --- Validação instantânea do comprovativo do Premium ---------------------
+# Não são secretos (o site mostra-os a quem vai pagar), mas têm de bater
+# certo com frontend/src/lib/pagamento.ts. Ver api/.env.example.
+export SUBSCRIPTION_PRICE_KZ="${SUBSCRIPTION_PRICE_KZ:-15000}"
+export PAYMENT_DEST_IBAN="${PAYMENT_DEST_IBAN:-}"
+export PAYMENT_DEST_PHONE="${PAYMENT_DEST_PHONE:-}"
+export PAYMENT_DEST_NAME_KEYWORDS="${PAYMENT_DEST_NAME_KEYWORDS:-}"
+export PAYMENT_MAX_AGE_DAYS="${PAYMENT_MAX_AGE_DAYS:-3}"
+export PAYMENT_AUTO_APROVACAO="${PAYMENT_AUTO_APROVACAO:-true}"
+export PAYMENT_PRODUCERS_CONFIAVEIS="${PAYMENT_PRODUCERS_CONFIAVEIS:-}"
 
 # --- Derivados (não editar) --------------------------------------------
 export SQL_CONNECTION_NAME="${PROJECT_ID}:${REGION}:${SQL_INSTANCE}"

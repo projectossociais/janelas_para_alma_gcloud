@@ -115,6 +115,21 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   O frontend (`AcessoExerciciosContext`) só espelha `GET /exercicios/acesso`. Os vídeos vivem
   num bucket R2 **privado** à parte (`r2_bucket_videos`), nunca no bucket público; o frontend
   não os usa (botão retirado em 2026-09-28), o endpoint mantém-se
+- **Validação instantânea do pagamento Premium** (decidido pelo dono do projecto,
+  2026-10-14) — no plano mensal, o utilizador envia o PDF original do BAI Directo /
+  Multicaixa Express e a API decide na hora (`ValidacaoComprovativoService`): ficheiro e
+  hash, sinais de edição (Canva, Word, iLovePDF, texto invisível, sem texto), destinatário =
+  conta oficial (`PAYMENT_DEST_*`), montante, número da operação, data (`PAYMENT_MAX_AGE_DAYS`)
+  e estado. Aprovado = +30 dias **somados** à validade actual, na mesma transacção que grava o
+  comprovativo. Erro claro → rejeitado com o motivo; dúvida (layout novo, PDF regravado,
+  campo ilegível, montante de mais de um mês) → `revisao_manual` e notificação aos admins —
+  nunca aprovado por omissão. Tabela `comprovativos_pagamento` (uma linha por tentativa);
+  anti-replay por índices únicos **parciais** (hash e referência, `estado <> 'rejeitado'`).
+  PDFs num bucket R2 **privado** à parte (`r2_bucket_comprovativos`). **Limite conhecido:**
+  ler o PDF não prova que o dinheiro entrou — um PDF forjado com cuidado passa; por isso os
+  aprovados automáticos ficam em `/admin/comprovativos` para conferir no extracto e revogar
+  (tira só os 30 dias desse comprovativo), e `PAYMENT_AUTO_APROVACAO=false` manda tudo para
+  revisão manual. O plano anual continua manual (`premium_requests`)
 - **Rede de clínicas parceiras**, doações, programa de voluntariado, painel administrativo
 - **Jogo "Inclusivamente"** (`frontend/src/pages/jogo/`, API `routers/jogo.py`) — quiz com
   economia virtual: moedas (ganhas a jogar) e diamantes. Saldo sempre decidido pela API
@@ -341,7 +356,10 @@ activa; verificar e testar isso explicitamente.**
    `services/upload_service.py`); o browser envia os bytes ao R2 e depois pede à API para
    confirmar. A API valida que a chave a confirmar pertence ao próprio utilizador
    (`avatares/{utilizador_id}/...`) antes de a gravar. Menos uma cópia de imagens de
-   crianças a passar pelos nossos servidores e logs.
+   crianças a passar pelos nossos servidores e logs. Excepção deliberada: o comprovativo
+   de pagamento validado automaticamente também sobe directo ao R2, mas a API **lê-o de
+   volta** (`R2ComprovativosStorage.ler_bytes`) — a validação é sobre o conteúdo do PDF.
+   Nunca uma imagem facial; nunca o bucket público.
 5. **Nunca escrever segredos no frontend nem os comitar em `.env`.** O repositório antigo
    teve `.env` rastreado em `main` durante meses (chave pública do Supabase — não crítico
    por ser uma chave `anon`, mas errado de qualquer forma). Este repositório nasce com

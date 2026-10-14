@@ -143,6 +143,12 @@ gh variable set GCP_FRONTEND_DOMAIN --repo "$GITHUB_REPO" --body "$FRONTEND_DOMA
 [ -n "${R2_ENDPOINT_URL:-}" ] && gh variable set GCP_R2_ENDPOINT_URL --repo "$GITHUB_REPO" --body "$R2_ENDPOINT_URL"
 [ -n "${R2_BUCKET:-}" ] && gh variable set GCP_R2_BUCKET --repo "$GITHUB_REPO" --body "$R2_BUCKET"
 [ -n "${R2_PUBLIC_BASE_URL:-}" ] && gh variable set GCP_R2_PUBLIC_BASE_URL --repo "$GITHUB_REPO" --body "$R2_PUBLIC_BASE_URL"
+[ -n "${R2_BUCKET_COMPROVATIVOS:-}" ] && gh variable set GCP_R2_BUCKET_COMPROVATIVOS --repo "$GITHUB_REPO" --body "$R2_BUCKET_COMPROVATIVOS"
+# Idem para a validação instantânea do comprovativo do Premium.
+for VAR in SUBSCRIPTION_PRICE_KZ PAYMENT_DEST_IBAN PAYMENT_DEST_PHONE PAYMENT_DEST_NAME_KEYWORDS \
+  PAYMENT_MAX_AGE_DAYS PAYMENT_AUTO_APROVACAO PAYMENT_PRODUCERS_CONFIAVEIS; do
+  [ -n "${!VAR:-}" ] && gh variable set "GCP_${VAR}" --repo "$GITHUB_REPO" --body "${!VAR}"
+done
 gh variable set GCP_WORKLOAD_IDENTITY_PROVIDER --repo "$GITHUB_REPO" --body "$WIF_PROVIDER"
 gh variable set GCP_DEPLOY_SERVICE_ACCOUNT --repo "$GITHUB_REPO" --body "$DEPLOY_SA_EMAIL"
 
