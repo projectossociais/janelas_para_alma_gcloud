@@ -474,6 +474,35 @@
     "copiado": "Copiado",
     "copiar": "Copiar"
   },
+  "CheckoutInstantaneo": {
+    "pagamento": "Pagamento",
+    "libertaNaHora": "Paga por transferência e libera o acesso aos Exercícios Visuais na hora, sem esperar pela equipa.",
+    "passo1DadosParaPagamento": "1. Dados para pagamento",
+    "valorAPagar": "Valor da subscrição",
+    "valorPorMes": "15.000,00 Kz / mês",
+    "titular": "Nome do titular",
+    "instrucao1": "Faz a transferência no BAI Directo ou Multicaixa Express.",
+    "instrucao2": "Baixa o comprovativo original em PDF.",
+    "instrucao3": "Envia abaixo para liberar o teu acesso na mesma hora.",
+    "passo2JaPaguei": "2. Já paguei — Validar e Liberar Acesso Agora",
+    "entraParaValidar": "Para liberar o acesso na hora, entra na conta que vai usar os exercícios.",
+    "entrarNaConta": "Entrar na conta",
+    "usaOPdfOriginal": "Usa o PDF original gerado pelo aplicativo do banco, não uses capturas de ecrã/fotos.",
+    "voltar": "Voltar",
+    "aVerificar": "A verificar...",
+    "validarEPagar": "Validar Comprovativo e Liberar Acesso",
+    "aVerificarAutenticidade": "A verificar autenticidade do comprovativo junto ao sistema...",
+    "naoFoiPossivelValidar": "Não foi possível validar o comprovativo. Tenta novamente dentro de alguns minutos.",
+    "pagamentoConfirmado": "Pagamento confirmado!",
+    "acessoLiberado": "O teu acesso aos Exercícios Visuais já está liberado.",
+    "numeroDaOperacao": "N.º da operação",
+    "validoAte": "Premium válido até",
+    "aAbrirOsExercicios": "A abrir os exercícios...",
+    "irParaOsExercicios": "Ir para os exercícios",
+    "comprovativoRecebido": "Comprovativo recebido",
+    "aEquipaVaiConfirmar": "Não conseguimos confirmar este comprovativo automaticamente, por isso a equipa vai confirmá-lo manualmente. Assim que for aprovado, o acesso aos exercícios fica liberado na tua conta.",
+    "voltarAPaginaInicial": "Voltar à página inicial"
+  },
   "CuriosidadesSection": {
     "curiosidades": "Curiosidades",
     "tenteONossoJogo": "Tente o nosso Jogo: Inclusivamente",
@@ -683,7 +712,9 @@
     "oFicheiroExcedeO": "O ficheiro excede o limite de 5MB.",
     "removerFicheiro": "Remover ficheiro {{name}}",
     "removerFicheiro2": "Remover ficheiro",
-    "anexarComprovativoCliqueOu": "Anexar comprovativo: clique ou arraste um ficheiro PDF, PNG, JPG ou WEBP, até 5MB"
+    "anexarComprovativoCliqueOu": "Anexar comprovativo: clique ou arraste um ficheiro PDF, PNG, JPG ou WEBP, até 5MB",
+    "soPdfOriginal": "Só são aceites ficheiros PDF. Envia o PDF original do comprovativo, gerado pela app do banco.",
+    "soPdfAte5mb": "Só PDF (máx. 5MB)"
   },
   "Footer": {
     "umaInstituicaoAngolanaQue": "Uma instituição angolana que promove a inclusão visual alinhada à economia circular e inovação tecnológica.",
@@ -1767,7 +1798,23 @@
     "semVagas": "Já não há vagas.",
     "actividadeIndisponivel": "Esta actividade já não está disponível.",
     "publicacaoNaoEncontrada": "Publicação não encontrada.",
-    "semPerguntas": "Não há perguntas disponíveis de momento."
+    "semPerguntas": "Não há perguntas disponíveis de momento.",
+    "comprovativoGrande": "O ficheiro tem mais de 5 MB. Envia o PDF original gerado pela aplicação BAI Directo ou Multicaixa Express.",
+    "comprovativoNaoPdf": "O ficheiro não é um PDF válido. Envia o PDF original gerado pela aplicação BAI Directo ou Multicaixa Express.",
+    "comprovativoJaUtilizado": "Este comprovativo já foi utilizado anteriormente.",
+    "comprovativoEmAnalise": "Este comprovativo já foi enviado e está a ser confirmado pela equipa.",
+    "comprovativoProtegido": "O PDF está protegido por password e não pode ser verificado. Envia o PDF original gerado pela aplicação BAI Directo ou Multicaixa Express.",
+    "comprovativoEditado": "Este PDF foi criado ou alterado com um editor de documentos. Envia o PDF original gerado pela aplicação BAI Directo ou Multicaixa Express.",
+    "comprovativoTextoOculto": "Este PDF tem texto escondido por cima de uma imagem. Envia o PDF original gerado pela aplicação BAI Directo ou Multicaixa Express.",
+    "comprovativoSemTexto": "Não foi possível ler texto neste PDF -- parece uma imagem ou uma captura de ecrã. Envia o PDF original gerado pela aplicação BAI Directo ou Multicaixa Express.",
+    "comprovativoDestinatario": "O destinatário do comprovativo não corresponde à conta oficial do projeto.",
+    "comprovativoValorInsuficiente": "Valor inferior ao da subscrição (15.000,00 Kz).",
+    "comprovativoTransacaoUsada": "Esta transação bancária já foi validada anteriormente.",
+    "comprovativoDataFutura": "A data do comprovativo está no futuro.",
+    "comprovativoAntigo": "O comprovativo é demasiado antigo. Se pagaste há mais de 3 dias, contacta a equipa.",
+    "comprovativoNaoConcluido": "O comprovativo não mostra uma operação concluída (parece um agendamento ou uma operação pendente).",
+    "validacaoIndisponivel": "A validação automática de comprovativos ainda não está disponível.",
+    "comprovativoNaoChegou": "O ficheiro do comprovativo não chegou. Envia-o outra vez."
   },
   "legal": {
     "notaTraducao": "Esta tradução inglesa é disponibilizada por conveniência. Prevalece a versão portuguesa."

@@ -13,6 +13,7 @@ import {
   HeartHandshake,
   CalendarPlus,
   Stethoscope,
+  Receipt,
 } from "lucide-react";
 import {
   Sidebar,
@@ -36,6 +37,7 @@ const items = [
   { title: "Utilizadores", url: "/admin/utilizadores", icon: Users },
   { title: "Actividade", url: "/admin/atividade", icon: Activity },
   { title: "Mensagens & Pedidos", url: "/admin/mensagens", icon: Inbox },
+  { title: "Comprovativos", url: "/admin/comprovativos", icon: Receipt },
   { title: "Voluntariado", url: "/admin/voluntariado", icon: HeartHandshake },
   { title: "Agendamentos clínicos", url: "/admin/agendamentos", icon: CalendarPlus },
   { title: "Clínicas parceiras", url: "/admin/clinicas", icon: Stethoscope },

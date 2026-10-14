@@ -7,14 +7,18 @@ import i18n from "@/i18n";
 interface FileDropzoneProps {
   file: File | null;
   onFileChange: (file: File | null) => void;
+  /** Só PDF (ex.: validação instantânea do comprovativo, que precisa do
+   *  PDF original do banco). Por omissão aceita imagens e PDF. */
+  apenasPdf?: boolean;
 }
 
 const TIPOS_ACEITES = ["image/png", "image/jpeg", "image/webp", "application/pdf"];
+const TIPOS_PDF = ["application/pdf"];
 const TAMANHO_MAXIMO_BYTES = 5 * 1024 * 1024; // 5MB, igual ao indicado na UI
 
-const validarFicheiro = (file: File): string | null => {
-  if (!TIPOS_ACEITES.includes(file.type)) {
-    return i18n.t("FileDropzone.formatoNaoSuportadoEnvie");
+const validarFicheiro = (file: File, apenasPdf: boolean): string | null => {
+  if (!(apenasPdf ? TIPOS_PDF : TIPOS_ACEITES).includes(file.type)) {
+    return i18n.t(apenasPdf ? "FileDropzone.soPdfOriginal" : "FileDropzone.formatoNaoSuportadoEnvie");
   }
   if (file.size > TAMANHO_MAXIMO_BYTES) {
     return i18n.t("FileDropzone.oFicheiroExcedeO");
@@ -22,14 +26,14 @@ const validarFicheiro = (file: File): string | null => {
   return null;
 };
 
-const FileDropzone = ({ file, onFileChange }: FileDropzoneProps) => {
+const FileDropzone = ({ file, onFileChange, apenasPdf = false }: FileDropzoneProps) => {
   const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   const tentarSelecionar = (candidato: File | undefined | null) => {
     if (!candidato) return;
-    const erro = validarFicheiro(candidato);
+    const erro = validarFicheiro(candidato, apenasPdf);
     if (erro) {
       toast.error(erro);
       return;
@@ -112,7 +116,7 @@ const FileDropzone = ({ file, onFileChange }: FileDropzoneProps) => {
         ref={inputRef}
         type="file"
         className="hidden"
-        accept={TIPOS_ACEITES.join(",")}
+        accept={(apenasPdf ? TIPOS_PDF : TIPOS_ACEITES).join(",")}
         onChange={handleFileSelect}
         aria-hidden="true"
         tabIndex={-1}
@@ -126,7 +130,7 @@ const FileDropzone = ({ file, onFileChange }: FileDropzoneProps) => {
           {t("FileDropzone.cliqueOuArrastePara")}
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
-          {t("FileDropzone.pdfPngJpgOu")}
+          {t(apenasPdf ? "FileDropzone.soPdfAte5mb" : "FileDropzone.pdfPngJpgOu")}
         </p>
       </div>
     </div>

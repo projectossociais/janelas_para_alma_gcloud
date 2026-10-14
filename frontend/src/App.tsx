@@ -66,6 +66,7 @@ import AdminOverview from "./pages/admin/AdminOverview";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminAtividade from "./pages/admin/AdminAtividade";
 import AdminInbox from "./pages/admin/AdminInbox";
+import AdminComprovativos from "./pages/admin/AdminComprovativos";
 import AdminBanners from "./pages/admin/AdminBanners";
 import AdminNotifications from "./pages/admin/AdminNotifications";
 import AdminPublicacoes from "./pages/admin/AdminPublicacoes";
@@ -186,6 +187,7 @@ const App = () => (
                   <Route path="utilizadores" element={<AdminUsers />} />
                   <Route path="atividade" element={<AdminAtividade />} />
                   <Route path="mensagens" element={<AdminInbox />} />
+                  <Route path="comprovativos" element={<AdminComprovativos />} />
                   <Route path="banners" element={<AdminBanners />} />
                   <Route path="notificacoes" element={<AdminNotifications />} />
                   <Route path="publicacoes" element={<AdminPublicacoes />} />
