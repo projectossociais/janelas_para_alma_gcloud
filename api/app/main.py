@@ -24,6 +24,7 @@ from app.routers import (
     interno,
     jogo,
     notificacoes,
+    pagamentos,
     perfil,
     premium,
     publicacoes,
@@ -81,6 +82,8 @@ app.include_router(sessoes_exercicio.router)
 app.include_router(exercicios.router)
 app.include_router(contact_messages.router)
 app.include_router(premium.router)
+app.include_router(pagamentos.router)
+app.include_router(pagamentos.router_admin)
 app.include_router(admin.router)
 app.include_router(voluntariado.router)
 app.include_router(publicacoes.router)

@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session
 from app.repositories.orm_models import (
     AgendamentoClinico,
     CandidaturaVoluntariado,
+    ComprovativoPagamento,
     ContactMessage,
     PartilhaRelatorio,
     PremiumRequest,
@@ -102,6 +103,14 @@ class SQLAlchemyEliminacaoContaRepository:
             row.nome = nome_anonimo
             row.email = email_anonimo
             row.telefone = None
+
+        # Comprovativos de pagamento: o registo financeiro fica (montante,
+        # operação, hash -- o anti-replay depende deles), o texto do PDF com
+        # o nome e a conta de quem pagou não.
+        for row in self._sessao.scalars(
+            select(ComprovativoPagamento).where(ComprovativoPagamento.utilizador_id == id_)
+        ):
+            row.texto_extraido = None
 
         for row in self._sessao.scalars(
             select(AgendamentoClinico).where(AgendamentoClinico.utilizador_id == id_)

@@ -21,6 +21,9 @@ dependencies = [
     # google-auth. Só passou despercebido em dev porque outra biblioteca já
     # o tinha instalado por acaso; o CI, num ambiente limpo, apanhou logo.
     "requests>=2.32",
+    # Leitura dos comprovativos de pagamento em PDF (validação instantânea do
+    # Premium). `[crypto]` para abrir PDFs cifrados com password vazia.
+    "pypdf[crypto]>=5.0",
 ]
 
 [project.optional-dependencies]
