@@ -131,7 +131,9 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   que grava o comprovativo. Erro claro → rejeitado com o motivo; numa leitura por OCR, valor,
   destinatário e data errados vão para revisão em vez de rejeitar (o OCR pode ter lido mal);
   dúvida (layout novo, imagem desfocada, PDF regravado, campo ilegível, interbancária ainda
-  "aceite/em processamento", montante de mais de um mês) → `revisao_manual` e notificação aos
+  "aceite/registada/em processamento", montante de mais de um mês; "registada com sucesso"
+  numa transferência **dentro do mesmo banco** conta como liquidada — é como o BAI Directo
+  escreve uma operação já feita, confirmado com um comprovativo real em 2026-10-15) → `revisao_manual` e notificação aos
   admins — nunca aprovado por omissão. Tabela `comprovativos_pagamento` (uma linha por
   tentativa); anti-replay por índices únicos **parciais** (SHA-256 e referência, `estado <>
   'rejeitado'`) e, para capturas, `hash_perceptual` (dHash): uma imagem quase igual a outra

@@ -197,3 +197,41 @@ def em_bytes(img: Image.Image, formato: str = "PNG", software: str | None = None
 
 def desfocar(img: Image.Image, raio: int = 9) -> Image.Image:
     return img.filter(ImageFilter.GaussianBlur(raio))
+
+
+def linhas_bai_directo_real(
+    tipo_movimento: str = "Transferências Mesmo Banco",
+    estado: str = "A operação que efectuou foi registada com sucesso através do serviço BAI Directo.",
+    data: str = "14/10/2026 09:02:50",
+) -> list[str]:
+    """Layout de um comprovativo verdadeiro do BAI Directo (2026-10-15), com
+    os dados pessoais trocados por fictícios. O estado vem como "registada com
+    sucesso" e o tipo de movimento diz se é dentro do BAI ou interbancária."""
+    return [
+        "CHAVE: 100200300",
+        "PIN: 400500600",
+        estado,
+        "DE: JOAO EXEMPLO PAGADOR",
+        "IBAN: AO06 004000001111222233334",
+        "PARA: MARIA EXEMPLO TITULAR",
+        "IBAN: AO06 004000001234567890123",
+        "DADOS DO ORDENANTE",
+        "Nome: JOAO EXEMPLO PAGADOR",
+        "Conta / IBAN: 11112222333",
+        "Banco: Banco Angolano de Investimentos",
+        "DADOS DO BENEFICIÁRIO",
+        "Nome: MARIA EXEMPLO TITULAR",
+        "Conta / IBAN: AO06 004000001234567890123",
+        "Banco: Banco Angolano de Investimentos",
+        "DADOS DO MOVIMENTO",
+        "Movimento: 7100000001",
+        f"Data: {data}",
+        "Montante: Kz 15 000,00",
+        "Descritivo Ordenante: Transferencia a Debito BAIDirecto",
+        "Descritivo Beneficiário: Transferencia a Credito BAIDirecto",
+        "Número de Operação: 7100000001",
+        f"Tipo de Movimento: {tipo_movimento}",
+        f"Documento processado pelo BAI Directo em: {data}",
+        "Banco Angolano de Investimentos, S.A. SWIFT: BAIPAOLU",
+        "Capital Social integralmente realizado: Kz 157 545 000 000",
+    ]

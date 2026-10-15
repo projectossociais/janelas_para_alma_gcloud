@@ -16,6 +16,7 @@ from tests.services.pdf_falso import (
     desfocar,
     em_bytes,
     linhas_bai,
+    linhas_bai_directo_real,
     linhas_express,
 )
 from tests.services.test_validacao_comprovativo_service import (
@@ -375,3 +376,38 @@ def test_montante_em_formato_angolano_numa_captura(ambiente, ocr) -> None:
     servico, _, storage, *_ = ambiente
     reg = servico.validar(UTILIZADOR, _enviar(storage, _captura(ocr, linhas_express(montante="KZ 15,000.00"))))
     assert reg.montante_kz == Decimal("15000.00")
+
+
+# --- comprovativo real do BAI Directo (bug de 2026-10-15) ---------------------------
+
+
+def test_bai_directo_mesmo_banco_registada_com_sucesso_aprova(ambiente) -> None:
+    """Caso real em produção: o BAI Directo escreve "A operação que efectuou foi
+    registada com sucesso", e numa transferência dentro do BAI isso é uma
+    operação já liquidada. Ia para revisão como "aceite / em processamento"."""
+    servico, repo, storage, *_ = ambiente
+    pdf = criar_pdf(linhas_bai_directo_real(), producer="iText® 5.5.13.3 ©2000-2022 iText Group NV (AGPL-version)", creator=None)
+
+    reg = servico.validar(UTILIZADOR, _enviar(storage, pdf))
+
+    assert reg.estado == "aprovado", reg.motivo
+    assert reg.origem == "bai_directo"
+    assert reg.referencia_transacao == "7100000001"
+    assert reg.montante_kz == Decimal("15000.00")
+    assert repo.premium[UTILIZADOR] == AGORA + timedelta(days=30)
+
+
+def test_registada_com_sucesso_numa_interbancaria_continua_em_revisao(ambiente) -> None:
+    """Para outro banco, "registada" quer dizer que ainda não chegou ao BAI."""
+    servico, repo, storage, *_ = ambiente
+    linhas = linhas_bai_directo_real(tipo_movimento="Transferências Interbancárias")
+    reg = servico.validar(UTILIZADOR, _enviar(storage, criar_pdf(linhas)))
+    assert reg.estado == "revisao_manual"
+    assert "em processamento" in reg.motivo
+    assert UTILIZADOR not in repo.premium
+
+
+def test_mesmo_banco_mas_ainda_pendente_continua_em_revisao(ambiente) -> None:
+    servico, _, storage, *_ = ambiente
+    linhas = linhas_bai_directo_real() + ["Estado: Pendente"]
+    assert servico.validar(UTILIZADOR, _enviar(storage, criar_pdf(linhas))).estado == "revisao_manual"
