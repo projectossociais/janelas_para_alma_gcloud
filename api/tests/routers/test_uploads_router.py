@@ -25,6 +25,10 @@ BASE_PUBLICA = "https://cdn.exemplo.test"
 @pytest.fixture(autouse=True)
 def _base_publica(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(obter_settings(), "r2_public_base_url", BASE_PUBLICA)
+    # Modo antigo (bucket público) de propósito, independente de um .env
+    # local com R2_BUCKET_COMPROVATIVOS -- o modo privado testa-se em
+    # test_comprovativo_upload_service.py.
+    monkeypatch.setattr(obter_settings(), "r2_bucket_comprovativos", "")
 
 
 @pytest.fixture

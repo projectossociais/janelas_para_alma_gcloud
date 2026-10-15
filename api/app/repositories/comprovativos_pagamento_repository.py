@@ -26,6 +26,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.repositories.orm_models import ComprovativoPagamento, Utilizador
+from app.services.comprovativo_texto import extrair_validacao_bai
 
 # Recebe a validade actual do Premium (None se não estiver activo) e devolve
 # a nova (None = desliga o Premium).
@@ -73,6 +74,16 @@ class ComprovativoRegisto:
     decidido_por: str | None
     decidido_em: datetime | None
     criado_em: datetime
+
+    # Lidas do texto guardado, não de colunas: a anonimização da conta apaga
+    # o texto e, com ele, isto (sem migração nem dados duplicados).
+    @property
+    def chave_validacao_bai(self) -> str | None:
+        return extrair_validacao_bai(self.texto_extraido)[0]
+
+    @property
+    def pin_validacao_bai(self) -> str | None:
+        return extrair_validacao_bai(self.texto_extraido)[1]
 
 
 class ComprovativoDuplicadoError(Exception):

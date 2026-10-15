@@ -37,6 +37,8 @@ const base = {
   decidido_por: null,
   decidido_em: null,
   criado_em: "2026-10-14T08:30:00Z",
+  chave_validacao_bai: null,
+  pin_validacao_bai: null,
 };
 
 describe("AdminComprovativos", () => {
@@ -79,5 +81,23 @@ describe("AdminComprovativos", () => {
     listar.mockRejectedValue(new Error("x"));
     render(<AdminComprovativos />);
     await waitFor(() => expect(toastErro).toHaveBeenCalledWith("Não foi possível carregar os comprovativos."));
+  });
+
+  it("mostra a CHAVE e o PIN do BAI em destaque, com atalho para validar no site do BAI", async () => {
+    listar.mockResolvedValue([
+      { ...base, id: "c-3", estado: "revisao_manual", chave_validacao_bai: "100200300", pin_validacao_bai: "400500600" },
+      { ...base, id: "c-4", estado: "revisao_manual" },
+    ]);
+    render(<AdminComprovativos />);
+
+    const blocos = await screen.findAllByTestId("validacao-bai");
+    expect(blocos).toHaveLength(1); // só o comprovativo que os tem
+    expect(screen.getByText("100200300")).toBeInTheDocument();
+    expect(screen.getByText("400500600")).toBeInTheDocument();
+    const atalho = screen.getByRole("link", { name: /Abrir o site do BAI/ });
+    expect(atalho).toHaveAttribute("href", "https://www.bancobai.ao/");
+    expect(atalho).toHaveAttribute("target", "_blank");
+    expect(atalho).toHaveAttribute("rel", "noopener noreferrer");
+    expect(screen.getByRole("button", { name: "Copiar CHAVE" })).toBeInTheDocument();
   });
 });

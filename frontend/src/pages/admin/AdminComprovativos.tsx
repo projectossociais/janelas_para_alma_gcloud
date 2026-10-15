@@ -20,7 +20,7 @@ import {
   type EstadoComprovativo,
 } from "@/lib/apiClient";
 import { toast } from "sonner";
-import { Check, Eye, FileText, Undo2, X } from "lucide-react";
+import { Check, Copy, ExternalLink, Eye, FileText, ShieldCheck, Undo2, X } from "lucide-react";
 
 const FILTROS: { valor: EstadoComprovativo | "todos"; rotulo: string }[] = [
   { valor: "revisao_manual", rotulo: "Por confirmar" },
@@ -51,6 +51,53 @@ const ORIGEM: Record<string, string> = {
   caixa_angola: "Caixa Geral Angola",
   outro: "Origem desconhecida",
 };
+
+/** Onde o BAI confirma se um comprovativo foi mesmo emitido por ele: o próprio
+ *  comprovativo manda ir a www.bancobai.ao → "Validar Documentos". Trocar
+ *  aqui pelo endereço exacto dessa página quando estiver confirmado. */
+export const URL_VALIDAR_DOCUMENTOS_BAI = "https://www.bancobai.ao/";
+
+const copiar = async (valor: string, rotulo: string) => {
+  try {
+    await navigator.clipboard.writeText(valor);
+    toast.success(`${rotulo} copiado.`);
+  } catch {
+    toast.error("Não foi possível copiar.");
+  }
+};
+
+/** CHAVE e PIN em destaque, com cópia num clique e o atalho para o BAI --
+ *  a conferência que prova o pagamento sem abrir o extracto. */
+const ValidacaoBai = ({ chave, pin }: { chave: string; pin: string }) => (
+  <div className="rounded-lg border-2 border-teal/40 bg-teal/5 p-3 space-y-2" data-testid="validacao-bai">
+    <p className="flex items-center gap-2 font-semibold text-foreground">
+      <ShieldCheck className="w-4 h-4 text-teal" /> Validar no BAI
+    </p>
+    <div className="grid gap-2 sm:grid-cols-2">
+      {([["CHAVE", chave], ["PIN", pin]] as const).map(([rotulo, valor]) => (
+        <div key={rotulo} className="flex items-center justify-between gap-2 rounded-md bg-background px-3 py-2">
+          <div>
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{rotulo}</p>
+            <p className="font-mono text-base font-bold tracking-wider">{valor}</p>
+          </div>
+          <Button size="sm" variant="ghost" aria-label={`Copiar ${rotulo}`} onClick={() => void copiar(valor, rotulo)}>
+            <Copy className="w-4 h-4" />
+          </Button>
+        </div>
+      ))}
+    </div>
+    <div className="flex flex-wrap items-center gap-2">
+      <Button size="sm" asChild>
+        <a href={URL_VALIDAR_DOCUMENTOS_BAI} target="_blank" rel="noopener noreferrer">
+          <ExternalLink className="w-4 h-4" /> Abrir o site do BAI
+        </a>
+      </Button>
+      <span className="text-xs text-muted-foreground">
+        Escolhe «Validar Documentos» e insere a chave e o PIN acima.
+      </span>
+    </div>
+  </div>
+);
 
 const kz = (v: string | null) =>
   v === null ? "—" : `${Number(v).toLocaleString("pt-PT", { minimumFractionDigits: 2 })} Kz`;
@@ -198,6 +245,9 @@ const AdminComprovativos = () => {
                   )}
                 </dl>
                 {c.motivo && <p className="rounded-md bg-muted/50 p-2 text-muted-foreground">{c.motivo}</p>}
+                {c.chave_validacao_bai && c.pin_validacao_bai && (
+                  <ValidacaoBai chave={c.chave_validacao_bai} pin={c.pin_validacao_bai} />
+                )}
                 <div className="flex flex-wrap gap-2">
                   <Button size="sm" variant="outline" onClick={() => void abrirPdf(c.id)}>
                     <FileText className="w-4 h-4" /> Ver ficheiro

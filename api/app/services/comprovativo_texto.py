@@ -330,12 +330,45 @@ _ESTADO_SUCESSO = re.compile(
 )
 
 
+# Dentro do mesmo banco não há compensação interbancária: o BAI Directo
+# escreve "A operação que efectuou foi registada com sucesso" numa
+# transferência já liquidada (comprovativo real, 2026-10-15). Só aí
+# "registada com sucesso" deixa de ser "em processamento".
+_INTRABANCARIA = re.compile(r"\bMESMO\s+BANCO\b|\bINTRABANCARI[AO]S?\b|\bINTRA-BANCARI[AO]S?\b")
+_REGISTADA_COM_SUCESSO = re.compile(r"\bREGISTAD[AO]\s+COM\s+SUCESSO\b")
+
+
 def extrair_estado(texto_normalizado: str) -> str | None:
     """`concluida`, `nao_concluida`, `em_processamento` ou None (não diz)."""
     if _ESTADO_FALHADO.search(texto_normalizado):
         return ESTADO_NAO_CONCLUIDA
+    if _INTRABANCARIA.search(texto_normalizado):
+        # Tira só a frase "registada com sucesso": qualquer outro sinal de
+        # pendente (ex.: "Pendente", "Em processamento") continua a contar.
+        texto_normalizado = _REGISTADA_COM_SUCESSO.sub("SUCESSO", texto_normalizado)
     if _ESTADO_EM_PROCESSAMENTO.search(texto_normalizado):
         return ESTADO_EM_PROCESSAMENTO
     if _ESTADO_SUCESSO.search(texto_normalizado):
         return ESTADO_CONCLUIDA
     return None
+
+
+# --- verificação oficial do BAI -------------------------------------------------
+
+_CHAVE_BAI = re.compile(r"(?:^|\n)\s*CHAVE\s*:?\s*(\d{6,20})\b")
+_PIN_BAI = re.compile(r"(?:^|\n)\s*PIN\s*:?\s*(\d{4,20})\b")
+
+
+def extrair_validacao_bai(texto: str | None) -> tuple[str | None, str | None]:
+    """CHAVE e PIN que o BAI imprime no topo dos comprovativos do BAI Directo:
+    em www.bancobai.ao → "Validar Documentos", confirmam se o documento foi
+    mesmo emitido pelo banco -- a única verificação que prova o pagamento sem
+    abrir o extracto. Só para o admin conferir; não decide nada sozinha.
+    Ambos ou nenhum: um sem o outro não serve para validar."""
+    if not texto:
+        return None, None
+    normalizado = normalizar(texto)
+    chave, pin = _CHAVE_BAI.search(normalizado), _PIN_BAI.search(normalizado)
+    if not (chave and pin):
+        return None, None
+    return chave.group(1), pin.group(1)

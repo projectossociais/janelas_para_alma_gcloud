@@ -131,7 +131,9 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   que grava o comprovativo. Erro claro → rejeitado com o motivo; numa leitura por OCR, valor,
   destinatário e data errados vão para revisão em vez de rejeitar (o OCR pode ter lido mal);
   dúvida (layout novo, imagem desfocada, PDF regravado, campo ilegível, interbancária ainda
-  "aceite/em processamento", montante de mais de um mês) → `revisao_manual` e notificação aos
+  "aceite/registada/em processamento", montante de mais de um mês; "registada com sucesso"
+  numa transferência **dentro do mesmo banco** conta como liquidada — é como o BAI Directo
+  escreve uma operação já feita, confirmado com um comprovativo real em 2026-10-15) → `revisao_manual` e notificação aos
   admins — nunca aprovado por omissão. Tabela `comprovativos_pagamento` (uma linha por
   tentativa); anti-replay por índices únicos **parciais** (SHA-256 e referência, `estado <>
   'rejeitado'`) e, para capturas, `hash_perceptual` (dHash): uma imagem quase igual a outra
@@ -140,7 +142,10 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   nunca bloqueia. Ficheiros num bucket R2 **privado** (`r2_bucket_comprovativos`). **Limite
   conhecido:** ler o ficheiro não prova que o dinheiro entrou — um PDF ou uma captura forjados
   com cuidado passam; por isso os aprovados automáticos ficam em `/admin/comprovativos` para
-  conferir no extracto e revogar (tira só os 30 dias desse comprovativo), e
+  conferir no extracto e revogar (tira só os 30 dias desse comprovativo). Nos comprovativos do
+  BAI Directo, o painel mostra a **CHAVE e o PIN** que o BAI imprime no documento, com atalho
+  para "Validar Documentos" em bancobai.ao — a verificação oficial de que o documento é do banco
+  (lidas do texto guardado, sem coluna própria; desaparecem com a anonimização), e
   `PAYMENT_AUTO_APROVACAO=false` / `PAYMENT_AUTO_APROVAR_IMAGENS=false` mandam tudo (ou só as
   imagens) para revisão manual; `PAYMENT_ACEITAR_INTERBANCARIO_PENDENTE=true` aprova uma
   interbancária "aceite" do próprio dia. O plano anual continua manual (`premium_requests`)
