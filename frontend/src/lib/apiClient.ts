@@ -898,6 +898,10 @@ export interface ComprovativoPagamentoAdmin {
   decidido_por: string | null;
   decidido_em: string | null;
   criado_em: string;
+  /** CHAVE e PIN do BAI Directo para "Validar Documentos" em bancobai.ao
+   *  (null quando o comprovativo não os tem). */
+  chave_validacao_bai: string | null;
+  pin_validacao_bai: string | null;
 }
 
 export interface ComprovativoPagamentoDetalhe extends ComprovativoPagamentoAdmin {

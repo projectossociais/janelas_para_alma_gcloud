@@ -57,6 +57,11 @@ class ComprovativoAdmin(BaseModel):
     decidido_por: str | None
     decidido_em: datetime | None
     criado_em: datetime
+    # CHAVE e PIN do BAI Directo para "Validar Documentos" em bancobai.ao
+    # (só quando o comprovativo os tem). Só admin -- este schema nunca chega
+    # ao utilizador.
+    chave_validacao_bai: str | None = None
+    pin_validacao_bai: str | None = None
 
     model_config = {"from_attributes": True}
 

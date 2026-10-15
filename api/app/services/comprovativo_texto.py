@@ -351,3 +351,24 @@ def extrair_estado(texto_normalizado: str) -> str | None:
     if _ESTADO_SUCESSO.search(texto_normalizado):
         return ESTADO_CONCLUIDA
     return None
+
+
+# --- verificação oficial do BAI -------------------------------------------------
+
+_CHAVE_BAI = re.compile(r"(?:^|\n)\s*CHAVE\s*:?\s*(\d{6,20})\b")
+_PIN_BAI = re.compile(r"(?:^|\n)\s*PIN\s*:?\s*(\d{4,20})\b")
+
+
+def extrair_validacao_bai(texto: str | None) -> tuple[str | None, str | None]:
+    """CHAVE e PIN que o BAI imprime no topo dos comprovativos do BAI Directo:
+    em www.bancobai.ao → "Validar Documentos", confirmam se o documento foi
+    mesmo emitido pelo banco -- a única verificação que prova o pagamento sem
+    abrir o extracto. Só para o admin conferir; não decide nada sozinha.
+    Ambos ou nenhum: um sem o outro não serve para validar."""
+    if not texto:
+        return None, None
+    normalizado = normalizar(texto)
+    chave, pin = _CHAVE_BAI.search(normalizado), _PIN_BAI.search(normalizado)
+    if not (chave and pin):
+        return None, None
+    return chave.group(1), pin.group(1)

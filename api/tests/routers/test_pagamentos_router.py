@@ -13,7 +13,7 @@ from app.repositories.utilizadores_repository import UtilizadorRegisto
 from app.routers import pagamentos as pagamentos_router
 from app.services.auth_service import AuthService
 from app.services.validacao_comprovativo_service import ValidacaoComprovativoService
-from tests.services.pdf_falso import criar_pdf, linhas_bai
+from tests.services.pdf_falso import criar_pdf, linhas_bai, linhas_bai_directo_real
 from tests.services.test_auth_service import RepositorioFalso as RepositorioAuthFalso
 from tests.services.test_validacao_comprovativo_service import (
     AGORA,
@@ -193,6 +193,8 @@ def test_admin_lista_filtra_e_ve_o_detalhe(ambiente) -> None:
     assert [r["motivo_codigo"] for r in rejeitados] == ["valor_insuficiente"]
     assert c.get("/admin/comprovativos-pagamento?estado=inventado").status_code == 422
 
+    # Comprovativos sem CHAVE/PIN do BAI trazem os campos a null.
+    assert todos[0]["chave_validacao_bai"] is None and todos[0]["pin_validacao_bai"] is None
     detalhe = c.get(f"/admin/comprovativos-pagamento/{todos[0]['id']}").json()
     assert "Montante" in detalhe["texto_extraido"]
     assert detalhe["metadados_ficheiro"]["Producer"] == "BAI Directo"
@@ -218,3 +220,11 @@ def test_admin_aprova_rejeita_e_revoga(ambiente) -> None:
     assert r.status_code == 200 and r.json()["estado"] == "revogado"
     assert repo.premium["id-comum"] is None
     assert c.post("/admin/comprovativos-pagamento/nao-existe/aprovar").status_code == 404
+
+
+def test_lista_do_admin_mostra_chave_e_pin_do_bai_directo(ambiente) -> None:
+    c, _, storage, token_admin, token = ambiente
+    _validar(c, token, _enviar(storage, criar_pdf(linhas_bai_directo_real())))
+    c.cookies.set("access_token", token_admin)
+    item = c.get("/admin/comprovativos-pagamento").json()[0]
+    assert (item["chave_validacao_bai"], item["pin_validacao_bai"]) == ("100200300", "400500600")
