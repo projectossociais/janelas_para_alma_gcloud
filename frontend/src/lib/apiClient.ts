@@ -510,7 +510,7 @@ export const comprovativosApi = {
 };
 
 /** Unidade do `limiar` de uma sessão de exercício (versão 2). */
-export type UnidadeLimiar = "logmar" | "log_cs" | "arcsec" | "segundos" | "dioptrias_prismaticas";
+export type UnidadeLimiar = "logmar" | "log_cs" | "arcsec" | "segundos" | "dioptrias_prismaticas" | "razao_contraste";
 
 export interface SessaoExercicioInput {
   exercicio_id: string;

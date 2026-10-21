@@ -85,7 +85,8 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   nem MediaPipe** (o scanner é outro produto e continua a usá-los). **8, todos pagos** (desde
   2026-09-23). Os ids históricos mantêm-se (acesso e preços iguais), mas quatro mudaram de
   significado — `sessoes_exercicio.versao` separa as sessões antigas (1) das novas (2):
-  teste de 7 dias = `figure8` Teste de Acuidade, `ambliopia` Treino de Anéis com tapa-olho,
+  teste de 7 dias = `figure8` Teste de Acuidade, `ambliopia` **Kianda** (desde 2026-10-20: com
+  óculos 3D, jogo dicóptico; sem óculos, o Treino de Anéis com tapa-olho de sempre),
   `cerebro` Teste de Contraste, `relax` Teste de Astigmatismo; só Premium = `estereopsia`
   Teste de Estereopsia, `convergence` **Pontes de Fusão** (desde 2026-10-20; antes, Treino
   de Convergência auto-declarado, "Vejo 1 / Vejo 2", em segundos), `sacadas-convergencia` Treino de Contraste em blocos,
@@ -510,6 +511,17 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   `convergence` (unidade "segundos") continuam a contar como auto-avaliação; as novas não
   (`eAutoAvaliacao`). Sem ver a forma a 0 Δ não há treino (precisa de alguma visão 3D).
   Na esotropia não se treina a convergência: a pessoa escolhe "Só divergência".
+- **Kianda (2026-10-20): treino dicóptico com contraste reequilibrado.** Modo com óculos 3D:
+  o olho mais fraco vê os peixes (escamas em Gabor: aprendizagem perceptual de orientação), o
+  mais forte vê as rochas com contraste reduzido; rondas de 10 peixes sobem ou descem esse
+  contraste (`lib/visao/kianda.ts`). As duas imagens desenham-se em cinzentos, uma por olho,
+  e juntam-se por tabela (`tabelaDosOlhos`, com a afinação dos óculos). `unidade =
+  "razao_contraste"` (contraste do olho forte sustentado, 0 a 1), `olho = "ambos"`,
+  `sinais.modo = "dicoptico"`. O jogo anda com um **relógio próprio** (não o de parede):
+  com o de parede, imagens lentas faziam nascer peixes mais depressa do que nadavam. Modo
+  sem óculos: o Treino de Anéis inalterado -- é a série em logMAR que alimenta a tendência
+  e o destaque do fim do trial, e não deve ser misturada com a razão de contraste.
+  `AssistenteTreino` tem `olhoFraco` (pergunta o olho sem tapa-olho) para isto.
 - **Tamanhos físicos, não píxeis soltos.** Todo o estímulo é calculado em ângulo visual a
   partir de `pxPorMm` (calibração com cartão de banco) e da distância; níveis abaixo de
   1,4 px de dispositivo descartam-se (`geometria.ts`). O "palco" (`PalcoVisual`) é sempre

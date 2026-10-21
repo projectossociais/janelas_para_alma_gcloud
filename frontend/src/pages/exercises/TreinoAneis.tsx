@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import AnelLandolt from "@/components/visao/AnelLandolt";
 import AssistenteTreino, { type ContextoTreino } from "@/components/visao/AssistenteTreino";
-import PaginaExercicio from "@/components/visao/PaginaExercicio";
 import { RequisitoTeste, ultimaDoTeste } from "@/components/visao/RequisitoTeste";
 import TarefaAnelTreino from "@/components/visao/TarefaAnelTreino";
 import { formatarDecimal, separadorDecimal } from "@/i18n/formatar";
@@ -19,10 +18,16 @@ const niveisTreinoAcuidade = (ctx: ContextoTreino) =>
     (l) => aberturaPx(l, ctx.distanciaMm, ctx.pxPorMm) * 5 <= DIAMETRO_MAX_PX,
   );
 
+/**
+ * Treino de Anéis com tapa-olho: o modo "sem óculos 3D" do Kianda
+ * (`Kianda.tsx`, que põe a página à volta). Mantém-se igual -- é a série em
+ * logMAR do olho fraco que alimenta a tendência e o destaque do fim do
+ * período de teste.
+ */
 const TreinoAneis = () => {
   const { t } = useTranslation();
   return (
-    <PaginaExercicio>
+    <>
       <AssistenteTreino
         exercicioId={EXERCICIO_ID}
         grupo="trial"
@@ -68,7 +73,7 @@ const TreinoAneis = () => {
           );
         }}
       />
-    </PaginaExercicio>
+    </>
   );
 };
 
