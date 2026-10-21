@@ -3,8 +3,9 @@
  * do Programa Olhos Juntos. Junta numa página o que as outras peças medem,
  * nas unidades do consultório: acuidade com aglomeração por olho e diferença
  * em linhas (Olhos de Palanca), sensibilidade ao contraste, estereoacuidade,
- * amplitudes de vergência em Δ (Pontes de Fusão), o contraste do olho forte
- * que o olho fraco aguenta (Kianda) e a adesão ao treino.
+ * amplitudes de vergência em Δ (Olho Mágico sem óculos, ou Pontes de Fusão),
+ * o Kianda (com tapa-olho: a inclinação que o olho fraco distingue; com
+ * óculos 3D: o contraste do olho forte que o olho fraco aguenta) e a adesão.
  *
  * Para cada medida: o resultado mais recente, o primeiro do período e as
  * condições da medição mais recente (distância medida ou só indicada, ecrã
@@ -74,9 +75,22 @@ export interface ResumoKianda extends Resumo<ValorKianda> {
   olhoFraco: Olho | null;
 }
 
+export interface ValorPesca {
+  /** Diferença de inclinação que o olho fraco distingue; `null` sem peixes apanhados. */
+  graus: number | null;
+  nivel: number | null;
+}
+
+export interface ResumoPesca extends Resumo<ValorPesca> {
+  /** O olho treinado (o outro estava tapado). */
+  olho: Olho | null;
+}
+
 export interface ResumoVergencia {
   sentidos: Partial<Record<Sentido, { recente: Medicao<ResumoSentido>; primeira: Medicao<ResumoSentido> | null }>>;
   condicoes: Condicoes;
+  /** A medição mais recente foi sem óculos (Olho Mágico, fusão livre). */
+  fusaoLivre: boolean;
 }
 
 export interface Adesao {
@@ -98,6 +112,8 @@ export interface ResumoClinico {
   estereopsia: Resumo<number | null> | null;
   vergencia: ResumoVergencia | null;
   kianda: ResumoKianda | null;
+  /** Kianda com tapa-olho. */
+  pesca: ResumoPesca | null;
   adesao: Adesao;
   /** Datas das sessões em que a pessoa disse ver a dobrar, da mais antiga para a mais recente. */
   diplopia: string[];
@@ -203,7 +219,9 @@ function resumoVergencia(sessoes: readonly S[]): ResumoVergencia | null {
     for (const s of pontes) if (lerSentido(s, sentido)) medidas.push(s);
   }
   for (const s of medidas) if (!maisRecente || s.created_at > maisRecente.created_at) maisRecente = s;
-  return maisRecente ? { sentidos, condicoes: condicoes(maisRecente, diasDistintos(medidas)) } : null;
+  if (!maisRecente) return null;
+  const recente: S = maisRecente;
+  return { sentidos, condicoes: condicoes(recente, diasDistintos(medidas)), fusaoLivre: recente.sinais?.modo === "fusao_livre" };
 }
 
 const eOlho = (v: unknown): v is Olho => v === "direito" || v === "esquerdo";
@@ -219,6 +237,14 @@ function resumoKianda(sessoes: readonly S[]): ResumoKianda | null {
   if (!r) return null;
   const olho = dicopticas[dicopticas.length - 1].sinais?.olho_fraco;
   return { ...r, olhoFraco: eOlho(olho) ? olho : null };
+}
+
+function resumoPesca(sessoes: readonly S[]): ResumoPesca | null {
+  const daPesca = sessoes.filter((s) => s.exercicio_id === ID_ANEIS && s.unidade === "graus" && s.sinais?.modo === "tapa_olho");
+  const r = resumir<ValorPesca>(daPesca, (s) => ({ graus: numero(s.limiar), nivel: numero(s.sinais?.nivel) }));
+  if (!r) return null;
+  const olho = daPesca[daPesca.length - 1].olho;
+  return { ...r, olho: eOlho(olho) ? olho : null };
 }
 
 function adesao(sessoes: readonly S[], hoje: Date): Adesao {
@@ -248,6 +274,7 @@ export function resumoClinico(sessoes: readonly S[], hoje: Date): ResumoClinico 
     estereopsia: resumir(de(ID_ESTEREOPSIA), (s) => (s.unidade === "arcsec" ? numero(s.limiar) : undefined)),
     vergencia: resumoVergencia(fiaveis),
     kianda: resumoKianda(fiaveis),
+    pesca: resumoPesca(fiaveis),
     adesao: adesao(sessoes, hoje),
     diplopia: doPeriodo.filter((s) => s.sinais?.diplopia_reportada === true).map((s) => s.created_at),
   };
@@ -255,4 +282,4 @@ export function resumoClinico(sessoes: readonly S[], hoje: Date): ResumoClinico 
 
 /** Há alguma medida para mostrar (fora a adesão)? */
 export const temMedicoes = (r: ResumoClinico): boolean =>
-  !!(r.acuidade || r.contraste || r.astigmatismo || r.estereopsia || r.vergencia || r.kianda);
+  !!(r.acuidade || r.contraste || r.astigmatismo || r.estereopsia || r.vergencia || r.kianda || r.pesca);

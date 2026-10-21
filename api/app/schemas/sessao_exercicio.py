@@ -9,9 +9,12 @@ OlhoSessao = Literal["direito", "esquerdo", "ambos"]
 # contraste, segundos de arco (estereopsia), segundos (perto e longe, e a
 # convergência antiga), dioptrias prismáticas (Pontes de Fusão, desde
 # 2026-10-20: rotura de vergência), razão de contraste entre os olhos (Kianda
-# com óculos 3D: contraste do olho forte que o olho fraco aguenta, 0 a 1). O
-# astigmatismo não tem limiar -- é Sim/Não, vai em `sinais`.
-UnidadeLimiar = Literal["logmar", "log_cs", "arcsec", "segundos", "dioptrias_prismaticas", "razao_contraste"]
+# com óculos 3D: contraste do olho forte que o olho fraco aguenta, 0 a 1),
+# graus (Kianda com tapa-olho, desde 2026-10-21: diferença de inclinação das
+# riscas que o olho fraco distingue). O Olho Mágico (sem óculos) grava em
+# dioptrias prismáticas, como as Pontes. O astigmatismo não tem limiar -- é
+# Sim/Não, vai em `sinais`.
+UnidadeLimiar = Literal["logmar", "log_cs", "arcsec", "segundos", "dioptrias_prismaticas", "razao_contraste", "graus"]
 
 
 class SessaoExercicioCriar(BaseModel):

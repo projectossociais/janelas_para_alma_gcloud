@@ -28,6 +28,15 @@ describe("tendencia (evolução em linguagem simples)", () => {
     expect(r).toMatchObject({ tipo: "melhorou", unidade: "logmar", passos: 2, dias: 21, aproximado: false });
   });
 
+  it("Kianda com tapa-olho (graus): menos graus é melhoria, e os anéis antigos não entram", () => {
+    const pesca = (dia: number, graus: number) =>
+      sessao(dia, graus, { exercicio_id: "ambliopia", unidade: "graus", sinais: { modo: "tapa_olho" } });
+    const aneis = sessao(1, 0.2, { exercicio_id: "ambliopia" });
+    const r = tendencia([aneis, pesca(2, 30), pesca(9, 20)], "ambliopia", "esquerdo");
+    expect(r).toMatchObject({ tipo: "melhorou", unidade: "graus", inicio: 30, actual: 20, passos: 3 });
+    expect(tendencia([pesca(2, 20), pesca(9, 22)], "ambliopia", "esquerdo")).toMatchObject({ tipo: "estavel" });
+  });
+
   it("variação menor do que uma linha é 'estável' -- nunca promete melhoria que é ruído", () => {
     const r = tendencia([sessao(1, 0.5), sessao(5, 0.45)], "figure8", "esquerdo");
     expect(r).toMatchObject({ tipo: "estavel", passos: 0 });

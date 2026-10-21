@@ -1,6 +1,5 @@
 import {
   NIVEIS_TESTE_ACUIDADE,
-  NIVEIS_TREINO_ACUIDADE,
   aberturaPx,
   arcminParaMm,
   arcsegParaPx,
@@ -32,8 +31,6 @@ describe("geometria", () => {
 
   it("níveis do teste: 1,0 a -0,1 em passos de 0,1, sem erros de vírgula flutuante", () => {
     expect(NIVEIS_TESTE_ACUIDADE).toEqual([1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0, -0.1]);
-    expect(NIVEIS_TREINO_ACUIDADE).toHaveLength(23);
-    expect(NIVEIS_TREINO_ACUIDADE[1]).toBe(0.95);
   });
 
   it("desenhável só a partir de 1,4 px de dispositivo", () => {

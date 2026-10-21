@@ -192,4 +192,13 @@ describe("sessoesDoGrafico (gráfico do progresso)", () => {
     ];
     expect(sessoesDoGrafico(lista, "ambliopia").map((s) => s.limiar)).toEqual([0.4, 0.2]);
   });
+
+  it("Kianda: depois da pesca (graus), os anéis antigos (logMAR) saem do gráfico", async () => {
+    const { sessoesDoGrafico } = await import("./progresso");
+    const lista = [
+      sessao({ created_at: "2026-10-01T10:00:00Z", limiar: 0.4 }),
+      sessao({ created_at: "2026-10-21T10:00:00Z", limiar: 18, unidade: "graus", sinais: { modo: "tapa_olho" } }),
+    ];
+    expect(sessoesDoGrafico(lista, "ambliopia").map((s) => s.unidade)).toEqual(["graus"]);
+  });
 });

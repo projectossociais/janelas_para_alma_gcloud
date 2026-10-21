@@ -93,6 +93,8 @@ export const limiarFormatado = (
       return `log CS ${formatarDecimal(limiar, 2)}`;
     case "arcsec":
       return `${limiar}″`;
+    case "graus":
+      return `${formatarDecimal(limiar, limiar % 1 ? 1 : 0)}°`;
     case "segundos":
       return i18n.t("Visao.segundosCurto", { valor: formatarDecimal(limiar, limiar % 1 ? 1 : 0) });
     default:

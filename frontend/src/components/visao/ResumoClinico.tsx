@@ -23,6 +23,7 @@ import {
   type PorOlho,
   type Resumo,
   type ValorKianda,
+  type ValorPesca,
 } from "@/lib/visao/resumoClinico";
 
 // Mesmo estilo do resto do relatório (ConteudoRelatorio): preto sobre branco,
@@ -113,12 +114,16 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
     ]
       .filter(Boolean)
       .join(" · ");
+  const pesca = (v: ValorPesca) =>
+    v.graus === null
+      ? t("Visao.clinicoPescaSemLimiar")
+      : t("Visao.clinicoPescaValor", { graus: formatarDecimal(v.graus, v.graus % 1 ? 1 : 0), nivel: v.nivel ?? "–" });
   const sentido = (nome: string, m: Medicao<ResumoSentido>, chave: string) =>
     `${nome} · ${t(chave, { data: formatarData(m.data), valor: rotuloRoturaRecuperacao(m.valor) })}`;
 
   const { adesao } = r;
   const totalDias = SEMANAS_ADESAO * 7;
-  const medicaoComDistancia = [r.acuidade, r.contraste, r.estereopsia, r.vergencia, r.kianda].some(
+  const medicaoComDistancia = [r.acuidade, r.contraste, r.estereopsia, r.vergencia, r.kianda, r.pesca].some(
     (m) => m?.condicoes.distanciaMedida,
   );
 
@@ -177,6 +182,17 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
             condicoes={textoCondicoes(t, r.vergencia.condicoes)}
           />
         )}
+        {r.pesca && (
+          <Medida
+            titulo={t("Visao.clinicoPesca")}
+            exercicio={nomeDoExercicio(ID_ANEIS)}
+            linhas={[
+              ...(r.pesca.olho ? [t("Visao.clinicoPescaOlho", { olho: abrevOlho(t, r.pesca.olho) })] : []),
+              ...recenteEPrimeira(t, r.pesca, pesca),
+            ]}
+            condicoes={textoCondicoes(t, r.pesca.condicoes)}
+          />
+        )}
         {r.kianda && (
           <Medida
             titulo={t("Visao.clinicoKianda")}
@@ -218,7 +234,10 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
             <p>{r.acuidade.aglomeracao ? t("Visao.clinicoMetodoAcuidadeAglomeracao") : t("Visao.clinicoMetodoAcuidade")}</p>
           )}
           {r.estereopsia && <p>{t("Visao.clinicoMetodoEstereo")}</p>}
-          {r.vergencia && <p>{t("Visao.clinicoMetodoVergencia")}</p>}
+          {r.vergencia && (
+            <p>{r.vergencia.fusaoLivre ? t("Visao.clinicoMetodoFusaoLivre") : t("Visao.clinicoMetodoVergencia")}</p>
+          )}
+          {r.pesca && <p>{t("Visao.clinicoMetodoPesca")}</p>}
           {r.kianda && <p>{t("Visao.clinicoMetodoKianda")}</p>}
           {medicaoComDistancia && <p>{t("Visao.clinicoMetodoDistancia")}</p>}
         </div>

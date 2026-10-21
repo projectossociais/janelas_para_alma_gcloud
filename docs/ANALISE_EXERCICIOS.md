@@ -99,6 +99,12 @@ o médico por **link temporário partilhado pelo pai** (nunca envio automático)
       com as sessões com barras. **A validar na Fase 1:** concordância com a acuidade com
       aglomeração do consultório (ex.: optótipos rodeados de barras) e se os limiares de sinal
       (pior do que 6/9; diferença de 2 linhas) devem mudar com as barras, sobretudo em crianças.
+- [x] **Sem óculos primeiro** (2026-10-21, pedido do dono do projecto: a maior parte das
+      famílias não tem óculos 3D). **Kianda com tapa-olho** (pesca a cores, em graus) substitui
+      o Treino de Anéis; **Olho Mágico** (fusão livre, em Δ) passa a ser o `convergence`, com
+      as Pontes como opção com óculos. **A validar:** se as crianças aprendem a juntar as
+      imagens sem óculos (e com que idade), a concordância do Olho Mágico com a régua de
+      prismas, e a dose do Kianda com tapa-olho.
 - [x] **Relatório clínico** (2026-10-21), último passo da Vaga 1: resumo de 90 dias no topo do
       relatório (ecrã do pai e link do médico), com o mais recente, o primeiro e as condições
       de cada medida, a adesão em 4 semanas e os relatos de visão dupla. **A validar com a

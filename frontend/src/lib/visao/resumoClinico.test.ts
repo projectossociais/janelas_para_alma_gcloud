@@ -170,6 +170,34 @@ describe("Kianda", () => {
   });
 });
 
+describe("Kianda com tapa-olho e Olho Mágico (sem óculos)", () => {
+  const pesca = (dias: number, graus: number | null, nivel: number) =>
+    sessao({
+      exercicio_id: "ambliopia",
+      created_at: haDias(dias),
+      olho: "esquerdo",
+      limiar: graus,
+      unidade: "graus",
+      segundos_activos: 360,
+      sinais: { modo: "tapa_olho", nivel },
+    });
+
+  it("inclinação que o olho fraco distingue, primeira e mais recente, e o olho treinado", () => {
+    const r = resumoClinico([pesca(12, 30, 1), pesca(0, 14, 3)], hoje);
+    expect(r.pesca?.recente.valor).toEqual({ graus: 14, nivel: 3 });
+    expect(r.pesca?.primeira?.valor.graus).toBe(30);
+    expect(r.pesca?.olho).toBe("esquerdo");
+    expect(r.kianda).toBeNull(); // o dicóptico é outra medida
+    expect(temMedicoes(r)).toBe(true);
+  });
+
+  it("as Pontes medem com óculos; o Olho Mágico sem: o relatório diz qual foi a mais recente", () => {
+    const olhoMagico = { ...pontes(0, 12, null), sinais: { ...pontes(0, 12, null).sinais, modo: "fusao_livre", oculos_verificados: undefined } };
+    expect(resumoClinico([pontes(5, 10, 6), olhoMagico], hoje).vergencia?.fusaoLivre).toBe(true);
+    expect(resumoClinico([olhoMagico, pontes(0, 10, 6)].map((s, i) => ({ ...s, created_at: haDias(5 - i * 5) })), hoje).vergencia?.fusaoLivre).toBe(false);
+  });
+});
+
 describe("adesão ao treino", () => {
   it("minutos por semana nas últimas 4, dias com treino e sessões de baixa atenção", () => {
     const r = resumoClinico(

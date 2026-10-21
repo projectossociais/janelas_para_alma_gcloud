@@ -48,11 +48,12 @@ export const contaParaDose = (s: SessaoResumo): boolean =>
 /**
  * As sessões que entram no gráfico do progresso de um exercício: com limiar
  * medido, de um olho, e sem baixa atenção (não é medição fiável -- já ficava
- * fora da tendência; até 2026-10-08 o gráfico contradizia-a). Por ordem.
+ * fora da tendência; até 2026-10-08 o gráfico contradizia-a), e na unidade
+ * da mais recente (o Kianda passou de logMAR a graus em 2026-10-21). Por ordem.
  */
 export function sessoesDoGrafico<S extends SessaoResumo>(sessoes: readonly S[], exercicioId: string): S[] {
   // Acuidade com e sem barras (Olhos de Palanca) não se misturam no gráfico.
-  return mesmoTipoDaUltima(sessoes.filter((s) => s.exercicio_id === exercicioId))
+  const validas = mesmoTipoDaUltima(sessoes.filter((s) => s.exercicio_id === exercicioId))
     .filter(
       (s) =>
         s.exercicio_id === exercicioId &&
@@ -61,6 +62,8 @@ export function sessoesDoGrafico<S extends SessaoResumo>(sessoes: readonly S[], 
         s.sinais?.baixa_atencao !== true,
     )
     .sort((a, b) => a.created_at.localeCompare(b.created_at));
+  const unidade = validas.length ? validas[validas.length - 1].unidade : null;
+  return validas.filter((s) => s.unidade === unidade);
 }
 
 /** Minutos activos de treino por dia (só o que conta para a dose). */

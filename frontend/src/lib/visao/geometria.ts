@@ -54,8 +54,6 @@ export const niveisLogmar = (de: number, ate: number, passo: number): number[] =
 
 /** Níveis do teste de acuidade: 1,0 a -0,1 em passos de 0,1. */
 export const NIVEIS_TESTE_ACUIDADE = niveisLogmar(1.0, -0.1, 0.1);
-/** Níveis dos treinos de acuidade: mesma gama, passos de 0,05. */
-export const NIVEIS_TREINO_ACUIDADE = niveisLogmar(1.0, -0.1, 0.05);
 
 /** Só os níveis cuja abertura este ecrã, a esta distância, consegue desenhar. */
 export const niveisDesenhaveis = (

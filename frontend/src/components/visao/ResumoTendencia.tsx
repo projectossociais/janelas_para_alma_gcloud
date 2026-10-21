@@ -12,6 +12,12 @@ const fraseDeTendencia = (t: (k: string, o?: Record<string, unknown>) => string,
   const quando = r.dias === 1 ? t("Visao.quandoOntem") : t("Visao.quandoHaDias", { dias: r.dias });
   const periodo = r.dias === 1 ? t("Visao.periodoUmDia") : t("Visao.periodoDias", { dias: r.dias });
   if (r.tipo === "estavel") return t("Visao.tendenciaEstavel", { olho: nome, periodo });
+  if (r.unidade === "graus") {
+    const graus = Math.round(Math.abs(r.inicio - r.actual));
+    return r.tipo === "melhorou"
+      ? t("Visao.tendenciaPescaMelhorou", { olho: nome, graus, referencia: quando })
+      : t("Visao.tendenciaPescaPiorou", { olho: nome, graus, referencia: quando });
+  }
   if (r.unidade === "logmar") {
     if (r.tipo === "melhorou")
       return r.passos === 1

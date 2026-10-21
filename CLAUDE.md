@@ -86,11 +86,13 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   2026-09-23). Os ids históricos mantêm-se (acesso e preços iguais), mas quatro mudaram de
   significado — `sessoes_exercicio.versao` separa as sessões antigas (1) das novas (2):
   teste de 7 dias = `figure8` **Olhos de Palanca** (Teste de Acuidade com barras de Flom,
-  desde 2026-10-21), `ambliopia` **Kianda** (desde 2026-10-20: com
-  óculos 3D, jogo dicóptico; sem óculos, o Treino de Anéis com tapa-olho de sempre),
+  desde 2026-10-21), `ambliopia` **Kianda** (desde 2026-10-21: sem óculos, por omissão,
+  pesca com o olho forte tapado, em graus; com óculos 3D, jogo dicóptico; o Treino de Anéis
+  saiu),
   `cerebro` Teste de Contraste, `relax` Teste de Astigmatismo; só Premium = `estereopsia`
-  Teste de Estereopsia, `convergence` **Pontes de Fusão** (desde 2026-10-20; antes, Treino
-  de Convergência auto-declarado, "Vejo 1 / Vejo 2", em segundos), `sacadas-convergencia` Treino de Contraste em blocos,
+  Teste de Estereopsia, `convergence` **Olho Mágico** (desde 2026-10-21: sem óculos, fusão
+  livre; com óculos 3D, as Pontes de Fusão de 2026-10-20; antes, Treino de Convergência
+  auto-declarado, "Vejo 1 / Vejo 2", em segundos), `sacadas-convergencia` Treino de Contraste em blocos,
   `flexibilidade-acomodativa` Treino Perto e longe. **Anéis e Convergência trocaram de grupo
   a 2026-09-29** (decisão do dono do projecto, `docs/ANALISE_EXERCICIOS.md`): o trial mostra
   o treino com mais valor e evidência; a Convergência é contra-indicada em parte do público
@@ -504,6 +506,23 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   um pedestal cinzento (`PEDESTAL`), porque descontar a fuga precisa de margem para baixo.
   Quem não mede fica com `sinais.distancia_medida = false`; quem afina, com
   `sinais.oculos_afinados = true`.
+- **Sem óculos primeiro (decisão do dono do projecto, 2026-10-21).** A maior parte das famílias
+  não tem óculos 3D nem visor: todos os exercícios têm de funcionar só com o telemóvel e o que
+  há em casa (a mão como tapa-olho, um lápis, um fio com missangas). Onde há versão com óculos,
+  ela é a segunda opção (`EscolherOculos`). **E os 8 exercícios têm de ser diferentes entre si**
+  -- outra forma de jogar, não o mesmo teste com outro nome.
+- **Kianda com tapa-olho (2026-10-21): pesca a cores com o olho forte tapado**
+  (`lib/visao/pescaKianda.ts`, `PescaKianda`). Toca-se nos peixes com as riscas inclinadas
+  como o sinal; a diferença de inclinação desce em escada e o limiar vai em **graus** (unidade
+  nova da API). Níveis com peixes mais pequenos e riscas mais finas e esbatidas. Peixe dourado
+  = controlo de atenção. Substituiu o Treino de Anéis; o gráfico e a tendência só comparam
+  sessões na unidade da mais recente.
+- **Olho Mágico (2026-10-21): vergência sem óculos, por fusão livre** (`lib/visao/olhoMagico.ts`).
+  Dois quadros de pano (pontos aleatórios coloridos); cruzar os olhos = convergência, relaxar
+  = divergência; a forma escondida só se vê com os quadros fundidos. Usa a rampa e o resumo das
+  Pontes e grava igual (`sinais.pontes`, `sinais.modo = "fusao_livre"`), por isso o relatório
+  lê os dois. Ao alto, um telemóvel só chega a ~7 Δ: pede para o deitar e continua
+  (`alargarRampa`).
 - **Pontes de Fusão (2026-10-20): fusão verificada pelo estímulo, não declarada.** Dois anéis
   em anáglifo afastam-se (convergência: imagem do olho esquerdo para a direita); dentro, um
   estereograma com uma forma que só se vê com os anéis fundidos. Rotura e recuperação em

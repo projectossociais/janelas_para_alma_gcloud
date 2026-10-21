@@ -84,7 +84,7 @@ describe("Exercicios — 8 exercícios em dois grupos", () => {
     const premium = grupo("Premium");
     for (const nome of [
       "Teste de Estereopsia",
-      "Pontes de Fusão",
+      "Olho Mágico",
       "Treino de Contraste em blocos",
       "Treino Perto e longe",
     ])

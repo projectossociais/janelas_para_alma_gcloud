@@ -55,8 +55,6 @@ export function sinaisDeControlo(controlos: number, controlosErrados: number): S
   return { baixa_atencao: controlosErrados > 0, controlos, controlos_errados: controlosErrados };
 }
 
-/** Margem acima do limiar de acuidade do olho para o treino de anéis. */
-export const MARGEM_ANEIS_LOGMAR = 0.1;
 /** Margem acima do limiar de acuidade do olho para o tamanho do treino de contraste. */
 export const MARGEM_CONTRASTE_LOGMAR = 0.3;
 /** Tamanho fixo do anel no teste de contraste (bem acima do limiar). */
