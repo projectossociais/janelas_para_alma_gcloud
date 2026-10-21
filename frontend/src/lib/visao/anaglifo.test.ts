@@ -8,7 +8,9 @@ import {
   coresAnulacao,
   coresEstereograma,
   guardarAfinacao,
+  juntarOlhos,
   lerAfinacao,
+  tabelaDosOlhos,
   oitoBitsParaLinear,
   type Afinacao,
   type Rgb,
@@ -116,5 +118,34 @@ describe("guardar por aparelho", () => {
     expect(lerAfinacao()).toBeNull();
     window.localStorage.setItem("jpa.visao.oculos", "não é json");
     expect(lerAfinacao()).toBeNull();
+  });
+});
+
+describe("tabelaDosOlhos / juntarOlhos", () => {
+  it("sem afinação, cinzento esquerdo no vermelho e direito no verde e azul", () => {
+    const t = tabelaDosOlhos(null);
+    const i = ((200 << 8) | 30) * 3;
+    expect([t[i], t[i + 1], t[i + 2]]).toEqual([200, 30, 30]);
+  });
+
+  it("com afinação, um elemento só do olho esquerdo não deixa fantasma no direito", () => {
+    const t = tabelaDosOlhos(OCULOS);
+    const cor = (e: number, d: number): Rgb => {
+      const i = ((e << 8) | d) * 3;
+      return [t[i], t[i + 1], t[i + 2]];
+    };
+    // Peixe só no olho esquerdo (escuro nesse olho, fundo branco no outro) vs fundo.
+    const peixe = visto(cor(0, 255), OCULOS);
+    const fundo = visto(cor(255, 255), OCULOS);
+    expect(peixe.direito).toBeCloseTo(fundo.direito, 2);
+    expect(fundo.esquerdo - peixe.esquerdo).toBeGreaterThan(0.3);
+  });
+
+  it("junta duas imagens RGBA numa", () => {
+    const esq = new Uint8ClampedArray([10, 10, 10, 255, 250, 250, 250, 255]);
+    const dir = new Uint8ClampedArray([200, 200, 200, 255, 0, 0, 0, 255]);
+    const saida = new Uint8ClampedArray(8);
+    juntarOlhos(esq, dir, saida, tabelaDosOlhos(null));
+    expect(Array.from(saida)).toEqual([10, 200, 200, 255, 250, 0, 0, 255]);
   });
 });

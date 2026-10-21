@@ -83,6 +83,12 @@ interface AssistenteTreinoProps {
   descricao: string;
   /** Treina só o olho mais fraco, com o outro tapado por tapa-olho. */
   monocular: boolean;
+  /**
+   * Os dois olhos abertos, mas a tarefa precisa de saber qual é o mais fraco
+   * (treino dicóptico: cada olho vê coisas diferentes). Pergunta o olho como
+   * no `monocular`, sem o passo do tapa-olho; a sessão grava-se como "ambos".
+   */
+  olhoFraco?: boolean;
   /** Pede a distância (anéis e contraste). Sem isto, usa `distanciaFixaMm`. */
   comDistancia?: boolean;
   distanciaFixaMm?: number;
@@ -288,6 +294,7 @@ const AssistenteTreino = ({
   titulo,
   descricao,
   monocular,
+  olhoFraco = false,
   comDistancia = false,
   distanciaFixaMm = DISTANCIA_OMISSAO_MM,
   oculos3D = false,
@@ -314,10 +321,12 @@ const AssistenteTreino = ({
   // Sessão rápida: com as escolhas da última vez neste aparelho, um só ecrã
   // de confirmação em vez dos 5-6 passos de preparação.
   const [escolhas] = useState(() => lerEscolhas(exercicioId));
-  const rapidaDisponivel = podeUsarSessaoRapida({ escolhas, calibracao, monocular, olhoActual: olho });
+  /** Precisa do olho mais fraco (com tapa-olho, ou dicóptico). */
+  const precisaOlho = monocular || olhoFraco;
+  const rapidaDisponivel = podeUsarSessaoRapida({ escolhas, calibracao, monocular: precisaOlho, olhoActual: olho });
   const [modoRapido, setModoRapido] = useState(false);
 
-  const [etapa, setEtapa] = useState<Etapa>(() => (monocular ? "olho" : rapidaDisponivel ? "rapida" : "brilho"));
+  const [etapa, setEtapa] = useState<Etapa>(() => (precisaOlho ? "olho" : rapidaDisponivel ? "rapida" : "brilho"));
   // Perfil ainda a carregar mostra a escolha por instantes; salta-a quando chega.
   useEffect(() => {
     if (etapa === "olho" && olho) setEtapa(rapidaDisponivel ? "rapida" : "brilho");
@@ -341,7 +350,7 @@ const AssistenteTreino = ({
 
   const ctx: ContextoTreino = useMemo(
     () => ({
-      olho: monocular ? olho : null,
+      olho: precisaOlho ? olho : null,
       pxPorMm: calibracao?.pxPorMm ?? PX_POR_MM_NOMINAL,
       calibrado: calibracao?.calibrado ?? false,
       distanciaMm,
@@ -349,7 +358,7 @@ const AssistenteTreino = ({
       historico: historico ?? [],
       afinacao,
     }),
-    [afinacao, calibracao, distanciaMm, dpr, historico, monocular, olho],
+    [afinacao, calibracao, distanciaMm, dpr, historico, olho, precisaOlho],
   );
 
   const terminar = useCallback(() => {
@@ -415,8 +424,8 @@ const AssistenteTreino = ({
   useEffect(() => {
     if (etapa !== "bloco" || escolhasGuardadas.current) return;
     escolhasGuardadas.current = true;
-    guardarEscolhas(exercicioId, { distanciaMm, usaCorreccao, olho: monocular ? olho : null });
-  }, [distanciaMm, etapa, exercicioId, monocular, olho, usaCorreccao]);
+    guardarEscolhas(exercicioId, { distanciaMm, usaCorreccao, olho: precisaOlho ? olho : null });
+  }, [distanciaMm, etapa, exercicioId, olho, precisaOlho, usaCorreccao]);
 
   const comecarBlocos = () => {
     inicioSessao.current = Date.now();
@@ -440,14 +449,14 @@ const AssistenteTreino = ({
 
   const usarOrdemRapida = etapa === "rapida" || modoRapido;
   const passosRapidos = [
-    ...(monocular ? [t("Visao.passoOlhoMaisFraco")] : []),
+    ...(precisaOlho ? [t("Visao.passoOlhoMaisFraco")] : []),
     t("Visao.passoPreparacao"),
     t("Visao.passoTreino"),
     t("Visao.passoResumo"),
   ];
-  const ordemRapida: Etapa[] = [...(monocular ? (["olho"] as Etapa[]) : []), "rapida", "bloco", "resumo"];
+  const ordemRapida: Etapa[] = [...(precisaOlho ? (["olho"] as Etapa[]) : []), "rapida", "bloco", "resumo"];
   const passosCompletos = [
-    ...(monocular ? [t("Visao.passoOlhoMaisFraco")] : []),
+    ...(precisaOlho ? [t("Visao.passoOlhoMaisFraco")] : []),
     t("Visao.passoEcra"),
     ...(aviso ? [t("Visao.passoAviso")] : []),
     t("Visao.passoCartao"),
@@ -462,7 +471,7 @@ const AssistenteTreino = ({
     t("Visao.passoResumo"),
   ];
   const ordemCompleta: Etapa[] = [
-    ...(monocular ? (["olho"] as Etapa[]) : []),
+    ...(precisaOlho ? (["olho"] as Etapa[]) : []),
     "brilho",
     ...(aviso ? (["aviso"] as Etapa[]) : []),
     "calibracao",
@@ -483,7 +492,7 @@ const AssistenteTreino = ({
   };
 
   const bloqueio = isLoggedIn && historico !== null && requisito ? requisito(ctx) : null;
-  const aCarregar = monocular && perfilLoading;
+  const aCarregar = precisaOlho && perfilLoading;
 
   let conteudo: ReactNode;
   if (aCarregar) conteudo = <div className="h-40" aria-busy />;

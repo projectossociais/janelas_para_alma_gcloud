@@ -79,6 +79,9 @@ export const limiarFormatado = (
   if (sinais && typeof sinais.astigmatismo === "boolean")
     return sinais.astigmatismo ? i18n.t("Visao.astigmatismoSinalCurto") : i18n.t("Visao.astigmatismoSemSinalCurto");
   if (unidade === "dioptrias_prismaticas") return rotuloPontes(sinais?.pontes) ?? (limiar === null ? "—" : rotuloDelta(limiar));
+  // Kianda com óculos 3D: contraste do olho forte que o olho fraco aguentou.
+  if (unidade === "razao_contraste")
+    return limiar === null ? "—" : i18n.t("Visao.kiandaLimiarCurto", { contraste: `${Math.round(limiar * 100)}%` });
   if (limiar === null) return "—";
   switch (unidade) {
     case "logmar":

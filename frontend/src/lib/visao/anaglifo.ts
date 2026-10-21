@@ -152,3 +152,58 @@ export function guardarAfinacao(af: Afinacao): void {
     // armazenamento bloqueado: a afinação vale só para esta visita
   }
 }
+
+// --- Duas imagens (uma por olho) numa só ----------------------------------
+
+/**
+ * Tabela para juntar duas imagens em cinzentos -- uma desenhada para cada
+ * olho -- numa só imagem vermelho-ciano. Índice `(cinzentoEsquerdo << 8) |
+ * cinzentoDireito`; três bytes (R, G, B) por entrada.
+ *
+ * Sem afinação: o cinzento do olho esquerdo vai directo para o vermelho e o
+ * do direito para o verde e o azul (contraste máximo, como o estereograma
+ * sem afinação). Com afinação: cada cinzento passa a luminância à volta do
+ * pedestal (branco = topo da amplitude, preto = fundo) e a fuga de cada
+ * filtro é descontada (`canaisParaOlhos`).
+ */
+export function tabelaDosOlhos(af: Afinacao | null): Uint8ClampedArray {
+  const tabela = new Uint8ClampedArray(256 * 256 * 3);
+  const amp = af ? amplitudeMaxima(af) : 0;
+  const luminancia = (cinzento: number) => PEDESTAL - amp + oitoBitsParaLinear(cinzento) * 2 * amp;
+  for (let e = 0; e < 256; e++) {
+    for (let d = 0; d < 256; d++) {
+      const i = ((e << 8) | d) * 3;
+      if (!af) {
+        tabela[i] = e;
+        tabela[i + 1] = d;
+        tabela[i + 2] = d;
+        continue;
+      }
+      const { r, g } = canaisParaOlhos(luminancia(e), luminancia(d), af);
+      tabela[i] = linearPara8Bits(r);
+      tabela[i + 1] = linearPara8Bits(g);
+      tabela[i + 2] = tabela[i + 1];
+    }
+  }
+  return tabela;
+}
+
+/**
+ * Junta, píxel a píxel, a imagem do olho esquerdo e a do direito (RGBA, só o
+ * canal vermelho conta -- são cinzentos) em `saida` (RGBA), com a tabela de
+ * `tabelaDosOlhos`. As três têm o mesmo tamanho.
+ */
+export function juntarOlhos(
+  esquerdo: Uint8ClampedArray,
+  direito: Uint8ClampedArray,
+  saida: Uint8ClampedArray,
+  tabela: Uint8ClampedArray,
+): void {
+  for (let p = 0; p < saida.length; p += 4) {
+    const i = ((esquerdo[p] << 8) | direito[p]) * 3;
+    saida[p] = tabela[i];
+    saida[p + 1] = tabela[i + 1];
+    saida[p + 2] = tabela[i + 2];
+    saida[p + 3] = 255;
+  }
+}

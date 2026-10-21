@@ -8,7 +8,9 @@ from app.schemas.sessao_exercicio import SessaoExercicioCriar
 BASE = {"exercicio_id": "convergence", "duracao_segundos": 60}
 
 
-@pytest.mark.parametrize("unidade", ["logmar", "log_cs", "arcsec", "segundos", "dioptrias_prismaticas"])
+@pytest.mark.parametrize(
+    "unidade", ["logmar", "log_cs", "arcsec", "segundos", "dioptrias_prismaticas", "razao_contraste"]
+)
 def test_unidades_aceites(unidade: str) -> None:
     sessao = SessaoExercicioCriar(**BASE, limiar=18, unidade=unidade)
     assert sessao.unidade == unidade

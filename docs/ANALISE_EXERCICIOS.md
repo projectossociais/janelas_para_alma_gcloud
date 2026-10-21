@@ -87,6 +87,13 @@ o médico por **link temporário partilhado pelo pai** (nunca envio automático)
       recuperação, convergência e divergência, em perto) e repetibilidade em duas sessões.
       **Decisão clínica pendente:** o sentido treinado é escolhido pela pessoa ("Só
       divergência" na esotropia) -- não há ainda prescrição pelo médico na plataforma.
+- [x] **Kianda** (2026-10-20) no `ambliopia`: com óculos 3D, jogo dicóptico com contraste
+      reequilibrado (peixes no olho fraco, rochas no forte) e Gabor nas escamas; sem óculos, o
+      Treino de Anéis de sempre. **Antes de lançar fora de Angola:** parecer de liberdade de
+      operação (patentes da McGill sobre equilíbrio de contraste dicóptico, ver relatório
+      "Programa Olhos Juntos"). **A validar:** dose (os estudos usam ~1 h/dia; aqui, 3 blocos
+      de 2 min), regras de reequilíbrio (70% / 50%, passos de 10%) e a evolução da acuidade em
+      logMAR de quem só joga com óculos (o Teste de Acuidade continua a ser a medida de resultado).
 - Treino dicóptico com os óculos vermelho-ciano já pedidos no teste de estereopsia
   (princípio usado por Luminopia/CureSight, com aprovação da FDA)
 - Estudo com a Optioptika: acuidade em casa vs. na consulta, 30 a 50 crianças

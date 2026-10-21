@@ -38,6 +38,7 @@ TRIAL_DURACAO_DIAS = 7
 #                                                       -> Pontes de Fusão (2026-10-20, em Δ)
 #   estereopsia               (esqueleto)             -> Teste de Estereopsia
 #   ambliopia                 Anti-Supressão          -> Treino de Anéis com tapa-olho
+#                                                       -> Kianda (2026-10-20: dicóptico; anéis sem óculos)
 #   sacadas-convergencia      Convergência c/ Saltos  -> Treino de Contraste em blocos
 #   flexibilidade-acomodativa (esqueleto)             -> Treino Perto e longe
 #
