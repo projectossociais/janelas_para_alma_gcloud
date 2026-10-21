@@ -27,7 +27,10 @@ const TarefaAnelTeste = ({
   indiceInicial,
   estimulo,
   aoTerminar,
+  nota,
 }: {
+  /** Uma linha a mais por baixo da instrução (ex.: as barras do Olhos de Palanca). */
+  nota?: string;
   totalNiveis: number;
   indiceInicial: number;
   estimulo: (indice: number, direccao: Direccao) => ReactNode;
@@ -75,6 +78,7 @@ const TarefaAnelTeste = ({
   return (
     <div className="flex flex-col items-center gap-5">
       <p className="text-center text-sm text-muted-foreground">{t("Visao.instrucaoAnel")}</p>
+      {nota && <p className="-mt-3 max-w-md text-center text-xs text-muted-foreground">{nota}</p>}
       <PalcoVisual className="min-h-[150px] sm:min-h-[260px]" rotulo={t("Visao.rotuloAnel")}>
         {!aTrocar && estimulo(escada.indice, direccao)}
       </PalcoVisual>

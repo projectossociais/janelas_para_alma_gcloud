@@ -19,6 +19,7 @@ import {
   niveisDesenhaveis,
 } from "@/lib/visao/geometria";
 import { OLHOS, sinaisAcuidade, type Olho } from "@/lib/visao/resultados";
+import { diferencaEmLinhas, levaBarras } from "@/lib/visao/aglomeracao";
 import { ID_ACUIDADE } from "@/lib/visao/ids";
 
 const EXERCICIO_ID = ID_ACUIDADE;
@@ -51,6 +52,7 @@ const EcraSemNiveis = () => {
 };
 
 const TarefaAcuidade = ({ ctx, aoTerminar }: { ctx: ContextoTeste; aoTerminar: (r: ResultadoAcuidade) => void }) => {
+  const { t } = useTranslation();
   const niveis = useMemo(() => niveisAcuidade(ctx), [ctx]);
   // Começa em 0,7 (0,4 a 1 m): grande o bastante para quase todos lerem.
   const inicio = indiceMaisProximo(niveis, ctx.distanciaMm >= DISTANCIA_LONGE_MM ? 0.4 : 0.7);
@@ -59,7 +61,13 @@ const TarefaAcuidade = ({ ctx, aoTerminar }: { ctx: ContextoTeste; aoTerminar: (
     <TarefaAnelTeste
       totalNiveis={niveis.length}
       indiceInicial={inicio}
-      estimulo={(i, d) => <AnelLandolt aberturaPx={aberturaPx(niveis[i], ctx.distanciaMm, ctx.pxPorMm)} direccao={d} />}
+      nota={t("Visao.palancaNotaBarras")}
+      estimulo={(i, d) => {
+        // Olhos de Palanca: com barras de Flom (aglomeração), salvo nos tamanhos
+        // grandes demais para o palco, muito acima do limiar.
+        const abertura = aberturaPx(niveis[i], ctx.distanciaMm, ctx.pxPorMm);
+        return <AnelLandolt aberturaPx={abertura} direccao={d} barras={levaBarras(abertura)} />;
+      }}
       aoTerminar={({ escada, segundosActivos, duracaoSegundos }: FimTarefaAnel) =>
         aoTerminar({
           // Anel a anel: os erros contam, não só o último nível passado.
@@ -105,6 +113,9 @@ const ResultadoAcuidadeEcra = ({
           nao_leu_o_maior: res[olho].limiar === null,
           com_correccao: ctx.usaCorreccao,
           distancia_medida: ctx.distanciaMedida,
+          // Desde 2026-10-21 o teste usa barras de Flom: a tendência só compara
+          // sessões do mesmo tipo (`mesmoTipoDaUltima`).
+          aglomeracao: true,
         },
       })),
     );
@@ -116,6 +127,7 @@ const ResultadoAcuidadeEcra = ({
     ...(s.diferencaEntreOlhos ? [t("Visao.acuidadeSinalDiferenca")] : []),
   ];
   const algumLimite = OLHOS.some((o) => res[o].limiteEcra);
+  const linhas = diferencaEmLinhas(res.direito.limiar, res.esquerdo.limiar);
 
   return (
     <EcraResultado
@@ -148,6 +160,15 @@ const ResultadoAcuidadeEcra = ({
       })}
       notas={
         <div className="space-y-2 text-center text-xs text-muted-foreground">
+          {linhas !== null && (
+            <p className="text-sm font-medium text-foreground">
+              {linhas === 0
+                ? t("Visao.palancaDiferencaZero")
+                : linhas === 1
+                  ? t("Visao.palancaDiferencaUma")
+                  : t("Visao.palancaDiferencaLinhas", { linhas })}
+            </p>
+          )}
           {!ctx.calibrado && <p>{t("Visao.semCartaoAviso")}</p>}
           {algumLimite && <p>{t("Visao.acuidadeLimiteEcra")}</p>}
         </div>

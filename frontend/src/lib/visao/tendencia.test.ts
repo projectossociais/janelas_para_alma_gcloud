@@ -33,6 +33,22 @@ describe("tendencia (evolução em linguagem simples)", () => {
     expect(r).toMatchObject({ tipo: "estavel", passos: 0 });
   });
 
+  it("Olhos de Palanca: a mudança para barras não aparece como piora", () => {
+    // Antes: sem barras, 0,3. Depois: com barras, a mesma pessoa lê 0,5 -- a
+    // aglomeração piora a leitura por natureza, não é a visão a piorar.
+    const comBarras = { sinais: { aglomeracao: true } };
+    const r = tendencia(
+      [sessao(1, 0.3), sessao(8, 0.3), sessao(20, 0.5, comBarras), sessao(21, 0.5, comBarras)],
+      "figure8",
+      "esquerdo",
+    );
+    expect(r).toMatchObject({ tipo: "estavel", passos: 0 });
+    // Só uma sessão com barras: ainda não há tendência, em vez de comparar com as antigas.
+    expect(tendencia([sessao(1, 0.3), sessao(8, 0.3), sessao(20, 0.5, comBarras)], "figure8", "esquerdo")).toEqual({
+      tipo: "poucos_dados",
+    });
+  });
+
   it("acuidade a piorar é sinalizada", () => {
     const r = tendencia([sessao(1, 0.2), sessao(10, 0.4)], "figure8", "esquerdo");
     expect(r).toMatchObject({ tipo: "piorou", passos: 2 });

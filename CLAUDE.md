@@ -85,7 +85,8 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   nem MediaPipe** (o scanner é outro produto e continua a usá-los). **8, todos pagos** (desde
   2026-09-23). Os ids históricos mantêm-se (acesso e preços iguais), mas quatro mudaram de
   significado — `sessoes_exercicio.versao` separa as sessões antigas (1) das novas (2):
-  teste de 7 dias = `figure8` Teste de Acuidade, `ambliopia` **Kianda** (desde 2026-10-20: com
+  teste de 7 dias = `figure8` **Olhos de Palanca** (Teste de Acuidade com barras de Flom,
+  desde 2026-10-21), `ambliopia` **Kianda** (desde 2026-10-20: com
   óculos 3D, jogo dicóptico; sem óculos, o Treino de Anéis com tapa-olho de sempre),
   `cerebro` Teste de Contraste, `relax` Teste de Astigmatismo; só Premium = `estereopsia`
   Teste de Estereopsia, `convergence` **Pontes de Fusão** (desde 2026-10-20; antes, Treino
@@ -522,6 +523,13 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   sem óculos: o Treino de Anéis inalterado -- é a série em logMAR que alimenta a tendência
   e o destaque do fim do trial, e não deve ser misturada com a razão de contraste.
   `AssistenteTreino` tem `olhoFraco` (pergunta o olho sem tapa-olho) para isto.
+- **Olhos de Palanca (2026-10-21): acuidade com aglomeração.** O anel de Landolt do Teste de
+  Acuidade passa a ter quatro barras de Flom (espessura do traço, a 1 traço do anel;
+  `lib/visao/aglomeracao.ts`), como os testes de acuidade usados na ambliopia -- mais
+  sensível ao olho preguiçoso. Sessões novas com `sinais.aglomeracao = true`. **A tendência e
+  o gráfico só comparam sessões do mesmo tipo da mais recente** (`mesmoTipoDaUltima`): com
+  barras lê-se pior por natureza, e misturar os dois tipos inventava uma piora no dia da
+  mudança. O resultado mostra sempre a diferença entre os olhos em linhas.
 - **Tamanhos físicos, não píxeis soltos.** Todo o estímulo é calculado em ângulo visual a
   partir de `pxPorMm` (calibração com cartão de banco) e da distância; níveis abaixo de
   1,4 px de dispositivo descartam-se (`geometria.ts`). O "palco" (`PalcoVisual`) é sempre

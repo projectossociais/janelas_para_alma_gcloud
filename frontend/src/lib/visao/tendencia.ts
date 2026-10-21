@@ -13,6 +13,7 @@
  * - sessões de baixa atenção ficam de fora; se houver sessões calibradas
  *   com cartão, as não calibradas também (tamanhos só aproximados).
  */
+import { mesmoTipoDaUltima } from "./aglomeracao";
 import { diaLocal, type SessaoResumo } from "@/lib/visao/progresso";
 import type { Olho } from "@/lib/visao/resultados";
 
@@ -62,8 +63,10 @@ export function tendencia<T extends SessaoResumo & { calibrado?: boolean | null 
       (s.unidade === "logmar" || s.unidade === "log_cs") &&
       s.sinais?.baixa_atencao !== true,
   );
-  const calibradas = doOlho.filter((s) => s.calibrado === true);
-  const usadas = (calibradas.length >= 2 ? calibradas : doOlho).sort((a, b) =>
+  // Acuidade com e sem barras (Olhos de Palanca) não se comparam: fica o tipo da sessão mais recente.
+  const doMesmoTipo = mesmoTipoDaUltima(doOlho);
+  const calibradas = doMesmoTipo.filter((s) => s.calibrado === true);
+  const usadas = (calibradas.length >= 2 ? calibradas : doMesmoTipo).sort((a, b) =>
     a.created_at.localeCompare(b.created_at),
   );
   const diasDistintos = new Set(usadas.map((s) => diaLocal(new Date(s.created_at))));

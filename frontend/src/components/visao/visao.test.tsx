@@ -201,6 +201,9 @@ describe("Teste de Acuidade (sem câmara)", () => {
     const limiar = (olho: string) => registar.mock.calls.find((c) => c[0].olho === olho)?.[0].limiar;
     // Distância escolhida, não medida: fica registado.
     expect(registar.mock.calls[0][0].sinais.distancia_medida).toBe(false);
+    // Olhos de Palanca: anéis com barras, e a diferença entre os olhos em linhas.
+    expect(registar.mock.calls[0][0].sinais.aglomeracao).toBe(true);
+    expect(screen.getByText(V.palancaDiferencaUma)).toBeInTheDocument();
     expect(limiar("direito")).toBe(0.57);
     expect(limiar("esquerdo")).toBe(0.63);
     expect(screen.getByText(/logMAR 0,57/)).toBeInTheDocument();
