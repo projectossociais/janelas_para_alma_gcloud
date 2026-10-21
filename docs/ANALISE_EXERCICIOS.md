@@ -75,6 +75,12 @@ o médico por **link temporário partilhado pelo pai** (nunca envio automático)
 - Modo pais/criança: adiado para o Sprint 7
 
 ### Fase C — diferenciação clínica (precisa de parceiro clínico)
+- [x] **Régua Invisível** (2026-10-20, Vaga 1 do relatório "Programa Olhos Juntos"): distância
+      medida pelo ponto cego em todos os testes e treinos com distância, e afinação dos óculos
+      vermelho-ciano no Teste de Estereopsia. **Falta a Fase 0 (bancada):** comparar a
+      distância medida com fita métrica (~20 adultos, 3 distâncias) e confirmar
+      `VELOCIDADE_PONTO_MM_S` (25 mm/s) com o ângulo de 13,5° -- o artigo de Li et al. não
+      publica a velocidade do ponto.
 - Treino dicóptico com os óculos vermelho-ciano já pedidos no teste de estereopsia
   (princípio usado por Luminopia/CureSight, com aprovação da FDA)
 - Estudo com a Optioptika: acuidade em casa vs. na consulta, 30 a 50 crianças

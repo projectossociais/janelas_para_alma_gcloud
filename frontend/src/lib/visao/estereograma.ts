@@ -11,6 +11,7 @@
  * a zero.
  */
 
+import { coresEstereograma, type Rgb } from "./anaglifo";
 import type { Rng } from "./escada";
 
 export type Forma = "circulo" | "quadrado" | "triangulo" | "estrela";
@@ -48,6 +49,11 @@ export interface OpcoesEstereograma {
   /** Lado de cada ponto aleatório, em píxeis de dispositivo. */
   tamanhoPonto: number;
   rng?: Rng;
+  /**
+   * Cores por `(esquerdo << 1) | direito`. Por omissão, as puras de sempre;
+   * com os óculos afinados, as de `coresEstereograma(afinacao)`.
+   */
+  cores?: readonly Rgb[];
 }
 
 /** Os dois canais (0 escuro / 1 claro), antes de se juntarem em cor. */
@@ -95,13 +101,13 @@ export function gerarPares(o: OpcoesEstereograma): { esquerda: Uint8Array; direi
 /** RGBA do anáglifo: vermelho = olho esquerdo, verde+azul = olho direito. */
 export function gerarEstereograma(o: OpcoesEstereograma): Uint8ClampedArray {
   const { esquerda, direita } = gerarPares(o);
+  const cores = o.cores ?? coresEstereograma(null);
   const px = new Uint8ClampedArray(o.largura * o.altura * 4);
   for (let i = 0; i < esquerda.length; i++) {
-    const r = esquerda[i] * 255;
-    const gb = direita[i] * 255;
+    const [r, g, b] = cores[(esquerda[i] << 1) | direita[i]];
     px[i * 4] = r;
-    px[i * 4 + 1] = gb;
-    px[i * 4 + 2] = gb;
+    px[i * 4 + 1] = g;
+    px[i * 4 + 2] = b;
     px[i * 4 + 3] = 255;
   }
   return px;

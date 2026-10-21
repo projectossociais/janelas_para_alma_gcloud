@@ -104,6 +104,7 @@ const ResultadoAcuidadeEcra = ({
           limite_ecra: res[olho].limiteEcra,
           nao_leu_o_maior: res[olho].limiar === null,
           com_correccao: ctx.usaCorreccao,
+          distancia_medida: ctx.distanciaMedida,
         },
       })),
     );

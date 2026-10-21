@@ -78,7 +78,7 @@ const ResultadoContrasteEcra = ({ res, ctx }: { res: Record<Olho, ResultadoContr
         distancia_mm: ctx.distanciaMm,
         px_por_mm: Math.round(ctx.pxPorMm * 1000) / 1000,
         calibrado: ctx.calibrado,
-        sinais: { limite_ecra: res[olho].limiteEcra, com_correccao: ctx.usaCorreccao },
+        sinais: { limite_ecra: res[olho].limiteEcra, com_correccao: ctx.usaCorreccao, distancia_medida: ctx.distanciaMedida },
       })),
     );
   }, [anteriores, ctx, gravar, res]);

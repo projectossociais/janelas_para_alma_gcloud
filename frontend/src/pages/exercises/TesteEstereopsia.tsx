@@ -10,6 +10,8 @@ import { BotaoContinuar, EcraPasso, PassoBrilho, PassoCalibracao, PassoDistancia
 import { useCalibracao, useDevicePixelRatio, useRegistoSessao, useTempoActivo } from "@/components/visao/hooks";
 import { escolhaAleatoria, iniciarEscadaTeste, responderTeste } from "@/lib/visao/escada";
 import { FORMAS, gerarEstereograma, type Forma } from "@/lib/visao/estereograma";
+import { coresEstereograma, type Afinacao } from "@/lib/visao/anaglifo";
+import AfinarOculos from "@/components/visao/AfinarOculos";
 import { DISTANCIA_OMISSAO_MM, arcsegParaPx, desenhavel } from "@/lib/visao/geometria";
 import { DISPARIDADES_ARCSEG, sinalEstereopsia } from "@/lib/visao/resultados";
 import { PX_POR_MM_NOMINAL } from "@/lib/visao/calibracao";
@@ -57,11 +59,13 @@ const Estereograma = ({
   forma,
   dpr,
   semente,
+  afinacao,
 }: {
   disparidadeCss: number;
   forma: Forma;
   dpr: number;
   semente: number;
+  afinacao: Afinacao | null;
 }) => {
   const ref = useRef<HTMLCanvasElement>(null);
   const ladoCss = Math.min(LADO_CSS_MAX, typeof window === "undefined" ? LADO_CSS_MAX : window.innerWidth - 64);
@@ -76,14 +80,15 @@ const Estereograma = ({
       disparidade: disparidadeCss * dpr,
       forma,
       tamanhoPonto: Math.max(1, Math.round(2 * dpr)),
+      cores: coresEstereograma(afinacao),
     });
     ctx.putImageData(new ImageData(px, ladoDisp, ladoDisp), 0, 0);
-  }, [disparidadeCss, dpr, forma, ladoDisp, semente]);
+  }, [afinacao, disparidadeCss, dpr, forma, ladoDisp, semente]);
   return <canvas ref={ref} width={ladoDisp} height={ladoDisp} style={{ width: ladoCss, height: ladoCss, display: "block" }} />;
 };
 
-type Etapa = "brilho" | "calibracao" | "distancia" | "oculos" | "tarefa" | "resultado";
-const ETAPAS: readonly Etapa[] = ["brilho", "calibracao", "distancia", "oculos", "tarefa", "resultado"];
+type Etapa = "brilho" | "calibracao" | "distancia" | "oculos" | "afinar" | "tarefa" | "resultado";
+const ETAPAS: readonly Etapa[] = ["brilho", "calibracao", "distancia", "oculos", "afinar", "tarefa", "resultado"];
 
 /** Verificação dos óculos: cada olho só deve ver uma das letras. */
 const VerificarOculos = ({ aoContinuar }: { aoContinuar: (ok: boolean) => void }) => {
@@ -175,11 +180,13 @@ const TarefaEstereo = ({
   distanciaMm,
   pxPorMm,
   dpr,
+  afinacao,
   aoTerminar,
 }: {
   distanciaMm: number;
   pxPorMm: number;
   dpr: number;
+  afinacao: Afinacao | null;
   aoTerminar: (r: ResultadoEstereo) => void;
 }) => {
   const { t } = useTranslation();
@@ -224,6 +231,7 @@ const TarefaEstereo = ({
           forma={FORMAS[forma]}
           dpr={dpr}
           semente={semente}
+          afinacao={afinacao}
         />
       </PalcoVisual>
       <div className="grid w-full max-w-md grid-cols-2 gap-2 sm:grid-cols-4">
@@ -242,13 +250,17 @@ const TarefaEstereo = ({
 const ResultadoEstereoEcra = ({
   res,
   oculosOk,
+  oculosAfinados,
   distanciaMm,
+  distanciaMedida,
   pxPorMm,
   calibrado,
 }: {
   res: ResultadoEstereo;
   oculosOk: boolean;
+  oculosAfinados: boolean;
   distanciaMm: number;
+  distanciaMedida: boolean;
   pxPorMm: number;
   calibrado: boolean;
 }) => {
@@ -269,10 +281,15 @@ const ResultadoEstereoEcra = ({
         distancia_mm: distanciaMm,
         px_por_mm: Math.round(pxPorMm * 1000) / 1000,
         calibrado,
-        sinais: { limite_ecra: res.limiteEcra, oculos_verificados: oculosOk },
+        sinais: {
+          limite_ecra: res.limiteEcra,
+          oculos_verificados: oculosOk,
+          oculos_afinados: oculosAfinados,
+          distancia_medida: distanciaMedida,
+        },
       },
     ]);
-  }, [calibrado, distanciaMm, gravar, oculosOk, pxPorMm, res]);
+  }, [calibrado, distanciaMedida, distanciaMm, gravar, oculosAfinados, oculosOk, pxPorMm, res]);
 
   const sinais =
     res.limiar === null
@@ -303,7 +320,7 @@ const ResultadoEstereoEcra = ({
       }
       notas={
         <div className="space-y-2 text-center text-xs text-muted-foreground">
-          <p>{t("Visao.estereoAvisoCrosstalk")}</p>
+          {!oculosAfinados && <p>{t("Visao.estereoAvisoCrosstalk")}</p>}
           {!oculosOk && <p>{t("Visao.estereoOculosNaoVerificados")}</p>}
           {!calibrado && <p>{t("Visao.semCartaoAviso")}</p>}
         </div>
@@ -318,7 +335,9 @@ const TesteEstereopsia = () => {
   const dpr = useDevicePixelRatio();
   const [etapa, setEtapa] = useState<Etapa>("brilho");
   const [distanciaMm, setDistanciaMm] = useState(DISTANCIA_OMISSAO_MM);
+  const [distanciaMedida, setDistanciaMedida] = useState(false);
   const [oculosOk, setOculosOk] = useState(false);
+  const [afinacao, setAfinacao] = useState<Afinacao | null>(null);
   const [resultado, setResultado] = useState<ResultadoEstereo | null>(null);
   const pxPorMm = calibracao?.pxPorMm ?? PX_POR_MM_NOMINAL;
 
@@ -327,6 +346,7 @@ const TesteEstereopsia = () => {
     t("Visao.passoCartao"),
     t("Visao.passoDistancia"),
     t("Visao.passoOculosVC"),
+    t("Visao.passoAfinar"),
     t("Visao.passoTarefa"),
     t("Visao.passoResultado"),
   ];
@@ -349,8 +369,10 @@ const TesteEstereopsia = () => {
         {etapa === "distancia" && (
           <PassoDistancia
             distanciaMm={distanciaMm}
-            aoEscolher={(mm) => {
+            pxPorMm={pxPorMm}
+            aoEscolher={(mm, medida) => {
               setDistanciaMm(mm);
+              setDistanciaMedida(medida);
               setEtapa("oculos");
             }}
           />
@@ -359,6 +381,15 @@ const TesteEstereopsia = () => {
           <VerificarOculos
             aoContinuar={(ok) => {
               setOculosOk(ok);
+              // Sem os óculos a funcionar, não há fuga que valha a pena medir.
+              setEtapa(ok ? "afinar" : "tarefa");
+            }}
+          />
+        )}
+        {etapa === "afinar" && (
+          <AfinarOculos
+            aoContinuar={(af) => {
+              setAfinacao(af);
               setEtapa("tarefa");
             }}
           />
@@ -368,6 +399,7 @@ const TesteEstereopsia = () => {
             distanciaMm={distanciaMm}
             pxPorMm={pxPorMm}
             dpr={dpr}
+            afinacao={afinacao}
             aoTerminar={(r) => {
               setResultado(r);
               setEtapa("resultado");
@@ -378,7 +410,9 @@ const TesteEstereopsia = () => {
           <ResultadoEstereoEcra
             res={resultado}
             oculosOk={oculosOk}
+            oculosAfinados={afinacao !== null}
             distanciaMm={distanciaMm}
+            distanciaMedida={distanciaMedida}
             pxPorMm={pxPorMm}
             calibrado={calibracao?.calibrado ?? false}
           />
