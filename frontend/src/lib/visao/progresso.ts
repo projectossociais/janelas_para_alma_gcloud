@@ -5,6 +5,8 @@
  * Datas no fuso local do utilizador -- "hoje" é o dia do calendário dele.
  */
 
+import { mesmoTipoDaUltima } from "./aglomeracao";
+
 export interface SessaoResumo {
   exercicio_id: string;
   created_at: string;
@@ -51,7 +53,8 @@ export const contaParaDose = (s: SessaoResumo): boolean =>
  * fora da tendência; até 2026-10-08 o gráfico contradizia-a). Por ordem.
  */
 export function sessoesDoGrafico<S extends SessaoResumo>(sessoes: readonly S[], exercicioId: string): S[] {
-  return sessoes
+  // Acuidade com e sem barras (Olhos de Palanca) não se misturam no gráfico.
+  return mesmoTipoDaUltima(sessoes.filter((s) => s.exercicio_id === exercicioId))
     .filter(
       (s) =>
         s.exercicio_id === exercicioId &&

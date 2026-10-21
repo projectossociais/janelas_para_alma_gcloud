@@ -94,6 +94,11 @@ o médico por **link temporário partilhado pelo pai** (nunca envio automático)
       "Programa Olhos Juntos"). **A validar:** dose (os estudos usam ~1 h/dia; aqui, 3 blocos
       de 2 min), regras de reequilíbrio (70% / 50%, passos de 10%) e a evolução da acuidade em
       logMAR de quem só joga com óculos (o Teste de Acuidade continua a ser a medida de resultado).
+- [x] **Olhos de Palanca** (2026-10-21) no `figure8`: anel de Landolt com barras de Flom
+      (aglomeração) e diferença entre os olhos em linhas no resultado. As tendências recomeçam
+      com as sessões com barras. **A validar na Fase 1:** concordância com a acuidade com
+      aglomeração do consultório (ex.: optótipos rodeados de barras) e se os limiares de sinal
+      (pior do que 6/9; diferença de 2 linhas) devem mudar com as barras, sobretudo em crianças.
 - Treino dicóptico com os óculos vermelho-ciano já pedidos no teste de estereopsia
   (princípio usado por Luminopia/CureSight, com aprovação da FDA)
 - Estudo com a Optioptika: acuidade em casa vs. na consulta, 30 a 50 crianças
