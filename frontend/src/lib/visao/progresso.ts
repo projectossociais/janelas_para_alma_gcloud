@@ -22,6 +22,14 @@ export const IDS_TREINOS = ["ambliopia", "sacadas-convergencia", "convergence", 
  * "Nítido") -- não são medições e aparecem marcados como auto-avaliação.
  */
 export const IDS_AUTOAVALIACAO = ["convergence", "flexibilidade-acomodativa"];
+
+/**
+ * Uma sessão é auto-avaliação? As do `convergence` só até 2026-10-20 (eram
+ * "Vejo 1 / Vejo 2", em segundos); desde as Pontes de Fusão, a fusão é
+ * verificada pelo próprio estímulo e o resultado vem em dioptrias prismáticas.
+ */
+export const eAutoAvaliacao = (exercicioId: string, unidade: string | null | undefined): boolean =>
+  IDS_AUTOAVALIACAO.includes(exercicioId) && unidade !== "dioptrias_prismaticas";
 /** Ids que são testes de triagem. */
 export const IDS_TESTES = ["figure8", "cerebro", "relax", "estereopsia"];
 

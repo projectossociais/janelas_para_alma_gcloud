@@ -6,9 +6,11 @@ from pydantic import BaseModel, Field, field_validator
 
 OlhoSessao = Literal["direito", "esquerdo", "ambos"]
 # Unidade do `limiar`: logMAR (acuidade, anéis), log da sensibilidade ao
-# contraste, segundos de arco (estereopsia), segundos (convergência, perto e
-# longe). O astigmatismo não tem limiar -- é Sim/Não, vai em `sinais`.
-UnidadeLimiar = Literal["logmar", "log_cs", "arcsec", "segundos"]
+# contraste, segundos de arco (estereopsia), segundos (perto e longe, e a
+# convergência antiga), dioptrias prismáticas (Pontes de Fusão, desde
+# 2026-10-20: rotura de vergência). O astigmatismo não tem limiar -- é
+# Sim/Não, vai em `sinais`.
+UnidadeLimiar = Literal["logmar", "log_cs", "arcsec", "segundos", "dioptrias_prismaticas"]
 
 
 class SessaoExercicioCriar(BaseModel):

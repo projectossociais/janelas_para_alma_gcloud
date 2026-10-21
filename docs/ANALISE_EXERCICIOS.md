@@ -81,6 +81,12 @@ o médico por **link temporário partilhado pelo pai** (nunca envio automático)
       distância medida com fita métrica (~20 adultos, 3 distâncias) e confirmar
       `VELOCIDADE_PONTO_MM_S` (25 mm/s) com o ângulo de 13,5° -- o artigo de Li et al. não
       publica a velocidade do ponto.
+- [x] **Pontes de Fusão** (2026-10-20) no lugar do Treino de Convergência (`convergence`):
+      fusão verificada por uma forma em estereograma dentro dos anéis, rotura e recuperação em
+      Δ. **A validar na Fase 1 com a Optioptika:** concordância com a régua de prismas (rotura e
+      recuperação, convergência e divergência, em perto) e repetibilidade em duas sessões.
+      **Decisão clínica pendente:** o sentido treinado é escolhido pela pessoa ("Só
+      divergência" na esotropia) -- não há ainda prescrição pelo médico na plataforma.
 - Treino dicóptico com os óculos vermelho-ciano já pedidos no teste de estereopsia
   (princípio usado por Luminopia/CureSight, com aprovação da FDA)
 - Estudo com a Optioptika: acuidade em casa vs. na consulta, 30 a 50 crianças

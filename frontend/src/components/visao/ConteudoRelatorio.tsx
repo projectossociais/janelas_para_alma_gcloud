@@ -6,7 +6,7 @@ import { formatarData, formatarDataHora, formatarDiaCurto } from "@/i18n/formata
 import { ID_ACUIDADE, ID_ANEIS } from "@/lib/visao/ids";
 import {
   DIAS_RELATORIO,
-  IDS_AUTOAVALIACAO,
+  eAutoAvaliacao,
   IDS_TREINOS,
   minutosPorDia,
   ultimosDias,
@@ -94,7 +94,7 @@ const ConteudoRelatorio = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRela
                   <td className="py-1 pr-2">{nomeDoOlho(s.olho)}</td>
                   <td className="py-1 pr-2">
                     {limiarFormatado(s.limiar, s.unidade, s.sinais)}
-                    {IDS_AUTOAVALIACAO.includes(s.exercicio_id) && ` (${t("Visao.autoAvaliacaoCurto")})`}
+                    {eAutoAvaliacao(s.exercicio_id, s.unidade) && ` (${t("Visao.autoAvaliacaoCurto")})`}
                   </td>
                   <td className="py-1 tabular-nums">
                     {IDS_TREINOS.includes(s.exercicio_id) ? Math.round((s.segundos_activos ?? 0) / 60) : "—"}

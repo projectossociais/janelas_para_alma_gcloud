@@ -299,6 +299,7 @@ export const PassoRapido = ({
   calibrado,
   distanciaMm,
   comDistancia,
+  oculos3D = false,
   usaCorreccao,
   olhoATapar,
   aviso,
@@ -308,6 +309,8 @@ export const PassoRapido = ({
   calibrado: boolean;
   distanciaMm: number;
   comDistancia: boolean;
+  /** Treino com óculos vermelho-ciano: lembra de os pôr. */
+  oculos3D?: boolean;
   usaCorreccao: boolean;
   /** Olho a tapar com o tapa-olho; `null` nos treinos com os dois olhos. */
   olhoATapar: Olho | null;
@@ -323,6 +326,7 @@ export const PassoRapido = ({
       ? [t("Visao.rapidoTapaOlho", { olho: (olhoATapar === "direito" ? t("Visao.olhoDireito") : t("Visao.olhoEsquerdo")).toLocaleLowerCase() })]
       : []),
     ...(comDistancia ? [t("Visao.rapidoDistancia", { distancia: rotuloDistancia(distanciaMm) })] : []),
+    ...(oculos3D ? [t("Visao.rapidoOculos3D")] : []),
   ];
   return (
     <EcraPasso

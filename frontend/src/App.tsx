@@ -54,7 +54,7 @@ import TesteAstigmatismo from "./pages/exercises/TesteAstigmatismo";
 import TesteEstereopsia from "./pages/exercises/TesteEstereopsia";
 import TreinoAneis from "./pages/exercises/TreinoAneis";
 import TreinoContrasteBlocos from "./pages/exercises/TreinoContrasteBlocos";
-import TreinoConvergencia from "./pages/exercises/TreinoConvergencia";
+import PontesFusao from "./pages/exercises/PontesFusao";
 import TreinoPertoLonge from "./pages/exercises/TreinoPertoLonge";
 import ProgressoVisao from "./pages/exercises/ProgressoVisao";
 import RelatorioSemanal from "./pages/exercises/RelatorioSemanal";
@@ -107,7 +107,7 @@ const PAGINAS: Record<ChaveRota, ReactElement> = {
   exercicioEstereopsia: <TesteEstereopsia />,
   exercicioAneis: <TreinoAneis />,
   exercicioContrasteBlocos: <TreinoContrasteBlocos />,
-  exercicioConvergencia: <TreinoConvergencia />,
+  exercicioConvergencia: <PontesFusao />,
   exercicioPertoLonge: <TreinoPertoLonge />,
   exerciciosProgresso: <ProgressoVisao />,
   exerciciosRelatorio: <RelatorioSemanal />,
