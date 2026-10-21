@@ -99,11 +99,11 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   nenhum texto promete tratar, curar ou "fortalecer a musculatura". Base partilhada em
   `frontend/src/lib/visao/` (TypeScript puro, com testes) e `components/visao/`; ver §6.
   Perfil visual opcional em `utilizadores` (`px_por_mm`, `olho_mais_fraco`, `usa_oculos`,
-  `faixa_etaria`); progresso e relatório semanal imprimível em `/exercicios/progresso` e
-  `/exercicios/relatorio`. **Relatório para o médico por link temporário** (Fase B,
-  2026-09-29, decisão do dono do projecto: nunca envio automático): o pai cria em
-  `/exercicios/relatorio` um link só de leitura (`POST /relatorios/partilhas`) e envia-o
-  ele próprio; o médico abre `/relatorio-partilhado/:token` sem sessão
+  `faixa_etaria`); progresso e relatório imprimível (com resumo clínico de 90 dias) em
+  `/exercicios/progresso` e `/exercicios/relatorio`. **Relatório para o médico por link
+  temporário** (Fase B, 2026-09-29, decisão do dono do projecto: nunca envio automático): o
+  pai cria em `/exercicios/relatorio` um link só de leitura (`POST /relatorios/partilhas`) e
+  envia-o ele próprio; o médico abre `/relatorio-partilhado/:token` sem sessão
   (`GET /relatorios/partilhados/{token}`, `Cache-Control: no-store`, `noindex`). Tabela
   `partilhas_relatorio` guarda só o hash SHA-256 do token; vale 30 dias, é revogável, no
   máximo 5 activos por conta, e é revogada na anonimização (W-03). Mostra só o primeiro
@@ -530,6 +530,15 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   o gráfico só comparam sessões do mesmo tipo da mais recente** (`mesmoTipoDaUltima`): com
   barras lê-se pior por natureza, e misturar os dois tipos inventava uma piora no dia da
   mudança. O resultado mostra sempre a diferença entre os olhos em linhas.
+- **Relatório clínico (2026-10-21): último passo da Vaga 1.** A secção 1 do relatório para o
+  médico (`ResumoClinico`, contas em `lib/visao/resumoClinico.ts`) junta os últimos 90 dias,
+  medida a medida, nas unidades do consultório: acuidade por olho (logMAR e 6/x) e diferença
+  em linhas, contraste, estereoacuidade, amplitudes em Δ por sentido, contraste do olho
+  forte no Kianda, adesão nas últimas 4 semanas e relatos de visão dupla. Para cada medida:
+  o mais recente, o primeiro do período e as **condições da mais recente** (distância medida
+  ou só indicada, cartão, óculos verificados), mais uma nota de método no fim. Sem
+  interpretação nem "sinais". Sessões de baixa atenção não entram; os relatos de visão dupla
+  entram sempre. O link do médico passa a trazer `distancia_mm` de cada sessão.
 - **Tamanhos físicos, não píxeis soltos.** Todo o estímulo é calculado em ângulo visual a
   partir de `pxPorMm` (calibração com cartão de banco) e da distância; níveis abaixo de
   1,4 px de dispositivo descartam-se (`geometria.ts`). O "palco" (`PalcoVisual`) é sempre

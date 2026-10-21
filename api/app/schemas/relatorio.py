@@ -26,6 +26,9 @@ class SessaoRelatorio(BaseModel):
     segundos_activos: int | None
     limiar: float | None
     unidade: str | None
+    # Distância olhos-ecrã da sessão: o médico precisa dela para ler as
+    # amplitudes de vergência (perto) e a estereoacuidade.
+    distancia_mm: int | None
     calibrado: bool | None
     sinais: dict | None
 

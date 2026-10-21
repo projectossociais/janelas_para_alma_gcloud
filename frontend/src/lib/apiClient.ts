@@ -600,6 +600,8 @@ export interface SessaoRelatorioPartilhado {
   segundos_activos: number | null;
   limiar: number | null;
   unidade: string | null;
+  /** Desde 2026-10-21; uma API mais antiga não a envia. */
+  distancia_mm?: number | null;
   calibrado: boolean | null;
   sinais: Record<string, unknown> | null;
 }

@@ -1,7 +1,7 @@
 import i18n from "@/i18n";
 import { formatarDecimal } from "@/i18n/formatar";
 import { DISTANCIA_LONGE_MM, DISTANCIA_OMISSAO_MM } from "@/lib/visao/geometria";
-import type { ResumoSentido, Sentido } from "@/lib/visao/pontes";
+import { eResumoSentido, type ResumoSentido, type Sentido } from "@/lib/visao/pontes";
 
 /** Nome curto de cada exercício (id histórico -> nome actual). */
 export const nomeDoExercicio = (id: string): string => {
@@ -39,26 +39,29 @@ export const nomeDoOlho = (olho: string | null): string =>
 /** Uma procura em dioptrias prismáticas ("18 Δ"). */
 export const rotuloDelta = (delta: number): string => i18n.t("Visao.pontesDelta", { delta: formatarDecimal(delta, delta % 1 ? 1 : 0) });
 
-const nomeDoSentido = (s: Sentido) =>
+export const nomeDoSentido = (s: Sentido) =>
   s === "convergencia" ? i18n.t("Visao.pontesConvergencia") : i18n.t("Visao.pontesDivergencia");
 
-const eResumoSentido = (v: unknown): v is ResumoSentido =>
-  !!v && typeof v === "object" && typeof (v as ResumoSentido).rampas === "number";
+/** Rotura e recuperação de um sentido, já formatadas ("18 Δ", "acima de 25 Δ", "—"). */
+const partesPontes = (r: ResumoSentido) => ({
+  rotura:
+    r.rotura !== null
+      ? rotuloDelta(r.rotura)
+      : r.limiteEcra && r.maximo !== null
+        ? i18n.t("Visao.pontesAcimaDe", { delta: rotuloDelta(r.maximo) })
+        : "—",
+  recuperacao: r.recuperacao !== null ? rotuloDelta(r.recuperacao) : "—",
+});
 
 /**
  * Pontes de Fusão, um sentido: "Convergência: rotura 18 Δ, recuperação 12 Δ".
  * Sem rotura mas com o limite do ecrã atingido: "rotura acima de 25 Δ".
  */
-export const rotuloSentidoPontes = (sentido: Sentido, r: ResumoSentido): string => {
-  const rotura =
-    r.rotura !== null
-      ? rotuloDelta(r.rotura)
-      : r.limiteEcra && r.maximo !== null
-        ? i18n.t("Visao.pontesAcimaDe", { delta: rotuloDelta(r.maximo) })
-        : "—";
-  const recuperacao = r.recuperacao !== null ? rotuloDelta(r.recuperacao) : "—";
-  return i18n.t("Visao.pontesResumoSentido", { sentido: nomeDoSentido(sentido), rotura, recuperacao });
-};
+export const rotuloSentidoPontes = (sentido: Sentido, r: ResumoSentido): string =>
+  i18n.t("Visao.pontesResumoSentido", { sentido: nomeDoSentido(sentido), ...partesPontes(r) });
+
+/** O mesmo sem o nome do sentido: "rotura 18 Δ, recuperação 12 Δ". */
+export const rotuloRoturaRecuperacao = (r: ResumoSentido): string => i18n.t("Visao.clinicoPontesValores", partesPontes(r));
 
 /** Os sentidos medidos numa sessão das Pontes de Fusão, numa linha. */
 export const rotuloPontes = (pontes: unknown): string | null => {

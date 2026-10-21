@@ -1,7 +1,7 @@
 import { ContadorTempoActivo, PAUSA_AUTOMATICA_MS } from "./tempoActivo";
 import { diferencaContraste, olhoMaisFracoPelaAcuidade, sinaisAcuidade, sinalEstereopsia } from "./resultados";
 import { criarAgendaControlo, eTentativaDeControlo, sinaisDeControlo } from "./treino";
-import { minutosPorDia, sequenciaDeDias, ultimosResultados, type SessaoResumo } from "./progresso";
+import { minutosPorDia, sequenciaDeDias, type SessaoResumo } from "./progresso";
 
 describe("tempo activo", () => {
   it("conta o tempo entre respostas próximas", () => {
@@ -150,16 +150,6 @@ describe("progresso", () => {
   it("um dia falhado quebra a sequência", () => {
     const s = [25, 27, 28].map((d) => sessao({ created_at: new Date(2026, 8, d, 9).toISOString() }));
     expect(sequenciaDeDias(s, hoje)).toBe(2);
-  });
-
-  it("último resultado de cada teste por olho", () => {
-    const r = ultimosResultados([
-      sessao({ exercicio_id: "figure8", limiar: 0.3, created_at: "2026-09-20T10:00:00Z" }),
-      sessao({ exercicio_id: "figure8", limiar: 0.2, created_at: "2026-09-27T10:00:00Z" }),
-      sessao({ exercicio_id: "ambliopia" }),
-    ]);
-    expect(r.get("figure8:esquerdo")?.limiar).toBe(0.2);
-    expect(r.size).toBe(1);
   });
 });
 

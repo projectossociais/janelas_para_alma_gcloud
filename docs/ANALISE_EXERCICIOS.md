@@ -99,6 +99,12 @@ o médico por **link temporário partilhado pelo pai** (nunca envio automático)
       com as sessões com barras. **A validar na Fase 1:** concordância com a acuidade com
       aglomeração do consultório (ex.: optótipos rodeados de barras) e se os limiares de sinal
       (pior do que 6/9; diferença de 2 linhas) devem mudar com as barras, sobretudo em crianças.
+- [x] **Relatório clínico** (2026-10-21), último passo da Vaga 1: resumo de 90 dias no topo do
+      relatório (ecrã do pai e link do médico), com o mais recente, o primeiro e as condições
+      de cada medida, a adesão em 4 semanas e os relatos de visão dupla. **A validar com a
+      Optioptika:** se o médico lê o resumo sem ajuda, o que falta para decidir (ex.: valores
+      de referência por idade, que o relatório não mostra de propósito) e se a nota de método
+      chega para confiar nos números.
 - Treino dicóptico com os óculos vermelho-ciano já pedidos no teste de estereopsia
   (princípio usado por Luminopia/CureSight, com aprovação da FDA)
 - Estudo com a Optioptika: acuidade em casa vs. na consulta, 30 a 50 crianças

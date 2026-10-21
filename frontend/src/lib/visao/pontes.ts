@@ -171,6 +171,10 @@ export interface ResumoSentido {
   maximo: number | null;
 }
 
+/** Um `ResumoSentido` lido de `sessoes_exercicio.sinais` (JSON vindo da API). */
+export const eResumoSentido = (v: unknown): v is ResumoSentido =>
+  !!v && typeof v === "object" && typeof (v as ResumoSentido).rampas === "number";
+
 /**
  * Resumo de várias rampas no mesmo sentido: medianas, para uma rampa com um
  * palpite feliz ou uma distracção não mexer no resultado. As rampas que

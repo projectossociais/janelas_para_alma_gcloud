@@ -1,5 +1,6 @@
 import { useMemo, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import ResumoClinico from "@/components/visao/ResumoClinico";
 import ResumoTendencia from "@/components/visao/ResumoTendencia";
 import { limiarFormatado, nomeDoExercicio, nomeDoOlho } from "@/components/visao/rotulos";
 import { formatarData, formatarDataHora, formatarDiaCurto } from "@/i18n/formatar";
@@ -10,9 +11,9 @@ import {
   IDS_TREINOS,
   minutosPorDia,
   ultimosDias,
-  ultimosResultados,
   type SessaoParaRelatorio,
 } from "@/lib/visao/progresso";
+import { DIAS_RESUMO_CLINICO } from "@/lib/visao/resumoClinico";
 
 // Estilo de relatório (pedido do dono do projecto, 2026-09-29): folha branca,
 // texto preto, secções numeradas, linhas finas -- sem cores do site, ícones nem
@@ -27,8 +28,9 @@ const inicioDoPeriodo = (hoje: Date) =>
 
 /**
  * Corpo do relatório para o oftalmologista, igual no ecrã do pai
- * (`RelatorioSemanal`) e no link partilhado (`RelatorioPartilhado`): minutos por
- * dia, sessões da semana, evolução de cada olho e últimos resultados dos testes.
+ * (`RelatorioSemanal`) e no link partilhado (`RelatorioPartilhado`): resumo
+ * clínico dos últimos 90 dias (`ResumoClinico`), minutos por dia e sessões da
+ * semana, e a evolução de cada olho em palavras.
  */
 const ConteudoRelatorio = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatorio[]; hoje: Date }) => {
   const { t } = useTranslation();
@@ -37,12 +39,16 @@ const ConteudoRelatorio = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRela
   const minutos = useMemo(() => minutosPorDia(daSemana), [daSemana]);
   const dias = ultimosDias(hoje, DIAS_RELATORIO);
   const baixaAtencao = daSemana.filter((s) => s.sinais?.baixa_atencao === true).length;
-  const ultimos = useMemo(() => [...ultimosResultados(sessoes).values()], [sessoes]);
 
   return (
     <article className="space-y-6 text-[13px] leading-relaxed text-black">
+      <section>
+        <h2 className={H2}>1. {t("Visao.clinicoTitulo", { dias: DIAS_RESUMO_CLINICO })}</h2>
+        <ResumoClinico sessoes={sessoes} hoje={hoje} />
+      </section>
+
       <section className="break-inside-avoid">
-        <h2 className={H2}>1. {t("Visao.relatorioMinutos")}</h2>
+        <h2 className={H2}>2. {t("Visao.relatorioMinutos")}</h2>
         <table className="w-full border-collapse">
           <thead>
             <tr className={TH_LINHA}>
@@ -69,7 +75,7 @@ const ConteudoRelatorio = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRela
       </section>
 
       <section>
-        <h2 className={H2}>2. {t("Visao.relatorioSessoes")}</h2>
+        <h2 className={H2}>3. {t("Visao.relatorioSessoes")}</h2>
         {daSemana.length === 0 ? (
           <p className="text-neutral-600">{t("Visao.semSessoesNaSemana")}</p>
         ) : (
@@ -107,30 +113,13 @@ const ConteudoRelatorio = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRela
       </section>
 
       <section className="break-inside-avoid space-y-2">
-        <h2 className={H2}>3. {t("Visao.relatorioEvolucao")}</h2>
+        <h2 className={H2}>4. {t("Visao.relatorioEvolucao")}</h2>
         {[ID_ACUIDADE, ID_ANEIS].map((id) => (
           <div key={id}>
             <p className="font-semibold">{nomeDoExercicio(id)}</p>
             <ResumoTendencia sessoes={sessoes} exercicioId={id} olhos={["direito", "esquerdo"]} simples />
           </div>
         ))}
-      </section>
-
-      <section className="break-inside-avoid">
-        <h2 className={H2}>4. {t("Visao.relatorioUltimosTestes")}</h2>
-        {ultimos.length === 0 ? (
-          <p className="text-neutral-600">{t("Visao.semDadosAinda")}</p>
-        ) : (
-          <ul className="list-none space-y-1 pl-0">
-            {ultimos.map((s, i) => (
-              <li key={chave(s, i)}>
-                {nomeDoExercicio(s.exercicio_id)} · {nomeDoOlho(s.olho)}:{" "}
-                <strong>{limiarFormatado(s.limiar, s.unidade, s.sinais)}</strong> ({formatarData(s.created_at)}
-                {s.calibrado === false ? `, ${t("Visao.semCalibracaoCurto")}` : ""})
-              </li>
-            ))}
-          </ul>
-        )}
       </section>
 
       <p className="border-t border-neutral-300 pt-3 text-xs text-neutral-600">
@@ -140,7 +129,7 @@ const ConteudoRelatorio = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRela
   );
 };
 
-/** Cabeçalho do relatório: marca, título, período e dados mínimos da pessoa. */
+/** Cabeçalho do relatório: marca, título, data de emissão e dados mínimos da pessoa. */
 export const CabecalhoRelatorio = ({
   hoje,
   nome,
@@ -163,9 +152,7 @@ export const CabecalhoRelatorio = ({
     <header className="mb-6 border-b border-neutral-400 pb-3 text-black">
       <p className="text-[11px] uppercase tracking-wide text-neutral-600">Janelas Para a Alma</p>
       <h1 className="text-[20px] font-bold">{t("Visao.relatorioTitulo")}</h1>
-      <p className="text-[13px] text-neutral-600">
-        {t("Visao.relatorioPeriodo", { inicio: formatarData(inicioDoPeriodo(hoje)), fim: formatarData(hoje) })}
-      </p>
+      <p className="text-[13px] text-neutral-600">{t("Visao.relatorioEmitido", { data: formatarData(hoje) })}</p>
       <p className="mt-2 text-[13px]">
         {nome ? `${nome} · ` : ""}
         {t("Visao.olhoMaisFraco")}: {olho}

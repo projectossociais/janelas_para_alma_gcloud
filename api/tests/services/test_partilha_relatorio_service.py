@@ -70,7 +70,7 @@ class SessoesFalsas:
         return [
             SessaoExercicioRegisto(
                 id="s1", user_id=user_id, exercicio_id="figure8", duracao_segundos=60, pontuacao=0,
-                precisao_percentual=0, detalhes=None, created_at=AGORA,
+                precisao_percentual=0, detalhes=None, created_at=AGORA, distancia_mm=400,
             )
         ]
 
