@@ -1,10 +1,14 @@
-import { Recycle, Wrench, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Recycle, Wrench, Sparkles, Glasses, Package, Scissors, Eye, ArrowRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
+import { Button } from "@/components/ui/button";
 import heroImg from "@/assets/circular-hero.jpg";
+import oculos3dImg from "@/assets/oculos-3d-prototipo.jpg";
 import { Trans, useTranslation } from "react-i18next";
 import i18n from "@/i18n";
+import { localizar } from "@/i18n/rotas";
 
 const steps = [
   {
@@ -35,6 +39,28 @@ const steps = [
     },
     get description() {
       return i18n.t("Circular.transformamosResiduosEmMateriais");
+    },
+  },
+];
+
+// O ciclo dos óculos 3D, em três passos curtos dentro do cartão "04".
+const passosOculos3d = [
+  {
+    icon: Package,
+    get title() {
+      return i18n.t("Circular.recolhaDePapelao");
+    },
+  },
+  {
+    icon: Scissors,
+    get title() {
+      return i18n.t("Circular.corteEMontagem");
+    },
+  },
+  {
+    icon: Eye,
+    get title() {
+      return i18n.t("Circular.oculosProntosParaOsExercicios");
     },
   },
 ];
@@ -99,6 +125,67 @@ const Circular = () => {
                   <p className="text-sm text-muted-foreground leading-relaxed">{step.description}</p>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Óculos 3D: o mesmo circuito de recolha, uma linha de produto nova */}
+        <section id="oculos-3d" className="pb-20 md:pb-28 scroll-mt-24">
+          <div className="container">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center max-w-5xl mx-auto">
+              <div className="animate-fade-in">
+                <span className="inline-block px-3 py-1 rounded-full bg-green/10 text-green text-xs font-bold uppercase tracking-widest mb-4">
+                  {t("Circular.novoCiclo")}
+                </span>
+                <h2 className="text-3xl md:text-4xl font-bold text-foreground leading-tight mb-6">
+                  {t("Circular.oculos3dUmNovoCiclo")}
+                </h2>
+                <div className="space-y-4 text-muted-foreground leading-relaxed">
+                  <p>{t("Circular.oculos3dRecolha")}</p>
+                  <p>{t("Circular.oculos3dVoluntarios")}</p>
+                  <p>{t("Circular.oculos3dAquisicao")}</p>
+                </div>
+                <Button asChild size="lg" className="mt-8 bg-green text-green-foreground hover:bg-green/90">
+                  <Link to={localizar("/apoiar?material=oculos3d")}>
+                    {t("Circular.apoiarAProducaoDosOculos")}
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </Button>
+              </div>
+
+              <div
+                className="relative flex flex-col rounded-2xl border border-border bg-card p-6 md:p-8 shadow-card animate-fade-in"
+                style={{ animationDelay: "100ms" }}
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <span className="text-5xl font-bold text-green/20">04</span>
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-green/10 text-green">
+                    <Glasses className="w-6 h-6" />
+                  </div>
+                </div>
+                <img
+                  src={oculos3dImg}
+                  alt={t("Circular.prototipoDosOculos3d")}
+                  className="w-full aspect-[4/3] object-cover rounded-xl mb-6"
+                  width={900}
+                  height={671}
+                  loading="lazy"
+                />
+                <h3 className="text-xl font-semibold text-foreground mb-4">{t("Circular.oculos3d")}</h3>
+                <ol className="flex flex-col sm:flex-row sm:items-stretch gap-2">
+                  {passosOculos3d.map((passo, i) => (
+                    <li key={passo.title} className="flex flex-col sm:flex-row items-center gap-2 sm:flex-1">
+                      <div className="flex w-full items-center gap-3 sm:flex-col sm:text-center rounded-xl bg-green/5 border border-green/20 px-4 py-3 h-full">
+                        <passo.icon className="w-5 h-5 shrink-0 text-green" />
+                        <span className="text-sm font-medium text-foreground leading-snug">{passo.title}</span>
+                      </div>
+                      {i < passosOculos3d.length - 1 && (
+                        <ArrowRight className="w-4 h-4 shrink-0 text-green/60 rotate-90 sm:rotate-0" aria-hidden="true" />
+                      )}
+                    </li>
+                  ))}
+                </ol>
+              </div>
             </div>
           </div>
         </section>
