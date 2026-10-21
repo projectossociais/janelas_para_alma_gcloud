@@ -5,7 +5,10 @@ import {
   obterPerguntaOfflineNaoVista,
   obterPerguntaOfflinePorId,
   obterPerguntasDoPatamar,
+  raridadeAlvo,
+  type TextosPergunta,
 } from "./perguntasOffline";
+import { PERGUNTAS_OFFLINE_EN } from "./perguntasOffline.en-US";
 
 const TOTAL_PATAMARES = 15;
 const MINIMO_POR_PATAMAR = 15;
@@ -102,5 +105,60 @@ describe("perguntasOffline", () => {
 
   it("lança um erro claro para um patamar sem reserva de contingência", () => {
     expect(() => obterPerguntaOfflineNaoVista(999, [])).toThrow(/patamar 999/);
+  });
+});
+
+const palavras = (texto: string) => texto.trim().split(/\s+/).length;
+const opcoes = (t: TextosPergunta) => [t.opcao_a, t.opcao_b, t.opcao_c, t.opcao_d];
+
+describe("perguntasOffline -- dificuldade equilibrada", () => {
+  const todas = Object.values(PERGUNTAS_OFFLINE_POR_PATAMAR).flat();
+  const idiomas: [string, (id: string) => TextosPergunta][] = [
+    ["pt", (id) => todas.find((p) => p.id === id)!],
+    ["en", (id) => PERGUNTAS_OFFLINE_EN[id]],
+  ];
+
+  it.each(idiomas)("[%s] linguagem simples: pergunta até 20 palavras, opções até 8 e niveladas", (_, textos) => {
+    const foraDaRegra = todas.flatMap((p) => {
+      const t = textos(p.id);
+      const ns = opcoes(t).map(palavras);
+      const problemas = [];
+      if (palavras(t.texto_pergunta) > 20) problemas.push("pergunta longa");
+      if (Math.max(...ns) > 8) problemas.push("opção longa");
+      if (Math.max(...ns) - Math.min(...ns) > 3) problemas.push(`opções desniveladas ${ns}`);
+      return problemas.map((x) => `${p.id}: ${x}`);
+    });
+    expect(foraDaRegra).toEqual([]);
+  });
+
+  it.each(idiomas)("[%s] a resposta certa raramente é a opção mais comprida (sem pista visual)", (_, textos) => {
+    const certaMaisLonga = todas.filter((p) => {
+      const t = textos(p.id);
+      const certa = t[`opcao_${p.resposta_correta.toLowerCase()}` as keyof TextosPergunta];
+      return opcoes(t).every((o) => o === certa || o.length < certa.length);
+    });
+    // Ao acaso seria 1/4; acima de 40% já se nota.
+    expect(certaMaisLonga.length / todas.length).toBeLessThanOrEqual(0.4);
+  });
+
+  it("a curva alvo vai de 1 a 5 e sobe sempre, devagar no início e mais depressa no fim", () => {
+    expect(raridadeAlvo(1)).toBe(1);
+    expect(raridadeAlvo(15)).toBeCloseTo(5, 10);
+    const saltos = [];
+    for (let n = 2; n <= 15; n++) saltos.push(raridadeAlvo(n) - raridadeAlvo(n - 1));
+    saltos.forEach((s, i) => {
+      expect(s).toBeGreaterThan(0);
+      if (i > 0) expect(s).toBeGreaterThanOrEqual(saltos[i - 1]);
+    });
+  });
+
+  it("cada patamar segue a curva: todas as perguntas no degrau do alvo e média a ±0,15", () => {
+    for (let patamar = 1; patamar <= TOTAL_PATAMARES; patamar++) {
+      const alvo = raridadeAlvo(patamar);
+      const raridades = obterPerguntasDoPatamar(patamar).map((p) => p.raridade);
+      raridades.forEach((r) => expect([Math.floor(alvo), Math.ceil(alvo)]).toContain(r));
+      const media = raridades.reduce((a, b) => a + b, 0) / raridades.length;
+      expect(Math.abs(media - alvo)).toBeLessThanOrEqual(0.15);
+    }
   });
 });

@@ -594,7 +594,7 @@ describe("JogoCuriosidades", () => {
       render(<JogoCuriosidades />, { wrapper: MemoryRouter });
       await comecarJogo();
       await screen.findByText("O que é o estrabismo, em termos simples?");
-      await userEvent.click(screen.getByText("Uma alteração na cor natural da íris")); // errada
+      await userEvent.click(screen.getByText("Olhos de cores diferentes")); // errada
       await screen.findByText("Essa não era a resposta certa");
 
       await userEvent.click(screen.getByRole("button", { name: "Close" }));
@@ -621,7 +621,7 @@ describe("JogoCuriosidades", () => {
       // Sem Mercado (é pago em diamantes, e sem conta não há diamantes).
       expect(screen.queryByRole("button", { name: /Consultório/ })).not.toBeInTheDocument();
 
-      await userEvent.click(screen.getByText("Um desalinhamento dos eixos visuais dos olhos"));
+      await userEvent.click(screen.getByText("Olhos que não olham juntos"));
       expect(obterPerguntaDaPartida).not.toHaveBeenCalled();
       expect(validarResposta).not.toHaveBeenCalled();
       expect(iniciarPartida).not.toHaveBeenCalled();
@@ -632,7 +632,7 @@ describe("JogoCuriosidades", () => {
       await comecarJogo();
       await screen.findByText("O que é o estrabismo, em termos simples?");
 
-      await userEvent.click(screen.getByText("Uma alteração na cor natural da íris"));
+      await userEvent.click(screen.getByText("Olhos de cores diferentes"));
 
       expect(await screen.findByText(/esta partida não dá moedas nem diamantes/i)).toBeInTheDocument();
       expect(screen.queryByText("Prémio ganho")).not.toBeInTheDocument();
@@ -749,10 +749,10 @@ describe("JogoCuriosidades", () => {
       await comecarJogo();
       await screen.findByText("O que é o estrabismo, em termos simples?");
 
-      await userEvent.click(screen.getByText("Uma alteração na cor natural da íris")); // opção errada
+      await userEvent.click(screen.getByText("Olhos de cores diferentes")); // opção errada
 
       expect(await screen.findByText("Essa não era a resposta certa")).toBeInTheDocument();
-      expect(screen.getByText(/desalinhamento dos eixos visuais dos dois olhos/i)).toBeInTheDocument();
+      expect(screen.getByText(/os dois olhos não apontam para o mesmo sítio/i)).toBeInTheDocument();
       expect(validarResposta).not.toHaveBeenCalled();
     });
 
@@ -784,7 +784,7 @@ describe("JogoCuriosidades", () => {
       await comecarJogo();
       await screen.findByText("O que é o estrabismo, em termos simples?");
 
-      await userEvent.click(screen.getByText("Uma alteração na cor natural da íris")); // opção errada
+      await userEvent.click(screen.getByText("Olhos de cores diferentes")); // opção errada
 
       await waitFor(() => expect(terminarPartida).toHaveBeenCalledTimes(1));
       expect(await screen.findByText(/essas respostas não contam para o prémio/i)).toBeInTheDocument();
@@ -798,12 +798,12 @@ describe("JogoCuriosidades", () => {
 
       await userEvent.click(screen.getByRole("button", { name: "50:50" }));
 
-      const opcaoCerta = screen.getByText("Um desalinhamento dos eixos visuais dos olhos").closest("button");
+      const opcaoCerta = screen.getByText("Olhos que não olham juntos").closest("button");
       await waitFor(() => expect(opcaoCerta).not.toBeDisabled());
       const desativadas = [
-        "Uma alteração na cor natural da íris",
-        "Uma alergia crónica à luz solar directa",
-        "Um tipo particular de miopia elevada",
+        "Olhos de cores diferentes",
+        "Olhos muito sensíveis à luz",
+        "Olhos que choram muito",
       ]
         .map((texto) => screen.getByText(texto).closest("button"))
         .filter((botao) => botao?.disabled).length;
@@ -846,7 +846,7 @@ describe("JogoCuriosidades", () => {
 
       // a reserva do patamar 1 tem 5 perguntas -- trocar mostra a próxima
       // ainda não vista, nunca repetindo a que já apareceu.
-      expect(await screen.findByText("Quantos músculos controlam os movimentos de cada olho?")).toBeInTheDocument();
+      expect(await screen.findByText("Para que servem as pestanas?")).toBeInTheDocument();
       expect(screen.queryByText("O que é o estrabismo, em termos simples?")).not.toBeInTheDocument();
       expect(obterPerguntaDaPartida).toHaveBeenCalledTimes(1); // só a tentativa inicial (que falhou)
       expect(toastError).not.toHaveBeenCalled();
@@ -887,9 +887,9 @@ describe("JogoCuriosidades", () => {
     it("valida a resposta localmente e mostra a explicação em inglês ao errar", async () => {
       abrirEmIngles();
       await userEvent.click(await screen.findByRole("button", { name: "Start" }));
-      await userEvent.click(await screen.findByText("A change in the natural color of the iris"));
+      await userEvent.click(await screen.findByText("Eyes of different colors"));
 
-      expect(await screen.findByText("Strabismus is a misalignment of the visual axes of the two eyes.")).toBeInTheDocument();
+      expect(await screen.findByText("With strabismus, the two eyes don't point at the same spot at the same time.")).toBeInTheDocument();
       expect(validarResposta).not.toHaveBeenCalled();
     });
   });
