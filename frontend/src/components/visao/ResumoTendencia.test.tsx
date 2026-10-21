@@ -69,10 +69,19 @@ describe("ResumoTendencia", () => {
 });
 
 describe("Relatório semanal: auto-avaliação separada das medições", () => {
-  it("marca a Convergência e o Perto e longe como auto-avaliação, e não os treinos medidos", () => {
+  it("marca a Convergência antiga como auto-avaliação, e não os treinos medidos nem as Pontes de Fusão", () => {
+    const resumoConv = { rampas: 2, semFusao: 0, rotura: 18, recuperacao: 12, limiteEcra: false, maximo: 25 };
     historico = [
       sessao({ exercicio_id: "convergence", olho: "ambos", limiar: 42, unidade: "segundos" }),
       sessao({ exercicio_id: "ambliopia", limiar: 0.3, unidade: "logmar" }),
+      // Pontes de Fusão (2026-10-20): mesmo id, mas medido -- em dioptrias prismáticas.
+      sessao({
+        exercicio_id: "convergence",
+        olho: "ambos",
+        limiar: 18,
+        unidade: "dioptrias_prismaticas",
+        sinais: { pontes: { convergencia: resumoConv, divergencia: { ...resumoConv, rampas: 0 } } },
+      }),
     ];
     render(
       <MemoryRouter>
@@ -81,7 +90,9 @@ describe("Relatório semanal: auto-avaliação separada das medições", () => {
     );
     const marcas = screen.getAllByText(/\(auto-avaliação\)/);
     expect(marcas).toHaveLength(1);
-    expect(marcas[0].closest("tr")).toHaveTextContent("Treino de Convergência");
+    expect(marcas[0].closest("tr")).toHaveTextContent("Pontes de Fusão");
+    expect(marcas[0].closest("tr")).toHaveTextContent("42");
+    expect(screen.getByText("Convergência: rotura 18 Δ, recuperação 12 Δ")).toBeInTheDocument();
     expect(screen.getByText(/Os resultados marcados como auto-avaliação/)).toBeInTheDocument();
   });
 });

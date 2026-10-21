@@ -35,6 +35,7 @@ TRIAL_DURACAO_DIAS = 7
 #   cerebro                   Foco Dinâmico           -> Teste de Contraste
 #   relax                     Relaxamento             -> Teste de Astigmatismo
 #   convergence               Convergência            -> Treino de Convergência (+ saltos)
+#                                                       -> Pontes de Fusão (2026-10-20, em Δ)
 #   estereopsia               (esqueleto)             -> Teste de Estereopsia
 #   ambliopia                 Anti-Supressão          -> Treino de Anéis com tapa-olho
 #   sacadas-convergencia      Convergência c/ Saltos  -> Treino de Contraste em blocos

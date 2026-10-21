@@ -1,6 +1,7 @@
 import i18n from "@/i18n";
 import { formatarDecimal } from "@/i18n/formatar";
 import { DISTANCIA_LONGE_MM, DISTANCIA_OMISSAO_MM } from "@/lib/visao/geometria";
+import type { ResumoSentido, Sentido } from "@/lib/visao/pontes";
 
 /** Nome curto de cada exercício (id histórico -> nome actual). */
 export const nomeDoExercicio = (id: string): string => {
@@ -35,6 +36,40 @@ export const nomeDoOlho = (olho: string | null): string =>
         ? i18n.t("Visao.doisOlhos")
         : "—";
 
+/** Uma procura em dioptrias prismáticas ("18 Δ"). */
+export const rotuloDelta = (delta: number): string => i18n.t("Visao.pontesDelta", { delta: formatarDecimal(delta, delta % 1 ? 1 : 0) });
+
+const nomeDoSentido = (s: Sentido) =>
+  s === "convergencia" ? i18n.t("Visao.pontesConvergencia") : i18n.t("Visao.pontesDivergencia");
+
+const eResumoSentido = (v: unknown): v is ResumoSentido =>
+  !!v && typeof v === "object" && typeof (v as ResumoSentido).rampas === "number";
+
+/**
+ * Pontes de Fusão, um sentido: "Convergência: rotura 18 Δ, recuperação 12 Δ".
+ * Sem rotura mas com o limite do ecrã atingido: "rotura acima de 25 Δ".
+ */
+export const rotuloSentidoPontes = (sentido: Sentido, r: ResumoSentido): string => {
+  const rotura =
+    r.rotura !== null
+      ? rotuloDelta(r.rotura)
+      : r.limiteEcra && r.maximo !== null
+        ? i18n.t("Visao.pontesAcimaDe", { delta: rotuloDelta(r.maximo) })
+        : "—";
+  const recuperacao = r.recuperacao !== null ? rotuloDelta(r.recuperacao) : "—";
+  return i18n.t("Visao.pontesResumoSentido", { sentido: nomeDoSentido(sentido), rotura, recuperacao });
+};
+
+/** Os sentidos medidos numa sessão das Pontes de Fusão, numa linha. */
+export const rotuloPontes = (pontes: unknown): string | null => {
+  if (!pontes || typeof pontes !== "object") return null;
+  const p = pontes as Partial<Record<Sentido, unknown>>;
+  const partes = (["convergencia", "divergencia"] as const)
+    .filter((s) => eResumoSentido(p[s]) && (p[s] as ResumoSentido).rampas > 0)
+    .map((s) => rotuloSentidoPontes(s, p[s] as ResumoSentido));
+  return partes.length ? partes.join(" · ") : null;
+};
+
 /** Limiar com a sua unidade, pronto a mostrar. */
 export const limiarFormatado = (
   limiar: number | null,
@@ -43,6 +78,7 @@ export const limiarFormatado = (
 ): string => {
   if (sinais && typeof sinais.astigmatismo === "boolean")
     return sinais.astigmatismo ? i18n.t("Visao.astigmatismoSinalCurto") : i18n.t("Visao.astigmatismoSemSinalCurto");
+  if (unidade === "dioptrias_prismaticas") return rotuloPontes(sinais?.pontes) ?? (limiar === null ? "—" : rotuloDelta(limiar));
   if (limiar === null) return "—";
   switch (unidade) {
     case "logmar":

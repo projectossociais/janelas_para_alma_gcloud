@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import TreinoConvergencia from "@/pages/exercises/TreinoConvergencia";
+import PontesFusao from "@/pages/exercises/PontesFusao";
+import ptAO from "@/i18n/locales/pt-AO.json";
+
+const V = ptAO.Visao;
 import { AcessoExerciciosProvider } from "@/contexts/AcessoExerciciosContext";
 
 // O consentimento para dados de saúde tem testes próprios
@@ -46,7 +49,7 @@ const abrir = () =>
   render(
     <MemoryRouter>
       <AcessoExerciciosProvider>
-        <TreinoConvergencia />
+        <PontesFusao />
       </AcessoExerciciosProvider>
     </MemoryRouter>,
   );
@@ -85,11 +88,14 @@ describe("Sessão rápida dos treinos", () => {
 
     await screen.findByText("Pronto para treinar?");
     expect(screen.getByText("Com os seus óculos ou lentes postos")).toBeInTheDocument();
+    // Treino com óculos 3D: o resumo lembra de os pôr.
+    expect(screen.getByText(V.rapidoOculos3D)).toBeInTheDocument();
     expect(screen.getByText(/Pare se sentir dor de cabeça/)).toBeInTheDocument();
     expect(screen.queryByText("Ponha o brilho do ecrã no máximo")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Começar treino/ }));
-    await screen.findByRole("button", { name: "Vejo 1" });
+    // Primeiro, a verificação com os anéis sobrepostos.
+    await screen.findByText(/Primeiro, com os anéis sobrepostos/);
   });
 
   it("'Alterar definições' volta ao fluxo completo", async () => {
@@ -103,11 +109,18 @@ describe("Sessão rápida dos treinos", () => {
   it("o fluxo completo guarda as escolhas quando o treino arranca, para a próxima vez", async () => {
     abrir();
     fireEvent.click(await screen.findByRole("button", { name: "Continuar" })); // brilho
-    fireEvent.click(await screen.findByRole("button", { name: "Continuar" })); // aviso da convergência
+    fireEvent.click(await screen.findByRole("button", { name: "Continuar" })); // aviso das Pontes de Fusão
     fireEvent.click(await screen.findByRole("button", { name: "Não tenho cartão" }));
     fireEvent.click(await screen.findByRole("button", { name: /Não uso óculos nem lentes/ }));
+    // Distância: sem medir (a medição tem testes próprios), 60 cm.
+    fireEvent.click(await screen.findByRole("button", { name: V.medirSemMedir }));
+    fireEvent.click(await screen.findByRole("button", { name: "Continuar" }));
+    // Óculos 3D: sem os óculos, a verificação falha e continua-se sem afinar.
+    fireEvent.click(await screen.findByRole("button", { name: V.vejoAsDuas }));
+    fireEvent.click(await screen.findByRole("button", { name: V.vejoAsDuas }));
+    fireEvent.click(await screen.findByRole("button", { name: V.continuarMesmoAssim }));
 
-    await screen.findByRole("button", { name: "Vejo 1" });
+    await screen.findByText(/Primeiro, com os anéis sobrepostos/);
     await waitFor(() =>
       expect(JSON.parse(window.localStorage.getItem("jpa.visao.escolhas.convergence") ?? "null")).toEqual({
         distanciaMm: 600,

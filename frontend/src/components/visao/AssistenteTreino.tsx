@@ -31,8 +31,11 @@ import { perfilApi, type BonusAssiduidade, type OlhoMaisFraco, type SessaoExerci
 import { disponivelNoIdiomaActual, localizar } from "@/i18n/rotas";
 import { PX_POR_MM_NOMINAL } from "@/lib/visao/calibracao";
 import { DISTANCIA_OMISSAO_MM } from "@/lib/visao/geometria";
-import { IDS_AUTOAVALIACAO, diaLocal, minutosPorDia, sequenciaDeDias } from "@/lib/visao/progresso";
+import { diaLocal, eAutoAvaliacao, minutosPorDia, sequenciaDeDias } from "@/lib/visao/progresso";
 import { guardarEscolhas, lerEscolhas, podeUsarSessaoRapida } from "@/lib/visao/preparacao";
+import { lerAfinacao, type Afinacao } from "@/lib/visao/anaglifo";
+import AfinarOculos from "@/components/visao/AfinarOculos";
+import VerificarOculos from "@/components/visao/VerificarOculos";
 import { olhoMaisFracoPelaAcuidade, type Olho, type OlhoSessao } from "@/lib/visao/resultados";
 import { ID_ACUIDADE } from "@/lib/visao/ids";
 import {
@@ -51,6 +54,8 @@ export interface ContextoTreino {
   distanciaMm: number;
   devicePixelRatio: number;
   historico: SessaoExercicioPublica[];
+  /** Afinação dos óculos vermelho-ciano (treinos com `oculos3D`); `null` = cores puras. */
+  afinacao: Afinacao | null;
 }
 
 /** O que a tarefa usa para reportar tentativas ao assistente. */
@@ -81,6 +86,8 @@ interface AssistenteTreinoProps {
   /** Pede a distância (anéis e contraste). Sem isto, usa `distanciaFixaMm`. */
   comDistancia?: boolean;
   distanciaFixaMm?: number;
+  /** Treino com óculos vermelho-ciano: verifica-os e afina-os antes de começar. */
+  oculos3D?: boolean;
   /** Ecrã de aviso específico antes de começar (ex.: convergência). */
   aviso?: ReactNode;
   /** Bloqueia o treino e explica o que falta (ex.: "faça primeiro o teste"). */
@@ -97,6 +104,8 @@ type Etapa =
   | "oculos"
   | "tapar"
   | "distancia"
+  | "verificar3d"
+  | "afinar"
   | "bloco"
   | "pausa"
   | "resumo";
@@ -281,6 +290,7 @@ const AssistenteTreino = ({
   monocular,
   comDistancia = false,
   distanciaFixaMm = DISTANCIA_OMISSAO_MM,
+  oculos3D = false,
   aviso,
   requisito,
   tarefa,
@@ -317,6 +327,8 @@ const AssistenteTreino = ({
   /** Medida pelo ponto cego nesta sessão (a da sessão rápida vem da última vez). */
   const [distanciaMedida, setDistanciaMedida] = useState(false);
   const [usaCorreccao, setUsaCorreccao] = useState(false);
+  const [oculosVerificados, setOculosVerificados] = useState(false);
+  const [afinacao, setAfinacao] = useState<Afinacao | null>(null);
   const [bloco, setBloco] = useState(1);
   const inicioBloco = useRef(0);
   const inicioSessao = useRef(0);
@@ -335,8 +347,9 @@ const AssistenteTreino = ({
       distanciaMm,
       devicePixelRatio: dpr,
       historico: historico ?? [],
+      afinacao,
     }),
-    [calibracao, distanciaMm, dpr, historico, monocular, olho],
+    [afinacao, calibracao, distanciaMm, dpr, historico, monocular, olho],
   );
 
   const terminar = useCallback(() => {
@@ -359,10 +372,16 @@ const AssistenteTreino = ({
         distancia_mm: distanciaMm,
         px_por_mm: Math.round(ctx.pxPorMm * 1000) / 1000,
         calibrado: ctx.calibrado,
-        sinais: { ...sinais, com_correccao: usaCorreccao, ...(comDistancia ? { distancia_medida: distanciaMedida } : {}) },
+        sinais: {
+          ...sinais,
+          com_correccao: usaCorreccao,
+          ...(comDistancia ? { distancia_medida: distanciaMedida } : {}),
+          ...(oculos3D ? { oculos_verificados: oculosVerificados, oculos_afinados: afinacao !== null } : {}),
+        },
       },
     ]).then(() => void recarregar());
   }, [
+    afinacao,
     bloco,
     comDistancia,
     ctx,
@@ -371,6 +390,8 @@ const AssistenteTreino = ({
     exercicioId,
     gravar,
     monocular,
+    oculos3D,
+    oculosVerificados,
     olho,
     recarregar,
     tempo,
@@ -434,6 +455,8 @@ const AssistenteTreino = ({
     // A distância mede-se antes do tapa-olho: o ponto cego mede-se com o
     // olho que vê melhor, e é esse que o tapa-olho vai cobrir.
     ...(comDistancia ? [t("Visao.passoDistancia")] : []),
+    // Os óculos 3D põem-se depois de medir a distância (a medição faz-se sem eles).
+    ...(oculos3D ? [t("Visao.passoOculosVC"), t("Visao.passoAfinar")] : []),
     ...(monocular ? [t("Visao.passoTapaOlho")] : []),
     t("Visao.passoTreino"),
     t("Visao.passoResumo"),
@@ -445,6 +468,7 @@ const AssistenteTreino = ({
     "calibracao",
     "oculos",
     ...(comDistancia ? (["distancia"] as Etapa[]) : []),
+    ...(oculos3D ? (["verificar3d", "afinar"] as Etapa[]) : []),
     ...(monocular ? (["tapar"] as Etapa[]) : []),
     "bloco",
     "resumo",
@@ -474,6 +498,7 @@ const AssistenteTreino = ({
               calibrado={ctx.calibrado}
               distanciaMm={escolhas.distanciaMm}
               comDistancia={comDistancia}
+              oculos3D={oculos3D}
               usaCorreccao={escolhas.usaCorreccao}
               olhoATapar={monocular && olho ? (olho === "direito" ? "esquerdo" : "direito") : null}
               aviso={aviso}
@@ -482,6 +507,8 @@ const AssistenteTreino = ({
                   setDistanciaMm(escolhas.distanciaMm);
                   setDistanciaMedida(false);
                 }
+                // Sessão rápida: a afinação guardada neste aparelho, sem voltar a verificar.
+                if (oculos3D) setAfinacao(lerAfinacao());
                 setUsaCorreccao(escolhas.usaCorreccao);
                 setModoRapido(true);
                 comecarBlocos();
@@ -519,6 +546,23 @@ const AssistenteTreino = ({
             olhoATapar={olho === "direito" ? "esquerdo" : "direito"}
             tapaOlho
             aoContinuar={() => seguinte("tapar")}
+          />
+        )}
+        {etapa === "verificar3d" && (
+          <VerificarOculos
+            aoContinuar={(ok) => {
+              setOculosVerificados(ok);
+              // Sem os óculos a funcionar, não há fuga de cor que valha a pena medir.
+              seguinte(ok ? "verificar3d" : "afinar");
+            }}
+          />
+        )}
+        {etapa === "afinar" && (
+          <AfinarOculos
+            aoContinuar={(af) => {
+              setAfinacao(af);
+              seguinte("afinar");
+            }}
           />
         )}
         {etapa === "distancia" && (
@@ -576,7 +620,7 @@ const AssistenteTreino = ({
               {t("Visao.resumoTempo", { minutos: Math.floor(resumo.segundos / 60), segundos: resumo.segundos % 60 })}
             </p>
             {resumo.resultado.resumo && <p className="text-lg font-semibold text-foreground">{resumo.resultado.resumo}</p>}
-            {IDS_AUTOAVALIACAO.includes(exercicioId) && (
+            {eAutoAvaliacao(exercicioId, resumo.resultado.unidade) && (
               <p className="text-sm text-muted-foreground">{t("Visao.autoAvaliacaoNota")}</p>
             )}
             {monocular && olho && historico && gravacao === "gravado" && (resumo.resultado.unidade === "logmar" || resumo.resultado.unidade === "log_cs") && (

@@ -87,8 +87,8 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   significado — `sessoes_exercicio.versao` separa as sessões antigas (1) das novas (2):
   teste de 7 dias = `figure8` Teste de Acuidade, `ambliopia` Treino de Anéis com tapa-olho,
   `cerebro` Teste de Contraste, `relax` Teste de Astigmatismo; só Premium = `estereopsia`
-  Teste de Estereopsia, `convergence` Treino de Convergência (com saltos como nível
-  avançado), `sacadas-convergencia` Treino de Contraste em blocos,
+  Teste de Estereopsia, `convergence` **Pontes de Fusão** (desde 2026-10-20; antes, Treino
+  de Convergência auto-declarado, "Vejo 1 / Vejo 2", em segundos), `sacadas-convergencia` Treino de Contraste em blocos,
   `flexibilidade-acomodativa` Treino Perto e longe. **Anéis e Convergência trocaram de grupo
   a 2026-09-29** (decisão do dono do projecto, `docs/ANALISE_EXERCICIOS.md`): o trial mostra
   o treino com mais valor e evidência; a Convergência é contra-indicada em parte do público
@@ -502,6 +502,14 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   um pedestal cinzento (`PEDESTAL`), porque descontar a fuga precisa de margem para baixo.
   Quem não mede fica com `sinais.distancia_medida = false`; quem afina, com
   `sinais.oculos_afinados = true`.
+- **Pontes de Fusão (2026-10-20): fusão verificada pelo estímulo, não declarada.** Dois anéis
+  em anáglifo afastam-se (convergência: imagem do olho esquerdo para a direita); dentro, um
+  estereograma com uma forma que só se vê com os anéis fundidos. Rotura e recuperação em
+  dioptrias prismáticas (`Δ ≈ 100·s/D`, `lib/visao/pontes.ts`), `unidade =
+  "dioptrias_prismaticas"`, detalhe por sentido em `sinais.pontes`. As sessões antigas do
+  `convergence` (unidade "segundos") continuam a contar como auto-avaliação; as novas não
+  (`eAutoAvaliacao`). Sem ver a forma a 0 Δ não há treino (precisa de alguma visão 3D).
+  Na esotropia não se treina a convergência: a pessoa escolhe "Só divergência".
 - **Tamanhos físicos, não píxeis soltos.** Todo o estímulo é calculado em ângulo visual a
   partir de `pxPorMm` (calibração com cartão de banco) e da distância; níveis abaixo de
   1,4 px de dispositivo descartam-se (`geometria.ts`). O "palco" (`PalcoVisual`) é sempre
