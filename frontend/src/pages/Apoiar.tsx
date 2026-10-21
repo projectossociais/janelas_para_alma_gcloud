@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Heart,
   CreditCard,
@@ -9,9 +10,23 @@ import {
   Crown,
   Glasses,
   Eye,
+  EyeOff,
   Boxes,
   ArrowRight,
   UploadCloud,
+  ChevronRight,
+  Wrench,
+  Disc,
+  Briefcase,
+  SprayCan,
+  BookOpen,
+  Layers,
+  Paperclip,
+  Recycle,
+  Stethoscope,
+  Users,
+  HeartPulse,
+  type LucideIcon,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -34,7 +49,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import oculos3dImg from "@/assets/oculos-3d-prototipo.jpg";
 import { toast } from "sonner";
 import {
   comprovativosApi,
@@ -49,11 +66,31 @@ import { PROVINCES } from "@/contexts/AuthContext";
 
 type Mode = "materiais" | "financeiro";
 
+/** Um material concreto aceite numa categoria (o que aparece no painel de detalhe). */
+interface ItemAceite {
+  readonly nome: string;
+  icon: LucideIcon;
+  /** Fotografia de referência. Enquanto não houver uma real, mostra-se o ícone. */
+  imagem?: string;
+}
+
+const itemAceite = (chave: string, icon: LucideIcon, imagem?: string): ItemAceite => ({
+  get nome() {
+    return i18n.t(chave);
+  },
+  icon,
+  imagem,
+});
+
 interface MaterialItem {
+  /** Vai tal como está para a API (`materiais`) e para o email da equipa. */
   id: string;
   label: string;
   description: string;
-  icon: typeof Glasses;
+  reaproveitamento: string;
+  itens: ItemAceite[];
+  icon: LucideIcon;
+  fotografia?: string;
 }
 
 const materialItems: MaterialItem[] = [
@@ -65,6 +102,14 @@ const materialItems: MaterialItem[] = [
     get description() {
       return i18n.t("Apoiar.armacoesNovasOuUsadas");
     },
+    get reaproveitamento() {
+      return i18n.t("Apoiar.armacoesReaproveitamento");
+    },
+    itens: [
+      itemAceite("Apoiar.armacoesItemGraduados", Glasses),
+      itemAceite("Apoiar.armacoesItemPartidas", Wrench),
+      itemAceite("Apoiar.armacoesItemLentes", Disc),
+    ],
     icon: Glasses,
   },
   {
@@ -75,6 +120,13 @@ const materialItems: MaterialItem[] = [
     get description() {
       return i18n.t("Apoiar.oclusoresOftalmologicosParaTratamento");
     },
+    get reaproveitamento() {
+      return i18n.t("Apoiar.tampoesReaproveitamento");
+    },
+    itens: [
+      itemAceite("Apoiar.tampoesItemAdesivos", EyeOff),
+      itemAceite("Apoiar.tampoesItemTecido", Eye),
+    ],
     icon: Eye,
   },
   {
@@ -85,9 +137,51 @@ const materialItems: MaterialItem[] = [
     get description() {
       return i18n.t("Apoiar.lentesEstojosProdutosDe");
     },
+    get reaproveitamento() {
+      return i18n.t("Apoiar.outrosReaproveitamento");
+    },
+    itens: [
+      itemAceite("Apoiar.outrosItemEstojos", Briefcase),
+      itemAceite("Apoiar.outrosItemLimpeza", SprayCan),
+      itemAceite("Apoiar.outrosItemDidactico", BookOpen),
+    ],
     icon: Boxes,
   },
+  {
+    id: "oculos3d",
+    get label() {
+      return i18n.t("Apoiar.oculos3dMateriais");
+    },
+    get description() {
+      return i18n.t("Apoiar.oculos3dMateriaisDescricao");
+    },
+    get reaproveitamento() {
+      return i18n.t("Apoiar.oculos3dReaproveitamento");
+    },
+    itens: [
+      itemAceite("Apoiar.oculos3dItemPapelao", Layers),
+      itemAceite("Apoiar.oculos3dItemPelicula", Glasses),
+      itemAceite("Apoiar.oculos3dItemFita", Paperclip),
+    ],
+    icon: Recycle,
+    fotografia: oculos3dImg,
+  },
 ];
+
+/** O que um nível de apoio financia. `percentagem` só aparece quando a equipa a confirmar. */
+interface CoberturaTier {
+  readonly nome: string;
+  icon: LucideIcon;
+  percentagem?: number;
+}
+
+const cobertura = (chave: string, icon: LucideIcon, percentagem?: number): CoberturaTier => ({
+  get nome() {
+    return i18n.t(chave);
+  },
+  icon,
+  percentagem,
+});
 
 interface Tier {
   id: "tier1" | "tier2" | "tier3";
@@ -98,6 +192,7 @@ interface Tier {
   range: string;
   short: string;
   impact: string;
+  cobre: CoberturaTier[];
   icon: typeof Sparkles;
   accent: string;
   ring: string;
@@ -121,6 +216,10 @@ const tiers: Tier[] = [
     get impact() {
       return i18n.t("Apoiar.financiaConsultasDeRastreio");
     },
+    cobre: [
+      cobertura("Apoiar.coberturaConsultasRastreio", Stethoscope),
+      cobertura("Apoiar.coberturaOculosGraduados", Glasses),
+    ],
     icon: Sparkles,
     accent: "text-teal",
     ring: "ring-teal border-teal",
@@ -142,6 +241,11 @@ const tiers: Tier[] = [
     get impact() {
       return i18n.t("Apoiar.cobreUmCicloCompleto");
     },
+    cobre: [
+      cobertura("Apoiar.coberturaConsulta", Stethoscope),
+      cobertura("Apoiar.coberturaOculos", Glasses),
+      cobertura("Apoiar.coberturaTerapia", Eye),
+    ],
     icon: Heart,
     accent: "text-navy",
     ring: "ring-navy border-navy",
@@ -163,6 +267,10 @@ const tiers: Tier[] = [
     get impact() {
       return i18n.t("Apoiar.viabilizaUmaCampanhaComunitaria");
     },
+    cobre: [
+      cobertura("Apoiar.coberturaCampanha", Users),
+      cobertura("Apoiar.coberturaCirurgias", HeartPulse),
+    ],
     icon: Crown,
     accent: "text-gold",
     ring: "ring-gold border-gold",
@@ -208,6 +316,25 @@ const Apoiar = () => {
   const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
   const [materialNotes, setMaterialNotes] = useState("");
   const [selectedTier, setSelectedTier] = useState<Tier["id"] | null>(null);
+  // Painéis de detalhe: o cartão mostra só ícone e título, o resto abre aqui.
+  // `?material=oculos3d` (link da página Circular) abre logo essa categoria.
+  const [searchParams] = useSearchParams();
+  const [detalheMaterial, setDetalheMaterial] = useState<string | null>(() => {
+    const pedido = searchParams.get("material");
+    return materialItems.some((m) => m.id === pedido) ? pedido : null;
+  });
+  const [materialAberto, setMaterialAberto] = useState(detalheMaterial !== null);
+  const [detalheTier, setDetalheTier] = useState<Tier["id"] | null>(null);
+  const [tierAberto, setTierAberto] = useState(false);
+  // O id fica depois de fechar, para o painel não ficar vazio durante a animação de saída.
+  const abrirMaterial = (id: string) => {
+    setDetalheMaterial(id);
+    setMaterialAberto(true);
+  };
+  const abrirTier = (id: Tier["id"]) => {
+    setDetalheTier(id);
+    setTierAberto(true);
+  };
 
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<DialogStep>("form");
@@ -237,6 +364,21 @@ const Apoiar = () => {
     setOpen(true);
   };
 
+  // "Quero Doar Isto": marca a categoria (sem desmarcar as outras) e segue
+  // para o mesmo diálogo de recolha do botão "Confirmar Doação de Materiais".
+  const doarMaterial = (id: string) => {
+    setSelectedMaterials((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    setMaterialAberto(false);
+    setReceipt(null);
+    setStep("form");
+    setOpen(true);
+  };
+
+  const seleccionarTier = (id: Tier["id"]) => {
+    setSelectedTier(id);
+    setTierAberto(false);
+  };
+
   const handleFinanceSubmit = () => {
     if (!selectedTier) {
       toast.error(tr("Apoiar.seleccioneUmTierDe"));
@@ -247,6 +389,8 @@ const Apoiar = () => {
   };
 
   const activeTier = tiers.find((t) => t.id === selectedTier) ?? null;
+  const materialEmDetalhe = materialItems.find((m) => m.id === detalheMaterial) ?? null;
+  const tierEmDetalhe = tiers.find((t) => t.id === detalheTier) ?? null;
 
   const handleConfirm = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -399,22 +543,24 @@ const Apoiar = () => {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-8">
                   {materialItems.map((item) => {
                     const selected = selectedMaterials.includes(item.id);
                     return (
-                      <button
+                      <div
                         key={item.id}
-                        type="button"
-                        aria-pressed={selected}
-                        onClick={() => toggleMaterial(item.id)}
-                        className={`relative text-left p-6 rounded-2xl border-2 bg-card transition-all duration-200 hover:-translate-y-1 hover:shadow-elevated focus:outline-none focus:ring-2 focus:ring-teal focus:ring-offset-2 ${
+                        className={`relative rounded-2xl border-2 bg-card transition-all duration-200 hover:-translate-y-1 hover:shadow-elevated ${
                           selected
                             ? "border-teal shadow-elevated bg-teal/5"
                             : "border-border/60 shadow-card"
                         }`}
                       >
-                        <div className="flex items-start justify-between mb-4">
+                        <button
+                          type="button"
+                          aria-haspopup="dialog"
+                          onClick={() => abrirMaterial(item.id)}
+                          className="flex h-full w-full flex-col items-start gap-3 rounded-2xl p-4 md:p-6 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2"
+                        >
                           <div
                             className={`inline-flex items-center justify-center w-12 h-12 rounded-xl transition-colors ${
                               selected ? "bg-teal text-teal-foreground" : "bg-teal/10 text-teal"
@@ -422,13 +568,21 @@ const Apoiar = () => {
                           >
                             <item.icon className="w-6 h-6" />
                           </div>
-                          <Checkbox checked={selected} className="pointer-events-none mt-1" />
-                        </div>
-                        <h3 className="text-lg font-bold text-foreground mb-1">{item.label}</h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          {item.description}
-                        </p>
-                      </button>
+                          <h3 className="text-base md:text-lg font-bold text-foreground leading-snug pr-6">
+                            {item.label}
+                          </h3>
+                          <span className="mt-auto inline-flex items-center gap-1 text-xs font-medium text-teal">
+                            {tr("Apoiar.verDetalhes")}
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </span>
+                        </button>
+                        <Checkbox
+                          checked={selected}
+                          onCheckedChange={() => toggleMaterial(item.id)}
+                          aria-label={tr("Apoiar.seleccionarMaterial", { nome: item.label })}
+                          className="absolute top-4 right-4 h-5 w-5 data-[state=checked]:bg-teal data-[state=checked]:border-teal"
+                        />
+                      </div>
                     );
                   })}
                 </div>
@@ -490,9 +644,9 @@ const Apoiar = () => {
                       <button
                         key={tier.id}
                         type="button"
-                        aria-pressed={selected}
-                        onClick={() => setSelectedTier(tier.id)}
-                        className={`relative text-left p-8 rounded-2xl border-2 bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-elevated focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                        aria-haspopup="dialog"
+                        onClick={() => abrirTier(tier.id)}
+                        className={`relative flex flex-col items-start text-left p-6 md:p-8 rounded-2xl border-2 bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-elevated focus:outline-none focus:ring-2 focus:ring-offset-2 ${
                           selected
                             ? `${tier.ring} shadow-elevated ring-2`
                             : "border-border/60 shadow-card"
@@ -500,7 +654,8 @@ const Apoiar = () => {
                       >
                         {selected && (
                           <span className="absolute top-4 right-4 inline-flex items-center justify-center w-6 h-6 rounded-full bg-teal text-teal-foreground">
-                            <Check className="w-4 h-4" />
+                            <Check className="w-4 h-4" aria-hidden="true" />
+                            <span className="sr-only">{tr("Apoiar.nivelSeleccionado")}</span>
                           </span>
                         )}
                         <div
@@ -513,13 +668,13 @@ const Apoiar = () => {
                         >
                           {tier.name}
                         </span>
-                        <p className={`text-2xl font-bold ${tier.accent} leading-tight mb-1`}>
+                        <p className={`text-2xl font-bold ${tier.accent} leading-tight mb-4`}>
                           {tier.range}
                         </p>
-                        <p className="text-sm font-medium text-foreground/70 mb-4">{tier.short}</p>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          {tier.impact}
-                        </p>
+                        <span className="mt-auto inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                          {tr("Apoiar.verDetalhes")}
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </span>
                       </button>
                     );
                   })}
@@ -547,6 +702,153 @@ const Apoiar = () => {
         </section>
       </main>
       <Footer />
+
+      {/* Detalhe de uma categoria de materiais */}
+      <Sheet open={materialAberto && materialEmDetalhe !== null} onOpenChange={setMaterialAberto}>
+        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto flex flex-col gap-6">
+          {materialEmDetalhe && (
+            <>
+              <SheetHeader className="space-y-3 text-left pr-6">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-teal/10 text-teal">
+                  <materialEmDetalhe.icon className="w-6 h-6" />
+                </div>
+                <SheetTitle className="text-xl">{materialEmDetalhe.label}</SheetTitle>
+                <SheetDescription>{materialEmDetalhe.description}</SheetDescription>
+              </SheetHeader>
+
+              {materialEmDetalhe.fotografia && (
+                <img
+                  src={materialEmDetalhe.fotografia}
+                  alt={tr("Circular.prototipoDosOculos3d")}
+                  className="w-full aspect-[4/3] object-cover rounded-xl"
+                  width={900}
+                  height={671}
+                />
+              )}
+
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-teal">
+                  {tr("Apoiar.materiaisAceites")}
+                </h4>
+                <ul className="space-y-2">
+                  {materialEmDetalhe.itens.map((itemAceite) => (
+                    <li
+                      key={itemAceite.nome}
+                      className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-2.5"
+                    >
+                      {itemAceite.imagem ? (
+                        <img
+                          src={itemAceite.imagem}
+                          alt=""
+                          className="w-14 h-14 shrink-0 rounded-lg object-cover"
+                        />
+                      ) : (
+                        <div
+                          className="w-14 h-14 shrink-0 rounded-lg bg-teal/10 text-teal flex items-center justify-center"
+                          aria-hidden="true"
+                        >
+                          <itemAceite.icon className="w-6 h-6" />
+                        </div>
+                      )}
+                      <span className="text-sm font-medium text-foreground">{itemAceite.nome}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="space-y-2 rounded-xl bg-teal/5 border border-teal/20 p-4">
+                <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <Recycle className="w-4 h-4 text-teal" />
+                  {tr("Apoiar.comoEReaproveitado")}
+                </h4>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {materialEmDetalhe.reaproveitamento}
+                </p>
+              </div>
+
+              <div className="mt-auto flex flex-col gap-2">
+                <Button
+                  onClick={() => doarMaterial(materialEmDetalhe.id)}
+                  className="w-full bg-teal text-teal-foreground hover:bg-teal/90"
+                  size="lg"
+                >
+                  {tr("Apoiar.queroDoarIsto")}
+                </Button>
+                <Button variant="outline" onClick={() => setMaterialAberto(false)} className="w-full">
+                  {tr("Apoiar.fechar")}
+                </Button>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {/* Detalhe de um nível de apoio financeiro */}
+      <Dialog open={tierAberto && tierEmDetalhe !== null} onOpenChange={setTierAberto}>
+        <DialogContent className="max-w-md">
+          {tierEmDetalhe && (
+            <>
+              <DialogHeader className="space-y-3 text-left">
+                <div
+                  className={`inline-flex items-center justify-center w-12 h-12 rounded-xl ${tierEmDetalhe.chip}`}
+                >
+                  <tierEmDetalhe.icon className="w-6 h-6" />
+                </div>
+                <DialogTitle className="text-xl">
+                  {tierEmDetalhe.name} · <span className={tierEmDetalhe.accent}>{tierEmDetalhe.range}</span>
+                </DialogTitle>
+                <DialogDescription>{tierEmDetalhe.short}</DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-navy">
+                  {tr("Apoiar.paraOndeVaiOSeuApoio")}
+                </h4>
+                <p className="text-sm text-foreground leading-relaxed">{tierEmDetalhe.impact}</p>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-navy">
+                  {tr("Apoiar.oQueCobre")}
+                </h4>
+                <ul className="space-y-2">
+                  {tierEmDetalhe.cobre.map((parte) => (
+                    <li
+                      key={parte.nome}
+                      className="flex items-center gap-3 rounded-lg border border-border/60 px-3 py-2"
+                    >
+                      <span
+                        className={`inline-flex items-center justify-center w-8 h-8 shrink-0 rounded-lg ${tierEmDetalhe.chip}`}
+                        aria-hidden="true"
+                      >
+                        <parte.icon className="w-4 h-4" />
+                      </span>
+                      <span className="flex-1 text-sm text-foreground">{parte.nome}</span>
+                      {parte.percentagem !== undefined && (
+                        <span className={`text-sm font-bold tabular-nums ${tierEmDetalhe.accent}`}>
+                          {parte.percentagem}%
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <DialogFooter className="flex-col gap-2 sm:flex-col">
+                <Button
+                  onClick={() => seleccionarTier(tierEmDetalhe.id)}
+                  className="w-full bg-navy text-navy-foreground hover:bg-navy/90"
+                >
+                  {tr("Apoiar.seleccionarEsteNivel")}
+                </Button>
+                <Button variant="ghost" onClick={() => setTierAberto(false)} className="w-full text-muted-foreground">
+                  {tr("Apoiar.fechar")}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={open} onOpenChange={(v) => (v ? setOpen(true) : closeDialog())}>
         <DialogContent className={step === "recolha" ? "max-w-lg" : "max-w-md"}>

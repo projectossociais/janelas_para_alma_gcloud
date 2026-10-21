@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
@@ -59,8 +59,9 @@ vi.mock("sonner", () => ({
 import Apoiar from "./Apoiar";
 
 async function abrirDialogoDeMateriais(user: ReturnType<typeof userEvent.setup>) {
+  // Cartão -> painel de detalhe -> "Quero Doar Isto" -> diálogo de recolha.
   await user.click(screen.getByRole("button", { name: /Armações/i }));
-  await user.click(screen.getByRole("button", { name: /^Confirmar Doação de Materiais$/ }));
+  await user.click(await screen.findByRole("button", { name: /Quero Doar Isto/i }));
   await user.click(screen.getByRole("combobox"));
   await user.click(await screen.findByRole("option", { name: "Luanda" }));
   const email = await screen.findByLabelText(/O seu email para contacto/i);
@@ -137,7 +138,8 @@ describe("Apoiar — doação de materiais", () => {
     const user = userEvent.setup();
     render(<Apoiar />, { wrapper: MemoryRouter });
 
-    await user.click(screen.getByRole("button", { name: /Armações/i }));
+    // Caminho sem abrir o detalhe: marcar a caixa do cartão e confirmar em baixo.
+    await user.click(screen.getByRole("checkbox", { name: /Seleccionar Armações/i }));
     await user.click(screen.getByRole("button", { name: /^Confirmar Doação de Materiais$/ }));
     const email = await screen.findByLabelText(/O seu email para contacto/i);
     await user.type(email, "doador@example.com");
@@ -162,6 +164,7 @@ describe("Apoiar — doação financeira (comprovativo via R2, CROSS-02)", () =>
     render(<Apoiar />, { wrapper: MemoryRouter });
     await user.click(screen.getByRole("tab", { name: /Apoio Financeiro/i }));
     await user.click(screen.getByRole("button", { name: /Aliado/i }));
+    await user.click(await screen.findByRole("button", { name: /Seleccionar Este Nível/i }));
     await user.click(screen.getByRole("button", { name: /^Apoiar como Aliado$/i }));
     const email = await screen.findByLabelText(/receber o comprovativo/i);
     await user.type(email, "doador@example.com");
@@ -277,6 +280,7 @@ describe("Apoiar -- em inglês, o que vai para a API continua em português", ()
     render(<Apoiar />, { wrapper: MemoryRouter });
     await user.click(screen.getByRole("tab", { name: /Financial Support/i }));
     await user.click(screen.getByRole("button", { name: /Ally/i }));
+    await user.click(await screen.findByRole("button", { name: /Select This Level/i }));
     await user.click(screen.getByRole("button", { name: /^Give as Ally$/i }));
     await user.type(await screen.findByLabelText(/receive your receipt/i), "doador@example.com");
     await user.click(screen.getByRole("button", { name: /Continue/i }));
@@ -285,5 +289,73 @@ describe("Apoiar -- em inglês, o que vai para a API continua em português", ()
 
     await waitFor(() => expect(registarFinanceira).toHaveBeenCalled());
     expect(registarFinanceira).toHaveBeenCalledWith("doador@example.com", "Aliado (10.000 a 250.000 Kz)", "comprovativos/x.pdf");
+  });
+});
+
+describe("Apoiar -- cartões com detalhe (materiais e níveis)", () => {
+  beforeEach(() => {
+    registarMateriais.mockReset();
+    toastSuccess.mockReset();
+    toastError.mockReset();
+  });
+
+  it("o detalhe de uma categoria mostra os materiais aceites e como são reaproveitados", async () => {
+    const user = userEvent.setup();
+    render(<Apoiar />, { wrapper: MemoryRouter });
+
+    // O cartão já não mostra a descrição longa; está no painel.
+    expect(screen.queryByText(/redistribuição/i)).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /Armações/i }));
+
+    const painel = await screen.findByRole("dialog");
+    expect(within(painel).getByText(/Armações novas ou usadas em bom estado/i)).toBeInTheDocument();
+    expect(within(painel).getByText("Óculos graduados usados")).toBeInTheDocument();
+    expect(within(painel).getByText(/limpeza, reparação e validação técnica/i)).toBeInTheDocument();
+
+    await user.click(within(painel).getByRole("button", { name: /^Fechar$/ }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  });
+
+  it("o link da página Circular abre logo os materiais dos óculos 3D, e doar envia o id à API", async () => {
+    registarMateriais.mockResolvedValue({ id: "d-3d", recibo_id: "JPA-3D", tipo: "materiais" });
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/apoiar?material=oculos3d"]}>
+        <Apoiar />
+      </MemoryRouter>,
+    );
+
+    const painel = await screen.findByRole("dialog");
+    expect(within(painel).getByText("Óculos 3D — Materiais de Produção")).toBeInTheDocument();
+    expect(within(painel).getByText("Fita adesiva")).toBeInTheDocument();
+
+    await user.click(within(painel).getByRole("button", { name: /Quero Doar Isto/i }));
+    await user.click(await screen.findByRole("combobox"));
+    await user.click(await screen.findByRole("option", { name: "Luanda" }));
+    await user.type(await screen.findByLabelText(/O seu email para contacto/i), "doador@example.com");
+    await user.click(screen.getByRole("button", { name: /Confirmar Doação|A enviar/ }));
+
+    await waitFor(() => expect(registarMateriais).toHaveBeenCalledWith("doador@example.com", ["oculos3d"], "Luanda", null));
+  });
+
+  it("escolher um nível no detalhe fecha-o e deixa o cartão marcado antes de avançar", async () => {
+    const user = userEvent.setup();
+    render(<Apoiar />, { wrapper: MemoryRouter });
+    await user.click(screen.getByRole("tab", { name: /Apoio Financeiro/i }));
+
+    expect(screen.queryByText(/Financia consultas de rastreio/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Seleccione um tier para continuar/i })).toBeDisabled();
+
+    await user.click(screen.getByRole("button", { name: /Padrinho/i }));
+    const modal = await screen.findByRole("dialog");
+    expect(within(modal).getByText(/Cobre um ciclo completo de tratamento/i)).toBeInTheDocument();
+    expect(within(modal).getByText("Terapia")).toBeInTheDocument();
+
+    await user.click(within(modal).getByRole("button", { name: /Seleccionar Este Nível/i }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+
+    // O cartão (não o botão "Apoiar como Padrinho" de baixo) fica marcado.
+    expect(screen.getByRole("button", { name: /^Seleccionado.*Padrinho/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Apoiar como Padrinho$/i })).toBeEnabled();
   });
 });
