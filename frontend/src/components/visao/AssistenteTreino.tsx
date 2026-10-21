@@ -314,6 +314,8 @@ const AssistenteTreino = ({
   }, [etapa, olho, rapidaDisponivel]);
 
   const [distanciaMm, setDistanciaMm] = useState(distanciaFixaMm);
+  /** Medida pelo ponto cego nesta sessão (a da sessão rápida vem da última vez). */
+  const [distanciaMedida, setDistanciaMedida] = useState(false);
   const [usaCorreccao, setUsaCorreccao] = useState(false);
   const [bloco, setBloco] = useState(1);
   const inicioBloco = useRef(0);
@@ -357,10 +359,23 @@ const AssistenteTreino = ({
         distancia_mm: distanciaMm,
         px_por_mm: Math.round(ctx.pxPorMm * 1000) / 1000,
         calibrado: ctx.calibrado,
-        sinais: { ...sinais, com_correccao: usaCorreccao },
+        sinais: { ...sinais, com_correccao: usaCorreccao, ...(comDistancia ? { distancia_medida: distanciaMedida } : {}) },
       },
     ]).then(() => void recarregar());
-  }, [bloco, ctx, distanciaMm, exercicioId, gravar, monocular, olho, recarregar, tempo, usaCorreccao]);
+  }, [
+    bloco,
+    comDistancia,
+    ctx,
+    distanciaMedida,
+    distanciaMm,
+    exercicioId,
+    gravar,
+    monocular,
+    olho,
+    recarregar,
+    tempo,
+    usaCorreccao,
+  ]);
 
   // Fim de bloco: 2 minutos de tempo activo.
   useEffect(() => {
@@ -416,8 +431,10 @@ const AssistenteTreino = ({
     ...(aviso ? [t("Visao.passoAviso")] : []),
     t("Visao.passoCartao"),
     t("Visao.passoOculos"),
-    ...(monocular ? [t("Visao.passoTapaOlho")] : []),
+    // A distância mede-se antes do tapa-olho: o ponto cego mede-se com o
+    // olho que vê melhor, e é esse que o tapa-olho vai cobrir.
     ...(comDistancia ? [t("Visao.passoDistancia")] : []),
+    ...(monocular ? [t("Visao.passoTapaOlho")] : []),
     t("Visao.passoTreino"),
     t("Visao.passoResumo"),
   ];
@@ -427,8 +444,8 @@ const AssistenteTreino = ({
     ...(aviso ? (["aviso"] as Etapa[]) : []),
     "calibracao",
     "oculos",
-    ...(monocular ? (["tapar"] as Etapa[]) : []),
     ...(comDistancia ? (["distancia"] as Etapa[]) : []),
+    ...(monocular ? (["tapar"] as Etapa[]) : []),
     "bloco",
     "resumo",
   ];
@@ -461,7 +478,10 @@ const AssistenteTreino = ({
               olhoATapar={monocular && olho ? (olho === "direito" ? "esquerdo" : "direito") : null}
               aviso={aviso}
               aoComecar={() => {
-                if (comDistancia) setDistanciaMm(escolhas.distanciaMm);
+                if (comDistancia) {
+                  setDistanciaMm(escolhas.distanciaMm);
+                  setDistanciaMedida(false);
+                }
                 setUsaCorreccao(escolhas.usaCorreccao);
                 setModoRapido(true);
                 comecarBlocos();
@@ -504,8 +524,10 @@ const AssistenteTreino = ({
         {etapa === "distancia" && (
           <PassoDistancia
             distanciaMm={distanciaMm}
-            aoEscolher={(mm) => {
+            pxPorMm={ctx.pxPorMm}
+            aoEscolher={(mm, medida) => {
               setDistanciaMm(mm);
+              setDistanciaMedida(medida);
               seguinte("distancia");
             }}
           />

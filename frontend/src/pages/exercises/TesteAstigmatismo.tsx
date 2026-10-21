@@ -106,7 +106,7 @@ const ResultadoAstigmatismoEcra = ({ res, ctx }: { res: Record<Olho, ResultadoAs
         distancia_mm: ctx.distanciaMm,
         px_por_mm: Math.round(ctx.pxPorMm * 1000) / 1000,
         calibrado: ctx.calibrado,
-        sinais: { astigmatismo: res[olho].sinal, com_correccao: ctx.usaCorreccao },
+        sinais: { astigmatismo: res[olho].sinal, com_correccao: ctx.usaCorreccao, distancia_medida: ctx.distanciaMedida },
       })),
     );
   }, [ctx, gravar, res]);

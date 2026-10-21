@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowRight, CreditCard, Glasses, Ruler, Sun } from "lucide-react";
+import { CreditCard, Glasses, Ruler, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -13,51 +13,12 @@ import { DISTANCIA_LONGE_MM, DISTANCIA_OMISSAO_MM } from "@/lib/visao/geometria"
 import type { Olho } from "@/lib/visao/resultados";
 import { cn } from "@/lib/utils";
 import { rotuloDistancia } from "@/components/visao/rotulos";
+import { BotaoContinuar, EcraPasso } from "@/components/visao/EcraPasso";
+import MedirDistancia from "@/components/visao/MedirDistancia";
+import { useProfile } from "@/contexts/ProfileContext";
+import { olhoParaMedir } from "@/lib/visao/pontoCego";
 
-/** Moldura comum de um passo: ícone, título, texto, conteúdo e botão. */
-export const EcraPasso = ({
-  icone,
-  titulo,
-  children,
-  accao,
-}: {
-  icone?: ReactNode;
-  titulo: string;
-  children?: ReactNode;
-  accao?: ReactNode;
-}) => (
-  <section className="mx-auto flex max-w-xl flex-col items-center gap-4 text-center">
-    {icone && (
-      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-teal/10 text-teal">{icone}</div>
-    )}
-    <h2 className="text-xl font-bold text-foreground">{titulo}</h2>
-    {children}
-    {accao && <div className="mt-2 flex w-full flex-col items-center gap-2 sm:w-auto">{accao}</div>}
-  </section>
-);
-
-export const BotaoContinuar = ({
-  aoClicar,
-  children,
-  desactivado,
-}: {
-  aoClicar: () => void;
-  children?: ReactNode;
-  desactivado?: boolean;
-}) => {
-  const { t } = useTranslation();
-  return (
-    <Button
-      size="lg"
-      onClick={aoClicar}
-      disabled={desactivado}
-      className="w-full gap-2 bg-teal text-teal-foreground hover:bg-teal/90 sm:w-auto sm:min-w-48"
-    >
-      {children ?? t("Visao.continuar")}
-      <ArrowRight className="h-4 w-4" />
-    </Button>
-  );
-};
+export { BotaoContinuar, EcraPasso };
 
 /** Primeiro passo de cada exercício. */
 export const PassoBrilho = ({ aoContinuar }: { aoContinuar: () => void }) => {
@@ -261,23 +222,50 @@ export const PassoTaparOlho = ({
   );
 };
 
+/**
+ * Distância olhos-ecrã. Primeiro mede-se pelo ponto cego (Régua Invisível,
+ * ver `MedirDistancia`); quem não consegue medir escolhe uma das distâncias
+ * de sempre, e o resultado fica marcado como distância estimada.
+ */
 export const PassoDistancia = ({
   distanciaMm,
+  pxPorMm,
   aoEscolher,
   opcoes = [DISTANCIA_OMISSAO_MM, DISTANCIA_LONGE_MM],
 }: {
   distanciaMm: number;
-  aoEscolher: (mm: number) => void;
+  pxPorMm: number;
+  /** `medida`: true quando veio do ponto cego, false quando foi escolhida. */
+  aoEscolher: (mm: number, medida: boolean) => void;
   opcoes?: readonly number[];
 }) => {
   const { t } = useTranslation();
-  const [escolha, setEscolha] = useState(distanciaMm);
-  const rotulo = (mm: number) => rotuloDistancia(mm);
+  const { profile } = useProfile();
+  const [modo, setModo] = useState<"medir" | "escolher">("medir");
+  const [escolha, setEscolha] = useState(opcoes.includes(distanciaMm) ? distanciaMm : opcoes[0]);
+
+  if (modo === "medir")
+    return (
+      <MedirDistancia
+        pxPorMm={pxPorMm}
+        olho={olhoParaMedir(profile?.olho_mais_fraco)}
+        aoMedir={(mm) => aoEscolher(mm, true)}
+        aoDesistir={() => setModo("escolher")}
+      />
+    );
+
   return (
     <EcraPasso
       icone={<Ruler className="h-7 w-7" />}
       titulo={t("Visao.distanciaTitulo")}
-      accao={<BotaoContinuar aoClicar={() => aoEscolher(escolha)} />}
+      accao={
+        <>
+          <BotaoContinuar aoClicar={() => aoEscolher(escolha, false)} />
+          <Button variant="ghost" onClick={() => setModo("medir")}>
+            {t("Visao.medirAfinal")}
+          </Button>
+        </>
+      }
     >
       <p className="text-sm text-muted-foreground">{t("Visao.distanciaTexto")}</p>
       <div role="radiogroup" aria-label={t("Visao.distanciaTitulo")} className="flex w-full flex-col gap-2 sm:flex-row">
@@ -293,10 +281,11 @@ export const PassoDistancia = ({
               escolha === mm ? "border-teal bg-teal/10 text-foreground" : "border-border text-muted-foreground hover:border-teal/50",
             )}
           >
-            {rotulo(mm)}
+            {rotuloDistancia(mm)}
           </button>
         ))}
       </div>
+      <p className="text-xs text-muted-foreground">{t("Visao.distanciaEstimadaAviso")}</p>
     </EcraPasso>
   );
 };

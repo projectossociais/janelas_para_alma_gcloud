@@ -185,7 +185,9 @@ describe("Teste de Acuidade (sem câmara)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Continuar" })); // brilho
     fireEvent.click(await screen.findByRole("button", { name: "Não tenho cartão" }));
     fireEvent.click(await screen.findByRole("button", { name: /Não uso óculos nem lentes/ }));
-    fireEvent.click(await screen.findByRole("button", { name: "Continuar" })); // distância (60 cm)
+    // Distância: sem medir pelo ponto cego, escolhe-se 60 cm (a medição tem testes próprios).
+    fireEvent.click(await screen.findByRole("button", { name: V.medirSemMedir }));
+    fireEvent.click(await screen.findByRole("button", { name: "Continuar" }));
     fireEvent.click(await screen.findByRole("button", { name: "Continuar" })); // tapar o esquerdo
 
     // Começa em 0,7. Direito: 0,7 ✓✓ · 0,6 ✓✓ · 0,5 ✓✗✗
@@ -197,6 +199,8 @@ describe("Teste de Acuidade (sem câmara)", () => {
     await screen.findByText(V.resultadoAcuidadeTitulo);
     await waitFor(() => expect(registar).toHaveBeenCalledTimes(2));
     const limiar = (olho: string) => registar.mock.calls.find((c) => c[0].olho === olho)?.[0].limiar;
+    // Distância escolhida, não medida: fica registado.
+    expect(registar.mock.calls[0][0].sinais.distancia_medida).toBe(false);
     expect(limiar("direito")).toBe(0.57);
     expect(limiar("esquerdo")).toBe(0.63);
     expect(screen.getByText(/logMAR 0,57/)).toBeInTheDocument();

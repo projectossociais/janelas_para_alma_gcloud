@@ -493,6 +493,15 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   + `AssistenteTeste`/`AssistenteTreino` (`components/visao/`) + a lógica pura de
   `lib/visao/` (geometria, escadas, contraste, tempo activo). Um passo por ecrã, um olho de
   cada vez; no máximo **um** `requestAnimationFrame` por exercício.
+- **Régua Invisível (2026-10-20): unidades reais sem câmara.** Cartão de banco -> px/mm
+  (`calibracao.ts`); ponto cego -> distância olhos-ecrã (`pontoCego.ts`, Li et al. 2020);
+  afinação dos óculos vermelho-ciano -> fuga de cor de cada filtro (`anaglifo.ts`). Duas
+  regras que vêm daí: (1) a distância mede-se **com o olho que vê melhor e antes do
+  tapa-olho** -- um olho amblíope pode não fixar o quadrado, e o tapa-olho tapa
+  precisamente o olho bom; (2) o que é desenhado para os óculos afinados vive à volta de
+  um pedestal cinzento (`PEDESTAL`), porque descontar a fuga precisa de margem para baixo.
+  Quem não mede fica com `sinais.distancia_medida = false`; quem afina, com
+  `sinais.oculos_afinados = true`.
 - **Tamanhos físicos, não píxeis soltos.** Todo o estímulo é calculado em ângulo visual a
   partir de `pxPorMm` (calibração com cartão de banco) e da distância; níveis abaixo de
   1,4 px de dispositivo descartam-se (`geometria.ts`). O "palco" (`PalcoVisual`) é sempre

@@ -11,6 +11,8 @@ export interface ContextoTeste {
   pxPorMm: number;
   calibrado: boolean;
   distanciaMm: number;
+  /** A distância foi medida pelo ponto cego (e não escolhida). */
+  distanciaMedida: boolean;
   devicePixelRatio: number;
   usaCorreccao: boolean;
 }
@@ -57,6 +59,7 @@ function AssistenteTeste<R>({
   const dpr = useDevicePixelRatio();
   const [etapa, setEtapa] = useState<Etapa>({ tipo: "brilho" });
   const [distanciaMm, setDistanciaMm] = useState(DISTANCIA_OMISSAO_MM);
+  const [distanciaMedida, setDistanciaMedida] = useState(false);
   const [usaCorreccao, setUsaCorreccao] = useState(false);
   const [resultados, setResultados] = useState<Partial<Record<Olho, R>>>({});
 
@@ -64,6 +67,7 @@ function AssistenteTeste<R>({
     pxPorMm: calibracao?.pxPorMm ?? 96 / 25.4,
     calibrado: calibracao?.calibrado ?? false,
     distanciaMm,
+    distanciaMedida,
     devicePixelRatio: dpr,
     usaCorreccao,
   };
@@ -121,8 +125,10 @@ function AssistenteTeste<R>({
         return (
           <PassoDistancia
             distanciaMm={distanciaMm}
-            aoEscolher={(mm) => {
+            pxPorMm={ctx.pxPorMm}
+            aoEscolher={(mm, medida) => {
               setDistanciaMm(mm);
+              setDistanciaMedida(medida);
               setEtapa({ tipo: "tapar", olho: primeiroOlho });
             }}
           />
@@ -150,6 +156,7 @@ function AssistenteTeste<R>({
       case "resultado":
         return resultado(resultados as Record<Olho, R>, ctx, (mm) => {
           setDistanciaMm(mm);
+          setDistanciaMedida(false);
           setResultados({});
           setEtapa({ tipo: "tapar", olho: primeiroOlho });
         });
