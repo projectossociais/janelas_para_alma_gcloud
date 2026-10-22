@@ -198,6 +198,34 @@ describe("Kianda com tapa-olho e Olho Mágico (sem óculos)", () => {
   });
 });
 
+describe("Luz nos Olhos (exame dos pais)", () => {
+  it("desvio pelo reflexo, teste de tapar e diário, primeiro e mais recente", () => {
+    const luz = (dias: number, delta: number) =>
+      sessao({
+        exercicio_id: "relax",
+        created_at: haDias(dias),
+        olho: "ambos",
+        limiar: delta,
+        unidade: "dioptrias_prismaticas",
+        sinais: {
+          modo: "luz_olhos",
+          achados: delta ? [{ olho: "esquerdo", sentido: "dentro", mm: delta / 15, delta }] : [],
+          desvio_tapar: [{ olho: "esquerdo", sentido: "dentro" }, { olho: "x", sentido: 3 }],
+          diario: { frequencia: "as_vezes" },
+        },
+      });
+    const r = resumoClinico([luz(14, 30), luz(0, 20)], hoje);
+    expect(r.luz?.recente.valor).toEqual({
+      delta: 20,
+      reflexo: [{ olho: "esquerdo", sentido: "dentro", delta: 20 }],
+      tapar: [{ olho: "esquerdo", sentido: "dentro" }],
+      frequencia: "as_vezes",
+    });
+    expect(r.luz?.primeira?.valor.delta).toBe(30);
+    expect(r.astigmatismo).toBeNull();
+  });
+});
+
 describe("adesão ao treino", () => {
   it("minutos por semana nas últimas 4, dias com treino e sessões de baixa atenção", () => {
     const r = resumoClinico(

@@ -86,6 +86,15 @@ export interface ResumoPesca extends Resumo<ValorPesca> {
   olho: Olho | null;
 }
 
+/** Luz nos Olhos (exame feito pelos pais): desvio pelo reflexo, teste de tapar e diário. */
+export interface ValorLuz {
+  /** Maior desvio estimado pelo reflexo, em Δ (0 = nenhum visível). */
+  delta: number;
+  reflexo: { olho: Olho; sentido: string; delta: number }[];
+  tapar: { olho: Olho; sentido: string }[];
+  frequencia: string | null;
+}
+
 export interface ResumoVergencia {
   sentidos: Partial<Record<Sentido, { recente: Medicao<ResumoSentido>; primeira: Medicao<ResumoSentido> | null }>>;
   condicoes: Condicoes;
@@ -114,6 +123,8 @@ export interface ResumoClinico {
   kianda: ResumoKianda | null;
   /** Kianda com tapa-olho. */
   pesca: ResumoPesca | null;
+  /** Luz nos Olhos. */
+  luz: Resumo<ValorLuz> | null;
   adesao: Adesao;
   /** Datas das sessões em que a pessoa disse ver a dobrar, da mais antiga para a mais recente. */
   diplopia: string[];
@@ -247,6 +258,24 @@ function resumoPesca(sessoes: readonly S[]): ResumoPesca | null {
   return { ...r, olho: eOlho(olho) ? olho : null };
 }
 
+const lista = (v: unknown): Record<string, unknown>[] =>
+  Array.isArray(v) ? v.filter((x): x is Record<string, unknown> => !!x && typeof x === "object") : [];
+
+function lerLuz(s: S): ValorLuz | undefined {
+  if (s.sinais?.modo !== "luz_olhos" || typeof s.limiar !== "number") return undefined;
+  const diario = s.sinais.diario as { frequencia?: unknown } | undefined;
+  return {
+    delta: s.limiar,
+    reflexo: lista(s.sinais.achados)
+      .filter((a) => eOlho(a.olho) && typeof a.sentido === "string" && typeof a.delta === "number")
+      .map((a) => ({ olho: a.olho as Olho, sentido: a.sentido as string, delta: a.delta as number })),
+    tapar: lista(s.sinais.desvio_tapar)
+      .filter((a) => eOlho(a.olho) && typeof a.sentido === "string")
+      .map((a) => ({ olho: a.olho as Olho, sentido: a.sentido as string })),
+    frequencia: typeof diario?.frequencia === "string" ? diario.frequencia : null,
+  };
+}
+
 function adesao(sessoes: readonly S[], hoje: Date): Adesao {
   const dias = ultimosDias(hoje, SEMANAS_ADESAO * 7);
   const doPeriodo = new Set(dias);
@@ -275,6 +304,7 @@ export function resumoClinico(sessoes: readonly S[], hoje: Date): ResumoClinico 
     vergencia: resumoVergencia(fiaveis),
     kianda: resumoKianda(fiaveis),
     pesca: resumoPesca(fiaveis),
+    luz: resumir(de(ID_ASTIGMATISMO), lerLuz),
     adesao: adesao(sessoes, hoje),
     diplopia: doPeriodo.filter((s) => s.sinais?.diplopia_reportada === true).map((s) => s.created_at),
   };
@@ -282,4 +312,4 @@ export function resumoClinico(sessoes: readonly S[], hoje: Date): ResumoClinico 
 
 /** Há alguma medida para mostrar (fora a adesão)? */
 export const temMedicoes = (r: ResumoClinico): boolean =>
-  !!(r.acuidade || r.contraste || r.astigmatismo || r.estereopsia || r.vergencia || r.kianda || r.pesca);
+  !!(r.acuidade || r.contraste || r.astigmatismo || r.estereopsia || r.vergencia || r.kianda || r.pesca || r.luz);

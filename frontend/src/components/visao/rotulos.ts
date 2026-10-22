@@ -79,6 +79,9 @@ export const limiarFormatado = (
   unidade: string | null,
   sinais: Record<string, unknown> | null,
 ): string => {
+  // Luz nos Olhos (id `relax`, desde 2026-10-21): desvio estimado pelo reflexo.
+  if (sinais?.modo === "luz_olhos")
+    return limiar ? i18n.t("Visao.luzLimiarCurto", { delta: limiar }) : i18n.t("Visao.luzSemDesvioCurto");
   if (sinais && typeof sinais.astigmatismo === "boolean")
     return sinais.astigmatismo ? i18n.t("Visao.astigmatismoSinalCurto") : i18n.t("Visao.astigmatismoSemSinalCurto");
   if (unidade === "dioptrias_prismaticas") return rotuloPontes(sinais?.pontes) ?? (limiar === null ? "—" : rotuloDelta(limiar));

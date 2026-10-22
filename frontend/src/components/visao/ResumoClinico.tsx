@@ -23,6 +23,7 @@ import {
   type PorOlho,
   type Resumo,
   type ValorKianda,
+  type ValorLuz,
   type ValorPesca,
 } from "@/lib/visao/resumoClinico";
 
@@ -118,6 +119,14 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
     v.graus === null
       ? t("Visao.clinicoPescaSemLimiar")
       : t("Visao.clinicoPescaValor", { graus: formatarDecimal(v.graus, v.graus % 1 ? 1 : 0), nivel: v.nivel ?? "–" });
+  const luz = (v: ValorLuz) => {
+    const partes = [
+      ...v.reflexo.map((a) => t("Visao.clinicoLuzReflexo", { olho: abrevOlho(t, a.olho), sentido: t(`Visao.luzSentido_${a.sentido}`), delta: a.delta })),
+      ...v.tapar.map((a) => t("Visao.clinicoLuzTapar", { olho: abrevOlho(t, a.olho), sentido: t(`Visao.luzSentido_${a.sentido}`) })),
+    ];
+    const diario = v.frequencia ? t("Visao.clinicoLuzDiario", { frequencia: t(`Visao.luzFrequencia_${v.frequencia}`).toLowerCase() }) : null;
+    return [partes.length ? partes.join(" · ") : t("Visao.clinicoLuzSemDesvio"), diario].filter(Boolean).join(" · ");
+  };
   const sentido = (nome: string, m: Medicao<ResumoSentido>, chave: string) =>
     `${nome} · ${t(chave, { data: formatarData(m.data), valor: rotuloRoturaRecuperacao(m.valor) })}`;
 
@@ -210,6 +219,14 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
             condicoes={textoCondicoes(t, r.kianda.condicoes)}
           />
         )}
+        {r.luz && (
+          <Medida
+            titulo={t("Visao.clinicoLuz")}
+            exercicio={nomeDoExercicio(ID_ASTIGMATISMO)}
+            linhas={recenteEPrimeira(t, r.luz, luz)}
+            condicoes={r.luz.condicoes.dias === 1 ? t("Visao.clinicoUmDia") : t("Visao.clinicoDias", { n: r.luz.condicoes.dias })}
+          />
+        )}
         {r.astigmatismo && (
           <Medida
             titulo={t("Visao.clinicoAstigmatismo")}
@@ -250,6 +267,7 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
             <p>{r.vergencia.fusaoLivre ? t("Visao.clinicoMetodoFusaoLivre") : t("Visao.clinicoMetodoVergencia")}</p>
           )}
           {r.pesca && <p>{t("Visao.clinicoMetodoPesca")}</p>}
+          {r.luz && <p>{t("Visao.clinicoMetodoLuz")}</p>}
           {r.kianda && <p>{t("Visao.clinicoMetodoKianda")}</p>}
           {medicaoComDistancia && <p>{t("Visao.clinicoMetodoDistancia")}</p>}
         </div>

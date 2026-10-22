@@ -38,7 +38,8 @@ export const ROTAS = [
   // Testes (triagem) e treinos sem webcam, desde 2026-09-28.
   { chave: "exercicioAcuidade", pt: "/exercicios/acuidade", en: "/en/exercises/visual-acuity" },
   { chave: "exercicioContraste", pt: "/exercicios/contraste", en: "/en/exercises/contrast-sensitivity" },
-  { chave: "exercicioAstigmatismo", pt: "/exercicios/astigmatismo", en: "/en/exercises/astigmatism" },
+  // Desde 2026-10-21 é a Luz nos Olhos (id `relax`); o caminho antigo é um alias.
+  { chave: "exercicioAstigmatismo", pt: "/exercicios/luz-nos-olhos", en: "/en/exercises/light-in-the-eyes" },
   { chave: "exercicioEstereopsia", pt: "/exercicios/estereopsia", en: "/en/exercises/stereopsis" },
   { chave: "exercicioAneis", pt: "/exercicios/aneis", en: "/en/exercises/rings" },
   { chave: "exercicioContrasteBlocos", pt: "/exercicios/contraste-em-blocos", en: "/en/exercises/contrast-blocks" },
@@ -93,6 +94,8 @@ export const ALIASES_PT: readonly { pt: string; chave: ChaveRota }[] = [
   { pt: "/auth", chave: "entrar" },
   { pt: "/registo", chave: "entrar" },
   { pt: "/update-password", chave: "atualizarPassword" },
+  // Exercícios que mudaram de nome em 2026-10-21: os links antigos continuam a abrir a página.
+  { pt: "/exercicios/astigmatismo", chave: "exercicioAstigmatismo" },
 ];
 
 /**

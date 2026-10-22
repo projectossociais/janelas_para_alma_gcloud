@@ -111,7 +111,7 @@ const exerciciosTrial: Exercicio[] = [
     },
     icon: Sun,
     get route() {
-      return localizar("/exercicios/astigmatismo");
+      return localizar("/exercicios/luz-nos-olhos");
     },
   },
 ];
