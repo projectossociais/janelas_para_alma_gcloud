@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Recycle, Wrench, Sparkles, Glasses, Package, Scissors, Eye, ArrowRight } from "lucide-react";
+import { Recycle, Wrench, Sparkles, Glasses, Scissors, ShoppingBag, HeartHandshake, ArrowRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
@@ -43,27 +43,33 @@ const steps = [
   },
 ];
 
-// O ciclo dos óculos 3D, em três passos curtos dentro do cartão "04".
+// Óculos 3D: um produto da plataforma, não uma etapa do processo circular.
+// Nenhum texto diz que são feitos de material doado ou reaproveitado -- se
+// isso um dia passar a ser verdade (cartão de embalagens recolhidas), é aqui
+// que se acrescenta, com a equipa a confirmar.
 const passosOculos3d = [
-  {
-    icon: Package,
-    get title() {
-      return i18n.t("Circular.recolhaDePapelao");
-    },
-  },
   {
     icon: Scissors,
     get title() {
-      return i18n.t("Circular.corteEMontagem");
+      return i18n.t("Circular.producao");
     },
   },
   {
-    icon: Eye,
+    icon: ShoppingBag,
     get title() {
-      return i18n.t("Circular.oculosProntosParaOsExercicios");
+      return i18n.t("Circular.venda");
+    },
+  },
+  {
+    icon: HeartHandshake,
+    get title() {
+      return i18n.t("Circular.reinvestimentoNoPrograma");
     },
   },
 ];
+
+// Ainda não há página de venda: até haver, os pedidos chegam pelo contacto.
+const DESTINO_OCULOS_3D = "/junte-se";
 
 const Circular = () => {
   const { t } = useTranslation();
@@ -129,25 +135,24 @@ const Circular = () => {
           </div>
         </section>
 
-        {/* Óculos 3D: o mesmo circuito de recolha, uma linha de produto nova */}
+        {/* Óculos 3D para os exercícios visuais (produto da plataforma) */}
         <section id="oculos-3d" className="pb-20 md:pb-28 scroll-mt-24">
           <div className="container">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center max-w-5xl mx-auto">
               <div className="animate-fade-in">
                 <span className="inline-block px-3 py-1 rounded-full bg-green/10 text-green text-xs font-bold uppercase tracking-widest mb-4">
-                  {t("Circular.novoCiclo")}
+                  {t("Circular.produtoDaPlataforma")}
                 </span>
                 <h2 className="text-3xl md:text-4xl font-bold text-foreground leading-tight mb-6">
-                  {t("Circular.oculos3dUmNovoCiclo")}
+                  {t("Circular.oculos3dParaOsExercicios")}
                 </h2>
                 <div className="space-y-4 text-muted-foreground leading-relaxed">
-                  <p>{t("Circular.oculos3dRecolha")}</p>
-                  <p>{t("Circular.oculos3dVoluntarios")}</p>
-                  <p>{t("Circular.oculos3dAquisicao")}</p>
+                  <p>{t("Circular.oculos3dProduto")}</p>
+                  <p>{t("Circular.oculos3dRendimento")}</p>
                 </div>
                 <Button asChild size="lg" className="mt-8 bg-green text-green-foreground hover:bg-green/90">
-                  <Link to={localizar("/apoiar?material=oculos3d")}>
-                    {t("Circular.apoiarAProducaoDosOculos")}
+                  <Link to={localizar(DESTINO_OCULOS_3D)}>
+                    {t("Circular.verOculos3d")}
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                 </Button>
@@ -157,12 +162,6 @@ const Circular = () => {
                 className="relative flex flex-col rounded-2xl border border-border bg-card p-6 md:p-8 shadow-card animate-fade-in"
                 style={{ animationDelay: "100ms" }}
               >
-                <div className="flex items-start justify-between mb-4">
-                  <span className="text-5xl font-bold text-green/20">04</span>
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-green/10 text-green">
-                    <Glasses className="w-6 h-6" />
-                  </div>
-                </div>
                 <img
                   src={oculos3dImg}
                   alt={t("Circular.prototipoDosOculos3d")}
@@ -171,7 +170,12 @@ const Circular = () => {
                   height={671}
                   loading="lazy"
                 />
-                <h3 className="text-xl font-semibold text-foreground mb-4">{t("Circular.oculos3d")}</h3>
+                <h3 className="flex items-center gap-3 text-xl font-semibold text-foreground mb-4">
+                  <span className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-green/10 text-green">
+                    <Glasses className="w-5 h-5" />
+                  </span>
+                  {t("Circular.oculos3d")}
+                </h3>
                 <ol className="flex flex-col sm:flex-row sm:items-stretch gap-2">
                   {passosOculos3d.map((passo, i) => (
                     <li key={passo.title} className="flex flex-col sm:flex-row items-center gap-2 sm:flex-1">

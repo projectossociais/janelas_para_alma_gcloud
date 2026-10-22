@@ -9,6 +9,7 @@ from app.core.dependencies import obter_email_sender
 from app.core.email import EmailSender
 from app.db import obter_sessao
 from app.repositories.doacoes_repository import SQLAlchemyDoacoesRepository
+from app.repositories.notificador_admins import NotificadorAdminsNaApp
 from app.schemas.doacao import DoacaoFinanceiraCriar, DoacaoMateriaisCriar, DoacaoPublica
 from app.services.comprovativo_upload_service import ChaveDeComprovativoInvalidaError
 from app.services.doacao_service import DoacaoService, MateriaisNaoSelecionadosError
@@ -20,7 +21,7 @@ def obter_doacao_service(
     sessao: Session = Depends(obter_sessao),
     email_sender: EmailSender = Depends(obter_email_sender),
 ) -> DoacaoService:
-    return DoacaoService(SQLAlchemyDoacoesRepository(sessao), email_sender)
+    return DoacaoService(SQLAlchemyDoacoesRepository(sessao), email_sender, NotificadorAdminsNaApp(sessao))
 
 
 @router.post("/materiais", response_model=DoacaoPublica, status_code=status.HTTP_201_CREATED)
