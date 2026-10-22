@@ -202,7 +202,7 @@ describe("exercícios retirados (2026-09-28) redireccionam para a lista de exerc
 
   it("as páginas que continuam (convergência e estereopsia) não redireccionam", async () => {
     abrir("/exercicios/convergencia");
-    expect(await screen.findByRole("heading", { name: "Pontes de Fusão" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Olho Mágico" })).toBeInTheDocument();
     expect(window.location.pathname).toBe("/exercicios/convergencia");
   });
 });

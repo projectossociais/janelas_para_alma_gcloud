@@ -69,6 +69,7 @@ def test_o_medico_abre_o_link_sem_sessao_e_sem_cache(ambiente) -> None:
     corpo = r.json()
     assert corpo["nome"] == "Ana" and corpo["olho_mais_fraco"] == "esquerdo"
     assert "user_id" not in corpo["sessoes"][0] and "id" not in corpo["sessoes"][0]
+    assert corpo["sessoes"][0]["distancia_mm"] == 400
 
 
 def test_link_revogado_ou_inventado_da_404(ambiente) -> None:

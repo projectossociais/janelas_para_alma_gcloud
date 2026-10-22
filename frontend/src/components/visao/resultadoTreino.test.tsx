@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import ptAO from "@/i18n/locales/pt-AO.json";
-import TreinoAneis from "@/pages/exercises/TreinoAneis";
+import Kianda from "@/pages/exercises/Kianda";
 import { AcessoExerciciosProvider } from "@/contexts/AcessoExerciciosContext";
 
 const V = ptAO.Visao;
@@ -71,21 +71,21 @@ describe("Resumo de um treino sem medição", () => {
     );
   });
 
-  it("Treino de Anéis parado ao fim de duas respostas: diz que não mediu, sem inventar um limiar", async () => {
+  it("Kianda com tapa-olho parado sem apanhar nenhum peixe: diz que não mediu, sem inventar um limiar", async () => {
+    window.localStorage.setItem("jpa.visao.kianda.modo", "tapaOlho");
     render(
       <MemoryRouter>
         <AcessoExerciciosProvider>
-          <TreinoAneis />
+          <Kianda />
         </AcessoExerciciosProvider>
       </MemoryRouter>,
     );
 
+    fireEvent.click(await screen.findByRole("button", { name: "Continuar" })); // sem óculos
     fireEvent.click(await screen.findByRole("button", { name: /Começar treino/ }));
-    const cima = await screen.findByRole("button", { name: V.direccao0 });
-    fireEvent.click(cima);
-    fireEvent.click(screen.getByRole("button", { name: /Terminar agora/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Terminar agora/ }));
 
-    expect(await screen.findByText(V.aneisSemLimiar)).toBeInTheDocument();
-    expect(screen.queryByText(/Limiar desta sessão/)).not.toBeInTheDocument();
+    expect(await screen.findByText(V.pescaSemLimiar)).toBeInTheDocument();
+    expect(screen.queryByText(/°/)).not.toBeInTheDocument();
   });
 });

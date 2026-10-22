@@ -9,7 +9,7 @@ BASE = {"exercicio_id": "convergence", "duracao_segundos": 60}
 
 
 @pytest.mark.parametrize(
-    "unidade", ["logmar", "log_cs", "arcsec", "segundos", "dioptrias_prismaticas", "razao_contraste"]
+    "unidade", ["logmar", "log_cs", "arcsec", "segundos", "dioptrias_prismaticas", "razao_contraste", "graus", "cm", "mm"]
 )
 def test_unidades_aceites(unidade: str) -> None:
     sessao = SessaoExercicioCriar(**BASE, limiar=18, unidade=unidade)

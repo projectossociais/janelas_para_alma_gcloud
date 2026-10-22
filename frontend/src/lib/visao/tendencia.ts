@@ -8,8 +8,11 @@
  *   (até 3), sem sessões em comum; são precisas pelo menos 2, em dias
  *   diferentes;
  * - só há "melhorou"/"piorou" a partir de uma linha de acuidade (0,1 logMAR,
- *   a variabilidade típica de teste-reteste) ou de 0,15 log de contraste
- *   (um degrau de Pelli-Robson); abaixo disso é "estável";
+ *   a variabilidade típica de teste-reteste), de 0,15 log de contraste
+ *   (um degrau de Pelli-Robson), de 3° na inclinação que o olho distingue
+ *   (Kianda com tapa-olho) ou de 0,3 mm no afastamento do traço (Pintar o
+ *   Samakaka); abaixo disso é "estável";
+ * - só compara sessões na unidade da mais recente;
  * - sessões de baixa atenção ficam de fora; se houver sessões calibradas
  *   com cartão, as não calibradas também (tamanhos só aproximados).
  */
@@ -17,7 +20,7 @@ import { mesmoTipoDaUltima } from "./aglomeracao";
 import { diaLocal, type SessaoResumo } from "@/lib/visao/progresso";
 import type { Olho } from "@/lib/visao/resultados";
 
-export type UnidadeTendencia = "logmar" | "log_cs";
+export type UnidadeTendencia = "logmar" | "log_cs" | "graus" | "mm";
 
 export type Tendencia =
   | { tipo: "poucos_dados" }
@@ -40,6 +43,10 @@ const JANELA = 3;
 export const PASSO_LOGMAR = 0.1;
 /** Um degrau de sensibilidade ao contraste (Pelli-Robson: tripletos de 0,15 log). */
 export const PASSO_LOG_CS = 0.15;
+/** Diferença de inclinação (graus) que conta como mudança no Kianda com tapa-olho. */
+export const PASSO_GRAUS = 3;
+/** Diferença no afastamento do traço (mm) que conta como mudança no Pintar o Samakaka. */
+export const PASSO_MM = 0.3;
 const EPS = 1e-6;
 
 const mediana = (xs: number[]): number => {
@@ -60,13 +67,15 @@ export function tendencia<T extends SessaoResumo & { calibrado?: boolean | null 
       s.exercicio_id === exercicioId &&
       s.olho === olho &&
       typeof s.limiar === "number" &&
-      (s.unidade === "logmar" || s.unidade === "log_cs") &&
+      (s.unidade === "logmar" || s.unidade === "log_cs" || s.unidade === "graus" || s.unidade === "mm") &&
       s.sinais?.baixa_atencao !== true,
   );
   // Acuidade com e sem barras (Olhos de Palanca) não se comparam: fica o tipo da sessão mais recente.
   const doMesmoTipo = mesmoTipoDaUltima(doOlho);
-  const calibradas = doMesmoTipo.filter((s) => s.calibrado === true);
-  const usadas = (calibradas.length >= 2 ? calibradas : doMesmoTipo).sort((a, b) =>
+  const ultima = doMesmoTipo.reduce<T | null>((a, b) => (!a || b.created_at > a.created_at ? b : a), null);
+  const daMesmaUnidade = doMesmoTipo.filter((s) => s.unidade === ultima?.unidade);
+  const calibradas = daMesmaUnidade.filter((s) => s.calibrado === true);
+  const usadas = (calibradas.length >= 2 ? calibradas : daMesmaUnidade).sort((a, b) =>
     a.created_at.localeCompare(b.created_at),
   );
   const diasDistintos = new Set(usadas.map((s) => diaLocal(new Date(s.created_at))));
@@ -78,9 +87,9 @@ export function tendencia<T extends SessaoResumo & { calibrado?: boolean | null 
   const unidade = usadas[0].unidade as UnidadeTendencia;
   const inicio = mediana(primeiras.map((s) => s.limiar as number));
   const actual = mediana(ultimas.map((s) => s.limiar as number));
-  // logMAR: mais baixo é melhor. log CS: mais alto é melhor.
-  const ganho = unidade === "logmar" ? inicio - actual : actual - inicio;
-  const passo = unidade === "logmar" ? PASSO_LOGMAR : PASSO_LOG_CS;
+  // logMAR e graus: mais baixo é melhor. log CS: mais alto é melhor.
+  const ganho = unidade === "log_cs" ? actual - inicio : inicio - actual;
+  const passo = { logmar: PASSO_LOGMAR, graus: PASSO_GRAUS, mm: PASSO_MM, log_cs: PASSO_LOG_CS }[unidade];
   const passos = Math.floor((Math.abs(ganho) + EPS) / passo);
   const dias = Math.round(
     (new Date(usadas[usadas.length - 1].created_at).getTime() - new Date(usadas[0].created_at).getTime()) /

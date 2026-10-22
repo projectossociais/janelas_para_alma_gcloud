@@ -94,11 +94,40 @@ o médico por **link temporário partilhado pelo pai** (nunca envio automático)
       "Programa Olhos Juntos"). **A validar:** dose (os estudos usam ~1 h/dia; aqui, 3 blocos
       de 2 min), regras de reequilíbrio (70% / 50%, passos de 10%) e a evolução da acuidade em
       logMAR de quem só joga com óculos (o Teste de Acuidade continua a ser a medida de resultado).
-- [x] **Olhos de Palanca** (2026-10-21) no `figure8`: anel de Landolt com barras de Flom
+- [x] **Olhos de Palanca** (2026-10-21, substituído no mesmo dia pela versão ao longe, abaixo) no `figure8`: anel de Landolt com barras de Flom
       (aglomeração) e diferença entre os olhos em linhas no resultado. As tendências recomeçam
       com as sessões com barras. **A validar na Fase 1:** concordância com a acuidade com
       aglomeração do consultório (ex.: optótipos rodeados de barras) e se os limiares de sinal
       (pior do que 6/9; diferença de 2 linhas) devem mudar com as barras, sobretudo em crianças.
+- [x] **Sem óculos primeiro** (2026-10-21, pedido do dono do projecto: a maior parte das
+      famílias não tem óculos 3D). **Kianda com tapa-olho** (pesca a cores, em graus) substitui
+      o Treino de Anéis; **Olho Mágico** (fusão livre, em Δ) passa a ser o `convergence`, com
+      as Pontes como opção com óculos. **A validar:** se as crianças aprendem a juntar as
+      imagens sem óculos (e com que idade), a concordância do Olho Mágico com a régua de
+      prismas, e a dose do Kianda com tapa-olho.
+- [x] **Seis exercícios novos, todos diferentes e sem óculos** (2026-10-21, pedido do dono do
+      projecto: "não o mesmo teste com outra camada"). Os ids ficam; muda o exercício.
+      **Olhos de Palanca ao longe** (`figure8`, "E" a 3 m, a criança aponta e o adulto desliza
+      o dedo; as barras de Flom ao perto saíram), **Luz nos Olhos** (`relax`, reflexo da luz e
+      teste de tapar feitos pelos pais, em Δ), **Fio de Missangas** (`cerebro`, cordão de
+      Brock e ponto próximo de convergência em cm), **Desafio da Agulha** (`estereopsia`, jogo
+      de família, dois olhos contra um; o estereograma fica como opção com óculos),
+      **Pintar o Samakaka** (`sacadas-convergencia`, seguir pontinhos com o olho fraco, em mm)
+      e **Caderneta do Tapa-olho** (`flexibilidade-acomodativa`, horas de tapa-olho
+      confirmadas de 15 em 15 min). **A validar com a Optioptika:** acuidade a 3 m contra a
+      tabela do consultório (e a partir de que idade a criança aponta com segurança); desvio
+      marcado pelos pais contra o *cover test* do ortoptista (o Hirschberg é só aproximado, e a
+      razão Δ por mm varia de pessoa para pessoa);
+      ponto próximo do Fio contra a régua RAF; a Agulha contra um teste de estereopsia do
+      consultório (Lang ou Titmus); se o Samakaka melhora a acuidade (a medida de resultado
+      continua a ser a Palanca); e quanto as horas da Caderneta se afastam de um medidor de
+      oclusão (o auto-relato costuma exagerar; a confirmação de 15 em 15 min reduz isso).
+- [x] **Relatório clínico** (2026-10-21), último passo da Vaga 1: resumo de 90 dias no topo do
+      relatório (ecrã do pai e link do médico), com o mais recente, o primeiro e as condições
+      de cada medida, a adesão em 4 semanas e os relatos de visão dupla. **A validar com a
+      Optioptika:** se o médico lê o resumo sem ajuda, o que falta para decidir (ex.: valores
+      de referência por idade, que o relatório não mostra de propósito) e se a nota de método
+      chega para confiar nos números.
 - Treino dicóptico com os óculos vermelho-ciano já pedidos no teste de estereopsia
   (princípio usado por Luminopia/CureSight, com aprovação da FDA)
 - Estudo com a Optioptika: acuidade em casa vs. na consulta, 30 a 50 crianças

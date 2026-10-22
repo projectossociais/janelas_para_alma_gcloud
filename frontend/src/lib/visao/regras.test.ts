@@ -1,7 +1,7 @@
 import { ContadorTempoActivo, PAUSA_AUTOMATICA_MS } from "./tempoActivo";
 import { diferencaContraste, olhoMaisFracoPelaAcuidade, sinaisAcuidade, sinalEstereopsia } from "./resultados";
 import { criarAgendaControlo, eTentativaDeControlo, sinaisDeControlo } from "./treino";
-import { minutosPorDia, sequenciaDeDias, ultimosResultados, type SessaoResumo } from "./progresso";
+import { minutosPorDia, sequenciaDeDias, type SessaoResumo } from "./progresso";
 
 describe("tempo activo", () => {
   it("conta o tempo entre respostas próximas", () => {
@@ -151,16 +151,6 @@ describe("progresso", () => {
     const s = [25, 27, 28].map((d) => sessao({ created_at: new Date(2026, 8, d, 9).toISOString() }));
     expect(sequenciaDeDias(s, hoje)).toBe(2);
   });
-
-  it("último resultado de cada teste por olho", () => {
-    const r = ultimosResultados([
-      sessao({ exercicio_id: "figure8", limiar: 0.3, created_at: "2026-09-20T10:00:00Z" }),
-      sessao({ exercicio_id: "figure8", limiar: 0.2, created_at: "2026-09-27T10:00:00Z" }),
-      sessao({ exercicio_id: "ambliopia" }),
-    ]);
-    expect(r.get("figure8:esquerdo")?.limiar).toBe(0.2);
-    expect(r.size).toBe(1);
-  });
 });
 
 describe("sinal da estereopsia", () => {
@@ -201,5 +191,14 @@ describe("sessoesDoGrafico (gráfico do progresso)", () => {
       sessao({ created_at: "2026-10-01T09:00:00Z", olho: "esquerdo", limiar: 0.4 }),
     ];
     expect(sessoesDoGrafico(lista, "ambliopia").map((s) => s.limiar)).toEqual([0.4, 0.2]);
+  });
+
+  it("Kianda: depois da pesca (graus), os anéis antigos (logMAR) saem do gráfico", async () => {
+    const { sessoesDoGrafico } = await import("./progresso");
+    const lista = [
+      sessao({ created_at: "2026-10-01T10:00:00Z", limiar: 0.4 }),
+      sessao({ created_at: "2026-10-21T10:00:00Z", limiar: 18, unidade: "graus", sinais: { modo: "tapa_olho" } }),
+    ];
+    expect(sessoesDoGrafico(lista, "ambliopia").map((s) => s.unidade)).toEqual(["graus"]);
   });
 });

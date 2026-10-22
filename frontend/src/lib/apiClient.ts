@@ -510,7 +510,7 @@ export const comprovativosApi = {
 };
 
 /** Unidade do `limiar` de uma sessão de exercício (versão 2). */
-export type UnidadeLimiar = "logmar" | "log_cs" | "arcsec" | "segundos" | "dioptrias_prismaticas" | "razao_contraste";
+export type UnidadeLimiar = "logmar" | "log_cs" | "arcsec" | "segundos" | "dioptrias_prismaticas" | "razao_contraste" | "graus" | "cm" | "mm";
 
 export interface SessaoExercicioInput {
   exercicio_id: string;
@@ -600,6 +600,8 @@ export interface SessaoRelatorioPartilhado {
   segundos_activos: number | null;
   limiar: number | null;
   unidade: string | null;
+  /** Desde 2026-10-21; uma API mais antiga não a envia. */
+  distancia_mm?: number | null;
   calibrado: boolean | null;
   sinais: Record<string, unknown> | null;
 }

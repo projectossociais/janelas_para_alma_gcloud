@@ -97,7 +97,7 @@ const exerciciosTrial: Exercicio[] = [
     },
     icon: Contrast,
     get route() {
-      return localizar("/exercicios/contraste");
+      return localizar("/exercicios/fio-de-missangas");
     },
   },
   {
@@ -111,7 +111,7 @@ const exerciciosTrial: Exercicio[] = [
     },
     icon: Sun,
     get route() {
-      return localizar("/exercicios/astigmatismo");
+      return localizar("/exercicios/luz-nos-olhos");
     },
   },
 ];
@@ -128,7 +128,7 @@ const exerciciosPremium: Exercicio[] = [
     },
     icon: Layers,
     get route() {
-      return localizar("/exercicios/estereopsia");
+      return localizar("/exercicios/desafio-da-agulha");
     },
   },
   {
@@ -142,7 +142,7 @@ const exerciciosPremium: Exercicio[] = [
     },
     icon: Target,
     get route() {
-      return localizar("/exercicios/contraste-em-blocos");
+      return localizar("/exercicios/pintar-o-samakaka");
     },
   },
   {
@@ -156,7 +156,7 @@ const exerciciosPremium: Exercicio[] = [
     },
     icon: RefreshCw,
     get route() {
-      return localizar("/exercicios/perto-e-longe");
+      return localizar("/exercicios/caderneta-do-tapa-olho");
     },
   },
   {

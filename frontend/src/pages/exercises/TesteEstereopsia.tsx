@@ -236,8 +236,8 @@ const TesteEstereopsia = () => {
   return (
     <PaginaExercicio>
       <BaseExercise
-        title={t("Visao.estereoTitulo")}
-        description={t("Visao.estereoDescricao")}
+        title={t("Visao.estereoOculosTitulo")}
+        description={t("Visao.estereoOculosDescricao")}
         exercicioId={EXERCICIO_ID}
         grupo="premium"
         tipo="teste"

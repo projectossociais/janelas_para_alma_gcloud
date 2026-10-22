@@ -355,8 +355,8 @@ const PontesFusao = () => {
       <AssistenteTreino
         exercicioId={EXERCICIO_ID}
         grupo="premium"
-        titulo={t("Visao.convergenciaTitulo")}
-        descricao={t("Visao.convergenciaDescricao")}
+        titulo={t("Visao.pontesTitulo")}
+        descricao={t("Visao.pontesDescricao")}
         monocular={false}
         comDistancia
         oculos3D

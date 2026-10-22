@@ -32,8 +32,6 @@ export const IDS_AUTOAVALIACAO = ["convergence", "flexibilidade-acomodativa"];
  */
 export const eAutoAvaliacao = (exercicioId: string, unidade: string | null | undefined): boolean =>
   IDS_AUTOAVALIACAO.includes(exercicioId) && unidade !== "dioptrias_prismaticas";
-/** Ids que são testes de triagem. */
-export const IDS_TESTES = ["figure8", "cerebro", "relax", "estereopsia"];
 
 /** `AAAA-MM-DD` no fuso local. */
 export function diaLocal(data: Date): string {
@@ -43,18 +41,23 @@ export function diaLocal(data: Date): string {
   return `${a}-${m}-${d}`;
 }
 
-/** Uma sessão marcada como baixa atenção não conta para a dose. */
+/**
+ * Uma sessão marcada como baixa atenção não conta para a dose. As horas de
+ * tapa-olho (Caderneta do Tapa-olho, desde 2026-10-21) também não: são o
+ * tratamento longe do ecrã e contam-se à parte (`lib/visao/caderneta.ts`).
+ */
 export const contaParaDose = (s: SessaoResumo): boolean =>
-  IDS_TREINOS.includes(s.exercicio_id) && s.sinais?.baixa_atencao !== true;
+  IDS_TREINOS.includes(s.exercicio_id) && s.sinais?.baixa_atencao !== true && s.sinais?.modo !== "tapa_olho_horas";
 
 /**
  * As sessões que entram no gráfico do progresso de um exercício: com limiar
  * medido, de um olho, e sem baixa atenção (não é medição fiável -- já ficava
- * fora da tendência; até 2026-10-08 o gráfico contradizia-a). Por ordem.
+ * fora da tendência; até 2026-10-08 o gráfico contradizia-a), e na unidade
+ * da mais recente (o Kianda passou de logMAR a graus em 2026-10-21). Por ordem.
  */
 export function sessoesDoGrafico<S extends SessaoResumo>(sessoes: readonly S[], exercicioId: string): S[] {
   // Acuidade com e sem barras (Olhos de Palanca) não se misturam no gráfico.
-  return mesmoTipoDaUltima(sessoes.filter((s) => s.exercicio_id === exercicioId))
+  const validas = mesmoTipoDaUltima(sessoes.filter((s) => s.exercicio_id === exercicioId))
     .filter(
       (s) =>
         s.exercicio_id === exercicioId &&
@@ -63,6 +66,8 @@ export function sessoesDoGrafico<S extends SessaoResumo>(sessoes: readonly S[], 
         s.sinais?.baixa_atencao !== true,
     )
     .sort((a, b) => a.created_at.localeCompare(b.created_at));
+  const unidade = validas.length ? validas[validas.length - 1].unidade : null;
+  return validas.filter((s) => s.unidade === unidade);
 }
 
 /** Minutos activos de treino por dia (só o que conta para a dose). */
@@ -102,20 +107,11 @@ export function ultimosDias(hoje: Date, n: number): string[] {
   });
 }
 
-/** Último resultado de cada teste por olho (sessões mais recentes primeiro). */
-export function ultimosResultados<T extends SessaoResumo>(sessoes: readonly T[]): Map<string, T> {
-  const out = new Map<string, T>();
-  const ordenadas = [...sessoes].sort((a, b) => b.created_at.localeCompare(a.created_at));
-  for (const s of ordenadas) {
-    if (!IDS_TESTES.includes(s.exercicio_id)) continue;
-    const chave = `${s.exercicio_id}:${s.olho ?? "?"}`;
-    if (!out.has(chave)) out.set(chave, s);
-  }
-  return out;
-}
-
 /** Dias cobertos pelo relatório semanal (ecrã do pai e link do médico). */
 export const DIAS_RELATORIO = 7;
 
-/** O que o relatório precisa de cada sessão -- sem ids nem dados da conta. */
-export type SessaoParaRelatorio = SessaoResumo & { calibrado: boolean | null };
+/**
+ * O que o relatório precisa de cada sessão -- sem ids nem dados da conta. A
+ * distância é opcional: o link do médico só a traz desde 2026-10-21.
+ */
+export type SessaoParaRelatorio = SessaoResumo & { calibrado: boolean | null; distancia_mm?: number | null };

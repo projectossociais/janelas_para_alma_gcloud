@@ -113,6 +113,7 @@ def ler_relatorio_partilhado(
                 segundos_activos=s.segundos_activos,
                 limiar=s.limiar,
                 unidade=s.unidade,
+                distancia_mm=s.distancia_mm,
                 calibrado=s.calibrado,
                 sinais=s.sinais,
             )

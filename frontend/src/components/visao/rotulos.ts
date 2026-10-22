@@ -1,7 +1,7 @@
 import i18n from "@/i18n";
 import { formatarDecimal } from "@/i18n/formatar";
 import { DISTANCIA_LONGE_MM, DISTANCIA_OMISSAO_MM } from "@/lib/visao/geometria";
-import type { ResumoSentido, Sentido } from "@/lib/visao/pontes";
+import { eResumoSentido, type ResumoSentido, type Sentido } from "@/lib/visao/pontes";
 
 /** Nome curto de cada exercício (id histórico -> nome actual). */
 export const nomeDoExercicio = (id: string): string => {
@@ -27,6 +27,36 @@ export const nomeDoExercicio = (id: string): string => {
   }
 };
 
+/**
+ * Nome do teste que gravou esta sessão. Os ids são históricos e foram
+ * reaproveitados em 2026-10-21 pelos exercícios sem óculos: uma sessão antiga
+ * de "cerebro" é do Teste de Contraste, não do Fio de Missangas. O que as
+ * distingue é `sinais.modo` (ou `ao_longe`, na acuidade).
+ */
+export const nomeDaSessao = (s: { exercicio_id: string; sinais?: Record<string, unknown> | null }): string => {
+  const sinais = s.sinais ?? {};
+  const actual = nomeDoExercicio(s.exercicio_id);
+  switch (s.exercicio_id) {
+    case "figure8":
+      return sinais.ao_longe === true ? actual : i18n.t("Visao.nomeAntigoAcuidadePerto");
+    case "cerebro":
+      return sinais.modo === "fio_missangas" ? actual : i18n.t("Visao.nomeAntigoContraste");
+    case "relax":
+      return sinais.modo === "luz_olhos" ? actual : i18n.t("Visao.nomeAntigoAstigmatismo");
+    case "estereopsia":
+      return sinais.modo === "agulha" ? actual : i18n.t("Visao.estereoOculosTitulo");
+    case "sacadas-convergencia":
+      return sinais.modo === "samakaka" ? actual : i18n.t("Visao.nomeAntigoContrasteBlocos");
+    case "flexibilidade-acomodativa":
+      return sinais.modo === "tapa_olho_horas" ? actual : i18n.t("Visao.nomeAntigoPertoLonge");
+    case "convergence":
+      // O Olho Mágico também guarda `pontes` (as rampas); só as sessões sem `modo` são das Pontes de Fusão.
+      return sinais.modo !== "fusao_livre" && sinais.pontes ? i18n.t("Visao.pontesTitulo") : actual;
+    default:
+      return actual;
+  }
+};
+
 export const nomeDoOlho = (olho: string | null): string =>
   olho === "direito"
     ? i18n.t("Visao.olhoDireito")
@@ -39,26 +69,29 @@ export const nomeDoOlho = (olho: string | null): string =>
 /** Uma procura em dioptrias prismáticas ("18 Δ"). */
 export const rotuloDelta = (delta: number): string => i18n.t("Visao.pontesDelta", { delta: formatarDecimal(delta, delta % 1 ? 1 : 0) });
 
-const nomeDoSentido = (s: Sentido) =>
+export const nomeDoSentido = (s: Sentido) =>
   s === "convergencia" ? i18n.t("Visao.pontesConvergencia") : i18n.t("Visao.pontesDivergencia");
 
-const eResumoSentido = (v: unknown): v is ResumoSentido =>
-  !!v && typeof v === "object" && typeof (v as ResumoSentido).rampas === "number";
+/** Rotura e recuperação de um sentido, já formatadas ("18 Δ", "acima de 25 Δ", "—"). */
+const partesPontes = (r: ResumoSentido) => ({
+  rotura:
+    r.rotura !== null
+      ? rotuloDelta(r.rotura)
+      : r.limiteEcra && r.maximo !== null
+        ? i18n.t("Visao.pontesAcimaDe", { delta: rotuloDelta(r.maximo) })
+        : "—",
+  recuperacao: r.recuperacao !== null ? rotuloDelta(r.recuperacao) : "—",
+});
 
 /**
  * Pontes de Fusão, um sentido: "Convergência: rotura 18 Δ, recuperação 12 Δ".
  * Sem rotura mas com o limite do ecrã atingido: "rotura acima de 25 Δ".
  */
-export const rotuloSentidoPontes = (sentido: Sentido, r: ResumoSentido): string => {
-  const rotura =
-    r.rotura !== null
-      ? rotuloDelta(r.rotura)
-      : r.limiteEcra && r.maximo !== null
-        ? i18n.t("Visao.pontesAcimaDe", { delta: rotuloDelta(r.maximo) })
-        : "—";
-  const recuperacao = r.recuperacao !== null ? rotuloDelta(r.recuperacao) : "—";
-  return i18n.t("Visao.pontesResumoSentido", { sentido: nomeDoSentido(sentido), rotura, recuperacao });
-};
+export const rotuloSentidoPontes = (sentido: Sentido, r: ResumoSentido): string =>
+  i18n.t("Visao.pontesResumoSentido", { sentido: nomeDoSentido(sentido), ...partesPontes(r) });
+
+/** O mesmo sem o nome do sentido: "rotura 18 Δ, recuperação 12 Δ". */
+export const rotuloRoturaRecuperacao = (r: ResumoSentido): string => i18n.t("Visao.clinicoPontesValores", partesPontes(r));
 
 /** Os sentidos medidos numa sessão das Pontes de Fusão, numa linha. */
 export const rotuloPontes = (pontes: unknown): string | null => {
@@ -76,6 +109,22 @@ export const limiarFormatado = (
   unidade: string | null,
   sinais: Record<string, unknown> | null,
 ): string => {
+  // Caderneta do Tapa-olho (id `flexibilidade-acomodativa`, desde 2026-10-21): horas de tapa-olho.
+  if (sinais?.modo === "tapa_olho_horas") return i18n.t("Visao.cadernetaLimiarCurto", { min: sinais.minutos ?? "–" });
+  // Pintar o Samakaka (id `sacadas-convergencia`, desde 2026-10-21): afastamento médio do traço.
+  if (sinais?.modo === "samakaka")
+    return limiar === null ? "—" : i18n.t("Visao.samakakaLimiarCurto", { mm: formatarDecimal(limiar, 1) });
+  // Desafio da Agulha (id `estereopsia`, desde 2026-10-21): acertos com os dois olhos e com um.
+  if (sinais?.modo === "agulha") {
+    const j = sinais.jogador as { acertos_dois?: unknown; acertos_um?: unknown } | undefined;
+    return i18n.t("Visao.agulhaLimiarCurto", { dois: j?.acertos_dois ?? "–", um: j?.acertos_um ?? "–" });
+  }
+  // Fio de Missangas (id `cerebro`, desde 2026-10-21): ponto mais próximo de convergência.
+  if (sinais?.modo === "fio_missangas")
+    return limiar === null ? i18n.t("Visao.fioLimiarAlem") : i18n.t("Visao.fioLimiarCurto", { cm: formatarDecimal(limiar, limiar % 1 ? 1 : 0) });
+  // Luz nos Olhos (id `relax`, desde 2026-10-21): desvio estimado pelo reflexo.
+  if (sinais?.modo === "luz_olhos")
+    return limiar ? i18n.t("Visao.luzLimiarCurto", { delta: limiar }) : i18n.t("Visao.luzSemDesvioCurto");
   if (sinais && typeof sinais.astigmatismo === "boolean")
     return sinais.astigmatismo ? i18n.t("Visao.astigmatismoSinalCurto") : i18n.t("Visao.astigmatismoSemSinalCurto");
   if (unidade === "dioptrias_prismaticas") return rotuloPontes(sinais?.pontes) ?? (limiar === null ? "—" : rotuloDelta(limiar));
@@ -90,6 +139,8 @@ export const limiarFormatado = (
       return `log CS ${formatarDecimal(limiar, 2)}`;
     case "arcsec":
       return `${limiar}″`;
+    case "graus":
+      return `${formatarDecimal(limiar, limiar % 1 ? 1 : 0)}°`;
     case "segundos":
       return i18n.t("Visao.segundosCurto", { valor: formatarDecimal(limiar, limiar % 1 ? 1 : 0) });
     default:

@@ -49,13 +49,13 @@ import LojaDiamantes from "./pages/jogo/LojaDiamantes";
 import LojaMoedas from "./pages/jogo/LojaMoedas";
 
 import TesteAcuidade from "./pages/exercises/TesteAcuidade";
-import TesteContraste from "./pages/exercises/TesteContraste";
-import TesteAstigmatismo from "./pages/exercises/TesteAstigmatismo";
-import TesteEstereopsia from "./pages/exercises/TesteEstereopsia";
+import FioMissangas from "./pages/exercises/FioMissangas";
+import TesteLuzOlhos from "./pages/exercises/TesteLuzOlhos";
+import DesafioAgulha from "./pages/exercises/DesafioAgulha";
 import Kianda from "./pages/exercises/Kianda";
-import TreinoContrasteBlocos from "./pages/exercises/TreinoContrasteBlocos";
-import PontesFusao from "./pages/exercises/PontesFusao";
-import TreinoPertoLonge from "./pages/exercises/TreinoPertoLonge";
+import TreinoSamakaka from "./pages/exercises/TreinoSamakaka";
+import OlhoMagico from "./pages/exercises/OlhoMagico";
+import CadernetaTapaOlho from "./pages/exercises/CadernetaTapaOlho";
 import ProgressoVisao from "./pages/exercises/ProgressoVisao";
 import RelatorioSemanal from "./pages/exercises/RelatorioSemanal";
 import RelatorioPartilhado from "./pages/exercises/RelatorioPartilhado";
@@ -102,13 +102,13 @@ const PAGINAS: Record<ChaveRota, ReactElement> = {
   suporte: <Suporte />,
   exercicios: <Exercicios />,
   exercicioAcuidade: <TesteAcuidade />,
-  exercicioContraste: <TesteContraste />,
-  exercicioAstigmatismo: <TesteAstigmatismo />,
-  exercicioEstereopsia: <TesteEstereopsia />,
+  exercicioContraste: <FioMissangas />,
+  exercicioAstigmatismo: <TesteLuzOlhos />,
+  exercicioEstereopsia: <DesafioAgulha />,
   exercicioAneis: <Kianda />,
-  exercicioContrasteBlocos: <TreinoContrasteBlocos />,
-  exercicioConvergencia: <PontesFusao />,
-  exercicioPertoLonge: <TreinoPertoLonge />,
+  exercicioContrasteBlocos: <TreinoSamakaka />,
+  exercicioConvergencia: <OlhoMagico />,
+  exercicioPertoLonge: <CadernetaTapaOlho />,
   exerciciosProgresso: <ProgressoVisao />,
   exerciciosRelatorio: <RelatorioSemanal />,
   relatorioPartilhado: <RelatorioPartilhado />,
