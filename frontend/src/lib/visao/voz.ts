@@ -7,9 +7,56 @@
 
 export const vozDisponivel = (): boolean => typeof window !== "undefined" && "speechSynthesis" in window;
 
-/** Fala o texto no idioma do site ("pt-AO" usa a voz portuguesa que houver). */
-export function falar(texto: string, idioma: string): void {
-  if (!vozDisponivel()) return;
+/*
+ * O som é opcional e começa desligado: nenhum exercício fala nem faz bips
+ * sozinho sem a pessoa ligar o som (`BotaoSom`, sempre à vista durante o
+ * exercício). A escolha fica guardada no aparelho. "Ouvir as instruções" é um
+ * pedido explícito e fala mesmo com o som desligado -- e pode ser parado.
+ */
+const CHAVE_SOM = "jpa.visao.som";
+const EVENTO_SOM = "jpa:visao-som";
+/** Se o armazenamento estiver bloqueado, a escolha dura enquanto a página estiver aberta. */
+let somEmMemoria = false;
+
+export function somLigado(): boolean {
+  try {
+    const v = window.localStorage.getItem(CHAVE_SOM);
+    return v === null ? somEmMemoria : v === "1";
+  } catch {
+    return somEmMemoria;
+  }
+}
+
+export function definirSom(ligado: boolean): void {
+  somEmMemoria = ligado;
+  try {
+    window.localStorage.setItem(CHAVE_SOM, ligado ? "1" : "0");
+  } catch {
+    // armazenamento bloqueado: fica em memória
+  }
+  if (!ligado) calar();
+  window.dispatchEvent(new Event(EVENTO_SOM));
+}
+
+/** Avisa quando o som é ligado ou desligado; devolve a função para deixar de ouvir. */
+export function aoMudarSom(fn: () => void): () => void {
+  window.addEventListener(EVENTO_SOM, fn);
+  return () => window.removeEventListener(EVENTO_SOM, fn);
+}
+
+interface OpcoesFala {
+  /** Pedido explícito ("Ouvir as instruções"): fala mesmo com o som desligado. */
+  pedido?: boolean;
+  /** Quando acaba (ou é interrompido). */
+  aoAcabar?: () => void;
+}
+
+/**
+ * Fala o texto no idioma do site ("pt-AO" usa a voz portuguesa que houver).
+ * Sem o som ligado, só fala o que foi pedido. Devolve se começou a falar.
+ */
+export function falar(texto: string, idioma: string, opcoes: OpcoesFala = {}): boolean {
+  if (!vozDisponivel() || (!opcoes.pedido && !somLigado())) return false;
   const sintese = window.speechSynthesis;
   sintese.cancel();
   const base = idioma.slice(0, 2).toLowerCase();
@@ -22,7 +69,12 @@ export function falar(texto: string, idioma: string): void {
   u.lang = voz?.lang ?? (base === "pt" ? "pt-PT" : idioma);
   if (voz) u.voice = voz;
   u.rate = 0.95;
+  if (opcoes.aoAcabar) {
+    u.onend = opcoes.aoAcabar;
+    u.onerror = opcoes.aoAcabar;
+  }
   sintese.speak(u);
+  return true;
 }
 
 export function calar(): void {
@@ -33,9 +85,11 @@ let audio: AudioContext | null = null;
 
 /**
  * Um som curto (WebAudio), para quem não está a ver o ecrã saber que a
- * resposta contou: "tic" registou, "fim" terminou um olho ou uma ronda.
+ * resposta contou: "tic" registou, "fim" terminou um olho ou uma ronda. Só
+ * com o som ligado.
  */
 export function sinalSonoro(tipo: "tic" | "certo" | "errado" | "fim" | "festa" = "tic"): void {
+  if (!somLigado()) return;
   try {
     const C = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!C) return;

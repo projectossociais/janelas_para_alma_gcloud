@@ -225,7 +225,7 @@ const EcraPalanca = ({
         <Square className="h-3.5 w-3.5" aria-hidden />
         {t("Visao.palancaParar")}
       </button>
-      <p className="absolute inset-x-0 bottom-3 flex items-center justify-center gap-2 px-4 text-xs" style={{ color: "#999999" }}>
+      <p className="absolute inset-x-0 bottom-16 flex items-center justify-center gap-2 px-4 text-xs" style={{ color: "#999999" }}>
         {voz.aOuvir && <Mic className="h-3.5 w-3.5" aria-label={t("Visao.palancaAOuvir")} />}
         {t("Visao.palancaRodape", {
           olho: t(olho === "direito" ? "Visao.olhoDireito" : "Visao.olhoEsquerdo"),

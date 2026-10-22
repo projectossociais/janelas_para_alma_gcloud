@@ -182,7 +182,7 @@ const Regua = ({
       <p className="pointer-events-none absolute right-4 top-12 max-w-[50%] text-right text-sm leading-snug" style={{ color: "#333333" }}>
         {medicao === 0 ? t("Visao.fioVozRegua") : t("Visao.fioVozOutraVez")}
       </p>
-      <div className="absolute bottom-4 right-4 flex max-w-[60%] flex-col items-end gap-2 text-right text-sm">
+      <div className="absolute bottom-4 right-4 flex max-w-[55%] flex-col items-end gap-2 text-right text-sm">
         <p style={{ color: "#333333" }}>{t("Visao.fioMedicao", { n: medicao + 1, total: MEDICOES_PPC })}</p>
         <button
           type="button"
