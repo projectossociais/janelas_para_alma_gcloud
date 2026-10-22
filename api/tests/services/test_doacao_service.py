@@ -86,6 +86,17 @@ class EmailSenderFalso:
         self.enviados.append({"destinatario": destinatario, "assunto": assunto, "corpo_html": corpo_html})
 
 
+class NotificadorFalso:
+    def __init__(self, falha: bool = False) -> None:
+        self.avisos: list[dict] = []
+        self._falha = falha
+
+    def notificar(self, titulo: str, mensagem: str) -> None:
+        if self._falha:
+            raise RuntimeError("falha simulada ao avisar os admins")
+        self.avisos.append({"titulo": titulo, "mensagem": mensagem})
+
+
 class TestRegistarDoacaoMateriais:
     def test_regista_com_um_recibo_gerado_pelo_servidor(self) -> None:
         service = DoacaoService(RepositorioFalso(), EmailSenderFalso())
@@ -142,6 +153,60 @@ class TestRegistarDoacaoMateriais:
             service.registar_doacao_materiais("ana@example.com", ["livros"], "Luanda")
 
         assert len(repo.chamadas) == 1
+
+
+    def test_o_email_lista_cada_material_e_escapa_o_html(self) -> None:
+        # O email vai para um endereço que qualquer pessoa escreve, a partir
+        # do nosso domínio: o texto do formulário nunca pode virar HTML.
+        email_sender = EmailSenderFalso()
+        service = DoacaoService(RepositorioFalso(), email_sender)
+
+        service.registar_doacao_materiais(
+            "ana@example.com",
+            ["Armações: Lentes soltas", "<b>Outros</b>: Fita adesiva"],
+            "Luanda",
+            '<a href="https://phishing.test">clique</a>',
+        )
+
+        corpo = email_sender.enviados[0]["corpo_html"]
+        assert "<li>Armações: Lentes soltas</li>" in corpo
+        assert "&lt;b&gt;Outros&lt;/b&gt;" in corpo
+        assert "<a href" not in corpo
+        assert "&lt;a href=&quot;https://phishing.test&quot;&gt;" in corpo
+
+    def test_avisa_a_equipa_com_os_itens_a_provincia_e_as_notas(self) -> None:
+        notificador = NotificadorFalso()
+        service = DoacaoService(RepositorioFalso(), EmailSenderFalso(), notificador)
+
+        doacao = service.registar_doacao_materiais(
+            "ana@example.com", ["Armações: Lentes soltas", "Outros: Fita adesiva"], "Benguela", "duas caixas"
+        )
+
+        assert len(notificador.avisos) == 1
+        aviso = notificador.avisos[0]
+        assert "doação de materiais" in aviso["titulo"].lower()
+        for texto in (doacao.recibo_id, "ana@example.com", "Benguela", "Armações: Lentes soltas",
+                      "Outros: Fita adesiva", "duas caixas"):
+            assert texto in aviso["mensagem"]
+
+    def test_avisa_a_equipa_mesmo_que_o_email_ao_doador_falhe(self) -> None:
+        # A doação já está gravada: a equipa tem de saber dela para a ir buscar.
+        notificador = NotificadorFalso()
+        service = DoacaoService(RepositorioFalso(), EmailSenderFalso(falha=True), notificador)
+
+        with pytest.raises(EmailEnvioFalhouError):
+            service.registar_doacao_materiais("ana@example.com", ["Outros: Fita adesiva"], "Luanda")
+
+        assert len(notificador.avisos) == 1
+
+    def test_uma_falha_ao_avisar_a_equipa_nao_desfaz_a_doacao(self) -> None:
+        email_sender = EmailSenderFalso()
+        service = DoacaoService(RepositorioFalso(), email_sender, NotificadorFalso(falha=True))
+
+        doacao = service.registar_doacao_materiais("ana@example.com", ["Outros: Fita adesiva"], "Luanda")
+
+        assert doacao.recibo_id.startswith("JPA-")
+        assert len(email_sender.enviados) == 1
 
 
 class TestRegistarDoacaoFinanceira:

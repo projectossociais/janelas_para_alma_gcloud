@@ -16,15 +16,24 @@ estabelecido (e testado) neste fluxo desde a versão que corria no Supabase:
 nunca mostrar "doação recebida" sem a pessoa também receber a confirmação.
 """
 
+import html
+import logging
 import uuid
+from typing import Protocol
 
 from app.core.email import EmailSender
 from app.repositories.doacoes_repository import DoacaoRegisto, DoacoesRepository
 from app.services.comprovativo_upload_service import referencia_do_comprovativo
 
+logger = logging.getLogger(__name__)
+
 
 class MateriaisNaoSelecionadosError(Exception):
     pass
+
+
+class NotificadorAdmins(Protocol):
+    def notificar(self, titulo: str, mensagem: str) -> None: ...
 
 
 def _gerar_recibo_id(prefixo: str) -> str:
@@ -34,9 +43,15 @@ def _gerar_recibo_id(prefixo: str) -> str:
 
 
 class DoacaoService:
-    def __init__(self, repositorio: DoacoesRepository, email_sender: EmailSender) -> None:
+    def __init__(
+        self,
+        repositorio: DoacoesRepository,
+        email_sender: EmailSender,
+        notificador: NotificadorAdmins | None = None,
+    ) -> None:
         self._repo = repositorio
         self._email = email_sender
+        self._notificador = notificador
 
     def registar_doacao_materiais(
         self, email: str, materiais: list[str], provincia: str, detalhes: str | None = None
@@ -54,24 +69,46 @@ class DoacaoService:
             provincia=provincia,
         )
 
+        # Antes do email ao doador: se esse envio falhar, a doação continua
+        # gravada e a equipa tem de saber dela para combinar a recolha.
+        self._avisar_equipa(doacao, materiais, provincia, detalhes)
+
         # Doação já gravada -- uma falha daqui para a frente propaga (ver
         # nota de topo), mas nunca apaga o registo: fica "pendente" na base
         # de dados, visível a um admin, mesmo que a pessoa não tenha visto
         # a confirmação.
+        #
+        # Tudo o que veio do formulário é escapado: o email sai do nosso
+        # domínio para um endereço que qualquer pessoa pode escrever.
+        itens = "".join(f"<li>{html.escape(m)}</li>" for m in materiais)
         self._email.enviar(
             destinatario=email,
             assunto="Recebemos a sua doação — Janelas Para a Alma",
             corpo_html=(
                 f"<p>Obrigado pela sua doação! Registámo-la com o recibo "
                 f"<strong>{doacao.recibo_id}</strong>.</p>"
-                f"<p>Materiais: {', '.join(materiais)}"
-                + (f"<br>Notas: {detalhes}" if detalhes else "")
-                + "</p>"
-                "<p>Em breve entraremos em contacto para combinar a recolha.</p>"
+                f"<p>Materiais:</p><ul>{itens}</ul>"
+                + (f"<p>Notas: {html.escape(detalhes)}</p>" if detalhes else "")
+                + "<p>Em breve entraremos em contacto para combinar a recolha.</p>"
             ),
         )
 
         return doacao
+
+    def _avisar_equipa(
+        self, doacao: DoacaoRegisto, materiais: list[str], provincia: str, detalhes: str | None
+    ) -> None:
+        if self._notificador is None:
+            return
+        mensagem = (
+            f"{doacao.email} ({provincia}) quer doar: {'; '.join(materiais)}."
+            + (f" Notas: {detalhes}" if detalhes else "")
+            + f" Recibo {doacao.recibo_id}."
+        )
+        try:
+            self._notificador.notificar("Nova doação de materiais para recolher", mensagem)
+        except Exception:  # avisar é acessório -- a doação já está gravada
+            logger.exception("falha ao avisar a equipa da doação %s", doacao.recibo_id)
 
     def registar_doacao_financeira(
         self, email: str, detalhes: str | None, comprovativo_chave: str

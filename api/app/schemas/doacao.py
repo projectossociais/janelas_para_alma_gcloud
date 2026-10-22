@@ -1,11 +1,14 @@
 from datetime import datetime
+from typing import Annotated
 
 from pydantic import BaseModel, EmailStr, Field
 
 
 class DoacaoMateriaisCriar(BaseModel):
     email: EmailStr
-    materiais: list[str]
+    # Um texto por item, já legível ("Armações: Lentes soltas") -- é o que
+    # fica no registo e vai no aviso à equipa. Limites só contra abuso.
+    materiais: list[Annotated[str, Field(min_length=1, max_length=200)]] = Field(max_length=40)
     # UX-03 -- onde a equipa vai recolher o que foi doado. Só faz sentido
     # aqui (doação financeira não tem nada para ir buscar).
     provincia: str = Field(min_length=1, max_length=60)
