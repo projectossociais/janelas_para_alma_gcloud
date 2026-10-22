@@ -86,7 +86,7 @@ describe("Exercicios — 8 exercícios em dois grupos", () => {
       "Desafio da Agulha",
       "Olho Mágico",
       "Pintar o Samakaka",
-      "Treino Perto e longe",
+      "Caderneta do Tapa-olho",
     ])
       expect(within(premium).getByText(nome)).toBeInTheDocument();
     for (const retirado of [/Acompanhamento Ocular em Oito/i, /Foco Dinâmico/i, /Anti-Supressão/i, /Convergência com Saltos/i])

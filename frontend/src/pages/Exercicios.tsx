@@ -156,7 +156,7 @@ const exerciciosPremium: Exercicio[] = [
     },
     icon: RefreshCw,
     get route() {
-      return localizar("/exercicios/perto-e-longe");
+      return localizar("/exercicios/caderneta-do-tapa-olho");
     },
   },
   {

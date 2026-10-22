@@ -237,6 +237,25 @@ describe("Fio de Missangas", () => {
   });
 });
 
+describe("Caderneta do Tapa-olho", () => {
+  it("horas de tapa-olho na semana, sem entrar nos minutos de treino", () => {
+    const tapa = (dias: number, minutos: number) =>
+      sessao({
+        exercicio_id: "flexibilidade-acomodativa",
+        created_at: haDias(dias),
+        olho: "esquerdo",
+        limiar: null,
+        unidade: null,
+        segundos_activos: minutos * 60,
+        sinais: { modo: "tapa_olho_horas", alvo_min: 120 },
+      });
+    const r = resumoClinico([tapa(1, 120), tapa(0, 60)], hoje);
+    expect(r.tapaOlho).toMatchObject({ alvoMin: 120, cumpridos: 1, mediaMin: 26 });
+    expect(r.adesao.minutosPorSemana).toEqual([0, 0, 0, 0]);
+    expect(resumoClinico([], hoje).tapaOlho).toBeNull();
+  });
+});
+
 describe("adesão ao treino", () => {
   it("minutos por semana nas últimas 4, dias com treino e sessões de baixa atenção", () => {
     const r = resumoClinico(

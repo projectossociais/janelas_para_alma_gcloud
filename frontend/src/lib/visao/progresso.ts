@@ -41,9 +41,13 @@ export function diaLocal(data: Date): string {
   return `${a}-${m}-${d}`;
 }
 
-/** Uma sessão marcada como baixa atenção não conta para a dose. */
+/**
+ * Uma sessão marcada como baixa atenção não conta para a dose. As horas de
+ * tapa-olho (Caderneta do Tapa-olho, desde 2026-10-21) também não: são o
+ * tratamento longe do ecrã e contam-se à parte (`lib/visao/caderneta.ts`).
+ */
 export const contaParaDose = (s: SessaoResumo): boolean =>
-  IDS_TREINOS.includes(s.exercicio_id) && s.sinais?.baixa_atencao !== true;
+  IDS_TREINOS.includes(s.exercicio_id) && s.sinais?.baixa_atencao !== true && s.sinais?.modo !== "tapa_olho_horas";
 
 /**
  * As sessões que entram no gráfico do progresso de um exercício: com limiar

@@ -9,7 +9,7 @@ import {
 } from "@/components/visao/rotulos";
 import { formatarData, formatarDecimal, separadorDecimal } from "@/i18n/formatar";
 import { fraccao6 } from "@/lib/visao/geometria";
-import { ID_ACUIDADE, ID_ANEIS, ID_ASTIGMATISMO, ID_CONTRASTE, ID_CONTRASTE_BLOCOS, ID_CONVERGENCIA, ID_ESTEREOPSIA } from "@/lib/visao/ids";
+import { ID_ACUIDADE, ID_ANEIS, ID_ASTIGMATISMO, ID_CONTRASTE, ID_CONTRASTE_BLOCOS, ID_CONVERGENCIA, ID_ESTEREOPSIA, ID_PERTO_LONGE } from "@/lib/visao/ids";
 import { SENTIDOS, type ResumoSentido } from "@/lib/visao/pontes";
 import type { SessaoParaRelatorio } from "@/lib/visao/progresso";
 import type { Olho } from "@/lib/visao/resultados";
@@ -291,6 +291,20 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
             )}
           />
         )}
+        {r.tapaOlho && (
+          <Medida
+            titulo={t("Visao.clinicoTapa")}
+            exercicio={nomeDoExercicio(ID_PERTO_LONGE)}
+            linhas={[
+              t("Visao.clinicoTapaSemana", {
+                media: formatarDecimal(r.tapaOlho.mediaMin / 60, 1),
+                pct: r.tapaOlho.pctDoReceitado,
+                alvo: formatarDecimal(r.tapaOlho.alvoMin / 60, r.tapaOlho.alvoMin % 60 ? 1 : 0),
+              }),
+              t("Visao.clinicoTapaCumpridos", { n: r.tapaOlho.cumpridos }),
+            ]}
+          />
+        )}
         <Medida
           titulo={t("Visao.clinicoTreino", { semanas: SEMANAS_ADESAO })}
           linhas={
@@ -305,7 +319,7 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
         />
       </dl>
 
-      {temMedicoes(r) && (
+      {(temMedicoes(r) || r.tapaOlho) && (
         <div className="space-y-1 text-xs text-neutral-600">
           <p className="font-semibold">{t("Visao.clinicoMetodoTitulo")}</p>
           {r.acuidade && (
@@ -326,6 +340,7 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
           {r.fio && <p>{t("Visao.clinicoMetodoFio")}</p>}
           {r.agulha && <p>{t("Visao.clinicoMetodoAgulha")}</p>}
           {r.samakaka && <p>{t("Visao.clinicoMetodoSamakaka")}</p>}
+          {r.tapaOlho && <p>{t("Visao.clinicoMetodoTapa")}</p>}
           {r.kianda && <p>{t("Visao.clinicoMetodoKianda")}</p>}
           {medicaoComDistancia && <p>{t("Visao.clinicoMetodoDistancia")}</p>}
         </div>

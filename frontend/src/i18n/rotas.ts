@@ -47,7 +47,8 @@ export const ROTAS = [
   // Desde 2026-10-21 é o Pintar o Samakaka (id `sacadas-convergencia`); o caminho antigo é um alias.
   { chave: "exercicioContrasteBlocos", pt: "/exercicios/pintar-o-samakaka", en: "/en/exercises/paint-the-samakaka" },
   { chave: "exercicioConvergencia", pt: "/exercicios/convergencia", en: "/en/exercises/convergence" },
-  { chave: "exercicioPertoLonge", pt: "/exercicios/perto-e-longe", en: "/en/exercises/near-and-far" },
+  // Desde 2026-10-21 é a Caderneta do Tapa-olho (id `flexibilidade-acomodativa`); o caminho antigo é um alias.
+  { chave: "exercicioPertoLonge", pt: "/exercicios/caderneta-do-tapa-olho", en: "/en/exercises/patch-diary" },
   { chave: "exerciciosProgresso", pt: "/exercicios/progresso", en: "/en/exercises/progress", foraDoSitemap: true },
   { chave: "exerciciosRelatorio", pt: "/exercicios/relatorio", en: "/en/exercises/report", foraDoSitemap: true },
   // Link temporário que a família envia ao médico (Fase B): público, fora do sitemap, noindex.
@@ -102,6 +103,7 @@ export const ALIASES_PT: readonly { pt: string; chave: ChaveRota }[] = [
   { pt: "/exercicios/contraste", chave: "exercicioContraste" },
   { pt: "/exercicios/estereopsia", chave: "exercicioEstereopsia" },
   { pt: "/exercicios/contraste-em-blocos", chave: "exercicioContrasteBlocos" },
+  { pt: "/exercicios/perto-e-longe", chave: "exercicioPertoLonge" },
 ];
 
 /**

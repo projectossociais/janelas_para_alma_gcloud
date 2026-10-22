@@ -15,6 +15,7 @@
  *
  * Funções puras -- o texto vive em `components/visao/ResumoClinico.tsx`.
  */
+import { MODO_TAPA_OLHO, minutosDeTapaPorDia, resumoSemana, type ResumoSemana } from "./caderneta";
 import { diferencaEmLinhas, mesmoTipoDaUltima, tipoDeAcuidade, type TipoAcuidade } from "./aglomeracao";
 import { ID_ACUIDADE, ID_ANEIS, ID_ASTIGMATISMO, ID_CONTRASTE, ID_CONTRASTE_BLOCOS, ID_CONVERGENCIA, ID_ESTEREOPSIA } from "./ids";
 import { SENTIDOS, eResumoSentido, type ResumoSentido, type Sentido } from "./pontes";
@@ -160,6 +161,8 @@ export interface ResumoClinico {
   agulha: Resumo<ValorAgulha> | null;
   /** Pintar o Samakaka. */
   samakaka: ResumoSamakaka | null;
+  /** Horas de tapa-olho (Caderneta), nos últimos 7 dias; `null` sem registos no período. */
+  tapaOlho: (ResumoSemana & { alvoMin: number }) | null;
   adesao: Adesao;
   /** Datas das sessões em que a pessoa disse ver a dobrar, da mais antiga para a mais recente. */
   diplopia: string[];
@@ -311,6 +314,13 @@ function lerLuz(s: S): ValorLuz | undefined {
   };
 }
 
+function resumoTapaOlho(sessoes: readonly S[], hoje: Date): (ResumoSemana & { alvoMin: number }) | null {
+  const doTapa = sessoes.filter((s) => s.sinais?.modo === MODO_TAPA_OLHO);
+  if (!doTapa.length) return null;
+  const alvoMin = numero(doTapa[doTapa.length - 1].sinais?.alvo_min) ?? 120;
+  return { ...resumoSemana(minutosDeTapaPorDia(doTapa), alvoMin, hoje), alvoMin };
+}
+
 function resumoSamakaka(sessoes: readonly S[]): ResumoSamakaka | null {
   const doSamakaka = sessoes.filter((s) => s.exercicio_id === ID_CONTRASTE_BLOCOS && s.sinais?.modo === "samakaka");
   const r = resumir<ValorSamakaka>(doSamakaka, (s) => ({
@@ -369,6 +379,7 @@ export function resumoClinico(sessoes: readonly S[], hoje: Date): ResumoClinico 
     fio: resumir(de(ID_CONTRASTE), lerFio),
     agulha: resumir(de(ID_ESTEREOPSIA), lerAgulha),
     samakaka: resumoSamakaka(fiaveis),
+    tapaOlho: resumoTapaOlho(doPeriodo, hoje),
     adesao: adesao(sessoes, hoje),
     diplopia: doPeriodo.filter((s) => s.sinais?.diplopia_reportada === true).map((s) => s.created_at),
   };

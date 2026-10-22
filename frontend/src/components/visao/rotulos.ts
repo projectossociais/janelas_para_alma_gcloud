@@ -79,6 +79,8 @@ export const limiarFormatado = (
   unidade: string | null,
   sinais: Record<string, unknown> | null,
 ): string => {
+  // Caderneta do Tapa-olho (id `flexibilidade-acomodativa`, desde 2026-10-21): horas de tapa-olho.
+  if (sinais?.modo === "tapa_olho_horas") return i18n.t("Visao.cadernetaLimiarCurto", { min: sinais.minutos ?? "–" });
   // Pintar o Samakaka (id `sacadas-convergencia`, desde 2026-10-21): afastamento médio do traço.
   if (sinais?.modo === "samakaka")
     return limiar === null ? "—" : i18n.t("Visao.samakakaLimiarCurto", { mm: formatarDecimal(limiar, 1) });
