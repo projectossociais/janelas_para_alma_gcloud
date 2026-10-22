@@ -85,15 +85,21 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   nem MediaPipe** (o scanner é outro produto e continua a usá-los). **8, todos pagos** (desde
   2026-09-23). Os ids históricos mantêm-se (acesso e preços iguais), mas quatro mudaram de
   significado — `sessoes_exercicio.versao` separa as sessões antigas (1) das novas (2):
-  teste de 7 dias = `figure8` **Olhos de Palanca** (Teste de Acuidade com barras de Flom,
-  desde 2026-10-21), `ambliopia` **Kianda** (desde 2026-10-21: sem óculos, por omissão,
+  teste de 7 dias = `figure8` **Olhos de Palanca ao longe** (desde 2026-10-21: "E" a 3 m,
+  a criança aponta e o adulto desliza o dedo; antes, anel de Landolt ao perto),
+  `ambliopia` **Kianda** (desde 2026-10-21: sem óculos, por omissão,
   pesca com o olho forte tapado, em graus; com óculos 3D, jogo dicóptico; o Treino de Anéis
-  saiu),
-  `cerebro` Teste de Contraste, `relax` Teste de Astigmatismo; só Premium = `estereopsia`
-  Teste de Estereopsia, `convergence` **Olho Mágico** (desde 2026-10-21: sem óculos, fusão
+  saiu), `cerebro` **Fio de Missangas** (desde 2026-10-21; antes, Teste de Contraste),
+  `relax` **Luz nos Olhos** (desde 2026-10-21; antes, Teste de Astigmatismo); só Premium =
+  `estereopsia` **Desafio da Agulha** (desde 2026-10-21; com óculos 3D, o Teste de
+  Estereopsia), `convergence` **Olho Mágico** (desde 2026-10-21: sem óculos, fusão
   livre; com óculos 3D, as Pontes de Fusão de 2026-10-20; antes, Treino de Convergência
-  auto-declarado, "Vejo 1 / Vejo 2", em segundos), `sacadas-convergencia` Treino de Contraste em blocos,
-  `flexibilidade-acomodativa` Treino Perto e longe. **Anéis e Convergência trocaram de grupo
+  auto-declarado, "Vejo 1 / Vejo 2", em segundos), `sacadas-convergencia` **Pintar o
+  Samakaka** (desde 2026-10-21; antes, Treino de Contraste em blocos),
+  `flexibilidade-acomodativa` **Caderneta do Tapa-olho** (desde 2026-10-21; antes, Treino
+  Perto e longe). Uma sessão antiga e uma nova com o mesmo id distinguem-se por
+  `sinais.modo` (na acuidade, `sinais.ao_longe`): o histórico e o relatório mostram o nome do
+  teste que gravou cada sessão (`nomeDaSessao`, `components/visao/rotulos.ts`). **Anéis e Convergência trocaram de grupo
   a 2026-09-29** (decisão do dono do projecto, `docs/ANALISE_EXERCICIOS.md`): o trial mostra
   o treino com mais valor e evidência; a Convergência é contra-indicada em parte do público
   (esotropia) e o resultado dela é auto-declarado. O Relaxamento deixou de ser exercício: é a pausa entre blocos dos treinos.
@@ -523,6 +529,38 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   Pontes e grava igual (`sinais.pontes`, `sinais.modo = "fusao_livre"`), por isso o relatório
   lê os dois. Ao alto, um telemóvel só chega a ~7 Δ: pede para o deitar e continua
   (`alargarRampa`).
+- **Olhos de Palanca ao longe (2026-10-21): acuidade a 3 m sem ninguém ver o ecrã**
+  (`lib/visao/palancaLonge.ts`, `TesteAcuidade`). "E" de Snellen (a "mãozinha"); a criança
+  aponta para onde apontam os dedos e o adulto, com o ecrã virado para ela, desliza o dedo
+  para esse lado (`useGestos`; dedo parado 1 s = "não sei"). Resposta por voz opcional e
+  desligada por omissão: no Chrome o som vai para a Google (o texto diz isto). 3 m ou 2 m;
+  grava `distancia_mm` e `sinais.ao_longe = true`. A tendência só compara sessões do mesmo
+  tipo (`tipoDeAcuidade`: longe, barras ou isolado).
+- **Luz nos Olhos (2026-10-21): reflexo da luz e teste de tapar, feitos pelos pais**
+  (`lib/visao/luzOlhos.ts`, `TesteLuzOlhos`). Ecrã branco a meio metro; marca-se num
+  desenho onde ficou o reflexo em cada olho (o direito da criança fica à esquerda de quem
+  vê); ~15 Δ por mm de descentração (Hirschberg). Depois tapa-se um olho de cada vez e
+  diz-se para onde o outro se mexeu. `unidade = "dioptrias_prismaticas"`, `limiar` = maior
+  desvio, `sinais.modo = "luz_olhos"`, mais o diário de 7 dias (frequência e quando).
+- **Fio de Missangas (2026-10-21): cordão de Brock com um fio e missangas de casa**
+  (`lib/visao/fioMissangas.ts`). A voz pergunta, em cada missanga, onde os fios se cruzam
+  ("só vejo um fio" = supressão); no fim o telemóvel é a régua do ponto próximo de
+  convergência (2 medições, `unidade = "cm"`). As instruções faladas também aparecem escritas.
+- **Desafio da Agulha (2026-10-21): profundidade num jogo de família** (`lib/visao/agulha.ts`).
+  Dois lápis ponta com ponta, ou palhinha na garrafa; por jogador, 3 rondas com os dois
+  olhos e 3 com um tapado; o telemóvel é árbitro e cronómetro. Só o jogador 1 é avaliado
+  (vantagem dos dois olhos: grande, pequena ou nenhuma); o outro é a comparação.
+  `limiar = null`, `sinais.modo = "agulha"`. Com óculos 3D: o Teste de Estereopsia.
+- **Pintar o Samakaka (2026-10-21): o olho fraco a guiar a mão** (`lib/visao/samakaka.ts`,
+  `PintarSamakaka`). Com tapa-olho, segue-se com o dedo os pontinhos de seis motivos do
+  pano; cada motivo com pontos mais pequenos e claros e menos folga. Desenha só quando o
+  dedo mexe (sem animação contínua). `unidade = "mm"` (afastamento médio do dedo ao traço).
+- **Caderneta do Tapa-olho (2026-10-21): as horas de tapa-olho, para o médico**
+  (`lib/visao/caderneta.ts`). Não é para olhar para o ecrã: conta o tempo e pergunta de 15
+  em 15 min se o tapa-olho continua posto -- só conta o tempo confirmado. O período em curso
+  sobrevive a fechar a página (localStorage). Um cromo por dia cumprido.
+  `sinais.modo = "tapa_olho_horas"`, `segundos_activos` = tempo confirmado; **não conta para
+  a dose de treino** (`contaParaDose`), só para a adesão no relatório.
 - **Pontes de Fusão (2026-10-20): fusão verificada pelo estímulo, não declarada.** Dois anéis
   em anáglifo afastam-se (convergência: imagem do olho esquerdo para a direita); dentro, um
   estereograma com uma forma que só se vê com os anéis fundidos. Rotura e recuperação em
@@ -542,12 +580,10 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   sem óculos: o Treino de Anéis inalterado -- é a série em logMAR que alimenta a tendência
   e o destaque do fim do trial, e não deve ser misturada com a razão de contraste.
   `AssistenteTreino` tem `olhoFraco` (pergunta o olho sem tapa-olho) para isto.
-- **Olhos de Palanca (2026-10-21): acuidade com aglomeração.** O anel de Landolt do Teste de
-  Acuidade passa a ter quatro barras de Flom (espessura do traço, a 1 traço do anel;
-  `lib/visao/aglomeracao.ts`), como os testes de acuidade usados na ambliopia -- mais
-  sensível ao olho preguiçoso. Sessões novas com `sinais.aglomeracao = true`. **A tendência e
-  o gráfico só comparam sessões do mesmo tipo da mais recente** (`mesmoTipoDaUltima`): com
-  barras lê-se pior por natureza, e misturar os dois tipos inventava uma piora no dia da
+- **Olhos de Palanca com barras (2026-10-21, substituído no mesmo dia pela versão ao
+  longe).** O anel de Landolt com barras de Flom gravou `sinais.aglomeracao = true`; essas
+  sessões continuam no histórico. **A tendência e o gráfico só comparam sessões do mesmo
+  tipo da mais recente** (`mesmoTipoDaUltima`): misturar tipos inventava uma piora no dia da
   mudança. O resultado mostra sempre a diferença entre os olhos em linhas.
 - **Relatório clínico (2026-10-21): último passo da Vaga 1.** A secção 1 do relatório para o
   médico (`ResumoClinico`, contas em `lib/visao/resumoClinico.ts`) junta os últimos 90 dias,
@@ -557,13 +593,15 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   o mais recente, o primeiro do período e as **condições da mais recente** (distância medida
   ou só indicada, cartão, óculos verificados), mais uma nota de método no fim. Sem
   interpretação nem "sinais". Sessões de baixa atenção não entram; os relatos de visão dupla
-  entram sempre. O link do médico passa a trazer `distancia_mm` de cada sessão.
+  entram sempre. O link do médico passa a trazer `distancia_mm` de cada sessão. Desde os seis
+  exercícios sem óculos: desvio pela Luz nos Olhos, ponto próximo do Fio, vantagem dos dois
+  olhos na Agulha, traço do Samakaka e horas de tapa-olho da Caderneta.
 - **Tamanhos físicos, não píxeis soltos.** Todo o estímulo é calculado em ângulo visual a
   partir de `pxPorMm` (calibração com cartão de banco) e da distância; níveis abaixo de
   1,4 px de dispositivo descartam-se (`geometria.ts`). O "palco" (`PalcoVisual`) é sempre
   fundo branco com optótipos pretos, também em modo escuro — o contraste faz parte da medição.
-- **Contraste em luminância linear.** A cor do anel converte-se de sRGB e usa-se sempre o
-  contraste *real* depois de arredondar a 8 bits (`contraste.ts`), nunca o pedido.
+- **Cores em luminância linear.** `contraste.ts` guarda as conversões sRGB <-> linear que o
+  anáglifo usa; o teste de contraste com anéis cinzentos saiu a 2026-10-21.
 - **Tempo activo só com respostas.** Conta intervalos entre respostas até 8 s e com o
   separador visível (`tempoActivo.ts`). Treinos com um estímulo de controlo errado ficam
   `sinais.baixa_atencao` e não contam para a dose.
