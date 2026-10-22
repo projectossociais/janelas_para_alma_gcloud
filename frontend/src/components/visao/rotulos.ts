@@ -79,6 +79,9 @@ export const limiarFormatado = (
   unidade: string | null,
   sinais: Record<string, unknown> | null,
 ): string => {
+  // Fio de Missangas (id `cerebro`, desde 2026-10-21): ponto mais próximo de convergência.
+  if (sinais?.modo === "fio_missangas")
+    return limiar === null ? i18n.t("Visao.fioLimiarAlem") : i18n.t("Visao.fioLimiarCurto", { cm: formatarDecimal(limiar, limiar % 1 ? 1 : 0) });
   // Luz nos Olhos (id `relax`, desde 2026-10-21): desvio estimado pelo reflexo.
   if (sinais?.modo === "luz_olhos")
     return limiar ? i18n.t("Visao.luzLimiarCurto", { delta: limiar }) : i18n.t("Visao.luzSemDesvioCurto");

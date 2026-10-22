@@ -86,6 +86,14 @@ export interface ResumoPesca extends Resumo<ValorPesca> {
   olho: Olho | null;
 }
 
+/** Fio de Missangas: ponto mais próximo de convergência e os fios. */
+export interface ValorFio {
+  /** cm; `null` = mais longe do que a régua. */
+  ppcCm: number | null;
+  supressao: boolean;
+  xNoSitio: number | null;
+}
+
 /** Luz nos Olhos (exame feito pelos pais): desvio pelo reflexo, teste de tapar e diário. */
 export interface ValorLuz {
   /** Maior desvio estimado pelo reflexo, em Δ (0 = nenhum visível). */
@@ -125,6 +133,8 @@ export interface ResumoClinico {
   pesca: ResumoPesca | null;
   /** Luz nos Olhos. */
   luz: Resumo<ValorLuz> | null;
+  /** Fio de Missangas. */
+  fio: Resumo<ValorFio> | null;
   adesao: Adesao;
   /** Datas das sessões em que a pessoa disse ver a dobrar, da mais antiga para a mais recente. */
   diplopia: string[];
@@ -276,6 +286,11 @@ function lerLuz(s: S): ValorLuz | undefined {
   };
 }
 
+function lerFio(s: S): ValorFio | undefined {
+  if (s.sinais?.modo !== "fio_missangas") return undefined;
+  return { ppcCm: numero(s.limiar), supressao: s.sinais.supressao === true, xNoSitio: numero(s.sinais.x_no_sitio) };
+}
+
 function adesao(sessoes: readonly S[], hoje: Date): Adesao {
   const dias = ultimosDias(hoje, SEMANAS_ADESAO * 7);
   const doPeriodo = new Set(dias);
@@ -305,6 +320,7 @@ export function resumoClinico(sessoes: readonly S[], hoje: Date): ResumoClinico 
     kianda: resumoKianda(fiaveis),
     pesca: resumoPesca(fiaveis),
     luz: resumir(de(ID_ASTIGMATISMO), lerLuz),
+    fio: resumir(de(ID_CONTRASTE), lerFio),
     adesao: adesao(sessoes, hoje),
     diplopia: doPeriodo.filter((s) => s.sinais?.diplopia_reportada === true).map((s) => s.created_at),
   };
@@ -312,4 +328,4 @@ export function resumoClinico(sessoes: readonly S[], hoje: Date): ResumoClinico 
 
 /** Há alguma medida para mostrar (fora a adesão)? */
 export const temMedicoes = (r: ResumoClinico): boolean =>
-  !!(r.acuidade || r.contraste || r.astigmatismo || r.estereopsia || r.vergencia || r.kianda || r.pesca || r.luz);
+  !!(r.acuidade || r.contraste || r.astigmatismo || r.estereopsia || r.vergencia || r.kianda || r.pesca || r.luz || r.fio);

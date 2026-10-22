@@ -97,7 +97,7 @@ const exerciciosTrial: Exercicio[] = [
     },
     icon: Contrast,
     get route() {
-      return localizar("/exercicios/contraste");
+      return localizar("/exercicios/fio-de-missangas");
     },
   },
   {

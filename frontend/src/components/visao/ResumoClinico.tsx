@@ -22,6 +22,7 @@ import {
   type Medicao,
   type PorOlho,
   type Resumo,
+  type ValorFio,
   type ValorKianda,
   type ValorLuz,
   type ValorPesca,
@@ -119,6 +120,14 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
     v.graus === null
       ? t("Visao.clinicoPescaSemLimiar")
       : t("Visao.clinicoPescaValor", { graus: formatarDecimal(v.graus, v.graus % 1 ? 1 : 0), nivel: v.nivel ?? "–" });
+  const fio = (v: ValorFio) =>
+    [
+      v.ppcCm === null ? t("Visao.clinicoFioPpcAlem") : t("Visao.clinicoFioPpc", { cm: formatarDecimal(v.ppcCm, v.ppcCm % 1 ? 1 : 0) }),
+      v.xNoSitio !== null && t("Visao.clinicoFioX", { n: v.xNoSitio }),
+      v.supressao && t("Visao.clinicoFioSupressao"),
+    ]
+      .filter(Boolean)
+      .join(" · ");
   const luz = (v: ValorLuz) => {
     const partes = [
       ...v.reflexo.map((a) => t("Visao.clinicoLuzReflexo", { olho: abrevOlho(t, a.olho), sentido: t(`Visao.luzSentido_${a.sentido}`), delta: a.delta })),
@@ -219,6 +228,14 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
             condicoes={textoCondicoes(t, r.kianda.condicoes)}
           />
         )}
+        {r.fio && (
+          <Medida
+            titulo={t("Visao.clinicoFio")}
+            exercicio={nomeDoExercicio(ID_CONTRASTE)}
+            linhas={recenteEPrimeira(t, r.fio, fio)}
+            condicoes={textoCondicoes(t, r.fio.condicoes)}
+          />
+        )}
         {r.luz && (
           <Medida
             titulo={t("Visao.clinicoLuz")}
@@ -268,6 +285,7 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
           )}
           {r.pesca && <p>{t("Visao.clinicoMetodoPesca")}</p>}
           {r.luz && <p>{t("Visao.clinicoMetodoLuz")}</p>}
+          {r.fio && <p>{t("Visao.clinicoMetodoFio")}</p>}
           {r.kianda && <p>{t("Visao.clinicoMetodoKianda")}</p>}
           {medicaoComDistancia && <p>{t("Visao.clinicoMetodoDistancia")}</p>}
         </div>

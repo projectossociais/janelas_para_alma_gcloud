@@ -226,6 +226,17 @@ describe("Luz nos Olhos (exame dos pais)", () => {
   });
 });
 
+describe("Fio de Missangas", () => {
+  it("ponto mais próximo em cm, X no sítio e supressão", () => {
+    const fio = (dias: number, cm: number | null, supressao: boolean) =>
+      sessao({ exercicio_id: "cerebro", created_at: haDias(dias), olho: "ambos", limiar: cm, unidade: "cm", sinais: { modo: "fio_missangas", supressao, x_no_sitio: 2 } });
+    const r = resumoClinico([fio(10, 12, true), fio(0, 7, false)], hoje);
+    expect(r.fio?.recente.valor).toEqual({ ppcCm: 7, supressao: false, xNoSitio: 2 });
+    expect(r.fio?.primeira?.valor).toEqual({ ppcCm: 12, supressao: true, xNoSitio: 2 });
+    expect(r.contraste).toBeNull();
+  });
+});
+
 describe("adesão ao treino", () => {
   it("minutos por semana nas últimas 4, dias com treino e sessões de baixa atenção", () => {
     const r = resumoClinico(

@@ -49,7 +49,7 @@ import LojaDiamantes from "./pages/jogo/LojaDiamantes";
 import LojaMoedas from "./pages/jogo/LojaMoedas";
 
 import TesteAcuidade from "./pages/exercises/TesteAcuidade";
-import TesteContraste from "./pages/exercises/TesteContraste";
+import FioMissangas from "./pages/exercises/FioMissangas";
 import TesteLuzOlhos from "./pages/exercises/TesteLuzOlhos";
 import TesteEstereopsia from "./pages/exercises/TesteEstereopsia";
 import Kianda from "./pages/exercises/Kianda";
@@ -102,7 +102,7 @@ const PAGINAS: Record<ChaveRota, ReactElement> = {
   suporte: <Suporte />,
   exercicios: <Exercicios />,
   exercicioAcuidade: <TesteAcuidade />,
-  exercicioContraste: <TesteContraste />,
+  exercicioContraste: <FioMissangas />,
   exercicioAstigmatismo: <TesteLuzOlhos />,
   exercicioEstereopsia: <TesteEstereopsia />,
   exercicioAneis: <Kianda />,
