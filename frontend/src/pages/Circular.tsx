@@ -1,14 +1,11 @@
-import { Link } from "react-router-dom";
 import { Recycle, Wrench, Sparkles, Glasses, Scissors, ShoppingBag, HeartHandshake, ArrowRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
-import { Button } from "@/components/ui/button";
 import heroImg from "@/assets/circular-hero.jpg";
 import oculos3dImg from "@/assets/oculos-3d-prototipo.jpg";
 import { Trans, useTranslation } from "react-i18next";
 import i18n from "@/i18n";
-import { localizar } from "@/i18n/rotas";
 
 const steps = [
   {
@@ -68,8 +65,6 @@ const passosOculos3d = [
   },
 ];
 
-// Ainda não há página de venda: até haver, os pedidos chegam pelo contacto.
-const DESTINO_OCULOS_3D = "/junte-se";
 
 const Circular = () => {
   const { t } = useTranslation();
@@ -150,12 +145,6 @@ const Circular = () => {
                   <p>{t("Circular.oculos3dProduto")}</p>
                   <p>{t("Circular.oculos3dRendimento")}</p>
                 </div>
-                <Button asChild size="lg" className="mt-8 bg-green text-green-foreground hover:bg-green/90">
-                  <Link to={localizar(DESTINO_OCULOS_3D)}>
-                    {t("Circular.verOculos3d")}
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </Button>
               </div>
 
               <div

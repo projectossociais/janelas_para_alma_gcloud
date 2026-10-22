@@ -18,9 +18,9 @@ describe("Circular -- óculos 3D", () => {
     expect(seccao?.textContent).not.toMatch(/doa|reaprove|recicl|recolha|papelão/i);
   });
 
-  it("o botão \"Ver Óculos 3D\" leva ao contacto enquanto não há página de venda", () => {
+  it("não tem botão \"Ver Óculos 3D\" enquanto não houver onde os vender", () => {
     render(<Circular />, { wrapper: MemoryRouter });
 
-    expect(screen.getByRole("link", { name: /Ver Óculos 3D/i })).toHaveAttribute("href", "/junte-se");
+    expect(screen.queryByRole("link", { name: /Ver Óculos 3D/i })).not.toBeInTheDocument();
   });
 });
