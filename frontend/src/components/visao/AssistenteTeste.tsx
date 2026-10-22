@@ -22,6 +22,7 @@ type Etapa =
   | { tipo: "calibracao" }
   | { tipo: "oculos" }
   | { tipo: "distancia" }
+  | { tipo: "preparacao" }
   | { tipo: "tapar"; olho: Olho }
   | { tipo: "tarefa"; olho: Olho }
   | { tipo: "resultado" };
@@ -33,6 +34,11 @@ interface AssistenteTesteProps<R> {
   descricao: string;
   /** Pede a distância (acuidade, contraste, astigmatismo). */
   comDistancia?: boolean;
+  /**
+   * Um passo próprio do teste antes do primeiro olho (ex.: montar o teste a
+   * 3 metros). `render` chama `aoContinuar` quando estiver pronto.
+   */
+  preparacao?: { nome: string; render: (aoContinuar: () => void) => ReactNode };
   /** A tarefa de um olho; chama `aoTerminar` com o resultado desse olho. */
   tarefa: (olho: Olho, ctx: ContextoTeste, aoTerminar: (r: R) => void) => ReactNode;
   /** Ecrã final; `repetirA` recomeça os dois olhos a outra distância. */
@@ -51,6 +57,7 @@ function AssistenteTeste<R>({
   titulo,
   descricao,
   comDistancia = true,
+  preparacao,
   tarefa,
   resultado,
 }: AssistenteTesteProps<R>) {
@@ -77,11 +84,12 @@ function AssistenteTeste<R>({
     t("Visao.passoCartao"),
     t("Visao.passoOculos"),
     ...(comDistancia ? [t("Visao.passoDistancia")] : []),
+    ...(preparacao ? [preparacao.nome] : []),
     t("Visao.passoOlhoDireito"),
     t("Visao.passoOlhoEsquerdo"),
     t("Visao.passoResultado"),
   ];
-  const indiceOlho = comDistancia ? 4 : 3;
+  const indiceOlho = 3 + (comDistancia ? 1 : 0) + (preparacao ? 1 : 0);
   const passoActual = (() => {
     switch (etapa.tipo) {
       case "brilho":
@@ -92,6 +100,8 @@ function AssistenteTeste<R>({
         return 2;
       case "distancia":
         return 3;
+      case "preparacao":
+        return indiceOlho - 1;
       case "tapar":
       case "tarefa":
         return indiceOlho + OLHOS.indexOf(etapa.olho);
@@ -103,6 +113,7 @@ function AssistenteTeste<R>({
   // Testa-se o olho direito com o esquerdo tapado, e depois o contrário.
   const outro = (o: Olho): Olho => (o === "direito" ? "esquerdo" : "direito");
   const primeiroOlho = OLHOS[0];
+  const depoisDosPassosComuns: Etapa = preparacao ? { tipo: "preparacao" } : { tipo: "tapar", olho: primeiroOlho };
 
   const conteudo = (() => {
     switch (etapa.tipo) {
@@ -117,7 +128,7 @@ function AssistenteTeste<R>({
           <PassoOculos
             aoResponder={(c) => {
               setUsaCorreccao(c);
-              setEtapa(comDistancia ? { tipo: "distancia" } : { tipo: "tapar", olho: primeiroOlho });
+              setEtapa(comDistancia ? { tipo: "distancia" } : depoisDosPassosComuns);
             }}
           />
         );
@@ -129,10 +140,12 @@ function AssistenteTeste<R>({
             aoEscolher={(mm, medida) => {
               setDistanciaMm(mm);
               setDistanciaMedida(medida);
-              setEtapa({ tipo: "tapar", olho: primeiroOlho });
+              setEtapa(depoisDosPassosComuns);
             }}
           />
         );
+      case "preparacao":
+        return preparacao?.render(() => setEtapa({ tipo: "tapar", olho: primeiroOlho }));
       case "tapar":
         return (
           <PassoTaparOlho

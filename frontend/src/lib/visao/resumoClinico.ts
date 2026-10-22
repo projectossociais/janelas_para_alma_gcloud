@@ -15,7 +15,7 @@
  *
  * Funções puras -- o texto vive em `components/visao/ResumoClinico.tsx`.
  */
-import { diferencaEmLinhas, eAglomerada, mesmoTipoDaUltima } from "./aglomeracao";
+import { diferencaEmLinhas, mesmoTipoDaUltima, tipoDeAcuidade, type TipoAcuidade } from "./aglomeracao";
 import { ID_ACUIDADE, ID_ANEIS, ID_ASTIGMATISMO, ID_CONTRASTE, ID_CONVERGENCIA, ID_ESTEREOPSIA } from "./ids";
 import { SENTIDOS, eResumoSentido, type ResumoSentido, type Sentido } from "./pontes";
 import { IDS_TREINOS, diaLocal, minutosPorDia, ultimosDias, type SessaoParaRelatorio } from "./progresso";
@@ -58,8 +58,8 @@ export interface Resumo<V> {
 export type PorOlho<V> = Partial<Record<Olho, V>>;
 
 export interface ResumoAcuidade extends Resumo<PorOlho<number | null>> {
-  /** Com barras de Flom (Olhos de Palanca) ou anel isolado (sessões antigas). */
-  aglomeracao: boolean;
+  /** Ao longe com a mãozinha, de perto com barras de Flom, ou de perto com o anel isolado. */
+  tipo: TipoAcuidade;
   /** Entre os dois olhos no resultado mais recente; `null` sem os dois. */
   diferencaLinhas: number | null;
 }
@@ -195,7 +195,7 @@ function resumoAcuidade(sessoes: readonly S[]): ResumoAcuidade | null {
   const { direito, esquerdo } = r.recente.valor;
   return {
     ...r,
-    aglomeracao: eAglomerada(doMesmoTipo[doMesmoTipo.length - 1]),
+    tipo: tipoDeAcuidade(doMesmoTipo[doMesmoTipo.length - 1]),
     diferencaLinhas:
       typeof direito === "number" && typeof esquerdo === "number" ? diferencaEmLinhas(direito, esquerdo) : null,
   };

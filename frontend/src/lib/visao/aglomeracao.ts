@@ -64,14 +64,23 @@ interface ComSinais {
 /** A sessão foi feita com barras (Olhos de Palanca, desde 2026-10-21)? */
 export const eAglomerada = (s: ComSinais): boolean => s.sinais?.aglomeracao === true;
 
+/** A sessão foi feita ao longe, com a mãozinha (Olhos de Palanca ao longe, desde 2026-10-21)? */
+export const eAoLonge = (s: ComSinais): boolean => s.sinais?.ao_longe === true;
+
+export type TipoAcuidade = "longe" | "barras" | "isolado";
+
+/** Ao longe (3 m, mãozinha), de perto com barras, ou de perto com o anel isolado. */
+export const tipoDeAcuidade = (s: ComSinais): TipoAcuidade => (eAoLonge(s) ? "longe" : eAglomerada(s) ? "barras" : "isolado");
+
 /**
- * Só as sessões do mesmo tipo da mais recente (com barras ou sem): com
- * barras, a acuidade é pior por natureza, e misturar os dois tipos numa
- * tendência inventava uma piora no dia da mudança. Sem sessões, vazio.
+ * Só as sessões do mesmo tipo da mais recente: ao longe, com barras ou com o
+ * anel isolado. Cada tipo dá valores diferentes por natureza, e misturá-los
+ * numa tendência inventava uma piora (ou melhoria) no dia da mudança. Sem
+ * sessões, vazio.
  */
 export function mesmoTipoDaUltima<S extends ComSinais>(sessoes: readonly S[]): S[] {
   if (!sessoes.length) return [];
   const ultima = sessoes.reduce((a, b) => (b.created_at > a.created_at ? b : a));
-  const tipo = eAglomerada(ultima);
-  return sessoes.filter((s) => eAglomerada(s) === tipo);
+  const tipo = tipoDeAcuidade(ultima);
+  return sessoes.filter((s) => tipoDeAcuidade(s) === tipo);
 }

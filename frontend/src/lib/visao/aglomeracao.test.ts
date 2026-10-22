@@ -7,6 +7,7 @@ import {
   eAglomerada,
   levaBarras,
   mesmoTipoDaUltima,
+  tipoDeAcuidade,
 } from "./aglomeracao";
 
 describe("barras de Flom", () => {
@@ -74,6 +75,15 @@ describe("mesmoTipoDaUltima", () => {
 
   it("sem sessões, vazio", () => {
     expect(mesmoTipoDaUltima([])).toEqual([]);
+  });
+
+  it("ao longe (mãozinha a 3 m) é outro tipo: não se compara com as de perto", () => {
+    const longe = (dia: number) => ({ created_at: `2026-10-${dia}T10:00:00Z`, sinais: { ao_longe: true } });
+    const sessoes = [s(10, true), s(15, true), longe(21), longe(22)];
+    expect(mesmoTipoDaUltima(sessoes).map((x) => x.created_at.slice(8, 10))).toEqual(["21", "22"]);
+    expect(tipoDeAcuidade(longe(21))).toBe("longe");
+    expect(tipoDeAcuidade(s(1, true))).toBe("barras");
+    expect(tipoDeAcuidade(s(1))).toBe("isolado");
   });
 
   it("eAglomerada só com o sinal explícito", () => {

@@ -62,7 +62,7 @@ describe("acuidade (Olhos de Palanca)", () => {
     expect(r.acuidade?.primeira?.valor).toEqual({ direito: 0.5, esquerdo: 0.1 });
     expect(r.acuidade?.primeira?.data).toBe(haDias(20));
     expect(r.acuidade?.diferencaLinhas).toBe(2);
-    expect(r.acuidade?.aglomeracao).toBe(true);
+    expect(r.acuidade?.tipo).toBe("barras");
     expect(r.acuidade?.condicoes).toMatchObject({ dias: 3, distanciaMm: 400, distanciaMedida: true, calibrado: true });
   });
 
@@ -80,7 +80,7 @@ describe("acuidade (Olhos de Palanca)", () => {
   it("depois das barras, as sessões sem barras não são a primeira", () => {
     const r = resumoClinico([...acuidade(30, 0.1, 0.1, {}), ...acuidade(0, 0.3, 0.1)], hoje);
     expect(r.acuidade?.primeira).toBeNull();
-    expect(r.acuidade?.aglomeracao).toBe(true);
+    expect(r.acuidade?.tipo).toBe("barras");
   });
 
   it("sessões de baixa atenção e de fora dos 90 dias ficam de fora", () => {

@@ -141,7 +141,13 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
       <dl className="m-0">
         {r.acuidade && (
           <Medida
-            titulo={r.acuidade.aglomeracao ? t("Visao.clinicoAcuidade") : t("Visao.clinicoAcuidadeIsolada")}
+            titulo={
+              r.acuidade.tipo === "longe"
+                ? t("Visao.clinicoAcuidadeLonge")
+                : r.acuidade.tipo === "barras"
+                  ? t("Visao.clinicoAcuidade")
+                  : t("Visao.clinicoAcuidadeIsolada")
+            }
             exercicio={nomeDoExercicio(ID_ACUIDADE)}
             linhas={recenteEPrimeira(t, r.acuidade, (v) => porOlho(t, v, acuidade)).map((l, i) =>
               i === 0 && r.acuidade?.diferencaLinhas != null ? `${l} · ${diferenca(r.acuidade.diferencaLinhas)}` : l,
@@ -231,7 +237,13 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
         <div className="space-y-1 text-xs text-neutral-600">
           <p className="font-semibold">{t("Visao.clinicoMetodoTitulo")}</p>
           {r.acuidade && (
-            <p>{r.acuidade.aglomeracao ? t("Visao.clinicoMetodoAcuidadeAglomeracao") : t("Visao.clinicoMetodoAcuidade")}</p>
+            <p>
+              {r.acuidade.tipo === "longe"
+                ? t("Visao.clinicoMetodoAcuidadeLonge")
+                : r.acuidade.tipo === "barras"
+                  ? t("Visao.clinicoMetodoAcuidadeAglomeracao")
+                  : t("Visao.clinicoMetodoAcuidade")}
+            </p>
           )}
           {r.estereopsia && <p>{t("Visao.clinicoMetodoEstereo")}</p>}
           {r.vergencia && (

@@ -79,7 +79,7 @@ describe("Exercicios — 8 exercícios em dois grupos", () => {
 
     await screen.findByText("Trial disponível");
     const trial = grupo("Incluídos no teste de 7 dias");
-    for (const nome of ["Olhos de Palanca: teste de acuidade", "Kianda: treino do olho mais fraco", "Teste de Contraste", "Teste de Astigmatismo"])
+    for (const nome of ["Olhos de Palanca ao longe", "Kianda: treino do olho mais fraco", "Teste de Contraste", "Teste de Astigmatismo"])
       expect(within(trial).getByText(nome)).toBeInTheDocument();
     const premium = grupo("Premium");
     for (const nome of [

@@ -157,20 +157,23 @@ describe("Teste de Acuidade (sem câmara)", () => {
 
   // Caso real (2026-10-08, teste feito pelo dono do projecto): os dois olhos
   // passaram os mesmos níveis, um com mais erros, e o resultado foi igual.
-  it("dois olhos nos mesmos níveis, um com mais erros: resultados diferentes (anel a anel)", async () => {
-    // Direcções previsíveis: com Math.random() = 0, a primeira é 0 e cada
-    // anel seguinte é a anterior + 1.
-    vi.spyOn(Math, "random").mockReturnValue(0);
-    window.localStorage.clear(); // sem calibração guardada pelo teste anterior
+  // Desde 2026-10-21 o teste é ao longe (3 m), com a mãozinha e o deslize do adulto.
+  it("ao longe, com a mãozinha: dois olhos nos mesmos níveis, um com mais erros, dão resultados diferentes", async () => {
+    window.localStorage.clear(); // sem calibração nem distância guardadas pelo teste anterior
     registar.mockReset().mockResolvedValue({});
-    const pausa = () => act(() => new Promise((r) => setTimeout(r, 300)));
+    const oposto = { direita: "esquerda", esquerda: "direita", cima: "baixo", baixo: "cima" } as const;
+    const vector = { direita: [100, 0], esquerda: [-100, 0], cima: [0, -100], baixo: [0, 100] } as const;
+    const deslizar = (d: keyof typeof vector) => {
+      const palco = screen.getByRole("application");
+      // O jsdom não tem PointerEvent: um MouseEvent com o mesmo nome leva as coordenadas.
+      palco.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true, clientX: 200, clientY: 300 }));
+      palco.dispatchEvent(new MouseEvent("pointerup", { bubbles: true, clientX: 200 + vector[d][0], clientY: 300 + vector[d][1] }));
+    };
     const responderOlho = async (respostas: boolean[]) => {
-      let d = 0;
+      fireEvent.click(await screen.findByRole("button", { name: V.palancaComecar }));
       for (const certa of respostas) {
-        const alvo = certa ? d : (d + 4) % 8;
-        fireEvent.click(await screen.findByRole("button", { name: V[`direccao${alvo}` as "direccao0"] }));
-        d = (d + 1) % 8;
-        await pausa();
+        const d = document.querySelector("svg[data-direccao]")!.getAttribute("data-direccao") as keyof typeof vector;
+        act(() => deslizar(certa ? d : oposto[d]));
       }
     };
 
@@ -185,9 +188,8 @@ describe("Teste de Acuidade (sem câmara)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Continuar" })); // brilho
     fireEvent.click(await screen.findByRole("button", { name: "Não tenho cartão" }));
     fireEvent.click(await screen.findByRole("button", { name: /Não uso óculos nem lentes/ }));
-    // Distância: sem medir pelo ponto cego, escolhe-se 60 cm (a medição tem testes próprios).
-    fireEvent.click(await screen.findByRole("button", { name: V.medirSemMedir }));
-    fireEvent.click(await screen.findByRole("button", { name: "Continuar" }));
+    await screen.findByText(V.palancaPrepararTitulo);
+    fireEvent.click(screen.getByRole("button", { name: "Continuar" })); // montar a 3 metros
     fireEvent.click(await screen.findByRole("button", { name: "Continuar" })); // tapar o esquerdo
 
     // Começa em 0,7. Direito: 0,7 ✓✓ · 0,6 ✓✓ · 0,5 ✓✗✗
@@ -198,17 +200,14 @@ describe("Teste de Acuidade (sem câmara)", () => {
 
     await screen.findByText(V.resultadoAcuidadeTitulo);
     await waitFor(() => expect(registar).toHaveBeenCalledTimes(2));
-    const limiar = (olho: string) => registar.mock.calls.find((c) => c[0].olho === olho)?.[0].limiar;
-    // Distância escolhida, não medida: fica registado.
-    expect(registar.mock.calls[0][0].sinais.distancia_medida).toBe(false);
-    // Olhos de Palanca: anéis com barras, e a diferença entre os olhos em linhas.
-    expect(registar.mock.calls[0][0].sinais.aglomeracao).toBe(true);
+    const sessaoDe = (olho: string) => registar.mock.calls.find((c) => c[0].olho === olho)?.[0];
+    expect(sessaoDe("direito").distancia_mm).toBe(3000);
+    expect(sessaoDe("direito").sinais).toMatchObject({ ao_longe: true, optotipo: "E", resposta: "gesto" });
     expect(screen.getByText(V.palancaDiferencaUma)).toBeInTheDocument();
-    expect(limiar("direito")).toBe(0.57);
-    expect(limiar("esquerdo")).toBe(0.63);
+    expect(sessaoDe("direito").limiar).toBe(0.57);
+    expect(sessaoDe("esquerdo").limiar).toBe(0.63);
     expect(screen.getByText(/logMAR 0,57/)).toBeInTheDocument();
     expect(screen.getByText(/logMAR 0,63/)).toBeInTheDocument();
-    vi.restoreAllMocks();
   }, 20000);
 });
 
