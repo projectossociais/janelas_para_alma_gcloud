@@ -47,10 +47,13 @@ const PintarSamakaka = ({
   resultado: MutableRefObject<(() => ResultadoTreino) | null>;
 }) => {
   const { t } = useTranslation();
+  const raiz = useRef<HTMLDivElement>(null);
   const caixa = useRef<HTMLDivElement>(null);
   const tela = useRef<HTMLCanvasElement>(null);
   const [lado, setLado] = useState(0);
   const [feitos, setFeitos] = useState<number[]>([]);
+  // O motivo em curso também em estado: o canvas redesenha-se sozinho, mas o texto da instrução precisa de um render.
+  const [motivoI, setMotivoI] = useState(0);
   const [fora, setFora] = useState(false);
   const estado = useRef({ i: 0, traco: [] as [number, number][], k: 0, desvios: [] as number[], movimentos: 0, fora: 0, aDesenhar: false, ultimoRegisto: 0, aMudar: false });
   const apiRef = useRef(api);
@@ -149,6 +152,14 @@ const PintarSamakaka = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lado]);
 
+  // No telemóvel o pano começa abaixo da dobra: traz o palco para o centro do ecrã, uma vez.
+  const centrado = useRef(false);
+  useEffect(() => {
+    if (lado < 1 || centrado.current) return;
+    centrado.current = true;
+    raiz.current?.scrollIntoView?.({ block: "center", behavior: "smooth" });
+  }, [lado]);
+
   const mover = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const s = estado.current;
     if (!s.aDesenhar || s.aMudar || !apiRef.current.activo || !s.traco.length) return;
@@ -177,6 +188,7 @@ const PintarSamakaka = ({
         desenhar();
         window.setTimeout(() => {
           s.i += 1;
+          setMotivoI(s.i);
           prepararMotivo();
         }, 700);
         return;
@@ -188,9 +200,9 @@ const PintarSamakaka = ({
     desenhar([x, y]);
   };
 
-  const motivo = MOTIVOS[estado.current.i % MOTIVOS.length];
+  const motivo = MOTIVOS[motivoI % MOTIVOS.length];
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div ref={raiz} className="flex flex-col items-center gap-3">
       <p className="text-center text-sm text-muted-foreground" aria-live="polite">
         {fora ? t("Visao.samakakaFora") : t("Visao.samakakaInstrucao", { motivo: t(`Visao.samakakaMotivo_${motivo.id}`) })}
       </p>

@@ -8,6 +8,7 @@ import {
   diasCumpridos,
   guardarAlvo,
   guardarPeriodo,
+  horasEMinutos,
   iniciarPeriodo,
   lerAlvo,
   lerPeriodo,
@@ -57,6 +58,14 @@ describe("dias e cromos", () => {
     const r = resumoSemana(m, 120, new Date(2026, 9, 21, 20));
     expect(r.minutos).toEqual([120, 0, 0, 0, 0, 0, 60]);
     expect(r).toMatchObject({ mediaMin: 26, pctDoReceitado: 22, cumpridos: 1 });
+  });
+});
+
+describe("horas e minutos", () => {
+  it("arredonda antes de partir: nunca 60 minutos", () => {
+    expect(horasEMinutos(119.6)).toEqual({ h: 2, m: 0 });
+    expect(horasEMinutos(125)).toEqual({ h: 2, m: 5 });
+    expect(horasEMinutos(59.4)).toEqual({ h: 0, m: 59 });
   });
 });
 

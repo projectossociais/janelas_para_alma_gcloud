@@ -55,12 +55,13 @@ describe("Luz nos Olhos", () => {
     fireEvent.click(await screen.findByRole("button", { name: V.luzAcender }));
     fireEvent.click(await screen.findByRole("button", { name: V.luzJaVi }));
 
-    // Desenho de 400 x 200: íris com 68 px de raio (6 mm). Direito no centro;
-    // esquerdo 1,5 mm para a orelha dela (para a direita de quem vê).
+    // Desenho de 400 x 168: íris com 46 px de raio (6 mm), centros em x = 108 e
+    // 292, y = 92,4. Direito no centro; esquerdo 12 px (~1,6 mm) para a orelha
+    // dela (para a direita de quem vê). O jsdom arredonda clientX/Y a inteiros.
     const desenho = await screen.findByRole("img", { name: V.luzRotuloDesenho });
     const tocar = (x: number, y: number) => desenho.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true, clientX: x, clientY: y }));
-    tocar(400 * 0.27, 200 * 0.55);
-    tocar(400 * 0.73 + (1.5 / 6) * 68, 200 * 0.55);
+    tocar(108, 92);
+    tocar(292 + 12, 92);
     expect(await screen.findByText(V.luzMarcados)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
 

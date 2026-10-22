@@ -215,8 +215,13 @@ const ResultadoAgulha = ({
       gravacao={estado}
       aoTentarDeNovo={() => void tentarDeNovo()}
       sinais={resumos[0].vantagem === "nenhuma" ? [t("Visao.agulhaSinalNenhuma", { nome: nomes[0] })] : []}
+      // Só o jogador 1 é avaliado; o outro jogador é a comparação (um adulto com boa visão acerta também com um olho).
       cartoes={resumos.map((r, j) => (
-        <CartaoOlho key={j} titulo={t("Visao.agulhaPontos", { nome: nomes[j], pontos: r.pontos })} estado={r.vantagem === "nenhuma" ? "sinal" : "ok"}>
+        <CartaoOlho
+          key={j}
+          titulo={t("Visao.agulhaPontos", { nome: nomes[j], pontos: r.pontos })}
+          estado={j > 0 ? "indeterminado" : r.vantagem === "nenhuma" ? "sinal" : "ok"}
+        >
           <p>{t("Visao.agulhaComDois", { n: r.acertosDois, tempo: tempo(r.tempoDois) })}</p>
           <p>{t("Visao.agulhaComUm", { n: r.acertosUm, tempo: tempo(r.tempoUm) })}</p>
           <p className="font-medium text-foreground">{t(`Visao.agulhaVantagem_${r.vantagem}`)}</p>

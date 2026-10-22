@@ -125,7 +125,7 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
   const samakaka = (v: ValorSamakaka) =>
     [
       v.mediaMm === null ? t("Visao.clinicoSamakakaSem") : t("Visao.clinicoSamakakaMm", { mm: formatarDecimal(v.mediaMm, 1) }),
-      v.motivos !== null && t("Visao.clinicoSamakakaMotivos", { n: v.motivos }),
+      v.motivos !== null && (v.motivos === 1 ? t("Visao.clinicoSamakakaUmMotivo") : t("Visao.clinicoSamakakaMotivos", { n: v.motivos })),
       v.dentroPct !== null && t("Visao.clinicoSamakakaDentro", { pct: v.dentroPct }),
     ]
       .filter(Boolean)
@@ -185,7 +185,8 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
                   ? t("Visao.clinicoAcuidade")
                   : t("Visao.clinicoAcuidadeIsolada")
             }
-            exercicio={nomeDoExercicio(ID_ACUIDADE)}
+            // Os ids são históricos: antes de 21/10/2026 o "figure8" era o anel ao perto, e o "cerebro" o teste de contraste.
+            exercicio={r.acuidade.tipo === "longe" ? nomeDoExercicio(ID_ACUIDADE) : t("Visao.nomeAntigoAcuidadePerto")}
             linhas={recenteEPrimeira(t, r.acuidade, (v) => porOlho(t, v, acuidade)).map((l, i) =>
               i === 0 && r.acuidade?.diferencaLinhas != null ? `${l} · ${diferenca(r.acuidade.diferencaLinhas)}` : l,
             )}
@@ -195,7 +196,7 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
         {r.contraste && (
           <Medida
             titulo={t("Visao.clinicoContraste")}
-            exercicio={nomeDoExercicio(ID_CONTRASTE)}
+            exercicio={t("Visao.nomeAntigoContraste")}
             linhas={recenteEPrimeira(t, r.contraste, (v) => porOlho(t, v, (x) => limiarFormatado(x, "log_cs", null)))}
             condicoes={textoCondicoes(t, r.contraste.condicoes)}
           />
@@ -203,7 +204,7 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
         {r.estereopsia && (
           <Medida
             titulo={t("Visao.clinicoEstereo")}
-            exercicio={nomeDoExercicio(ID_ESTEREOPSIA)}
+            exercicio={t("Visao.estereoOculosTitulo")}
             linhas={recenteEPrimeira(t, r.estereopsia, (v) =>
               v === null ? t("Visao.clinicoEstereoNaoViu") : limiarFormatado(v, "arcsec", null),
             )}

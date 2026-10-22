@@ -59,6 +59,17 @@ describe("ResumoClinico", () => {
     ).toHaveLength(1);
   });
 
+  it("as medições antigas levam o nome do teste que as fez, não o do exercício que hoje usa o mesmo id", () => {
+    const comEstereo = [
+      ...historico,
+      sessao({ exercicio_id: "estereopsia", olho: "ambos", limiar: 200, unidade: "arcsec", sinais: { oculos_verificados: true } }),
+    ];
+    render(<ResumoClinico sessoes={comEstereo} hoje={hoje} />);
+    expect(screen.getByText("· Olhos de Palanca ao perto (anel)", { exact: false })).toBeInTheDocument();
+    expect(screen.getByText("· Teste de Estereopsia (com óculos 3D)", { exact: false })).toBeInTheDocument();
+    expect(screen.queryByText("· Desafio da Agulha", { exact: false })).not.toBeInTheDocument();
+  });
+
   it("vergência em Δ por sentido e Kianda com o olho mais fraco", () => {
     render(<ResumoClinico sessoes={historico} hoje={hoje} />);
     expect(screen.getByText(/^Convergência · Mais recente \(.+\): rotura 14 Δ, recuperação 10 Δ$/)).toBeInTheDocument();

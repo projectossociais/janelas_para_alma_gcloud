@@ -178,6 +178,10 @@ const Regua = ({
         style={{ width: tam.w, height: tam.h }}
         onPointerDown={tocar}
       />
+      {/* O mesmo que a voz diz, para quem tem o som desligado; os toques passam para a régua. */}
+      <p className="pointer-events-none absolute right-4 top-12 max-w-[50%] text-right text-sm leading-snug" style={{ color: "#333333" }}>
+        {medicao === 0 ? t("Visao.fioVozRegua") : t("Visao.fioVozOutraVez")}
+      </p>
       <div className="absolute bottom-4 right-4 flex max-w-[60%] flex-col items-end gap-2 text-right text-sm">
         <p style={{ color: "#333333" }}>{t("Visao.fioMedicao", { n: medicao + 1, total: MEDICOES_PPC })}</p>
         <button
@@ -335,7 +339,7 @@ const FioMissangas = () => {
         description={t("Visao.contrasteDescricao")}
         exercicioId={EXERCICIO_ID}
         grupo="trial"
-        tipo="treino"
+        tipo="teste"
         passos={passos}
         passoActual={passoActual}
       >

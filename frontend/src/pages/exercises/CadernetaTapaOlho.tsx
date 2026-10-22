@@ -16,6 +16,7 @@ import {
   diasCumpridos,
   guardarAlvo,
   guardarPeriodo,
+  horasEMinutos,
   iniciarPeriodo,
   lerAlvo,
   lerPeriodo,
@@ -36,8 +37,12 @@ const CORES_CROMO = ["#b3302a", "#e3a21a", "#2f7d4f", "#1f52c4", "#a3168e", "#0b
 /** Menos do que isto não chega a ser um período: não se grava. */
 const MINIMO_SEGUNDOS = 60;
 
-const horas = (min: number, t: (k: string, o?: Record<string, unknown>) => string) =>
-  min >= 60 ? t("Visao.cadernetaHoras", { h: Math.floor(min / 60), m: String(Math.round(min % 60)).padStart(2, "0") }) : t("Visao.cadernetaMinutos", { m: Math.round(min) });
+/** "2 h 05" ou "45 min", com espaços que não partem a linha. */
+const horas = (min: number, t: (k: string, o?: Record<string, unknown>) => string) => {
+  const { h, m } = horasEMinutos(min);
+  const texto = h ? t("Visao.cadernetaHoras", { h, m: String(m).padStart(2, "0") }) : t("Visao.cadernetaMinutos", { m });
+  return texto.replace(/ /g, " ");
+};
 
 /** Um cromo: padrão de formas geradas a partir do número, com o nome por baixo. */
 const Cromo = ({ i, grande = false }: { i: number; grande?: boolean }) => {

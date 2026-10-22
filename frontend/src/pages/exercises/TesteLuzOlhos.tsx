@@ -110,8 +110,9 @@ const DiagramaOlhos = ({
     return () => window.removeEventListener("resize", medir);
   }, []);
 
-  const altura = Math.round(largura * 0.5);
-  const raio = Math.min(largura * 0.17, altura * 0.36);
+  const altura = Math.round(largura * 0.42);
+  // A amêndoa do olho mede 1,9 raios para cada lado: com 0,115 da largura, os dois olhos cabem lado a lado sem se tocarem.
+  const raio = Math.min(largura * 0.115, altura * 0.36);
   const centros: Record<Olho, { x: number; y: number }> = {
     direito: { x: largura * 0.27, y: altura * 0.55 },
     esquerdo: { x: largura * 0.73, y: altura * 0.55 },

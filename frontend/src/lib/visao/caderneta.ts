@@ -82,6 +82,12 @@ export const diasCumpridos = (porDia: Map<string, number>, alvoMin: number): str
 /** O cromo de um dia cumprido: o 1.º dia dá o cromo 0, e assim por diante (a caderneta recomeça ao fim de 30). */
 export const cromoDoDia = (n: number): number => n % TOTAL_CROMOS;
 
+/** Minutos em horas e minutos, arredondando primeiro: 119,6 min dá 2 h 00, não 1 h 60. */
+export function horasEMinutos(min: number): { h: number; m: number } {
+  const total = Math.round(min);
+  return { h: Math.floor(total / 60), m: total % 60 };
+}
+
 export interface ResumoSemana {
   /** Minutos de cada um dos últimos 7 dias, do mais antigo para hoje. */
   minutos: number[];

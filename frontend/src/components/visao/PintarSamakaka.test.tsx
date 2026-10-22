@@ -45,7 +45,9 @@ describe("Pintar o Samakaka", () => {
     act(() => {
       vi.advanceTimersByTime(800);
     });
-    expect(screen.getByLabelText("O seu pano: 1 motivos pintados")).toBeInTheDocument();
+    expect(screen.getByLabelText(V.samakakaPano.replace("{{n}}", "1"))).toBeInTheDocument();
+    // A instrução passa para o motivo seguinte (antes ficava com o nome do anterior).
+    expect(screen.getByText(V.samakakaInstrucao.replace("{{motivo}}", V.samakakaMotivo_losango))).toBeInTheDocument();
     const r = resultado.current!();
     expect(r.unidade).toBe("mm");
     expect(r.limiar).toBeLessThan(0.5);

@@ -2,7 +2,7 @@ import { useMemo, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import ResumoClinico from "@/components/visao/ResumoClinico";
 import ResumoTendencia from "@/components/visao/ResumoTendencia";
-import { limiarFormatado, nomeDoExercicio, nomeDoOlho } from "@/components/visao/rotulos";
+import { limiarFormatado, nomeDaSessao, nomeDoExercicio, nomeDoOlho } from "@/components/visao/rotulos";
 import { formatarData, formatarDataHora, formatarDiaCurto } from "@/i18n/formatar";
 import { ID_ACUIDADE, ID_ANEIS } from "@/lib/visao/ids";
 import {
@@ -94,7 +94,7 @@ const ConteudoRelatorio = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRela
                 <tr key={chave(s, i)} className="break-inside-avoid border-b border-neutral-200">
                   <td className="py-1 pr-2 tabular-nums">{formatarDataHora(s.created_at)}</td>
                   <td className="py-1 pr-2">
-                    {nomeDoExercicio(s.exercicio_id)}
+                    {nomeDaSessao(s)}
                     {s.sinais?.baixa_atencao === true && ` (${t("Visao.baixaAtencaoCurto")})`}
                   </td>
                   <td className="py-1 pr-2">{nomeDoOlho(s.olho)}</td>

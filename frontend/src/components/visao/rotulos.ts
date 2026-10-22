@@ -27,6 +27,36 @@ export const nomeDoExercicio = (id: string): string => {
   }
 };
 
+/**
+ * Nome do teste que gravou esta sessão. Os ids são históricos e foram
+ * reaproveitados em 2026-10-21 pelos exercícios sem óculos: uma sessão antiga
+ * de "cerebro" é do Teste de Contraste, não do Fio de Missangas. O que as
+ * distingue é `sinais.modo` (ou `ao_longe`, na acuidade).
+ */
+export const nomeDaSessao = (s: { exercicio_id: string; sinais?: Record<string, unknown> | null }): string => {
+  const sinais = s.sinais ?? {};
+  const actual = nomeDoExercicio(s.exercicio_id);
+  switch (s.exercicio_id) {
+    case "figure8":
+      return sinais.ao_longe === true ? actual : i18n.t("Visao.nomeAntigoAcuidadePerto");
+    case "cerebro":
+      return sinais.modo === "fio_missangas" ? actual : i18n.t("Visao.nomeAntigoContraste");
+    case "relax":
+      return sinais.modo === "luz_olhos" ? actual : i18n.t("Visao.nomeAntigoAstigmatismo");
+    case "estereopsia":
+      return sinais.modo === "agulha" ? actual : i18n.t("Visao.estereoOculosTitulo");
+    case "sacadas-convergencia":
+      return sinais.modo === "samakaka" ? actual : i18n.t("Visao.nomeAntigoContrasteBlocos");
+    case "flexibilidade-acomodativa":
+      return sinais.modo === "tapa_olho_horas" ? actual : i18n.t("Visao.nomeAntigoPertoLonge");
+    case "convergence":
+      // O Olho Mágico também guarda `pontes` (as rampas); só as sessões sem `modo` são das Pontes de Fusão.
+      return sinais.modo !== "fusao_livre" && sinais.pontes ? i18n.t("Visao.pontesTitulo") : actual;
+    default:
+      return actual;
+  }
+};
+
 export const nomeDoOlho = (olho: string | null): string =>
   olho === "direito"
     ? i18n.t("Visao.olhoDireito")
