@@ -78,7 +78,7 @@ const EcraLuz = ({ aoVer }: { aoVer: () => void }) => {
       <button
         type="button"
         onClick={aoVer}
-        className="absolute bottom-6 rounded-xl px-7 py-4 text-base font-semibold"
+        className="absolute bottom-20 rounded-xl px-7 py-4 text-base font-semibold"
         style={{ backgroundColor: "#3a3f97", color: "#ffffff" }}
       >
         {t("Visao.luzJaVi")}
