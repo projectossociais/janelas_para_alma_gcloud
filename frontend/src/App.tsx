@@ -51,7 +51,7 @@ import LojaMoedas from "./pages/jogo/LojaMoedas";
 import TesteAcuidade from "./pages/exercises/TesteAcuidade";
 import FioMissangas from "./pages/exercises/FioMissangas";
 import TesteLuzOlhos from "./pages/exercises/TesteLuzOlhos";
-import TesteEstereopsia from "./pages/exercises/TesteEstereopsia";
+import DesafioAgulha from "./pages/exercises/DesafioAgulha";
 import Kianda from "./pages/exercises/Kianda";
 import TreinoContrasteBlocos from "./pages/exercises/TreinoContrasteBlocos";
 import OlhoMagico from "./pages/exercises/OlhoMagico";
@@ -104,7 +104,7 @@ const PAGINAS: Record<ChaveRota, ReactElement> = {
   exercicioAcuidade: <TesteAcuidade />,
   exercicioContraste: <FioMissangas />,
   exercicioAstigmatismo: <TesteLuzOlhos />,
-  exercicioEstereopsia: <TesteEstereopsia />,
+  exercicioEstereopsia: <DesafioAgulha />,
   exercicioAneis: <Kianda />,
   exercicioContrasteBlocos: <TreinoContrasteBlocos />,
   exercicioConvergencia: <OlhoMagico />,

@@ -83,7 +83,7 @@ describe("Exercicios — 8 exercícios em dois grupos", () => {
       expect(within(trial).getByText(nome)).toBeInTheDocument();
     const premium = grupo("Premium");
     for (const nome of [
-      "Teste de Estereopsia",
+      "Desafio da Agulha",
       "Olho Mágico",
       "Treino de Contraste em blocos",
       "Treino Perto e longe",

@@ -22,6 +22,7 @@ import {
   type Medicao,
   type PorOlho,
   type Resumo,
+  type ValorAgulha,
   type ValorFio,
   type ValorKianda,
   type ValorLuz,
@@ -120,6 +121,15 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
     v.graus === null
       ? t("Visao.clinicoPescaSemLimiar")
       : t("Visao.clinicoPescaValor", { graus: formatarDecimal(v.graus, v.graus % 1 ? 1 : 0), nivel: v.nivel ?? "–" });
+  const segundos = (s: number | null) => (s === null ? "–" : `${formatarDecimal(s, 1)} s`);
+  const agulha = (v: ValorAgulha) =>
+    [
+      t("Visao.clinicoAgulhaDois", { n: v.acertosDois, tempo: segundos(v.tempoDois) }),
+      t("Visao.clinicoAgulhaUm", { n: v.acertosUm, tempo: segundos(v.tempoUm) }),
+      v.vantagem && t(`Visao.clinicoAgulhaVantagem_${v.vantagem}`),
+    ]
+      .filter(Boolean)
+      .join(" · ");
   const fio = (v: ValorFio) =>
     [
       v.ppcCm === null ? t("Visao.clinicoFioPpcAlem") : t("Visao.clinicoFioPpc", { cm: formatarDecimal(v.ppcCm, v.ppcCm % 1 ? 1 : 0) }),
@@ -228,6 +238,14 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
             condicoes={textoCondicoes(t, r.kianda.condicoes)}
           />
         )}
+        {r.agulha && (
+          <Medida
+            titulo={t("Visao.clinicoAgulha")}
+            exercicio={nomeDoExercicio(ID_ESTEREOPSIA)}
+            linhas={recenteEPrimeira(t, r.agulha, agulha)}
+            condicoes={r.agulha.condicoes.dias === 1 ? t("Visao.clinicoUmDia") : t("Visao.clinicoDias", { n: r.agulha.condicoes.dias })}
+          />
+        )}
         {r.fio && (
           <Medida
             titulo={t("Visao.clinicoFio")}
@@ -286,6 +304,7 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
           {r.pesca && <p>{t("Visao.clinicoMetodoPesca")}</p>}
           {r.luz && <p>{t("Visao.clinicoMetodoLuz")}</p>}
           {r.fio && <p>{t("Visao.clinicoMetodoFio")}</p>}
+          {r.agulha && <p>{t("Visao.clinicoMetodoAgulha")}</p>}
           {r.kianda && <p>{t("Visao.clinicoMetodoKianda")}</p>}
           {medicaoComDistancia && <p>{t("Visao.clinicoMetodoDistancia")}</p>}
         </div>

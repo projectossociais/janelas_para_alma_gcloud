@@ -128,7 +128,7 @@ const exerciciosPremium: Exercicio[] = [
     },
     icon: Layers,
     get route() {
-      return localizar("/exercicios/estereopsia");
+      return localizar("/exercicios/desafio-da-agulha");
     },
   },
   {

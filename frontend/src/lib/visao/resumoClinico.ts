@@ -86,6 +86,15 @@ export interface ResumoPesca extends Resumo<ValorPesca> {
   olho: Olho | null;
 }
 
+/** Desafio da Agulha: o jogador que faz o treino, com os dois olhos e com um. */
+export interface ValorAgulha {
+  acertosDois: number;
+  acertosUm: number;
+  tempoDois: number | null;
+  tempoUm: number | null;
+  vantagem: string;
+}
+
 /** Fio de Missangas: ponto mais próximo de convergência e os fios. */
 export interface ValorFio {
   /** cm; `null` = mais longe do que a régua. */
@@ -135,6 +144,8 @@ export interface ResumoClinico {
   luz: Resumo<ValorLuz> | null;
   /** Fio de Missangas. */
   fio: Resumo<ValorFio> | null;
+  /** Desafio da Agulha. */
+  agulha: Resumo<ValorAgulha> | null;
   adesao: Adesao;
   /** Datas das sessões em que a pessoa disse ver a dobrar, da mais antiga para a mais recente. */
   diplopia: string[];
@@ -286,6 +297,15 @@ function lerLuz(s: S): ValorLuz | undefined {
   };
 }
 
+function lerAgulha(s: S): ValorAgulha | undefined {
+  if (s.sinais?.modo !== "agulha") return undefined;
+  const j = s.sinais.jogador as Record<string, unknown> | undefined;
+  const a2 = numero(j?.acertos_dois);
+  const a1 = numero(j?.acertos_um);
+  if (a2 === null || a1 === null) return undefined;
+  return { acertosDois: a2, acertosUm: a1, tempoDois: numero(j?.tempo_dois_s), tempoUm: numero(j?.tempo_um_s), vantagem: String(j?.vantagem ?? "") };
+}
+
 function lerFio(s: S): ValorFio | undefined {
   if (s.sinais?.modo !== "fio_missangas") return undefined;
   return { ppcCm: numero(s.limiar), supressao: s.sinais.supressao === true, xNoSitio: numero(s.sinais.x_no_sitio) };
@@ -321,6 +341,7 @@ export function resumoClinico(sessoes: readonly S[], hoje: Date): ResumoClinico 
     pesca: resumoPesca(fiaveis),
     luz: resumir(de(ID_ASTIGMATISMO), lerLuz),
     fio: resumir(de(ID_CONTRASTE), lerFio),
+    agulha: resumir(de(ID_ESTEREOPSIA), lerAgulha),
     adesao: adesao(sessoes, hoje),
     diplopia: doPeriodo.filter((s) => s.sinais?.diplopia_reportada === true).map((s) => s.created_at),
   };
@@ -328,4 +349,4 @@ export function resumoClinico(sessoes: readonly S[], hoje: Date): ResumoClinico 
 
 /** Há alguma medida para mostrar (fora a adesão)? */
 export const temMedicoes = (r: ResumoClinico): boolean =>
-  !!(r.acuidade || r.contraste || r.astigmatismo || r.estereopsia || r.vergencia || r.kianda || r.pesca || r.luz || r.fio);
+  !!(r.acuidade || r.contraste || r.astigmatismo || r.estereopsia || r.vergencia || r.kianda || r.pesca || r.luz || r.fio || r.agulha);

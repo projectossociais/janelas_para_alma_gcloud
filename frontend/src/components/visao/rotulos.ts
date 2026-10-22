@@ -79,6 +79,11 @@ export const limiarFormatado = (
   unidade: string | null,
   sinais: Record<string, unknown> | null,
 ): string => {
+  // Desafio da Agulha (id `estereopsia`, desde 2026-10-21): acertos com os dois olhos e com um.
+  if (sinais?.modo === "agulha") {
+    const j = sinais.jogador as { acertos_dois?: unknown; acertos_um?: unknown } | undefined;
+    return i18n.t("Visao.agulhaLimiarCurto", { dois: j?.acertos_dois ?? "–", um: j?.acertos_um ?? "–" });
+  }
   // Fio de Missangas (id `cerebro`, desde 2026-10-21): ponto mais próximo de convergência.
   if (sinais?.modo === "fio_missangas")
     return limiar === null ? i18n.t("Visao.fioLimiarAlem") : i18n.t("Visao.fioLimiarCurto", { cm: formatarDecimal(limiar, limiar % 1 ? 1 : 0) });
