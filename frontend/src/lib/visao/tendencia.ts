@@ -9,8 +9,9 @@
  *   diferentes;
  * - só há "melhorou"/"piorou" a partir de uma linha de acuidade (0,1 logMAR,
  *   a variabilidade típica de teste-reteste), de 0,15 log de contraste
- *   (um degrau de Pelli-Robson) ou de 3° na inclinação que o olho distingue
- *   (Kianda com tapa-olho); abaixo disso é "estável";
+ *   (um degrau de Pelli-Robson), de 3° na inclinação que o olho distingue
+ *   (Kianda com tapa-olho) ou de 0,3 mm no afastamento do traço (Pintar o
+ *   Samakaka); abaixo disso é "estável";
  * - só compara sessões na unidade da mais recente;
  * - sessões de baixa atenção ficam de fora; se houver sessões calibradas
  *   com cartão, as não calibradas também (tamanhos só aproximados).
@@ -19,7 +20,7 @@ import { mesmoTipoDaUltima } from "./aglomeracao";
 import { diaLocal, type SessaoResumo } from "@/lib/visao/progresso";
 import type { Olho } from "@/lib/visao/resultados";
 
-export type UnidadeTendencia = "logmar" | "log_cs" | "graus";
+export type UnidadeTendencia = "logmar" | "log_cs" | "graus" | "mm";
 
 export type Tendencia =
   | { tipo: "poucos_dados" }
@@ -44,6 +45,8 @@ export const PASSO_LOGMAR = 0.1;
 export const PASSO_LOG_CS = 0.15;
 /** Diferença de inclinação (graus) que conta como mudança no Kianda com tapa-olho. */
 export const PASSO_GRAUS = 3;
+/** Diferença no afastamento do traço (mm) que conta como mudança no Pintar o Samakaka. */
+export const PASSO_MM = 0.3;
 const EPS = 1e-6;
 
 const mediana = (xs: number[]): number => {
@@ -64,7 +67,7 @@ export function tendencia<T extends SessaoResumo & { calibrado?: boolean | null 
       s.exercicio_id === exercicioId &&
       s.olho === olho &&
       typeof s.limiar === "number" &&
-      (s.unidade === "logmar" || s.unidade === "log_cs" || s.unidade === "graus") &&
+      (s.unidade === "logmar" || s.unidade === "log_cs" || s.unidade === "graus" || s.unidade === "mm") &&
       s.sinais?.baixa_atencao !== true,
   );
   // Acuidade com e sem barras (Olhos de Palanca) não se comparam: fica o tipo da sessão mais recente.
@@ -86,7 +89,7 @@ export function tendencia<T extends SessaoResumo & { calibrado?: boolean | null 
   const actual = mediana(ultimas.map((s) => s.limiar as number));
   // logMAR e graus: mais baixo é melhor. log CS: mais alto é melhor.
   const ganho = unidade === "log_cs" ? actual - inicio : inicio - actual;
-  const passo = unidade === "logmar" ? PASSO_LOGMAR : unidade === "graus" ? PASSO_GRAUS : PASSO_LOG_CS;
+  const passo = { logmar: PASSO_LOGMAR, graus: PASSO_GRAUS, mm: PASSO_MM, log_cs: PASSO_LOG_CS }[unidade];
   const passos = Math.floor((Math.abs(ganho) + EPS) / passo);
   const dias = Math.round(
     (new Date(usadas[usadas.length - 1].created_at).getTime() - new Date(usadas[0].created_at).getTime()) /

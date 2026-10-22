@@ -9,7 +9,7 @@ import {
 } from "@/components/visao/rotulos";
 import { formatarData, formatarDecimal, separadorDecimal } from "@/i18n/formatar";
 import { fraccao6 } from "@/lib/visao/geometria";
-import { ID_ACUIDADE, ID_ANEIS, ID_ASTIGMATISMO, ID_CONTRASTE, ID_CONVERGENCIA, ID_ESTEREOPSIA } from "@/lib/visao/ids";
+import { ID_ACUIDADE, ID_ANEIS, ID_ASTIGMATISMO, ID_CONTRASTE, ID_CONTRASTE_BLOCOS, ID_CONVERGENCIA, ID_ESTEREOPSIA } from "@/lib/visao/ids";
 import { SENTIDOS, type ResumoSentido } from "@/lib/visao/pontes";
 import type { SessaoParaRelatorio } from "@/lib/visao/progresso";
 import type { Olho } from "@/lib/visao/resultados";
@@ -27,6 +27,7 @@ import {
   type ValorKianda,
   type ValorLuz,
   type ValorPesca,
+  type ValorSamakaka,
 } from "@/lib/visao/resumoClinico";
 
 // Mesmo estilo do resto do relatório (ConteudoRelatorio): preto sobre branco,
@@ -121,6 +122,14 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
     v.graus === null
       ? t("Visao.clinicoPescaSemLimiar")
       : t("Visao.clinicoPescaValor", { graus: formatarDecimal(v.graus, v.graus % 1 ? 1 : 0), nivel: v.nivel ?? "–" });
+  const samakaka = (v: ValorSamakaka) =>
+    [
+      v.mediaMm === null ? t("Visao.clinicoSamakakaSem") : t("Visao.clinicoSamakakaMm", { mm: formatarDecimal(v.mediaMm, 1) }),
+      v.motivos !== null && t("Visao.clinicoSamakakaMotivos", { n: v.motivos }),
+      v.dentroPct !== null && t("Visao.clinicoSamakakaDentro", { pct: v.dentroPct }),
+    ]
+      .filter(Boolean)
+      .join(" · ");
   const segundos = (s: number | null) => (s === null ? "–" : `${formatarDecimal(s, 1)} s`);
   const agulha = (v: ValorAgulha) =>
     [
@@ -238,6 +247,17 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
             condicoes={textoCondicoes(t, r.kianda.condicoes)}
           />
         )}
+        {r.samakaka && (
+          <Medida
+            titulo={t("Visao.clinicoSamakaka")}
+            exercicio={nomeDoExercicio(ID_CONTRASTE_BLOCOS)}
+            linhas={[
+              ...(r.samakaka.olho ? [t("Visao.clinicoPescaOlho", { olho: abrevOlho(t, r.samakaka.olho) })] : []),
+              ...recenteEPrimeira(t, r.samakaka, samakaka),
+            ]}
+            condicoes={r.samakaka.condicoes.dias === 1 ? t("Visao.clinicoUmDia") : t("Visao.clinicoDias", { n: r.samakaka.condicoes.dias })}
+          />
+        )}
         {r.agulha && (
           <Medida
             titulo={t("Visao.clinicoAgulha")}
@@ -305,6 +325,7 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
           {r.luz && <p>{t("Visao.clinicoMetodoLuz")}</p>}
           {r.fio && <p>{t("Visao.clinicoMetodoFio")}</p>}
           {r.agulha && <p>{t("Visao.clinicoMetodoAgulha")}</p>}
+          {r.samakaka && <p>{t("Visao.clinicoMetodoSamakaka")}</p>}
           {r.kianda && <p>{t("Visao.clinicoMetodoKianda")}</p>}
           {medicaoComDistancia && <p>{t("Visao.clinicoMetodoDistancia")}</p>}
         </div>

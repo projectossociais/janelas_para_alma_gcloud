@@ -85,7 +85,7 @@ describe("Exercicios — 8 exercícios em dois grupos", () => {
     for (const nome of [
       "Desafio da Agulha",
       "Olho Mágico",
-      "Treino de Contraste em blocos",
+      "Pintar o Samakaka",
       "Treino Perto e longe",
     ])
       expect(within(premium).getByText(nome)).toBeInTheDocument();

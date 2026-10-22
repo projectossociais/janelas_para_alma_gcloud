@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { TrendingDown, TrendingUp, Minus, Clock } from "lucide-react";
 import type { SessaoResumo } from "@/lib/visao/progresso";
 import { nomeDoOlho } from "@/components/visao/rotulos";
+import { formatarDecimal } from "@/i18n/formatar";
 import { tendencia, type Tendencia } from "@/lib/visao/tendencia";
 import type { Olho } from "@/lib/visao/resultados";
 
@@ -12,6 +13,12 @@ const fraseDeTendencia = (t: (k: string, o?: Record<string, unknown>) => string,
   const quando = r.dias === 1 ? t("Visao.quandoOntem") : t("Visao.quandoHaDias", { dias: r.dias });
   const periodo = r.dias === 1 ? t("Visao.periodoUmDia") : t("Visao.periodoDias", { dias: r.dias });
   if (r.tipo === "estavel") return t("Visao.tendenciaEstavel", { olho: nome, periodo });
+  if (r.unidade === "mm") {
+    const mm = formatarDecimal(Math.abs(r.inicio - r.actual), 1);
+    return r.tipo === "melhorou"
+      ? t("Visao.tendenciaSamakakaMelhorou", { olho: nome, mm, referencia: quando })
+      : t("Visao.tendenciaSamakakaPiorou", { olho: nome, mm, referencia: quando });
+  }
   if (r.unidade === "graus") {
     const graus = Math.round(Math.abs(r.inicio - r.actual));
     return r.tipo === "melhorou"

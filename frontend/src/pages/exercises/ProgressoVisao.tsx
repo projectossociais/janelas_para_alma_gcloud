@@ -14,10 +14,13 @@ import { localizar } from "@/i18n/rotas";
 import { minutosPorDia, sequenciaDeDias, sessoesDoGrafico, ultimosDias } from "@/lib/visao/progresso";
 import { cn } from "@/lib/utils";
 
-/** Exercícios com uma curva de limiar por olho. */
-const COM_CURVA = ["figure8", "cerebro", "ambliopia", "sacadas-convergencia"] as const;
-/** logMAR: mais baixo é melhor -- o eixo fica invertido para "subir" ser melhorar. */
-const EIXO_INVERTIDO = new Set(["figure8", "ambliopia"]);
+/**
+ * Exercícios com uma curva de limiar por olho. O Fio de Missangas (`cerebro`)
+ * mede os dois olhos juntos e não tem curva por olho desde 2026-10-21.
+ */
+const COM_CURVA = ["figure8", "ambliopia", "sacadas-convergencia"] as const;
+/** Só o contraste (log CS) melhora a subir; logMAR, graus e mm melhoram a descer -- aí o eixo inverte-se. */
+const MELHORA_A_SUBIR = new Set(["log_cs"]);
 
 // Cores dos dois olhos: azul-marinho e turquesa da marca (contraste suficiente
 // entre si e sobre fundo claro e escuro).
@@ -32,14 +35,16 @@ const ProgressoVisao = () => {
   const [exercicio, setExercicio] = useState<(typeof COM_CURVA)[number]>("figure8");
   const escuro = typeof document !== "undefined" && document.documentElement.classList.contains("dark");
 
+  const doGrafico = useMemo(() => sessoesDoGrafico(sessoes ?? [], exercicio), [exercicio, sessoes]);
+  const unidade = doGrafico.length ? doGrafico[doGrafico.length - 1].unidade : null;
   const dados = useMemo(() => {
-    const s = sessoesDoGrafico(sessoes ?? [], exercicio);
+    const s = doGrafico;
     return s.map((x) => ({
       data: formatarData(x.created_at),
       direito: x.olho === "direito" ? x.limiar : undefined,
       esquerdo: x.olho === "esquerdo" ? x.limiar : undefined,
     }));
-  }, [exercicio, sessoes]);
+  }, [doGrafico]);
 
   const hoje = new Date();
   const minutos = useMemo(() => minutosPorDia(sessoes ?? []), [sessoes]);
@@ -112,7 +117,7 @@ const ProgressoVisao = () => {
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                   <XAxis dataKey="data" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
                   <YAxis
-                    reversed={EIXO_INVERTIDO.has(exercicio)}
+                    reversed={!MELHORA_A_SUBIR.has(unidade ?? "")}
                     // Margem de 0,1 acima e abaixo, em décimas: com um só ponto o eixo não fica colado a ele.
                     domain={[(min: number) => Math.floor((min - 0.1) * 10) / 10, (max: number) => Math.ceil((max + 0.1) * 10) / 10]}
                     tickFormatter={(v: number) => formatarDecimal(v, 1)}
@@ -143,9 +148,17 @@ const ProgressoVisao = () => {
               </ResponsiveContainer>
             </div>
           )}
-          <p className="mt-2 text-xs text-muted-foreground">
-            {EIXO_INVERTIDO.has(exercicio) ? t("Visao.curvaLogmarNota") : t("Visao.curvaContrasteNota")}
-          </p>
+          {unidade && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              {unidade === "log_cs"
+                ? t("Visao.curvaContrasteNota")
+                : unidade === "graus"
+                  ? t("Visao.curvaGrausNota")
+                  : unidade === "mm"
+                    ? t("Visao.curvaMmNota")
+                    : t("Visao.curvaLogmarNota")}
+            </p>
+          )}
         </section>
 
         <div className="flex justify-center">

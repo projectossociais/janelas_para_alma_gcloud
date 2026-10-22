@@ -79,6 +79,9 @@ export const limiarFormatado = (
   unidade: string | null,
   sinais: Record<string, unknown> | null,
 ): string => {
+  // Pintar o Samakaka (id `sacadas-convergencia`, desde 2026-10-21): afastamento médio do traço.
+  if (sinais?.modo === "samakaka")
+    return limiar === null ? "—" : i18n.t("Visao.samakakaLimiarCurto", { mm: formatarDecimal(limiar, 1) });
   // Desafio da Agulha (id `estereopsia`, desde 2026-10-21): acertos com os dois olhos e com um.
   if (sinais?.modo === "agulha") {
     const j = sinais.jogador as { acertos_dois?: unknown; acertos_um?: unknown } | undefined;

@@ -44,7 +44,8 @@ export const ROTAS = [
   // Desde 2026-10-21 é o Desafio da Agulha (id `estereopsia`; o teste com óculos 3D é uma opção); o caminho antigo é um alias.
   { chave: "exercicioEstereopsia", pt: "/exercicios/desafio-da-agulha", en: "/en/exercises/needle-challenge" },
   { chave: "exercicioAneis", pt: "/exercicios/aneis", en: "/en/exercises/rings" },
-  { chave: "exercicioContrasteBlocos", pt: "/exercicios/contraste-em-blocos", en: "/en/exercises/contrast-blocks" },
+  // Desde 2026-10-21 é o Pintar o Samakaka (id `sacadas-convergencia`); o caminho antigo é um alias.
+  { chave: "exercicioContrasteBlocos", pt: "/exercicios/pintar-o-samakaka", en: "/en/exercises/paint-the-samakaka" },
   { chave: "exercicioConvergencia", pt: "/exercicios/convergencia", en: "/en/exercises/convergence" },
   { chave: "exercicioPertoLonge", pt: "/exercicios/perto-e-longe", en: "/en/exercises/near-and-far" },
   { chave: "exerciciosProgresso", pt: "/exercicios/progresso", en: "/en/exercises/progress", foraDoSitemap: true },
@@ -100,6 +101,7 @@ export const ALIASES_PT: readonly { pt: string; chave: ChaveRota }[] = [
   { pt: "/exercicios/astigmatismo", chave: "exercicioAstigmatismo" },
   { pt: "/exercicios/contraste", chave: "exercicioContraste" },
   { pt: "/exercicios/estereopsia", chave: "exercicioEstereopsia" },
+  { pt: "/exercicios/contraste-em-blocos", chave: "exercicioContrasteBlocos" },
 ];
 
 /**

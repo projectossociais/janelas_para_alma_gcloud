@@ -142,7 +142,7 @@ const exerciciosPremium: Exercicio[] = [
     },
     icon: Target,
     get route() {
-      return localizar("/exercicios/contraste-em-blocos");
+      return localizar("/exercicios/pintar-o-samakaka");
     },
   },
   {
