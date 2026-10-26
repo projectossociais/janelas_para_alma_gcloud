@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import teamDalva from "@/assets/team-dalva.png";
 import teamManuel from "@/assets/team-manuel.png";
 import teamLukeny from "@/assets/team-lukeny.png";
-import teamPedro from "@/assets/team-pedro.png";
+import teamPedro from "@/assets/team-pedro.webp";
 import teamKassia from "@/assets/team-kassia.webp";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
