@@ -248,3 +248,51 @@ class TestRegistarDoacaoFinanceira:
 
         assert len(email_sender.enviados) == 1
         assert doacao.recibo_id in email_sender.enviados[0]["corpo_html"]
+
+    def test_o_email_escapa_os_detalhes(self) -> None:
+        email_sender = EmailSenderFalso()
+        DoacaoService(RepositorioFalso(), email_sender).registar_doacao_financeira(
+            "ana@example.com", '<a href="https://phishing.test">x</a>', "comprovativos/abc.pdf"
+        )
+
+        corpo = email_sender.enviados[0]["corpo_html"]
+        assert "<a href" not in corpo
+        assert "&lt;a href=" in corpo
+
+    def test_mensal_explica_a_transferencia_permanente_no_email(self) -> None:
+        email_sender = EmailSenderFalso()
+        service = DoacaoService(RepositorioFalso(), email_sender)
+
+        service.registar_doacao_financeira(
+            "ana@example.com", "Mensal · 25.000 Kz", "comprovativos/abc.pdf", frequencia="mensal"
+        )
+        unica = EmailSenderFalso()
+        DoacaoService(RepositorioFalso(), unica).registar_doacao_financeira(
+            "ana@example.com", "Uma única vez · 25.000 Kz", "comprovativos/abc.pdf"
+        )
+
+        assert "transferência permanente" in email_sender.enviados[0]["corpo_html"]
+        assert "transferência permanente" not in unica.enviados[0]["corpo_html"]
+
+    def test_avisa_a_equipa_com_a_frequencia_e_os_detalhes(self) -> None:
+        notificador = NotificadorFalso()
+        service = DoacaoService(RepositorioFalso(), EmailSenderFalso(), notificador)
+
+        doacao = service.registar_doacao_financeira(
+            "ana@example.com", "Mensal · 25.000 Kz", "comprovativos/abc.pdf", frequencia="mensal"
+        )
+
+        assert len(notificador.avisos) == 1
+        aviso = notificador.avisos[0]
+        assert "mensal" in aviso["titulo"].lower()
+        for texto in (doacao.recibo_id, "ana@example.com", "Mensal · 25.000 Kz"):
+            assert texto in aviso["mensagem"]
+
+    def test_uma_falha_ao_avisar_a_equipa_nao_desfaz_o_donativo(self) -> None:
+        email_sender = EmailSenderFalso()
+        service = DoacaoService(RepositorioFalso(), email_sender, NotificadorFalso(falha=True))
+
+        doacao = service.registar_doacao_financeira("ana@example.com", None, "comprovativos/abc.pdf")
+
+        assert doacao.recibo_id.startswith("FIN-")
+        assert len(email_sender.enviados) == 1

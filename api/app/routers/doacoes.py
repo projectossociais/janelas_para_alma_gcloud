@@ -46,7 +46,7 @@ def registar_doacao_financeira(
 ) -> DoacaoPublica:
     try:
         doacao = service.registar_doacao_financeira(
-            dados.email, dados.detalhes, dados.comprovativo_chave
+            dados.email, dados.detalhes, dados.comprovativo_chave, dados.frequencia
         )
     except ChaveDeComprovativoInvalidaError as exc:
         raise HTTPException(

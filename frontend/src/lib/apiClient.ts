@@ -757,10 +757,15 @@ export const doacoesApi = {
 
   /** `comprovativoChave` vem de `comprovativosApi.preparar` + upload já
    *  feito directamente ao R2 (ver CROSS-02) — nunca os bytes por aqui. */
-  registarFinanceira: (email: string, detalhes: string | null, comprovativoChave: string) =>
+  registarFinanceira: (
+    email: string,
+    detalhes: string | null,
+    comprovativoChave: string,
+    frequencia: "unica" | "mensal" = "unica",
+  ) =>
     pedido<DoacaoPublica>("/doacoes/financeiro", {
       method: "POST",
-      body: JSON.stringify({ email, detalhes, comprovativo_chave: comprovativoChave }),
+      body: JSON.stringify({ email, detalhes, comprovativo_chave: comprovativoChave, frequencia }),
     }),
 };
 
