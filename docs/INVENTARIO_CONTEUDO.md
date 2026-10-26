@@ -135,7 +135,7 @@ Já tratada em `docs/ESTRUTURA_SITE.md` §5. Destino do conteúdo actual:
 | `PillarsSection` | Sai (T4, T5); o que é real vai para "Quem somos" |
 | `CuriosidadesSection` | Vai para o jogo e para o artigo do estrabismo, com fontes |
 | `NovidadesSection` | Retirada do código (2026-09-30). O texto da formalização e do lançamento do jogo está em `docs/PUBLICACOES_A_CRIAR.md`, pronto a publicar pelos admins (a formalização depende da pergunta 1) |
-| `ParceirosSection` | Foi para "Porque confiar" (2026-09-30), com os mesmos 5 parceiros: Desafio Genial (programa da UNICEF Angola com a Arotec), UNICEF, Arotec, Optioptika, Nelt Group |
+| `ParceirosSection` | Foi para "Porque confiar" (2026-09-30), com os mesmos 5 parceiros: Desafio Genial (programa da UNICEF Angola com a Arotec), UNICEF, Arotec, Optioptika, Nelt Group. Desde 2026-10-15 só 3: UNICEF e Nelt Group retirados por falta de autorização de uso da marca |
 
 ### Novidade da formalização (`FirmaOlharAlinhadoModal`)
 

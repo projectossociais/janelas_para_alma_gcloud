@@ -1,8 +1,6 @@
 import logoDesafioGenial from "@/assets/partner-desafio-genial-logo.png";
-import logoUnicef from "@/assets/partner-unicef-logo.jpg";
 import logoArotec from "@/assets/partner-arotec-logo.png";
 import logoOptioptika from "@/assets/partner-optioptika-logo.jpg";
-import logoNeltGroup from "@/assets/partner-nelt-group-logo.png";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 
@@ -15,7 +13,6 @@ const partners = [
     onDark: true,
     url: "https://www.unicef.org/angola/desafio-genial-gera%C3%A7%C3%A3o-digital",
   },
-  { name: "UNICEF", logo: logoUnicef, onDark: false, url: "https://www.unicef.org/" },
   {
     name: "Arotec",
     logo: logoArotec,
@@ -29,14 +26,6 @@ const partners = [
     logo: logoOptioptika,
     onDark: false,
     url: "https://www.optioptika.com/",
-  },
-  {
-    get name() {
-      return i18n.t("ParceirosSection.neltGroup");
-    },
-    logo: logoNeltGroup,
-    onDark: true,
-    url: "https://www.nelt.com/en/markets/angola/",
   },
 ];
 
@@ -52,7 +41,9 @@ const ParceirosSection = () => {
           <h2 className="text-3xl md:text-5xl font-bold text-foreground">{t("ParceirosSection.parceiros")}</h2>
         </div>
 
-        <div className="flex gap-6 overflow-x-auto snap-x pb-4 -mx-4 px-4 scrollbar-hide touch-pan-x justify-start md:justify-center md:flex-wrap">
+        {/* Só 3 parceiros (UNICEF e Nelt Group retirados em 2026-10-15, sem
+            autorização de uso da marca): cabem centrados sem carrossel. */}
+        <div className="flex flex-wrap justify-center gap-6">
           {partners.map((partner) => (
             <a
               key={partner.name}
@@ -60,7 +51,7 @@ const ParceirosSection = () => {
               target="_blank"
               rel="noopener noreferrer"
               aria-label={partner.name}
-              className="snap-start shrink-0 w-52 sm:w-56 h-36 rounded-2xl bg-card border border-border/50 shadow-card flex items-center justify-center p-6 transition-all hover:shadow-elevated hover:scale-[1.02]"
+              className="w-52 sm:w-56 h-36 rounded-2xl bg-card border border-border/50 shadow-card flex items-center justify-center p-6 transition-all hover:shadow-elevated hover:scale-[1.02]"
             >
               {partner.onDark ? (
                 <div className="w-full h-full rounded-lg bg-navy flex items-center justify-center p-4">
