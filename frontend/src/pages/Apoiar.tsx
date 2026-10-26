@@ -1,18 +1,13 @@
 import { useState } from "react";
 import {
   Heart,
-  CreditCard,
   Check,
   Package,
   Wallet,
-  Sparkles,
-  Crown,
   Glasses,
   Eye,
   EyeOff,
   Boxes,
-  ArrowRight,
-  UploadCloud,
   ChevronRight,
   Wrench,
   Disc,
@@ -20,17 +15,12 @@ import {
   Paperclip,
   Ellipsis,
   Recycle,
-  Stethoscope,
-  Users,
-  HeartPulse,
   type LucideIcon,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
-import FileDropzone from "@/components/FileDropzone";
 import PontosRecolha from "@/components/PontosRecolha";
-import CopyRow from "@/components/CopyRow";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -48,14 +38,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import DoacaoFinanceira from "@/components/DoacaoFinanceira";
 import { toast } from "sonner";
-import {
-  comprovativosApi,
-  doacoesApi,
-  mensagemDeErroApi,
-  TIPOS_DE_COMPROVATIVO_ACEITES,
-} from "@/lib/apiClient";
-import { DEFAULT_BANK_DATA, ofuscarValor } from "@/lib/pagamento";
+import { doacoesApi, mensagemDeErroApi } from "@/lib/apiClient";
 import { Trans, useTranslation } from "react-i18next";
 import i18n, { tPt } from "@/i18n";
 import { PROVINCES } from "@/contexts/AuthContext";
@@ -173,116 +158,6 @@ function materiaisParaEnvio(itensPorMaterial: ItensPorMaterial): string[] {
   );
 }
 
-/** O que um nível de apoio financia. `percentagem` só aparece quando a equipa a confirmar. */
-interface CoberturaTier {
-  readonly nome: string;
-  icon: LucideIcon;
-  percentagem?: number;
-}
-
-const cobertura = (chave: string, icon: LucideIcon, percentagem?: number): CoberturaTier => ({
-  get nome() {
-    return i18n.t(chave);
-  },
-  icon,
-  percentagem,
-});
-
-interface Tier {
-  id: "tier1" | "tier2" | "tier3";
-  /** Chaves i18n do nome e do intervalo: os detalhes enviados à API usam sempre o texto português. */
-  chaveNome: string;
-  chaveIntervalo: string;
-  name: string;
-  range: string;
-  short: string;
-  impact: string;
-  cobre: CoberturaTier[];
-  icon: typeof Sparkles;
-  accent: string;
-  ring: string;
-  chip: string;
-}
-
-const tiers: Tier[] = [
-  {
-    id: "tier1",
-    chaveNome: "Apoiar.aliado",
-    chaveIntervalo: "Apoiar.n10000A250",
-    get name() {
-      return i18n.t("Apoiar.aliado");
-    },
-    get range() {
-      return i18n.t("Apoiar.n10000A250");
-    },
-    get short() {
-      return i18n.t("Apoiar.umGestoSignificativo");
-    },
-    get impact() {
-      return i18n.t("Apoiar.financiaConsultasDeRastreio");
-    },
-    cobre: [
-      cobertura("Apoiar.coberturaConsultasRastreio", Stethoscope),
-      cobertura("Apoiar.coberturaOculosGraduados", Glasses),
-    ],
-    icon: Sparkles,
-    accent: "text-teal",
-    ring: "ring-teal border-teal",
-    chip: "bg-teal/10 text-teal",
-  },
-  {
-    id: "tier2",
-    chaveNome: "Apoiar.padrinho",
-    chaveIntervalo: "Apoiar.n250000A500",
-    get name() {
-      return i18n.t("Apoiar.padrinho");
-    },
-    get range() {
-      return i18n.t("Apoiar.n250000A500");
-    },
-    get short() {
-      return i18n.t("Apoiar.impactoSustentado");
-    },
-    get impact() {
-      return i18n.t("Apoiar.cobreUmCicloCompleto");
-    },
-    cobre: [
-      cobertura("Apoiar.coberturaConsulta", Stethoscope),
-      cobertura("Apoiar.coberturaOculos", Glasses),
-      cobertura("Apoiar.coberturaTerapia", Eye),
-    ],
-    icon: Heart,
-    accent: "text-navy",
-    ring: "ring-navy border-navy",
-    chip: "bg-navy/10 text-navy",
-  },
-  {
-    id: "tier3",
-    chaveNome: "Apoiar.benfeitor",
-    chaveIntervalo: "Apoiar.acimaDe500000",
-    get name() {
-      return i18n.t("Apoiar.benfeitor");
-    },
-    get range() {
-      return i18n.t("Apoiar.acimaDe500000");
-    },
-    get short() {
-      return i18n.t("Apoiar.transformacaoEmEscala");
-    },
-    get impact() {
-      return i18n.t("Apoiar.viabilizaUmaCampanhaComunitaria");
-    },
-    cobre: [
-      cobertura("Apoiar.coberturaCampanha", Users),
-      cobertura("Apoiar.coberturaCirurgias", HeartPulse),
-    ],
-    icon: Crown,
-    accent: "text-gold",
-    ring: "ring-gold border-gold",
-    chip: "bg-gold/10 text-gold",
-  },
-];
-
 const LIMITE_NOTAS_MATERIAIS = 500;
 
 interface MaterialDonationReceipt {
@@ -292,22 +167,14 @@ interface MaterialDonationReceipt {
   notes?: string;
 }
 
-type DialogStep = "form" | "recolha" | "upload";
+type DialogStep = "form" | "recolha";
 
-const StepIndicator = ({
-  current,
-  total,
-  tone,
-}: {
-  current: number;
-  total: number;
-  tone: "teal" | "navy";
-}) => (
+const StepIndicator = ({ current, total }: { current: number; total: number }) => (
   <div className="flex items-center gap-3 pb-1">
     <Progress
       value={(current / total) * 100}
       className="h-1.5 flex-1"
-      indicatorClassName={tone === "teal" ? "bg-teal" : "bg-navy"}
+      indicatorClassName="bg-teal"
     />
     <span className="shrink-0 text-xs font-medium text-muted-foreground">
       <Trans i18nKey="Apoiar.etapaDe" values={{ current, total }} />
@@ -320,23 +187,16 @@ const Apoiar = () => {
   const [mode, setMode] = useState<Mode>("materiais");
   const [itensPorMaterial, setItensPorMaterial] = useState<ItensPorMaterial>({});
   const [materialNotes, setMaterialNotes] = useState("");
-  const [selectedTier, setSelectedTier] = useState<Tier["id"] | null>(null);
   // Painéis de detalhe: o cartão mostra só ícone e título, o resto abre aqui.
   const [detalheMaterial, setDetalheMaterial] = useState<string | null>(null);
   const [materialAberto, setMaterialAberto] = useState(false);
   // Itens marcados no painel aberto; só passam para `itensPorMaterial` com "Quero Doar Isto".
   const [rascunhoItens, setRascunhoItens] = useState<string[]>([]);
-  const [detalheTier, setDetalheTier] = useState<Tier["id"] | null>(null);
-  const [tierAberto, setTierAberto] = useState(false);
   // O id fica depois de fechar, para o painel não ficar vazio durante a animação de saída.
   const abrirMaterial = (id: string) => {
     setDetalheMaterial(id);
     setRascunhoItens(itensPorMaterial[id] ?? []);
     setMaterialAberto(true);
-  };
-  const abrirTier = (id: Tier["id"]) => {
-    setDetalheTier(id);
-    setTierAberto(true);
   };
 
   const [open, setOpen] = useState(false);
@@ -347,9 +207,6 @@ const Apoiar = () => {
   const [provincia, setProvincia] = useState("");
   const [receipt, setReceipt] = useState<MaterialDonationReceipt | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [comprovativo, setComprovativo] = useState<File | null>(null);
-
-  const bankData = DEFAULT_BANK_DATA;
 
   const materiaisEscolhidos = materialItems.filter((m) => (itensPorMaterial[m.id]?.length ?? 0) > 0);
 
@@ -386,29 +243,13 @@ const Apoiar = () => {
     setOpen(true);
   };
 
-  const seleccionarTier = (id: Tier["id"]) => {
-    setSelectedTier(id);
-    setTierAberto(false);
-  };
-
-  const handleFinanceSubmit = () => {
-    if (!selectedTier) {
-      toast.error(tr("Apoiar.seleccioneUmTierDe"));
-      return;
-    }
-    setStep("form");
-    setOpen(true);
-  };
-
-  const activeTier = tiers.find((t) => t.id === selectedTier) ?? null;
   const materialEmDetalhe = materialItems.find((m) => m.id === detalheMaterial) ?? null;
-  const tierEmDetalhe = tiers.find((t) => t.id === detalheTier) ?? null;
 
   const handleConfirm = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
 
-    if (mode === "materiais") {
+    {
       if (!provincia) {
         toast.error(tr("Apoiar.seleccioneASuaProvincia"));
         return;
@@ -443,44 +284,6 @@ const Apoiar = () => {
       } finally {
         setSubmitting(false);
       }
-      return;
-    }
-
-    setStep("upload");
-  };
-
-  const handleConcluirDoacao = async () => {
-    if (!comprovativo) {
-      toast.error(tr("Apoiar.anexeOComprovativoDa2"));
-      return;
-    }
-    if (!TIPOS_DE_COMPROVATIVO_ACEITES.includes(comprovativo.type as never)) {
-      toast.error(tr("Apoiar.formatoNaoSuportadoUse"));
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const detalhesDonativo = activeTier
-        ? `${tPt(activeTier.chaveNome)} (${tPt(activeTier.chaveIntervalo)})`
-        : tPt("Apoiar.donativoFinanceiro");
-
-      // Três passos (CROSS-02, mesmo padrão do avatar): a API assina o
-      // URL, o browser envia os bytes directamente ao R2, e só depois a
-      // doação é criada com a chave -- nunca os bytes passam pela nossa
-      // API. Nunca mostrar sucesso antes de todos os passos confirmarem.
-      const preparado = await comprovativosApi.preparar(comprovativo.type);
-      await comprovativosApi.enviarParaStorage(preparado.url_de_upload, comprovativo);
-      await doacoesApi.registarFinanceira(email, detalhesDonativo, preparado.chave);
-
-      toast.success(tr("Apoiar.comprovativoRecebidoComSucesso"));
-      setSelectedTier(null);
-      closeDialog();
-    } catch (err) {
-      console.error("Falha ao processar comprovativo:", err);
-      toast.error(mensagemDeErroApi(err, tr("Apoiar.naoFoiPossivelEnviar")));
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -489,7 +292,6 @@ const Apoiar = () => {
     setEmail("");
     setReceipt(null);
     setStep("form");
-    setComprovativo(null);
   };
 
   return (
@@ -641,73 +443,17 @@ const Apoiar = () => {
 
               {/* Financeiro */}
               <TabsContent value="financeiro" className="mt-0">
-                <div className="text-center max-w-2xl mx-auto mb-10 space-y-2">
+                <div className="text-center max-w-2xl mx-auto mb-8 space-y-2">
                   <span className="inline-block text-xs font-bold uppercase tracking-widest text-navy">
                     {tr("Apoiar.escolhaOSeuImpacto")}
                   </span>
                   <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-                    {tr("Apoiar.tresTiersTresFormas")}
+                    {tr("Apoiar.doeUmaVezOuTodosOsMeses")}
                   </h2>
-                  <p className="text-muted-foreground">
-                    {tr("Apoiar.cadaNivelCorrespondeA")}
-                  </p>
+                  <p className="text-muted-foreground">{tr("Apoiar.cadaDonativoAjuda")}</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                  {tiers.map((tier) => {
-                    const selected = selectedTier === tier.id;
-                    return (
-                      <button
-                        key={tier.id}
-                        type="button"
-                        aria-haspopup="dialog"
-                        onClick={() => abrirTier(tier.id)}
-                        className={`relative flex flex-col items-start text-left p-6 md:p-8 rounded-2xl border-2 bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-elevated focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                          selected
-                            ? `${tier.ring} shadow-elevated ring-2`
-                            : "border-border/60 shadow-card"
-                        }`}
-                      >
-                        {selected && (
-                          <span className="absolute top-4 right-4 inline-flex items-center justify-center w-6 h-6 rounded-full bg-teal text-teal-foreground">
-                            <Check className="w-4 h-4" aria-hidden="true" />
-                            <span className="sr-only">{tr("Apoiar.nivelSeleccionado")}</span>
-                          </span>
-                        )}
-                        <div
-                          className={`inline-flex items-center justify-center w-14 h-14 rounded-2xl ${tier.chip} mb-5`}
-                        >
-                          <tier.icon className="w-7 h-7" />
-                        </div>
-                        <span
-                          className={`inline-block text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full ${tier.chip} mb-3`}
-                        >
-                          {tier.name}
-                        </span>
-                        <p className={`text-2xl font-bold ${tier.accent} leading-tight mb-4`}>
-                          {tier.range}
-                        </p>
-                        <span className="mt-auto inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
-                          {tr("Apoiar.verDetalhes")}
-                          <ChevronRight className="w-3.5 h-3.5" />
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="max-w-2xl mx-auto">
-                  <Button
-                    onClick={handleFinanceSubmit}
-                    className="w-full bg-navy text-navy-foreground hover:bg-navy/90"
-                    size="lg"
-                    disabled={!selectedTier}
-                  >
-                    {selectedTier
-                      ? tr("Apoiar.apoiarComo", { name: activeTier?.name })
-                      : tr("Apoiar.seleccioneUmTierPara")}
-                  </Button>
-                </div>
+                <DoacaoFinanceira />
               </TabsContent>
             </Tabs>
 
@@ -802,73 +548,6 @@ const Apoiar = () => {
         </SheetContent>
       </Sheet>
 
-      {/* Detalhe de um nível de apoio financeiro */}
-      <Dialog open={tierAberto && tierEmDetalhe !== null} onOpenChange={setTierAberto}>
-        <DialogContent className="max-w-md">
-          {tierEmDetalhe && (
-            <>
-              <DialogHeader className="space-y-3 text-left">
-                <div
-                  className={`inline-flex items-center justify-center w-12 h-12 rounded-xl ${tierEmDetalhe.chip}`}
-                >
-                  <tierEmDetalhe.icon className="w-6 h-6" />
-                </div>
-                <DialogTitle className="text-xl">
-                  {tierEmDetalhe.name} · <span className={tierEmDetalhe.accent}>{tierEmDetalhe.range}</span>
-                </DialogTitle>
-                <DialogDescription>{tierEmDetalhe.short}</DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-2">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-navy">
-                  {tr("Apoiar.paraOndeVaiOSeuApoio")}
-                </h4>
-                <p className="text-sm text-foreground leading-relaxed">{tierEmDetalhe.impact}</p>
-              </div>
-
-              <div className="space-y-2">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-navy">
-                  {tr("Apoiar.oQueCobre")}
-                </h4>
-                <ul className="space-y-2">
-                  {tierEmDetalhe.cobre.map((parte) => (
-                    <li
-                      key={parte.nome}
-                      className="flex items-center gap-3 rounded-lg border border-border/60 px-3 py-2"
-                    >
-                      <span
-                        className={`inline-flex items-center justify-center w-8 h-8 shrink-0 rounded-lg ${tierEmDetalhe.chip}`}
-                        aria-hidden="true"
-                      >
-                        <parte.icon className="w-4 h-4" />
-                      </span>
-                      <span className="flex-1 text-sm text-foreground">{parte.nome}</span>
-                      {parte.percentagem !== undefined && (
-                        <span className={`text-sm font-bold tabular-nums ${tierEmDetalhe.accent}`}>
-                          {parte.percentagem}%
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <DialogFooter className="flex-col gap-2 sm:flex-col">
-                <Button
-                  onClick={() => seleccionarTier(tierEmDetalhe.id)}
-                  className="w-full bg-navy text-navy-foreground hover:bg-navy/90"
-                >
-                  {tr("Apoiar.seleccionarEsteNivel")}
-                </Button>
-                <Button variant="ghost" onClick={() => setTierAberto(false)} className="w-full text-muted-foreground">
-                  {tr("Apoiar.fechar")}
-                </Button>
-              </DialogFooter>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
-
       <Dialog open={open} onOpenChange={(v) => (v ? setOpen(true) : closeDialog())}>
         <DialogContent className={step === "recolha" ? "max-w-lg" : "max-w-md"}>
           {step === "recolha" ? (
@@ -877,7 +556,7 @@ const Apoiar = () => {
               className="animate-in fade-in-0 slide-in-from-right-4 duration-300 space-y-4"
             >
               <DialogHeader className="space-y-3">
-                <StepIndicator current={2} total={2} tone="teal" />
+                <StepIndicator current={2} total={2} />
                 <DialogTitle className="flex items-center gap-2">
                   <Check className="w-5 h-5 text-teal" />
                   {tr("Apoiar.doacaoRegistada")}
@@ -904,84 +583,19 @@ const Apoiar = () => {
                 </Button>
               </DialogFooter>
             </div>
-          ) : step === "upload" ? (
-            <div
-              key="upload"
-              className="animate-in fade-in-0 slide-in-from-right-4 duration-300 space-y-4"
-            >
-              <DialogHeader className="space-y-3">
-                <StepIndicator current={2} total={2} tone="navy" />
-                <DialogTitle className="flex items-center gap-2">
-                  <UploadCloud className="w-5 h-5 text-navy" />
-                  {tr("Apoiar.enviarComprovativo")}
-                </DialogTitle>
-                <DialogDescription>
-                  {activeTier?.name ?? tr("Apoiar.donativo")}: {activeTier?.range ?? ""}{tr("Apoiar.anexeOComprovativoDa")}
-                </DialogDescription>
-              </DialogHeader>
-
-              <FileDropzone file={comprovativo} onFileChange={setComprovativo} />
-
-              <DialogFooter className="flex-col gap-2 sm:flex-col">
-                <Button
-                  onClick={handleConcluirDoacao}
-                  disabled={submitting || !comprovativo}
-                  className="w-full bg-navy text-navy-foreground hover:bg-navy/90"
-                >
-                  {submitting
-                    ? tr("Apoiar.aEnviar")
-                    : comprovativo
-                      ? tr("Apoiar.concluirDoacao")
-                      : tr("Apoiar.anexeOComprovativoPara")}
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setStep("form")}
-                  disabled={submitting}
-                  className="w-full text-muted-foreground"
-                >
-                  {tr("Apoiar.voltar")}
-                </Button>
-              </DialogFooter>
-            </div>
           ) : (
             <div key="form" className="animate-in fade-in-0 slide-in-from-left-4 duration-300">
               <DialogHeader className="space-y-3">
-                <StepIndicator current={1} total={2} tone={mode === "materiais" ? "teal" : "navy"} />
+                <StepIndicator current={1} total={2} />
                 <DialogTitle className="flex items-center gap-2">
-                  {mode === "materiais" ? (
-                    <Package className="w-5 h-5 text-teal" />
-                  ) : (
-                    <CreditCard className="w-5 h-5 text-navy" />
-                  )}
-                  {mode === "materiais" ? tr("Apoiar.combinarRecolha") : tr("Apoiar.detalhesParaPagamento")}
+                  <Package className="w-5 h-5 text-teal" />
+                  {tr("Apoiar.combinarRecolha")}
                 </DialogTitle>
-                <DialogDescription>
-                  {mode === "materiais"
-                    ? tr("Apoiar.deixeOSeuEmail")
-                    : tr("Apoiar.nivelObrigado", { nome: activeTier?.name ?? tr("Apoiar.donativo"), intervalo: activeTier?.range ?? "" })}
-                </DialogDescription>
+                <DialogDescription>{tr("Apoiar.deixeOSeuEmail")}</DialogDescription>
               </DialogHeader>
 
               <form onSubmit={handleConfirm} className="space-y-4 mt-4">
-                {mode === "financeiro" && (
-                  <div className="rounded-lg border border-navy/20 bg-navy/5 p-4 space-y-1 divide-y divide-navy/10">
-                    <CopyRow label={tr("Apoiar.beneficiario")} value={bankData.beneficiario} />
-                    <CopyRow
-                      label={bankData.pagamento_rapido.metodo}
-                      value={bankData.pagamento_rapido.telefone}
-                      displayValue={ofuscarValor(bankData.pagamento_rapido.telefone)}
-                    />
-                    <CopyRow
-                      label={`IBAN ${bankData.transferencia_nacional.banco}`}
-                      value={bankData.transferencia_nacional.iban}
-                      displayValue={ofuscarValor(bankData.transferencia_nacional.iban)}
-                    />
-                  </div>
-                )}
-
-                {mode === "materiais" && materiaisEscolhidos.length > 0 && (
+                {materiaisEscolhidos.length > 0 && (
                   <div className="rounded-lg border border-teal/20 bg-teal/5 p-4">
                     <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium mb-2">
                       {tr("Apoiar.materiaisSeleccionados")}
@@ -1003,8 +617,7 @@ const Apoiar = () => {
                   </div>
                 )}
 
-                {mode === "materiais" && (
-                  <div className="space-y-2">
+                <div className="space-y-2">
                     <Label htmlFor="donor-provincia">{tr("Apoiar.provinciaParaRecolha")}</Label>
                     <Select value={provincia} onValueChange={setProvincia}>
                       <SelectTrigger id="donor-provincia">
@@ -1019,14 +632,9 @@ const Apoiar = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                )}
 
                 <div className="space-y-2">
-                  <Label htmlFor="donor-email">
-                    {mode === "materiais"
-                      ? tr("Apoiar.oSeuEmailPara")
-                      : tr("Apoiar.insiraOSeuEmail")}
-                  </Label>
+                  <Label htmlFor="donor-email">{tr("Apoiar.oSeuEmailPara")}</Label>
                   <Input
                     id="donor-email"
                     type="email"
@@ -1041,20 +649,9 @@ const Apoiar = () => {
                   <Button
                     type="submit"
                     disabled={submitting}
-                    className={`w-full ${
-                      mode === "materiais"
-                        ? "bg-teal text-teal-foreground hover:bg-teal/90"
-                        : "bg-navy text-navy-foreground hover:bg-navy/90"
-                    }`}
+                    className="w-full bg-teal text-teal-foreground hover:bg-teal/90"
                   >
-                    {mode === "materiais" ? (
-                      submitting ? tr("Apoiar.aEnviar") : tr("Apoiar.confirmarDoacao")
-                    ) : (
-                      <span className="inline-flex items-center gap-2">
-                        {tr("Apoiar.continuar")}
-                        <ArrowRight className="h-4 w-4" />
-                      </span>
-                    )}
+                    {submitting ? tr("Apoiar.aEnviar") : tr("Apoiar.confirmarDoacao")}
                   </Button>
                 </DialogFooter>
               </form>

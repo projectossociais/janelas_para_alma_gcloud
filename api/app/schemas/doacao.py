@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -17,7 +17,11 @@ class DoacaoMateriaisCriar(BaseModel):
 
 class DoacaoFinanceiraCriar(BaseModel):
     email: EmailStr
-    detalhes: str | None = None
+    detalhes: str | None = Field(default=None, max_length=1000)
+    # "mensal" é um compromisso: o site não cobra cartões, o doador cria uma
+    # transferência permanente no banco. Não tem coluna própria -- o frontend
+    # já escreve a frequência em `detalhes`; aqui só muda o email e o aviso.
+    frequencia: Literal["unica", "mensal"] = "unica"
     # Chave devolvida por POST /uploads/comprovativo, depois do PUT ao R2
     # já ter corrido -- ver comprovativo_upload_service.py.
     comprovativo_chave: str = Field(min_length=1, max_length=300)

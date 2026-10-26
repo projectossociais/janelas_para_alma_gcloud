@@ -98,20 +98,28 @@ class DoacaoService:
     def _avisar_equipa(
         self, doacao: DoacaoRegisto, materiais: list[str], provincia: str, detalhes: str | None
     ) -> None:
-        if self._notificador is None:
-            return
-        mensagem = (
+        self._notificar(
+            "Nova doação de materiais para recolher",
             f"{doacao.email} ({provincia}) quer doar: {'; '.join(materiais)}."
             + (f" Notas: {detalhes}" if detalhes else "")
-            + f" Recibo {doacao.recibo_id}."
+            + f" Recibo {doacao.recibo_id}.",
+            doacao.recibo_id,
         )
+
+    def _notificar(self, titulo: str, mensagem: str, recibo_id: str) -> None:
+        if self._notificador is None:
+            return
         try:
-            self._notificador.notificar("Nova doação de materiais para recolher", mensagem)
+            self._notificador.notificar(titulo, mensagem)
         except Exception:  # avisar é acessório -- a doação já está gravada
-            logger.exception("falha ao avisar a equipa da doação %s", doacao.recibo_id)
+            logger.exception("falha ao avisar a equipa da doação %s", recibo_id)
 
     def registar_doacao_financeira(
-        self, email: str, detalhes: str | None, comprovativo_chave: str
+        self,
+        email: str,
+        detalhes: str | None,
+        comprovativo_chave: str,
+        frequencia: str = "unica",
     ) -> DoacaoRegisto:
         """CROSS-02: o comprovativo já foi enviado directamente ao R2 (ver
         `uploads.py`/`comprovativo_upload_service.py`) — aqui só se
@@ -128,14 +136,30 @@ class DoacaoService:
             comprovativo_url=comprovativo_url,
         )
 
+        mensal = frequencia == "mensal"
+        self._notificar(
+            "Novo donativo mensal" if mensal else "Novo donativo",
+            f"{doacao.email} enviou o comprovativo"
+            + (f" ({detalhes})" if detalhes else "")
+            + f". Recibo {doacao.recibo_id}.",
+            doacao.recibo_id,
+        )
+
         self._email.enviar(
             destinatario=email,
             assunto="Recebemos o seu comprovativo — Janelas Para a Alma",
             corpo_html=(
                 f"<p>Obrigado pelo seu donativo! Recebemos o comprovativo, com o "
                 f"recibo <strong>{doacao.recibo_id}</strong>.</p>"
-                + (f"<p>{detalhes}</p>" if detalhes else "")
+                + (f"<p>{html.escape(detalhes)}</p>" if detalhes else "")
                 + "<p>A nossa equipa vai confirmar a transferência em breve.</p>"
+                + (
+                    "<p>Para doar todos os meses, crie no seu banco uma transferência "
+                    "permanente (mensal) com o mesmo valor e os mesmos dados. Pode "
+                    "cancelá-la quando quiser.</p>"
+                    if mensal
+                    else ""
+                )
             ),
         )
 

@@ -166,6 +166,43 @@ describe("Apoiar — doação de materiais", () => {
   });
 });
 
+/** Separador financeiro: valor -> resumo (método + email) -> passo do comprovativo. */
+async function passosFinanceiros(
+  user: ReturnType<typeof userEvent.setup>,
+  opcoes: {
+    valor?: string;
+    outroValor?: string;
+    mensal?: boolean;
+    metodo: string;
+    nota?: string;
+    nomes?: { tab: RegExp; mensal: RegExp; continuar: RegExp; nota: RegExp; email: RegExp; avancar: RegExp };
+    antesDeContinuar?: () => void;
+  },
+) {
+  const nomes = opcoes.nomes ?? {
+    tab: /Apoio Financeiro/i,
+    mensal: /^Mensalmente$/,
+    continuar: /^Continuar$/,
+    nota: /Adicionar nota/i,
+    email: /receber o comprovativo/i,
+    avancar: /Já transferi/i,
+  };
+  await user.click(screen.getByRole("tab", { name: nomes.tab }));
+  if (opcoes.mensal) await user.click(screen.getByRole("button", { name: nomes.mensal }));
+  if (opcoes.valor) await user.click(screen.getByRole("button", { name: opcoes.valor }));
+  if (opcoes.outroValor) await user.type(screen.getByRole("textbox", { name: /Outro valor|Other amount/ }), opcoes.outroValor);
+  if (opcoes.nota) {
+    await user.click(screen.getByRole("checkbox", { name: nomes.nota }));
+    await user.type(screen.getByRole("textbox", { name: nomes.nota }), opcoes.nota);
+  }
+  await user.click(screen.getByRole("button", { name: nomes.continuar }));
+  await user.click(await screen.findByRole("radio", { name: new RegExp(opcoes.metodo.replace(/[()]/g, "\\$&")) }));
+  opcoes.antesDeContinuar?.();
+  await user.type(screen.getByLabelText(nomes.email), "doador@example.com");
+  await user.click(screen.getByRole("button", { name: nomes.avancar }));
+  return screen.findByTestId("file-input");
+}
+
 describe("Apoiar — doação financeira (comprovativo via R2, CROSS-02)", () => {
   beforeEach(() => {
     registarMateriais.mockReset();
@@ -178,14 +215,7 @@ describe("Apoiar — doação financeira (comprovativo via R2, CROSS-02)", () =>
 
   async function chegarAoPassoDeUpload(user: ReturnType<typeof userEvent.setup>) {
     render(<Apoiar />, { wrapper: MemoryRouter });
-    await user.click(screen.getByRole("tab", { name: /Apoio Financeiro/i }));
-    await user.click(screen.getByRole("button", { name: /Aliado/i }));
-    await user.click(await screen.findByRole("button", { name: /Seleccionar Este Nível/i }));
-    await user.click(screen.getByRole("button", { name: /^Apoiar como Aliado$/i }));
-    const email = await screen.findByLabelText(/receber o comprovativo/i);
-    await user.type(email, "doador@example.com");
-    await user.click(screen.getByRole("button", { name: /Continuar/i }));
-    return screen.findByTestId("file-input");
+    return passosFinanceiros(user, { valor: "25.000 Kz", metodo: "Multicaixa Express" });
   }
 
   it("nunca mostra sucesso quando o envio ao storage falha", async () => {
@@ -262,9 +292,76 @@ describe("Apoiar — doação financeira (comprovativo via R2, CROSS-02)", () =>
     );
     expect(registarFinanceira).toHaveBeenCalledWith(
       "doador@example.com",
-      expect.any(String),
+      "Uma única vez · 25.000 Kz · Multicaixa Express",
       "comprovativos/x.pdf",
+      "unica",
     );
+    expect(await screen.findByText("Obrigado!")).toBeInTheDocument();
+    expect(screen.getByText("FIN-ABC123")).toBeInTheDocument();
+  });
+
+  it("mensal: explica a transferência permanente e envia a frequência e a nota", async () => {
+    prepararComprovativo.mockResolvedValue({ url_de_upload: "https://r2.exemplo.test/u", chave: "comprovativos/m.pdf" });
+    enviarParaStorage.mockResolvedValue(undefined);
+    registarFinanceira.mockResolvedValue({ id: "d", recibo_id: "FIN-MES", tipo: "financeiro" });
+    const user = userEvent.setup();
+    render(<Apoiar />, { wrapper: MemoryRouter });
+
+    const input = await passosFinanceiros(user, {
+      mensal: true,
+      outroValor: "12.500",
+      metodo: "Transferência bancária (BAI)",
+      nota: "para as crianças",
+      antesDeContinuar: () =>
+        expect(screen.getByText(/transferência permanente \(mensal\) com o mesmo valor/)).toBeInTheDocument(),
+    });
+    await user.upload(input, new File(["x"], "c.pdf", { type: "application/pdf" }));
+    await user.click(screen.getByRole("button", { name: /Concluir Doação/i }));
+
+    await waitFor(() =>
+      expect(registarFinanceira).toHaveBeenCalledWith(
+        "doador@example.com",
+        "Mensal · 12.500 Kz · Transferência bancária (BAI) · para as crianças",
+        "comprovativos/m.pdf",
+        "mensal",
+      ),
+    );
+    expect(await screen.findByText(/Não se esqueça de criar no seu banco/)).toBeInTheDocument();
+  });
+
+  it("não avança sem valor, nem com um valor abaixo do mínimo", async () => {
+    const user = userEvent.setup();
+    render(<Apoiar />, { wrapper: MemoryRouter });
+    await user.click(screen.getByRole("tab", { name: /Apoio Financeiro/i }));
+
+    const continuar = screen.getByRole("button", { name: /^Continuar$/ });
+    expect(continuar).toBeDisabled();
+
+    await user.type(screen.getByRole("textbox", { name: "Outro valor" }), "500");
+    expect(continuar).toBeDisabled();
+    expect(screen.getByRole("textbox", { name: "Outro valor" })).toHaveAttribute("aria-invalid", "true");
+
+    await user.type(screen.getByRole("textbox", { name: "Outro valor" }), "0");
+    expect(continuar).toBeEnabled();
+  });
+
+  it("no resumo, só avança com a forma de pagar escolhida e um email válido", async () => {
+    const user = userEvent.setup();
+    render(<Apoiar />, { wrapper: MemoryRouter });
+    await user.click(screen.getByRole("tab", { name: /Apoio Financeiro/i }));
+    await user.click(screen.getByRole("button", { name: "5.000 Kz" }));
+    await user.click(screen.getByRole("button", { name: /^Continuar$/ }));
+
+    const avancar = await screen.findByRole("button", { name: /Já transferi/i });
+    await user.type(screen.getByLabelText(/receber o comprovativo/i), "doador@example.com");
+    expect(avancar).toBeDisabled();
+
+    await user.click(screen.getByRole("radio", { name: /Multicaixa Express/i }));
+    expect(avancar).toBeEnabled();
+
+    await user.clear(screen.getByLabelText(/receber o comprovativo/i));
+    await user.type(screen.getByLabelText(/receber o comprovativo/i), "sem-arroba");
+    expect(avancar).toBeDisabled();
   });
 });
 
@@ -281,7 +378,7 @@ describe("Apoiar -- em inglês, o que vai para a API continua em português", ()
     await i18n.changeLanguage("pt-AO");
   });
 
-  it("os detalhes do donativo usam o nome e o intervalo do nível em português, com a página em inglês", async () => {
+  it("os detalhes do donativo vão em português, com a página em inglês", async () => {
     const { default: i18n } = await import("@/i18n");
     await i18n.changeLanguage("en-US");
     prepararComprovativo.mockResolvedValue({
@@ -294,21 +391,34 @@ describe("Apoiar -- em inglês, o que vai para a API continua em português", ()
 
     const user = userEvent.setup();
     render(<Apoiar />, { wrapper: MemoryRouter });
-    await user.click(screen.getByRole("tab", { name: /Financial Support/i }));
-    await user.click(screen.getByRole("button", { name: /Ally/i }));
-    await user.click(await screen.findByRole("button", { name: /Select This Level/i }));
-    await user.click(screen.getByRole("button", { name: /^Give as Ally$/i }));
-    await user.type(await screen.findByLabelText(/receive your receipt/i), "doador@example.com");
-    await user.click(screen.getByRole("button", { name: /Continue/i }));
-    await user.upload(await screen.findByTestId("file-input"), new File(["x"], "c.pdf", { type: "application/pdf" }));
+    const input = await passosFinanceiros(user, {
+      mensal: true,
+      valor: "50.000 Kz",
+      metodo: "Bank transfer (BAI)",
+      nomes: {
+        tab: /Financial Support/i,
+        mensal: /^Monthly$/,
+        continuar: /^Continue$/,
+        nota: /Add note/i,
+        email: /receive your receipt/i,
+        avancar: /I've transferred/i,
+      },
+    });
+    await user.upload(input, new File(["x"], "c.pdf", { type: "application/pdf" }));
     await user.click(screen.getByRole("button", { name: /Complete Donation/i }));
 
-    await waitFor(() => expect(registarFinanceira).toHaveBeenCalled());
-    expect(registarFinanceira).toHaveBeenCalledWith("doador@example.com", "Aliado (10.000 a 250.000 Kz)", "comprovativos/x.pdf");
+    await waitFor(() =>
+      expect(registarFinanceira).toHaveBeenCalledWith(
+        "doador@example.com",
+        "Mensal · 50.000 Kz · Transferência bancária (BAI)",
+        "comprovativos/x.pdf",
+        "mensal",
+      ),
+    );
   });
 });
 
-describe("Apoiar -- cartões com detalhe (materiais e níveis)", () => {
+describe("Apoiar -- cartões com detalhe (materiais)", () => {
   beforeEach(() => {
     registarMateriais.mockReset();
     toastSuccess.mockReset();
@@ -413,26 +523,5 @@ describe("Apoiar -- cartões com detalhe (materiais e níveis)", () => {
       await user.click(within(painel).getByRole("button", { name: /^Fechar$/ }));
       await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     }
-  });
-
-  it("escolher um nível no detalhe fecha-o e deixa o cartão marcado antes de avançar", async () => {
-    const user = userEvent.setup();
-    render(<Apoiar />, { wrapper: MemoryRouter });
-    await user.click(screen.getByRole("tab", { name: /Apoio Financeiro/i }));
-
-    expect(screen.queryByText(/Financia consultas de rastreio/i)).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Seleccione um tier para continuar/i })).toBeDisabled();
-
-    await user.click(screen.getByRole("button", { name: /Padrinho/i }));
-    const modal = await screen.findByRole("dialog");
-    expect(within(modal).getByText(/Cobre um ciclo completo de tratamento/i)).toBeInTheDocument();
-    expect(within(modal).getByText("Terapia")).toBeInTheDocument();
-
-    await user.click(within(modal).getByRole("button", { name: /Seleccionar Este Nível/i }));
-    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
-
-    // O cartão (não o botão "Apoiar como Padrinho" de baixo) fica marcado.
-    expect(screen.getByRole("button", { name: /^Seleccionado.*Padrinho/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^Apoiar como Padrinho$/i })).toBeEnabled();
   });
 });
