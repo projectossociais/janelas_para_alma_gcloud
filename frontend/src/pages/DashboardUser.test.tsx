@@ -97,7 +97,7 @@ describe("DashboardUser — Exercícios disponíveis", () => {
     expect(screen.getByText("Exercícios disponíveis").previousSibling).toHaveTextContent("0");
   });
 
-  it("com o teste de 7 dias activo, conta os 4 exercícios do teste", () => {
+  it("com o teste de 90 dias activo, conta os 4 exercícios do teste", () => {
     mockDesbloqueados = ["figure8", "ambliopia", "cerebro", "relax"];
     render(
       <MemoryRouter>

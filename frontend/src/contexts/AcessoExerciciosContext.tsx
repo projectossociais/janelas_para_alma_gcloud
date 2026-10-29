@@ -35,7 +35,7 @@ interface AcessoExerciciosContextType {
 const AcessoExerciciosContext = createContext<AcessoExerciciosContextType | undefined>(undefined);
 
 /**
- * Estado de acesso aos exercícios (Premium / teste de 7 dias), partilhado
+ * Estado de acesso aos exercícios (Premium / teste de 90 dias), partilhado
  * entre a página /exercicios, cada exercício e o painel. Só espelha o que a
  * API decide -- bloquear aqui é conveniência de interface, a garantia real
  * é a API recusar sessões e vídeos sem direito de acesso.

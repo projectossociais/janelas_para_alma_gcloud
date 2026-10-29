@@ -394,7 +394,7 @@ const CadernetaTapaOlho = () => {
 
   return (
     <PaginaExercicio>
-      <BaseExercise title={t("Visao.pertoLongeTitulo")} description={t("Visao.pertoLongeDescricao")} exercicioId={EXERCICIO_ID} grupo="premium" tipo="treino">
+      <BaseExercise title={t("Visao.pertoLongeTitulo")} description={t("Visao.pertoLongeDescricao")} exercicioId={EXERCICIO_ID} tipo="treino">
         {conteudo}
       </BaseExercise>
     </PaginaExercicio>

@@ -56,7 +56,7 @@ class Settings(BaseSettings):
     # Express). Os dados de destino são os da conta que recebe -- vazios por
     # omissão de propósito: sem eles, nenhum comprovativo pode ser aprovado
     # (a validação responde 503, nunca "aprova tudo" por falta de config).
-    subscription_price_kz: int = 15000
+    subscription_price_kz: int = 10000
     # IBAN de destino -- comparado sem espaços nem pontos.
     payment_dest_iban: str = ""
     # Número associado ao Multicaixa Express (9 dígitos, com ou sem +244).

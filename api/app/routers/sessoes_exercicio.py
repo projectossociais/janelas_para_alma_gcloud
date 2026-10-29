@@ -55,7 +55,7 @@ def registar_sessao(
     """Grava uma sessão terminada. O `user_id` vem do JWT — um `user_id`
     enviado no corpo nem existe no schema, quanto mais chega aqui.
 
-    Todos os exercícios são pagos (Premium ou trial de 7 dias): sem direito
+    Todos os exercícios são pagos (Premium ou trial de 90 dias): sem direito
     de acesso a este exercício, 403 — mesmo que o pedido não venha da
     interface (CLAUDE.md §4.1)."""
     try:

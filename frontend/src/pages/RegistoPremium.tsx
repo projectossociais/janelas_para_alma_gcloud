@@ -94,7 +94,7 @@ const PLANOS: PlanoOpcao[] = [
       return i18n.t("RegistoPremium.planoMensal");
     },
     get preco() {
-      return i18n.t("RegistoPremium.n15000Kz");
+      return i18n.t("RegistoPremium.precoMensal");
     },
     get detalhe() {
       return i18n.t("RegistoPremium.cobrancaTodosOsMeses");
@@ -113,7 +113,7 @@ const PLANOS: PlanoOpcao[] = [
       return i18n.t("RegistoPremium.planoAnual");
     },
     get preco() {
-      return i18n.t("RegistoPremium.n150000Kz");
+      return i18n.t("RegistoPremium.precoAnual");
     },
     get detalhe() {
       return i18n.t("RegistoPremium.poupe2Meses");

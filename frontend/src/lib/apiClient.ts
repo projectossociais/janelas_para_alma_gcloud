@@ -663,12 +663,12 @@ export interface AcessoExerciciosPublico {
 }
 
 export const exerciciosApi = {
-  /** Estado de acesso já calculado pela API (Premium, teste de 7 dias).
+  /** Estado de acesso já calculado pela API (Premium, teste de 90 dias).
    *  Funciona sem sessão (`estado: "sem_sessao"`). O frontend nunca decide
    *  acesso por conta própria -- a API recusa sessões/vídeos sem direito. */
   acesso: () => pedido<AcessoExerciciosPublico>("/exercicios/acesso"),
 
-  /** Inicia o teste de 7 dias -- uma única vez por conta (409 depois). */
+  /** Inicia o teste de 90 dias -- uma única vez por conta (409 depois). */
   iniciarTrial: () =>
     pedido<AcessoExerciciosPublico>("/exercicios/trial", { method: "POST" }),
 };

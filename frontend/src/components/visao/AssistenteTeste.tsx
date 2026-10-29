@@ -1,7 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import BaseExercise from "@/components/exercises/BaseExercise";
-import type { GrupoExercicio } from "@/components/exercises/useAcaoDesbloqueio";
 import { useCalibracao, useDevicePixelRatio } from "@/components/visao/hooks";
 import { PassoBrilho, PassoCalibracao, PassoDistancia, PassoOculos, PassoTaparOlho } from "@/components/visao/Passos";
 import { DISTANCIA_OMISSAO_MM } from "@/lib/visao/geometria";
@@ -29,7 +28,6 @@ type Etapa =
 
 interface AssistenteTesteProps<R> {
   exercicioId: string;
-  grupo: GrupoExercicio;
   titulo: string;
   descricao: string;
   /** Pede a distância (acuidade, contraste, astigmatismo). */
@@ -53,7 +51,6 @@ interface AssistenteTesteProps<R> {
  */
 function AssistenteTeste<R>({
   exercicioId,
-  grupo,
   titulo,
   descricao,
   comDistancia = true,
@@ -181,7 +178,7 @@ function AssistenteTeste<R>({
       title={titulo}
       description={descricao}
       exercicioId={exercicioId}
-      grupo={grupo}
+     
       tipo="teste"
       passos={nomesPassos}
       passoActual={passoActual}

@@ -1,4 +1,4 @@
-"""Acesso aos exercícios: estado (premium / trial), início do trial de 7
+"""Acesso aos exercícios: estado (premium / trial), início do trial de 90
 dias e URL assinado dos vídeos. A regra vive no `AcessoExerciciosService`
 — aqui só se traduz para HTTP (CLAUDE.md §3/§7)."""
 
@@ -70,7 +70,7 @@ def iniciar_trial(
     utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
     service: AcessoExerciciosService = Depends(obter_acesso_exercicios_service),
 ) -> AcessoExerciciosPublico:
-    """Inicia o teste de 7 dias — uma única vez por conta. O início conta
+    """Inicia o teste de 90 dias — uma única vez por conta. O início conta
     a partir de agora (UTC), no servidor; nada vem do corpo do pedido."""
     try:
         return _publico(service.iniciar_trial(utilizador.id))

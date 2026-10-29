@@ -31,7 +31,6 @@ const TreinoSamakaka = () => {
     <PaginaExercicio>
       <AssistenteTreino
         exercicioId={EXERCICIO_ID}
-        grupo="premium"
         titulo={t("Visao.contrasteBlocosTitulo")}
         descricao={t("Visao.contrasteBlocosDescricao")}
         monocular

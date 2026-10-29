@@ -304,7 +304,6 @@ const DesafioSemOculos = () => {
         title={t("Visao.estereoTitulo")}
         description={t("Visao.estereoDescricao")}
         exercicioId={EXERCICIO_ID}
-        grupo="premium"
         tipo="teste"
         passos={[t("Visao.passoPreparar"), t("Visao.agulhaPassoJogo"), t("Visao.passoResultado")]}
         passoActual={{ preparar: 0, jogo: 1, fim: 2 }[fase]}
@@ -335,7 +334,7 @@ const DesafioAgulha = () => {
   if (oculos === "sem") return <DesafioSemOculos />;
   return (
     <PaginaExercicio>
-      <BaseExercise title={t("Visao.estereoTitulo")} description={t("Visao.estereoDescricao")} exercicioId={EXERCICIO_ID} grupo="premium" tipo="teste">
+      <BaseExercise title={t("Visao.estereoTitulo")} description={t("Visao.estereoDescricao")} exercicioId={EXERCICIO_ID} tipo="teste">
         <EscolherOculos
           titulo={t("Visao.olhoMagicoOculosTitulo")}
           sem={{ titulo: t("Visao.agulhaSemOculos"), texto: t("Visao.agulhaSemOculosTexto") }}

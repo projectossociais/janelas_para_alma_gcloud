@@ -37,14 +37,22 @@ vi.mock("@/lib/apiClient", () => ({
   mensagemDeErroApi: (_e: unknown, fallback: string) => fallback,
 }));
 
-const TRIAL = ["figure8", "ambliopia", "cerebro", "relax"];
-const PREMIUM = ["convergence", "sacadas-convergencia", "flexibilidade-acomodativa", "estereopsia"];
+const TODOS = [
+  "figure8",
+  "ambliopia",
+  "cerebro",
+  "relax",
+  "convergence",
+  "sacadas-convergencia",
+  "flexibilidade-acomodativa",
+  "estereopsia",
+];
 
 const estado = (over: Record<string, unknown>) => ({
   estado: "trial_disponivel",
   exercicios_desbloqueados: [],
-  exercicios_trial: TRIAL,
-  exercicios_premium: PREMIUM,
+  exercicios_trial: TODOS,
+  exercicios_premium: [],
   trial_iniciado_em: null,
   trial_termina_em: null,
   trial_dias_restantes: null,
@@ -60,55 +68,47 @@ const renderPagina = () =>
     </MemoryRouter>,
   );
 
-const grupo = (titulo: string) =>
-  screen.getByRole("heading", { level: 2, name: titulo }).closest("section") as HTMLElement;
+const lista = () =>
+  screen.getByRole("heading", { level: 2, name: "Incluídos no teste de 90 dias" }).closest("section") as HTMLElement;
 const contarDisponiveis = (el: HTMLElement) => within(el).queryAllByText("Disponível").length;
 const contarBloqueados = (el: HTMLElement) =>
   within(el).queryAllByText("Bloqueado", { selector: "span" }).length;
 
-describe("Exercicios — 8 exercícios em dois grupos", () => {
+describe("Exercicios — os 8 exercícios no teste gratuito de 90 dias", () => {
   beforeEach(() => {
     mockLoggedIn = true;
     acesso.mockReset();
     iniciarTrial.mockReset();
   });
 
-  it("mostra os testes e treinos sem webcam e nenhum dos exercícios retirados", async () => {
+  it("mostra os 8 testes e treinos numa só lista, sem grupo só Premium nem exercícios retirados", async () => {
     acesso.mockResolvedValue(estado({}));
     renderPagina();
 
     await screen.findByText("Trial disponível");
-    const trial = grupo("Incluídos no teste de 7 dias");
-    for (const nome of ["Olhos de Palanca ao longe", "Kianda: treino do olho mais fraco", "Fio de Missangas", "Luz nos Olhos"])
-      expect(within(trial).getByText(nome)).toBeInTheDocument();
-    const premium = grupo("Premium");
     for (const nome of [
+      "Olhos de Palanca ao longe",
+      "Kianda: treino do olho mais fraco",
+      "Fio de Missangas",
+      "Luz nos Olhos",
       "Desafio da Agulha",
       "Olho Mágico",
       "Pintar o Samakaka",
       "Caderneta do Tapa-olho",
     ])
-      expect(within(premium).getByText(nome)).toBeInTheDocument();
-    for (const retirado of [/Acompanhamento Ocular em Oito/i, /Foco Dinâmico/i, /Anti-Supressão/i, /Convergência com Saltos/i])
+      expect(within(lista()).getByText(nome)).toBeInTheDocument();
+    expect(contarBloqueados(lista())).toBe(8);
+    expect(screen.queryByRole("heading", { level: 2, name: "Premium" })).not.toBeInTheDocument();
+    for (const retirado of [
+      /Acompanhamento Ocular em Oito/i,
+      /Foco Dinâmico/i,
+      /Anti-Supressão/i,
+      /Convergência com Saltos/i,
+      /Sacadas com Distratores/i,
+      /Programa Adaptativo/i,
+    ])
       expect(screen.queryByText(retirado)).not.toBeInTheDocument();
     expect(screen.queryByText(/fortale|musculatura/i)).not.toBeInTheDocument();
-  });
-
-  it("mostra exactamente 4 no grupo do teste e 4 no Premium, sem os exercícios eliminados", async () => {
-    acesso.mockResolvedValue(estado({}));
-    renderPagina();
-
-    await screen.findByText("Trial disponível");
-    expect(contarBloqueados(grupo("Incluídos no teste de 7 dias"))).toBe(4);
-    expect(contarBloqueados(grupo("Premium"))).toBe(4);
-    for (const eliminado of [
-      /Sacadas com Distratores/i,
-      /Facilidade de Vergência/i,
-      /Consciência Periférica/i,
-      /Programa Adaptativo/i,
-    ]) {
-      expect(screen.queryByText(eliminado)).not.toBeInTheDocument();
-    }
   });
 
   it("visitante: sem botões nos cartões, e o CTA do banner abre o registo em /login (não 404)", async () => {
@@ -128,9 +128,8 @@ describe("Exercicios — 8 exercícios em dois grupos", () => {
       </MemoryRouter>,
     );
 
-    const cta = await screen.findByRole("button", { name: /Criar conta e começar teste de 7 dias/i });
-    expect(within(grupo("Incluídos no teste de 7 dias")).queryAllByRole("button")).toHaveLength(0);
-    expect(within(grupo("Premium")).queryAllByRole("button", { name: /Criar conta/i })).toHaveLength(0);
+    const cta = await screen.findByRole("button", { name: /Criar conta e começar teste de 90 dias/i });
+    expect(within(lista()).queryAllByRole("button")).toHaveLength(0);
 
     fireEvent.click(cta);
     expect(await screen.findByTestId("onde")).toHaveTextContent(
@@ -143,52 +142,51 @@ describe("Exercicios — 8 exercícios em dois grupos", () => {
     renderPagina();
 
     expect(
-      await screen.findByRole("button", { name: /Criar conta e começar teste de 7 dias/i }),
+      await screen.findByRole("button", { name: /Criar conta e começar teste de 90 dias/i }),
     ).toBeInTheDocument();
-    expect(contarBloqueados(grupo("Incluídos no teste de 7 dias"))).toBe(4);
-    expect(contarBloqueados(grupo("Premium"))).toBe(4);
+    expect(contarBloqueados(lista())).toBe(8);
     expect(acesso).not.toHaveBeenCalled();
   });
 
-  it("trial disponível: 8 bloqueados e botão para começar o teste", async () => {
+  it("trial disponível: os 8 bloqueados, cada um com o botão para começar o teste", async () => {
     acesso.mockResolvedValue(estado({ estado: "trial_disponivel" }));
     renderPagina();
 
     expect(
-      await screen.findByRole("button", { name: /Começar teste gratuito de 7 dias/i }),
+      await screen.findByRole("button", { name: /Começar teste gratuito de 90 dias/i }),
     ).toBeInTheDocument();
-    expect(contarDisponiveis(grupo("Incluídos no teste de 7 dias"))).toBe(0);
-    expect(contarDisponiveis(grupo("Premium"))).toBe(0);
+    expect(contarDisponiveis(lista())).toBe(0);
+    expect(within(lista()).getAllByRole("button", { name: /Começar teste/i })).toHaveLength(8);
+    expect(screen.queryByRole("button", { name: /Ver planos Premium/i })).not.toBeInTheDocument();
   });
 
-  it("trial activo: só os 4 do teste desbloqueados, com os dias que faltam", async () => {
+  it("trial activo: os 8 desbloqueados, com os dias que faltam", async () => {
     acesso.mockResolvedValue(
-      estado({ estado: "trial_ativo", exercicios_desbloqueados: TRIAL, trial_dias_restantes: 5 }),
+      estado({ estado: "trial_ativo", exercicios_desbloqueados: TODOS, trial_dias_restantes: 85 }),
     );
     renderPagina();
 
-    expect(await screen.findByText(/Faltam 5 dias do seu teste gratuito/)).toBeInTheDocument();
-    expect(contarDisponiveis(grupo("Incluídos no teste de 7 dias"))).toBe(4);
-    expect(contarBloqueados(grupo("Premium"))).toBe(4);
+    expect(await screen.findByText(/Faltam 85 dias do seu teste gratuito/)).toBeInTheDocument();
+    expect(contarDisponiveis(lista())).toBe(8);
+    expect(screen.getAllByRole("button", { name: /Ver planos Premium/i })).toHaveLength(1);
   });
 
-  it("trial terminado: o grupo do teste continua visível mas bloqueado, CTA para Premium", async () => {
+  it("trial terminado: os 8 continuam visíveis mas bloqueados, CTA para Premium", async () => {
     acesso.mockResolvedValue(estado({ estado: "trial_terminado" }));
     renderPagina();
 
     expect(await screen.findByText("Trial terminado")).toBeInTheDocument();
-    expect(contarBloqueados(grupo("Incluídos no teste de 7 dias"))).toBe(4);
-    expect(contarBloqueados(grupo("Premium"))).toBe(4);
+    expect(contarBloqueados(lista())).toBe(8);
     expect(screen.queryByRole("button", { name: /Começar teste/i })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /Ver planos Premium/i })).toHaveLength(1);
   });
 
   it("Premium: os 8 desbloqueados, sem CTA de compra", async () => {
-    acesso.mockResolvedValue(estado({ estado: "premium", exercicios_desbloqueados: [...TRIAL, ...PREMIUM] }));
+    acesso.mockResolvedValue(estado({ estado: "premium", exercicios_desbloqueados: TODOS }));
     renderPagina();
 
     await screen.findByText(/Tem acesso aos 8 exercícios/);
-    expect(contarDisponiveis(grupo("Incluídos no teste de 7 dias"))).toBe(4);
-    expect(contarDisponiveis(grupo("Premium"))).toBe(4);
+    expect(contarDisponiveis(lista())).toBe(8);
     expect(screen.queryByRole("button", { name: /Ver planos Premium/i })).not.toBeInTheDocument();
   });
 
@@ -196,22 +194,22 @@ describe("Exercicios — 8 exercícios em dois grupos", () => {
     acesso.mockRejectedValue(new Error("falha de rede"));
     renderPagina();
 
-    await waitFor(() => expect(contarBloqueados(grupo("Premium"))).toBe(4));
-    expect(contarDisponiveis(grupo("Incluídos no teste de 7 dias"))).toBe(0);
+    await waitFor(() => expect(contarBloqueados(lista())).toBe(8));
+    expect(contarDisponiveis(lista())).toBe(0);
   });
 
-  it("começar o teste com sucesso desbloqueia os 4 do teste", async () => {
+  it("começar o teste com sucesso desbloqueia os 8", async () => {
     acesso.mockResolvedValue(estado({ estado: "trial_disponivel" }));
     iniciarTrial.mockResolvedValue(
-      estado({ estado: "trial_ativo", exercicios_desbloqueados: TRIAL, trial_dias_restantes: 7 }),
+      estado({ estado: "trial_ativo", exercicios_desbloqueados: TODOS, trial_dias_restantes: 90 }),
     );
     renderPagina();
 
-    fireEvent.click(await screen.findByRole("button", { name: /Começar teste gratuito de 7 dias/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /Começar teste gratuito de 90 dias/i }));
 
-    expect(await screen.findByText(/Faltam 7 dias/)).toBeInTheDocument();
+    expect(await screen.findByText(/Faltam 90 dias/)).toBeInTheDocument();
     expect(iniciarTrial).toHaveBeenCalledTimes(1);
-    expect(contarDisponiveis(grupo("Incluídos no teste de 7 dias"))).toBe(4);
+    expect(contarDisponiveis(lista())).toBe(8);
   });
 
   it("se a API recusar o início do teste (ex.: 409), nada fica desbloqueado", async () => {
@@ -219,10 +217,10 @@ describe("Exercicios — 8 exercícios em dois grupos", () => {
     iniciarTrial.mockRejectedValue(Object.assign(new Error("já utilizado"), { status: 409 }));
     renderPagina();
 
-    fireEvent.click(await screen.findByRole("button", { name: /Começar teste gratuito de 7 dias/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /Começar teste gratuito de 90 dias/i }));
 
     await waitFor(() => expect(iniciarTrial).toHaveBeenCalled());
-    expect(contarDisponiveis(grupo("Incluídos no teste de 7 dias"))).toBe(0);
+    expect(contarDisponiveis(lista())).toBe(0);
   });
 });
 
@@ -256,14 +254,14 @@ describe("Exercicios — fim do trial mostra a evolução medida (Fase B)", () =
 
   it("últimos dias do trial: mostra a evolução; com mais dias pela frente, ainda não", async () => {
     mockHistorico = [aneis(4, 0.5), aneis(0, 0.4)];
-    acesso.mockResolvedValue(estado({ estado: "trial_ativo", exercicios_desbloqueados: TRIAL, trial_dias_restantes: 2 }));
+    acesso.mockResolvedValue(estado({ estado: "trial_ativo", exercicios_desbloqueados: TODOS, trial_dias_restantes: 7 }));
     const { unmount } = renderPagina();
     expect(await screen.findByText("Em 4 dias de treino, o olho esquerdo já lê uma linha mais pequena.")).toBeInTheDocument();
     unmount();
 
-    acesso.mockResolvedValue(estado({ estado: "trial_ativo", exercicios_desbloqueados: TRIAL, trial_dias_restantes: 5 }));
+    acesso.mockResolvedValue(estado({ estado: "trial_ativo", exercicios_desbloqueados: TODOS, trial_dias_restantes: 8 }));
     renderPagina();
-    await screen.findByText(/Faltam 5 dias/);
+    await screen.findByText(/Faltam 8 dias/);
     expect(screen.queryByText(/dias de treino, o olho/)).not.toBeInTheDocument();
   });
 

@@ -369,7 +369,7 @@ const CLINIC_RECOMMENDATIONS = (): Record<DiagnosisKey, ClinicRec[]> => ({
   ],
 });
 
-// Exercícios sem webcam (2026-09-28): testes de triagem e o treino do teste de 7 dias.
+// Exercícios sem webcam (2026-09-28): os 4 em destaque (eram os do antigo teste de 7 dias).
 const exercises = [
   { get title() {
     return i18n.t("Visao.acuidadeTitulo");
