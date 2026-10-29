@@ -33,7 +33,6 @@ import { evolucaoDestacada } from "@/lib/visao/tendencia";
 import { ID_ACUIDADE, ID_ANEIS } from "@/lib/visao/ids";
 import {
   useAcaoDesbloqueio,
-  type GrupoExercicio,
   type TipoDesbloqueio,
 } from "@/components/exercises/useAcaoDesbloqueio";
 import { useTranslation } from "react-i18next";
@@ -54,10 +53,11 @@ interface Exercicio {
   thumbnail?: string;
 }
 
-// Os ids são os históricos. Desde 2026-09-29 o Treino de Anéis está no
-// trial no lugar da Convergência (docs/ANALISE_EXERCICIOS.md). O conteúdo
-// mudou em 2026-09-28 -- ver api/app/services/acesso_exercicios_service.py.
-const exerciciosTrial: Exercicio[] = [
+// Os ids são os históricos (o conteúdo mudou; ver
+// api/app/services/acesso_exercicios_service.py). Desde 2026-10-28 o teste
+// gratuito de 90 dias inclui os 8: uma só lista, primeiro os do antigo teste
+// de 7 dias e depois os que eram só Premium.
+const exercicios: Exercicio[] = [
   {
     id: "figure8",
     tipo: "teste",
@@ -114,9 +114,6 @@ const exerciciosTrial: Exercicio[] = [
       return localizar("/exercicios/luz-nos-olhos");
     },
   },
-];
-
-const exerciciosPremium: Exercicio[] = [
   {
     id: "estereopsia",
     tipo: "teste",
@@ -183,7 +180,7 @@ const BOTAO_CARTAO: Record<TipoDesbloqueio, { chave: string; icon: LucideIcon }>
 
 /** Banner de estado no topo da página: um por cada estado de acesso. */
 /** A partir destes dias restantes, o banner do trial mostra a evolução medida. */
-const DIAS_FINAIS_TRIAL = 3;
+const DIAS_FINAIS_TRIAL = 7;
 
 /**
  * Fim do trial (Fase B, docs/ANALISE_EXERCICIOS.md): o melhor argumento para
@@ -301,16 +298,16 @@ const BannerEstado = ({ aoVerPremium }: { aoVerPremium: () => void }) => {
   );
 };
 
-const CartaoExercicio = ({ ex, grupo }: { ex: Exercicio; grupo: GrupoExercicio }) => {
+const CartaoExercicio = ({ ex }: { ex: Exercicio }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { loading } = useAcessoExercicios();
   const { tipoPara, executar, aIniciarTrial } = useAcaoDesbloqueio();
   const Icon = ex.icon;
-  const tipo = loading ? null : tipoPara(ex.id, grupo);
+  const tipo = loading ? null : tipoPara(ex.id);
   const desbloqueado = !loading && tipo === null;
   // Visitante sem sessão: sem botão por cartão -- o único CTA é o do banner
-  // ("Criar conta e começar teste de 7 dias"), para o ecrã não repetir 8 vezes.
+  // ("Criar conta e começar teste de 90 dias"), para o ecrã não repetir 8 vezes.
   const semBotao = tipo === "criar_conta";
   const botao = tipo ? BOTAO_CARTAO[tipo] : null;
   const BotaoIcon = botao?.icon;
@@ -422,49 +419,19 @@ const Exercicios = () => {
           </div>
         </section>
 
-        {/* Incluídos no teste de 7 dias */}
-        <section className="pb-14 bg-background">
-          <div className="container">
-            <div className="max-w-5xl mx-auto">
-              <div className="mb-6">
-                <h2 className="text-xl md:text-2xl font-bold text-foreground">{t("Exercicios.grupoTrial")}</h2>
-                <p className="mt-1 text-sm text-muted-foreground">{t("Exercicios.grupoTrialDescricao")}</p>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {exerciciosTrial.map((ex) => (
-                  <CartaoExercicio key={ex.id} ex={ex} grupo="trial" />
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Premium */}
+        {/* Os 8, todos incluídos no teste de 90 dias */}
         <section className="pb-24 bg-background">
           <div className="container">
             <div className="max-w-5xl mx-auto">
-              <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+              <div className="mb-6">
                 <div className="max-w-2xl">
-                  <h2 className="text-xl md:text-2xl font-bold text-foreground">
-                    {t("Exercicios.grupoPremium")}
-                  </h2>
-                  <p className="mt-1 text-sm text-muted-foreground">{t("Exercicios.grupoPremiumDescricao")}</p>
+                  <h2 className="text-xl md:text-2xl font-bold text-foreground">{t("Exercicios.grupoTrial")}</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">{t("Exercicios.grupoTrialDescricao")}</p>
                 </div>
-                {acesso.estado !== "premium" && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-navy/25 text-navy hover:bg-navy/5"
-                    onClick={() => setPaywallAberto(true)}
-                  >
-                    <Lock className="h-4 w-4" />
-                    {t("Exercicios.verPlanosPremium")}
-                  </Button>
-                )}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {exerciciosPremium.map((ex) => (
-                  <CartaoExercicio key={ex.id} ex={ex} grupo="premium" />
+                {exercicios.map((ex) => (
+                  <CartaoExercicio key={ex.id} ex={ex} />
                 ))}
               </div>
             </div>

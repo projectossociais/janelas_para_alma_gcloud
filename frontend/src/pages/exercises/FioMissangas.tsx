@@ -198,7 +198,7 @@ const Regua = ({
 };
 
 /**
- * Fio de Missangas (id `cerebro`, no teste de 7 dias): o cordão de Brock com
+ * Fio de Missangas (id `cerebro`, no teste de 90 dias): o cordão de Brock com
  * objectos de casa, e o telemóvel a falar e a medir. Ver
  * `lib/visao/fioMissangas.ts`.
  */
@@ -338,7 +338,6 @@ const FioMissangas = () => {
         title={t("Visao.contrasteTitulo")}
         description={t("Visao.contrasteDescricao")}
         exercicioId={EXERCICIO_ID}
-        grupo="trial"
         tipo="teste"
         passos={passos}
         passoActual={passoActual}

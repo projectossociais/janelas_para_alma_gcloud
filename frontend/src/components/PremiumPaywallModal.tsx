@@ -66,12 +66,12 @@ const PremiumPaywallModal = ({ open, onOpenChange }: PremiumPaywallModalProps) =
         <div className="grid grid-cols-2 gap-3" aria-label={t("PremiumPaywallModal.precos")}>
           <div className="rounded-lg border border-border p-3 text-center">
             <p className="text-xs font-medium text-muted-foreground">{t("RegistoPremium.planoMensal")}</p>
-            <p className="mt-1 text-lg font-bold text-navy">{t("RegistoPremium.n15000Kz")}</p>
+            <p className="mt-1 text-lg font-bold text-navy">{t("RegistoPremium.precoMensal")}</p>
             <p className="text-xs text-muted-foreground">{t("PremiumPaywallModal.porMes")}</p>
           </div>
           <div className="rounded-lg border border-border p-3 text-center">
             <p className="text-xs font-medium text-muted-foreground">{t("RegistoPremium.planoAnual")}</p>
-            <p className="mt-1 text-lg font-bold text-navy">{t("RegistoPremium.n150000Kz")}</p>
+            <p className="mt-1 text-lg font-bold text-navy">{t("RegistoPremium.precoAnual")}</p>
             <p className="text-xs text-muted-foreground">{t("PremiumPaywallModal.porAnoPoupe2Meses")}</p>
           </div>
         </div>

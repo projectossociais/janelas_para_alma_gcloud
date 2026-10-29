@@ -17,7 +17,7 @@ const DashboardUser = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  // 8 exercícios, todos pagos: 4 com o teste de 7 dias activo, os 8 com
+  // 8 exercícios, todos pagos: os 8 com o teste de 90 dias activo ou com
   // Premium (ou admin), 0 sem nenhum dos dois -- o número vem da API.
   const { acesso } = useAcessoExercicios();
   const [scanCount, setScanCount] = useState(0);

@@ -1,6 +1,6 @@
 """Acesso a dados do direito de acesso aos exercícios — a fatia da tabela
 `utilizadores` que decide quem pode fazer que exercício: papel, Premium e
-trial de 7 dias. Mesmo desenho de `perfil_repository.py` (repositórios
+trial de 90 dias. Mesmo desenho de `perfil_repository.py` (repositórios
 diferentes, mesma tabela).
 
 A regra em si (quem tem acesso a quê) vive no `AcessoExerciciosService`;

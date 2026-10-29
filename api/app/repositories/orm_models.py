@@ -103,7 +103,8 @@ class Utilizador(Base):
     premium_ativo: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     premium_expira_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
-    # Teste de 7 dias aos 4 exercícios base — uma única vez por conta.
+    # Teste gratuito aos 8 exercícios (90 dias desde 2026-10-28; antes, 7 dias
+    # aos 4 base) — uma única vez por conta.
     # `trial_iniciado_em IS NULL` = trial ainda disponível (é o estado de
     # todas as contas que já existiam antes desta coluna). Iniciado só pelo
     # próprio utilizador, por `AcessoExerciciosService.iniciar_trial`; tal

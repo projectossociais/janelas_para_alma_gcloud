@@ -477,7 +477,6 @@ const OlhoMagico = () => {
       <PaginaExercicio>
         <AssistenteTreino
           exercicioId={EXERCICIO_ID}
-          grupo="premium"
           titulo={t("Visao.convergenciaTitulo")}
           descricao={t("Visao.convergenciaDescricao")}
           monocular={false}
@@ -494,7 +493,6 @@ const OlhoMagico = () => {
         title={t("Visao.convergenciaTitulo")}
         description={t("Visao.convergenciaDescricao")}
         exercicioId={EXERCICIO_ID}
-        grupo="premium"
         tipo="treino"
       >
         <EscolherOculos

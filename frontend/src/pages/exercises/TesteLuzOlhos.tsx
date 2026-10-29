@@ -202,7 +202,7 @@ const DiagramaOlhos = ({
 };
 
 /**
- * Luz nos Olhos (id `relax`, no teste de 7 dias): o adulto examina. Ver
+ * Luz nos Olhos (id `relax`, no teste de 90 dias): o adulto examina. Ver
  * `lib/visao/luzOlhos.ts`.
  */
 const TesteLuzOlhos = () => {
@@ -360,7 +360,6 @@ const TesteLuzOlhos = () => {
         title={t("Visao.astigmatismoTitulo")}
         description={t("Visao.astigmatismoDescricao")}
         exercicioId={EXERCICIO_ID}
-        grupo="trial"
         tipo="teste"
         passos={passos}
         passoActual={ETAPAS.indexOf(etapa)}

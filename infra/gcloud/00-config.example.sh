@@ -70,7 +70,7 @@ export R2_BUCKET_VIDEOS="${R2_BUCKET_VIDEOS:-}"
 # --- Validação instantânea do comprovativo do Premium ---------------------
 # Não são secretos (o site mostra-os a quem vai pagar), mas têm de bater
 # certo com frontend/src/lib/pagamento.ts. Ver api/.env.example.
-export SUBSCRIPTION_PRICE_KZ="${SUBSCRIPTION_PRICE_KZ:-15000}"
+export SUBSCRIPTION_PRICE_KZ="${SUBSCRIPTION_PRICE_KZ:-10000}"
 export PAYMENT_DEST_IBAN="${PAYMENT_DEST_IBAN:-}"
 export PAYMENT_DEST_PHONE="${PAYMENT_DEST_PHONE:-}"
 export PAYMENT_DEST_NAME_KEYWORDS="${PAYMENT_DEST_NAME_KEYWORDS:-}"

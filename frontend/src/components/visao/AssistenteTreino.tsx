@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import { Coins, Eye, Flame, Gem, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BaseExercise from "@/components/exercises/BaseExercise";
-import type { GrupoExercicio } from "@/components/exercises/useAcaoDesbloqueio";
 import PausaRespiracao from "@/components/visao/PausaRespiracao";
 import ResumoTendencia from "@/components/visao/ResumoTendencia";
 import { EstadoDaGravacao } from "@/components/visao/Resultados";
@@ -78,7 +77,6 @@ export interface ResultadoTreino {
 
 interface AssistenteTreinoProps {
   exercicioId: string;
-  grupo: GrupoExercicio;
   titulo: string;
   descricao: string;
   /** Treina só o olho mais fraco, com o outro tapado por tapa-olho. */
@@ -290,7 +288,6 @@ export const ContadorDiario = ({ historico }: { historico: SessaoExercicioPublic
  */
 const AssistenteTreino = ({
   exercicioId,
-  grupo,
   titulo,
   descricao,
   monocular,
@@ -660,7 +657,7 @@ const AssistenteTreino = ({
       title={titulo}
       description={descricao}
       exercicioId={exercicioId}
-      grupo={grupo}
+     
       tipo="treino"
       passos={passos}
       passoActual={Math.max(0, passoActual)}

@@ -61,7 +61,7 @@ const AvisoPesca = () => {
 };
 
 /**
- * Kianda (id `ambliopia`, no teste de 7 dias). Sem óculos (por omissão): a
+ * Kianda (id `ambliopia`, no teste de 90 dias). Sem óculos (por omissão): a
  * pesca com o olho mais forte tapado (`PescaKianda`). Com óculos 3D: o jogo
  * dicóptico (`JogoKianda`). Ver `lib/visao/pescaKianda.ts` e `lib/visao/kianda.ts`.
  */
@@ -74,7 +74,6 @@ const Kianda = () => {
       <PaginaExercicio>
         <AssistenteTreino
           exercicioId={EXERCICIO_ID}
-          grupo="trial"
           titulo={t("Visao.aneisTitulo")}
           descricao={t("Visao.pescaDescricao")}
           monocular
@@ -89,7 +88,6 @@ const Kianda = () => {
       <PaginaExercicio>
         <AssistenteTreino
           exercicioId={EXERCICIO_ID}
-          grupo="trial"
           titulo={t("Visao.aneisTitulo")}
           descricao={t("Visao.kiandaDescricaoOculos")}
           monocular={false}
@@ -108,7 +106,6 @@ const Kianda = () => {
         title={t("Visao.aneisTitulo")}
         description={t("Visao.aneisDescricao")}
         exercicioId={EXERCICIO_ID}
-        grupo="trial"
         tipo="treino"
       >
         <EscolherModoKianda aoEscolher={setModo} />

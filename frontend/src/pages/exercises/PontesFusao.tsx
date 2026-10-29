@@ -354,7 +354,6 @@ const PontesFusao = () => {
     <PaginaExercicio>
       <AssistenteTreino
         exercicioId={EXERCICIO_ID}
-        grupo="premium"
         titulo={t("Visao.pontesTitulo")}
         descricao={t("Visao.pontesDescricao")}
         monocular={false}

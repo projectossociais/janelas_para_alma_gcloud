@@ -376,7 +376,7 @@ const ResultadoAcuidadeEcra = ({ res, ctx }: { res: Record<Olho, ResultadoAcuida
 };
 
 /**
- * Olhos de Palanca ao longe (id `figure8`, no teste de 7 dias). Ver
+ * Olhos de Palanca ao longe (id `figure8`, no teste de 90 dias). Ver
  * `lib/visao/palancaLonge.ts`.
  */
 const TesteAcuidade = () => {
@@ -385,7 +385,6 @@ const TesteAcuidade = () => {
     <PaginaExercicio>
       <AssistenteTeste<ResultadoAcuidade>
         exercicioId={EXERCICIO_ID}
-        grupo="trial"
         titulo={t("Visao.acuidadeTitulo")}
         descricao={t("Visao.acuidadeDescricao")}
         comDistancia={false}

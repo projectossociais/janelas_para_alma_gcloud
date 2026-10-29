@@ -85,7 +85,7 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   nem MediaPipe** (o scanner é outro produto e continua a usá-los). **8, todos pagos** (desde
   2026-09-23). Os ids históricos mantêm-se (acesso e preços iguais), mas quatro mudaram de
   significado — `sessoes_exercicio.versao` separa as sessões antigas (1) das novas (2):
-  teste de 7 dias = `figure8` **Olhos de Palanca ao longe** (desde 2026-10-21: "E" a 3 m,
+  antigo teste de 7 dias = `figure8` **Olhos de Palanca ao longe** (desde 2026-10-21: "E" a 3 m,
   a criança aponta e o adulto desliza o dedo; antes, anel de Landolt ao perto),
   `ambliopia` **Kianda** (desde 2026-10-21: sem óculos, por omissão,
   pesca com o olho forte tapado, em graus; com óculos 3D, jogo dicóptico; o Treino de Anéis
@@ -117,9 +117,14 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   máximo 5 activos por conta, e é revogada na anonimização (W-03). Mostra só o primeiro
   nome, olho mais fraco, óculos e os resultados dos últimos 90 dias — nunca email nem
   contactos (`PartilhaRelatorioService`)
-- **Modelo de acesso** — Premium a 15.000 Kz/mês (pagamento por transferência + comprovativo)
-  dá os 8; o teste de 7 dias (`utilizadores.trial_iniciado_em`/`trial_termina_em`, UTC) é
-  iniciado pelo próprio utilizador, uma única vez por conta, e dá só os 4 do teste. Regra
+- **Modelo de acesso** — Premium a 10.000 Kz/mês ou 100.000 Kz/ano (desde 2026-10-28; antes
+  15.000 e 150.000; pagamento por transferência + comprovativo) dá os 8; o teste gratuito de
+  **90 dias** (desde 2026-10-28; antes 7 dias e só os 4 base) também dá **os 8**
+  (`utilizadores.trial_iniciado_em`/`trial_termina_em`, UTC). É iniciado pelo próprio
+  utilizador, uma única vez por conta; os trials anteriores mantêm a data de fim (não houve
+  migração), mas desbloqueiam os 8 até lá. O preço que a validação do comprovativo exige vem
+  de `SUBSCRIPTION_PRICE_KZ` (variável `GCP_SUBSCRIPTION_PRICE_KZ` do GitHub Actions) e tem
+  de bater com o preço mostrado no site. Regra
   única em `api/app/services/acesso_exercicios_service.py`; a API recusa com 403 sessões
   (`POST /sessoes-exercicio`) e vídeos (`GET /exercicios/{id}/video`) sem direito de acesso.
   O frontend (`AcessoExerciciosContext`) só espelha `GET /exercicios/acesso`. Os vídeos vivem

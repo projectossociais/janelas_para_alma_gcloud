@@ -38,7 +38,7 @@ const Auth = () => {
   // muda para o separador de login (em vez de navegar como se estivesse
   // autenticado) e avisa para confirmar o email primeiro.
   // `?modo=registo` abre directamente em "Criar conta" (ex.: CTA do teste
-  // de 7 dias em /exercicios, para quem ainda não tem conta).
+  // de 90 dias em /exercicios, para quem ainda não tem conta).
   const [activeTab, setActiveTab] = useState<"login" | "register">(
     searchParams.get("modo") === "registo" ? "register" : "login",
   );
