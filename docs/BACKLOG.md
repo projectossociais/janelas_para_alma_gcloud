@@ -40,6 +40,16 @@ Nada disto avança agora; fica aqui para não se perder.
 | **Trocar o `janelas-scanner-api` pelo motor próprio** | Ligar o motor ao `/scanner`, retirar o serviço externo (hoje o `/rastreio-completo` já está publicado, só para testes, escondido e `noindex`) | V1 e V2, e revisão humana da regra, do esquema e do texto do consentimento |
 | **Motor próprio, fase V3** | Validação clínica com crianças angolanas: parceria clínica (quem fala com a Optioptika?) e comissão de ética | Parceria e ética |
 | **Teste do −0,09** | 3 a 5 adultos sem estrabismo fazem o rastreio actual e mandam o PDF, para ver se o desalinhamento a olhar em frente ronda 0,06 a 0,10 (convergência de perto) | Voluntários (fazem-no no `/rastreio-completo` publicado) |
+| **Testes a sério do redesenho e do rastreio completo** | O dono do projecto faz os testes **no fim** e quer trabalhá-los a sério (ver a lista abaixo). A Fase 3 só fecha quando as três primeiras jornadas baterem a linha de base em tarefa concluída e tempo, testadas com pessoas reais (`docs/REDESENHO_FRONTEND.md`, Fase 3) | O dono, e pessoas reais |
+
+**O que testar (lista de 2026-10-07, tudo já publicado):**
+- Criar conta e entrar: género em rádio na mesma linha, erro em cada campo com o foco no primeiro, "Mostrar" na palavra-passe, `?modo=registo`.
+- Pedir o Premium (3 passos): sem sessão leva primeiro a entrar ou criar conta e volta; dados pré-preenchidos; comprovativo; o pedido chega ao admin ligado a uma conta. Ver na caixa de entrada do admin se há pedidos antigos sem conta (esses nunca puderam ser aprovados).
+- Teste de 7 dias: só começa ao confirmar; o painel passa a "continuar os treinos"; depois de usado não se repete.
+- Painel: o próximo passo em cada situação (teleconsulta, marcar consulta, primeiro rastreio, repetir, treinos, teste, Premium) e o menu da conta (sair).
+- Rastreio completo (`/rastreio-completo`, escondido): no Android e no iPhone, com a folha dos pontos de fixação; ver `docs/MOTOR_ANALISE_RASTREIO.md`.
+- Texto: "Dalva Filipe, coordenadora geral" na página inicial e na equipa.
+- Ainda com o visual antigo (não testar ainda): sino de notificações, exercícios, progresso, jogo.
 
 ### 🔴 Urgente — risco legal ou de confiança
 
