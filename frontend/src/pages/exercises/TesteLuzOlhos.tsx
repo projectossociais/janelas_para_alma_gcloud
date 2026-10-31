@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import BaseExercise from "@/components/exercises/BaseExercise";
-import BotaoOuvir from "@/components/visao/BotaoOuvir";
 import { BotaoContinuar, EcraPasso } from "@/components/visao/EcraPasso";
 import PaginaExercicio from "@/components/visao/PaginaExercicio";
 import { CartaoOlho, EcraResultado } from "@/components/visao/Resultados";
@@ -25,7 +24,7 @@ import {
   type Reflexo,
 } from "@/lib/visao/luzOlhos";
 import { OLHOS, type Olho } from "@/lib/visao/resultados";
-import { falar, sinalSonoro } from "@/lib/visao/voz";
+import { sinalSonoro } from "@/lib/visao/voz";
 import { cn } from "@/lib/utils";
 
 /** O id histórico `relax` (antes, Teste de Astigmatismo). */
@@ -37,10 +36,9 @@ const outro = (o: Olho): Olho => (o === "direito" ? "esquerdo" : "direito");
 
 /** Ecrã inteiro e branco (é a luz), com um peixinho a mexer para a criança olhar. */
 const EcraLuz = ({ aoVer }: { aoVer: () => void }) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const tela = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
-    falar(t("Visao.luzVozOlhar"), i18n.language);
     const g = tela.current?.getContext("2d");
     if (!g) return;
     let raf = 0;
@@ -69,8 +67,6 @@ const EcraLuz = ({ aoVer }: { aoVer: () => void }) => {
     };
     raf = requestAnimationFrame(animar);
     return () => cancelAnimationFrame(raf);
-    // Só ao abrir o ecrã.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
     <div className="fixed inset-0 z-[100] grid place-items-center" style={{ backgroundColor: "#ffffff", colorScheme: "light" }}>
@@ -221,9 +217,6 @@ const TesteLuzOlhos = () => {
   const taparAgora: Olho = OLHOS[tapar.vez] ?? "direito";
   const olharPara = outro(taparAgora);
   const textoTapar = t("Visao.luzTaparTexto", { tapa: nomeOlho(taparAgora), olha: nomeOlho(olharPara) });
-  useEffect(() => {
-    if (etapa === "tapar") falar(textoTapar, i18n.language);
-  }, [etapa, i18n.language, textoTapar]);
 
   let conteudo;
   if (etapa === "diario")
@@ -284,7 +277,6 @@ const TesteLuzOlhos = () => {
               <li key={p}>{p}</li>
             ))}
           </ol>
-          <BotaoOuvir texto={lista.join(" ")} />
         </div>
       </EcraPasso>
     );
@@ -319,7 +311,6 @@ const TesteLuzOlhos = () => {
       <EcraPasso titulo={t("Visao.luzTaparTitulo", { olho: nomeOlho(taparAgora) })}>
         <div className="w-full space-y-3 text-left text-sm">
           <p className="text-foreground">{textoTapar}</p>
-          <BotaoOuvir texto={textoTapar} />
           <div className="grid gap-2">
             {MOVIMENTOS.map((m) => (
               <Button

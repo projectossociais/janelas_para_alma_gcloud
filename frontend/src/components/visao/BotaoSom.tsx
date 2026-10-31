@@ -7,9 +7,8 @@ import { aoMudarSom, definirSom, somLigado } from "@/lib/visao/voz";
 const useSom = (): boolean => useSyncExternalStore(aoMudarSom, somLigado, () => false);
 
 /**
- * Ligar ou desligar o som (voz e bips) a qualquer momento do exercício. Fica
- * fixo no canto do ecrã, por cima também dos ecrãs inteiros (régua, luz,
- * mãozinha), e desligar cala logo o que estiver a ser dito.
+ * Ligar ou desligar os bips a qualquer momento do exercício. Fica fixo no
+ * canto do ecrã, por cima também dos ecrãs inteiros (régua, luz, mãozinha).
  */
 const BotaoSom = () => {
   const { t } = useTranslation();

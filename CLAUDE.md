@@ -534,13 +534,14 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   Pontes e grava igual (`sinais.pontes`, `sinais.modo = "fusao_livre"`), por isso o relatório
   lê os dois. Ao alto, um telemóvel só chega a ~7 Δ: pede para o deitar e continua
   (`alargarRampa`).
-- **Som opcional e desligado por omissão (pedido do dono do projecto, 2026-10-22).** Nenhum
-  exercício fala nem faz bips sozinho: `falar` e `sinalSonoro` (`lib/visao/voz.ts`) só tocam
-  com o som ligado (`jpa.visao.som` no aparelho). O `BotaoSom` (fixo no canto inferior
-  esquerdo, por cima também dos ecrãs inteiros, vem do `BaseExercise`) liga e desliga a
-  qualquer momento, e desligar cala logo. "Ouvir as instruções" é um pedido explícito: fala
-  mesmo com o som desligado e passa a "Parar" enquanto fala. Sair do exercício cala tudo.
-  Os controlos dos ecrãs inteiros não podem ficar nesse canto.
+- **Sem narração falada (pedido do dono do projecto, 2026-10-31: "é ineficaz").** Os
+  exercícios não falam: nada de síntese de voz nem de "Ouvir as instruções"; tudo o que a
+  pessoa precisa de saber está escrito no ecrã. Ficam só os bips (`sinalSonoro`,
+  `lib/visao/voz.ts`), opcionais e desligados por omissão (`jpa.visao.som` no aparelho). O
+  `BotaoSom` (fixo no canto inferior esquerdo, por cima também dos ecrãs inteiros, vem do
+  `BaseExercise`) liga e desliga a qualquer momento. Os controlos dos ecrãs inteiros não
+  podem ficar nesse canto. A resposta *por voz* da criança na Palanca (microfone,
+  `useRespostaPorVoz`) não é narração e fica.
 - **Olhos de Palanca ao longe (2026-10-21): acuidade a 3 m sem ninguém ver o ecrã**
   (`lib/visao/palancaLonge.ts`, `TesteAcuidade`). "E" de Snellen (a "mãozinha"); a criança
   aponta para onde apontam os dedos e o adulto, com o ecrã virado para ela, desliza o dedo
@@ -555,9 +556,9 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   diz-se para onde o outro se mexeu. `unidade = "dioptrias_prismaticas"`, `limiar` = maior
   desvio, `sinais.modo = "luz_olhos"`, mais o diário de 7 dias (frequência e quando).
 - **Fio de Missangas (2026-10-21): cordão de Brock com um fio e missangas de casa**
-  (`lib/visao/fioMissangas.ts`). A voz pergunta, em cada missanga, onde os fios se cruzam
+  (`lib/visao/fioMissangas.ts`). O ecrã pergunta, em cada missanga, onde os fios se cruzam
   ("só vejo um fio" = supressão); no fim o telemóvel é a régua do ponto próximo de
-  convergência (2 medições, `unidade = "cm"`). As instruções faladas também aparecem escritas.
+  convergência (2 medições, `unidade = "cm"`).
 - **Desafio da Agulha (2026-10-21): profundidade num jogo de família** (`lib/visao/agulha.ts`).
   Dois lápis ponta com ponta, ou palhinha na garrafa; por jogador, 3 rondas com os dois
   olhos e 3 com um tapado; o telemóvel é árbitro e cronómetro. Só o jogador 1 é avaliado

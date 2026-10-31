@@ -28,7 +28,7 @@ import {
 } from "@/lib/visao/caderneta";
 import { ID_PERTO_LONGE } from "@/lib/visao/ids";
 import { diaLocal, ultimosDias } from "@/lib/visao/progresso";
-import { falar, sinalSonoro } from "@/lib/visao/voz";
+import { sinalSonoro } from "@/lib/visao/voz";
 import { cn } from "@/lib/utils";
 
 /** O id histórico `flexibilidade-acomodativa` (antes, Treino Perto e longe). */
@@ -194,8 +194,7 @@ const CadernetaTapaOlho = () => {
     if (perguntou.current) return;
     perguntou.current = true;
     sinalSonoro("tic");
-    falar(t("Visao.cadernetaVozVerificar"), i18n.language);
-  }, [aVerificar, i18n.language, t]);
+  }, [aVerificar]);
 
   // Dia cumprido durante este período: mostra o cromo novo uma vez.
   const cumpridoHojeAntes = useRef<boolean | null>(null);
@@ -208,9 +207,8 @@ const CadernetaTapaOlho = () => {
       const i = cromoDoDia(cumpridos.indexOf(hoje));
       setCromoNovo(i);
       sinalSonoro("festa");
-      falar(t("Visao.cadernetaVozCromo", { nome: t(`Visao.cadernetaCromo_${i}`) }), i18n.language);
     }
-  }, [alvo, cumpridos, hoje, i18n.language, minutosHoje, periodo, sessoes, t]);
+  }, [alvo, cumpridos, hoje, minutosHoje, periodo, sessoes]);
 
   const comecar = () => {
     const p = iniciarPeriodo(Date.now(), alvo, olhoTreinado);
@@ -219,7 +217,6 @@ const CadernetaTapaOlho = () => {
     setAgora(Date.now());
     cumpridoHojeAntes.current = null;
     sinalSonoro("tic");
-    falar(t("Visao.cadernetaVozComecar"), i18n.language);
   };
 
   const terminar = useCallback(

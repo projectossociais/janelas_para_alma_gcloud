@@ -8,7 +8,6 @@ import AssistenteTreino, {
   type ContextoTreino,
   type ResultadoTreino,
 } from "@/components/visao/AssistenteTreino";
-import BotaoOuvir from "@/components/visao/BotaoOuvir";
 import { EcraPasso } from "@/components/visao/EcraPasso";
 import EscolherOculos, { type ComOuSemOculos } from "@/components/visao/EscolherOculos";
 import PaginaExercicio from "@/components/visao/PaginaExercicio";
@@ -430,7 +429,6 @@ const ComoFazer = ({ modo }: { modo: ModoOlhoMagico }) => {
           <li key={p}>{p}</li>
         ))}
       </ol>
-      <BotaoOuvir texto={passos.join(" ")} />
     </div>
   );
 };

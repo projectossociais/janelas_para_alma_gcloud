@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import BaseExercise from "@/components/exercises/BaseExercise";
-import BotaoOuvir from "@/components/visao/BotaoOuvir";
 import { BotaoContinuar, EcraPasso } from "@/components/visao/EcraPasso";
 import PaginaExercicio from "@/components/visao/PaginaExercicio";
 import { PassoCalibracao } from "@/components/visao/Passos";
@@ -22,7 +21,7 @@ import {
   type RespostaFio,
 } from "@/lib/visao/fioMissangas";
 import { ID_CONTRASTE } from "@/lib/visao/ids";
-import { falar, sinalSonoro } from "@/lib/visao/voz";
+import { sinalSonoro } from "@/lib/visao/voz";
 
 /** O id histórico `cerebro` (antes, Teste de Contraste). */
 const EXERCICIO_ID = ID_CONTRASTE;
@@ -107,7 +106,7 @@ const Regua = ({
   medicao: number;
   aoMedir: (cm: number | null) => void;
 }) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const ref = useRef<HTMLCanvasElement>(null);
   const [marca, setMarca] = useState<number | null>(null);
   const [tam, setTam] = useState({ w: window.innerWidth, h: window.innerHeight });
@@ -161,7 +160,6 @@ const Regua = ({
     const cm = cmNaRegua(y, pxPorMm);
     setMarca(cm);
     sinalSonoro("tic");
-    falar(t("Visao.fioVozCm", { cm: formatarDecimal(cm, cm % 1 ? 1 : 0) }), i18n.language);
     window.setTimeout(() => {
       setMarca(null);
       aoMedir(cm);
@@ -178,7 +176,7 @@ const Regua = ({
         style={{ width: tam.w, height: tam.h }}
         onPointerDown={tocar}
       />
-      {/* O mesmo que a voz diz, para quem tem o som desligado; os toques passam para a régua. */}
+      {/* Os toques passam para a régua. */}
       <p className="pointer-events-none absolute right-4 top-12 max-w-[50%] text-right text-sm leading-snug" style={{ color: "#333333" }}>
         {medicao === 0 ? t("Visao.fioVozRegua") : t("Visao.fioVozOutraVez")}
       </p>
@@ -199,11 +197,11 @@ const Regua = ({
 
 /**
  * Fio de Missangas (id `cerebro`, no teste de 90 dias): o cordão de Brock com
- * objectos de casa, e o telemóvel a falar e a medir. Ver
+ * objectos de casa, e o telemóvel a medir. Ver
  * `lib/visao/fioMissangas.ts`.
  */
 const FioMissangas = () => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { calibracao, guardar } = useCalibracao();
   const [etapa, setEtapa] = useState<Etapa>("preparar");
   const [i, setI] = useState(0);
@@ -217,10 +215,6 @@ const FioMissangas = () => {
   const nomeCor = (c: string) => t(`Visao.fioCor_${c}`);
   const textoMissanga = m ? t("Visao.fioMissangaTexto", { cor: nomeCor(m.cor) }) : "";
   const ultima = respostas[i];
-
-  useEffect(() => {
-    if (etapa === "missanga" && contagem === null) falar(textoMissanga, i18n.language);
-  }, [contagem, etapa, i18n.language, textoMissanga]);
 
   // Segurar o X: uma contagem de 10 segundos, um bip por segundo.
   const aSegurar = contagem !== null;
@@ -236,11 +230,8 @@ const FioMissangas = () => {
     if (contagem === null || contagem > 0) return;
     setContagem(null);
     if (i + 1 < MISSANGAS.length) setI(i + 1);
-    else {
-      setEtapa("regua");
-      falar(t("Visao.fioVozRegua"), i18n.language);
-    }
-  }, [contagem, i, i18n.language, t]);
+    else setEtapa("regua");
+  }, [contagem, i]);
 
   const passos = [t("Visao.passoPreparar"), t("Visao.passoCartao"), t("Visao.fioPassoMissangas"), t("Visao.fioPassoRegua"), t("Visao.passoResultado")];
   const passoActual = { preparar: 0, calibracao: 1, missanga: 2, regua: 3, resultado: 4 }[etapa];
@@ -260,7 +251,6 @@ const FioMissangas = () => {
               <li key={p}>{p}</li>
             ))}
           </ol>
-          <BotaoOuvir texto={lista.join(" ")} />
         </div>
       </EcraPasso>
     );
@@ -273,7 +263,6 @@ const FioMissangas = () => {
           {contagem === null ? (
             <>
               <p className="text-foreground">{textoMissanga}</p>
-              <BotaoOuvir texto={textoMissanga} />
               <div className="grid gap-2">
                 {RESPOSTAS_FIO.map((r) => (
                   <Button
@@ -287,7 +276,6 @@ const FioMissangas = () => {
                         n[i] = r;
                         return n;
                       });
-                      falar(t(`Visao.fioDica_${r}`, { cor: nomeCor(m.cor) }), i18n.language);
                       setContagem(SEGUNDOS_SEGURAR);
                     }}
                   >
@@ -317,7 +305,6 @@ const FioMissangas = () => {
           const novo = [...ppc, cm];
           setPpc(novo);
           if (novo.length >= MEDICOES_PPC) setEtapa("resultado");
-          else falar(t("Visao.fioVozOutraVez"), i18n.language);
         }}
       />
     );

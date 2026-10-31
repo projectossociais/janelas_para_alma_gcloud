@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import BaseExercise from "@/components/exercises/BaseExercise";
-import BotaoOuvir from "@/components/visao/BotaoOuvir";
 import { EcraPasso } from "@/components/visao/EcraPasso";
 import EscolherOculos, { type ComOuSemOculos } from "@/components/visao/EscolherOculos";
 import PaginaExercicio from "@/components/visao/PaginaExercicio";
@@ -20,7 +19,7 @@ import {
   type ResumoJogador,
 } from "@/lib/visao/agulha";
 import { ID_ESTEREOPSIA } from "@/lib/visao/ids";
-import { falar, sinalSonoro } from "@/lib/visao/voz";
+import { sinalSonoro } from "@/lib/visao/voz";
 import { cn } from "@/lib/utils";
 import TesteEstereopsia from "./TesteEstereopsia";
 
@@ -39,7 +38,7 @@ const Jogo = ({
   nomes: [string, string];
   aoTerminar: (res: ResultadoRonda[], segundos: number) => void;
 }) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [plano] = useState(() => planoDeRondas(2));
   const [i, setI] = useState(0);
   const [fase, setFase] = useState<Fase>("espera");
@@ -51,18 +50,6 @@ const Jogo = ({
   const inicioJogo = useRef(Date.now());
   const ronda = plano[i];
 
-  const anunciar = () =>
-    ronda.condicao === "dois"
-      ? t("Visao.agulhaVozDois", { nome: nomes[ronda.jogador] })
-      : t("Visao.agulhaVozUm", { nome: nomes[ronda.jogador], olho: t(ronda.olhoTapado === "direito" ? "Visao.olhoDireito" : "Visao.olhoEsquerdo").toLowerCase() });
-
-  const emEspera = fase === "espera";
-  useEffect(() => {
-    if (emEspera) falar(anunciar(), i18n.language);
-    // Anuncia cada ronda uma vez.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [i, emEspera]);
-
   // 3, 2, 1, já!
   useEffect(() => {
     if (fase !== "contagem") return;
@@ -73,14 +60,12 @@ const Jogo = ({
     if (fase !== "contagem") return;
     if (contagem > 0) {
       sinalSonoro("tic");
-      falar(String(contagem), i18n.language);
       return;
     }
-    falar(t("Visao.agulhaJa"), i18n.language);
     inicioRonda.current = Date.now();
     setDecorrido(0);
     setFase("a_correr");
-  }, [contagem, fase, i18n.language, t]);
+  }, [contagem, fase]);
 
   const fechar = (acertou: boolean, segundos: number) => {
     const r = { jogador: ronda.jogador, condicao: ronda.condicao, acertou, segundos: Math.round(segundos * 10) / 10 };
@@ -269,7 +254,6 @@ const DesafioSemOculos = () => {
           </div>
           <p className="text-foreground">{t(`Visao.agulhaRegra_${material}`)}</p>
           <p className="text-muted-foreground">{t("Visao.agulhaComoJogar")}</p>
-          <BotaoOuvir texto={`${t(`Visao.agulhaRegra_${material}`)} ${t("Visao.agulhaComoJogar")}`} />
           {([0, 1] as const).map((j) => (
             <label key={j} className="block space-y-1">
               <span className="text-muted-foreground">{j === 0 ? t("Visao.agulhaJogador1") : t("Visao.agulhaJogador2")}</span>
