@@ -307,6 +307,7 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
                 alvo: formatarDecimal(r.tapaOlho.alvoMin / 60, r.tapaOlho.alvoMin % 60 ? 1 : 0),
               }),
               t("Visao.clinicoTapaCumpridos", { n: r.tapaOlho.cumpridos }),
+              ...(r.tapaOlho.manualMin ? [t("Visao.clinicoTapaManual", { tempo: formatarDecimal(r.tapaOlho.manualMin / 60, 1) })] : []),
             ]}
           />
         )}

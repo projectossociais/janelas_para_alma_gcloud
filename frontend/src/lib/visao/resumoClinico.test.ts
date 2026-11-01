@@ -294,9 +294,24 @@ describe("Caderneta do Tapa-olho", () => {
         sinais: { modo: "tapa_olho_horas", alvo_min: 120 },
       });
     const r = resumoClinico([tapa(1, 120), tapa(0, 60)], hoje);
-    expect(r.tapaOlho).toMatchObject({ alvoMin: 120, cumpridos: 1, mediaMin: 26 });
+    expect(r.tapaOlho).toMatchObject({ alvoMin: 120, cumpridos: 1, mediaMin: 26, manualMin: 0 });
     expect(r.adesao.minutosPorSemana).toEqual([0, 0, 0, 0]);
     expect(resumoClinico([], hoje).tapaOlho).toBeNull();
+  });
+
+  it("versão 2: o tempo acrescentado à mão fica à parte", () => {
+    const tapa = (minutos: number, manual: boolean) =>
+      sessao({
+        exercicio_id: "flexibilidade-acomodativa",
+        created_at: haDias(0),
+        olho: "esquerdo",
+        limiar: null,
+        unidade: null,
+        segundos_activos: minutos * 60,
+        sinais: { modo: "tapa_olho_horas", versao: 2, alvo_min: 120, manual },
+      });
+    const r = resumoClinico([tapa(60, false), tapa(90, true)], hoje);
+    expect(r.tapaOlho).toMatchObject({ cumpridos: 1, manualMin: 90 });
   });
 });
 

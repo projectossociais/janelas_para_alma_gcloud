@@ -585,10 +585,16 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   pano; cada motivo com pontos mais pequenos e claros e menos folga. Desenha só quando o
   dedo mexe (sem animação contínua). `unidade = "mm"` (afastamento médio do dedo ao traço).
 - **Caderneta do Tapa-olho (2026-10-21): as horas de tapa-olho, para o médico**
-  (`lib/visao/caderneta.ts`). Não é para olhar para o ecrã: conta o tempo e pergunta de 15
-  em 15 min se o tapa-olho continua posto -- só conta o tempo confirmado. O período em curso
-  sobrevive a fechar a página (localStorage). Um cromo por dia cumprido.
-  `sinais.modo = "tapa_olho_horas"`, `segundos_activos` = tempo confirmado; **não conta para
+  (`lib/visao/caderneta.ts`). Não é para olhar para o ecrã: Pôr quando se põe o tapa-olho,
+  Tirar quando se tira, e o tempo pode ser feito aos bocados (cada bocado é uma sessão). O
+  bocado em curso sobrevive a fechar a página (localStorage). Um cromo por dia cumprido.
+  **Versão 2 (2026-11-01):** o tempo receitado escolhe-se na primeira vez -- 2 h (moderada) ou
+  6 h (grave), como nos estudos PEDIG, ou outro em passos de 30 min; a pergunta de 15 em 15
+  min "continua posto?" é opcional e vem desligada; num bocado de 30 min ou mais, ao tirar
+  pergunta-se "tirou-o agora?" (`sinais.tirado_antes_min`); o tempo feito sem o telemóvel
+  acrescenta-se à mão (`sinais.manual = true`), à parte no relatório (`manualMin`). A
+  versão 1 perguntava sempre e só contava o tempo confirmado.
+  `sinais.modo = "tapa_olho_horas"`, `segundos_activos` = tempo que conta; **não conta para
   a dose de treino** (`contaParaDose`), só para a adesão no relatório.
 - **Pontes de Fusão (2026-10-20): fusão verificada pelo estímulo, não declarada.** Dois anéis
   em anáglifo afastam-se (convergência: imagem do olho esquerdo para a direita); dentro, um
