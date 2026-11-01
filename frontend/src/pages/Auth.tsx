@@ -20,6 +20,7 @@ import { useAuth, PROVINCES, UserRole, ROLE_LABEL } from "@/contexts/AuthContext
 import { authApi, mensagemDeErroApi } from "@/lib/apiClient";
 import { erroDePasswordFraca } from "@/lib/validarPassword";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
+import { estaNaAppNativa } from "@/lib/appNativa";
 import { useTranslation } from "react-i18next";
 import { localizar } from "@/i18n/rotas";
 
@@ -209,7 +210,7 @@ const Auth = () => {
             <CardDescription>{t("Auth.entreOuCrieA")}</CardDescription>
           </CardHeader>
           <CardContent>
-            {import.meta.env.VITE_GOOGLE_CLIENT_ID && (
+            {import.meta.env.VITE_GOOGLE_CLIENT_ID && !estaNaAppNativa() && (
               <div className="mb-6 space-y-4">
                 <GoogleSignInButton onCredential={handleGoogleCredential} />
                 {googleLoading && (

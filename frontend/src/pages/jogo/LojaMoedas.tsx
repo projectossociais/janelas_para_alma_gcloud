@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
+import BotaoCompraNaLoja from "@/components/compras/BotaoCompraNaLoja";
 import CarteiraJogo from "@/components/jogo/CarteiraJogo";
 import CheckoutTransferencia from "@/components/jogo/CheckoutTransferencia";
 import PedidosLojaLista from "@/components/jogo/PedidosLojaLista";
@@ -22,6 +23,7 @@ import { useCarteiraJogo } from "@/contexts/CarteiraJogoContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { jogoApi, mensagemDeErroApi, type LojaMoedas as Loja, type PacoteMoedas, type PedidoLoja } from "@/lib/apiClient";
 import { localizar } from "@/i18n/rotas";
+import { comprasPelaLoja, esperarPelaApi, produtoMoedas } from "@/lib/comprasLoja";
 import { comprovativoValido, pagarComTransferencia } from "@/lib/pagamentoLoja";
 import { cn } from "@/lib/utils";
 import { formatarKz } from "./jogoConfig";
@@ -46,7 +48,7 @@ const formatarMoedas = (valor: number) => valor.toString().replace(/\B(?=(\d{3})
 const LojaMoedas = () => {
   const { t } = useTranslation();
   const { profile } = useProfile();
-  const { definirPerfil } = useCarteiraJogo();
+  const { perfil, definirPerfil } = useCarteiraJogo();
   const [loja, setLoja] = useState<Loja | null>(null);
   const [aCarregar, setACarregar] = useState(true);
   const [erro, setErro] = useState(false);
@@ -85,7 +87,17 @@ const LojaMoedas = () => {
     if (profile) void carregarPedidos();
   }, [profile, carregarPedidos]);
 
-  const simulado = !!loja?.pagamento_simulado;
+  // Na app nativa, os Kwanzas dão lugar à compra pela App Store / Google Play.
+  const naLoja = comprasPelaLoja();
+  const simulado = !!loja?.pagamento_simulado && !naLoja;
+
+  /** Depois de pagar na loja: espera que a API credite (webhook). */
+  const confirmarCompraNaLoja = async (pacote: PacoteMoedas) => {
+    const antes = perfil?.moedas ?? 0;
+    const novo = await esperarPelaApi(jogoApi.obterPerfil, (p) => p.moedas >= antes + pacote.total_moedas);
+    if (novo) definirPerfil(novo);
+    return novo !== null;
+  };
 
   const fecharCompra = () => {
     if (aComprar) return;
@@ -184,7 +196,11 @@ const LojaMoedas = () => {
               >
                 <Info className="w-5 h-5 shrink-0 text-gold" />
                 <p className="text-muted-foreground">
-                  {simulado ? t("LojaMoedas.avisoPagamentoSimulado") : t("LojaMoedas.avisoTransferencia")}
+                  {naLoja
+                    ? t("ComprasLoja.avisoLoja")
+                    : simulado
+                      ? t("LojaMoedas.avisoPagamentoSimulado")
+                      : t("LojaMoedas.avisoTransferencia")}
                 </p>
               </div>
 
@@ -216,7 +232,14 @@ const LojaMoedas = () => {
                         <Sparkles className="w-3.5 h-3.5 inline -mt-0.5 mr-1" />
                         {t("LojaMoedas.bonus", { quantidade: formatarMoedas(pacote.bonus) })}
                       </p>
-                      {profile ? (
+                      {profile && naLoja ? (
+                        <BotaoCompraNaLoja
+                          produtoId={produtoMoedas(pacote.id)}
+                          confirmarNaApi={() => confirmarCompraNaLoja(pacote)}
+                          mensagemSucesso={t("ComprasLoja.compraConcluida", { quantidade: `${quantidade} 🪙` })}
+                          className="mt-auto bg-gold text-navy hover:bg-gold/90"
+                        />
+                      ) : profile ? (
                         <Button
                           className="w-full mt-auto bg-gold text-navy hover:bg-gold/90"
                           onClick={() => setPacoteEscolhido(pacote)}
@@ -227,7 +250,7 @@ const LojaMoedas = () => {
                         </Button>
                       ) : (
                         <div className="w-full mt-auto space-y-2">
-                          <p className="font-bold text-foreground">{formatarKz(pacote.preco_kz)}</p>
+                          {!naLoja && <p className="font-bold text-foreground">{formatarKz(pacote.preco_kz)}</p>}
                           <Button asChild variant="outline" className="w-full">
                             <Link to={localizar("/auth")}>{t("LojaMoedas.entrarParaComprar")}</Link>
                           </Button>
@@ -238,7 +261,7 @@ const LojaMoedas = () => {
                 })}
               </div>
 
-              {profile && <PedidosLojaLista pedidos={pedidos} />}
+              {profile && !naLoja && <PedidosLojaLista pedidos={pedidos} />}
             </>
           )}
         </div>

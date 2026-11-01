@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
 import CarteiraJogo from "@/components/jogo/CarteiraJogo";
+import BotaoCompraNaLoja from "@/components/compras/BotaoCompraNaLoja";
 import CheckoutTransferencia from "@/components/jogo/CheckoutTransferencia";
 import PedidosLojaLista from "@/components/jogo/PedidosLojaLista";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ import {
   type PedidoLoja,
 } from "@/lib/apiClient";
 import { localizar } from "@/i18n/rotas";
+import { comprasPelaLoja, esperarPelaApi, produtoDiamantes } from "@/lib/comprasLoja";
 import { comprovativoValido, pagarComTransferencia } from "@/lib/pagamentoLoja";
 import { cn } from "@/lib/utils";
 import { formatarKz } from "./jogoConfig";
@@ -91,7 +93,9 @@ const LojaDiamantes = () => {
     if (profile) void carregarPedidos();
   }, [profile, carregarPedidos]);
 
-  const simulado = !!loja?.pagamento_simulado;
+  // Na app nativa, os Kwanzas dão lugar à compra pela App Store / Google Play.
+  const naLoja = comprasPelaLoja();
+  const simulado = !!loja?.pagamento_simulado && !naLoja;
   // Kwanzas reais: transferência + comprovativo, como o Premium.
   const checkoutTransferencia = compra?.metodo === "kwanzas" && !simulado;
   const moedas = perfil?.moedas ?? 0;
@@ -112,6 +116,14 @@ const LojaDiamantes = () => {
     await pagarComTransferencia(pacote.id, ficheiro, "diamantes");
     toast.success(t("LojaDiamantes.pedidoEnviado", { quantidade: pacote.total_diamantes }));
     void carregarPedidos();
+  };
+
+  /** Depois de pagar na loja: espera que a API credite (webhook). */
+  const confirmarCompraNaLoja = async (pacote: PacoteDiamantes) => {
+    const antes = perfil?.diamantes ?? 0;
+    const novo = await esperarPelaApi(jogoApi.obterPerfil, (p) => p.diamantes >= antes + pacote.total_diamantes);
+    if (novo) definirPerfil(novo);
+    return novo !== null;
   };
 
   const confirmarCompra = async () => {
@@ -197,7 +209,11 @@ const LojaDiamantes = () => {
               >
                 <Info className="w-5 h-5 shrink-0 text-gold" />
                 <p className="text-muted-foreground">
-                  {simulado ? t("LojaDiamantes.avisoPagamentoSimulado") : t("LojaDiamantes.avisoDuasFormas")}
+                  {naLoja
+                    ? t("ComprasLoja.avisoLoja")
+                    : simulado
+                      ? t("LojaDiamantes.avisoPagamentoSimulado")
+                      : t("LojaDiamantes.avisoDuasFormas")}
                 </p>
               </div>
 
@@ -231,17 +247,28 @@ const LojaDiamantes = () => {
                       </p>
                       {profile ? (
                         <div className="w-full mt-auto space-y-2">
-                          <Button
-                            className="w-full bg-teal text-teal-foreground hover:bg-teal/90"
-                            onClick={() => setCompra({ pacote, metodo: "kwanzas" })}
-                            aria-label={t("LojaDiamantes.comprarPacote", {
-                              quantidade: pacote.total_diamantes,
-                              preco: formatarKz(pacote.preco_kz),
-                            })}
-                          >
-                            <Banknote className="w-4 h-4" />
-                            {formatarKz(pacote.preco_kz)}
-                          </Button>
+                          {naLoja ? (
+                            <BotaoCompraNaLoja
+                              produtoId={produtoDiamantes(pacote.id)}
+                              confirmarNaApi={() => confirmarCompraNaLoja(pacote)}
+                              mensagemSucesso={t("ComprasLoja.compraConcluida", {
+                                quantidade: `${pacote.total_diamantes} 💎`,
+                              })}
+                              className="bg-teal text-teal-foreground hover:bg-teal/90"
+                            />
+                          ) : (
+                            <Button
+                              className="w-full bg-teal text-teal-foreground hover:bg-teal/90"
+                              onClick={() => setCompra({ pacote, metodo: "kwanzas" })}
+                              aria-label={t("LojaDiamantes.comprarPacote", {
+                                quantidade: pacote.total_diamantes,
+                                preco: formatarKz(pacote.preco_kz),
+                              })}
+                            >
+                              <Banknote className="w-4 h-4" />
+                              {formatarKz(pacote.preco_kz)}
+                            </Button>
+                          )}
                           {precoMoedas !== undefined && (
                             <Button
                               variant="outline"
@@ -265,7 +292,7 @@ const LojaDiamantes = () => {
                         </div>
                       ) : (
                         <div className="w-full mt-auto space-y-2">
-                          <p className="font-bold text-foreground">{formatarKz(pacote.preco_kz)}</p>
+                          {!naLoja && <p className="font-bold text-foreground">{formatarKz(pacote.preco_kz)}</p>}
                           {precoMoedas !== undefined && (
                             <p className="text-sm font-semibold text-gold">
                               {t("LojaDiamantes.ouPrecoMoedas", { moedas: formatarMoedas(precoMoedas) })}
@@ -281,7 +308,7 @@ const LojaDiamantes = () => {
                 })}
               </div>
 
-              {profile && <PedidosLojaLista pedidos={pedidos} />}
+              {profile && !naLoja && <PedidosLojaLista pedidos={pedidos} />}
             </>
           )}
         </div>
