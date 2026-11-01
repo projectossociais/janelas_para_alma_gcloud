@@ -230,6 +230,16 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
             condicoes={textoCondicoes(t, r.vergencia.condicoes)}
           />
         )}
+        {r.gaiola && (
+          <Medida
+            titulo={t("Visao.clinicoGaiola")}
+            exercicio={nomeDoExercicio(ID_CONVERGENCIA)}
+            linhas={recenteEPrimeira(t, r.gaiola, (v) =>
+              [rotuloRoturaRecuperacao(v.gaiola), v.supressao && t("Visao.clinicoGaiolaSupressao")].filter(Boolean).join("; "),
+            )}
+            condicoes={textoCondicoes(t, r.gaiola.condicoes)}
+          />
+        )}
         {r.pesca && (
           <Medida
             titulo={t("Visao.clinicoPesca")}
@@ -345,6 +355,7 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
           {r.luz && <p>{t("Visao.clinicoMetodoLuz")}</p>}
           {r.fio && <p>{t("Visao.clinicoMetodoFio")}</p>}
           {r.agulha && <p>{t("Visao.clinicoMetodoAgulha")}</p>}
+          {r.gaiola && <p>{t("Visao.clinicoMetodoGaiola")}</p>}
           {r.samakaka && <p>{t("Visao.clinicoMetodoSamakaka")}</p>}
           {r.tapaOlho && <p>{t("Visao.clinicoMetodoTapa")}</p>}
           {r.kianda && <p>{t("Visao.clinicoMetodoKianda")}</p>}

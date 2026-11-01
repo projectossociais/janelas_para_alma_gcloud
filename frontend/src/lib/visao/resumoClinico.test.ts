@@ -281,6 +281,24 @@ describe("Desafio da Agulha", () => {
   });
 });
 
+describe("Olho Mágico, cartão do pássaro e da gaiola", () => {
+  it("à parte da vergência medida, com a supressão", () => {
+    const gaiola = (dias: number, rotura: number, fusao: string) =>
+      sessao({
+        exercicio_id: "convergence",
+        created_at: haDias(dias),
+        olho: "ambos",
+        limiar: null,
+        unidade: null,
+        sinais: { modo: "fusao_gaiola", versao: 2, fusao, gaiola: { rampas: 1, semFusao: 0, rotura, recuperacao: 6, limiteEcra: false, maximo: 25 } },
+      });
+    const r = resumoClinico([gaiola(3, 10, "ambos"), gaiola(0, 14, "supressao")], hoje);
+    expect(r.vergencia).toBeNull();
+    expect(r.gaiola?.recente.valor).toMatchObject({ gaiola: { rotura: 14 }, supressao: true });
+    expect(r.gaiola?.primeira?.valor).toMatchObject({ gaiola: { rotura: 10 }, supressao: false });
+  });
+});
+
 describe("Caderneta do Tapa-olho", () => {
   it("horas de tapa-olho na semana, sem entrar nos minutos de treino", () => {
     const tapa = (dias: number, minutos: number) =>

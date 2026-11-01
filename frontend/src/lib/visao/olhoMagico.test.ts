@@ -14,6 +14,7 @@ import {
   sentidoDoModo,
 } from "./olhoMagico";
 import { iniciarRampa, responderRampa, separacaoMm } from "./pontes";
+import { diasSeguidosAPrimeira, fusaoDaSessao, responderGaiola } from "./olhoMagico";
 
 /** Gerador determinista (Park-Miller), para os testes não dependerem da sorte. */
 const rngFixo = (semente = 7) => {
@@ -131,5 +132,40 @@ describe("modo guardado", () => {
     guardarModoOlhoMagico("relaxar");
     expect(lerModoOlhoMagico()).toBe("relaxar");
     window.localStorage.clear();
+  });
+});
+
+describe("cartão do pássaro e da gaiola", () => {
+  it("rampa declarada: uma resposta chega para a rotura e para a recuperação", () => {
+    let e = iniciarRampa(5);
+    e = responderGaiola(e, true);
+    e = responderGaiola(e, true);
+    e = responderGaiola(e, false);
+    expect(e).toMatchObject({ fase: "descer", rotura: 2, indice: 1 });
+    e = responderGaiola(e, false);
+    e = responderGaiola(e, true);
+    expect(e).toMatchObject({ terminado: true, recuperacao: 0 });
+  });
+
+  it("chegar ao último degrau sem sair é o limite do ecrã", () => {
+    let e = iniciarRampa(2);
+    e = responderGaiola(responderGaiola(e, true), true);
+    expect(e).toMatchObject({ terminado: true, atingiuLimite: true, rotura: null });
+  });
+
+  it("a fusão da sessão é a pior que se viu", () => {
+    expect(fusaoDaSessao([])).toBeNull();
+    expect(fusaoDaSessao(["dois", "quatro"])).toBe("nao");
+    expect(fusaoDaSessao(["dois", "dentro"])).toBe("ambos");
+    expect(fusaoDaSessao(["dentro", "falta"])).toBe("supressao");
+  });
+
+  it("dias seguidos à primeira, até hoje", () => {
+    const hoje = new Date(2026, 10, 1, 12);
+    const s = (dia: number, aPrimeira = true) => ({ created_at: new Date(2026, 10, dia, 10).toISOString(), sinais: { modo: "fusao_gaiola", a_primeira: aPrimeira } });
+    expect(diasSeguidosAPrimeira([s(0), s(1)], hoje)).toBe(2);
+    expect(diasSeguidosAPrimeira([s(0, false), s(1)], hoje)).toBe(1);
+    expect(diasSeguidosAPrimeira([s(0)], hoje)).toBe(0);
+    expect(diasSeguidosAPrimeira([s(0)], hoje, true)).toBe(2);
   });
 });

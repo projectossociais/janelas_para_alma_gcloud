@@ -17,9 +17,21 @@
  *
  * A escada de rotura e recuperação é a de `pontes.ts`.
  *
+ * Versão 2 (2026-11-01): começa-se pelo cartão do pássaro e da gaiola, o
+ * cartão de fusão clássico da terapia visual. Um pássaro de um lado e uma
+ * gaiola do outro; com o dedo como guia, os olhos cruzam-se e, no meio, o
+ * pássaro aparece dentro da gaiola. O sol só existe no cartão do pássaro e a
+ * nuvem só no da gaiola: se falta um deles, um olho está a "desligar"
+ * (supressão). A resposta é declarada -- "continua dentro" / "saiu da
+ * gaiola" -- e a sessão grava-se como auto-avaliação (`modo =
+ * "fusao_gaiola"`, sem unidade), fora da medida objectiva. Os quadros de
+ * pano passam a nível seguinte, recomendado depois de o pássaro entrar à
+ * primeira em `DIAS_PARA_PANO` dias seguidos.
+ *
  * Funções puras -- o desenho vive em `pages/exercises/OlhoMagico.tsx`.
  */
 import type { Rng } from "./escada";
+import { diaLocal } from "./progresso";
 import { NIVEIS_DELTA, separacaoMm, type EstadoRampa, type Sentido } from "./pontes";
 
 export type FormaPano = "peixe" | "estrela" | "coracao" | "casa";
@@ -132,14 +144,14 @@ export function gerarParPano(
  * mais perto que os quadros podem estar sem se tocarem (arredondado ao meio
  * Δ acima); depois os degraus das Pontes que ficam pelo menos 1 Δ acima.
  */
-export function niveisOlhoMagico(sentido: Sentido, distanciaMm: number): number[] {
-  const minimo = Math.ceil((((QUADRO_PANO_MM + FOLGA_PANO_MM) * 100) / distanciaMm) * 2) / 2;
+export function niveisOlhoMagico(sentido: Sentido, distanciaMm: number, ladoMm = QUADRO_PANO_MM): number[] {
+  const minimo = Math.ceil((((ladoMm + FOLGA_PANO_MM) * 100) / distanciaMm) * 2) / 2;
   return [minimo, ...NIVEIS_DELTA[sentido].filter((d) => d >= minimo + 1)];
 }
 
 /** Degraus que cabem num palco com esta largura (mm). */
-export const niveisQueCabem = (niveis: readonly number[], distanciaMm: number, larguraPalcoMm: number): number[] =>
-  niveis.filter((d) => separacaoMm(d, distanciaMm) + QUADRO_PANO_MM + 2 * MARGEM_PANO_MM <= larguraPalcoMm);
+export const niveisQueCabem = (niveis: readonly number[], distanciaMm: number, larguraPalcoMm: number, ladoMm = QUADRO_PANO_MM): number[] =>
+  niveis.filter((d) => separacaoMm(d, distanciaMm) + ladoMm + 2 * MARGEM_PANO_MM <= larguraPalcoMm);
 
 /**
  * Depois de rodar o telemóvel cabem mais degraus: a rampa continua um degrau
@@ -149,6 +161,84 @@ export const niveisQueCabem = (niveis: readonly number[], distanciaMm: number, l
 export function alargarRampa(e: EstadoRampa, novoTotal: number): EstadoRampa {
   if (e.terminado || e.fase !== "subir" || novoTotal <= e.indice + 1) return e;
   return { ...e, total: novoTotal, indice: e.indice + 1, errosSeguidos: 0 };
+}
+
+// --- Cartão do pássaro e da gaiola (versão 2) --------------------------------
+
+export type NivelOlhoMagico = "gaiola" | "pano";
+export const MODO_GAIOLA = "fusao_gaiola";
+/** Lado de cada cartão (pássaro, gaiola), no ecrã: maior do que o pano, para os desenhos se lerem. */
+export const CARTAO_GAIOLA_MM = 22;
+/** Dias seguidos com o pássaro a entrar à primeira para recomendar os quadros de pano. */
+export const DIAS_PARA_PANO = 3;
+
+/** O que se vê no meio: juntou com os dois olhos, juntou mas falta o sol ou a nuvem, dois desenhos, quatro. */
+export type RespostaGaiola = "dentro" | "falta" | "dois" | "quatro";
+export const RESPOSTAS_GAIOLA: readonly RespostaGaiola[] = ["dentro", "falta", "dois", "quatro"];
+/** Juntou as imagens (com ou sem supressão): pode começar a afastar. */
+export const juntou = (r: RespostaGaiola): boolean => r === "dentro" || r === "falta";
+
+/**
+ * Uma resposta na rampa da gaiola. A resposta é declarada (não há palpites
+ * ao acaso como na forma escondida), por isso basta uma: a subir, "saiu da
+ * gaiola" é a rotura e começa a descer; a descer, "voltou a entrar" é a
+ * recuperação. Usa o `EstadoRampa` das Pontes, para o resumo ser o mesmo.
+ */
+export function responderGaiola(e: EstadoRampa, dentro: boolean): EstadoRampa {
+  if (e.terminado) return e;
+  if (e.fase === "subir") {
+    if (dentro)
+      return e.indice >= e.total - 1 ? { ...e, atingiuLimite: true, terminado: true } : { ...e, indice: e.indice + 1 };
+    return { ...e, fase: "descer", rotura: e.indice, indice: Math.max(0, e.indice - 1) };
+  }
+  if (dentro) return { ...e, recuperacao: e.indice, terminado: true };
+  return e.indice === 0 ? { ...e, terminado: true } : { ...e, indice: e.indice - 1 };
+}
+
+/** Como correu a fusão na sessão: o pior que se viu. */
+export function fusaoDaSessao(respostas: readonly RespostaGaiola[]): "ambos" | "supressao" | "nao" | null {
+  if (!respostas.length) return null;
+  if (!respostas.some(juntou)) return "nao";
+  return respostas.includes("falta") ? "supressao" : "ambos";
+}
+
+interface SessaoGaiola {
+  created_at: string;
+  sinais: Record<string, unknown> | null;
+}
+
+/**
+ * Dias seguidos, até hoje, em que o pássaro entrou na gaiola à primeira
+ * (`sinais.a_primeira`). `hojeAPrimeira` junta a sessão em curso.
+ */
+export function diasSeguidosAPrimeira(sessoes: readonly SessaoGaiola[], hoje: Date, hojeAPrimeira = false): number {
+  const dias = new Set(sessoes.filter((s) => s.sinais?.modo === MODO_GAIOLA && s.sinais.a_primeira === true).map((s) => diaLocal(new Date(s.created_at))));
+  if (hojeAPrimeira) dias.add(diaLocal(hoje));
+  let n = 0;
+  const d = new Date(hoje);
+  while (dias.has(diaLocal(d))) {
+    n++;
+    d.setDate(d.getDate() - 1);
+  }
+  return n;
+}
+
+const CHAVE_NIVEL = "jpa.visao.olhoMagico.nivel";
+
+export function lerNivelOlhoMagico(): NivelOlhoMagico {
+  try {
+    return window.localStorage.getItem(CHAVE_NIVEL) === "pano" ? "pano" : "gaiola";
+  } catch {
+    return "gaiola";
+  }
+}
+
+export function guardarNivelOlhoMagico(n: NivelOlhoMagico): void {
+  try {
+    window.localStorage.setItem(CHAVE_NIVEL, n);
+  } catch {
+    // armazenamento bloqueado: começa-se pela gaiola
+  }
 }
 
 const CHAVE_MODO = "jpa.visao.olhoMagico.modo";

@@ -102,8 +102,11 @@ o médico por **link temporário partilhado pelo pai** (nunca envio automático)
 - [x] **Sem óculos primeiro** (2026-10-21, pedido do dono do projecto: a maior parte das
       famílias não tem óculos 3D). **Kianda com tapa-olho** (pesca a cores, em graus) substitui
       o Treino de Anéis; **Olho Mágico** (fusão livre, em Δ) passa a ser o `convergence`, com
-      as Pontes como opção com óculos. **A validar:** se as crianças aprendem a juntar as
-      imagens sem óculos (e com que idade), a concordância do Olho Mágico com a régua de
+      as Pontes como opção com óculos. Desde 2026-11-01 começa no cartão do pássaro e da
+      gaiola (dedo-guia animado, rotura declarada, sol e nuvem para a supressão); os quadros de
+      pano passam a nível seguinte. **A validar:** se as crianças aprendem a juntar as
+      imagens sem óculos (e com que idade), se a rotura declarada no cartão concorda com a
+      dos quadros de pano, a concordância do Olho Mágico com a régua de
       prismas, e a dose do Kianda com tapa-olho.
 - [x] **Seis exercícios novos, todos diferentes e sem óculos** (2026-10-21, pedido do dono do
       projecto: "não o mesmo teste com outra camada"). Os ids ficam; muda o exercício.

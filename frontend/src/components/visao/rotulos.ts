@@ -129,6 +129,11 @@ export const limiarFormatado = (
       : limiar
         ? i18n.t("Visao.luzLimiarCurto", { delta: limiar })
         : i18n.t("Visao.luzSemDesvioCurto");
+  // Olho Mágico, cartão do pássaro e da gaiola (id `convergence`, desde 2026-11-01): rotura declarada.
+  if (sinais?.modo === "fusao_gaiola")
+    return eResumoSentido(sinais.gaiola) && sinais.gaiola.rampas > 0
+      ? i18n.t("Visao.gaiolaLimiarCurto", { valores: rotuloRoturaRecuperacao(sinais.gaiola) })
+      : i18n.t("Visao.gaiolaSemRampa");
   if (sinais && typeof sinais.astigmatismo === "boolean")
     return sinais.astigmatismo ? i18n.t("Visao.astigmatismoSinalCurto") : i18n.t("Visao.astigmatismoSemSinalCurto");
   if (unidade === "dioptrias_prismaticas") return rotuloPontes(sinais?.pontes) ?? (limiar === null ? "—" : rotuloDelta(limiar));
