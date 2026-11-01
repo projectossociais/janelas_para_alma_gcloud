@@ -231,9 +231,21 @@ describe("Fio de Missangas", () => {
     const fio = (dias: number, cm: number | null, supressao: boolean) =>
       sessao({ exercicio_id: "cerebro", created_at: haDias(dias), olho: "ambos", limiar: cm, unidade: "cm", sinais: { modo: "fio_missangas", supressao, x_no_sitio: 2 } });
     const r = resumoClinico([fio(10, 12, true), fio(0, 7, false)], hoje);
-    expect(r.fio?.recente.valor).toEqual({ ppcCm: 7, supressao: false, xNoSitio: 2 });
-    expect(r.fio?.primeira?.valor).toEqual({ ppcCm: 12, supressao: true, xNoSitio: 2 });
+    expect(r.fio?.recente.valor).toEqual({ ppcCm: 7, supressao: false, xNoSitio: 2, recuperacaoCm: null, cansaco: false });
+    expect(r.fio?.primeira?.valor).toEqual({ ppcCm: 12, supressao: true, xNoSitio: 2, recuperacaoCm: null, cansaco: false });
     expect(r.contraste).toBeNull();
+  });
+
+  it("versão 2 (só o telemóvel): recuperação e cansaço", () => {
+    const s2 = sessao({
+      exercicio_id: "cerebro",
+      created_at: haDias(0),
+      olho: "ambos",
+      limiar: 8.5,
+      unidade: "cm",
+      sinais: { modo: "fio_missangas", versao: 2, rotura_cm: [7, 8.5, 10], recuperacao_media_cm: 11, cansaco: true },
+    });
+    expect(resumoClinico([s2], hoje).fio?.recente.valor).toEqual({ ppcCm: 8.5, supressao: false, xNoSitio: null, recuperacaoCm: 11, cansaco: true });
   });
 });
 

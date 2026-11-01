@@ -142,6 +142,8 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
   const fio = (v: ValorFio) =>
     [
       v.ppcCm === null ? t("Visao.clinicoFioPpcAlem") : t("Visao.clinicoFioPpc", { cm: formatarDecimal(v.ppcCm, v.ppcCm % 1 ? 1 : 0) }),
+      v.recuperacaoCm !== null && t("Visao.clinicoFioRecuperacao", { cm: formatarDecimal(v.recuperacaoCm, v.recuperacaoCm % 1 ? 1 : 0) }),
+      v.cansaco && t("Visao.clinicoFioCansaco"),
       v.xNoSitio !== null && t("Visao.clinicoFioX", { n: v.xNoSitio }),
       v.supressao && t("Visao.clinicoFioSupressao"),
     ]

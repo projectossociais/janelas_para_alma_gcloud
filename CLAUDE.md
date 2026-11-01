@@ -555,10 +555,16 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   vê); ~15 Δ por mm de descentração (Hirschberg). Depois tapa-se um olho de cada vez e
   diz-se para onde o outro se mexeu. `unidade = "dioptrias_prismaticas"`, `limiar` = maior
   desvio, `sinais.modo = "luz_olhos"`, mais o diário de 7 dias (frequência e quando).
-- **Fio de Missangas (2026-10-21): cordão de Brock com um fio e missangas de casa**
-  (`lib/visao/fioMissangas.ts`). O ecrã pergunta, em cada missanga, onde os fios se cruzam
-  ("só vejo um fio" = supressão); no fim o telemóvel é a régua do ponto próximo de
-  convergência (2 medições, `unidade = "cm"`).
+- **Fio de Missangas (versão 2, 2026-10-31): o ponto próximo de convergência só com o
+  telemóvel** (`lib/visao/fioMissangas.ts`). O telemóvel fica deitado, com a ponta de baixo
+  encostada ao nariz (régua RAF); uma missanga desce pelo fio desenhado no ecrã a 1 cm/s e
+  a pessoa toca quando a vê a dobrar (rotura) e quando volta a ser uma (recuperação). Três
+  rondas; `limiar` = média das roturas, `unidade = "cm"`, `sinais.versao = 2`
+  (`rotura_cm`, `recuperacao_cm`, `cansaco`, `alem_do_ecra`, `inicio_cm`). A distância conta
+  do fundo da página (pede ecrã inteiro; no iPhone a barra do Safari soma um desvio) -- a
+  Fase 0 compara com a régua RAF. A versão 1 (2026-10-21, cordão de Brock com fio e
+  missangas a sério; "só vejo um fio" = supressão) saiu por ser difícil de perceber; as
+  sessões antigas ainda se lêem no relatório (`x_no_sitio`, `supressao`).
 - **Desafio da Agulha (2026-10-21): profundidade num jogo de família** (`lib/visao/agulha.ts`).
   Dois lápis ponta com ponta, ou palhinha na garrafa; por jogador, 3 rondas com os dois
   olhos e 3 com um tapado; o telemóvel é árbitro e cronómetro. Só o jogador 1 é avaliado

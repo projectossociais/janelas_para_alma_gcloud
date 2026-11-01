@@ -109,8 +109,9 @@ o médico por **link temporário partilhado pelo pai** (nunca envio automático)
       projecto: "não o mesmo teste com outra camada"). Os ids ficam; muda o exercício.
       **Olhos de Palanca ao longe** (`figure8`, "E" a 3 m, a criança aponta e o adulto desliza
       o dedo; as barras de Flom ao perto saíram), **Luz nos Olhos** (`relax`, reflexo da luz e
-      teste de tapar feitos pelos pais, em Δ), **Fio de Missangas** (`cerebro`, cordão de
-      Brock e ponto próximo de convergência em cm), **Desafio da Agulha** (`estereopsia`, jogo
+      teste de tapar feitos pelos pais, em Δ), **Fio de Missangas** (`cerebro`, ponto próximo de
+      convergência em cm só com o telemóvel deitado no nariz -- desde 2026-10-31; antes,
+      cordão de Brock com fio a sério), **Desafio da Agulha** (`estereopsia`, jogo
       de família, dois olhos contra um; o estereograma fica como opção com óculos),
       **Pintar o Samakaka** (`sacadas-convergencia`, seguir pontinhos com o olho fraco, em mm)
       e **Caderneta do Tapa-olho** (`flexibilidade-acomodativa`, horas de tapa-olho

@@ -108,12 +108,18 @@ export interface ValorAgulha {
   vantagem: string;
 }
 
-/** Fio de Missangas: ponto mais próximo de convergência e os fios. */
+/** Fio de Missangas: ponto mais próximo de convergência, recuperação e (versão 1) os fios. */
 export interface ValorFio {
-  /** cm; `null` = mais longe do que a régua. */
+  /** cm; `null` = mais longe do que a régua (ou o ecrã). */
   ppcCm: number | null;
+  /** Versão 1 (cordão de Brock): algum fio desapareceu. */
   supressao: boolean;
+  /** Versão 1: missangas com o X no sítio. */
   xNoSitio: number | null;
+  /** Versão 2: onde voltou a ser uma (média, cm). */
+  recuperacaoCm: number | null;
+  /** Versão 2: a última rotura ficou bem mais longe do que a primeira. */
+  cansaco: boolean;
 }
 
 /** Luz nos Olhos (exame feito pelos pais): desvio pelo reflexo, teste de tapar e diário. */
@@ -344,7 +350,13 @@ function lerAgulha(s: S): ValorAgulha | undefined {
 
 function lerFio(s: S): ValorFio | undefined {
   if (s.sinais?.modo !== "fio_missangas") return undefined;
-  return { ppcCm: numero(s.limiar), supressao: s.sinais.supressao === true, xNoSitio: numero(s.sinais.x_no_sitio) };
+  return {
+    ppcCm: numero(s.limiar),
+    supressao: s.sinais.supressao === true,
+    xNoSitio: numero(s.sinais.x_no_sitio),
+    recuperacaoCm: numero(s.sinais.recuperacao_media_cm),
+    cansaco: s.sinais.cansaco === true,
+  };
 }
 
 function adesao(sessoes: readonly S[], hoje: Date): Adesao {

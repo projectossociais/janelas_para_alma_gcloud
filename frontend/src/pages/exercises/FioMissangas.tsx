@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
 import BaseExercise from "@/components/exercises/BaseExercise";
 import { BotaoContinuar, EcraPasso } from "@/components/visao/EcraPasso";
 import PaginaExercicio from "@/components/visao/PaginaExercicio";
@@ -10,15 +9,16 @@ import { useCalibracao, useRegistoSessao } from "@/components/visao/hooks";
 import { formatarDecimal } from "@/i18n/formatar";
 import { PX_POR_MM_NOMINAL } from "@/lib/visao/calibracao";
 import {
-  MEDICOES_PPC,
   MISSANGAS,
-  RESPOSTAS_FIO,
-  SEGUNDOS_SEGURAR,
-  ZERO_REGUA_PX,
-  cmNaRegua,
-  linhasDoFio,
+  NARIZ_MM,
+  RONDAS,
+  inicioDaMissanga,
+  meioCm,
+  posicaoDaMissanga,
   resumirFio,
-  type RespostaFio,
+  roturaAlem,
+  yDoCm,
+  type RondaFio,
 } from "@/lib/visao/fioMissangas";
 import { ID_CONTRASTE } from "@/lib/visao/ids";
 import { sinalSonoro } from "@/lib/visao/voz";
@@ -26,96 +26,142 @@ import { sinalSonoro } from "@/lib/visao/voz";
 /** O id histórico `cerebro` (antes, Teste de Contraste). */
 const EXERCICIO_ID = ID_CONTRASTE;
 
-type Etapa = "preparar" | "calibracao" | "missanga" | "regua" | "resultado";
+type Etapa = "preparar" | "calibracao" | "medir" | "resultado";
 
-/** O fio da porta ao nariz, com as três missangas, para mostrar como montar. */
-const DesenhoFio = () => {
+/** Pausa entre rondas, com a missanga parada no início. */
+const PAUSA_MS = 1200;
+/** De quanto em quanto tempo a missanga anda (≈ 30 imagens por segundo). */
+const PASSO_MS = 33;
+/** Logo a seguir a "ficou a dobrar", um segundo toque é o mesmo toque repetido, não "voltou a ser uma". */
+const TOQUE_DUPLO_MS = 500;
+
+const cmTexto = (cm: number) => `${formatarDecimal(cm, cm % 1 ? 1 : 0)} cm`;
+
+/** De lado: a cabeça, o telemóvel deitado com a ponta encostada ao nariz e o olhar na missanga. */
+const DesenhoComoSegurar = () => {
   const { t } = useTranslation();
-  const ref = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    const g = ref.current?.getContext("2d");
-    if (!g) return;
-    g.fillStyle = "#eef6ef";
-    g.fillRect(0, 0, 600, 220);
-    g.fillStyle = "#8a6d4b";
-    g.fillRect(560, 20, 22, 190);
-    g.fillStyle = "#555555";
-    g.fillRect(548, 104, 24, 8);
-    g.fillStyle = "#f0c9a0";
-    g.beginPath();
-    g.arc(70, 108, 46, 0, Math.PI * 2);
-    g.fill();
-    g.beginPath();
-    g.moveTo(112, 104);
-    g.lineTo(130, 112);
-    g.lineTo(110, 120);
-    g.fill();
-    g.fillStyle = "#222222";
-    g.beginPath();
-    g.arc(92, 96, 4, 0, Math.PI * 2);
-    g.fill();
-    g.strokeStyle = "#6b5a45";
-    g.lineWidth = 2.5;
-    g.beginPath();
-    g.moveTo(130, 112);
-    g.lineTo(560, 108);
-    g.stroke();
-    [200, 345, 500].forEach((x, i) => {
-      g.fillStyle = MISSANGAS[i].hex;
-      g.beginPath();
-      g.arc(x, 112 - ((x - 130) / 430) * 4, 10, 0, Math.PI * 2);
-      g.fill();
-    });
-  }, []);
   return (
-    <canvas
-      ref={ref}
-      width={600}
-      height={220}
-      role="img"
-      aria-label={t("Visao.fioRotuloDesenho")}
-      className="block h-auto w-full rounded-xl"
-    />
+    <svg viewBox="0 0 300 150" role="img" aria-label={t("Visao.fioRotuloDesenho")} className="h-auto w-full">
+      <rect width={300} height={150} rx={14} fill="#eef5f3" />
+      <ellipse cx={66} cy={70} rx={46} ry={56} fill="#e7c3a0" />
+      <path d="M108 62 L128 88 L108 94 Z" fill="#e7c3a0" />
+      <path d="M96 52 q8 -5 14 0" stroke="#3b2a20" strokeWidth={2.5} fill="none" strokeLinecap="round" />
+      <circle cx={102} cy={60} r={3.5} fill="#1f1a17" />
+      <rect x={126} y={96} width={160} height={9} rx={3} fill="#1d2423" />
+      <rect x={129} y={97.5} width={154} height={4} rx={1.5} fill="#cfe8e3" />
+      <line x1={103} y1={61} x2={222} y2={94} stroke="#127a6e" strokeWidth={2} strokeDasharray="5 5" />
+      <circle cx={222} cy={92} r={7} fill={MISSANGAS[0].hex} />
+      <circle cx={219.5} cy={89.5} r={2} fill="#ffffff" opacity={0.8} />
+      <path d="M128 118 L128 108" stroke="#56635f" strokeWidth={1.5} />
+      <text x={128} y={134} textAnchor="middle" fontSize={12} fill="#3f4a47">
+        {t("Visao.fioDesenhoNariz")}
+      </text>
+    </svg>
   );
 };
 
-/** Desenho de uma resposta: os dois fios e a missanga a meio. */
-const DesenhoResposta = ({ r, hex }: { r: RespostaFio; hex: string }) => (
-  <svg width={54} height={75} viewBox="0 0 72 100" aria-hidden className="shrink-0">
-    <defs>
-      <clipPath id={`fio-${r}`}>
-        <rect width={72} height={100} />
-      </clipPath>
-    </defs>
-    <g clipPath={`url(#fio-${r})`} stroke="currentColor" strokeWidth={2.5}>
-      {linhasDoFio(r).map((l, i) => (
-        <line key={i} {...l} />
-      ))}
-    </g>
-    <circle cx={36} cy={46} r={6} fill={hex} />
-  </svg>
-);
-
-/** A régua em ecrã inteiro: o zero à altura da ponta do nariz, um toque onde ficou a missanga. */
-const Regua = ({
-  pxPorMm,
-  medicao,
-  aoMedir,
-}: {
-  pxPorMm: number;
-  medicao: number;
-  aoMedir: (cm: number | null) => void;
-}) => {
+/**
+ * O ecrã inteiro e branco: o fio ao centro, a barra do nariz em baixo e a
+ * missanga a descer. Um toque em qualquer sítio marca "ficou a dobrar" e,
+ * depois, "voltou a ser uma".
+ */
+const EcraMissanga = ({ pxPorMm, aoAcabar }: { pxPorMm: number; aoAcabar: (rondas: RondaFio[], inicioCm: number) => void }) => {
   const { t } = useTranslation();
   const ref = useRef<HTMLCanvasElement>(null);
-  const [marca, setMarca] = useState<number | null>(null);
   const [tam, setTam] = useState({ w: window.innerWidth, h: window.innerHeight });
+  const [ronda, setRonda] = useState(0);
+  const [fase, setFase] = useState<"pausa" | "aproximar" | "afastar">("pausa");
+  const [rondas, setRondas] = useState<RondaFio[]>([]);
+  const [cm, setCm] = useState(() => inicioDaMissanga(window.innerHeight, pxPorMm));
+  const [inicioCm, setInicioCm] = useState(cm);
+  // A rotura desta ronda, enquanto a missanga se afasta.
+  const [roturaActual, setRoturaActual] = useState<number | null>(null);
+  // Onde a missanga começou o movimento actual, e quando.
+  const movimento = useRef({ desde: cm, t0: Date.now() });
+  const aoAcabarRef = useRef(aoAcabar);
+  aoAcabarRef.current = aoAcabar;
+
+  // Ecrã inteiro, quando o aparelho deixa (no iPhone não): o fundo da página fica na ponta do telemóvel.
+  useEffect(() => {
+    // Nem todos os navegadores têm a API, e alguns devolvem undefined em vez de uma promessa.
+    const pedido = document.documentElement.requestFullscreen?.() as Promise<void> | undefined;
+    pedido?.catch(() => undefined);
+    return () => {
+      if (!document.fullscreenElement) return;
+      const saida = document.exitFullscreen?.() as Promise<void> | undefined;
+      saida?.catch(() => undefined);
+    };
+  }, []);
 
   useEffect(() => {
     const medir = () => setTam({ w: window.innerWidth, h: window.innerHeight });
     window.addEventListener("resize", medir);
     return () => window.removeEventListener("resize", medir);
   }, []);
+
+  // Pausa: a missanga volta ao início (medido agora, já em ecrã inteiro) e parte daí a pouco.
+  useEffect(() => {
+    if (fase !== "pausa") return;
+    const inicio = inicioDaMissanga(window.innerHeight, pxPorMm);
+    setInicioCm(inicio);
+    setCm(inicio);
+    const id = window.setTimeout(() => {
+      movimento.current = { desde: inicio, t0: Date.now() };
+      setFase("aproximar");
+    }, PAUSA_MS);
+    return () => window.clearTimeout(id);
+  }, [fase, pxPorMm, ronda]);
+
+  const fecharRonda = (r: RondaFio) => {
+    const novas = [...rondas, r];
+    setRondas(novas);
+    sinalSonoro(novas.length >= RONDAS ? "fim" : "tic");
+    if (novas.length >= RONDAS) aoAcabarRef.current(novas, inicioCm);
+    else {
+      setRonda(novas.length);
+      setFase("pausa");
+    }
+  };
+
+  // A missanga a andar; ao chegar ao nariz (ou de volta ao início) a ronda fecha sozinha.
+  useEffect(() => {
+    if (fase === "pausa") return;
+    const id = window.setInterval(() => {
+      const { desde, t0 } = movimento.current;
+      const agora = posicaoDaMissanga(desde, (Date.now() - t0) / 1000, fase, inicioCm);
+      setCm(agora);
+      if (fase === "aproximar" && agora <= NARIZ_MM / 10) {
+        window.clearInterval(id);
+        fecharRonda({ rotura: 0, recuperacao: 0, alem: false });
+      } else if (fase === "afastar" && agora >= inicioCm) {
+        window.clearInterval(id);
+        const rotura = roturaActual ?? 0;
+        setRoturaActual(null);
+        fecharRonda({ rotura, recuperacao: null, alem: roturaAlem(rotura, inicioCm) });
+      }
+    }, PASSO_MS);
+    return () => window.clearInterval(id);
+    // `fecharRonda` muda a cada render; o intervalo só recomeça quando muda a fase.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fase, inicioCm, ronda]);
+
+  const tocar = () => {
+    if (fase === "pausa") return;
+    const { desde, t0 } = movimento.current;
+    if (fase === "afastar" && Date.now() - t0 < TOQUE_DUPLO_MS) return;
+    const aqui = meioCm(posicaoDaMissanga(desde, (Date.now() - t0) / 1000, fase, inicioCm));
+    if (fase === "aproximar") {
+      sinalSonoro("tic");
+      setRoturaActual(aqui);
+      movimento.current = { desde: aqui, t0: Date.now() };
+      setCm(aqui);
+      setFase("afastar");
+    } else {
+      const rotura = roturaActual ?? aqui;
+      setRoturaActual(null);
+      fecharRonda({ rotura, recuperacao: Math.max(rotura, aqui), alem: roturaAlem(rotura, inicioCm) });
+    }
+  };
 
   useEffect(() => {
     const cv = ref.current;
@@ -127,126 +173,100 @@ const Regua = ({
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
     g.fillStyle = "#ffffff";
     g.fillRect(0, 0, tam.w, tam.h);
-    g.strokeStyle = "#000000";
-    g.fillStyle = "#000000";
-    g.font = "600 14px system-ui, sans-serif";
-    for (let mm = 0; ZERO_REGUA_PX + mm * pxPorMm < tam.h; mm++) {
-      const y = ZERO_REGUA_PX + mm * pxPorMm;
-      const cm = mm % 10 === 0;
-      g.lineWidth = cm ? 2 : 1;
+    const x = tam.w / 2;
+    const narizY = yDoCm(NARIZ_MM / 10, tam.h, pxPorMm);
+    // Marcas discretas de centímetro, à direita e sem números (não influenciam a resposta).
+    g.strokeStyle = "#dfe7e5";
+    g.lineWidth = 1;
+    for (let c = 1; yDoCm(c, tam.h, pxPorMm) > 0; c++) {
+      const y = yDoCm(c, tam.h, pxPorMm);
       g.beginPath();
-      g.moveTo(0, y);
-      g.lineTo(cm ? 44 : mm % 5 === 0 ? 30 : 18, y);
-      g.stroke();
-      if (cm) g.fillText(`${mm / 10} cm`, 52, y + 5);
-    }
-    g.fillStyle = "#2e7a4c";
-    g.fillText(t("Visao.fioZeroNariz"), 52, ZERO_REGUA_PX - 8);
-    if (marca !== null) {
-      const y = ZERO_REGUA_PX + marca * 10 * pxPorMm;
-      g.strokeStyle = "#c0392b";
-      g.lineWidth = 2;
-      g.beginPath();
-      g.moveTo(0, y);
-      g.lineTo(tam.w, y);
+      g.moveTo(tam.w, y);
+      g.lineTo(tam.w - (c % 5 === 0 ? 22 : 12), y);
       g.stroke();
     }
-  }, [marca, pxPorMm, t, tam]);
+    g.strokeStyle = "#8a6d4b";
+    g.lineWidth = 2.5;
+    g.beginPath();
+    g.moveTo(x, narizY);
+    g.lineTo(x, yDoCm(inicioCm, tam.h, pxPorMm));
+    g.stroke();
+    if (roturaActual !== null) {
+      g.fillStyle = "rgba(178,59,46,0.85)";
+      g.fillRect(x - 18, yDoCm(roturaActual, tam.h, pxPorMm) - 1.5, 36, 3);
+    }
+    const y = yDoCm(cm, tam.h, pxPorMm);
+    g.fillStyle = MISSANGAS[ronda % MISSANGAS.length].hex;
+    g.beginPath();
+    g.arc(x, y, 13, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = "rgba(255,255,255,0.75)";
+    g.beginPath();
+    g.arc(x - 4, y - 4, 3.5, 0, Math.PI * 2);
+    g.fill();
+    // Um pormenor pequeno para os olhos focarem.
+    g.fillStyle = "#111111";
+    g.beginPath();
+    g.arc(x + 3, y + 3, 1.6, 0, Math.PI * 2);
+    g.fill();
+  }, [cm, inicioCm, pxPorMm, ronda, roturaActual, tam]);
 
-  const tocar = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if ((e.target as HTMLElement).closest("button") || marca !== null) return;
-    const y = e.clientY - e.currentTarget.getBoundingClientRect().top;
-    if (!Number.isFinite(y)) return;
-    const cm = cmNaRegua(y, pxPorMm);
-    setMarca(cm);
-    sinalSonoro("tic");
-    window.setTimeout(() => {
-      setMarca(null);
-      aoMedir(cm);
-    }, 900);
-  };
-
+  const narizPx = NARIZ_MM * pxPorMm;
   return (
-    <div className="fixed inset-0 z-[100]" style={{ backgroundColor: "#ffffff", color: "#000000", colorScheme: "light" }}>
-      <canvas
-        ref={ref}
-        role="img"
-        aria-label={t("Visao.fioRotuloRegua")}
-        className="block touch-none"
-        style={{ width: tam.w, height: tam.h }}
+    <div className="fixed inset-0 z-[100]" style={{ backgroundColor: "#ffffff", color: "#17201f", colorScheme: "light" }}>
+      <canvas ref={ref} aria-hidden className="block" style={{ width: tam.w, height: tam.h }} />
+      {/* À esquerda, para não tapar o fio, que está ao centro. */}
+      <div className="pointer-events-none absolute left-4 top-4 max-w-[38%] space-y-2 text-left" aria-live="polite">
+        <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#56635f" }}>
+          {t("Visao.fioRonda", { n: ronda + 1, total: RONDAS })}
+        </p>
+        <p className="text-xl font-bold leading-tight">{fase === "afastar" ? t("Visao.fioToqueUma") : t("Visao.fioToqueDuas")}</p>
+        <p className="text-sm leading-snug" style={{ color: "#56635f" }}>
+          {fase === "afastar" ? t("Visao.fioToqueUmaAjuda") : t("Visao.fioToqueDuasAjuda")}
+        </p>
+      </div>
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 grid place-items-center text-sm font-bold"
+        style={{ height: narizPx, backgroundColor: "#127a6e", color: "#ffffff" }}
+      >
+        {t("Visao.fioNariz")}
+      </div>
+      <button
+        type="button"
+        aria-label={fase === "afastar" ? t("Visao.fioToqueUma") : t("Visao.fioToqueDuas")}
+        className="absolute inset-0 h-full w-full cursor-pointer touch-none bg-transparent focus-visible:outline-none"
         onPointerDown={tocar}
       />
-      {/* Os toques passam para a régua. */}
-      <p className="pointer-events-none absolute right-4 top-12 max-w-[50%] text-right text-sm leading-snug" style={{ color: "#333333" }}>
-        {medicao === 0 ? t("Visao.fioVozRegua") : t("Visao.fioVozOutraVez")}
-      </p>
-      <div className="absolute bottom-4 right-4 flex max-w-[55%] flex-col items-end gap-2 text-right text-sm">
-        <p style={{ color: "#333333" }}>{t("Visao.fioMedicao", { n: medicao + 1, total: MEDICOES_PPC })}</p>
-        <button
-          type="button"
-          className="rounded-lg border px-3 py-2"
-          style={{ borderColor: "#cccccc", backgroundColor: "#f4f4f4", color: "#333333" }}
-          onClick={() => aoMedir(null)}
-        >
-          {t("Visao.fioMaisLonge")}
-        </button>
-      </div>
     </div>
   );
 };
 
 /**
- * Fio de Missangas (id `cerebro`, no teste de 90 dias): o cordão de Brock com
- * objectos de casa, e o telemóvel a medir. Ver
- * `lib/visao/fioMissangas.ts`.
+ * Fio de Missangas (id `cerebro`, no teste de 90 dias): o ponto mais próximo
+ * de convergência só com o telemóvel. Ver `lib/visao/fioMissangas.ts`.
  */
 const FioMissangas = () => {
   const { t } = useTranslation();
   const { calibracao, guardar } = useCalibracao();
   const [etapa, setEtapa] = useState<Etapa>("preparar");
-  const [i, setI] = useState(0);
-  const [respostas, setRespostas] = useState<RespostaFio[]>([]);
-  const [contagem, setContagem] = useState<number | null>(null);
-  const [ppc, setPpc] = useState<(number | null)[]>([]);
+  const [medido, setMedido] = useState<{ rondas: RondaFio[]; inicioCm: number } | null>(null);
   const inicio = useRef(Date.now());
   const pxPorMm = calibracao?.pxPorMm ?? PX_POR_MM_NOMINAL;
 
-  const m = MISSANGAS[i];
-  const nomeCor = (c: string) => t(`Visao.fioCor_${c}`);
-  const textoMissanga = m ? t("Visao.fioMissangaTexto", { cor: nomeCor(m.cor) }) : "";
-  const ultima = respostas[i];
-
-  // Segurar o X: uma contagem de 10 segundos, um bip por segundo.
-  const aSegurar = contagem !== null;
-  useEffect(() => {
-    if (!aSegurar) return;
-    const id = window.setInterval(() => {
-      sinalSonoro("tic");
-      setContagem((c) => (c === null ? null : c - 1));
-    }, 1000);
-    return () => window.clearInterval(id);
-  }, [aSegurar]);
-  useEffect(() => {
-    if (contagem === null || contagem > 0) return;
-    setContagem(null);
-    if (i + 1 < MISSANGAS.length) setI(i + 1);
-    else setEtapa("regua");
-  }, [contagem, i]);
-
-  const passos = [t("Visao.passoPreparar"), t("Visao.passoCartao"), t("Visao.fioPassoMissangas"), t("Visao.fioPassoRegua"), t("Visao.passoResultado")];
-  const passoActual = { preparar: 0, calibracao: 1, missanga: 2, regua: 3, resultado: 4 }[etapa];
+  const passos = [t("Visao.passoPreparar"), t("Visao.passoCartao"), t("Visao.fioPassoMedir"), t("Visao.passoResultado")];
+  const passoActual = { preparar: 0, calibracao: 1, medir: 2, resultado: 3 }[etapa];
 
   let conteudo;
   if (etapa === "preparar") {
-    const lista = [1, 2, 3, 4].map((n) => t(`Visao.fioPreparar${n}`));
+    const lista = [1, 2, 3].map((n) => t(`Visao.fioPreparar${n}`));
     conteudo = (
       <EcraPasso
         titulo={t("Visao.fioPrepararTitulo")}
-        accao={<BotaoContinuar aoClicar={() => setEtapa(calibracao?.calibrado ? "missanga" : "calibracao")} />}
+        accao={<BotaoContinuar aoClicar={() => setEtapa(calibracao?.calibrado ? "medir" : "calibracao")}>{t("Visao.fioComecar")}</BotaoContinuar>}
       >
         <div className="w-full space-y-3 text-left text-sm">
-          <DesenhoFio />
-          <ol className="list-decimal space-y-1 pl-5 text-foreground">
+          <DesenhoComoSegurar />
+          <ol className="list-decimal space-y-1 pl-5 text-base text-foreground">
             {lista.map((p) => (
               <li key={p}>{p}</li>
             ))}
@@ -255,64 +275,22 @@ const FioMissangas = () => {
       </EcraPasso>
     );
   } else if (etapa === "calibracao")
-    conteudo = <PassoCalibracao calibracao={calibracao} aoGuardar={guardar} aoContinuar={() => setEtapa("missanga")} />;
-  else if (etapa === "missanga" && m)
+    conteudo = <PassoCalibracao calibracao={calibracao} aoGuardar={guardar} aoContinuar={() => setEtapa("medir")} />;
+  else if (etapa === "medir")
     conteudo = (
-      <EcraPasso titulo={t("Visao.fioMissangaTitulo", { cor: nomeCor(m.cor), n: i + 1, total: MISSANGAS.length })}>
-        <div className="w-full space-y-3 text-left text-sm">
-          {contagem === null ? (
-            <>
-              <p className="text-foreground">{textoMissanga}</p>
-              <div className="grid gap-2">
-                {RESPOSTAS_FIO.map((r) => (
-                  <Button
-                    key={r}
-                    variant="outline"
-                    className="h-auto justify-start gap-3 whitespace-normal py-2 text-left"
-                    onClick={() => {
-                      sinalSonoro(r === "x" ? "certo" : "tic");
-                      setRespostas((rs) => {
-                        const n = [...rs];
-                        n[i] = r;
-                        return n;
-                      });
-                      setContagem(SEGUNDOS_SEGURAR);
-                    }}
-                  >
-                    <DesenhoResposta r={r} hex={m.hex} />
-                    <span>{t(`Visao.fioResposta_${r}`)}</span>
-                  </Button>
-                ))}
-              </div>
-            </>
-          ) : (
-            <div className="space-y-3 text-center">
-              <p className="text-foreground">{ultima ? t(`Visao.fioDica_${ultima}`, { cor: nomeCor(m.cor) }) : null}</p>
-              <p className="text-6xl font-bold tabular-nums text-teal" aria-live="polite">
-                {Math.max(0, contagem)}
-              </p>
-            </div>
-          )}
-        </div>
-      </EcraPasso>
-    );
-  else if (etapa === "regua")
-    conteudo = (
-      <Regua
+      <EcraMissanga
         pxPorMm={pxPorMm}
-        medicao={ppc.length}
-        aoMedir={(cm) => {
-          const novo = [...ppc, cm];
-          setPpc(novo);
-          if (novo.length >= MEDICOES_PPC) setEtapa("resultado");
+        aoAcabar={(rondas, inicioCm) => {
+          setMedido({ rondas, inicioCm });
+          setEtapa("resultado");
         }}
       />
     );
   else
-    conteudo = (
+    conteudo = medido && (
       <ResultadoFio
-        respostas={respostas}
-        ppc={ppc}
+        rondas={medido.rondas}
+        inicioCm={medido.inicioCm}
         pxPorMm={pxPorMm}
         calibrado={calibracao?.calibrado ?? false}
         segundos={Math.max(1, Math.round((Date.now() - inicio.current) / 1000))}
@@ -336,14 +314,14 @@ const FioMissangas = () => {
 };
 
 const ResultadoFio = ({
-  respostas,
-  ppc,
+  rondas,
+  inicioCm,
   pxPorMm,
   calibrado,
   segundos,
 }: {
-  respostas: RespostaFio[];
-  ppc: (number | null)[];
+  rondas: RondaFio[];
+  inicioCm: number;
   pxPorMm: number;
   calibrado: boolean;
   segundos: number;
@@ -351,8 +329,7 @@ const ResultadoFio = ({
   const { t } = useTranslation();
   const { estado, gravar, tentarDeNovo } = useRegistoSessao();
   const gravou = useRef(false);
-  const r = resumirFio(respostas, ppc);
-  const reguaCm = Math.floor((window.innerHeight - ZERO_REGUA_PX) / pxPorMm / 10);
+  const r = resumirFio(rondas);
 
   useEffect(() => {
     if (gravou.current) return;
@@ -369,22 +346,21 @@ const ResultadoFio = ({
         calibrado,
         sinais: {
           modo: "fio_missangas",
-          respostas: Object.fromEntries(MISSANGAS.map((m, i) => [m.cor, respostas[i] ?? null])),
-          supressao: r.supressao,
-          x_no_sitio: r.xNoSitio,
-          ppc_medicoes_cm: ppc,
-          ppc_alem_da_regua: r.alemDaRegua,
-          regua_cm: reguaCm,
+          versao: 2,
+          rotura_cm: rondas.map((x) => x.rotura),
+          recuperacao_cm: rondas.map((x) => x.recuperacao),
+          recuperacao_media_cm: r.recuperacaoCm,
+          chegou_ao_nariz: r.chegouAoNariz,
+          alem_do_ecra: r.alemDoEcra,
+          cansaco: r.cansaco,
+          inicio_cm: inicioCm,
         },
       },
     ]);
-  }, [calibrado, gravar, pxPorMm, ppc, r, reguaCm, respostas, segundos]);
+  }, [calibrado, gravar, inicioCm, pxPorMm, r, rondas, segundos]);
 
-  const sinais = [
-    ...(r.supressao ? [t("Visao.fioSinalSupressao")] : []),
-    ...(r.classe === "alto" ? [t("Visao.fioSinalPpc")] : []),
-  ];
-  const ppcTexto = r.ppcCm === null ? t("Visao.fioPpcAlem", { cm: reguaCm }) : `${formatarDecimal(r.ppcCm, r.ppcCm % 1 ? 1 : 0)} cm`;
+  const sinais = [...(r.classe === "alto" ? [t("Visao.fioSinalPpc")] : []), ...(r.cansaco ? [t("Visao.fioCansaco")] : [])];
+  const ppcTexto = r.chegouAoNariz ? t("Visao.fioChegouNariz") : r.ppcCm === null ? t("Visao.fioPpcAlem", { cm: inicioCm }) : cmTexto(r.ppcCm);
 
   return (
     <EcraResultado
@@ -395,11 +371,12 @@ const ResultadoFio = ({
       cartoes={[
         <CartaoOlho key="ppc" titulo={t("Visao.fioPpcTitulo")} estado={r.classe === "alto" ? "sinal" : r.classe === "limite" ? "indeterminado" : "ok"}>
           <p className="text-2xl font-bold text-foreground">{ppcTexto}</p>
-          <p>{t(`Visao.fioPpcClasse_${r.classe}`)}</p>
+          <p>{r.chegouAoNariz ? t("Visao.fioChegouNarizTexto") : t(`Visao.fioPpcClasse_${r.classe}`)}</p>
         </CartaoOlho>,
-        <CartaoOlho key="fios" titulo={t("Visao.fioFiosTitulo")} estado={r.supressao ? "sinal" : "ok"}>
-          <p className="text-2xl font-bold text-foreground">{t("Visao.fioXNoSitio", { n: r.xNoSitio, total: MISSANGAS.length })}</p>
-          <p>{r.supressao ? t("Visao.fioUmFio") : t("Visao.fioDoisFios")}</p>
+        <CartaoOlho key="rec" titulo={t("Visao.fioRecuperacaoTitulo")} estado={r.cansaco ? "sinal" : "ok"}>
+          <p className="text-2xl font-bold text-foreground">{r.recuperacaoCm === null ? t("Visao.fioRecuperacaoAlem") : cmTexto(r.recuperacaoCm)}</p>
+          <p>{t("Visao.fioRondas", { lista: rondas.map((x) => (x.alem ? `> ${inicioCm} cm` : cmTexto(x.rotura))).join(" · ") })}</p>
+          <p>{r.cansaco ? t("Visao.fioCansaco") : t("Visao.fioSemCansaco")}</p>
         </CartaoOlho>,
       ]}
       notas={
