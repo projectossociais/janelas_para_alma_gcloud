@@ -133,8 +133,9 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
   const segundos = (s: number | null) => (s === null ? "–" : `${formatarDecimal(s, 1)} s`);
   const agulha = (v: ValorAgulha) =>
     [
-      t("Visao.clinicoAgulhaDois", { n: v.acertosDois, tempo: segundos(v.tempoDois) }),
-      t("Visao.clinicoAgulhaUm", { n: v.acertosUm, tempo: segundos(v.tempoUm) }),
+      // A versão 2 não cronometra: o tempo só aparece nas sessões antigas.
+      t("Visao.clinicoAgulhaDois", { n: v.acertosDois, total: v.total }) + (v.tempoDois === null ? "" : ` (${segundos(v.tempoDois)})`),
+      t("Visao.clinicoAgulhaUm", { n: v.acertosUm, total: v.total }) + (v.tempoUm === null ? "" : ` (${segundos(v.tempoUm)})`),
       v.vantagem && t(`Visao.clinicoAgulhaVantagem_${v.vantagem}`),
     ]
       .filter(Boolean)

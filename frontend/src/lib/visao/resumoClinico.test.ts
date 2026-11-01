@@ -261,6 +261,26 @@ describe("Fio de Missangas", () => {
   });
 });
 
+describe("Desafio da Agulha", () => {
+  it("lê os acertos das duas versões: 3 + 3 cronometradas e 5 + 5 sem tempo", () => {
+    const v1 = sessao({
+      exercicio_id: "estereopsia",
+      created_at: haDias(10),
+      olho: "ambos",
+      sinais: { modo: "agulha", jogador: { acertos_dois: 3, acertos_um: 1, tempo_dois_s: 1.2, tempo_um_s: 2.5, vantagem: "grande" } },
+    });
+    const v2 = sessao({
+      exercicio_id: "estereopsia",
+      created_at: haDias(0),
+      olho: "ambos",
+      sinais: { modo: "agulha", versao: 2, jogador: { acertos_dois: 4, acertos_um: 4, tentativas: 5, vantagem: "nenhuma" } },
+    });
+    const r = resumoClinico([v1, v2], hoje);
+    expect(r.agulha?.recente.valor).toEqual({ acertosDois: 4, acertosUm: 4, total: 5, tempoDois: null, tempoUm: null, vantagem: "nenhuma" });
+    expect(r.agulha?.primeira?.valor).toMatchObject({ total: 3, tempoDois: 1.2 });
+  });
+});
+
 describe("Caderneta do Tapa-olho", () => {
   it("horas de tapa-olho na semana, sem entrar nos minutos de treino", () => {
     const tapa = (dias: number, minutos: number) =>

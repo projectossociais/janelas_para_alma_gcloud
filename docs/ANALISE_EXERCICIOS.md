@@ -112,8 +112,9 @@ o médico por **link temporário partilhado pelo pai** (nunca envio automático)
       do telemóvel e teste de tapar feitos pelos pais, respondidos por desenhos, em Δ -- desde
       2026-10-31; antes, a luz era o ecrã), **Fio de Missangas** (`cerebro`, ponto próximo de
       convergência em cm só com o telemóvel deitado no nariz -- desde 2026-10-31; antes,
-      cordão de Brock com fio a sério), **Desafio da Agulha** (`estereopsia`, jogo
-      de família, dois olhos contra um; o estereograma fica como opção com óculos),
+      cordão de Brock com fio a sério), **Desafio da Agulha** (`estereopsia`, o dedo
+      na ponta de um lápis, 5 vezes com os dois olhos contra 5 com um -- desde 2026-11-01;
+      antes, jogo de família com pontos; o estereograma fica como opção com óculos),
       **Pintar o Samakaka** (`sacadas-convergencia`, seguir pontinhos com o olho fraco, em mm)
       e **Caderneta do Tapa-olho** (`flexibilidade-acomodativa`, horas de tapa-olho
       confirmadas de 15 em 15 min). **A validar com a Optioptika:** acuidade a 3 m contra a

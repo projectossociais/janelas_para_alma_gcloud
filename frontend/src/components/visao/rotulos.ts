@@ -114,10 +114,10 @@ export const limiarFormatado = (
   // Pintar o Samakaka (id `sacadas-convergencia`, desde 2026-10-21): afastamento médio do traço.
   if (sinais?.modo === "samakaka")
     return limiar === null ? "—" : i18n.t("Visao.samakakaLimiarCurto", { mm: formatarDecimal(limiar, 1) });
-  // Desafio da Agulha (id `estereopsia`, desde 2026-10-21): acertos com os dois olhos e com um.
+  // Desafio da Agulha (id `estereopsia`, desde 2026-10-21): acertos com os dois olhos e com um (3 + 3 até 01/11/2026; depois 5 + 5).
   if (sinais?.modo === "agulha") {
-    const j = sinais.jogador as { acertos_dois?: unknown; acertos_um?: unknown } | undefined;
-    return i18n.t("Visao.agulhaLimiarCurto", { dois: j?.acertos_dois ?? "–", um: j?.acertos_um ?? "–" });
+    const j = sinais.jogador as { acertos_dois?: unknown; acertos_um?: unknown; tentativas?: unknown } | undefined;
+    return i18n.t("Visao.agulhaLimiarCurto", { dois: j?.acertos_dois ?? "–", um: j?.acertos_um ?? "–", total: j?.tentativas ?? 3 });
   }
   // Fio de Missangas (id `cerebro`, desde 2026-10-21): ponto mais próximo de convergência.
   if (sinais?.modo === "fio_missangas")

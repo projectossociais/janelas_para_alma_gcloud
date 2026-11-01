@@ -570,11 +570,16 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   Fase 0 compara com a régua RAF. A versão 1 (2026-10-21, cordão de Brock com fio e
   missangas a sério; "só vejo um fio" = supressão) saiu por ser difícil de perceber; as
   sessões antigas ainda se lêem no relatório (`x_no_sitio`, `supressao`).
-- **Desafio da Agulha (2026-10-21): profundidade num jogo de família** (`lib/visao/agulha.ts`).
-  Dois lápis ponta com ponta, ou palhinha na garrafa; por jogador, 3 rondas com os dois
-  olhos e 3 com um tapado; o telemóvel é árbitro e cronómetro. Só o jogador 1 é avaliado
-  (vantagem dos dois olhos: grande, pequena ou nenhuma); o outro é a comparação.
-  `limiar = null`, `sinais.modo = "agulha"`. Com óculos 3D: o Teste de Estereopsia.
+- **Desafio da Agulha (versão 2, 2026-11-01): o dedo na ponta do lápis** (`lib/visao/agulha.ts`).
+  O adulto segura um lápis de pé a um braço; a criança desce o dedo e tenta tocar na ponta à
+  primeira (teste dos lápis de Lang). 5 tentativas com os dois olhos e 5 com um tapado (o
+  tapado alterna, a começar pelo esquerdo), sem tempo; o adulto toca em Acertou ou Falhou
+  (e pode corrigir a anterior). Vantagem dos dois olhos: 2 ou mais acertos a mais = grande,
+  1 = pequena (repetir), 0 ou menos = nenhuma (mostrar ao médico). `limiar = null`,
+  `sinais.modo = "agulha"`, `sinais.versao = 2`, `sinais.jogador` no formato da versão 1
+  mais `tentativas: 5` (o relatório e o rótulo usam-no como total; sem ele, 3). A versão 1
+  (2026-10-21: dois jogadores, dois lápis ou palhinha, 3 + 3 cronometradas, pontos) saiu
+  por ser difícil de perceber. Com óculos 3D: o Teste de Estereopsia.
 - **Pintar o Samakaka (2026-10-21): o olho fraco a guiar a mão** (`lib/visao/samakaka.ts`,
   `PintarSamakaka`). Com tapa-olho, segue-se com o dedo os pontinhos de seis motivos do
   pano; cada motivo com pontos mais pequenos e claros e menos folga. Desenha só quando o

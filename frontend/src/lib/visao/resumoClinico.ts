@@ -103,6 +103,8 @@ export interface ResumoSamakaka extends Resumo<ValorSamakaka> {
 export interface ValorAgulha {
   acertosDois: number;
   acertosUm: number;
+  /** Tentativas em cada condição: 3 na versão 1, 5 na versão 2. */
+  total: number;
   tempoDois: number | null;
   tempoUm: number | null;
   vantagem: string;
@@ -347,7 +349,14 @@ function lerAgulha(s: S): ValorAgulha | undefined {
   const a2 = numero(j?.acertos_dois);
   const a1 = numero(j?.acertos_um);
   if (a2 === null || a1 === null) return undefined;
-  return { acertosDois: a2, acertosUm: a1, tempoDois: numero(j?.tempo_dois_s), tempoUm: numero(j?.tempo_um_s), vantagem: String(j?.vantagem ?? "") };
+  return {
+    acertosDois: a2,
+    acertosUm: a1,
+    total: numero(j?.tentativas) ?? 3,
+    tempoDois: numero(j?.tempo_dois_s),
+    tempoUm: numero(j?.tempo_um_s),
+    vantagem: String(j?.vantagem ?? ""),
+  };
 }
 
 function lerFio(s: S): ValorFio | undefined {
