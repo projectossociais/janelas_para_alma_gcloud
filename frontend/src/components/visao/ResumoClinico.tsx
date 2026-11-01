@@ -133,8 +133,9 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
   const segundos = (s: number | null) => (s === null ? "–" : `${formatarDecimal(s, 1)} s`);
   const agulha = (v: ValorAgulha) =>
     [
-      t("Visao.clinicoAgulhaDois", { n: v.acertosDois, tempo: segundos(v.tempoDois) }),
-      t("Visao.clinicoAgulhaUm", { n: v.acertosUm, tempo: segundos(v.tempoUm) }),
+      // A versão 2 não cronometra: o tempo só aparece nas sessões antigas.
+      t("Visao.clinicoAgulhaDois", { n: v.acertosDois, total: v.total }) + (v.tempoDois === null ? "" : ` (${segundos(v.tempoDois)})`),
+      t("Visao.clinicoAgulhaUm", { n: v.acertosUm, total: v.total }) + (v.tempoUm === null ? "" : ` (${segundos(v.tempoUm)})`),
       v.vantagem && t(`Visao.clinicoAgulhaVantagem_${v.vantagem}`),
     ]
       .filter(Boolean)
@@ -142,6 +143,8 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
   const fio = (v: ValorFio) =>
     [
       v.ppcCm === null ? t("Visao.clinicoFioPpcAlem") : t("Visao.clinicoFioPpc", { cm: formatarDecimal(v.ppcCm, v.ppcCm % 1 ? 1 : 0) }),
+      v.recuperacaoCm !== null && t("Visao.clinicoFioRecuperacao", { cm: formatarDecimal(v.recuperacaoCm, v.recuperacaoCm % 1 ? 1 : 0) }),
+      v.cansaco && t("Visao.clinicoFioCansaco"),
       v.xNoSitio !== null && t("Visao.clinicoFioX", { n: v.xNoSitio }),
       v.supressao && t("Visao.clinicoFioSupressao"),
     ]
@@ -149,6 +152,7 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
       .join(" · ");
   const luz = (v: ValorLuz) => {
     const partes = [
+      ...(v.delta === null ? [t("Visao.clinicoLuzSemReflexo")] : []),
       ...v.reflexo.map((a) => t("Visao.clinicoLuzReflexo", { olho: abrevOlho(t, a.olho), sentido: t(`Visao.luzSentido_${a.sentido}`), delta: a.delta })),
       ...v.tapar.map((a) => t("Visao.clinicoLuzTapar", { olho: abrevOlho(t, a.olho), sentido: t(`Visao.luzSentido_${a.sentido}`) })),
     ];
@@ -303,6 +307,7 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
                 alvo: formatarDecimal(r.tapaOlho.alvoMin / 60, r.tapaOlho.alvoMin % 60 ? 1 : 0),
               }),
               t("Visao.clinicoTapaCumpridos", { n: r.tapaOlho.cumpridos }),
+              ...(r.tapaOlho.manualMin ? [t("Visao.clinicoTapaManual", { tempo: formatarDecimal(r.tapaOlho.manualMin / 60, 1) })] : []),
             ]}
           />
         )}

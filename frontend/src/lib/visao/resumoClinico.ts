@@ -15,7 +15,7 @@
  *
  * Funções puras -- o texto vive em `components/visao/ResumoClinico.tsx`.
  */
-import { MODO_TAPA_OLHO, minutosDeTapaPorDia, resumoSemana, type ResumoSemana } from "./caderneta";
+import { MODO_TAPA_OLHO, minutosDeTapaPorDia, minutosManuaisNaSemana, resumoSemana, type ResumoSemana } from "./caderneta";
 import { diferencaEmLinhas, mesmoTipoDaUltima, tipoDeAcuidade, type TipoAcuidade } from "./aglomeracao";
 import { ID_ACUIDADE, ID_ANEIS, ID_ASTIGMATISMO, ID_CONTRASTE, ID_CONTRASTE_BLOCOS, ID_CONVERGENCIA, ID_ESTEREOPSIA } from "./ids";
 import { SENTIDOS, eResumoSentido, type ResumoSentido, type Sentido } from "./pontes";
@@ -103,23 +103,31 @@ export interface ResumoSamakaka extends Resumo<ValorSamakaka> {
 export interface ValorAgulha {
   acertosDois: number;
   acertosUm: number;
+  /** Tentativas em cada condição: 3 na versão 1, 5 na versão 2. */
+  total: number;
   tempoDois: number | null;
   tempoUm: number | null;
   vantagem: string;
 }
 
-/** Fio de Missangas: ponto mais próximo de convergência e os fios. */
+/** Fio de Missangas: ponto mais próximo de convergência, recuperação e (versão 1) os fios. */
 export interface ValorFio {
-  /** cm; `null` = mais longe do que a régua. */
+  /** cm; `null` = mais longe do que a régua (ou o ecrã). */
   ppcCm: number | null;
+  /** Versão 1 (cordão de Brock): algum fio desapareceu. */
   supressao: boolean;
+  /** Versão 1: missangas com o X no sítio. */
   xNoSitio: number | null;
+  /** Versão 2: onde voltou a ser uma (média, cm). */
+  recuperacaoCm: number | null;
+  /** Versão 2: a última rotura ficou bem mais longe do que a primeira. */
+  cansaco: boolean;
 }
 
 /** Luz nos Olhos (exame feito pelos pais): desvio pelo reflexo, teste de tapar e diário. */
 export interface ValorLuz {
-  /** Maior desvio estimado pelo reflexo, em Δ (0 = nenhum visível). */
-  delta: number;
+  /** Maior desvio estimado pelo reflexo, em Δ (0 = nenhum visível; `null` = os pontinhos não se viram ou não havia lanterna). */
+  delta: number | null;
   reflexo: { olho: Olho; sentido: string; delta: number }[];
   tapar: { olho: Olho; sentido: string }[];
   frequencia: string | null;
@@ -162,7 +170,8 @@ export interface ResumoClinico {
   /** Pintar o Samakaka. */
   samakaka: ResumoSamakaka | null;
   /** Horas de tapa-olho (Caderneta), nos últimos 7 dias; `null` sem registos no período. */
-  tapaOlho: (ResumoSemana & { alvoMin: number }) | null;
+  /** `manualMin`: minutos acrescentados à mão nos últimos 7 dias (versão 2), à parte do medido. */
+  tapaOlho: (ResumoSemana & { alvoMin: number; manualMin: number }) | null;
   adesao: Adesao;
   /** Datas das sessões em que a pessoa disse ver a dobrar, da mais antiga para a mais recente. */
   diplopia: string[];
@@ -300,10 +309,12 @@ const lista = (v: unknown): Record<string, unknown>[] =>
   Array.isArray(v) ? v.filter((x): x is Record<string, unknown> => !!x && typeof x === "object") : [];
 
 function lerLuz(s: S): ValorLuz | undefined {
-  if (s.sinais?.modo !== "luz_olhos" || typeof s.limiar !== "number") return undefined;
+  if (s.sinais?.modo !== "luz_olhos") return undefined;
+  // A versão 2 grava `limiar = null` quando não se viu o reflexo; a versão 1 tinha-o sempre.
+  if (typeof s.limiar !== "number" && s.sinais.versao !== 2) return undefined;
   const diario = s.sinais.diario as { frequencia?: unknown } | undefined;
   return {
-    delta: s.limiar,
+    delta: numero(s.limiar),
     reflexo: lista(s.sinais.achados)
       .filter((a) => eOlho(a.olho) && typeof a.sentido === "string" && typeof a.delta === "number")
       .map((a) => ({ olho: a.olho as Olho, sentido: a.sentido as string, delta: a.delta as number })),
@@ -314,11 +325,11 @@ function lerLuz(s: S): ValorLuz | undefined {
   };
 }
 
-function resumoTapaOlho(sessoes: readonly S[], hoje: Date): (ResumoSemana & { alvoMin: number }) | null {
+function resumoTapaOlho(sessoes: readonly S[], hoje: Date): (ResumoSemana & { alvoMin: number; manualMin: number }) | null {
   const doTapa = sessoes.filter((s) => s.sinais?.modo === MODO_TAPA_OLHO);
   if (!doTapa.length) return null;
   const alvoMin = numero(doTapa[doTapa.length - 1].sinais?.alvo_min) ?? 120;
-  return { ...resumoSemana(minutosDeTapaPorDia(doTapa), alvoMin, hoje), alvoMin };
+  return { ...resumoSemana(minutosDeTapaPorDia(doTapa), alvoMin, hoje), alvoMin, manualMin: minutosManuaisNaSemana(doTapa, hoje) };
 }
 
 function resumoSamakaka(sessoes: readonly S[]): ResumoSamakaka | null {
@@ -339,12 +350,25 @@ function lerAgulha(s: S): ValorAgulha | undefined {
   const a2 = numero(j?.acertos_dois);
   const a1 = numero(j?.acertos_um);
   if (a2 === null || a1 === null) return undefined;
-  return { acertosDois: a2, acertosUm: a1, tempoDois: numero(j?.tempo_dois_s), tempoUm: numero(j?.tempo_um_s), vantagem: String(j?.vantagem ?? "") };
+  return {
+    acertosDois: a2,
+    acertosUm: a1,
+    total: numero(j?.tentativas) ?? 3,
+    tempoDois: numero(j?.tempo_dois_s),
+    tempoUm: numero(j?.tempo_um_s),
+    vantagem: String(j?.vantagem ?? ""),
+  };
 }
 
 function lerFio(s: S): ValorFio | undefined {
   if (s.sinais?.modo !== "fio_missangas") return undefined;
-  return { ppcCm: numero(s.limiar), supressao: s.sinais.supressao === true, xNoSitio: numero(s.sinais.x_no_sitio) };
+  return {
+    ppcCm: numero(s.limiar),
+    supressao: s.sinais.supressao === true,
+    xNoSitio: numero(s.sinais.x_no_sitio),
+    recuperacaoCm: numero(s.sinais.recuperacao_media_cm),
+    cansaco: s.sinais.cansaco === true,
+  };
 }
 
 function adesao(sessoes: readonly S[], hoje: Date): Adesao {

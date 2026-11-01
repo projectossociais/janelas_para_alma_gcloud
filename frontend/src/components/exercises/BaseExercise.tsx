@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Info, Lock, LogOut, Play, ShieldCheck, UserPlus } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { useAcessoExercicios } from "@/contexts/AcessoExerciciosContext";
 import { useConsentimentoSaude } from "@/contexts/ConsentimentoSaudeContext";
 import BotaoSom from "@/components/visao/BotaoSom";
-import { calar } from "@/lib/visao/voz";
 import {
   useAcaoDesbloqueio,
   type TipoDesbloqueio,
@@ -118,8 +117,6 @@ const BaseExercise = ({
   const tipoDesbloqueio = acessoLoading ? null : tipoPara(exercicioId);
   const pedeConsentimento = !locked && !consentimentoLoading && !consentido;
   const bloqueado = locked || consentimentoLoading || !consentido;
-  // Sair do exercício (ou mudar de página) cala o que estiver a ser dito.
-  useEffect(() => calar, []);
 
   return (
     <div className="relative w-full overflow-hidden rounded-2xl border border-border/60 bg-card shadow-card">

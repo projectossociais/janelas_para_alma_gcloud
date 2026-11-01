@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import { AlertTriangle } from "lucide-react";
 import BaseExercise from "@/components/exercises/BaseExercise";
 import AssistenteTreino from "@/components/visao/AssistenteTreino";
-import BotaoOuvir from "@/components/visao/BotaoOuvir";
 import EscolherOculos from "@/components/visao/EscolherOculos";
 import JogoKianda from "@/components/visao/JogoKianda";
 import PaginaExercicio from "@/components/visao/PaginaExercicio";
@@ -55,7 +54,6 @@ const AvisoPesca = () => {
     <div className="space-y-3 text-left text-sm">
       <p className="text-foreground">{t("Visao.pescaComoJogar")}</p>
       <p className="text-muted-foreground">{t("Visao.pescaTapaOlho")}</p>
-      <BotaoOuvir texto={`${t("Visao.pescaComoJogar")} ${t("Visao.pescaTapaOlho")}`} />
     </div>
   );
 };

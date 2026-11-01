@@ -1,17 +1,9 @@
 /**
- * Instruções faladas (síntese de voz do próprio aparelho), para crianças e
- * para quem lê com dificuldade. Sem rede nem custos; se o aparelho não tiver
- * voz no idioma, usa a que houver -- e sem síntese nenhuma, o botão nem
- * aparece.
- */
-
-export const vozDisponivel = (): boolean => typeof window !== "undefined" && "speechSynthesis" in window;
-
-/*
- * O som é opcional e começa desligado: nenhum exercício fala nem faz bips
- * sozinho sem a pessoa ligar o som (`BotaoSom`, sempre à vista durante o
- * exercício). A escolha fica guardada no aparelho. "Ouvir as instruções" é um
- * pedido explícito e fala mesmo com o som desligado -- e pode ser parado.
+ * O som dos exercícios: só bips curtos, sem voz (a narração falada saiu em
+ * 2026-10-31 -- era ineficaz; as instruções estão todas no ecrã). É opcional
+ * e começa desligado: nenhum exercício faz bips sem a pessoa ligar o som
+ * (`BotaoSom`, sempre à vista durante o exercício). A escolha fica guardada
+ * no aparelho.
  */
 const CHAVE_SOM = "jpa.visao.som";
 const EVENTO_SOM = "jpa:visao-som";
@@ -34,7 +26,6 @@ export function definirSom(ligado: boolean): void {
   } catch {
     // armazenamento bloqueado: fica em memória
   }
-  if (!ligado) calar();
   window.dispatchEvent(new Event(EVENTO_SOM));
 }
 
@@ -42,43 +33,6 @@ export function definirSom(ligado: boolean): void {
 export function aoMudarSom(fn: () => void): () => void {
   window.addEventListener(EVENTO_SOM, fn);
   return () => window.removeEventListener(EVENTO_SOM, fn);
-}
-
-interface OpcoesFala {
-  /** Pedido explícito ("Ouvir as instruções"): fala mesmo com o som desligado. */
-  pedido?: boolean;
-  /** Quando acaba (ou é interrompido). */
-  aoAcabar?: () => void;
-}
-
-/**
- * Fala o texto no idioma do site ("pt-AO" usa a voz portuguesa que houver).
- * Sem o som ligado, só fala o que foi pedido. Devolve se começou a falar.
- */
-export function falar(texto: string, idioma: string, opcoes: OpcoesFala = {}): boolean {
-  if (!vozDisponivel() || (!opcoes.pedido && !somLigado())) return false;
-  const sintese = window.speechSynthesis;
-  sintese.cancel();
-  const base = idioma.slice(0, 2).toLowerCase();
-  const vozes = sintese.getVoices();
-  const voz =
-    vozes.find((v) => v.lang.toLowerCase().replace("_", "-") === (base === "pt" ? "pt-pt" : idioma.toLowerCase())) ??
-    vozes.find((v) => v.lang.toLowerCase().startsWith(base)) ??
-    null;
-  const u = new SpeechSynthesisUtterance(texto);
-  u.lang = voz?.lang ?? (base === "pt" ? "pt-PT" : idioma);
-  if (voz) u.voice = voz;
-  u.rate = 0.95;
-  if (opcoes.aoAcabar) {
-    u.onend = opcoes.aoAcabar;
-    u.onerror = opcoes.aoAcabar;
-  }
-  sintese.speak(u);
-  return true;
-}
-
-export function calar(): void {
-  if (vozDisponivel()) window.speechSynthesis.cancel();
 }
 
 let audio: AudioContext | null = null;

@@ -224,6 +224,18 @@ describe("Luz nos Olhos (exame dos pais)", () => {
     expect(r.luz?.primeira?.valor.delta).toBe(30);
     expect(r.astigmatismo).toBeNull();
   });
+
+  it("versão 2 sem lanterna: só o tapar conta, sem estimativa pelo reflexo", () => {
+    const s2 = sessao({
+      exercicio_id: "relax",
+      created_at: haDias(0),
+      olho: "ambos",
+      limiar: null,
+      unidade: "dioptrias_prismaticas",
+      sinais: { modo: "luz_olhos", versao: 2, achados: [], desvio_tapar: [{ olho: "direito", sentido: "fora" }], diario: { frequencia: "nunca" } },
+    });
+    expect(resumoClinico([s2], hoje).luz?.recente.valor).toEqual({ delta: null, reflexo: [], tapar: [{ olho: "direito", sentido: "fora" }], frequencia: "nunca" });
+  });
 });
 
 describe("Fio de Missangas", () => {
@@ -231,9 +243,41 @@ describe("Fio de Missangas", () => {
     const fio = (dias: number, cm: number | null, supressao: boolean) =>
       sessao({ exercicio_id: "cerebro", created_at: haDias(dias), olho: "ambos", limiar: cm, unidade: "cm", sinais: { modo: "fio_missangas", supressao, x_no_sitio: 2 } });
     const r = resumoClinico([fio(10, 12, true), fio(0, 7, false)], hoje);
-    expect(r.fio?.recente.valor).toEqual({ ppcCm: 7, supressao: false, xNoSitio: 2 });
-    expect(r.fio?.primeira?.valor).toEqual({ ppcCm: 12, supressao: true, xNoSitio: 2 });
+    expect(r.fio?.recente.valor).toEqual({ ppcCm: 7, supressao: false, xNoSitio: 2, recuperacaoCm: null, cansaco: false });
+    expect(r.fio?.primeira?.valor).toEqual({ ppcCm: 12, supressao: true, xNoSitio: 2, recuperacaoCm: null, cansaco: false });
     expect(r.contraste).toBeNull();
+  });
+
+  it("versão 2 (só o telemóvel): recuperação e cansaço", () => {
+    const s2 = sessao({
+      exercicio_id: "cerebro",
+      created_at: haDias(0),
+      olho: "ambos",
+      limiar: 8.5,
+      unidade: "cm",
+      sinais: { modo: "fio_missangas", versao: 2, rotura_cm: [7, 8.5, 10], recuperacao_media_cm: 11, cansaco: true },
+    });
+    expect(resumoClinico([s2], hoje).fio?.recente.valor).toEqual({ ppcCm: 8.5, supressao: false, xNoSitio: null, recuperacaoCm: 11, cansaco: true });
+  });
+});
+
+describe("Desafio da Agulha", () => {
+  it("lê os acertos das duas versões: 3 + 3 cronometradas e 5 + 5 sem tempo", () => {
+    const v1 = sessao({
+      exercicio_id: "estereopsia",
+      created_at: haDias(10),
+      olho: "ambos",
+      sinais: { modo: "agulha", jogador: { acertos_dois: 3, acertos_um: 1, tempo_dois_s: 1.2, tempo_um_s: 2.5, vantagem: "grande" } },
+    });
+    const v2 = sessao({
+      exercicio_id: "estereopsia",
+      created_at: haDias(0),
+      olho: "ambos",
+      sinais: { modo: "agulha", versao: 2, jogador: { acertos_dois: 4, acertos_um: 4, tentativas: 5, vantagem: "nenhuma" } },
+    });
+    const r = resumoClinico([v1, v2], hoje);
+    expect(r.agulha?.recente.valor).toEqual({ acertosDois: 4, acertosUm: 4, total: 5, tempoDois: null, tempoUm: null, vantagem: "nenhuma" });
+    expect(r.agulha?.primeira?.valor).toMatchObject({ total: 3, tempoDois: 1.2 });
   });
 });
 
@@ -250,9 +294,24 @@ describe("Caderneta do Tapa-olho", () => {
         sinais: { modo: "tapa_olho_horas", alvo_min: 120 },
       });
     const r = resumoClinico([tapa(1, 120), tapa(0, 60)], hoje);
-    expect(r.tapaOlho).toMatchObject({ alvoMin: 120, cumpridos: 1, mediaMin: 26 });
+    expect(r.tapaOlho).toMatchObject({ alvoMin: 120, cumpridos: 1, mediaMin: 26, manualMin: 0 });
     expect(r.adesao.minutosPorSemana).toEqual([0, 0, 0, 0]);
     expect(resumoClinico([], hoje).tapaOlho).toBeNull();
+  });
+
+  it("versão 2: o tempo acrescentado à mão fica à parte", () => {
+    const tapa = (minutos: number, manual: boolean) =>
+      sessao({
+        exercicio_id: "flexibilidade-acomodativa",
+        created_at: haDias(0),
+        olho: "esquerdo",
+        limiar: null,
+        unidade: null,
+        segundos_activos: minutos * 60,
+        sinais: { modo: "tapa_olho_horas", versao: 2, alvo_min: 120, manual },
+      });
+    const r = resumoClinico([tapa(60, false), tapa(90, true)], hoje);
+    expect(r.tapaOlho).toMatchObject({ cumpridos: 1, manualMin: 90 });
   });
 });
 

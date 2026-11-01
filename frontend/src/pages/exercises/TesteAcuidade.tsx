@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import { Mic, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AssistenteTeste, { type ContextoTeste } from "@/components/visao/AssistenteTeste";
-import BotaoOuvir from "@/components/visao/BotaoOuvir";
 import { EcraPasso } from "@/components/visao/EcraPasso";
 import PaginaExercicio from "@/components/visao/PaginaExercicio";
 import { CartaoOlho, EcraResultado } from "@/components/visao/Resultados";
@@ -30,7 +29,7 @@ import {
   type RespostaE,
 } from "@/lib/visao/palancaLonge";
 import { OLHOS, sinaisAcuidade, type Olho } from "@/lib/visao/resultados";
-import { falar, sinalSonoro } from "@/lib/visao/voz";
+import { sinalSonoro } from "@/lib/visao/voz";
 import { cn } from "@/lib/utils";
 
 const EXERCICIO_ID = ID_ACUIDADE;
@@ -109,7 +108,6 @@ const PrepararPalanca = ({ aoContinuar }: { aoContinuar: () => void }) => {
             <li key={p}>{p}</li>
           ))}
         </ol>
-        <BotaoOuvir texto={passos.join(" ")} />
         <div role="radiogroup" aria-label={t("Visao.palancaDistancia")} className="flex flex-wrap gap-2">
           {DISTANCIAS_LONGE_MM.map((mm) => (
             <Button
@@ -172,7 +170,6 @@ const EcraPalanca = ({
 
   useEffect(() => {
     tempo.iniciar();
-    falar(t("Visao.palancaVozComecar", { olho: t(olho === "direito" ? "Visao.olhoDireito" : "Visao.olhoEsquerdo").toLowerCase() }), i18n.language);
     // Só ao abrir o ecrã.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

@@ -1,6 +1,5 @@
 import { useTranslation } from "react-i18next";
 import AssistenteTreino from "@/components/visao/AssistenteTreino";
-import BotaoOuvir from "@/components/visao/BotaoOuvir";
 import PaginaExercicio from "@/components/visao/PaginaExercicio";
 import PintarSamakaka from "@/components/visao/PintarSamakaka";
 import { ID_CONTRASTE_BLOCOS } from "@/lib/visao/ids";
@@ -10,12 +9,10 @@ const EXERCICIO_ID = ID_CONTRASTE_BLOCOS;
 
 const AvisoSamakaka = () => {
   const { t } = useTranslation();
-  const texto = `${t("Visao.samakakaComoFazer")} ${t("Visao.samakakaTapaOlho")}`;
   return (
     <div className="space-y-3 text-left text-sm">
       <p className="text-foreground">{t("Visao.samakakaComoFazer")}</p>
       <p className="text-muted-foreground">{t("Visao.samakakaTapaOlho")}</p>
-      <BotaoOuvir texto={texto} />
     </div>
   );
 };

@@ -534,13 +534,14 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   Pontes e grava igual (`sinais.pontes`, `sinais.modo = "fusao_livre"`), por isso o relatório
   lê os dois. Ao alto, um telemóvel só chega a ~7 Δ: pede para o deitar e continua
   (`alargarRampa`).
-- **Som opcional e desligado por omissão (pedido do dono do projecto, 2026-10-22).** Nenhum
-  exercício fala nem faz bips sozinho: `falar` e `sinalSonoro` (`lib/visao/voz.ts`) só tocam
-  com o som ligado (`jpa.visao.som` no aparelho). O `BotaoSom` (fixo no canto inferior
-  esquerdo, por cima também dos ecrãs inteiros, vem do `BaseExercise`) liga e desliga a
-  qualquer momento, e desligar cala logo. "Ouvir as instruções" é um pedido explícito: fala
-  mesmo com o som desligado e passa a "Parar" enquanto fala. Sair do exercício cala tudo.
-  Os controlos dos ecrãs inteiros não podem ficar nesse canto.
+- **Sem narração falada (pedido do dono do projecto, 2026-10-31: "é ineficaz").** Os
+  exercícios não falam: nada de síntese de voz nem de "Ouvir as instruções"; tudo o que a
+  pessoa precisa de saber está escrito no ecrã. Ficam só os bips (`sinalSonoro`,
+  `lib/visao/voz.ts`), opcionais e desligados por omissão (`jpa.visao.som` no aparelho). O
+  `BotaoSom` (fixo no canto inferior esquerdo, por cima também dos ecrãs inteiros, vem do
+  `BaseExercise`) liga e desliga a qualquer momento. Os controlos dos ecrãs inteiros não
+  podem ficar nesse canto. A resposta *por voz* da criança na Palanca (microfone,
+  `useRespostaPorVoz`) não é narração e fica.
 - **Olhos de Palanca ao longe (2026-10-21): acuidade a 3 m sem ninguém ver o ecrã**
   (`lib/visao/palancaLonge.ts`, `TesteAcuidade`). "E" de Snellen (a "mãozinha"); a criança
   aponta para onde apontam os dedos e o adulto, com o ecrã virado para ela, desliza o dedo
@@ -548,30 +549,52 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   desligada por omissão: no Chrome o som vai para a Google (o texto diz isto). 3 m ou 2 m;
   grava `distancia_mm` e `sinais.ao_longe = true`. A tendência só compara sessões do mesmo
   tipo (`tipoDeAcuidade`: longe, barras ou isolado).
-- **Luz nos Olhos (2026-10-21): reflexo da luz e teste de tapar, feitos pelos pais**
-  (`lib/visao/luzOlhos.ts`, `TesteLuzOlhos`). Ecrã branco a meio metro; marca-se num
-  desenho onde ficou o reflexo em cada olho (o direito da criança fica à esquerda de quem
-  vê); ~15 Δ por mm de descentração (Hirschberg). Depois tapa-se um olho de cada vez e
-  diz-se para onde o outro se mexeu. `unidade = "dioptrias_prismaticas"`, `limiar` = maior
-  desvio, `sinais.modo = "luz_olhos"`, mais o diário de 7 dias (frequência e quando).
-- **Fio de Missangas (2026-10-21): cordão de Brock com um fio e missangas de casa**
-  (`lib/visao/fioMissangas.ts`). A voz pergunta, em cada missanga, onde os fios se cruzam
-  ("só vejo um fio" = supressão); no fim o telemóvel é a régua do ponto próximo de
-  convergência (2 medições, `unidade = "cm"`). As instruções faladas também aparecem escritas.
-- **Desafio da Agulha (2026-10-21): profundidade num jogo de família** (`lib/visao/agulha.ts`).
-  Dois lápis ponta com ponta, ou palhinha na garrafa; por jogador, 3 rondas com os dois
-  olhos e 3 com um tapado; o telemóvel é árbitro e cronómetro. Só o jogador 1 é avaliado
-  (vantagem dos dois olhos: grande, pequena ou nenhuma); o outro é a comparação.
-  `limiar = null`, `sinais.modo = "agulha"`. Com óculos 3D: o Teste de Estereopsia.
+- **Luz nos Olhos (versão 2, 2026-10-31): reflexo da lanterna e teste de tapar, feitos pelos
+  pais** (`lib/visao/luzOlhos.ts`, `TesteLuzOlhos`). O adulto segura o telemóvel abaixo dos
+  olhos, ecrã para si e lanterna (ligada no menu do telemóvel; a página não a acende) para
+  a criança, a um braço. Responde por desenhos: os pontinhos estão iguais? em que olho está
+  fora (o direito da criança fica à esquerda de quem vê)? para que lado? quão longe (4
+  posições: ~15, 30, 60, 90 Δ, Hirschberg)? Depois uma animação mostra o teste de tapar e
+  tapa-se um olho de cada vez; no fim, o diário de 7 dias. `unidade = "dioptrias_prismaticas"`,
+  `limiar` = maior desvio (`null` sem lanterna ou sem pontinhos vistos), `sinais.modo =
+  "luz_olhos"`, `sinais.versao = 2`, `achados`/`desvio_tapar` no mesmo formato da versão 1
+  (2026-10-21: ecrã branco como luz e reflexo marcado ao milímetro num desenho -- saiu porque
+  o reflexo mal se via e o adulto não lia o ecrã virado para a criança).
+- **Fio de Missangas (versão 2, 2026-10-31): o ponto próximo de convergência só com o
+  telemóvel** (`lib/visao/fioMissangas.ts`). O telemóvel fica deitado, com a ponta de baixo
+  encostada ao nariz (régua RAF); uma missanga desce pelo fio desenhado no ecrã a 1 cm/s e
+  a pessoa toca quando a vê a dobrar (rotura) e quando volta a ser uma (recuperação). Três
+  rondas; `limiar` = média das roturas, `unidade = "cm"`, `sinais.versao = 2`
+  (`rotura_cm`, `recuperacao_cm`, `cansaco`, `alem_do_ecra`, `inicio_cm`). A distância conta
+  do fundo da página (pede ecrã inteiro; no iPhone a barra do Safari soma um desvio) -- a
+  Fase 0 compara com a régua RAF. A versão 1 (2026-10-21, cordão de Brock com fio e
+  missangas a sério; "só vejo um fio" = supressão) saiu por ser difícil de perceber; as
+  sessões antigas ainda se lêem no relatório (`x_no_sitio`, `supressao`).
+- **Desafio da Agulha (versão 2, 2026-11-01): o dedo na ponta do lápis** (`lib/visao/agulha.ts`).
+  O adulto segura um lápis de pé a um braço; a criança desce o dedo e tenta tocar na ponta à
+  primeira (teste dos lápis de Lang). 5 tentativas com os dois olhos e 5 com um tapado (o
+  tapado alterna, a começar pelo esquerdo), sem tempo; o adulto toca em Acertou ou Falhou
+  (e pode corrigir a anterior). Vantagem dos dois olhos: 2 ou mais acertos a mais = grande,
+  1 = pequena (repetir), 0 ou menos = nenhuma (mostrar ao médico). `limiar = null`,
+  `sinais.modo = "agulha"`, `sinais.versao = 2`, `sinais.jogador` no formato da versão 1
+  mais `tentativas: 5` (o relatório e o rótulo usam-no como total; sem ele, 3). A versão 1
+  (2026-10-21: dois jogadores, dois lápis ou palhinha, 3 + 3 cronometradas, pontos) saiu
+  por ser difícil de perceber. Com óculos 3D: o Teste de Estereopsia.
 - **Pintar o Samakaka (2026-10-21): o olho fraco a guiar a mão** (`lib/visao/samakaka.ts`,
   `PintarSamakaka`). Com tapa-olho, segue-se com o dedo os pontinhos de seis motivos do
   pano; cada motivo com pontos mais pequenos e claros e menos folga. Desenha só quando o
   dedo mexe (sem animação contínua). `unidade = "mm"` (afastamento médio do dedo ao traço).
 - **Caderneta do Tapa-olho (2026-10-21): as horas de tapa-olho, para o médico**
-  (`lib/visao/caderneta.ts`). Não é para olhar para o ecrã: conta o tempo e pergunta de 15
-  em 15 min se o tapa-olho continua posto -- só conta o tempo confirmado. O período em curso
-  sobrevive a fechar a página (localStorage). Um cromo por dia cumprido.
-  `sinais.modo = "tapa_olho_horas"`, `segundos_activos` = tempo confirmado; **não conta para
+  (`lib/visao/caderneta.ts`). Não é para olhar para o ecrã: Pôr quando se põe o tapa-olho,
+  Tirar quando se tira, e o tempo pode ser feito aos bocados (cada bocado é uma sessão). O
+  bocado em curso sobrevive a fechar a página (localStorage). Um cromo por dia cumprido.
+  **Versão 2 (2026-11-01):** o tempo receitado escolhe-se na primeira vez -- 2 h (moderada) ou
+  6 h (grave), como nos estudos PEDIG, ou outro em passos de 30 min; a pergunta de 15 em 15
+  min "continua posto?" é opcional e vem desligada; num bocado de 30 min ou mais, ao tirar
+  pergunta-se "tirou-o agora?" (`sinais.tirado_antes_min`); o tempo feito sem o telemóvel
+  acrescenta-se à mão (`sinais.manual = true`), à parte no relatório (`manualMin`). A
+  versão 1 perguntava sempre e só contava o tempo confirmado.
+  `sinais.modo = "tapa_olho_horas"`, `segundos_activos` = tempo que conta; **não conta para
   a dose de treino** (`contaParaDose`), só para a adesão no relatório.
 - **Pontes de Fusão (2026-10-20): fusão verificada pelo estímulo, não declarada.** Dois anéis
   em anáglifo afastam-se (convergência: imagem do olho esquerdo para a direita); dentro, um
