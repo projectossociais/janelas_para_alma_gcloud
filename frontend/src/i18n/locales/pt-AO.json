@@ -2965,5 +2965,31 @@
     "fazerOutraDoacao": "Fazer outra doação",
     "semCartao": "Pagamento por transferência para a conta do projecto. Nunca pedimos dados de cartão.",
     "mensal": "Mensal"
+  },
+  "ComprasLoja": {
+    "titulo": "Premium",
+    "descricao": "Os 8 exercícios, o acompanhamento da evolução e o relatório para o médico.",
+    "porMes": "{{preco}} por mês",
+    "precoACarregar": "A obter o preço da loja…",
+    "subscrever": "Subscrever",
+    "comprar": "Comprar",
+    "aComprar": "A abrir a loja…",
+    "aConfirmar": "A confirmar o pagamento…",
+    "restaurar": "Restaurar compras",
+    "restauradas": "Compras restauradas.",
+    "entrarParaComprar": "Entre na sua conta para comprar",
+    "entrar": "Entrar",
+    "termosSubscricao": "Subscrição mensal com renovação automática. O pagamento é cobrado na conta da loja quando confirma a compra e renova-se todos os meses, ao mesmo preço, a menos que seja cancelada pelo menos 24 horas antes do fim do período. Pode gerir ou cancelar a subscrição nas definições da conta da loja.",
+    "termosUtilizacao": "Termos de utilização",
+    "politicaPrivacidade": "Política de privacidade",
+    "jaTemPremium": "O Premium está activo nesta conta.",
+    "premiumActivado": "Premium activado. Bom treino!",
+    "irParaExercicios": "Ir para os exercícios",
+    "pagamentoEmConfirmacao": "O pagamento foi feito, mas ainda não chegou à nossa conta. Pode demorar alguns minutos — volte a abrir esta página mais tarde.",
+    "compraConcluida": "Compra concluída: {{quantidade}} na carteira.",
+    "naoFoiPossivelComprar": "Não foi possível concluir a compra. Tente de novo.",
+    "indisponivel": "As compras ainda não estão disponíveis nesta versão da app.",
+    "avisoLoja": "Os pagamentos dentro da app são feitos pela loja (App Store ou Google Play), com o preço na moeda da sua conta da loja.",
+    "voltar": "Voltar"
   }
 }

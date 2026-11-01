@@ -2965,5 +2965,31 @@
     "fazerOutraDoacao": "Make another donation",
     "semCartao": "Payment by bank transfer to the project's account. We never ask for card details.",
     "mensal": "Monthly"
+  },
+  "ComprasLoja": {
+    "titulo": "Premium",
+    "descricao": "All 8 exercises, progress tracking and the report for the doctor.",
+    "porMes": "{{preco}} per month",
+    "precoACarregar": "Getting the price from the store…",
+    "subscrever": "Subscribe",
+    "comprar": "Buy",
+    "aComprar": "Opening the store…",
+    "aConfirmar": "Confirming the payment…",
+    "restaurar": "Restore purchases",
+    "restauradas": "Purchases restored.",
+    "entrarParaComprar": "Sign in to buy",
+    "entrar": "Sign in",
+    "termosSubscricao": "Monthly subscription that renews automatically. Payment is charged to your store account when you confirm the purchase and renews every month at the same price unless cancelled at least 24 hours before the end of the period. You can manage or cancel the subscription in your store account settings.",
+    "termosUtilizacao": "Terms of use",
+    "politicaPrivacidade": "Privacy policy",
+    "jaTemPremium": "Premium is active on this account.",
+    "premiumActivado": "Premium activated. Enjoy your training!",
+    "irParaExercicios": "Go to the exercises",
+    "pagamentoEmConfirmacao": "The payment went through but has not reached us yet. It can take a few minutes — open this page again later.",
+    "compraConcluida": "Purchase complete: {{quantidade}} added to your wallet.",
+    "naoFoiPossivelComprar": "The purchase could not be completed. Please try again.",
+    "indisponivel": "Purchases are not available in this version of the app yet.",
+    "avisoLoja": "Payments inside the app go through the store (App Store or Google Play), priced in your store account's currency.",
+    "voltar": "Back"
   }
 }

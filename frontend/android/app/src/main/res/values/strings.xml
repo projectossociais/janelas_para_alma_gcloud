@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Janelas Para a Alma</string>
+    <string name="title_activity_main">Janelas Para a Alma</string>
+    <string name="package_name">com.janelasparaalma.app</string>
+    <string name="custom_url_scheme">com.janelasparaalma.app</string>
+</resources>

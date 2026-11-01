@@ -74,6 +74,13 @@ if gcloud secrets describe jpa-cron-secret >/dev/null 2>&1; then
 else
   echo "    Sem jpa-cron-secret (03-secrets.sh) — eliminação real de contas (W-03) fica desligada."
 fi
+# Compras na app nativa (docs/APP_LOJAS.md): o valor do cabeçalho Authorization
+# configurado no webhook do RevenueCat. Sem ele, o webhook recusa tudo.
+if gcloud secrets describe jpa-revenuecat-webhook >/dev/null 2>&1; then
+  API_SECRETS="${API_SECRETS},REVENUECAT_WEBHOOK_SEGREDO=jpa-revenuecat-webhook:latest"
+else
+  echo "    Sem jpa-revenuecat-webhook — compras na app (App Store / Google Play) ficam por creditar."
+fi
 # Não é secreto (corre no browser, dentro do próprio id_token que o Google
 # Identity Services emite) -- ver core/google_auth.py. Vazio até o dono do
 # projecto criar o cliente OAuth na consola do GCP; sem isto, o botão de

@@ -331,6 +331,25 @@ mantida pelo rewrite do Vercel exactamente como antes pelo NGINX — que torna o
 `httpOnly` de sessão viável (§3b) sem CORS a sério; o CORS na API (`frontend_origins`)
 fica só como rede de segurança para pedidos verdadeiramente cross-origin.
 
+**App nativa (Google Play / App Store, preparada a 2026-10-30, ainda não publicada):**
+Capacitor (`frontend/capacitor.config.ts`, projectos em `frontend/android` e
+`frontend/ios`). A app abre o site publicado (`server.url`), nunca uma cópia do build —
+assim `/api/*` continua na mesma origem e o cookie de sessão funciona; deploys do Vercel
+chegam à app sem nova versão nas lojas. O site sabe que está na app por
+`estaNaAppNativa()` (`lib/appNativa.ts`); lá dentro não há login com Google. **Na app, o
+Premium e os diamantes/moedas compram-se pela App Store / Google Play** (decisão do dono
+do projecto, 2026-10-30 — as lojas não aceitam transferência + comprovativo para
+produtos digitais): `lib/comprasLoja.ts` (SDK do RevenueCat, `app_user_id` = id da
+conta), `PremiumNaApp` e `BotaoCompraNaLoja`; no site nada muda. **Quem credita é só a
+API**, pelo webhook `POST /webhooks/revenuecat` (segredo `REVENUECAT_WEBHOOK_SEGREDO` no
+`Authorization`, mesma regra de §4.8) e `CompraLojaService`: uma linha por transacção da
+loja em `compras_loja` (índice único: nunca aplica duas vezes), Premium = período pago
+somado à validade actual (tecto de 35 dias por transacção), diamantes/moedas do catálogo
+da loja do jogo, reembolso tira só o que essa compra deu, sandbox conta (o revisor da
+Apple compra assim). Os ids dos produtos são iguais nas lojas e no código; os preços
+vivem só nas consolas das lojas. A app só celebra quando a API já mostra a compra
+(`esperarPelaApi`). Passos, custos e privacidade em `docs/APP_LOJAS.md`.
+
 Produção da API (Cloud Run): scripts de provisionamento e deploy em `infra/gcloud/` (ver
 o `README.md` lá). **Decisão do dono do projecto (2026-09-15): o deploy da API passa a
 ser automático**, tal como o do frontend — um push/merge para `main` builda a imagem,

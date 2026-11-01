@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef } from "react";
+import { estaNaAppNativa } from "@/lib/appNativa";
 
 // Formas mínimas do Google Identity Services que usamos -- a biblioteca
 // carrega globalmente via <script> em index.html, não como módulo importável.
@@ -24,14 +25,18 @@ interface GoogleSignInButtonProps {
 /** Botão "Continuar com o Google" — usa o Google Identity Services (carregado
  *  em index.html), nunca um redireccionamento para fora do site. Sem
  *  `VITE_GOOGLE_CLIENT_ID` configurado, não renderiza nada (em vez de um
- *  botão partido). */
+ *  botão partido). Dentro da app nativa também não: o Google recusa o login
+ *  dentro de uma WebView embutida (`disallowed_useragent`), e a App Store
+ *  exigiria "Iniciar sessão com a Apple" ao lado (guideline 4.8) -- na app
+ *  entra-se com email e password. */
 const GoogleSignInButton = ({ onCredential }: GoogleSignInButtonProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const elementId = useId();
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
+  const naApp = estaNaAppNativa();
 
   useEffect(() => {
-    if (!clientId || !containerRef.current) return;
+    if (!clientId || naApp || !containerRef.current) return;
 
     let cancelado = false;
     // O <script> do Google carrega de forma assíncrona (async defer) --
@@ -63,7 +68,7 @@ const GoogleSignInButton = ({ onCredential }: GoogleSignInButtonProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientId]);
 
-  if (!clientId) return null;
+  if (!clientId || naApp) return null;
 
   return <div ref={containerRef} id={elementId} className="flex justify-center" />;
 };
