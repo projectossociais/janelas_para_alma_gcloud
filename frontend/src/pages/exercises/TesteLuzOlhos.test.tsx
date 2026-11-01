@@ -37,49 +37,70 @@ vi.mock("@/lib/apiClient", () => ({
 
 afterEach(() => vi.restoreAllMocks());
 
-describe("Luz nos Olhos", () => {
-  it("diário, reflexo e teste de tapar: grava o desvio estimado e mostra-o como sinal", async () => {
-    registar.mockReset().mockResolvedValue({});
-    vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(400);
-    render(
-      <MemoryRouter>
-        <AcessoExerciciosProvider>
-          <TesteLuzOlhos />
-        </AcessoExerciciosProvider>
-      </MemoryRouter>,
-    );
+const abrir = () =>
+  render(
+    <MemoryRouter>
+      <AcessoExerciciosProvider>
+        <TesteLuzOlhos />
+      </AcessoExerciciosProvider>
+    </MemoryRouter>,
+  );
+const escolher = async (nome: string | RegExp) => fireEvent.click(await screen.findByRole("button", { name: nome }));
 
+describe("Luz nos Olhos", () => {
+  it("lanterna, pontinho fora do sítio e teste de tapar: grava o desvio e diz que concordam", async () => {
+    registar.mockReset().mockResolvedValue({});
+    abrir();
+
+    await escolher(V.luzLanternaAcesa);
+    await escolher(new RegExp(V.luzIguais_diferente));
+    await escolher(new RegExp(V.luzOlhoEsquerdoDela));
+    await escolher(V.luzLado_orelha);
+    await escolher(V.luzNivel_pupila);
+    await escolher(V.luzDemoPercebi);
+    // Tapa-se o esquerdo e olha-se para o direito: não se mexeu.
+    await escolher(V.luzMovimento_nao);
+    // Tapa-se o direito e olha-se para o esquerdo: foi para a orelha (estava virado para dentro).
+    await escolher(V.luzMovimento_fora);
     fireEvent.click(await screen.findByRole("radio", { name: V.luzFrequencia_as_vezes }));
     fireEvent.click(screen.getByRole("button", { name: V.luzQuando_cansaco }));
-    fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
-    fireEvent.click(await screen.findByRole("button", { name: V.luzAcender }));
-    fireEvent.click(await screen.findByRole("button", { name: V.luzJaVi }));
-
-    // Desenho de 400 x 168: íris com 46 px de raio (6 mm), centros em x = 108 e
-    // 292, y = 92,4. Direito no centro; esquerdo 12 px (~1,6 mm) para a orelha
-    // dela (para a direita de quem vê). O jsdom arredonda clientX/Y a inteiros.
-    const desenho = await screen.findByRole("img", { name: V.luzRotuloDesenho });
-    const tocar = (x: number, y: number) => desenho.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true, clientX: x, clientY: y }));
-    tocar(108, 92);
-    tocar(292 + 12, 92);
-    expect(await screen.findByText(V.luzMarcados)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
-
-    // Tapa-se o direito e olha-se para o esquerdo: foi para a orelha (estava virado para dentro).
-    fireEvent.click(await screen.findByRole("button", { name: V.luzMovimento_fora }));
-    fireEvent.click(await screen.findByRole("button", { name: V.luzMovimento_nao }));
+    await escolher(V.luzVerResultado);
 
     expect(await screen.findByText(V.luzResultadoTitulo)).toBeInTheDocument();
-    expect(screen.getByText("Pelo reflexo, o olho esquerdo desvia para dentro: cerca de 25 Δ.")).toBeInTheDocument();
+    expect(screen.getByText("Pelo reflexo, o olho esquerdo desvia para dentro: cerca de 30 Δ.")).toBeInTheDocument();
     expect(screen.getByText("Ao tapar o outro olho, o olho esquerdo mexeu-se: estava desviado para dentro.")).toBeInTheDocument();
+    expect(screen.getByText(V.luzConcordam)).toBeInTheDocument();
     await waitFor(() => expect(registar).toHaveBeenCalledTimes(1));
     const s = registar.mock.calls[0][0];
-    expect(s).toMatchObject({ exercicio_id: "relax", olho: "ambos", limiar: 25, unidade: "dioptrias_prismaticas" });
+    expect(s).toMatchObject({ exercicio_id: "relax", olho: "ambos", limiar: 30, unidade: "dioptrias_prismaticas" });
     expect(s.sinais).toMatchObject({
       modo: "luz_olhos",
-      tapar: { esquerdo: "fora", direito: "nao" },
+      versao: 2,
+      reflexo: { resposta: "diferente", olho: "esquerdo", lado: "orelha", nivel: "pupila" },
+      achados: [{ olho: "esquerdo", sentido: "dentro", mm: 2, delta: 30 }],
+      tapar: { direito: "nao", esquerdo: "fora" },
       desvio_tapar: [{ olho: "esquerdo", sentido: "dentro" }],
       diario: { frequencia: "as_vezes", quando: ["cansaco"] },
     });
+  });
+
+  it("sem lanterna: salta para o tapar e grava sem estimativa pelo reflexo", async () => {
+    registar.mockReset().mockResolvedValue({});
+    abrir();
+
+    await escolher(V.luzSemLanterna);
+    expect(await screen.findByText(V.luzDemoTextoSemLuz)).toBeInTheDocument();
+    await escolher(V.luzDemoPercebi);
+    await escolher(V.luzMovimento_nao);
+    await escolher(V.luzMovimento_nao);
+    fireEvent.click(await screen.findByRole("radio", { name: V.luzFrequencia_nunca }));
+    await escolher(V.luzVerResultado);
+
+    expect(await screen.findByText(V.luzLuz_sem_lanterna)).toBeInTheDocument();
+    expect(screen.getByText(V.luzTaparNada)).toBeInTheDocument();
+    await waitFor(() => expect(registar).toHaveBeenCalledTimes(1));
+    const s = registar.mock.calls[0][0];
+    expect(s.limiar).toBeNull();
+    expect(s.sinais).toMatchObject({ reflexo: { resposta: "sem_lanterna" }, achados: [], desvio_tapar: [] });
   });
 });

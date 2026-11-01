@@ -108,8 +108,9 @@ o médico por **link temporário partilhado pelo pai** (nunca envio automático)
 - [x] **Seis exercícios novos, todos diferentes e sem óculos** (2026-10-21, pedido do dono do
       projecto: "não o mesmo teste com outra camada"). Os ids ficam; muda o exercício.
       **Olhos de Palanca ao longe** (`figure8`, "E" a 3 m, a criança aponta e o adulto desliza
-      o dedo; as barras de Flom ao perto saíram), **Luz nos Olhos** (`relax`, reflexo da luz e
-      teste de tapar feitos pelos pais, em Δ), **Fio de Missangas** (`cerebro`, ponto próximo de
+      o dedo; as barras de Flom ao perto saíram), **Luz nos Olhos** (`relax`, reflexo da lanterna
+      do telemóvel e teste de tapar feitos pelos pais, respondidos por desenhos, em Δ -- desde
+      2026-10-31; antes, a luz era o ecrã), **Fio de Missangas** (`cerebro`, ponto próximo de
       convergência em cm só com o telemóvel deitado no nariz -- desde 2026-10-31; antes,
       cordão de Brock com fio a sério), **Desafio da Agulha** (`estereopsia`, jogo
       de família, dois olhos contra um; o estereograma fica como opção com óculos),

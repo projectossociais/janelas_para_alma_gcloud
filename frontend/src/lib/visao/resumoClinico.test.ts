@@ -224,6 +224,18 @@ describe("Luz nos Olhos (exame dos pais)", () => {
     expect(r.luz?.primeira?.valor.delta).toBe(30);
     expect(r.astigmatismo).toBeNull();
   });
+
+  it("versão 2 sem lanterna: só o tapar conta, sem estimativa pelo reflexo", () => {
+    const s2 = sessao({
+      exercicio_id: "relax",
+      created_at: haDias(0),
+      olho: "ambos",
+      limiar: null,
+      unidade: "dioptrias_prismaticas",
+      sinais: { modo: "luz_olhos", versao: 2, achados: [], desvio_tapar: [{ olho: "direito", sentido: "fora" }], diario: { frequencia: "nunca" } },
+    });
+    expect(resumoClinico([s2], hoje).luz?.recente.valor).toEqual({ delta: null, reflexo: [], tapar: [{ olho: "direito", sentido: "fora" }], frequencia: "nunca" });
+  });
 });
 
 describe("Fio de Missangas", () => {

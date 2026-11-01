@@ -151,6 +151,7 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
       .join(" · ");
   const luz = (v: ValorLuz) => {
     const partes = [
+      ...(v.delta === null ? [t("Visao.clinicoLuzSemReflexo")] : []),
       ...v.reflexo.map((a) => t("Visao.clinicoLuzReflexo", { olho: abrevOlho(t, a.olho), sentido: t(`Visao.luzSentido_${a.sentido}`), delta: a.delta })),
       ...v.tapar.map((a) => t("Visao.clinicoLuzTapar", { olho: abrevOlho(t, a.olho), sentido: t(`Visao.luzSentido_${a.sentido}`) })),
     ];

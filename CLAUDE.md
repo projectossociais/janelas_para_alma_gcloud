@@ -549,12 +549,17 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   desligada por omissão: no Chrome o som vai para a Google (o texto diz isto). 3 m ou 2 m;
   grava `distancia_mm` e `sinais.ao_longe = true`. A tendência só compara sessões do mesmo
   tipo (`tipoDeAcuidade`: longe, barras ou isolado).
-- **Luz nos Olhos (2026-10-21): reflexo da luz e teste de tapar, feitos pelos pais**
-  (`lib/visao/luzOlhos.ts`, `TesteLuzOlhos`). Ecrã branco a meio metro; marca-se num
-  desenho onde ficou o reflexo em cada olho (o direito da criança fica à esquerda de quem
-  vê); ~15 Δ por mm de descentração (Hirschberg). Depois tapa-se um olho de cada vez e
-  diz-se para onde o outro se mexeu. `unidade = "dioptrias_prismaticas"`, `limiar` = maior
-  desvio, `sinais.modo = "luz_olhos"`, mais o diário de 7 dias (frequência e quando).
+- **Luz nos Olhos (versão 2, 2026-10-31): reflexo da lanterna e teste de tapar, feitos pelos
+  pais** (`lib/visao/luzOlhos.ts`, `TesteLuzOlhos`). O adulto segura o telemóvel abaixo dos
+  olhos, ecrã para si e lanterna (ligada no menu do telemóvel; a página não a acende) para
+  a criança, a um braço. Responde por desenhos: os pontinhos estão iguais? em que olho está
+  fora (o direito da criança fica à esquerda de quem vê)? para que lado? quão longe (4
+  posições: ~15, 30, 60, 90 Δ, Hirschberg)? Depois uma animação mostra o teste de tapar e
+  tapa-se um olho de cada vez; no fim, o diário de 7 dias. `unidade = "dioptrias_prismaticas"`,
+  `limiar` = maior desvio (`null` sem lanterna ou sem pontinhos vistos), `sinais.modo =
+  "luz_olhos"`, `sinais.versao = 2`, `achados`/`desvio_tapar` no mesmo formato da versão 1
+  (2026-10-21: ecrã branco como luz e reflexo marcado ao milímetro num desenho -- saiu porque
+  o reflexo mal se via e o adulto não lia o ecrã virado para a criança).
 - **Fio de Missangas (versão 2, 2026-10-31): o ponto próximo de convergência só com o
   telemóvel** (`lib/visao/fioMissangas.ts`). O telemóvel fica deitado, com a ponta de baixo
   encostada ao nariz (régua RAF); uma missanga desce pelo fio desenhado no ecrã a 1 cm/s e

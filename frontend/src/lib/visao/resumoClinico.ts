@@ -124,8 +124,8 @@ export interface ValorFio {
 
 /** Luz nos Olhos (exame feito pelos pais): desvio pelo reflexo, teste de tapar e diário. */
 export interface ValorLuz {
-  /** Maior desvio estimado pelo reflexo, em Δ (0 = nenhum visível). */
-  delta: number;
+  /** Maior desvio estimado pelo reflexo, em Δ (0 = nenhum visível; `null` = os pontinhos não se viram ou não havia lanterna). */
+  delta: number | null;
   reflexo: { olho: Olho; sentido: string; delta: number }[];
   tapar: { olho: Olho; sentido: string }[];
   frequencia: string | null;
@@ -306,10 +306,12 @@ const lista = (v: unknown): Record<string, unknown>[] =>
   Array.isArray(v) ? v.filter((x): x is Record<string, unknown> => !!x && typeof x === "object") : [];
 
 function lerLuz(s: S): ValorLuz | undefined {
-  if (s.sinais?.modo !== "luz_olhos" || typeof s.limiar !== "number") return undefined;
+  if (s.sinais?.modo !== "luz_olhos") return undefined;
+  // A versão 2 grava `limiar = null` quando não se viu o reflexo; a versão 1 tinha-o sempre.
+  if (typeof s.limiar !== "number" && s.sinais.versao !== 2) return undefined;
   const diario = s.sinais.diario as { frequencia?: unknown } | undefined;
   return {
-    delta: s.limiar,
+    delta: numero(s.limiar),
     reflexo: lista(s.sinais.achados)
       .filter((a) => eOlho(a.olho) && typeof a.sentido === "string" && typeof a.delta === "number")
       .map((a) => ({ olho: a.olho as Olho, sentido: a.sentido as string, delta: a.delta as number })),

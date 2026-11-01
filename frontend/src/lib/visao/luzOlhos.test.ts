@@ -1,44 +1,34 @@
 import { describe, expect, it } from "vitest";
-import { IRIS_RAIO_MM, analisarReflexos, desvioMaximo, desvioPeloTapar, limitarAIris } from "./luzOlhos";
+import { achadoDoReflexo, concordam, desvioMaximo, desvioPeloTapar, reflexoNoDesenho } from "./luzOlhos";
 
-const centro = { x: 0, y: 0 };
-
-describe("reflexo da luz (Hirschberg)", () => {
-  it("os dois reflexos no mesmo sítio: sem desvio", () => {
-    expect(analisarReflexos({ direito: centro, esquerdo: centro })).toEqual([]);
-    // O pequeno desvio natural para o nariz, igual nos dois olhos, não conta.
-    expect(analisarReflexos({ direito: { x: 0.4, y: 0 }, esquerdo: { x: -0.4, y: 0 } })).toEqual([]);
+describe("o pontinho de luz (Hirschberg)", () => {
+  it("as quatro posições valem cerca de 15, 30, 60 e 90 Δ", () => {
+    expect(achadoDoReflexo("esquerdo", "orelha", "pouco").delta).toBe(15);
+    expect(achadoDoReflexo("esquerdo", "orelha", "pupila").delta).toBe(30);
+    expect(achadoDoReflexo("esquerdo", "orelha", "meio").delta).toBe(60);
+    expect(achadoDoReflexo("esquerdo", "orelha", "iris").delta).toBe(90);
   });
 
-  it("reflexo do olho esquerdo 1,5 mm para a orelha: olho esquerdo virado para dentro, ~25 Δ", () => {
-    // De frente, a orelha esquerda da criança fica à direita do adulto (+x).
-    const a = analisarReflexos({ direito: centro, esquerdo: { x: 1.5, y: 0 } });
-    expect(a).toEqual([{ olho: "esquerdo", sentido: "dentro", mm: 1.5, delta: 25 }]);
+  it("pontinho para a orelha: olho virado para dentro; para o nariz: para fora", () => {
+    expect(achadoDoReflexo("esquerdo", "orelha", "pupila")).toEqual({ olho: "esquerdo", sentido: "dentro", mm: 2, delta: 30 });
+    expect(achadoDoReflexo("direito", "nariz", "pouco")).toMatchObject({ olho: "direito", sentido: "fora" });
   });
 
-  it("reflexo do olho direito para o nariz: olho direito virado para fora", () => {
-    const a = analisarReflexos({ direito: { x: 1, y: 0 }, esquerdo: centro });
-    expect(a).toEqual([{ olho: "direito", sentido: "fora", mm: 1, delta: 15 }]);
+  it("pontinho para cima: olho virado para baixo, e vice-versa", () => {
+    expect(achadoDoReflexo("direito", "cima", "pouco").sentido).toBe("baixo");
+    expect(achadoDoReflexo("direito", "baixo", "pouco").sentido).toBe("cima");
   });
 
-  it("reflexo para baixo: olho virado para cima", () => {
-    const a = analisarReflexos({ direito: centro, esquerdo: { x: 0, y: 1 } });
-    expect(a).toEqual([{ olho: "esquerdo", sentido: "cima", mm: 1, delta: 15 }]);
-  });
-
-  it("menos de meio milímetro não se distingue a olho", () => {
-    expect(analisarReflexos({ direito: centro, esquerdo: { x: 0.3, y: 0.2 } })).toEqual([]);
+  it("no desenho, de frente: a orelha esquerda dela fica à direita de quem vê", () => {
+    expect(reflexoNoDesenho("esquerdo", "orelha", 2)).toEqual({ x: 2, y: 0 });
+    expect(reflexoNoDesenho("direito", "orelha", 2)).toEqual({ x: -2, y: 0 });
+    expect(reflexoNoDesenho("direito", "nariz", 2)).toEqual({ x: 2, y: 0 });
+    expect(reflexoNoDesenho("esquerdo", "cima", 1)).toEqual({ x: 0, y: -1 });
   });
 
   it("o desvio máximo é o maior dos achados", () => {
-    const a = analisarReflexos({ direito: centro, esquerdo: { x: 2, y: 1 } });
-    expect(desvioMaximo(a)).toBe(30);
+    expect(desvioMaximo([achadoDoReflexo("direito", "nariz", "meio")])).toBe(60);
     expect(desvioMaximo([])).toBe(0);
-  });
-
-  it("um reflexo marcado fora da íris fica na borda", () => {
-    const r = limitarAIris({ x: 12, y: 0 });
-    expect(r.x).toBe(IRIS_RAIO_MM);
   });
 });
 
@@ -56,5 +46,11 @@ describe("teste de tapar", () => {
 
   it("'não se mexeu' e 'não consegui ver' não são desvio", () => {
     expect(desvioPeloTapar({ direito: "nao", esquerdo: "naovi" })).toEqual([]);
+  });
+
+  it("a luz e o tapar concordam quando apontam o mesmo olho para o mesmo lado", () => {
+    const luz = [achadoDoReflexo("esquerdo", "orelha", "pupila")];
+    expect(concordam(luz, desvioPeloTapar({ esquerdo: "fora" }))).toBe(true);
+    expect(concordam(luz, desvioPeloTapar({ direito: "fora" }))).toBe(false);
   });
 });

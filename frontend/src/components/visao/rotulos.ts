@@ -122,9 +122,13 @@ export const limiarFormatado = (
   // Fio de Missangas (id `cerebro`, desde 2026-10-21): ponto mais próximo de convergência.
   if (sinais?.modo === "fio_missangas")
     return limiar === null ? i18n.t("Visao.fioLimiarAlem") : i18n.t("Visao.fioLimiarCurto", { cm: formatarDecimal(limiar, limiar % 1 ? 1 : 0) });
-  // Luz nos Olhos (id `relax`, desde 2026-10-21): desvio estimado pelo reflexo.
+  // Luz nos Olhos (id `relax`, desde 2026-10-21): desvio estimado pelo reflexo (`null` = só se fez o tapar).
   if (sinais?.modo === "luz_olhos")
-    return limiar ? i18n.t("Visao.luzLimiarCurto", { delta: limiar }) : i18n.t("Visao.luzSemDesvioCurto");
+    return limiar === null
+      ? i18n.t("Visao.luzSemLuzCurto")
+      : limiar
+        ? i18n.t("Visao.luzLimiarCurto", { delta: limiar })
+        : i18n.t("Visao.luzSemDesvioCurto");
   if (sinais && typeof sinais.astigmatismo === "boolean")
     return sinais.astigmatismo ? i18n.t("Visao.astigmatismoSinalCurto") : i18n.t("Visao.astigmatismoSemSinalCurto");
   if (unidade === "dioptrias_prismaticas") return rotuloPontes(sinais?.pontes) ?? (limiar === null ? "—" : rotuloDelta(limiar));
