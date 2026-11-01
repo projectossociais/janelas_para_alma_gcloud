@@ -100,6 +100,13 @@ export interface ResumoSamakaka extends Resumo<ValorSamakaka> {
 }
 
 /** Desafio da Agulha: o jogador que faz o treino, com os dois olhos e com um. */
+/** Olho Mágico, cartão do pássaro e da gaiola (versão 2): rotura e recuperação declaradas, em Δ. */
+export interface ValorGaiola {
+  gaiola: ResumoSentido;
+  /** Faltou o sol ou a nuvem (um olho desligou) nalgum momento da sessão. */
+  supressao: boolean;
+}
+
 export interface ValorAgulha {
   acertosDois: number;
   acertosUm: number;
@@ -167,6 +174,7 @@ export interface ResumoClinico {
   fio: Resumo<ValorFio> | null;
   /** Desafio da Agulha. */
   agulha: Resumo<ValorAgulha> | null;
+  gaiola: Resumo<ValorGaiola> | null;
   /** Pintar o Samakaka. */
   samakaka: ResumoSamakaka | null;
   /** Horas de tapa-olho (Caderneta), nos últimos 7 dias; `null` sem registos no período. */
@@ -344,6 +352,12 @@ function resumoSamakaka(sessoes: readonly S[]): ResumoSamakaka | null {
   return { ...r, olho: eOlho(olho) ? olho : null };
 }
 
+function lerGaiola(s: S): ValorGaiola | undefined {
+  if (s.sinais?.modo !== "fusao_gaiola") return undefined;
+  const g = s.sinais.gaiola;
+  return eResumoSentido(g) && g.rampas > 0 ? { gaiola: g, supressao: s.sinais.fusao === "supressao" } : undefined;
+}
+
 function lerAgulha(s: S): ValorAgulha | undefined {
   if (s.sinais?.modo !== "agulha") return undefined;
   const j = s.sinais.jogador as Record<string, unknown> | undefined;
@@ -402,6 +416,7 @@ export function resumoClinico(sessoes: readonly S[], hoje: Date): ResumoClinico 
     luz: resumir(de(ID_ASTIGMATISMO), lerLuz),
     fio: resumir(de(ID_CONTRASTE), lerFio),
     agulha: resumir(de(ID_ESTEREOPSIA), lerAgulha),
+    gaiola: resumir(de(ID_CONVERGENCIA), lerGaiola),
     samakaka: resumoSamakaka(fiaveis),
     tapaOlho: resumoTapaOlho(doPeriodo, hoje),
     adesao: adesao(sessoes, hoje),
@@ -411,4 +426,4 @@ export function resumoClinico(sessoes: readonly S[], hoje: Date): ResumoClinico 
 
 /** Há alguma medida para mostrar (fora a adesão)? */
 export const temMedicoes = (r: ResumoClinico): boolean =>
-  !!(r.acuidade || r.contraste || r.astigmatismo || r.estereopsia || r.vergencia || r.kianda || r.pesca || r.luz || r.fio || r.agulha || r.samakaka);
+  !!(r.acuidade || r.contraste || r.astigmatismo || r.estereopsia || r.vergencia || r.kianda || r.pesca || r.luz || r.fio || r.agulha || r.gaiola || r.samakaka);

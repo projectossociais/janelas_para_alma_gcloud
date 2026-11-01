@@ -24,6 +24,8 @@ const janela = (w: number, h: number) => {
 
 beforeEach(() => {
   window.localStorage.clear();
+  // Estes testes são do nível dos quadros de pano; o do pássaro e da gaiola está no fim.
+  window.localStorage.setItem("jpa.visao.olhoMagico.nivel", "pano");
   vez = 0;
   largura = 800;
   janela(1024, 768);
@@ -32,7 +34,7 @@ beforeEach(() => {
 });
 afterEach(() => vi.restoreAllMocks());
 
-const montar = () => {
+const montar = (historico: ContextoTreino["historico"] = []) => {
   const api: ApiTarefa = { activo: true, registar: vi.fn(), proximaEControlo: () => false };
   const ctx: ContextoTreino = {
     olho: null,
@@ -40,7 +42,7 @@ const montar = () => {
     calibrado: true,
     distanciaMm: 400,
     devicePixelRatio: 1,
-    historico: [],
+    historico,
     afinacao: null,
   };
   const resultado: MutableRefObject<(() => ResultadoTreino) | null> = { current: null };
@@ -118,5 +120,68 @@ describe("Olho Mágico", () => {
     expect(screen.getByText(/A praticar/)).toBeInTheDocument();
     expect(window.localStorage.getItem("jpa.visao.olhoMagico.modo")).toBe("relaxar");
     expect(resultado.current!().sinais).toMatchObject({ modo_fusao: "relaxar" });
+  });
+});
+
+describe("Olho Mágico, nível do pássaro e da gaiola", () => {
+  const clicar = (nome: string) => fireEvent.click(screen.getByRole("button", { name: nome }));
+  beforeEach(() => window.localStorage.removeItem("jpa.visao.olhoMagico.nivel"));
+
+  it("começa pela gaiola: junta à primeira, mede a rotura e a recuperação declaradas e grava como auto-avaliação", () => {
+    const { api, resultado } = montar();
+    expect(screen.getByRole("radio", { name: V.olhoMagicoNivel_gaiola })).toHaveAttribute("aria-checked", "true");
+    clicar(V.gaiolaExperimentar);
+    clicar(V.gaiolaResposta_dentro);
+    // Degraus de 6, 8, 10, 12 Δ (cartões de 22 mm a 40 cm): sai da gaiola a 12, volta a entrar a 8.
+    for (let i = 0; i < 3; i++) clicar(V.gaiolaContinuaDentro);
+    clicar(V.gaiolaSaiu);
+    expect(screen.getByText(V.gaiolaAproximarTitulo)).toBeInTheDocument();
+    clicar(V.gaiolaAindaFora);
+    clicar(V.gaiolaVoltou);
+    expect(screen.getByText(/O pássaro saiu da gaiola a 12/)).toBeInTheDocument();
+    expect(screen.getByText(V.gaiolaSemSupressao)).toBeInTheDocument();
+    // O nível fica fixo depois da primeira resposta.
+    expect(screen.getByRole("radio", { name: V.olhoMagicoNivel_pano })).toBeDisabled();
+
+    expect(api.registar).toHaveBeenCalledTimes(7);
+    const r = resultado.current!();
+    expect(r.limiar).toBeNull();
+    expect(r.unidade).toBeUndefined();
+    expect(r.sinais).toMatchObject({
+      modo: "fusao_gaiola",
+      versao: 2,
+      fusao: "ambos",
+      a_primeira: true,
+      respostas: { dentro: 1, falta: 0, dois: 0, quatro: 0 },
+      gaiola: { rampas: 1, rotura: 12, recuperacao: 8 },
+    });
+  });
+
+  it("com o sol ou a nuvem a faltar, dá a dica e deixa continuar, registando a supressão", () => {
+    const { resultado } = montar();
+    clicar(V.gaiolaExperimentar);
+    clicar(V.gaiolaResposta_dois);
+    expect(screen.getByText(V.gaiolaDicaTitulo_dois)).toBeInTheDocument();
+    clicar(V.tentarDeNovo);
+    clicar(V.gaiolaResposta_falta);
+    expect(screen.getByText(V.gaiolaDicaTitulo_falta)).toBeInTheDocument();
+    clicar(V.gaiolaContinuarAssim);
+    // Aguenta todos os degraus que cabem: fica "acima de".
+    while (screen.queryByRole("button", { name: V.gaiolaContinuaDentro })) clicar(V.gaiolaContinuaDentro);
+    expect(screen.getByText(V.gaiolaAteAoFim)).toBeInTheDocument();
+    expect(screen.getByText(V.gaiolaComSupressao)).toBeInTheDocument();
+    expect(resultado.current!().sinais).toMatchObject({ fusao: "supressao", a_primeira: false, gaiola: { limiteEcra: true, rotura: null } });
+  });
+
+  it("ao terceiro dia seguido à primeira, a próxima sessão passa aos quadros de pano", () => {
+    const dia = (n: number) => {
+      const d = new Date();
+      d.setDate(d.getDate() - n);
+      return { created_at: d.toISOString(), sinais: { modo: "fusao_gaiola", a_primeira: true } } as unknown as ContextoTreino["historico"][number];
+    };
+    montar([dia(1), dia(2)]);
+    clicar(V.gaiolaExperimentar);
+    clicar(V.gaiolaResposta_dentro);
+    expect(window.localStorage.getItem("jpa.visao.olhoMagico.nivel")).toBe("pano");
   });
 });

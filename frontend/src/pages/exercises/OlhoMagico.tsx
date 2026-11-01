@@ -12,25 +12,31 @@ import { EcraPasso } from "@/components/visao/EcraPasso";
 import EscolherOculos, { type ComOuSemOculos } from "@/components/visao/EscolherOculos";
 import PaginaExercicio from "@/components/visao/PaginaExercicio";
 import PalcoVisual from "@/components/visao/PalcoVisual";
+import { useLarguraDe } from "@/components/visao/hooks";
 import { rotuloDelta, rotuloSentidoPontes } from "@/components/visao/rotulos";
 import { escolhaAleatoria } from "@/lib/visao/escada";
 import { ID_CONVERGENCIA } from "@/lib/visao/ids";
 import {
   CORES_PANO,
   FALHAS_PARA_DICAS,
+  DIAS_PARA_PANO,
   FORMAS_PANO,
   GRELHA_PANO,
   PRATICA_SEGUIDAS,
   QUADRO_PANO_MM,
   alargarRampa,
+  diasSeguidosAPrimeira,
   gerarParPano,
+  guardarNivelOlhoMagico,
   guardarModoOlhoMagico,
   lerModoOlhoMagico,
+  lerNivelOlhoMagico,
   niveisOlhoMagico,
   niveisQueCabem,
   sentidoDoModo,
   type FormaPano,
   type ModoOlhoMagico,
+  type NivelOlhoMagico,
 } from "@/lib/visao/olhoMagico";
 import {
   iniciarRampa,
@@ -44,6 +50,7 @@ import {
 } from "@/lib/visao/pontes";
 import { cn } from "@/lib/utils";
 import PontesFusao from "./PontesFusao";
+import { TarefaGaiola } from "./OlhoMagicoGaiola";
 
 const EXERCICIO_ID = ID_CONVERGENCIA;
 const CHAVE_OCULOS = "jpa.visao.convergencia.oculos";
@@ -105,17 +112,6 @@ const QuadroPano = ({ grelha, ladoCss, dpr }: { grelha: Uint8Array; ladoCss: num
   return <canvas ref={ref} width={lado} height={lado} style={{ width: ladoCss, height: ladoCss, display: "block" }} />;
 };
 
-function useLarguraDe(ref: MutableRefObject<HTMLDivElement | null>): number {
-  const [largura, setLargura] = useState(0);
-  useEffect(() => {
-    const medir = () => setLargura(ref.current?.clientWidth ?? 0);
-    medir();
-    window.addEventListener("resize", medir);
-    return () => window.removeEventListener("resize", medir);
-  }, [ref]);
-  return largura;
-}
-
 /** Uma forma nova (nunca a mesma da anterior) e um par de quadros novo. */
 const novaForma = (anterior: number | null) => {
   const forma = escolhaAleatoria(FORMAS_PANO.length, anterior);
@@ -127,13 +123,13 @@ const aoAlto = () => typeof window !== "undefined" && window.innerWidth < window
 type Fase = "praticar" | "dicas" | "rampas";
 
 /**
- * Olho Mágico (sem óculos): pratica-se no primeiro degrau até acertar
+ * Olho Mágico, nível dos quadros de pano (sem óculos): pratica-se no primeiro degrau até acertar
  * `PRATICA_SEGUIDAS` seguidas; depois, rampas de rotura e recuperação no
  * sentido do modo (cruzar = convergência, relaxar = divergência). Ao alto,
  * quando os quadros já não se podem afastar mais, pede para deitar o
  * telemóvel e continua. A cada ~10 respostas, um controlo no primeiro degrau.
  */
-export const TarefaOlhoMagico = ({
+export const TarefaPano = ({
   api,
   ctx,
   resultado,
@@ -413,6 +409,78 @@ export const TarefaOlhoMagico = ({
         <p className="text-center text-xs text-muted-foreground">
           {t("Visao.pontesUltima", { resultado: rotuloSentidoPontes(ultima.sentido, resumirRampas([ultima.r])) })}
         </p>
+      )}
+    </div>
+  );
+};
+
+const NIVEIS: readonly NivelOlhoMagico[] = ["gaiola", "pano"];
+
+/**
+ * Olho Mágico sem óculos (versão 2, 2026-11-01): começa no cartão do pássaro
+ * e da gaiola (`TarefaGaiola`); os quadros de pano (`TarefaPano`) são o nível
+ * seguinte, recomendado depois de `DIAS_PARA_PANO` dias seguidos com o
+ * pássaro a entrar à primeira -- mas pode escolher-se já (quem tem os olhos a
+ * desviar para dentro precisa do Relaxar, que só o pano tem). O nível fica
+ * fixo a partir da primeira resposta, para a sessão ser de um só nível.
+ */
+export const TarefaOlhoMagico = ({
+  api,
+  ctx,
+  resultado,
+}: {
+  api: ApiTarefa;
+  ctx: ContextoTreino;
+  resultado: MutableRefObject<(() => ResultadoTreino) | null>;
+}) => {
+  const { t } = useTranslation();
+  const [nivel, setNivel] = useState<NivelOlhoMagico>(() => lerNivelOlhoMagico());
+  const [comecou, setComecou] = useState(false);
+  const pronto = diasSeguidosAPrimeira(ctx.historico, new Date()) >= DIAS_PARA_PANO;
+  const apiComInicio: ApiTarefa = {
+    ...api,
+    registar: (r) => {
+      setComecou(true);
+      api.registar(r);
+    },
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col items-center gap-1">
+        <div role="radiogroup" aria-label={t("Visao.olhoMagicoNivel")} className="flex flex-wrap justify-center gap-2">
+          {NIVEIS.map((n) => (
+            <Button
+              key={n}
+              role="radio"
+              aria-checked={nivel === n}
+              size="sm"
+              disabled={comecou && nivel !== n}
+              variant={nivel === n ? "default" : "outline"}
+              className={cn(nivel === n && "bg-navy text-navy-foreground hover:bg-navy/90")}
+              onClick={() => {
+                setNivel(n);
+                guardarNivelOlhoMagico(n);
+              }}
+            >
+              {t(`Visao.olhoMagicoNivel_${n}`)}
+            </Button>
+          ))}
+        </div>
+        <p className="max-w-md text-center text-xs text-muted-foreground">
+          {comecou
+            ? t("Visao.olhoMagicoNivelFixo")
+            : nivel === "pano" && !pronto
+              ? t("Visao.olhoMagicoNivelPanoCedo", { n: DIAS_PARA_PANO })
+              : nivel === "gaiola"
+                ? t("Visao.olhoMagicoNivelGaiolaNota")
+                : null}
+        </p>
+      </div>
+      {nivel === "gaiola" ? (
+        <TarefaGaiola api={apiComInicio} ctx={ctx} resultado={resultado} />
+      ) : (
+        <TarefaPano api={apiComInicio} ctx={ctx} resultado={resultado} />
       )}
     </div>
   );

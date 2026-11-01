@@ -534,6 +534,16 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   Pontes e grava igual (`sinais.pontes`, `sinais.modo = "fusao_livre"`), por isso o relatório
   lê os dois. Ao alto, um telemóvel só chega a ~7 Δ: pede para o deitar e continua
   (`alargarRampa`).
+  **Versão 2 (2026-11-01): começa no cartão do pássaro e da gaiola** (`OlhoMagicoGaiola.tsx`).
+  Uma animação (vista de cima) ensina o dedo-guia; a pessoa diz por desenhos o que vê no meio
+  (pássaro na gaiola com o sol e a nuvem / falta um deles = supressão / dois / quatro) e depois
+  "continua dentro" / "saiu da gaiola" com os cartões a afastar (`responderGaiola`: uma
+  resposta chega, é declarada). Grava `sinais.modo = "fusao_gaiola"`, `sinais.gaiola`
+  (resumo da rampa), **sem unidade e com `limiar = null`**: é auto-avaliação, fica fora da
+  vergência medida e aparece à parte no relatório (`resumoClinico.gaiola`). Os quadros de pano
+  são o nível seguinte (`TarefaPano`), recomendado depois de 3 dias seguidos com o pássaro a
+  entrar à primeira (`diasSeguidosAPrimeira`); escolhe-se no topo e fica fixo na sessão a
+  partir da primeira resposta. Só o pano tem Relaxar (esotropia).
 - **Sem narração falada (pedido do dono do projecto, 2026-10-31: "é ineficaz").** Os
   exercícios não falam: nada de síntese de voz nem de "Ouvir as instruções"; tudo o que a
   pessoa precisa de saber está escrito no ecrã. Ficam só os bips (`sinalSonoro`,
