@@ -106,7 +106,7 @@
   "AboutSection": {
     "conhecaNos": "Conheça-nos",
     "umOlharAlinhadoUma": "Um Olhar Alinhado, <span>Uma Vida Transformada</span>",
-    "oJanelasParaA": "O Janelas para a Alma é uma startup angolana dedicada a pessoas com estrabismo, uma condição que afecta o alinhamento dos olhos, podendo causar visão dupla, ambliopia ou cegueira. Em Angola, muitas crianças, jovens e adultos convivem com esta condição sem o devido apoio, o que pesa na auto-estima, no desempenho escolar e integração social.",
+    "oJanelasParaA": "O Janelas para a Alma é uma startup angolana dedicada a pessoas com estrabismo, uma condição que afecta o alinhamento dos olhos, podendo causar visão dupla, ambliopia ou cegueira. Em Angola, muitas crianças, jovens e adultos convivem com esta condição sem o devido apoio, o que pesa na auto-estima, no desempenho escolar e na integração social.",
     "aoMesmoTempoO": "Ao mesmo tempo, o meio ambiente sofre com o descarte inadequado de resíduos reutilizáveis. O Janelas para a Alma actua na intersecção destas duas problemáticas, propondo soluções que servem as pessoas e o planeta ao mesmo tempo.",
     "cliqueParaSaberMais": "Clique para saber mais →",
     "detalhesSobre": "Detalhes sobre {{label}}",
@@ -116,7 +116,7 @@
     "lerRelatorioMundialDa": "Ler Relatório Mundial da Visão (OMS) ↗",
     "prevalenciaDeEstrabismoEm": "Prevalência de estrabismo em África",
     "prevalenciaDeEstrabismoEm2": "Prevalência de Estrabismo em África",
-    "deAcordoAPesquisa": "De acordo a pesquisa feita pela National Library of Medicine através da National Center Of Biotechnology Information em 2023, a prevalência geral de estrabismo na África foi estimada em 0,8%. Esta condição, quando não tratada, pode levar a ambliopia (olho preguiçoso) e perda permanente da visão binocular, afectando significativamente a qualidade de vida e o desenvolvimento educacional das crianças africanas.",
+    "deAcordoAPesquisa": "De acordo com a pesquisa feita pela National Library of Medicine através do National Center for Biotechnology Information em 2023, a prevalência geral de estrabismo em África foi estimada em 0,8%. Esta condição, quando não tratada, pode levar a ambliopia (olho preguiçoso) e perda permanente da visão binocular, afectando significativamente a qualidade de vida e o desenvolvimento educacional das crianças africanas.",
     "lerArtigoAcademicoSobre": "Ler Artigo Académico sobre Estrabismo ↗",
     "daInformacaoECaptada": "Da informação é captada pela visão",
     "aVisaoComoPrincipal": "A Visão como Principal Sentido",
@@ -127,7 +127,7 @@
     "sobreNos": "Sobre Nós",
     "umaEquipaJovemA": "Uma equipa jovem a transformar a saúde visual em Angola",
     "somosJovensAngolanosQue": "Somos jovens angolanos que decidimos olhar de frente para uma condição que a maioria prefere ignorar. Todos os dias trabalhamos ao lado de crianças, famílias e clínicas parceiras para detectar cedo o estrabismo e a ambliopia, e para devolver a quem mais precisa o simples direito de ver bem.",
-    "cadaRastreioFeitoCada": "Cada rastreio feito, cada óculo reaproveitado e cada treino visual é um passo para mudar não só um olhar, mas a vida inteira à volta dele.",
+    "cadaRastreioFeitoCada": "Cada rastreio feito, cada par de óculos reaproveitado e cada treino visual é um passo para mudar não só um olhar, mas a vida inteira à volta dele.",
     "lerMais": "Ler mais",
     "equipaDoJanelasPara": "Equipa do Janelas Para a Alma reunida"
   },
