@@ -54,7 +54,7 @@ const ConteudoRelatorio = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRela
             <tr className={TH_LINHA}>
               {dias.map((d) => (
                 <th key={d} className="px-1 py-1 text-center font-semibold">
-                  {formatarDiaCurto(`${d}T12:00:00`)}
+                  {formatarDiaCurto(d)}
                 </th>
               ))}
             </tr>
