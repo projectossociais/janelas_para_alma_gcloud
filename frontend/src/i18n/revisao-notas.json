@@ -1,7 +1,7 @@
 {
-  "AboutSection.deAcordoAPesquisa": "health + dúvida: o PT atribui a pesquisa à National Library of Medicine/NCBI, que só alojam o artigo; traduzido literalmente. O nome oficial é 'National Center for Biotechnology Information' (corrigido o 'Of' em maiúscula). Confirmar a fonte e o número 0,8%.",
+  "AboutSection.deAcordoAPesquisa": "health + dúvida: o PT atribui a pesquisa à National Library of Medicine/NCBI, que só alojam o artigo; traduzido literalmente. O nome oficial é 'National Center for Biotechnology Information' (corrigido o 'Of' em maiúscula). Confirmar a fonte e o número 0,8%. No PT foram corrigidos em 2026-11-04 'De acordo a' → 'De acordo com', 'da National Center Of' → 'do National Center for' e 'na África' → 'em África'; a atribuição da fonte continua por confirmar.",
   "AboutSection.segundoORelatorioDa": "Nome oficial do relatório OMS: 'World report on vision' (2019). O PT dizia 'bilhões' (brasileirismo), corrigido para 'mil milhões' em 2026-11-04; em inglês 'billion' está correcto.",
-  "AboutTeaserSection.cadaRastreioFeitoCada": "'cada óculo reaproveitado' traduzido como 'every pair of reused glasses'.",
+  "AboutTeaserSection.cadaRastreioFeitoCada": "'cada óculo reaproveitado' traduzido como 'every pair of reused glasses'. O PT foi corrigido para 'cada par de óculos reaproveitado' em 2026-11-04.",
   "Apoiar.todosOsDonativosSao": "Promessa ('revertem integralmente') traduzida à letra ('go entirely'). Confirmar que é exacta antes de publicar em inglês.",
   "Auth.perfilDeUtente": "'Perfil de Utente' → 'User Type' (é o selector do papel). 'User Profile' confundir-se-ia com a página de perfil.",
   "AuthContext.pessoaComum": "'Pessoa Comum' (quem não tem estrabismo nem é profissional) → 'General User'. Alternativa: 'Member of the Public'.",
