@@ -3,6 +3,7 @@ import { Linkedin, Mail } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 import teamDalva from "@/assets/team-dalva.png";
+import teamDalvaRosto from "@/assets/team-dalva-rosto.webp";
 import teamManuel from "@/assets/team-manuel.png";
 import teamManuelRosto from "@/assets/team-manuel-rosto.webp";
 import teamLukeny from "@/assets/team-lukeny.png";
@@ -38,7 +39,7 @@ const TEAM_MEMBERS: TeamMember[] = [
       return i18n.t("TeamSection.impulsionandoAVisaoDo");
     },
     image: teamDalva,
-    faceOrigin: "50% -19%",
+    faceImage: teamDalvaRosto,
     get bio() {
       return i18n.t("TeamSection.souEstudanteDoTerceiro");
     },
