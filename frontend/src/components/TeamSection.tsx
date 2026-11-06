@@ -16,6 +16,7 @@ interface TeamMember {
   role: string;
   description: string;
   image: string;
+  faceOrigin: string;
   bio: string;
   mission: string;
   linkedin: string;
@@ -35,6 +36,7 @@ const TEAM_MEMBERS: TeamMember[] = [
       return i18n.t("TeamSection.impulsionandoAVisaoDo");
     },
     image: teamDalva,
+    faceOrigin: "50% -19%",
     get bio() {
       return i18n.t("TeamSection.souEstudanteDoTerceiro");
     },
@@ -50,12 +52,13 @@ const TEAM_MEMBERS: TeamMember[] = [
       return i18n.t("TeamSection.manuelFrancisco");
     },
     get role() {
-      return i18n.t("TeamSection.directorFinanceiro");
+      return i18n.t("TeamSection.responsavelPelasFinancas");
     },
     get description() {
       return i18n.t("TeamSection.investigadorELiderJovem");
     },
     image: teamManuel,
+    faceOrigin: "50% -2%",
     get bio() {
       return i18n.t("TeamSection.souEstudanteUniversitarioDe");
     },
@@ -71,12 +74,13 @@ const TEAM_MEMBERS: TeamMember[] = [
       return i18n.t("TeamSection.lukenyViegas");
     },
     get role() {
-      return i18n.t("TeamSection.directorDeTi");
+      return i18n.t("TeamSection.responsavelPelaTecnologia");
     },
     get description() {
       return i18n.t("TeamSection.amplificandoANossaMensagem");
     },
     image: teamLukeny,
+    faceOrigin: "50% -9%",
     get bio() {
       return i18n.t("TeamSection.estudanteUniversitarioNaturalDe");
     },
@@ -92,12 +96,13 @@ const TEAM_MEMBERS: TeamMember[] = [
       return i18n.t("TeamSection.pedroSapalo");
     },
     get role() {
-      return i18n.t("TeamSection.directorDeLegalizacaoE");
+      return i18n.t("TeamSection.responsavelPelaLegalizacaoE");
     },
     get description() {
       return i18n.t("TeamSection.garantindoAConformidadeE");
     },
     image: teamPedro,
+    faceOrigin: "50% -22%",
     get bio() {
       return i18n.t("TeamSection.souEstudanteUniversitarioCom");
     },
@@ -113,12 +118,13 @@ const TEAM_MEMBERS: TeamMember[] = [
       return i18n.t("TeamSection.kassiaNunda");
     },
     get role() {
-      return i18n.t("TeamSection.directoraDeComunicacaoE");
+      return i18n.t("TeamSection.responsavelPelaComunicacaoE");
     },
     get description() {
       return i18n.t("TeamSection.construindoAliancasEDefinindo");
     },
     image: teamKassia,
+    faceOrigin: "50% -9%",
     get bio() {
       return i18n.t("TeamSection.souUmaJovemCrista");
     },
@@ -149,11 +155,11 @@ const TeamSection = () => {
           </p>
         </div>
 
-        <div className="flex flex-row flex-nowrap overflow-x-auto overflow-y-hidden gap-6 pb-8 px-4 snap-x snap-mandatory">
+        <div className="flex flex-wrap justify-center gap-x-6 gap-y-10">
           {TEAM_MEMBERS.map((member) => (
             <div
               key={member.id}
-              className="snap-center shrink-0 bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col w-[220px] hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 cursor-pointer"
+              className="group flex w-[150px] sm:w-[168px] xl:w-[200px] flex-col items-center text-center cursor-pointer transition-transform duration-300 hover:-translate-y-1"
               onClick={() => setSelectedMember(member)}
               role="button"
               tabIndex={0}
@@ -164,22 +170,21 @@ const TeamSection = () => {
                 }
               }}
             >
-              <div className="bg-white">
+              <div className="h-32 w-32 sm:h-36 sm:w-36 xl:h-44 xl:w-44 overflow-hidden rounded-full bg-white shadow-lg ring-4 ring-white transition-shadow duration-300 group-hover:shadow-2xl group-hover:ring-teal/40">
                 <img
                   src={member.image}
                   alt={member.name}
-                  className="w-full h-[280px] object-contain object-bottom pt-8"
+                  className="h-full w-full object-cover object-top"
+                  style={{ transform: "scale(1.6)", transformOrigin: member.faceOrigin }}
                   loading="eager"
                 />
               </div>
-              <div className="p-6 flex flex-col items-center text-center bg-white">
-                <h3 className="text-lg font-bold text-slate-900">
-                  {member.name}
-                </h3>
-                <span className="inline-block text-[11px] font-semibold text-teal bg-teal/10 uppercase tracking-wider leading-tight px-2 py-1 rounded-full mt-2">
-                  {member.role}
-                </span>
-              </div>
+              <h3 className="mt-4 text-base font-bold text-slate-900">
+                {member.name}
+              </h3>
+              <p className="mt-1 text-[13px] font-medium leading-snug text-teal">
+                {member.role}
+              </p>
             </div>
           ))}
         </div>
