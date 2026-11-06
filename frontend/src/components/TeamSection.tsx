@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 import teamDalva from "@/assets/team-dalva.png";
 import teamManuel from "@/assets/team-manuel.png";
+import teamManuelRosto from "@/assets/team-manuel-rosto.webp";
 import teamLukeny from "@/assets/team-lukeny.png";
 import teamPedro from "@/assets/team-pedro.webp";
 import teamKassia from "@/assets/team-kassia.webp";
@@ -16,7 +17,8 @@ interface TeamMember {
   role: string;
   description: string;
   image: string;
-  faceOrigin: string;
+  faceOrigin?: string;
+  faceImage?: string;
   bio: string;
   mission: string;
   linkedin: string;
@@ -58,7 +60,7 @@ const TEAM_MEMBERS: TeamMember[] = [
       return i18n.t("TeamSection.investigadorELiderJovem");
     },
     image: teamManuel,
-    faceOrigin: "50% -2%",
+    faceImage: teamManuelRosto,
     get bio() {
       return i18n.t("TeamSection.souEstudanteUniversitarioDe");
     },
@@ -172,10 +174,14 @@ const TeamSection = () => {
             >
               <div className="h-32 w-32 sm:h-36 sm:w-36 xl:h-44 xl:w-44 overflow-hidden rounded-full bg-white shadow-lg ring-4 ring-white transition-shadow duration-300 group-hover:shadow-2xl group-hover:ring-teal/40">
                 <img
-                  src={member.image}
+                  src={member.faceImage ?? member.image}
                   alt={member.name}
                   className="h-full w-full object-cover object-top"
-                  style={{ transform: "scale(1.6)", transformOrigin: member.faceOrigin }}
+                  style={
+                    member.faceImage
+                      ? undefined
+                      : { transform: "scale(1.6)", transformOrigin: member.faceOrigin }
+                  }
                   loading="eager"
                 />
               </div>
