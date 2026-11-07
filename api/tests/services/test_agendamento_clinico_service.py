@@ -181,10 +181,12 @@ class EmailSenderFalso:
         self.enviados: list[dict] = []
         self._falha = falha
 
-    def enviar(self, destinatario: str, assunto: str, corpo_html: str) -> None:
+    def enviar(self, destinatario: str, assunto: str, corpo_html: str, anexos=None) -> None:
         if self._falha:
             raise EmailEnvioFalhouError("falha simulada do Resend")
-        self.enviados.append({"destinatario": destinatario, "assunto": assunto, "corpo_html": corpo_html})
+        self.enviados.append(
+            {"destinatario": destinatario, "assunto": assunto, "corpo_html": corpo_html, "anexos": anexos or []}
+        )
 
 
 def _servico(
@@ -324,6 +326,37 @@ def test_pedir_num_feriado_e_recusado() -> None:
     ponte_do_carnaval = datetime(2027, 2, 8, 9, 0, tzinfo=UTC)
     with pytest.raises(HorarioIndisponivelError):
         _servico().pedir(**{**DADOS_PEDIDO, "horario_inicio": ponte_do_carnaval})
+
+
+class TestFichaDeEncaminhamento:
+    def test_a_clinica_recebe_a_ficha_em_pdf_e_o_paciente_nao(self) -> None:
+        email_sender = EmailSenderFalso()
+        agendamento = _servico(email_sender=email_sender).pedir(**DADOS_PEDIDO)
+
+        para_paciente, para_clinica = email_sender.enviados
+        referencia = f"JPA-{agendamento.id.replace('-', '')[:8].upper()}"
+        assert para_paciente["anexos"] == []
+        assert referencia in para_paciente["corpo_html"]
+        assert para_clinica["destinatario"] == "geral@optioptika.com"
+        assert referencia in para_clinica["assunto"]
+        (anexo,) = para_clinica["anexos"]
+        assert anexo.nome_ficheiro == f"ficha-encaminhamento-{referencia}.pdf"
+        assert anexo.conteudo.startswith(b"%PDF")
+
+    def test_se_o_pdf_falhar_o_pedido_e_o_email_seguem_na_mesma(self, monkeypatch) -> None:
+        def rebenta(_ficha):
+            raise RuntimeError("falha simulada")
+
+        monkeypatch.setattr(
+            "app.services.agendamento_clinico_service.gerar_ficha_encaminhamento", rebenta
+        )
+        email_sender = EmailSenderFalso()
+        agendamentos = RepositorioAgendamentosFalso()
+        _servico(agendamentos=agendamentos, email_sender=email_sender).pedir(**DADOS_PEDIDO)
+
+        assert agendamentos.criado is not None
+        assert len(email_sender.enviados) == 2
+        assert email_sender.enviados[1]["anexos"] == []
 
 
 class TestHorariosDisponiveis:
