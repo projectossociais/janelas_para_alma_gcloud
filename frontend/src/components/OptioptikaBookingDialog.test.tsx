@@ -96,4 +96,20 @@ describe("OptioptikaBookingDialog", () => {
     expect(screen.queryByText("Pedido de Consulta Confirmado")).not.toBeInTheDocument();
     expect(toastSuccess).not.toHaveBeenCalled();
   });
+
+  it("sem horários livres, aponta para o WhatsApp da clínica em vez de um beco sem saída", async () => {
+    horariosDisponiveis.mockResolvedValue([]);
+    render(<OptioptikaBookingDialog open onOpenChange={() => {}} />);
+
+    const link = await screen.findByRole("link", { name: /WhatsApp/i });
+    expect(link).toHaveAttribute("href", "https://wa.me/244931240304");
+  });
+
+  it("com horários livres, não mostra o contacto alternativo", async () => {
+    render(<OptioptikaBookingDialog open onOpenChange={() => {}} />);
+
+    await waitFor(() => expect(horariosDisponiveis).toHaveBeenCalled());
+    expect(await screen.findByText("Escolher horário")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /WhatsApp/i })).not.toBeInTheDocument();
+  });
 });

@@ -315,6 +315,19 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
                       ))}
                     </SelectContent>
                   </Select>
+                  {!aCarregarHorarios && horarios.length === 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      {t("OptioptikaBookingDialog.semHorariosFaleConnosco")}{" "}
+                      <a
+                        href={`https://wa.me/${optioptika.phone.replace(/\D/g, "")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-medium text-foreground underline"
+                      >
+                        WhatsApp {optioptika.phone}
+                      </a>
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-1.5 sm:col-span-2">
                   <Label htmlFor="ap-notes">{t("OptioptikaBookingDialog.motivoDaConsultaOpcional")}</Label>
