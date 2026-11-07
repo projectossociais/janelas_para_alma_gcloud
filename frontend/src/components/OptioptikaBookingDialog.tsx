@@ -26,7 +26,7 @@ import { optioptika, OPTIOPTIKA_YELLOW } from "@/data/optioptika";
 import { agendamentosApi, mensagemDeErroApi, type HorarioDisponivel } from "@/lib/apiClient";
 import { Trans, useTranslation } from "react-i18next";
 import i18n from "@/i18n";
-import { formatarDataHora } from "@/i18n/formatar";
+import { formatarDataHora, formatarHorarioConsulta } from "@/i18n/formatar";
 
 const appointmentSchema = () => z.object({
   name: z
@@ -198,7 +198,7 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t("OptioptikaBookingDialog.horario")}</span>
-                <span>{formatarDataHora(new Date(receipt.horario))}</span>
+                <span>{formatarHorarioConsulta(receipt.horario)}</span>
               </div>
             </div>
             <DialogFooter>
@@ -290,7 +290,7 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
                   />
                 </div>
                 <div className="space-y-1.5 sm:col-span-2">
-                  <Label htmlFor="ap-horario">{t("OptioptikaBookingDialog.horario")}</Label>
+                  <Label htmlFor="ap-horario">{t("OptioptikaBookingDialog.horarioHoraDeLuanda")}</Label>
                   <Select
                     value={form.horario}
                     onValueChange={(v) => update("horario", v)}
@@ -310,7 +310,7 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
                     <SelectContent>
                       {horarios.map((h) => (
                         <SelectItem key={h.inicio} value={h.inicio}>
-                          {formatarDataHora(new Date(h.inicio))}
+                          {formatarHorarioConsulta(h.inicio)}
                         </SelectItem>
                       ))}
                     </SelectContent>
