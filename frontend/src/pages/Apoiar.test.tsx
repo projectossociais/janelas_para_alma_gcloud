@@ -58,7 +58,7 @@ vi.mock("sonner", () => ({
 
 import Apoiar from "./Apoiar";
 
-/** Cartão -> marcar itens no painel -> "Quero Doar Isto" (fecha o painel). */
+/** Cartão -> marcar itens no painel -> "Quero doar isto" (fecha o painel). */
 async function escolherItens(
   user: ReturnType<typeof userEvent.setup>,
   categoria: RegExp,
@@ -67,18 +67,18 @@ async function escolherItens(
   await user.click(screen.getByRole("button", { name: categoria }));
   const painel = await screen.findByRole("dialog");
   for (const item of itens) await user.click(within(painel).getByRole("checkbox", { name: item }));
-  await user.click(within(painel).getByRole("button", { name: /Quero Doar Isto/i }));
+  await user.click(within(painel).getByRole("button", { name: /Quero doar isto/i }));
   await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
 }
 
 async function abrirDialogoDeMateriais(user: ReturnType<typeof userEvent.setup>) {
   await escolherItens(user, /Armações/i, ["Óculos graduados usados"]);
-  await user.click(screen.getByRole("button", { name: /^Confirmar Doação de Materiais$/ }));
+  await user.click(screen.getByRole("button", { name: /^Confirmar doação de materiais$/i }));
   await user.click(await screen.findByRole("combobox"));
   await user.click(await screen.findByRole("option", { name: "Luanda" }));
   const email = await screen.findByLabelText(/O seu email para contacto/i);
   await user.type(email, "doador@example.com");
-  return screen.getByRole("button", { name: /Confirmar Doação|A enviar/ });
+  return screen.getByRole("button", { name: /Confirmar doação|A enviar/i });
 }
 
 describe("Apoiar — doação de materiais", () => {
@@ -156,10 +156,10 @@ describe("Apoiar — doação de materiais", () => {
     render(<Apoiar />, { wrapper: MemoryRouter });
 
     await escolherItens(user, /Armações/i, ["Lentes soltas"]);
-    await user.click(screen.getByRole("button", { name: /^Confirmar Doação de Materiais$/ }));
+    await user.click(screen.getByRole("button", { name: /^Confirmar doação de materiais$/i }));
     const email = await screen.findByLabelText(/O seu email para contacto/i);
     await user.type(email, "doador@example.com");
-    await user.click(screen.getByRole("button", { name: /Confirmar Doação|A enviar/ }));
+    await user.click(screen.getByRole("button", { name: /Confirmar doação|A enviar/i }));
 
     expect(registarMateriais).not.toHaveBeenCalled();
     expect(toastError).toHaveBeenCalledWith("Seleccione a sua província");
@@ -180,7 +180,7 @@ async function passosFinanceiros(
   },
 ) {
   const nomes = opcoes.nomes ?? {
-    tab: /Apoio Financeiro/i,
+    tab: /Apoio financeiro/i,
     mensal: /^Mensalmente$/,
     continuar: /^Continuar$/,
     nota: /Adicionar nota/i,
@@ -231,7 +231,7 @@ describe("Apoiar — doação financeira (comprovativo via R2, CROSS-02)", () =>
     const inputFicheiro = await chegarAoPassoDeUpload(user);
 
     await user.upload(inputFicheiro, new File(["x"], "comprovativo.pdf", { type: "application/pdf" }));
-    await user.click(screen.getByRole("button", { name: /Concluir Doação/i }));
+    await user.click(screen.getByRole("button", { name: /Concluir doação/i }));
 
     await waitFor(() => expect(enviarParaStorage).toHaveBeenCalled());
     expect(registarFinanceira).not.toHaveBeenCalled();
@@ -253,7 +253,7 @@ describe("Apoiar — doação financeira (comprovativo via R2, CROSS-02)", () =>
     const inputFicheiro = await chegarAoPassoDeUpload(user);
 
     await user.upload(inputFicheiro, new File(["x"], "comprovativo.pdf", { type: "application/pdf" }));
-    await user.click(screen.getByRole("button", { name: /Concluir Doação/i }));
+    await user.click(screen.getByRole("button", { name: /Concluir doação/i }));
 
     await waitFor(() => expect(registarFinanceira).toHaveBeenCalled());
     expect(toastSuccess).not.toHaveBeenCalled();
@@ -282,7 +282,7 @@ describe("Apoiar — doação financeira (comprovativo via R2, CROSS-02)", () =>
     const inputFicheiro = await chegarAoPassoDeUpload(user);
 
     await user.upload(inputFicheiro, new File(["x"], "comprovativo.pdf", { type: "application/pdf" }));
-    await user.click(screen.getByRole("button", { name: /Concluir Doação/i }));
+    await user.click(screen.getByRole("button", { name: /Concluir doação/i }));
 
     await waitFor(() => expect(toastSuccess).toHaveBeenCalled());
     expect(toastError).not.toHaveBeenCalled();
@@ -316,7 +316,7 @@ describe("Apoiar — doação financeira (comprovativo via R2, CROSS-02)", () =>
         expect(screen.getByText(/transferência permanente \(mensal\) com o mesmo valor/)).toBeInTheDocument(),
     });
     await user.upload(input, new File(["x"], "c.pdf", { type: "application/pdf" }));
-    await user.click(screen.getByRole("button", { name: /Concluir Doação/i }));
+    await user.click(screen.getByRole("button", { name: /Concluir doação/i }));
 
     await waitFor(() =>
       expect(registarFinanceira).toHaveBeenCalledWith(
@@ -332,7 +332,7 @@ describe("Apoiar — doação financeira (comprovativo via R2, CROSS-02)", () =>
   it("não avança sem valor, nem com um valor abaixo do mínimo", async () => {
     const user = userEvent.setup();
     render(<Apoiar />, { wrapper: MemoryRouter });
-    await user.click(screen.getByRole("tab", { name: /Apoio Financeiro/i }));
+    await user.click(screen.getByRole("tab", { name: /Apoio financeiro/i }));
 
     const continuar = screen.getByRole("button", { name: /^Continuar$/ });
     expect(continuar).toBeDisabled();
@@ -348,7 +348,7 @@ describe("Apoiar — doação financeira (comprovativo via R2, CROSS-02)", () =>
   it("no resumo, só avança com a forma de pagar escolhida e um email válido", async () => {
     const user = userEvent.setup();
     render(<Apoiar />, { wrapper: MemoryRouter });
-    await user.click(screen.getByRole("tab", { name: /Apoio Financeiro/i }));
+    await user.click(screen.getByRole("tab", { name: /Apoio financeiro/i }));
     await user.click(screen.getByRole("button", { name: "5.000 Kz" }));
     await user.click(screen.getByRole("button", { name: /^Continuar$/ }));
 
@@ -469,7 +469,7 @@ describe("Apoiar -- cartões com detalhe (materiais)", () => {
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
 
     expect(screen.getByRole("button", { name: /Tampões/i })).not.toHaveTextContent(/item/);
-    await user.click(screen.getByRole("button", { name: /^Confirmar Doação de Materiais$/ }));
+    await user.click(screen.getByRole("button", { name: /^Confirmar doação de materiais$/i }));
     expect(toastError).toHaveBeenCalledWith("Seleccione pelo menos um tipo de material.");
   });
 
@@ -481,14 +481,14 @@ describe("Apoiar -- cartões com detalhe (materiais)", () => {
     await escolherItens(user, /Armações/i, ["Armações partidas"]);
     await escolherItens(user, /Outros/i, ["Fita adesiva", "Película colorida transparente"]);
     await user.type(screen.getByLabelText(/Detalhes adicionais/i), "duas caixas");
-    await user.click(screen.getByRole("button", { name: /^Confirmar Doação de Materiais$/ }));
+    await user.click(screen.getByRole("button", { name: /^Confirmar doação de materiais$/i }));
 
     const dialogo = await screen.findByRole("dialog");
     expect(within(dialogo).getByText(/Película colorida transparente, Fita adesiva/)).toBeInTheDocument();
     await user.click(within(dialogo).getByRole("combobox"));
     await user.click(await screen.findByRole("option", { name: "Benguela" }));
     await user.type(within(dialogo).getByLabelText(/O seu email para contacto/i), "doador@example.com");
-    await user.click(within(dialogo).getByRole("button", { name: /Confirmar Doação|A enviar/ }));
+    await user.click(within(dialogo).getByRole("button", { name: /Confirmar doação|A enviar/i }));
 
     await waitFor(() =>
       expect(registarMateriais).toHaveBeenCalledWith(
@@ -505,7 +505,7 @@ describe("Apoiar -- cartões com detalhe (materiais)", () => {
     render(<Apoiar />, { wrapper: MemoryRouter });
 
     await escolherItens(user, /Outros/i, [/Outro material/i]);
-    await user.click(screen.getByRole("button", { name: /^Confirmar Doação de Materiais$/ }));
+    await user.click(screen.getByRole("button", { name: /^Confirmar doação de materiais$/i }));
 
     expect(toastError).toHaveBeenCalledWith("Descreva o outro material no campo de detalhes adicionais.");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
