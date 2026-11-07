@@ -40,7 +40,7 @@ async function preencherFormulario(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText(/Telefone/i), "+244900000000");
   await user.click(await screen.findByRole("combobox"));
   await user.click(await screen.findByRole("option"));
-  await user.click(screen.getByRole("button", { name: /Solicitar Consulta/i }));
+  await user.click(screen.getByRole("button", { name: /Solicitar consulta/i }));
 }
 
 describe("OptioptikaBookingDialog", () => {
@@ -62,7 +62,7 @@ describe("OptioptikaBookingDialog", () => {
 
     await preencherFormulario(user);
 
-    expect(screen.queryByText("Pedido de Consulta Confirmado")).not.toBeInTheDocument();
+    expect(screen.queryByText("Pedido de consulta confirmado")).not.toBeInTheDocument();
 
     resolver!({
       id: "11111111-2222-3333-4444-555555555555",
@@ -79,7 +79,7 @@ describe("OptioptikaBookingDialog", () => {
       created_at: "2026-01-01T00:00:00.000Z",
     });
 
-    expect(await screen.findByText("Pedido de Consulta Confirmado")).toBeInTheDocument();
+    expect(await screen.findByText("Pedido de consulta confirmado")).toBeInTheDocument();
     expect(pedir).toHaveBeenCalledWith(
       expect.objectContaining({ clinica_id: "clinica-1", nome: "Ana Silva", modalidade: "presencial" }),
     );
@@ -93,7 +93,7 @@ describe("OptioptikaBookingDialog", () => {
     await preencherFormulario(user);
 
     await waitFor(() => expect(toastError).toHaveBeenCalledWith("Serviço indisponível"));
-    expect(screen.queryByText("Pedido de Consulta Confirmado")).not.toBeInTheDocument();
+    expect(screen.queryByText("Pedido de consulta confirmado")).not.toBeInTheDocument();
     expect(toastSuccess).not.toHaveBeenCalled();
   });
 });

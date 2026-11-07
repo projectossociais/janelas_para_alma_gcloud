@@ -968,7 +968,7 @@
     "paragrafo3": "Thank you to everyone who has followed our journey as we build a solid, accessible solution for the community."
   },
   "OptioptikaBookingDialog": {
-    "aEnviarOSeuPedido": "Sending your request...",
+    "aEnviarOSeuPedido": "Sending your request…",
     "pedidoDeConsultaConfirmado": "Appointment Request Confirmed",
     "aEntraraEmContacto": "{{name}} will contact you by email or phone to confirm the final time.",
     "nDoPedido": "Request no.",
@@ -995,7 +995,7 @@
     "horario": "Time slot",
     "escolhaUmHorario": "Choose a time slot",
     "escolherHorario": "Choose a time slot",
-    "aCarregarHorarios": "Loading time slots...",
+    "aCarregarHorarios": "Loading time slots…",
     "semHorariosDisponiveis": "No time slots available in the coming days",
     "esteHorarioJaNao": "This time slot is no longer available. Please choose another.",
     "motivoDaConsultaOpcional": "Reason for the appointment (optional)",
