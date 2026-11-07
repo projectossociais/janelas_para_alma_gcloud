@@ -458,6 +458,14 @@ activa; verificar e testar isso explicitamente.**
    `consentimento_dados_saude_em_falta`); no frontend, `ConsentimentoSaudeContext`
    pede-o antes da câmara do scanner e dos exercícios. Sem jurista no projecto: a
    leitura da lei e o que falta junto da APD estão em `docs/APD_NOTIFICACAO.md`.
+10. **A clínica recebe cada pedido de consulta com uma ficha de encaminhamento em PDF
+    (2026-11-07).** `AgendamentoClinicoService.pedir` gera-a
+    (`services/ficha_encaminhamento.py`, fpdf2) e anexa-a ao email da clínica; o paciente
+    recebe só o email de confirmação. Leva apenas o que o próprio paciente escreveu no
+    pedido, marcada como confidencial (Lei n.º 22/11) -- nunca resultados de rastreio,
+    só a indicação de que existe um. Gerar o PDF é melhor esforço: se falhar, o pedido
+    fica gravado e o email segue sem anexo. Clínica nova com logótipo: o PNG em
+    `app/assets/clinicas/` e uma linha em `LOGOTIPOS_CLINICAS`.
 
 ---
 
