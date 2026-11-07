@@ -29,6 +29,12 @@ SITE = "www.janelasparaalma.com"
 EMAIL_JPA = "janelasparaalma18@gmail.com"
 TELEFONE_JPA = "+244 926 969 819"
 
+# Sociedade que opera a plataforma (relatório de situação legal de
+# 2026-10-17). A morada da sede não entra: é a residência de uma sócia.
+FIRMA = "Olhar Alinhado, Comércio e Prestação de Serviços, Lda."
+NIF = "5003659364"
+CAPITAL_SOCIAL = "25.000,00 Kz"
+
 _NAVY = (10, 44, 76)
 _TEAL = (23, 169, 139)
 _TEAL_CLARO = (234, 246, 243)
@@ -84,23 +90,32 @@ class _Documento(FPDF):
         self.core_fonts_encoding = "windows-1252"
 
     def footer(self) -> None:
-        self.set_y(-16)
+        self.set_y(-19)
         self.set_draw_color(*_LINHA)
         self.line(self.l_margin, self.get_y(), self.w - self.r_margin, self.get_y())
         self.ln(2)
+        self.set_font("helvetica", "B", 7.5)
+        self.set_text_color(*_NAVY)
+        self.cell(
+            0,
+            4,
+            _texto(f"{FIRMA}  ·  NIF {NIF}  ·  Capital social {CAPITAL_SOCIAL}  ·  Luanda, Angola"),
+            new_x="LMARGIN",
+            new_y="NEXT",
+        )
         self.set_font("helvetica", "", 7.5)
         self.set_text_color(*_CINZA)
         self.cell(
             0,
             4,
-            _texto(f"Janelas Para a Alma  ·  {SITE}  ·  {EMAIL_JPA}  ·  {TELEFONE_JPA}  ·  Luanda, Angola"),
+            _texto(f"Plataforma Janelas Para a Alma  ·  {SITE}  ·  {EMAIL_JPA}  ·  {TELEFONE_JPA}"),
             align="L",
         )
         self.cell(0, 4, f"Página {self.page_no()} de {{nb}}", align="R", new_x="LMARGIN", new_y="NEXT")
 
 
 def _seccao(pdf: FPDF, numero: int, titulo: str) -> None:
-    pdf.ln(3)
+    pdf.ln(2.5)
     pdf.set_font("helvetica", "B", 10.5)
     pdf.set_text_color(*_NAVY)
     pdf.cell(0, 6, _texto(f"{numero}. {titulo.upper()}"), new_x="LMARGIN", new_y="NEXT")
@@ -120,7 +135,7 @@ def _linha(pdf: FPDF, rotulo: str, valor: str, destaque: bool = False) -> None:
     pdf.set_xy(pdf.l_margin + largura_rotulo, y)
     pdf.set_font("helvetica", "B" if destaque else "", 10 if destaque else 9.5)
     pdf.set_text_color(*_NAVY)
-    pdf.multi_cell(0, 5, _texto(valor), new_x="LMARGIN", new_y="NEXT")
+    pdf.multi_cell(0, 5, _texto(valor), align="L", new_x="LMARGIN", new_y="NEXT")
     pdf.set_draw_color(*_LINHA)
     pdf.line(pdf.l_margin, pdf.get_y() + 0.6, pdf.w - pdf.r_margin, pdf.get_y() + 0.6)
     pdf.ln(1.4)
@@ -147,7 +162,7 @@ def _cabecalho(pdf: FPDF, ficha: FichaEncaminhamento) -> None:
     pdf.cell(
         0,
         5,
-        _texto(f"Pedido recebido através da plataforma Janelas Para a Alma para {ficha.clinica_nome}"),
+        _texto(f"Pedido de consulta recebido através da plataforma Janelas Para a Alma, para {ficha.clinica_nome}"),
         new_x="LMARGIN",
         new_y="NEXT",
     )
@@ -183,9 +198,10 @@ def _cabecalho(pdf: FPDF, ficha: FichaEncaminhamento) -> None:
 def gerar_ficha_encaminhamento(ficha: FichaEncaminhamento) -> bytes:
     pdf = _Documento()
     pdf.set_margins(18, 12, 18)
-    pdf.set_auto_page_break(auto=True, margin=22)
+    pdf.set_auto_page_break(auto=True, margin=24)
     pdf.set_title(_texto(f"Ficha de encaminhamento {ficha.referencia}"))
-    pdf.set_author("Janelas Para a Alma")
+    pdf.set_author(_texto(f"{FIRMA} (Janelas Para a Alma)"))
+    pdf.set_subject(_texto(f"Pedido de consulta para {ficha.clinica_nome}"))
     pdf.set_creator(SITE)
     pdf.add_page()
 
@@ -193,15 +209,18 @@ def gerar_ficha_encaminhamento(ficha: FichaEncaminhamento) -> bytes:
 
     _seccao(pdf, 1, "Consulta pedida")
     _linha(pdf, "Modalidade", _MODALIDADES.get(ficha.modalidade, ficha.modalidade), destaque=True)
-    _linha(pdf, "Data", _dia(ficha.horario_inicio), destaque=True)
-    _linha(pdf, "Hora", f"{_hora(ficha.horario_inicio)} (hora de Luanda)", destaque=True)
+    _linha(
+        pdf,
+        "Data e hora",
+        f"{_dia(ficha.horario_inicio)}, às {_hora(ficha.horario_inicio)} (hora de Luanda)",
+        destaque=True,
+    )
     _linha(pdf, "Duração prevista", f"{ficha.duracao_minutos} minutos")
     _linha(pdf, "Motivo indicado", ficha.motivo.strip() if ficha.motivo and ficha.motivo.strip() else "Não indicado")
 
     _seccao(pdf, 2, "Paciente")
     _linha(pdf, "Nome completo", ficha.paciente_nome, destaque=True)
-    _linha(pdf, "Telefone", ficha.paciente_telefone)
-    _linha(pdf, "Email", ficha.paciente_email)
+    _linha(pdf, "Contactos", f"{ficha.paciente_telefone}  ·  {ficha.paciente_email}")
     _linha(
         pdf,
         "Conta na plataforma",
@@ -215,9 +234,10 @@ def gerar_ficha_encaminhamento(ficha: FichaEncaminhamento) -> bytes:
         else "Sem rastreio associado a este pedido",
     )
 
-    _seccao(pdf, 3, "Clínica de destino")
+    _seccao(pdf, 3, "Partes")
+    _linha(pdf, "Emitente", f"{FIRMA}  ·  NIF {NIF}")
     contactos = [ficha.clinica_cidade, ficha.clinica_telefone, ficha.clinica_email]
-    _linha(pdf, ficha.clinica_nome, "  ·  ".join(c for c in contactos if c))
+    _linha(pdf, "Destinatário", "  ·  ".join([f"{ficha.clinica_nome} (clínica parceira)", *filter(None, contactos)]))
 
     _seccao(pdf, 4, "Próximos passos")
     pdf.set_font("helvetica", "", 9.5)
@@ -232,7 +252,7 @@ def gerar_ficha_encaminhamento(ficha: FichaEncaminhamento) -> bytes:
     )
     for i, passo in enumerate(passos, start=1):
         pdf.cell(6, 5, f"{i}.")
-        pdf.multi_cell(0, 5, _texto(passo), new_x="LMARGIN", new_y="NEXT")
+        pdf.multi_cell(0, 5, _texto(passo), align="L", new_x="LMARGIN", new_y="NEXT")
         pdf.ln(0.4)
 
     # Avisos legais.
@@ -247,17 +267,20 @@ def gerar_ficha_encaminhamento(ficha: FichaEncaminhamento) -> bytes:
     pdf.set_font("helvetica", "", 7.5)
     pdf.set_text_color(*_CINZA)
     avisos = (
-        ("Os dados deste documento foram fornecidos pelo próprio paciente ao pedir a consulta na plataforma "
-        "Janelas Para a Alma e são transmitidos à clínica de destino exclusivamente para a marcação e "
-        "realização desta consulta, nos termos da Lei n.º 22/11, de 17 de Junho (Lei da Protecção de Dados "
-        "Pessoais). O motivo da consulta é um dado de saúde: deve ser tratado com sigilo profissional, "
-        "guardado com acesso restrito e não pode ser partilhado com terceiros nem usado para outros fins."),
-        ("O rastreio digital da Janelas Para a Alma é uma ferramenta de triagem e não substitui um diagnóstico "
-        "médico. A avaliação clínica é da exclusiva responsabilidade da clínica de destino."),
+        (f"Responsável pelo tratamento: {FIRMA}, NIF {NIF}. Os dados deste documento foram fornecidos "
+        "pelo próprio paciente ao pedir a consulta na plataforma Janelas Para a Alma e são transmitidos à "
+        "clínica de destino exclusivamente para a marcação e realização desta consulta, nos termos da Lei "
+        "n.º 22/11, de 17 de Junho (Lei da Protecção de Dados Pessoais). O motivo da consulta é um dado de "
+        "saúde: deve ser tratado com sigilo profissional, guardado com acesso restrito e não pode ser "
+        "partilhado com terceiros nem usado para outros fins."),
+        (f"A {FIRMA} actua como intermediária entre o paciente e a clínica e não realiza actos clínicos nem "
+        "diagnósticos médicos. O rastreio digital da plataforma é uma ferramenta de triagem preliminar e não "
+        "substitui um diagnóstico. A consulta, a avaliação e as decisões clínicas são da exclusiva "
+        "responsabilidade da clínica de destino."),
         "Documento gerado automaticamente pela plataforma; não requer assinatura.",
     )
     for aviso in avisos:
-        pdf.multi_cell(0, 3.6, _texto(aviso), new_x="LMARGIN", new_y="NEXT")
+        pdf.multi_cell(0, 3.5, _texto(aviso), align="L", new_x="LMARGIN", new_y="NEXT")
         pdf.ln(1)
 
     return bytes(pdf.output())

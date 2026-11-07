@@ -50,9 +50,14 @@ def test_uma_pagina_com_todos_os_dados_do_pedido() -> None:
         "08:30 (hora de Luanda)",
         "Maria da Conceição Domingos",
         "+244 923 000 000",
+        "maria@example.com",
         "Olho que desvia para dentro",
         "Lei n.º 22/11",
         "não substitui um diagnóstico",
+        "Olhar Alinhado, Comércio e Prestação de Serviços, Lda.",
+        "NIF 5003659364",
+        "Capital social 25.000,00 Kz",
+        "não realiza actos clínicos",
     ):
         assert esperado in texto, esperado
 
@@ -78,3 +83,9 @@ def test_logotipos_existem_no_pacote() -> None:
 
 def test_referencia_curta_e_estavel() -> None:
     assert referencia_do_agendamento("3f9c2a7b-1d4e-4c8a-9b2f-6a1e5d7c8b90") == "JPA-3F9C2A7B"
+
+
+def test_motivo_no_tamanho_maximo_continua_numa_pagina() -> None:
+    # O formulário aceita até 500 caracteres no motivo.
+    paginas, _ = _texto(gerar_ficha_encaminhamento(replace(FICHA, motivo="Visão turva ao fim do dia. " * 18)))
+    assert paginas == 1

@@ -465,7 +465,10 @@ activa; verificar e testar isso explicitamente.**
     pedido, marcada como confidencial (Lei n.º 22/11) -- nunca resultados de rastreio,
     só a indicação de que existe um. Gerar o PDF é melhor esforço: se falhar, o pedido
     fica gravado e o email segue sem anexo. Clínica nova com logótipo: o PNG em
-    `app/assets/clinicas/` e uma linha em `LOGOTIPOS_CLINICAS`.
+    `app/assets/clinicas/` e uma linha em `LOGOTIPOS_CLINICAS`. O emitente é a sociedade
+    que opera a plataforma -- Olhar Alinhado, Comércio e Prestação de Serviços, Lda., NIF
+    5003659364 (`FIRMA`/`NIF`/`CAPITAL_SOCIAL`), como intermediária que não realiza actos
+    clínicos. A morada da sede nunca entra: é a residência de uma sócia.
 
 ---
 
