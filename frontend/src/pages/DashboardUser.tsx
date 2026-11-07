@@ -11,7 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAcessoExercicios } from "@/contexts/AcessoExerciciosContext";
 import { useTranslation } from "react-i18next";
 import { localizar } from "@/i18n/rotas";
-import { formatarDataHora } from "@/i18n/formatar";
+import { formatarHorarioConsulta } from "@/i18n/formatar";
 
 const DashboardUser = () => {
   const { t } = useTranslation();
@@ -69,7 +69,7 @@ const DashboardUser = () => {
               <Calendar className="w-6 h-6 text-gold mb-2" />
               {proximaTeleconsulta ? (
                 <>
-                  <div className="text-lg font-bold">{formatarDataHora(proximaTeleconsulta.horario_inicio)}</div>
+                  <div className="text-lg font-bold">{formatarHorarioConsulta(proximaTeleconsulta.horario_inicio)}</div>
                   <div className="text-sm text-muted-foreground mb-2">{proximaTeleconsulta.clinica_nome}</div>
                   <a href={linkDaSalaVideo(proximaTeleconsulta.sala_video)} target="_blank" rel="noreferrer">
                     <Button size="sm" variant="outline"><Video className="w-4 h-4" />{" "}{t("DashboardUser.entrarNaSala")}</Button>

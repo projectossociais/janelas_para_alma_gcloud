@@ -43,6 +43,25 @@ export function formatarDataHora(data: Data): string {
     : d.toLocaleString("pt-PT");
 }
 
+/**
+ * Hora de uma consulta: sempre no fuso de Luanda e em 24h, seja qual for o
+ * fuso do computador de quem vê -- as clínicas definem o horário em hora de
+ * Luanda, e um browser noutro fuso mostrava horas fora do expediente.
+ */
+export function formatarHorarioConsulta(data: Data): string {
+  const d = paraData(data);
+  return d.toLocaleString(emIngles() ? "en-US" : "pt-PT", {
+    timeZone: "Africa/Luanda",
+    weekday: "long",
+    day: "numeric",
+    month: emIngles() ? "long" : "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  });
+}
+
 /** Número decimal com `casas` casas, vírgula em português, ponto em inglês. */
 export function formatarDecimal(n: number, casas: number): string {
   return n.toLocaleString(emIngles() ? "en-US" : "pt-PT", {
