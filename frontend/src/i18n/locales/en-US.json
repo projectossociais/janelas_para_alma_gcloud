@@ -997,6 +997,7 @@
     "escolherHorario": "Choose a time slot",
     "aCarregarHorarios": "Loading time slots...",
     "semHorariosDisponiveis": "No time slots available in the coming days",
+    "semHorariosFaleConnosco": "No free slots right now? Talk to Optioptika directly:",
     "esteHorarioJaNao": "This time slot is no longer available. Please choose another.",
     "motivoDaConsultaOpcional": "Reason for the appointment (optional)",
     "solicitarConsulta": "Request Appointment",
