@@ -39,6 +39,9 @@ class _Agendamentos:
     def existe_conflito(self, clinica_id: str, horario_inicio: datetime) -> bool:
         return False
 
+    def horarios_ocupados(self, clinica_id: str, desde: datetime, ate: datetime) -> set[datetime]:
+        return set()
+
 
 def _servico() -> AgendamentoClinicoService:
     return AgendamentoClinicoService(_Agendamentos(), _Clinicas(), _Disponibilidades(), None, None)

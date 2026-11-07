@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { CalendarPlus, Video, MapPinned } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,13 @@ import { optioptika, OPTIOPTIKA_YELLOW } from "@/data/optioptika";
 import { agendamentosApi, mensagemDeErroApi, type HorarioDisponivel } from "@/lib/apiClient";
 import { Trans, useTranslation } from "react-i18next";
 import i18n from "@/i18n";
-import { formatarDataHora, formatarHorarioConsulta } from "@/i18n/formatar";
+import {
+  chaveDiaEmLuanda,
+  formatarDataHora,
+  formatarDiaConsulta,
+  formatarHoraConsulta,
+  formatarHorarioConsulta,
+} from "@/i18n/formatar";
 
 const appointmentSchema = () => z.object({
   name: z
@@ -81,6 +87,22 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
   const [clinicaId, setClinicaId] = useState<string | null>(null);
   const [horarios, setHorarios] = useState<HorarioDisponivel[]>([]);
   const [aCarregarHorarios, setACarregarHorarios] = useState(false);
+  // Primeiro o dia, depois a hora: ~3 meses de horários numa só lista
+  // seriam mais de mil opções.
+  const [dia, setDia] = useState("");
+
+  const dias = useMemo(() => {
+    const vistos = new Map<string, string>();
+    for (const h of horarios) {
+      const chave = chaveDiaEmLuanda(h.inicio);
+      if (!vistos.has(chave)) vistos.set(chave, h.inicio);
+    }
+    return [...vistos.entries()].map(([chave, inicio]) => ({ chave, inicio }));
+  }, [horarios]);
+  const horasDoDia = useMemo(
+    () => horarios.filter((h) => chaveDiaEmLuanda(h.inicio) === dia),
+    [horarios, dia],
+  );
 
   const update = (k: keyof typeof form, v: string) =>
     setForm((prev) => ({ ...prev, [k]: v }));
@@ -96,6 +118,7 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
   useEffect(() => {
     if (!open || !clinicaId) return;
     setACarregarHorarios(true);
+    setDia("");
     update("horario", "");
     agendamentosApi
       .horariosDisponiveis(clinicaId, mode)
@@ -140,6 +163,7 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
         t("OptioptikaBookingDialog.pedidoEnviadoAEntraremos", { name: optioptika.name, valor: mode === "online" ? t("OptioptikaBookingDialog.modalidadeOnline") : t("OptioptikaBookingDialog.modalidadePresencial") }),
       );
       setForm(emptyForm);
+      setDia("");
     } catch (err) {
       toast.error(mensagemDeErroApi(err, t("OptioptikaBookingDialog.esteHorarioJaNao")));
       // Um horário pode ter sido ocupado por outro pedido entretanto --
@@ -289,33 +313,61 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
                     placeholder="+244 900 000 000"
                   />
                 </div>
-                <div className="space-y-1.5 sm:col-span-2">
-                  <Label htmlFor="ap-horario">{t("OptioptikaBookingDialog.horarioHoraDeLuanda")}</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="ap-dia">{t("OptioptikaBookingDialog.dia")}</Label>
                   <Select
-                    value={form.horario}
-                    onValueChange={(v) => update("horario", v)}
-                    disabled={aCarregarHorarios || horarios.length === 0}
+                    value={dia}
+                    onValueChange={(v) => {
+                      setDia(v);
+                      update("horario", "");
+                    }}
+                    disabled={aCarregarHorarios || dias.length === 0}
                   >
-                    <SelectTrigger id="ap-horario">
+                    <SelectTrigger id="ap-dia">
                       <SelectValue
                         placeholder={
                           aCarregarHorarios
                             ? t("OptioptikaBookingDialog.aCarregarHorarios")
-                            : horarios.length === 0
+                            : dias.length === 0
                               ? t("OptioptikaBookingDialog.semHorariosDisponiveis")
-                              : t("OptioptikaBookingDialog.escolherHorario")
+                              : t("OptioptikaBookingDialog.escolherDia")
                         }
                       />
                     </SelectTrigger>
                     <SelectContent>
-                      {horarios.map((h) => (
-                        <SelectItem key={h.inicio} value={h.inicio}>
-                          {formatarHorarioConsulta(h.inicio)}
+                      {dias.map((d) => (
+                        <SelectItem key={d.chave} value={d.chave}>
+                          {formatarDiaConsulta(d.inicio)}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  {!aCarregarHorarios && horarios.length === 0 && (
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="ap-horario">{t("OptioptikaBookingDialog.horaDeLuanda")}</Label>
+                  <Select
+                    value={form.horario}
+                    onValueChange={(v) => update("horario", v)}
+                    disabled={!dia || horasDoDia.length === 0}
+                  >
+                    <SelectTrigger id="ap-horario">
+                      <SelectValue
+                        placeholder={
+                          dia ? t("OptioptikaBookingDialog.escolherHora") : t("OptioptikaBookingDialog.escolhaPrimeiroODia")
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {horasDoDia.map((h) => (
+                        <SelectItem key={h.inicio} value={h.inicio}>
+                          {formatarHoraConsulta(h.inicio)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {!aCarregarHorarios && horarios.length === 0 && (
+                  <div className="sm:col-span-2">
                     <p className="text-xs text-muted-foreground">
                       {t("OptioptikaBookingDialog.semHorariosFaleConnosco")}{" "}
                       <a
@@ -327,8 +379,8 @@ const OptioptikaBookingDialog = ({ open, onOpenChange }: OptioptikaBookingDialog
                         WhatsApp {optioptika.phone}
                       </a>
                     </p>
-                  )}
-                </div>
+                  </div>
+                )}
                 <div className="space-y-1.5 sm:col-span-2">
                   <Label htmlFor="ap-notes">{t("OptioptikaBookingDialog.motivoDaConsultaOpcional")}</Label>
                   <Textarea

@@ -83,9 +83,15 @@ def _disponibilidade(**over) -> DisponibilidadeRegisto:
 
 
 class RepositorioAgendamentosFalso:
-    def __init__(self, existente: AgendamentoClinicoRegisto | None = None, conflito: bool = False) -> None:
+    def __init__(
+        self,
+        existente: AgendamentoClinicoRegisto | None = None,
+        conflito: bool = False,
+        ocupados: set[datetime] | None = None,
+    ) -> None:
         self._existente = existente
         self._conflito = conflito
+        self._ocupados = ocupados or set()
         self.criado: dict | None = None
         self.confirmado: dict | None = None
         self.recusado: dict | None = None
@@ -102,6 +108,9 @@ class RepositorioAgendamentosFalso:
 
     def existe_conflito(self, clinica_id: str, horario_inicio: datetime) -> bool:
         return self._conflito
+
+    def horarios_ocupados(self, clinica_id: str, desde: datetime, ate: datetime) -> set[datetime]:
+        return {h for h in self._ocupados if desde <= h < ate}
 
     def confirmar(self, agendamento_id, admin_id, quando) -> AgendamentoClinicoRegisto:
         self.confirmado = {"agendamento_id": agendamento_id, "admin_id": admin_id, "quando": quando}
@@ -308,6 +317,15 @@ class TestPedir:
         assert resultado.estado == "pendente"
 
 
+def test_pedir_num_feriado_e_recusado() -> None:
+    # Segunda 8/2/2027: ponte do Carnaval (terça 9/2) -- dentro da janela de
+    # segunda, mas sem expediente por lei. O browser nunca o oferece; o
+    # servidor também não o aceita se vier forjado.
+    ponte_do_carnaval = datetime(2027, 2, 8, 9, 0, tzinfo=UTC)
+    with pytest.raises(HorarioIndisponivelError):
+        _servico().pedir(**{**DADOS_PEDIDO, "horario_inicio": ponte_do_carnaval})
+
+
 class TestHorariosDisponiveis:
     def test_gera_horarios_dentro_da_janela_semanal(self) -> None:
         disponibilidades = RepositorioDisponibilidadesFalso(
@@ -333,13 +351,36 @@ class TestHorariosDisponiveis:
         assert primeiro.astimezone(UTC).time() == time(8, 0)
 
     def test_exclui_horario_ja_ocupado(self) -> None:
-        agendamentos = RepositorioAgendamentosFalso(conflito=True)
         disponibilidades = RepositorioDisponibilidadesFalso(
             janelas=[_disponibilidade(dia_semana=0, hora_inicio=time(8, 0), hora_fim=time(9, 0))]
         )
+        livres = _servico(disponibilidades=disponibilidades).horarios_disponiveis("clinica-1", "presencial")
+        ocupado = livres[0].inicio.astimezone(UTC)  # a base de dados devolve UTC
+
+        agendamentos = RepositorioAgendamentosFalso(ocupados={ocupado})
         resultado = _servico(agendamentos=agendamentos, disponibilidades=disponibilidades).horarios_disponiveis(
             "clinica-1", "presencial"
         )
+        assert ocupado not in {h.inicio for h in resultado}
+        assert len(resultado) == len(livres) - 1
+
+    def test_chega_cerca_de_tres_meses_a_frente(self) -> None:
+        # Pedido do dono do projecto (2026-11-07): marcações até Janeiro.
+        disponibilidades = RepositorioDisponibilidadesFalso(
+            janelas=[_disponibilidade(dia_semana=0, hora_inicio=time(8, 0), hora_fim=time(9, 0))]
+        )
+        resultado = _servico(disponibilidades=disponibilidades).horarios_disponiveis("clinica-1", "presencial")
+        ultimo = resultado[-1].inicio - datetime.now(UTC)
+        assert 80 <= ultimo.days < 90
+
+    def test_salta_feriados_nacionais(self, monkeypatch) -> None:
+        monkeypatch.setattr(
+            "app.services.agendamento_clinico_service.e_feriado", lambda dia: dia.weekday() == 0
+        )
+        disponibilidades = RepositorioDisponibilidadesFalso(
+            janelas=[_disponibilidade(dia_semana=0, hora_inicio=time(8, 0), hora_fim=time(9, 0))]
+        )
+        resultado = _servico(disponibilidades=disponibilidades).horarios_disponiveis("clinica-1", "presencial")
         assert resultado == []
 
     def test_ignora_janelas_de_outra_modalidade(self) -> None:
