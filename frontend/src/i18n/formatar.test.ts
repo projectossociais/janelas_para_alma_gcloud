@@ -1,5 +1,13 @@
 import i18n from "./index";
-import { formatarData, formatarDataHora, formatarDiaCurto, formatarHorarioConsulta } from "./formatar";
+import {
+  chaveDiaEmLuanda,
+  formatarData,
+  formatarDataHora,
+  formatarDiaConsulta,
+  formatarDiaCurto,
+  formatarHoraConsulta,
+  formatarHorarioConsulta,
+} from "./formatar";
 
 const DATA = "2026-09-23T14:05:00";
 
@@ -76,5 +84,34 @@ describe("formatarHorarioConsulta", () => {
     const texto = formatarHorarioConsulta(DEZASSEIS_E_TRINTA);
     expect(texto).toMatch(/^Monday, November 9, 2026(,| at) 16:30$/);
     expect(texto).not.toMatch(/AM|PM/);
+  });
+});
+
+describe("dia e hora de uma consulta, separados", () => {
+  const tzOriginal = process.env.TZ;
+  // 23:30 UTC de domingo já é segunda 00:30 em Luanda.
+  const MEIA_NOITE_E_MEIA = "2027-01-03T23:30:00Z";
+  beforeEach(() => {
+    process.env.TZ = "America/Phoenix";
+  });
+  afterEach(() => {
+    process.env.TZ = tzOriginal;
+    void i18n.changeLanguage("pt-AO");
+  });
+
+  it("agrupa pelo dia de Luanda, não pelo do computador", () => {
+    expect(chaveDiaEmLuanda(MEIA_NOITE_E_MEIA)).toBe("2027-01-04");
+  });
+
+  it("em português", () => {
+    void i18n.changeLanguage("pt-AO");
+    expect(formatarDiaConsulta(MEIA_NOITE_E_MEIA)).toBe("segunda-feira, 04/01/2027");
+    expect(formatarHoraConsulta(MEIA_NOITE_E_MEIA)).toBe("00:30");
+  });
+
+  it("em inglês, também em 24h", () => {
+    void i18n.changeLanguage("en-US");
+    expect(formatarDiaConsulta(MEIA_NOITE_E_MEIA)).toBe("Monday, January 4, 2027");
+    expect(formatarHoraConsulta(MEIA_NOITE_E_MEIA)).toBe("00:30");
   });
 });

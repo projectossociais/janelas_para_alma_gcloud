@@ -17,6 +17,7 @@ from datetime import UTC, datetime, timedelta
 from html import escape
 
 from app.core.email import EmailEnvioFalhouError, EmailSender
+from app.core.feriados_angola import e_feriado
 from app.core.fuso import FUSO_LUANDA
 from app.repositories.agendamento_clinico_repository import (
     AgendamentoClinicoRegisto,
@@ -47,9 +48,10 @@ DURACAO_SLOT_MINUTOS = 30
 # daqui a 2 minutos que a clínica nunca vai conseguir honrar.
 ANTECEDENCIA_MINIMA = timedelta(hours=2)
 
-# Não gerar uma lista infinita de horários -- 14 dias é suficiente para
-# reservar sem forçar a clínica a planear meses à frente.
-DIAS_A_GERAR = 14
+# Cerca de três meses à frente: as famílias marcam com semanas de antecedência
+# (pedido do dono do projecto, 2026-11-07: chegar até Janeiro). O browser
+# escolhe primeiro o dia e só depois a hora, por isso a lista não pesa.
+DIAS_A_GERAR = 90
 
 
 # As janelas de disponibilidade são escritas pela clínica no portal em hora
@@ -116,15 +118,25 @@ class AgendamentoClinicoService:
         hoje_em_luanda = agora.astimezone(FUSO_LUANDA).date()
         resultado: list[HorarioDisponivel] = []
 
+        inicio_periodo = datetime.combine(hoje_em_luanda, datetime.min.time(), tzinfo=FUSO_LUANDA)
+        ocupados = {
+            _com_fuso(h)
+            for h in self._agendamentos.horarios_ocupados(
+                clinica_id, inicio_periodo, inicio_periodo + timedelta(days=DIAS_A_GERAR + 1)
+            )
+        }
+
         for i in range(DIAS_A_GERAR):
             dia = hoje_em_luanda + timedelta(days=i)
+            if e_feriado(dia):
+                continue
             for janela in janelas:
                 if janela.dia_semana != dia.weekday():
                     continue
                 cursor = datetime.combine(dia, janela.hora_inicio, tzinfo=FUSO_LUANDA)
                 fim_janela = datetime.combine(dia, janela.hora_fim, tzinfo=FUSO_LUANDA)
                 while cursor + duracao <= fim_janela:
-                    if cursor >= limite_inferior and not self._agendamentos.existe_conflito(clinica_id, cursor):
+                    if cursor >= limite_inferior and cursor not in ocupados:
                         resultado.append(HorarioDisponivel(inicio=cursor, fim=cursor + duracao))
                     cursor += duracao
 
@@ -134,6 +146,8 @@ class AgendamentoClinicoService:
     def _horario_e_valido(self, clinica_id: str, modalidade: str, horario_inicio: datetime) -> bool:
         janelas = [j for j in self._disponibilidades.listar_por_clinica(clinica_id) if j.modalidade == modalidade]
         local = horario_inicio.astimezone(FUSO_LUANDA)
+        if e_feriado(local.date()):
+            return False
         for janela in janelas:
             if janela.dia_semana != local.weekday():
                 continue
