@@ -180,7 +180,7 @@
     "comprovativoRecebidoComSucesso": "Proof of payment received! We've sent you a confirmation email.",
     "naoFoiPossivelEnviar": "We couldn't send your proof of payment. Please try again.",
     "quantidadeAproximadaEstadoDos": "Approximate quantity, condition of the items, availability for drop-off…",
-    "aEnviar": "Sending...",
+    "aEnviar": "Sending…",
     "concluirDoacao": "Complete Donation",
     "combinarRecolha": "Arrange a Drop-Off",
     "deixeOSeuEmail": "Leave your email and we'll show you the available drop-off points.",
@@ -212,7 +212,7 @@
     "outrosItemOutroMaterial": "Other material (describe it in the details field)",
     "descrevaOOutroMaterial": "Please describe the other material in the additional details field.",
     "doeUmaVezOuTodosOsMeses": "Give once or every month",
-    "cadaDonativoAjuda": "Choose the amount and how often. Payment is made by bank transfer, and you upload the receipt here."
+    "cadaDonativoAjuda": "Choose the amount and how often. Payment is made by bank transfer. Then upload your proof of payment here."
   },
   "AtualizarPassword": {
     "definirNovaPalavraPasse": "Set a New Password",
