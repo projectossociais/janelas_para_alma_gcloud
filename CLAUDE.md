@@ -279,8 +279,10 @@ visuais novos sem nova decisão da equipa.
 cabeçalho com menus suspensos (`lib/menuPrincipal.ts`, fonte única, com teste que garante
 que todo o destino existe no mapa de rotas) e logótipo só com o nome completo. A capa da
 página inicial (`components/inicio/HeroInicio.tsx`) é um carrossel em ecrã inteiro, uma
-fotografia por criança, que muda a cada 5 s, sem véu por cima; "Doar Agora" e "Entrar"
-(só sem sessão) ficam sempre visíveis. **Todas as páginas têm fundo branco**, e os tokens do
+fotografia por criança, que muda a cada 5 s, com um véu azul suave por cima; "Doar Agora",
+"Exercícios Visuais" e "Entrar" (só sem sessão) ficam sempre visíveis, e por baixo deles os
+números do projecto (`components/inicio/numerosCapa.ts`: valores do pitch deck do Desafio
+Genial; actualizam-se aí, sempre com fonte). **Todas as páginas têm fundo branco**, e os tokens do
 tema em `index.css` (`--teal`, `--navy`, `--gold`, `--green`, `--primary`...) usam os valores
 exactos da paleta da marca (`marca.*` em `tailwind.config.ts`) — não reintroduzir fundos
 creme, cinzentos ou faixas azul-marinho de secção. Ficam de fora, por agora, os cabeçalhos

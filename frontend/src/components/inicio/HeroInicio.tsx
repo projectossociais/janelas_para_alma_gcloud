@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Heart, LogIn } from "lucide-react";
+import { Eye, Heart, LogIn } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { localizar } from "@/i18n/rotas";
+import { NUMEROS_CAPA } from "./numerosCapa";
 
 /**
  * Diapositivos da capa (pedidos do dono do projecto, 2026-11-08): uma fotografia por
@@ -21,9 +22,9 @@ export const DIAPOSITIVOS_CAPA: readonly { src: string; alt: string; posicao?: s
 export const INTERVALO_CAPA_MS = 5000;
 
 /**
- * Capa da página inicial: carrossel em ecrã inteiro, sem véu por cima, que muda
- * sozinho a cada 5 s. "Doar Agora" e (sem sessão) "Entrar" ficam sempre por cima,
- * no canto inferior esquerdo, seja qual for o diapositivo.
+ * Capa da página inicial: carrossel em ecrã inteiro, com um véu azul suave, que muda
+ * sozinho a cada 5 s. Por cima, sempre visíveis: "Doar Agora", "Exercícios Visuais",
+ * "Entrar" (só sem sessão) e os números do projecto.
  */
 const HeroInicio = () => {
   const { t } = useTranslation();
@@ -58,30 +59,59 @@ const HeroInicio = () => {
         ))}
       </div>
 
+      {/* Véu azul suave por cima das fotografias (pedido da coordenação, 2026-11-08): mais
+          forte do lado do texto e em baixo, para os botões e os números se lerem bem. */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-gradient-to-r from-marca-marinho/85 via-marca-marinho/55 to-marca-azul/30"
+      />
+      <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-marca-marinho/80 via-transparent to-transparent" />
+
       <h1 id="hero-titulo" className="sr-only">
         Janelas Para a Alma
       </h1>
 
-      <div className="container relative z-10 flex flex-col items-start gap-5 pb-10 sm:flex-row sm:items-center sm:gap-6 sm:pb-8">
-        <div className="flex w-full max-w-md flex-col gap-4 sm:w-auto sm:max-w-none sm:flex-row">
+      <div className="container relative z-10 pb-8 md:pb-12">
+        <div className="flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:flex-wrap sm:gap-4">
           <Link
             to={localizar("/apoiar?modo=unica")}
-            className="inline-flex min-w-[17rem] items-center justify-center gap-3 rounded-full bg-marca-azul px-12 py-5 text-lg font-bold uppercase tracking-[0.08em] text-marca-marfim shadow-lg transition-colors hover:bg-marca-marinho md:min-w-[21rem] md:py-6 md:text-xl"
+            className="inline-flex items-center justify-center gap-3 rounded-full bg-marca-azul px-8 py-4 text-base font-bold uppercase tracking-[0.08em] text-white shadow-lg transition-colors hover:bg-marca-azul/85 lg:px-10 lg:py-5 lg:text-lg"
           >
-            <Heart className="h-6 w-6" aria-hidden="true" />
+            <Heart className="h-5 w-5 lg:h-6 lg:w-6" aria-hidden="true" />
             {t("Inicio.doarAgora")}
+          </Link>
+          <Link
+            to={localizar("/exercicios")}
+            className="inline-flex items-center justify-center gap-3 rounded-full bg-marca-turquesa px-8 py-4 text-base font-bold uppercase tracking-[0.08em] text-marca-marinho shadow-lg transition-colors hover:bg-marca-turquesa/85 lg:px-10 lg:py-5 lg:text-lg"
+          >
+            <Eye className="h-5 w-5 lg:h-6 lg:w-6" aria-hidden="true" />
+            {t("Cabecalho.exerciciosVisuais")}
           </Link>
           {!isLoggedIn && (
             <Link
               to={localizar("/auth")}
-              className="inline-flex min-w-[17rem] items-center justify-center gap-3 rounded-full bg-white px-12 py-5 text-lg font-bold uppercase tracking-[0.08em] text-marca-azul shadow-lg ring-2 ring-marca-azul transition-colors hover:bg-marca-celeste/30 md:min-w-[21rem] md:py-6 md:text-xl"
+              className="inline-flex items-center justify-center gap-3 rounded-full bg-white/10 px-8 py-4 text-base font-bold uppercase tracking-[0.08em] text-white ring-2 ring-white/80 backdrop-blur-sm transition-colors hover:bg-white/20 lg:px-10 lg:py-5 lg:text-lg"
             >
-              <LogIn className="h-6 w-6" aria-hidden="true" />
+              <LogIn className="h-5 w-5 lg:h-6 lg:w-6" aria-hidden="true" />
               {t("Navbar.entrar")}
             </Link>
           )}
         </div>
-        <div className="flex gap-2 rounded-full bg-marca-marinho/40 px-3 py-2">
+
+        {/* Números do projecto (fonte e actualização em numerosCapa.ts). */}
+        <dl className="mt-8 grid grid-cols-2 gap-x-6 gap-y-5 border-t border-white/30 pt-6 md:mt-10 md:grid-cols-4 md:pt-8">
+          {NUMEROS_CAPA.map((n) => (
+            <div key={n.legenda}>
+              <dt className="sr-only">{t(n.legenda)}</dt>
+              <dd className="text-3xl font-bold leading-none text-white md:text-5xl">{n.valor}</dd>
+              <dd aria-hidden="true" className="mt-2 text-sm text-white/80 md:text-base">
+                {t(n.legenda)}
+              </dd>
+            </div>
+          ))}
+        </dl>
+
+        <div className="mt-6 flex w-fit gap-2 rounded-full bg-marca-marinho/40 px-3 py-2">
           {DIAPOSITIVOS_CAPA.map((_, i) => (
             <button
               key={i}
