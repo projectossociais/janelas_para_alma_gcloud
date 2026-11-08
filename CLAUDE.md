@@ -435,6 +435,17 @@ activa; verificar e testar isso explicitamente.**
    `utilizadores` e nas tabelas que copiam nome/email/telefone directamente
    (`premium_requests`, `agendamentos_clinicos`, `contact_messages`,
    `candidaturas_voluntariado`), mantendo o `id` e tudo o resto intacto.
+   **Um admin também pode eliminar uma conta na hora** (2026-11-08, botão em
+   `/admin/utilizadores`, `DELETE /admin/utilizadores/{id}`, regras em
+   `AdminService.eliminar_conta`): é a mesma anonimização (`anonimizar_agora`), sem os 30
+   dias; recusa a própria conta e contas de admin (tira-se primeiro o acesso em
+   Administradores). Uma conta anonimizada deixa de valer para a autenticação logo
+   (`obter_por_id` devolve `None`: cookies antigos caem), sai da listagem do admin e perde
+   a ligação a uma clínica (`equipa_clinica`).
+   **Clínicas parceiras** criam-se e removem-se em `/admin/clinicas`
+   (`POST`/`DELETE /admin/clinicas[/{id}]`): uma clínica com pedidos de consulta nunca se
+   apaga (`agendamentos_clinicos` tem `RESTRICT`) -- fica desactivada e pode ser
+   reactivada (`ClinicaParceiraService.remover`).
 8. **Endpoints internos (Cloud Scheduler, nunca um browser) usam um segredo partilhado
    em cabeçalho, nunca sessão.** `obter_cron_valido` (`core/dependencies.py`) compara
    `X-Cron-Secret` com `CRON_SECRET` via `hmac.compare_digest`; sem o segredo configurado,

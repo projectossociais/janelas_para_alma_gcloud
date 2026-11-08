@@ -1051,6 +1051,10 @@ export const adminApi = {
   removerAdmin: (id: string) =>
     pedido<AdminUtilizador>(`/admin/utilizadores/${id}/remover-admin`, { method: "POST" }),
 
+  /** Elimina a conta na hora (anonimização, nunca apaga o histórico).
+   *  A API recusa (409) a própria conta e contas de admin. */
+  eliminarUtilizador: (id: string) => pedido<void>(`/admin/utilizadores/${id}`, { method: "DELETE" }),
+
   /** Nunca aceita `papel: "admin"` (a API recusa com 422) — para isso é
    *  sempre `promover`/`removerAdmin`, que têm a protecção do último admin. */
   definirPapel: (id: string, papel: string) =>
@@ -1295,6 +1299,12 @@ export interface ClinicaPerfilInput {
   preco_indicativo: string | null;
 }
 
+export interface ClinicaCriarInput extends ClinicaPerfilInput {
+  nome: string;
+  email_contacto: string;
+  telefone_contacto: string;
+}
+
 export interface MembroEquipaPublico {
   id: string;
   utilizador_id: string;
@@ -1370,6 +1380,17 @@ export const clinicasApi = {
   // Administração ------------------------------------------------------------
   listarAdmin: () => pedido<ClinicaParceiraAdmin[]>("/admin/clinicas"),
 
+  criar: (dados: ClinicaCriarInput) =>
+    pedido<ClinicaParceiraAdmin>("/admin/clinicas", { method: "POST", body: JSON.stringify(dados) }),
+
+  /** `apagada` -- saiu de vez; `desativada` -- tinha pedidos de consulta, por
+   *  isso ficou só escondida do público (e pode ser reactivada). */
+  remover: (clinicaId: string) =>
+    pedido<{ resultado: "apagada" | "desativada" }>(`/admin/clinicas/${clinicaId}`, { method: "DELETE" }),
+
+  reativar: (clinicaId: string) =>
+    pedido<ClinicaParceiraAdmin>(`/admin/clinicas/${clinicaId}/reativar`, { method: "POST" }),
+
   atualizarPerfil: (clinicaId: string, dados: ClinicaPerfilInput) =>
     pedido<ClinicaParceiraAdmin>(`/admin/clinicas/${clinicaId}`, {
       method: "PATCH",
@@ -1409,6 +1430,17 @@ export interface PublicacaoPublica {
   data_evento: string | null;
   capa_url: string | null;
   midias: MidiaPublicacao[];
+  /** Quantas vezes a página da publicação foi aberta (contado pela API). */
+  visualizacoes: number;
+  /** Quantas contas marcaram "Gosto". */
+  gostos: number;
+  /** `true` se a conta com sessão já marcou "Gosto"; sempre `false` sem sessão. */
+  gostei: boolean;
+}
+
+export interface GostoPublicacao {
+  gostos: number;
+  gostei: boolean;
 }
 
 export interface PublicacaoAdmin extends PublicacaoPublica {
@@ -1441,6 +1473,15 @@ export const publicacoesApi = {
   listarPublicadas: () => pedido<PublicacaoPublica[]>("/publicacoes"),
 
   obterPorSlug: (slug: string) => pedido<PublicacaoPublica>(`/publicacoes/${slug}`),
+
+  /** Conta uma visualização: chamado uma vez por abertura da página. */
+  registarVisualizacao: (slug: string) =>
+    pedido<{ visualizacoes: number }>(`/publicacoes/${slug}/visualizacoes`, { method: "POST" }),
+
+  /** "Gosto" exige sessão (401 sem ela): uma conta, um gosto. */
+  gostar: (slug: string) => pedido<GostoPublicacao>(`/publicacoes/${slug}/gostos`, { method: "POST" }),
+
+  retirarGosto: (slug: string) => pedido<GostoPublicacao>(`/publicacoes/${slug}/gostos`, { method: "DELETE" }),
 
   // Administração -------------------------------------------------------------
   listarTodas: () => pedido<PublicacaoAdmin[]>("/publicacoes/admin/todas"),
@@ -1828,4 +1869,53 @@ export const jogoApi = {
     pedido<PedidoLojaAdmin>(`/admin/jogo/pedidos-loja/${id}/aprovar`, { method: "POST" }),
   rejeitarPedidoLoja: (id: string) =>
     pedido<PedidoLojaAdmin>(`/admin/jogo/pedidos-loja/${id}/rejeitar`, { method: "POST" }),
+};
+
+// --- Números de impacto (página inicial) ----------------------------------------
+// Contagens reais da base de dados, públicas e sem dados pessoais.
+
+export interface NumerosImpacto {
+  rastreios: number;
+  sessoes_treino: number;
+  encaminhamentos: number;
+}
+
+export const impactoApi = {
+  numeros: () => pedido<NumerosImpacto>("/impacto/numeros"),
+};
+
+// --- Apoio mensal (Kamba Mensal) -------------------------------------------------
+// Uma promessa de doação recorrente ligada à conta. Não há débito automático:
+// todos os meses a pessoa envia o comprovativo da transferência, como numa
+// doação única, e a API lembra-a por email quando passa um mês sem nenhum.
+
+export interface ApoioMensalPublico {
+  id: string;
+  valor_mensal_kz: number;
+  estado: "ativo" | "cancelado";
+  criado_em: string;
+  ultimo_comprovativo_em: string | null;
+  meses_com_comprovativo: number;
+  /** Já passou um mês desde o último comprovativo (ou desde a adesão). */
+  renovacao_em_falta: boolean;
+}
+
+export const apoiosMensaisApi = {
+  /** `null` quando a conta não tem apoio mensal activo. */
+  meu: () => pedido<ApoioMensalPublico | null>("/apoios-mensais/meu"),
+
+  aderir: (valorMensalKz: number) =>
+    pedido<ApoioMensalPublico>("/apoios-mensais", {
+      method: "POST",
+      body: JSON.stringify({ valor_mensal_kz: valorMensalKz }),
+    }),
+
+  /** `comprovativoChave` vem de `comprovativosApi.preparar` + upload directo ao R2. */
+  enviarComprovativo: (comprovativoChave: string) =>
+    pedido<ApoioMensalPublico>("/apoios-mensais/meu/comprovativos", {
+      method: "POST",
+      body: JSON.stringify({ comprovativo_chave: comprovativoChave }),
+    }),
+
+  cancelar: () => pedido<void>("/apoios-mensais/meu", { method: "DELETE" }),
 };

@@ -32,13 +32,13 @@ const partners = [
 const ParceirosSection = () => {
   const { t } = useTranslation();
   return (
-    <section className="py-16 md:py-24 bg-muted/50">
+    <section className="py-16 md:py-24 bg-white">
       <div className="container">
         <div className="text-center mb-12 space-y-4">
-          <span className="text-sm font-medium tracking-widest uppercase text-teal">
+          <span className="text-sm font-medium tracking-widest uppercase text-marca-azul">
             {t("ParceirosSection.juntosVemosMaisLonge")}
           </span>
-          <h2 className="text-3xl md:text-5xl font-bold text-foreground">{t("ParceirosSection.parceiros")}</h2>
+          <h2 className="text-3xl md:text-5xl font-bold text-marca-marinho">{t("ParceirosSection.parceiros")}</h2>
         </div>
 
         {/* Só 3 parceiros (UNICEF e Nelt Group retirados em 2026-10-15, sem
@@ -51,10 +51,10 @@ const ParceirosSection = () => {
               target="_blank"
               rel="noopener noreferrer"
               aria-label={partner.name}
-              className="w-52 sm:w-56 h-36 rounded-2xl bg-card border border-border/50 shadow-card flex items-center justify-center p-6 transition-all hover:shadow-elevated hover:scale-[1.02]"
+              className="w-52 sm:w-56 h-36 rounded-2xl bg-white border border-border/50 shadow-card flex items-center justify-center p-6 transition-all hover:shadow-elevated hover:scale-[1.02]"
             >
               {partner.onDark ? (
-                <div className="w-full h-full rounded-lg bg-navy flex items-center justify-center p-4">
+                <div className="w-full h-full rounded-lg bg-marca-marinho flex items-center justify-center p-4">
                   <img
                     src={partner.logo}
                     alt={partner.name}

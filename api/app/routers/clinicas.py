@@ -45,14 +45,20 @@ from app.repositories.utilizadores_repository import (
 )
 from app.schemas.agendamento import AgendamentoClinicoAdmin
 from app.schemas.clinica import (
+    ClinicaCriar,
     ClinicaParceiraAdmin,
     ClinicaPerfilAtualizar,
+    ClinicaRemovida,
     DisponibilidadeClinicaCriar,
     DisponibilidadeClinicaPublica,
     EquipaClinicaAdicionar,
     MembroEquipaPublico,
 )
 from app.schemas.teleconsulta import TeleconsultaConcluir, TeleconsultaPublica
+from app.services.clinica_parceira_service import (
+    ClinicaNaoEncontradaError as ClinicaARemoverNaoEncontradaError,
+)
+from app.services.clinica_parceira_service import ClinicaParceiraService
 from app.services.equipa_clinica_service import (
     ClinicaNaoEncontradaError,
     EquipaClinicaService,
@@ -216,6 +222,58 @@ def listar_clinicas_admin(
     repo: SQLAlchemyClinicaParceiraRepository = Depends(obter_clinica_parceira_repository),
 ) -> list[ClinicaParceiraRegisto]:
     return repo.listar_todas()
+
+
+@router.post(
+    "/admin/clinicas",
+    response_model=ClinicaParceiraAdmin,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(obter_utilizador_admin)],
+)
+def criar_clinica(
+    dados: ClinicaCriar,
+    repo: SQLAlchemyClinicaParceiraRepository = Depends(obter_clinica_parceira_repository),
+) -> ClinicaParceiraRegisto:
+    return repo.criar(
+        nome=dados.nome,
+        email_contacto=str(dados.email_contacto),
+        telefone_contacto=dados.telefone_contacto,
+        especialidades=[e.strip() for e in dados.especialidades if e.strip()],
+        cidade=dados.cidade,
+        modalidades_suportadas=list(dados.modalidades_suportadas),
+        preco_indicativo=dados.preco_indicativo,
+    )
+
+
+@router.delete(
+    "/admin/clinicas/{clinica_id}",
+    response_model=ClinicaRemovida,
+    dependencies=[Depends(obter_utilizador_admin)],
+)
+def remover_clinica(
+    clinica_id: str,
+    repo: SQLAlchemyClinicaParceiraRepository = Depends(obter_clinica_parceira_repository),
+) -> ClinicaRemovida:
+    try:
+        resultado = ClinicaParceiraService(repo).remover(clinica_id)
+    except ClinicaARemoverNaoEncontradaError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="clínica não encontrada") from exc
+    return ClinicaRemovida(resultado=resultado.value)
+
+
+@router.post(
+    "/admin/clinicas/{clinica_id}/reativar",
+    response_model=ClinicaParceiraAdmin,
+    dependencies=[Depends(obter_utilizador_admin)],
+)
+def reativar_clinica(
+    clinica_id: str,
+    repo: SQLAlchemyClinicaParceiraRepository = Depends(obter_clinica_parceira_repository),
+) -> ClinicaParceiraRegisto:
+    resultado = repo.definir_ativa(clinica_id, True)
+    if resultado is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="clínica não encontrada")
+    return resultado
 
 
 @router.patch(
