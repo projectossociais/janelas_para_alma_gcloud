@@ -1,5 +1,4 @@
 import logoDesafioGenial from "@/assets/partner-desafio-genial-logo.png";
-import logoArotec from "@/assets/partner-arotec-logo.png";
 import logoOptioptika from "@/assets/partner-optioptika-logo.jpg";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
@@ -12,12 +11,6 @@ const partners = [
     logo: logoDesafioGenial,
     onDark: true,
     url: "https://www.unicef.org/angola/desafio-genial-gera%C3%A7%C3%A3o-digital",
-  },
-  {
-    name: "Arotec",
-    logo: logoArotec,
-    onDark: false,
-    url: "https://www.arotec.ao/programas/desafio-genial",
   },
   {
     get name() {
@@ -41,8 +34,8 @@ const ParceirosSection = () => {
           <h2 className="text-3xl md:text-5xl font-bold text-foreground">{t("ParceirosSection.parceiros")}</h2>
         </div>
 
-        {/* Só 3 parceiros (UNICEF e Nelt Group retirados em 2026-10-15, sem
-            autorização de uso da marca): cabem centrados sem carrossel. */}
+        {/* Só 2 parceiros (UNICEF e Nelt Group retirados em 2026-10-15, Arotec
+            em 2026-11-08): cabem centrados sem carrossel. */}
         <div className="flex flex-wrap justify-center gap-6">
           {partners.map((partner) => (
             <a
