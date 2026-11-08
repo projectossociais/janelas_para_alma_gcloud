@@ -33,14 +33,23 @@ class EliminacaoContaService:
         agora = datetime.now(UTC)
         ids = self._repo.listar_pendentes(agora)
         for utilizador_id in ids:
-            email_anonimo = f"conta-eliminada+{utilizador_id}@{DOMINIO_EMAIL_ANONIMO}"
-            password_hash_invalido = hash_password(secrets.token_urlsafe(32))
-            self._repo.anonimizar(
-                utilizador_id,
-                agora,
-                email_anonimo=email_anonimo,
-                password_hash_invalido=password_hash_invalido,
-                nome_anonimo=NOME_ANONIMO,
-            )
+            self._anonimizar(utilizador_id, agora)
             logger.info("conta %s anonimizada (prazo de eliminação vencido)", utilizador_id)
         return len(ids)
+
+    def anonimizar_agora(self, utilizador_id: str) -> None:
+        """Eliminação decidida por um admin (`DELETE /admin/utilizadores/{id}`),
+        sem os 30 dias de carência -- as regras de quem pode ser eliminado
+        vivem em `AdminService.eliminar_conta`. Mesma anonimização do job:
+        nunca um `DELETE` da linha (CLAUDE.md §4.7)."""
+        self._anonimizar(utilizador_id, datetime.now(UTC))
+        logger.info("conta %s anonimizada por um admin", utilizador_id)
+
+    def _anonimizar(self, utilizador_id: str, agora: datetime) -> None:
+        self._repo.anonimizar(
+            utilizador_id,
+            agora,
+            email_anonimo=f"conta-eliminada+{utilizador_id}@{DOMINIO_EMAIL_ANONIMO}",
+            password_hash_invalido=hash_password(secrets.token_urlsafe(32)),
+            nome_anonimo=NOME_ANONIMO,
+        )

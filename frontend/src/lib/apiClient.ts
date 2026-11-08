@@ -1046,6 +1046,10 @@ export const adminApi = {
   removerAdmin: (id: string) =>
     pedido<AdminUtilizador>(`/admin/utilizadores/${id}/remover-admin`, { method: "POST" }),
 
+  /** Elimina a conta na hora (anonimização, nunca apaga o histórico).
+   *  A API recusa (409) a própria conta e contas de admin. */
+  eliminarUtilizador: (id: string) => pedido<void>(`/admin/utilizadores/${id}`, { method: "DELETE" }),
+
   /** Nunca aceita `papel: "admin"` (a API recusa com 422) — para isso é
    *  sempre `promover`/`removerAdmin`, que têm a protecção do último admin. */
   definirPapel: (id: string, papel: string) =>
@@ -1290,6 +1294,12 @@ export interface ClinicaPerfilInput {
   preco_indicativo: string | null;
 }
 
+export interface ClinicaCriarInput extends ClinicaPerfilInput {
+  nome: string;
+  email_contacto: string;
+  telefone_contacto: string;
+}
+
 export interface MembroEquipaPublico {
   id: string;
   utilizador_id: string;
@@ -1364,6 +1374,17 @@ export const clinicasApi = {
 
   // Administração ------------------------------------------------------------
   listarAdmin: () => pedido<ClinicaParceiraAdmin[]>("/admin/clinicas"),
+
+  criar: (dados: ClinicaCriarInput) =>
+    pedido<ClinicaParceiraAdmin>("/admin/clinicas", { method: "POST", body: JSON.stringify(dados) }),
+
+  /** `apagada` -- saiu de vez; `desativada` -- tinha pedidos de consulta, por
+   *  isso ficou só escondida do público (e pode ser reactivada). */
+  remover: (clinicaId: string) =>
+    pedido<{ resultado: "apagada" | "desativada" }>(`/admin/clinicas/${clinicaId}`, { method: "DELETE" }),
+
+  reativar: (clinicaId: string) =>
+    pedido<ClinicaParceiraAdmin>(`/admin/clinicas/${clinicaId}/reativar`, { method: "POST" }),
 
   atualizarPerfil: (clinicaId: string, dados: ClinicaPerfilInput) =>
     pedido<ClinicaParceiraAdmin>(`/admin/clinicas/${clinicaId}`, {
