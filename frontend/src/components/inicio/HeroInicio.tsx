@@ -4,21 +4,14 @@ import { useTranslation } from "react-i18next";
 import fotoHero from "@/assets/hero-bg.jpg";
 import { localizar } from "@/i18n/rotas";
 
-/** Os três pilares, cada um com a última palavra em destaque (como no título do Project Prakash). */
-const PILARES = [
-  { inicio: "Inicio.pilar1Inicio", destaque: "Inicio.pilar1Destaque" },
-  { inicio: "Inicio.pilar2Inicio", destaque: "Inicio.pilar2Destaque" },
-  { inicio: "Inicio.pilar3Inicio", destaque: "Inicio.pilar3Destaque" },
-] as const;
-
-/** A. Hero com os pilares triplos, seguido dos cartões Visão e Missão. */
+/**
+ * Hero da página inicial (pedido de 2026-11-08): a fotografia de sempre do site
+ * (hero-bg.jpg) em ecrã inteiro, sem o véu azul-marinho que a escurecia, e por
+ * cima só o botão "Doar Agora", no canto inferior esquerdo.
+ */
 const HeroInicio = () => {
   const { t } = useTranslation();
   return (
-    <>
-      {/* Hero (pedido de 2026-11-08): a fotografia de sempre do site (hero-bg.jpg),
-          inteira e sem o véu azul-marinho que a escurecia; por cima, só o botão de doar.
-          Os botões ficam no canto inferior esquerdo. */}
       <section
         aria-labelledby="hero-titulo"
         className="relative flex h-[100svh] min-h-[32rem] w-full items-end overflow-hidden bg-marca-marinho pt-16"
@@ -31,7 +24,7 @@ const HeroInicio = () => {
           decoding="async"
         />
         <h1 id="hero-titulo" className="sr-only">
-          {PILARES.map((p) => `${t(p.inicio)} ${t(p.destaque)}`).join(". ")}
+          Janelas Para a Alma
         </h1>
         <div className="container relative z-10 flex justify-start pb-10 md:pb-16">
           <div className="flex w-full max-w-xs flex-col gap-3 sm:max-w-none sm:w-auto sm:flex-row">
@@ -45,23 +38,6 @@ const HeroInicio = () => {
           </div>
         </div>
       </section>
-
-      <section aria-labelledby="visao-missao" className="border-b border-marca-marinho/10 bg-marca-marfim">
-        <h2 id="visao-missao" className="sr-only">
-          {t("Inicio.visaoEMissao")}
-        </h2>
-        <div className="container grid gap-10 py-14 md:grid-cols-2 md:gap-16 md:py-16">
-          <div>
-            <h3 className="text-xl font-bold text-marca-azul md:text-2xl">{t("Inicio.aNossaVisao")}</h3>
-            <p className="mt-3 text-lg leading-relaxed text-marca-marinho">{t("Inicio.aNossaVisaoTexto")}</p>
-          </div>
-          <div>
-            <h3 className="text-xl font-bold text-marca-azul md:text-2xl">{t("Inicio.aNossaMissao")}</h3>
-            <p className="mt-3 text-lg leading-relaxed text-marca-marinho">{t("Inicio.aNossaMissaoTexto")}</p>
-          </div>
-        </div>
-      </section>
-    </>
   );
 };
 

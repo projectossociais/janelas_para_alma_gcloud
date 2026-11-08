@@ -4,7 +4,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { IDIOMA_EN, IDIOMA_PT, inglesAtivo } from "@/i18n/idiomas";
 import { caminhoNoIdioma } from "@/i18n/rotas";
 import { useIdioma } from "@/i18n/useIdioma";
-import LogoMarca from "@/components/marca/LogoMarca";
+import logoIcon from "@/assets/logo-icon.png";
 import { localizar } from "@/i18n/rotas";
 
 /**
@@ -23,77 +23,80 @@ const AlternarIdioma = () => {
       hrefLang={destino}
       lang={destino === IDIOMA_EN ? "en" : "pt"}
       aria-label={t("idioma.alternarRotulo")}
-      className="font-medium transition-colors hover:text-marca-marfim"
+      className="font-medium hover:text-primary transition-colors"
     >
       {t("idioma.alternar")}
     </Link>
   );
 };
 
-const REDES = [
-  {
-    nome: "Instagram",
-    href: "https://www.instagram.com/janelas_para_alma?igsh=MTI5eXFxa3M0a3FpbA==",
-    icone: Instagram,
-  },
-  { nome: "Facebook", href: "https://www.facebook.com", icone: Facebook },
-  { nome: "LinkedIn", href: "https://www.linkedin.com", icone: Linkedin },
-] as const;
-
-/** G. Rodapé institucional escuro: marca, nota legal, redes, contactos e links rápidos. */
 const Footer = () => {
   const { t } = useTranslation();
-  const linksRapidos = [
-    { label: t("Footer.inicio"), to: localizar("/") },
-    { label: t("Cabecalho.aNossaEquipa"), to: localizar("/equipa") },
-    { label: t("Cabecalho.cienciaTerapia"), to: localizar("/exercicios") },
-    { label: t("Footer.scannerDeEstrabismo"), to: localizar("/scanner") },
-    { label: t("Cabecalho.clinicasParceiras"), to: localizar("/parceiros") },
-    { label: t("Cabecalho.blog"), to: localizar("/publicacoes") },
-  ];
-  const apoiar = [
-    { label: t("Cabecalho.doarUmaVez"), to: localizar("/apoiar?modo=unica") },
-    { label: t("Cabecalho.doarMensalmente"), to: localizar("/apoiar?modo=mensal") },
-    { label: t("Cabecalho.voluntario"), to: localizar("/kamba#voluntariado") },
-    { label: t("Footer.doacaoDeOculos"), to: localizar("/circular") },
-  ];
-
   return (
-    <footer className="bg-marca-marinho text-marca-marfim/85">
+    <footer className="bg-slate-50 text-slate-700 border-t border-slate-200">
       <div className="container py-14 md:py-16">
-        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr] lg:gap-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
+          {/* Column 1: Brand & About */}
           <div className="flex flex-col gap-5">
-            <Link to={localizar("/")} className="flex items-center gap-2" aria-label={t("Cabecalho.irParaInicio")}>
-              <LogoMarca variante="escuro" className="h-10 w-auto" />
-              <span className="flex flex-col text-[15px] font-bold uppercase leading-[1.1] tracking-[0.12em] text-marca-marfim">
-                <span>Janelas Para</span>
-                <span>a Alma</span>
+            <div className="flex items-center gap-1.5">
+              <img
+                src={logoIcon}
+                alt="Janelas Para a Alma"
+                className="h-10 w-auto object-contain shrink-0"
+              />
+              <span className="font-bold text-base text-slate-900">
+                Janelas Para a Alma
               </span>
-            </Link>
-            <p className="text-sm leading-relaxed text-marca-marfim/70">{t("Footer.umaInstituicaoAngolanaQue")}</p>
-            <p className="text-xs leading-relaxed text-marca-marinho/60">{t("Footer.notaLegal")}</p>
-            <div className="flex items-center gap-3">
-              {REDES.map(({ nome, href, icone: Icone }) => (
-                <a
-                  key={nome}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={nome}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-marca-marfim/15 text-marca-marfim/85 transition-colors hover:border-marca-turquesa hover:bg-marca-turquesa hover:text-marca-marfim"
-                >
-                  <Icone className="h-4 w-4" />
-                </a>
-              ))}
+            </div>
+            <p className="text-sm leading-relaxed text-slate-600 text-justify">
+              {t("Footer.umaInstituicaoAngolanaQue")}
+            </p>
+            <div className="flex items-center gap-3 pt-1">
+              <a
+                href="https://www.instagram.com/janelas_para_alma?igsh=MTI5eXFxa3M0a3FpbA=="
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram"
+                className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
+              >
+                <Instagram className="w-4 h-4" />
+              </a>
+              <a
+                href="https://www.facebook.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Facebook"
+                className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
+              >
+                <Facebook className="w-4 h-4" />
+              </a>
+              <a
+                href="https://www.linkedin.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="LinkedIn"
+                className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
+              >
+                <Linkedin className="w-4 h-4" />
+              </a>
             </div>
           </div>
 
+          {/* Column 2: Links Rápidos */}
           <div className="flex flex-col gap-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-marca-marfim">{t("Footer.linksRapidos")}</h3>
+            <h3 className="font-bold text-base text-slate-900">{t("Footer.linksRapidos")}</h3>
             <ul className="flex flex-col gap-2.5 text-sm">
-              {linksRapidos.map((l) => (
+              {[
+                { label: t("Footer.inicio"), to: localizar("/") },
+                { label: t("Footer.sobreNos"), to: localizar("/impacto") },
+                { label: t("Footer.apoiarACausa"), to: localizar("/apoiar") },
+                { label: t("Footer.contactos"), to: localizar("/junte-se") },
+              ].map((l) => (
                 <li key={l.to}>
-                  <Link to={l.to} className="transition-colors hover:text-marca-ouro">
+                  <Link
+                    to={l.to}
+                    className="text-slate-600 hover:text-primary hover:translate-x-0.5 inline-block transition-all"
+                  >
                     {l.label}
                   </Link>
                 </li>
@@ -101,13 +104,21 @@ const Footer = () => {
             </ul>
           </div>
 
+          {/* Column 3: Pilares */}
           <div className="flex flex-col gap-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-marca-marfim">{t("Cabecalho.formasDeApoiar")}</h3>
+            <h3 className="font-bold text-base text-slate-900">{t("Footer.nossosServicos")}</h3>
             <ul className="flex flex-col gap-2.5 text-sm">
-              {apoiar.map((l) => (
+              {[
+                { label: t("Footer.scannerDeEstrabismo"), to: localizar("/scanner") },
+                { label: t("Footer.exerciciosVisuais"), to: localizar("/exercicios") },
+                { label: t("Footer.doacaoDeOculos"), to: localizar("/circular") },
+              ].map((l) => (
                 <li key={l.to}>
-                  <Link to={l.to} className="group inline-flex items-center gap-1.5 transition-colors hover:text-marca-ouro">
-                    <ChevronRight className="h-3.5 w-3.5 text-marca-turquesa transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                  <Link
+                    to={l.to}
+                    className="group inline-flex items-center gap-1.5 text-slate-600 hover:text-primary transition-colors"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5 text-primary/60 group-hover:translate-x-0.5 transition-transform" />
                     {l.label}
                   </Link>
                 </li>
@@ -115,32 +126,37 @@ const Footer = () => {
             </ul>
           </div>
 
+          {/* Column 4: Contactos */}
           <div className="flex flex-col gap-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-marca-marfim">{t("Footer.contactos")}</h3>
+            <h3 className="font-bold text-base text-slate-900">{t("Footer.contactos")}</h3>
             <ul className="flex flex-col gap-3 text-sm">
               <li>
                 <a
                   href="https://www.google.com/maps/search/?api=1&query=Luanda%2C+Angola"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-start gap-3 transition-colors hover:text-marca-ouro"
+                  className="flex items-start gap-3 text-slate-600 hover:text-primary transition-colors"
                 >
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-marca-turquesa" />
+                  <MapPin className="w-4 h-4 mt-0.5 text-primary shrink-0" />
                   <span>{t("Footer.luandaAngola")}</span>
                 </a>
               </li>
+
               <li>
-                <a href="tel:+244926969819" className="flex items-start gap-3 transition-colors hover:text-marca-ouro">
-                  <Phone className="mt-0.5 h-4 w-4 shrink-0 text-marca-turquesa" />
+                <a
+                  href="tel:+244926969819"
+                  className="flex items-start gap-3 text-slate-600 hover:text-primary transition-colors"
+                >
+                  <Phone className="w-4 h-4 mt-0.5 text-primary shrink-0" />
                   <span>+244 926 969 819</span>
                 </a>
               </li>
               <li>
                 <a
                   href="mailto:janelasparaalma18@gmail.com"
-                  className="flex items-start gap-3 break-all transition-colors hover:text-marca-ouro"
+                  className="flex items-start gap-3 text-slate-600 hover:text-primary transition-colors break-all"
                 >
-                  <Mail className="mt-0.5 h-4 w-4 shrink-0 text-marca-turquesa" />
+                  <Mail className="w-4 h-4 mt-0.5 text-primary shrink-0" />
                   <span>janelasparaalma18@gmail.com</span>
                 </a>
               </li>
@@ -149,18 +165,19 @@ const Footer = () => {
         </div>
       </div>
 
-      <div className="border-t border-marca-marfim/15">
-        <div className="container flex flex-col items-center justify-between gap-3 py-5 text-xs text-marca-marinho/60 sm:flex-row">
+      {/* Bottom bar */}
+      <div className="border-t border-slate-200">
+        <div className="container py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
           <p><Trans i18nKey="Footer.janelasParaAAlma" values={{ valor: new Date().getFullYear() }} /></p>
-          <div className="flex flex-wrap items-center justify-center gap-5">
+          <div className="flex items-center gap-5">
             {inglesAtivo() && <AlternarIdioma />}
-            <Link to={localizar("/politica-de-privacidade")} className="transition-colors hover:text-marca-marfim">
+            <Link to={localizar("/politica-de-privacidade")} className="hover:text-primary transition-colors">
               {t("Footer.politicaDePrivacidade")}
             </Link>
-            <Link to={localizar("/termos-de-utilizacao")} className="transition-colors hover:text-marca-marfim">
+            <Link to={localizar("/termos-de-utilizacao")} className="hover:text-primary transition-colors">
               {t("Footer.termosDeUtilizacao")}
             </Link>
-            <Link to={localizar("/faq")} className="transition-colors hover:text-marca-marfim">
+            <Link to={localizar("/faq")} className="hover:text-primary transition-colors">
               {t("Footer.faq")}
             </Link>
           </div>

@@ -393,7 +393,7 @@ const MenuSuspenso = ({ id, rotulo, itens, aberto, onAbrir, onFechar, destaque }
         onKeyDown={aoTeclarPainel}
         className={`absolute top-full z-50 pt-3 ${destaque ? "right-0" : "left-1/2 -translate-x-1/2"}`}
       >
-        <ul className="w-[19rem] rounded-xl border border-marca-marinho/10 bg-marca-marfim p-2 shadow-xl">
+        <ul className="w-[19rem] rounded-xl border border-marca-marinho/10 bg-white p-2 shadow-xl">
           {visiveis(itens).map((item) => (
             <li key={item.caminho}>
               <Link
@@ -475,7 +475,7 @@ const Navbar = () => {
     <>
       <header
         style={{ top: bannerAltura }}
-        className="fixed left-0 right-0 z-50 w-full border-b border-marca-marinho/10 bg-marca-marfim/95 backdrop-blur supports-[backdrop-filter]:bg-marca-marfim/90"
+        className="fixed left-0 right-0 z-50 w-full border-b border-marca-marinho/10 bg-white"
       >
         <div className="container flex h-16 items-center justify-between gap-2 px-4 sm:px-8">
           <Link
@@ -641,7 +641,7 @@ const Navbar = () => {
 
       {/* Menu mobile e tablet: os mesmos grupos, em acordeão */}
       <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
-        <SheetContent side="right" className="flex w-[22rem] max-w-[90vw] flex-col border-l border-border bg-marca-marfim p-0">
+        <SheetContent side="right" className="flex w-[22rem] max-w-[90vw] flex-col border-l border-border bg-white p-0">
           <SheetHeader className="border-b border-marca-marinho/10 p-5 text-left">
             <SheetTitle className="text-base font-semibold text-marca-marinho">{t("Navbar.menu")}</SheetTitle>
           </SheetHeader>
