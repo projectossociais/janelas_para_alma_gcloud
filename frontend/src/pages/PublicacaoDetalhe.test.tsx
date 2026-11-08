@@ -3,8 +3,12 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
 const obterPorSlug = vi.fn();
+const registarVisualizacao = vi.fn();
 vi.mock("@/lib/apiClient", () => ({
-  publicacoesApi: { obterPorSlug: (...a: unknown[]) => obterPorSlug(...a) },
+  publicacoesApi: {
+    obterPorSlug: (...a: unknown[]) => obterPorSlug(...a),
+    registarVisualizacao: (...a: unknown[]) => registarVisualizacao(...a),
+  },
   mensagemDeErroApi: (err: unknown, fallback: string) => {
     const status = (err as { status?: unknown } | null)?.status;
     const message = (err as { message?: unknown } | null)?.message;
@@ -13,6 +17,7 @@ vi.mock("@/lib/apiClient", () => ({
 }));
 vi.mock("@/components/Navbar", () => ({ default: () => null }));
 vi.mock("@/components/Footer", () => ({ default: () => null }));
+vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => ({ isLoggedIn: false }) }));
 
 const toastError = vi.fn();
 const PUBLICACAO = {
@@ -44,6 +49,9 @@ function renderComSlug(slug: string, prefixo = "/publicacoes") {
 describe("PublicacaoDetalhe", () => {
   beforeEach(() => {
     obterPorSlug.mockReset();
+    registarVisualizacao.mockReset();
+    registarVisualizacao.mockResolvedValue({ visualizacoes: 1 });
+    sessionStorage.clear();
     toastError.mockReset();
   });
 

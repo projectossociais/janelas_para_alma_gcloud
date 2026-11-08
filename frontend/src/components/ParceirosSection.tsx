@@ -40,46 +40,39 @@ const partners = [
   },
 ];
 
+/** E. Apoiadores, clínicas e parceiros na missão: grelha limpa de logótipos. */
 const ParceirosSection = () => {
   const { t } = useTranslation();
   return (
-    <section className="py-16 md:py-24 bg-muted/50">
+    <section className="border-t border-marca-marinho/10 bg-marca-marfim py-16 md:py-20">
       <div className="container">
-        <div className="text-center mb-12 space-y-4">
-          <span className="text-sm font-medium tracking-widest uppercase text-teal">
-            {t("ParceirosSection.juntosVemosMaisLonge")}
-          </span>
-          <h2 className="text-3xl md:text-5xl font-bold text-foreground">{t("ParceirosSection.parceiros")}</h2>
-        </div>
+        <h2 className="text-center text-2xl font-bold text-marca-marinho md:text-3xl">
+          {t("ParceirosSection.algunsDosNossos")}{" "}
+          <span className="text-marca-azul">{t("ParceirosSection.apoiadoresEParceiros")}</span>{" "}
+          {t("ParceirosSection.nestaMissao")}
+        </h2>
 
-        <div className="flex gap-6 overflow-x-auto snap-x pb-4 -mx-4 px-4 scrollbar-hide touch-pan-x justify-start md:justify-center md:flex-wrap">
+        <ul className="mx-auto mt-10 grid max-w-5xl grid-cols-2 items-center gap-x-8 gap-y-10 sm:grid-cols-3 lg:grid-cols-5">
           {partners.map((partner) => (
-            <a
-              key={partner.name}
-              href={partner.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={partner.name}
-              className="snap-start shrink-0 w-52 sm:w-56 h-36 rounded-2xl bg-card border border-border/50 shadow-card flex items-center justify-center p-6 transition-all hover:shadow-elevated hover:scale-[1.02]"
-            >
-              {partner.onDark ? (
-                <div className="w-full h-full rounded-lg bg-navy flex items-center justify-center p-4">
-                  <img
-                    src={partner.logo}
-                    alt={partner.name}
-                    className="max-w-full max-h-full object-contain"
-                  />
-                </div>
-              ) : (
-                <img
-                  src={partner.logo}
-                  alt={partner.name}
-                  className="max-w-full max-h-full object-contain"
-                />
-              )}
-            </a>
+            <li key={partner.name} className="flex justify-center">
+              <a
+                href={partner.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={partner.name}
+                className="flex h-20 w-full max-w-[11rem] items-center justify-center rounded-xl p-2 grayscale transition hover:grayscale-0 focus-visible:grayscale-0"
+              >
+                {partner.onDark ? (
+                  <span className="flex h-full w-full items-center justify-center rounded-lg bg-marca-marinho p-3">
+                    <img src={partner.logo} alt={partner.name} className="max-h-full max-w-full object-contain" loading="lazy" />
+                  </span>
+                ) : (
+                  <img src={partner.logo} alt={partner.name} className="max-h-full max-w-full object-contain" loading="lazy" />
+                )}
+              </a>
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
     </section>
   );
