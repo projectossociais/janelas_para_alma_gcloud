@@ -71,13 +71,13 @@ const NovidadesSection = () => {
   const { t } = useTranslation();
   const [modalAberto, setModalAberto] = useState<Novidade["modal"] | null>(null);
   return (
-    <section className="py-16 md:py-24 bg-background">
+    <section className="py-16 md:py-24 bg-white">
       <div className="container">
         <div className="text-center mb-12 space-y-4">
-          <span className="text-sm font-medium tracking-widest uppercase text-teal">
+          <span className="text-sm font-medium tracking-widest uppercase text-marca-azul">
             {t("NovidadesSection.fiquePorDentro")}
           </span>
-          <h2 className="text-3xl md:text-5xl font-bold text-foreground">{t("NovidadesSection.novidades")}</h2>
+          <h2 className="text-3xl md:text-5xl font-bold text-marca-marinho">{t("NovidadesSection.novidades")}</h2>
         </div>
 
         <div className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-4 scrollbar-hide touch-pan-x">
@@ -94,29 +94,29 @@ const NovidadesSection = () => {
                       loading="lazy"
                     />
                   ) : (
-                    <div className="w-full h-48 bg-gradient-to-br from-gold/20 to-navy/10 flex items-center justify-center">
-                      <Icone className="w-10 h-10 text-navy/40" />
+                    <div className="w-full h-48 bg-gradient-to-br from-marca-ouro/20 to-marca-marinho/10 flex items-center justify-center">
+                      <Icone className="w-10 h-10 text-marca-marinho/40" />
                     </div>
                   )}
                   {item.external && (
-                    <span className="absolute top-4 left-4 bg-navy text-navy-foreground px-3 py-1 rounded-lg font-semibold text-xs">
+                    <span className="absolute top-4 left-4 bg-marca-marinho text-marca-marfim px-3 py-1 rounded-lg font-semibold text-xs">
                       {t("NovidadesSection.externo")}
                     </span>
                   )}
                   {item.tag && (
-                    <span className="absolute top-4 left-4 bg-navy text-navy-foreground px-3 py-1 rounded-lg font-semibold text-xs">
+                    <span className="absolute top-4 left-4 bg-marca-marinho text-marca-marfim px-3 py-1 rounded-lg font-semibold text-xs">
                       {item.tag}
                     </span>
                   )}
                 </div>
                 <div className="p-6 space-y-3 flex flex-col flex-1">
-                  <h3 className="text-lg font-bold text-foreground leading-snug">
+                  <h3 className="text-lg font-bold text-marca-marinho leading-snug">
                     {item.title}
                   </h3>
                   {item.resumo && (
-                    <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">{item.resumo}</p>
+                    <p className="text-sm text-marca-marinho/70 leading-relaxed line-clamp-3">{item.resumo}</p>
                   )}
-                  <span className="inline-flex items-center gap-1 text-sm text-teal font-medium mt-auto pt-2">
+                  <span className="inline-flex items-center gap-1 text-sm text-marca-azul font-medium mt-auto pt-2">
                     {t("NovidadesSection.saibaMais")}
                     {item.external && <ArrowUpRight className="w-4 h-4" />}
                   </span>
@@ -125,7 +125,7 @@ const NovidadesSection = () => {
             );
 
             const cardClass =
-              "snap-start shrink-0 w-[85%] sm:w-[70%] md:w-[45%] lg:w-[32%] xl:w-[calc(25%-1.125rem)] rounded-2xl overflow-hidden bg-card shadow-card border border-border/50 transition-all hover:shadow-elevated hover:scale-[1.02] cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 flex flex-col";
+              "snap-start shrink-0 w-[85%] sm:w-[70%] md:w-[45%] lg:w-[32%] xl:w-[calc(25%-1.125rem)] rounded-2xl overflow-hidden bg-white shadow-card border border-border/50 transition-all hover:shadow-elevated hover:scale-[1.02] cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 flex flex-col";
 
             if (item.modal) {
               const modal = item.modal;

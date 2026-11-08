@@ -30,20 +30,20 @@ const HeroInicio = () => {
           Janelas Para a Alma
         </h1>
         <div className="container relative z-10 flex justify-start pb-10 md:pb-16">
-          <div className="flex w-full max-w-xs flex-col gap-3 sm:max-w-none sm:w-auto sm:flex-row">
+          <div className="flex w-full max-w-sm flex-col gap-4 sm:max-w-none sm:w-auto sm:flex-row">
             <Link
               to={localizar("/apoiar?modo=unica")}
-              className="inline-flex min-w-[13rem] items-center justify-center gap-2 rounded-full bg-marca-azul px-8 py-3.5 text-sm font-bold uppercase tracking-[0.08em] text-marca-marfim shadow-lg transition-colors hover:bg-marca-marinho"
+              className="inline-flex min-w-[15rem] items-center justify-center gap-3 rounded-full bg-marca-azul px-10 py-4 text-base font-bold md:min-w-[17rem] md:py-5 md:text-lg uppercase tracking-[0.08em] text-marca-marfim shadow-lg transition-colors hover:bg-marca-marinho"
             >
-              <Heart className="h-4 w-4" aria-hidden="true" />
+              <Heart className="h-5 w-5" aria-hidden="true" />
               {t("Inicio.doarAgora")}
             </Link>
             {!isLoggedIn && (
               <Link
                 to={localizar("/auth")}
-                className="inline-flex min-w-[13rem] items-center justify-center gap-2 rounded-full bg-white px-8 py-3.5 text-sm font-bold uppercase tracking-[0.08em] text-marca-azul shadow-lg ring-2 ring-marca-azul transition-colors hover:bg-marca-celeste/30"
+                className="inline-flex min-w-[15rem] items-center justify-center gap-3 rounded-full bg-white px-10 py-4 text-base font-bold md:min-w-[17rem] md:py-5 md:text-lg uppercase tracking-[0.08em] text-marca-azul shadow-lg ring-2 ring-marca-azul transition-colors hover:bg-marca-celeste/30"
               >
-                <LogIn className="h-4 w-4" aria-hidden="true" />
+                <LogIn className="h-5 w-5" aria-hidden="true" />
                 {t("Navbar.entrar")}
               </Link>
             )}
