@@ -121,7 +121,7 @@ const Tecnologia = () => {
         </section>
 
         {/* Mockup */}
-        <section className="py-20 bg-muted/40">
+        <section className="py-20 bg-white">
           <div className="container">
             <div className="grid md:grid-cols-2 gap-12 items-center max-w-5xl mx-auto">
               <div className="animate-fade-in">

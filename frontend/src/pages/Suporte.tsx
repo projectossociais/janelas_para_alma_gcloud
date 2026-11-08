@@ -102,13 +102,13 @@ const Suporte = () => {
         </section>
 
         {/* CTA */}
-        <section className="py-20 bg-gradient-to-br from-primary to-primary/80">
+        <section className="py-20 bg-white">
           <div className="container">
             <div className="max-w-3xl mx-auto text-center animate-fade-in">
-              <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4 leading-tight">
+              <h2 className="text-3xl md:text-4xl font-bold text-marca-marinho mb-4 leading-tight">
                 {t("Suporte.juntaTeANossa")}
               </h2>
-              <p className="text-primary-foreground/85 text-lg mb-8">
+              <p className="text-marca-marinho/85 text-lg mb-8">
                 <Trans i18nKey="Suporte.fazParteDoPrograma" components={{ strong: <strong /> }} />
               </p>
               <Link

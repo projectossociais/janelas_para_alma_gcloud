@@ -275,6 +275,17 @@ documentos do redesenho (`REDESENHO_FRONTEND.md`, `SISTEMA_DESIGN.md`, `LAYOUTS.
 `MARCA.md`, `ESTRUTURA_SITE.md`) ficam como histórico — não retomar nem introduzir padrões
 visuais novos sem nova decisão da equipa.
 
+**Cabeçalho, capa e fundo branco (2026-11-08, decisão do dono do projecto):** um só
+cabeçalho com menus suspensos (`lib/menuPrincipal.ts`, fonte única, com teste que garante
+que todo o destino existe no mapa de rotas) e logótipo só com o nome completo. A capa da
+página inicial (`components/inicio/HeroInicio.tsx`) é um carrossel em ecrã inteiro, uma
+fotografia por criança, que muda a cada 5 s, sem véu por cima; "Doar Agora" e "Entrar"
+(só sem sessão) ficam sempre visíveis. **Todas as páginas têm fundo branco**, e os tokens do
+tema em `index.css` (`--teal`, `--navy`, `--gold`, `--green`, `--primary`...) usam os valores
+exactos da paleta da marca (`marca.*` em `tailwind.config.ts`) — não reintroduzir fundos
+creme, cinzentos ou faixas azul-marinho de secção. Ficam de fora, por agora, os cabeçalhos
+com fotografia e véu escuro de algumas páginas e as cores da marca da Optioptika no portal.
+
 Público-alvo inclui **crianças**. Todo o tratamento de dados deve assumir isso.
 
 Idioma do produto e do código: **português (pt-PT)**. Nomes de colunas, rotas e variáveis

@@ -13,7 +13,7 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted">
+    <div className="flex min-h-screen items-center justify-center bg-white">
       {/* O vercel.json serve o index.html (200) para qualquer URL: sem isto, um
           URL inexistente seria indexável como página ("soft 404"). */}
       <Helmet>
