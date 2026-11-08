@@ -11,9 +11,9 @@ import { localizar } from "@/i18n/rotas";
  * inteiras, acima dos botões; as outras enchem o ecrã. Fotografias suavizadas (menos
  * contraste e cor) em public/olhares/.
  */
-export const DIAPOSITIVOS_CAPA: readonly { src: string; alt: string; inteira?: boolean }[] = [
+export const DIAPOSITIVOS_CAPA: readonly { src: string; alt: string; inteira?: boolean; posicao?: string }[] = [
   { src: "/olhares/menino-oculos-azuis.jpg", alt: "Inicio.capaFotoOculos" },
-  { src: "/olhares/olhos-antes-depois-1.jpg", alt: "Inicio.capaFotoOlhares", inteira: true },
+  { src: "/olhares/menina-escola.jpg", alt: "Inicio.capaFotoMeninaEscola", posicao: "object-[35%_center]" },
   { src: "/olhares/menina.jpg", alt: "Inicio.capaFotoMenina" },
   { src: "/olhares/olhos-antes-depois-2.jpg", alt: "Inicio.capaFotoOlhares", inteira: true },
   { src: "/olhares/menino-estrabismo.jpg", alt: "Inicio.fotoHeroAlt" },
@@ -43,7 +43,7 @@ const HeroInicio = () => {
       className="relative flex h-[100svh] min-h-[32rem] w-full items-end overflow-hidden bg-white pt-16"
     >
       <div aria-roledescription="carousel" aria-label={t("Inicio.capaCarrossel")} className="absolute inset-0">
-        {DIAPOSITIVOS_CAPA.map(({ src, alt, inteira }, i) => (
+        {DIAPOSITIVOS_CAPA.map(({ src, alt, inteira, posicao }, i) => (
           <img
             key={src}
             src={src}
@@ -54,7 +54,7 @@ const HeroInicio = () => {
               inteira
                 ? // Antes/depois: inteira, sem cortes, e acima dos botões para nenhum a tapar.
                   "inset-x-0 top-16 h-[calc(100%-18rem)] object-contain sm:h-[calc(100%-12rem)]"
-                : "inset-0 h-full object-cover object-[center_30%]"
+                : `inset-0 h-full object-cover ${posicao ?? "object-[center_30%]"}`
             }`}
             loading={i === 0 ? "eager" : "lazy"}
             fetchPriority={i === 0 ? "high" : undefined}
