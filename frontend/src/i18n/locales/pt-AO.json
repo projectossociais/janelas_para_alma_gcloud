@@ -2914,7 +2914,11 @@
     "metricaTreinosNota": "Testes e treinos de reabilitação visual feitos",
     "metricaEncaminhamentos": "Encaminhamentos clínicos",
     "metricaEncaminhamentosNota": "Rastreios com indicação de consulta e consultas marcadas",
-    "notaNumeros": "Números contados em tempo real a partir da nossa plataforma."
+    "notaNumeros": "Números contados em tempo real a partir da nossa plataforma.",
+    "capaCarrossel": "Fotografias de crianças acompanhadas",
+    "capaFotoOlhares": "Olhos de uma criança antes (em cima) e depois (em baixo) do tratamento do estrabismo",
+    "capaVerDiapositivo": "Ver fotografia {{numero}}",
+    "capaFotoOculos": "Menino sorridente com óculos azuis"
   },
   "Visionarios": {
     "titulo": "Guiados por Visionários na Ciência e no Serviço",
@@ -3053,14 +3057,5 @@
     "indisponivel": "As compras ainda não estão disponíveis nesta versão da app.",
     "avisoLoja": "Os pagamentos dentro da app são feitos pela loja (App Store ou Google Play), com o preço na moeda da sua conta da loja.",
     "voltar": "Voltar"
-  },
-  "Olhares": {
-    "titulo": "Olhares que se alinham",
-    "texto": "O estrabismo tem tratamento, sobretudo quando é detectado cedo. Cada par de fotografias mostra os olhos de uma criança antes (em cima) e depois (em baixo) do tratamento feito por médicos oftalmologistas.",
-    "nota": "Fotografias ilustrativas.",
-    "antes": "Antes",
-    "depois": "Depois",
-    "fotoAlt": "Olhos de uma criança antes e depois do tratamento do estrabismo (fotografia {{numero}})",
-    "verFoto": "Ver fotografia {{numero}}"
   }
 }

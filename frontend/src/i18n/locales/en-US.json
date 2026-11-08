@@ -2914,7 +2914,11 @@
     "metricaTreinosNota": "Vision tests and rehabilitation exercises completed",
     "metricaEncaminhamentos": "Clinical referrals",
     "metricaEncaminhamentosNota": "Screenings flagged for a check-up and appointments booked",
-    "notaNumeros": "Figures counted in real time from our platform."
+    "notaNumeros": "Figures counted in real time from our platform.",
+    "capaCarrossel": "Photos of children we support",
+    "capaFotoOlhares": "A child's eyes before (top) and after (bottom) strabismus treatment",
+    "capaVerDiapositivo": "Show photo {{numero}}",
+    "capaFotoOculos": "Smiling boy wearing blue glasses"
   },
   "Visionarios": {
     "titulo": "Guided by Visionaries in Science and Service",
@@ -3053,14 +3057,5 @@
     "indisponivel": "Purchases are not available in this version of the app yet.",
     "avisoLoja": "Payments inside the app go through the store (App Store or Google Play), priced in your store account's currency.",
     "voltar": "Back"
-  },
-  "Olhares": {
-    "titulo": "Eyes coming into line",
-    "texto": "Strabismus can be treated, especially when it is caught early. Each pair of photos shows a child's eyes before (top) and after (bottom) treatment by ophthalmologists.",
-    "nota": "Illustrative photos.",
-    "antes": "Before",
-    "depois": "After",
-    "fotoAlt": "A child's eyes before and after strabismus treatment (photo {{numero}})",
-    "verFoto": "Show photo {{numero}}"
   }
 }

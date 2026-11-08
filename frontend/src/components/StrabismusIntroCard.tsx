@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { localizar } from "@/i18n/rotas";
 
 // A fotografia do menino passou para a capa do site (2026-11-08).
-const strabismusIntro = "/estrabismo-intro-menina.jpg";
+const strabismusIntro = "/estrabismo-intro-oculos.jpg";
 
 
 const StrabismusIntroCard = () => {
@@ -27,11 +27,11 @@ const StrabismusIntroCard = () => {
               <img
                 src={strabismusIntro}
                 alt={t("StrabismusIntroCard.rastreioVisualDeUma")}
-                className="absolute inset-0 w-full h-full object-cover object-[53%_center] transition-transform duration-700 group-hover:scale-105"
+                className="absolute inset-0 w-full h-full object-cover object-[center_35%] transition-transform duration-700 group-hover:scale-105"
                 decoding="async"
                 fetchPriority="high"
-                width={1920}
-                height={864}
+                width={644}
+                height={589}
               />
 
             </div>

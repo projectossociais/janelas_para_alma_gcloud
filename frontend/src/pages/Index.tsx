@@ -2,7 +2,6 @@ import Navbar from "@/components/Navbar";
 import HeroInicio from "@/components/inicio/HeroInicio";
 import BannerHomepageSection from "@/components/BannerHomepageSection";
 import StrabismusIntroCard from "@/components/StrabismusIntroCard";
-import OlharesCarrossel from "@/components/inicio/OlharesCarrossel";
 import AboutTeaserSection from "@/components/AboutTeaserSection";
 import PillarsSection from "@/components/PillarsSection";
 import CuriosidadesSection from "@/components/CuriosidadesSection";
@@ -18,7 +17,6 @@ const Index = () => {
         <HeroInicio />
         <BannerHomepageSection />
         <StrabismusIntroCard />
-        <OlharesCarrossel />
         <AboutTeaserSection />
         <PillarsSection />
         <CuriosidadesSection />
