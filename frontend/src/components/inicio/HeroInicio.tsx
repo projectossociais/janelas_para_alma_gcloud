@@ -7,15 +7,13 @@ import { localizar } from "@/i18n/rotas";
 
 /**
  * Diapositivos da capa (pedidos do dono do projecto, 2026-11-08): uma fotografia por
- * criança, por esta ordem. As de antes/depois (antes em cima, depois em baixo) aparecem
- * inteiras, acima dos botões; as outras enchem o ecrã. Fotografias suavizadas (menos
- * contraste e cor) em public/olhares/.
+ * criança, por esta ordem, em ecrã inteiro (public/olhares/; a do menino com estrabismo
+ * foi suavizada: menos contraste e cor).
  */
-export const DIAPOSITIVOS_CAPA: readonly { src: string; alt: string; inteira?: boolean; posicao?: string }[] = [
+export const DIAPOSITIVOS_CAPA: readonly { src: string; alt: string; posicao?: string }[] = [
   { src: "/olhares/menino-oculos-azuis.jpg", alt: "Inicio.capaFotoOculos" },
-  { src: "/olhares/olhos-antes-depois-1.jpg", alt: "Inicio.capaFotoOlhares", inteira: true },
-  { src: "/olhares/menina.jpg", alt: "Inicio.capaFotoMenina" },
   { src: "/olhares/menina-escola.jpg", alt: "Inicio.capaFotoMeninaEscola", posicao: "object-[35%_center]" },
+  { src: "/olhares/menina.jpg", alt: "Inicio.capaFotoMenina" },
   { src: "/olhares/menino-estrabismo.jpg", alt: "Inicio.fotoHeroAlt" },
 ];
 
@@ -43,19 +41,16 @@ const HeroInicio = () => {
       className="relative flex h-[100svh] min-h-[32rem] w-full items-end overflow-hidden bg-white pt-16"
     >
       <div aria-roledescription="carousel" aria-label={t("Inicio.capaCarrossel")} className="absolute inset-0">
-        {DIAPOSITIVOS_CAPA.map(({ src, alt, inteira, posicao }, i) => (
+        {DIAPOSITIVOS_CAPA.map(({ src, alt, posicao }, i) => (
           <img
             key={src}
             src={src}
             alt={i === actual ? t(alt) : ""}
             data-testid="diapositivo-capa"
             aria-hidden={i !== actual}
-            className={`absolute w-full transition-opacity duration-1000 ${i === actual ? "opacity-100" : "opacity-0"} ${
-              inteira
-                ? // Antes/depois: inteira, sem cortes, e acima dos botões para nenhum a tapar.
-                  "inset-x-0 top-16 h-[calc(100%-21rem)] object-contain sm:h-[calc(100%-13.5rem)]"
-                : `inset-0 h-full object-cover ${posicao ?? "object-[center_30%]"}`
-            }`}
+            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
+              posicao ?? "object-[center_30%]"
+            } ${i === actual ? "opacity-100" : "opacity-0"}`}
             loading={i === 0 ? "eager" : "lazy"}
             fetchPriority={i === 0 ? "high" : undefined}
             decoding="async"
