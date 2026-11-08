@@ -6,21 +6,17 @@ import { useAuth } from "@/contexts/AuthContext";
 import { localizar } from "@/i18n/rotas";
 
 /**
- * Diapositivos da capa (pedidos do dono do projecto, 2026-11-08). As fotografias de
- * antes/depois são pequenas para o ecrã inteiro, por isso vão quatro de cada vez, recortadas
- * à volta dos olhos (capa-N.jpg: antes em cima, depois em baixo) e abaixo do cabeçalho.
+ * Diapositivos da capa (pedidos do dono do projecto, 2026-11-08): uma fotografia por
+ * criança, por esta ordem. As de antes/depois (antes em cima, depois em baixo) aparecem
+ * inteiras, acima dos botões; as outras enchem o ecrã. Fotografias suavizadas (menos
+ * contraste e cor) em public/olhares/.
  */
-export const DIAPOSITIVOS_CAPA: readonly { fotos: readonly string[]; alt: string }[] = [
-  { fotos: ["/estrabismo-intro-boy.jpg"], alt: "Inicio.fotoHeroAlt" },
-  {
-    fotos: ["/olhares/capa-1.jpg", "/olhares/capa-2.jpg", "/olhares/capa-3.jpg", "/olhares/capa-4.jpg"],
-    alt: "Inicio.capaFotoOlhares",
-  },
-  { fotos: ["/olhares/menino-oculos-azuis.jpg"], alt: "Inicio.capaFotoOculos" },
-  {
-    fotos: ["/olhares/capa-5.jpg", "/olhares/capa-6.jpg", "/olhares/capa-7.jpg", "/olhares/capa-1.jpg"],
-    alt: "Inicio.capaFotoOlhares",
-  },
+export const DIAPOSITIVOS_CAPA: readonly { src: string; alt: string; inteira?: boolean }[] = [
+  { src: "/olhares/menino-oculos-azuis.jpg", alt: "Inicio.capaFotoOculos" },
+  { src: "/olhares/olhos-antes-depois-1.jpg", alt: "Inicio.capaFotoOlhares", inteira: true },
+  { src: "/olhares/menina.jpg", alt: "Inicio.capaFotoMenina" },
+  { src: "/olhares/olhos-antes-depois-2.jpg", alt: "Inicio.capaFotoOlhares", inteira: true },
+  { src: "/olhares/menino-estrabismo.jpg", alt: "Inicio.fotoHeroAlt" },
 ];
 
 /** Cada diapositivo fica 5 s no ecrã. */
@@ -47,43 +43,23 @@ const HeroInicio = () => {
       className="relative flex h-[100svh] min-h-[32rem] w-full items-end overflow-hidden bg-white pt-16"
     >
       <div aria-roledescription="carousel" aria-label={t("Inicio.capaCarrossel")} className="absolute inset-0">
-        {DIAPOSITIVOS_CAPA.map(({ fotos, alt }, i) => (
-          <div
-            key={i}
+        {DIAPOSITIVOS_CAPA.map(({ src, alt, inteira }, i) => (
+          <img
+            key={src}
+            src={src}
+            alt={i === actual ? t(alt) : ""}
             data-testid="diapositivo-capa"
             aria-hidden={i !== actual}
-            className={`absolute inset-x-0 transition-opacity duration-1000 ${
-              i === actual ? "opacity-100" : "opacity-0"
-            } ${
-              fotos.length > 1
-                ? // A grelha acaba acima dos botões, para nenhum deles tapar uma fotografia.
-                  "bottom-[14rem] top-16 grid grid-cols-1 grid-rows-4 bg-white sm:bottom-32 sm:grid-cols-[auto_auto] sm:grid-rows-2 sm:justify-center"
-                : "inset-y-0"
+            className={`absolute w-full transition-opacity duration-1000 ${i === actual ? "opacity-100" : "opacity-0"} ${
+              inteira
+                ? // Antes/depois: inteira, sem cortes, e acima dos botões para nenhum a tapar.
+                  "inset-x-0 top-16 h-[calc(100%-18rem)] object-contain sm:h-[calc(100%-12rem)]"
+                : "inset-0 h-full object-cover object-[center_30%]"
             }`}
-          >
-            {fotos.length === 1 ? (
-              <img
-                src={fotos[0]}
-                alt={i === actual ? t(alt) : ""}
-                className="absolute inset-0 h-full w-full object-cover object-[center_30%]"
-                loading={i === 0 ? "eager" : "lazy"}
-                fetchPriority={i === 0 ? "high" : undefined}
-                decoding="async"
-              />
-            ) : (
-              // Na grelha nada se corta: cada fotografia aparece inteira (object-contain) sobre branco.
-              fotos.map((src, j) => (
-                <img
-                  key={`${src}-${j}`}
-                  src={src}
-                  alt={i === actual ? t(alt) : ""}
-                  className="h-full min-h-0 w-full object-contain sm:w-auto"
-                  loading="lazy"
-                  decoding="async"
-                />
-              ))
-            )}
-          </div>
+            loading={i === 0 ? "eager" : "lazy"}
+            fetchPriority={i === 0 ? "high" : undefined}
+            decoding="async"
+          />
         ))}
       </div>
 
