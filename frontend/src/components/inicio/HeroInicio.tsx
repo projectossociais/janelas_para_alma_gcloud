@@ -13,9 +13,9 @@ import { localizar } from "@/i18n/rotas";
  */
 export const DIAPOSITIVOS_CAPA: readonly { src: string; alt: string; inteira?: boolean; posicao?: string }[] = [
   { src: "/olhares/menino-oculos-azuis.jpg", alt: "Inicio.capaFotoOculos" },
-  { src: "/olhares/menina-escola.jpg", alt: "Inicio.capaFotoMeninaEscola", posicao: "object-[35%_center]" },
+  { src: "/olhares/olhos-antes-depois-1.jpg", alt: "Inicio.capaFotoOlhares", inteira: true },
   { src: "/olhares/menina.jpg", alt: "Inicio.capaFotoMenina" },
-  { src: "/olhares/olhos-antes-depois-2.jpg", alt: "Inicio.capaFotoOlhares", inteira: true },
+  { src: "/olhares/menina-escola.jpg", alt: "Inicio.capaFotoMeninaEscola", posicao: "object-[35%_center]" },
   { src: "/olhares/menino-estrabismo.jpg", alt: "Inicio.fotoHeroAlt" },
 ];
 
