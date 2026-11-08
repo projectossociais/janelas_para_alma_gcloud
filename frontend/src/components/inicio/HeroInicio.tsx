@@ -1,16 +1,19 @@
 import { Link } from "react-router-dom";
-import { Heart } from "lucide-react";
+import { Heart, LogIn } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import fotoHero from "@/assets/hero-bg.jpg";
+import { useAuth } from "@/contexts/AuthContext";
 import { localizar } from "@/i18n/rotas";
 
+/** A fotografia do menino que estava no cartão "Sabia que... O que é o Estrabismo?". */
+const fotoHero = "/estrabismo-intro-boy.jpg";
+
 /**
- * Hero da página inicial (pedido de 2026-11-08): a fotografia de sempre do site
- * (hero-bg.jpg) em ecrã inteiro, sem o véu azul-marinho que a escurecia, e por
- * cima só o botão "Doar Agora", no canto inferior esquerdo.
+ * Hero da página inicial (pedidos de 2026-11-08): a fotografia em ecrã inteiro, sem véu
+ * por cima, e no canto inferior esquerdo só "Doar Agora" e, sem sessão, "Entrar".
  */
 const HeroInicio = () => {
   const { t } = useTranslation();
+  const { isLoggedIn } = useAuth();
   return (
       <section
         aria-labelledby="hero-titulo"
@@ -19,7 +22,7 @@ const HeroInicio = () => {
         <img
           src={fotoHero}
           alt={t("Inicio.fotoHeroAlt")}
-          className="absolute inset-0 h-full w-full object-cover object-[35%_center]"
+          className="absolute inset-0 h-full w-full object-cover object-[center_30%]"
           fetchPriority="high"
           decoding="async"
         />
@@ -35,6 +38,15 @@ const HeroInicio = () => {
               <Heart className="h-4 w-4" aria-hidden="true" />
               {t("Inicio.doarAgora")}
             </Link>
+            {!isLoggedIn && (
+              <Link
+                to={localizar("/auth")}
+                className="inline-flex min-w-[13rem] items-center justify-center gap-2 rounded-full bg-white px-8 py-3.5 text-sm font-bold uppercase tracking-[0.08em] text-marca-azul shadow-lg ring-2 ring-marca-azul transition-colors hover:bg-marca-celeste/30"
+              >
+                <LogIn className="h-4 w-4" aria-hidden="true" />
+                {t("Navbar.entrar")}
+              </Link>
+            )}
           </div>
         </div>
       </section>
