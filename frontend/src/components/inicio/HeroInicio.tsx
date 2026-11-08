@@ -53,7 +53,7 @@ const HeroInicio = () => {
             className={`absolute w-full transition-opacity duration-1000 ${i === actual ? "opacity-100" : "opacity-0"} ${
               inteira
                 ? // Antes/depois: inteira, sem cortes, e acima dos botões para nenhum a tapar.
-                  "inset-x-0 top-16 h-[calc(100%-18rem)] object-contain sm:h-[calc(100%-12rem)]"
+                  "inset-x-0 top-16 h-[calc(100%-21rem)] object-contain sm:h-[calc(100%-13.5rem)]"
                 : `inset-0 h-full object-cover ${posicao ?? "object-[center_30%]"}`
             }`}
             loading={i === 0 ? "eager" : "lazy"}
@@ -68,20 +68,20 @@ const HeroInicio = () => {
       </h1>
 
       <div className="container relative z-10 flex flex-col items-start gap-5 pb-10 sm:flex-row sm:items-center sm:gap-6 sm:pb-8">
-        <div className="flex w-full max-w-sm flex-col gap-4 sm:w-auto sm:max-w-none sm:flex-row">
+        <div className="flex w-full max-w-md flex-col gap-4 sm:w-auto sm:max-w-none sm:flex-row">
           <Link
             to={localizar("/apoiar?modo=unica")}
-            className="inline-flex min-w-[15rem] items-center justify-center gap-3 rounded-full bg-marca-azul px-10 py-4 text-base font-bold uppercase tracking-[0.08em] text-marca-marfim shadow-lg transition-colors hover:bg-marca-marinho md:min-w-[17rem] md:py-5 md:text-lg"
+            className="inline-flex min-w-[17rem] items-center justify-center gap-3 rounded-full bg-marca-azul px-12 py-5 text-lg font-bold uppercase tracking-[0.08em] text-marca-marfim shadow-lg transition-colors hover:bg-marca-marinho md:min-w-[21rem] md:py-6 md:text-xl"
           >
-            <Heart className="h-5 w-5" aria-hidden="true" />
+            <Heart className="h-6 w-6" aria-hidden="true" />
             {t("Inicio.doarAgora")}
           </Link>
           {!isLoggedIn && (
             <Link
               to={localizar("/auth")}
-              className="inline-flex min-w-[15rem] items-center justify-center gap-3 rounded-full bg-white px-10 py-4 text-base font-bold uppercase tracking-[0.08em] text-marca-azul shadow-lg ring-2 ring-marca-azul transition-colors hover:bg-marca-celeste/30 md:min-w-[17rem] md:py-5 md:text-lg"
+              className="inline-flex min-w-[17rem] items-center justify-center gap-3 rounded-full bg-white px-12 py-5 text-lg font-bold uppercase tracking-[0.08em] text-marca-azul shadow-lg ring-2 ring-marca-azul transition-colors hover:bg-marca-celeste/30 md:min-w-[21rem] md:py-6 md:text-xl"
             >
-              <LogIn className="h-5 w-5" aria-hidden="true" />
+              <LogIn className="h-6 w-6" aria-hidden="true" />
               {t("Navbar.entrar")}
             </Link>
           )}
