@@ -72,6 +72,19 @@ const HeroInicio = () => {
       </h1>
 
       <div className="container relative z-10 pb-8 md:pb-12">
+        {/* Números do projecto em quadrados, à esquerda (fonte e actualização em numerosCapa.ts). */}
+        <ul className="mb-6 grid w-full max-w-[17rem] grid-cols-2 gap-3 sm:max-w-xs md:mb-8 md:max-w-sm">
+          {NUMEROS_CAPA.map((n) => (
+            <li
+              key={n.legenda}
+              className="flex aspect-square flex-col justify-end rounded-2xl bg-white/10 p-3 ring-1 ring-white/30 backdrop-blur-sm md:p-5"
+            >
+              <span className="text-3xl font-bold leading-none text-white md:text-5xl">{n.valor}</span>
+              <span className="mt-1.5 text-xs leading-snug text-white/85 md:mt-2 md:text-sm">{t(n.legenda)}</span>
+            </li>
+          ))}
+        </ul>
+
         <div className="flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:flex-wrap sm:gap-4">
           <Link
             to={localizar("/apoiar?modo=unica")}
@@ -98,18 +111,6 @@ const HeroInicio = () => {
           )}
         </div>
 
-        {/* Números do projecto (fonte e actualização em numerosCapa.ts). */}
-        <dl className="mt-8 grid grid-cols-2 gap-x-6 gap-y-5 border-t border-white/30 pt-6 md:mt-10 md:grid-cols-4 md:pt-8">
-          {NUMEROS_CAPA.map((n) => (
-            <div key={n.legenda}>
-              <dt className="sr-only">{t(n.legenda)}</dt>
-              <dd className="text-3xl font-bold leading-none text-white md:text-5xl">{n.valor}</dd>
-              <dd aria-hidden="true" className="mt-2 text-sm text-white/80 md:text-base">
-                {t(n.legenda)}
-              </dd>
-            </div>
-          ))}
-        </dl>
 
         <div className="mt-6 flex w-fit gap-2 rounded-full bg-marca-marinho/40 px-3 py-2">
           {DIAPOSITIVOS_CAPA.map((_, i) => (
