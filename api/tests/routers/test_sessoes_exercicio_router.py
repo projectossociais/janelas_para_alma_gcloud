@@ -207,14 +207,14 @@ def test_sem_trial_nem_premium_devolve_403_e_nao_grava(ambiente) -> None:
     assert repo.gravadas == []
 
 
-def test_trial_ativo_grava_exercicio_do_trial_mas_nao_premium(ambiente) -> None:
+def test_trial_ativo_grava_qualquer_um_dos_8(ambiente) -> None:
     c, repo = ambiente
     _registar(c)
     agora = datetime.now(UTC)
-    _com_acesso(_conta(trial_iniciado_em=agora, trial_termina_em=agora + timedelta(days=7)))
+    _com_acesso(_conta(trial_iniciado_em=agora, trial_termina_em=agora + timedelta(days=90)))
     assert c.post("/sessoes-exercicio", json={"exercicio_id": "cerebro", "duracao_segundos": 60}).status_code == 201
-    assert c.post("/sessoes-exercicio", json={"exercicio_id": "convergence", "duracao_segundos": 60}).status_code == 403
-    assert [g["exercicio_id"] for g in repo.gravadas] == ["cerebro"]
+    assert c.post("/sessoes-exercicio", json={"exercicio_id": "convergence", "duracao_segundos": 60}).status_code == 201
+    assert [g["exercicio_id"] for g in repo.gravadas] == ["cerebro", "convergence"]
 
 
 def test_trial_terminado_devolve_403(ambiente) -> None:

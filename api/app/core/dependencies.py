@@ -126,6 +126,16 @@ def obter_cron_valido(x_cron_secret: str | None = Header(default=None)) -> None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="segredo inválido")
 
 
+def obter_webhook_revenuecat_valido(authorization: str | None = Header(default=None)) -> None:
+    """Protege o webhook do RevenueCat (`routers/webhooks.py`): o RevenueCat
+    envia no `Authorization` o valor configurado no painel dele. Mesma regra
+    de `obter_cron_valido` -- sem segredo configurado, recusa sempre."""
+    settings = obter_settings()
+    segredo = settings.revenuecat_webhook_segredo
+    if not segredo or not authorization or not hmac.compare_digest(authorization, segredo):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="segredo inválido")
+
+
 def obter_clinica_parceira_repository(
     sessao: Session = Depends(obter_sessao),
 ) -> SQLAlchemyClinicaParceiraRepository:

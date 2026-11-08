@@ -12,6 +12,8 @@ projecto (recuperação de password, pontualmente) não justificam uma fila
 nem um cliente assíncrono dedicado.
 """
 
+import base64
+from dataclasses import dataclass
 from typing import Protocol
 
 import httpx
@@ -27,8 +29,16 @@ class EmailEnvioFalhouError(Exception):
     antes de verificar erro"."""
 
 
+@dataclass(frozen=True)
+class Anexo:
+    nome_ficheiro: str
+    conteudo: bytes
+
+
 class EmailSender(Protocol):
-    def enviar(self, destinatario: str, assunto: str, corpo_html: str) -> None: ...
+    def enviar(
+        self, destinatario: str, assunto: str, corpo_html: str, anexos: list[Anexo] | None = None
+    ) -> None: ...
 
 
 class ResendEmailSender:
@@ -41,18 +51,26 @@ class ResendEmailSender:
         self._api_key = settings.resend_api_key
         self._remetente = settings.email_remetente
 
-    def enviar(self, destinatario: str, assunto: str, corpo_html: str) -> None:
+    def enviar(
+        self, destinatario: str, assunto: str, corpo_html: str, anexos: list[Anexo] | None = None
+    ) -> None:
+        corpo = {
+            "from": self._remetente,
+            "to": [destinatario],
+            "subject": assunto,
+            "html": corpo_html,
+        }
+        if anexos:
+            corpo["attachments"] = [
+                {"filename": a.nome_ficheiro, "content": base64.b64encode(a.conteudo).decode("ascii")}
+                for a in anexos
+            ]
         try:
             resposta = httpx.post(
                 _RESEND_API_URL,
                 headers={"Authorization": f"Bearer {self._api_key}"},
-                json={
-                    "from": self._remetente,
-                    "to": [destinatario],
-                    "subject": assunto,
-                    "html": corpo_html,
-                },
-                timeout=10.0,
+                json=corpo,
+                timeout=20.0,
             )
         except httpx.HTTPError as exc:
             raise EmailEnvioFalhouError(f"falha de rede a chamar o Resend: {exc}") from exc
@@ -71,9 +89,13 @@ class ConsoleEmailSender:
     /`uvicorn` locais sem Resend configurado deixariam de conseguir
     registar contas nenhumas."""
 
-    def enviar(self, destinatario: str, assunto: str, corpo_html: str) -> None:
+    def enviar(
+        self, destinatario: str, assunto: str, corpo_html: str, anexos: list[Anexo] | None = None
+    ) -> None:
+        nomes = ", ".join(f"{a.nome_ficheiro} ({len(a.conteudo)} bytes)" for a in anexos or [])
         print(
             f"\n--- EMAIL (modo consola — RESEND_API_KEY vazia) ---\n"
             f"Para: {destinatario}\nAssunto: {assunto}\n{corpo_html}\n"
+            f"Anexos: {nomes or '(nenhum)'}\n"
             f"----------------------------------------------------\n"
         )

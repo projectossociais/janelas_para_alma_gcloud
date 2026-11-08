@@ -56,7 +56,7 @@ class Settings(BaseSettings):
     # Express). Os dados de destino são os da conta que recebe -- vazios por
     # omissão de propósito: sem eles, nenhum comprovativo pode ser aprovado
     # (a validação responde 503, nunca "aprova tudo" por falta de config).
-    subscription_price_kz: int = 15000
+    subscription_price_kz: int = 10000
     # IBAN de destino -- comparado sem espaços nem pontos.
     payment_dest_iban: str = ""
     # Número associado ao Multicaixa Express (9 dígitos, com ou sem +244).
@@ -124,6 +124,14 @@ class Settings(BaseSettings):
     # Vazio por omissão de propósito: sem valor definido, o endpoint recusa
     # sempre (nunca "aberto por engano" em produção por falta de configuração).
     cron_secret: str = ""
+
+    # Webhook do RevenueCat (compras na app nativa, `routers/webhooks.py`): o
+    # valor exacto do cabeçalho `Authorization` configurado no painel do
+    # RevenueCat. Vazio por omissão: sem valor, o webhook recusa sempre.
+    revenuecat_webhook_segredo: str = ""
+    # Compras de teste (sandbox) creditam: o revisor da Apple compra em
+    # sandbox na app de produção. Ver services/compra_loja_service.py.
+    revenuecat_aceitar_sandbox: bool = True
 
     @property
     def cookie_seguro(self) -> bool:

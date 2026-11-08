@@ -1,8 +1,9 @@
-import { Recycle, Wrench, Sparkles } from "lucide-react";
+import { Recycle, Wrench, Sparkles, Glasses, Scissors, ShoppingBag, HeartHandshake, ArrowRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
 import heroImg from "@/assets/circular-hero.jpg";
+import oculos3dImg from "@/assets/oculos-3d-prototipo.jpg";
 import { Trans, useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 
@@ -38,6 +39,32 @@ const steps = [
     },
   },
 ];
+
+// Óculos 3D: um produto da plataforma, não uma etapa do processo circular.
+// Nenhum texto diz que são feitos de material doado ou reaproveitado -- se
+// isso um dia passar a ser verdade (cartão de embalagens recolhidas), é aqui
+// que se acrescenta, com a equipa a confirmar.
+const passosOculos3d = [
+  {
+    icon: Scissors,
+    get title() {
+      return i18n.t("Circular.producao");
+    },
+  },
+  {
+    icon: ShoppingBag,
+    get title() {
+      return i18n.t("Circular.venda");
+    },
+  },
+  {
+    icon: HeartHandshake,
+    get title() {
+      return i18n.t("Circular.reinvestimentoNoPrograma");
+    },
+  },
+];
+
 
 const Circular = () => {
   const { t } = useTranslation();
@@ -99,6 +126,59 @@ const Circular = () => {
                   <p className="text-sm text-muted-foreground leading-relaxed">{step.description}</p>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Óculos 3D para os exercícios visuais (produto da plataforma) */}
+        <section id="oculos-3d" className="pb-20 md:pb-28 scroll-mt-24">
+          <div className="container">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center max-w-5xl mx-auto">
+              <div className="animate-fade-in">
+                <span className="inline-block px-3 py-1 rounded-full bg-green/10 text-green text-xs font-bold uppercase tracking-widest mb-4">
+                  {t("Circular.produtoDaPlataforma")}
+                </span>
+                <h2 className="text-3xl md:text-4xl font-bold text-foreground leading-tight mb-6">
+                  {t("Circular.oculos3dParaOsExercicios")}
+                </h2>
+                <div className="space-y-4 text-muted-foreground leading-relaxed">
+                  <p>{t("Circular.oculos3dProduto")}</p>
+                  <p>{t("Circular.oculos3dRendimento")}</p>
+                </div>
+              </div>
+
+              <div
+                className="relative flex flex-col rounded-2xl border border-border bg-card p-6 md:p-8 shadow-card animate-fade-in"
+                style={{ animationDelay: "100ms" }}
+              >
+                <img
+                  src={oculos3dImg}
+                  alt={t("Circular.prototipoDosOculos3d")}
+                  className="w-full aspect-[4/3] object-cover rounded-xl mb-6"
+                  width={900}
+                  height={671}
+                  loading="lazy"
+                />
+                <h3 className="flex items-center gap-3 text-xl font-semibold text-foreground mb-4">
+                  <span className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-green/10 text-green">
+                    <Glasses className="w-5 h-5" />
+                  </span>
+                  {t("Circular.oculos3d")}
+                </h3>
+                <ol className="flex flex-col sm:flex-row sm:items-stretch gap-2">
+                  {passosOculos3d.map((passo, i) => (
+                    <li key={passo.title} className="flex flex-col sm:flex-row items-center gap-2 sm:flex-1">
+                      <div className="flex w-full items-center gap-3 sm:flex-col sm:text-center rounded-xl bg-green/5 border border-green/20 px-4 py-3 h-full">
+                        <passo.icon className="w-5 h-5 shrink-0 text-green" />
+                        <span className="text-sm font-medium text-foreground leading-snug">{passo.title}</span>
+                      </div>
+                      {i < passosOculos3d.length - 1 && (
+                        <ArrowRight className="w-4 h-4 shrink-0 text-green/60 rotate-90 sm:rotate-0" aria-hidden="true" />
+                      )}
+                    </li>
+                  ))}
+                </ol>
+              </div>
             </div>
           </div>
         </section>

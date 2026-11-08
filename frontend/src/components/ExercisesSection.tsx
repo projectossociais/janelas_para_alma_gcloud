@@ -5,8 +5,8 @@ import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { localizar } from "@/i18n/rotas";
 
-// Os 4 do teste de 7 dias (ids históricos; conteúdo desde 2026-09-28; o
-// Treino de Anéis substituiu a Convergência no trial a 2026-09-29).
+// Os 4 em destaque na página inicial (eram os do antigo teste de 7 dias; desde
+// 2026-10-28 o teste gratuito inclui os 8). Ids históricos.
 const exercises = [
   {
     id: "figure8",

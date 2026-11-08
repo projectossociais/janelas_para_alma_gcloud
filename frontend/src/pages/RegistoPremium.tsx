@@ -25,6 +25,7 @@ import { Textarea } from "@/components/ui/textarea";
 import FileDropzone from "@/components/FileDropzone";
 import CopyRow from "@/components/CopyRow";
 import CheckoutInstantaneo from "@/components/CheckoutInstantaneo";
+import PremiumNaApp from "@/components/compras/PremiumNaApp";
 import { toast } from "@/hooks/use-toast";
 import {
   comprovativosApi,
@@ -32,6 +33,7 @@ import {
   premiumApi,
   TIPOS_DE_COMPROVATIVO_ACEITES,
 } from "@/lib/apiClient";
+import { comprasPelaLoja } from "@/lib/comprasLoja";
 import { DEFAULT_BANK_DATA, ofuscarValor } from "@/lib/pagamento";
 import { Trans, useTranslation } from "react-i18next";
 import i18n from "@/i18n";
@@ -94,7 +96,7 @@ const PLANOS: PlanoOpcao[] = [
       return i18n.t("RegistoPremium.planoMensal");
     },
     get preco() {
-      return i18n.t("RegistoPremium.n15000Kz");
+      return i18n.t("RegistoPremium.precoMensal");
     },
     get detalhe() {
       return i18n.t("RegistoPremium.cobrancaTodosOsMeses");
@@ -113,7 +115,7 @@ const PLANOS: PlanoOpcao[] = [
       return i18n.t("RegistoPremium.planoAnual");
     },
     get preco() {
-      return i18n.t("RegistoPremium.n150000Kz");
+      return i18n.t("RegistoPremium.precoAnual");
     },
     get detalhe() {
       return i18n.t("RegistoPremium.poupe2Meses");
@@ -259,6 +261,10 @@ const RegistoPremium = () => {
     step === 1 ? 20 : step === 2 ? 40 : step === 3 ? 60 : step === 4 ? 80 : 100;
   const planoEscolhido = PLANOS.find((p) => p.id === plano) ?? null;
   const wizardMaxWidth = step === 3 ? "max-w-xl" : step === 4 ? "max-w-lg" : "max-w-md";
+
+  // Na app nativa, o Premium compra-se pela App Store / Google Play: as lojas
+  // não aceitam transferência + comprovativo para produtos digitais.
+  if (comprasPelaLoja()) return <PremiumNaApp onVoltar={voltar} />;
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-background">

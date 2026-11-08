@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Info, Lock, LogOut, Play, ShieldCheck, UserPlus } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -6,10 +6,8 @@ import { Button } from "@/components/ui/button";
 import { useAcessoExercicios } from "@/contexts/AcessoExerciciosContext";
 import { useConsentimentoSaude } from "@/contexts/ConsentimentoSaudeContext";
 import BotaoSom from "@/components/visao/BotaoSom";
-import { calar } from "@/lib/visao/voz";
 import {
   useAcaoDesbloqueio,
-  type GrupoExercicio,
   type TipoDesbloqueio,
 } from "@/components/exercises/useAcaoDesbloqueio";
 import { localizar } from "@/i18n/rotas";
@@ -79,8 +77,6 @@ interface BaseExerciseProps {
   description: string;
   /** Id do exercício tal como a API o conhece (ex.: `"figure8"`). */
   exercicioId: string;
-  /** Grupo do exercício: incluído no teste de 7 dias, ou só Premium. */
-  grupo: GrupoExercicio;
   tipo: TipoExercicio;
   /** Nomes dos passos do assistente (vazio = sem indicador). */
   passos?: readonly string[];
@@ -91,7 +87,7 @@ interface BaseExerciseProps {
 /**
  * Casca dos exercícios de visão: cabeçalho com "Sair", indicador de passos,
  * aviso de triagem/treino em todos os ecrãs e bloqueio de conteúdo pago
- * (Premium ou teste de 7 dias, estado vindo da API).
+ * (Premium ou teste de 90 dias, estado vindo da API).
  *
  * Desde 2026-09-28 **sem câmara**: os exercícios são testes e treinos com
  * resposta do utilizador. Cada exercício gere o seu próprio fluxo; aqui só
@@ -106,7 +102,6 @@ const BaseExercise = ({
   title,
   description,
   exercicioId,
-  grupo,
   tipo,
   passos = [],
   passoActual = 0,
@@ -119,11 +114,9 @@ const BaseExercise = ({
   const { consentido, carregando: consentimentoLoading, garantir } = useConsentimentoSaude();
 
   const locked = acessoLoading || !temAcesso(exercicioId);
-  const tipoDesbloqueio = acessoLoading ? null : tipoPara(exercicioId, grupo);
+  const tipoDesbloqueio = acessoLoading ? null : tipoPara(exercicioId);
   const pedeConsentimento = !locked && !consentimentoLoading && !consentido;
   const bloqueado = locked || consentimentoLoading || !consentido;
-  // Sair do exercício (ou mudar de página) cala o que estiver a ser dito.
-  useEffect(() => calar, []);
 
   return (
     <div className="relative w-full overflow-hidden rounded-2xl border border-border/60 bg-card shadow-card">

@@ -15,7 +15,7 @@
  *
  * Funções puras -- o texto vive em `components/visao/ResumoClinico.tsx`.
  */
-import { MODO_TAPA_OLHO, minutosDeTapaPorDia, resumoSemana, type ResumoSemana } from "./caderneta";
+import { MODO_TAPA_OLHO, minutosDeTapaPorDia, minutosManuaisNaSemana, resumoSemana, type ResumoSemana } from "./caderneta";
 import { diferencaEmLinhas, mesmoTipoDaUltima, tipoDeAcuidade, type TipoAcuidade } from "./aglomeracao";
 import { ID_ACUIDADE, ID_ANEIS, ID_ASTIGMATISMO, ID_CONTRASTE, ID_CONTRASTE_BLOCOS, ID_CONVERGENCIA, ID_ESTEREOPSIA } from "./ids";
 import { SENTIDOS, eResumoSentido, type ResumoSentido, type Sentido } from "./pontes";
@@ -100,26 +100,41 @@ export interface ResumoSamakaka extends Resumo<ValorSamakaka> {
 }
 
 /** Desafio da Agulha: o jogador que faz o treino, com os dois olhos e com um. */
+/** Olho Mágico, cartão do pássaro e da gaiola (versão 2): rotura e recuperação declaradas, em Δ. */
+export interface ValorGaiola {
+  gaiola: ResumoSentido;
+  /** Faltou o sol ou a nuvem (um olho desligou) nalgum momento da sessão. */
+  supressao: boolean;
+}
+
 export interface ValorAgulha {
   acertosDois: number;
   acertosUm: number;
+  /** Tentativas em cada condição: 3 na versão 1, 5 na versão 2. */
+  total: number;
   tempoDois: number | null;
   tempoUm: number | null;
   vantagem: string;
 }
 
-/** Fio de Missangas: ponto mais próximo de convergência e os fios. */
+/** Fio de Missangas: ponto mais próximo de convergência, recuperação e (versão 1) os fios. */
 export interface ValorFio {
-  /** cm; `null` = mais longe do que a régua. */
+  /** cm; `null` = mais longe do que a régua (ou o ecrã). */
   ppcCm: number | null;
+  /** Versão 1 (cordão de Brock): algum fio desapareceu. */
   supressao: boolean;
+  /** Versão 1: missangas com o X no sítio. */
   xNoSitio: number | null;
+  /** Versão 2: onde voltou a ser uma (média, cm). */
+  recuperacaoCm: number | null;
+  /** Versão 2: a última rotura ficou bem mais longe do que a primeira. */
+  cansaco: boolean;
 }
 
 /** Luz nos Olhos (exame feito pelos pais): desvio pelo reflexo, teste de tapar e diário. */
 export interface ValorLuz {
-  /** Maior desvio estimado pelo reflexo, em Δ (0 = nenhum visível). */
-  delta: number;
+  /** Maior desvio estimado pelo reflexo, em Δ (0 = nenhum visível; `null` = os pontinhos não se viram ou não havia lanterna). */
+  delta: number | null;
   reflexo: { olho: Olho; sentido: string; delta: number }[];
   tapar: { olho: Olho; sentido: string }[];
   frequencia: string | null;
@@ -159,10 +174,12 @@ export interface ResumoClinico {
   fio: Resumo<ValorFio> | null;
   /** Desafio da Agulha. */
   agulha: Resumo<ValorAgulha> | null;
+  gaiola: Resumo<ValorGaiola> | null;
   /** Pintar o Samakaka. */
   samakaka: ResumoSamakaka | null;
   /** Horas de tapa-olho (Caderneta), nos últimos 7 dias; `null` sem registos no período. */
-  tapaOlho: (ResumoSemana & { alvoMin: number }) | null;
+  /** `manualMin`: minutos acrescentados à mão nos últimos 7 dias (versão 2), à parte do medido. */
+  tapaOlho: (ResumoSemana & { alvoMin: number; manualMin: number }) | null;
   adesao: Adesao;
   /** Datas das sessões em que a pessoa disse ver a dobrar, da mais antiga para a mais recente. */
   diplopia: string[];
@@ -300,10 +317,12 @@ const lista = (v: unknown): Record<string, unknown>[] =>
   Array.isArray(v) ? v.filter((x): x is Record<string, unknown> => !!x && typeof x === "object") : [];
 
 function lerLuz(s: S): ValorLuz | undefined {
-  if (s.sinais?.modo !== "luz_olhos" || typeof s.limiar !== "number") return undefined;
+  if (s.sinais?.modo !== "luz_olhos") return undefined;
+  // A versão 2 grava `limiar = null` quando não se viu o reflexo; a versão 1 tinha-o sempre.
+  if (typeof s.limiar !== "number" && s.sinais.versao !== 2) return undefined;
   const diario = s.sinais.diario as { frequencia?: unknown } | undefined;
   return {
-    delta: s.limiar,
+    delta: numero(s.limiar),
     reflexo: lista(s.sinais.achados)
       .filter((a) => eOlho(a.olho) && typeof a.sentido === "string" && typeof a.delta === "number")
       .map((a) => ({ olho: a.olho as Olho, sentido: a.sentido as string, delta: a.delta as number })),
@@ -314,11 +333,11 @@ function lerLuz(s: S): ValorLuz | undefined {
   };
 }
 
-function resumoTapaOlho(sessoes: readonly S[], hoje: Date): (ResumoSemana & { alvoMin: number }) | null {
+function resumoTapaOlho(sessoes: readonly S[], hoje: Date): (ResumoSemana & { alvoMin: number; manualMin: number }) | null {
   const doTapa = sessoes.filter((s) => s.sinais?.modo === MODO_TAPA_OLHO);
   if (!doTapa.length) return null;
   const alvoMin = numero(doTapa[doTapa.length - 1].sinais?.alvo_min) ?? 120;
-  return { ...resumoSemana(minutosDeTapaPorDia(doTapa), alvoMin, hoje), alvoMin };
+  return { ...resumoSemana(minutosDeTapaPorDia(doTapa), alvoMin, hoje), alvoMin, manualMin: minutosManuaisNaSemana(doTapa, hoje) };
 }
 
 function resumoSamakaka(sessoes: readonly S[]): ResumoSamakaka | null {
@@ -333,18 +352,37 @@ function resumoSamakaka(sessoes: readonly S[]): ResumoSamakaka | null {
   return { ...r, olho: eOlho(olho) ? olho : null };
 }
 
+function lerGaiola(s: S): ValorGaiola | undefined {
+  if (s.sinais?.modo !== "fusao_gaiola") return undefined;
+  const g = s.sinais.gaiola;
+  return eResumoSentido(g) && g.rampas > 0 ? { gaiola: g, supressao: s.sinais.fusao === "supressao" } : undefined;
+}
+
 function lerAgulha(s: S): ValorAgulha | undefined {
   if (s.sinais?.modo !== "agulha") return undefined;
   const j = s.sinais.jogador as Record<string, unknown> | undefined;
   const a2 = numero(j?.acertos_dois);
   const a1 = numero(j?.acertos_um);
   if (a2 === null || a1 === null) return undefined;
-  return { acertosDois: a2, acertosUm: a1, tempoDois: numero(j?.tempo_dois_s), tempoUm: numero(j?.tempo_um_s), vantagem: String(j?.vantagem ?? "") };
+  return {
+    acertosDois: a2,
+    acertosUm: a1,
+    total: numero(j?.tentativas) ?? 3,
+    tempoDois: numero(j?.tempo_dois_s),
+    tempoUm: numero(j?.tempo_um_s),
+    vantagem: String(j?.vantagem ?? ""),
+  };
 }
 
 function lerFio(s: S): ValorFio | undefined {
   if (s.sinais?.modo !== "fio_missangas") return undefined;
-  return { ppcCm: numero(s.limiar), supressao: s.sinais.supressao === true, xNoSitio: numero(s.sinais.x_no_sitio) };
+  return {
+    ppcCm: numero(s.limiar),
+    supressao: s.sinais.supressao === true,
+    xNoSitio: numero(s.sinais.x_no_sitio),
+    recuperacaoCm: numero(s.sinais.recuperacao_media_cm),
+    cansaco: s.sinais.cansaco === true,
+  };
 }
 
 function adesao(sessoes: readonly S[], hoje: Date): Adesao {
@@ -378,6 +416,7 @@ export function resumoClinico(sessoes: readonly S[], hoje: Date): ResumoClinico 
     luz: resumir(de(ID_ASTIGMATISMO), lerLuz),
     fio: resumir(de(ID_CONTRASTE), lerFio),
     agulha: resumir(de(ID_ESTEREOPSIA), lerAgulha),
+    gaiola: resumir(de(ID_CONVERGENCIA), lerGaiola),
     samakaka: resumoSamakaka(fiaveis),
     tapaOlho: resumoTapaOlho(doPeriodo, hoje),
     adesao: adesao(sessoes, hoje),
@@ -387,4 +426,4 @@ export function resumoClinico(sessoes: readonly S[], hoje: Date): ResumoClinico 
 
 /** Há alguma medida para mostrar (fora a adesão)? */
 export const temMedicoes = (r: ResumoClinico): boolean =>
-  !!(r.acuidade || r.contraste || r.astigmatismo || r.estereopsia || r.vergencia || r.kianda || r.pesca || r.luz || r.fio || r.agulha || r.samakaka);
+  !!(r.acuidade || r.contraste || r.astigmatismo || r.estereopsia || r.vergencia || r.kianda || r.pesca || r.luz || r.fio || r.agulha || r.gaiola || r.samakaka);

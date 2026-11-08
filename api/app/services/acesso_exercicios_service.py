@@ -1,10 +1,10 @@
 """Quem pode fazer que exercício — lógica de acesso pago, por isso vive num
 service com testes (CLAUDE.md §3/§10).
 
-Modelo (decidido pelo dono do projecto, 2026-09-23): os 8 exercícios são
-todos pagos.
+Modelo (decidido pelo dono do projecto, 2026-09-23; trial alargado a
+2026-10-28): os 8 exercícios são todos pagos.
 - Admin e Premium válido: os 8, sem limite.
-- Trial activo (7 dias, uma vez por conta): só os 4 `EXERCICIOS_TRIAL`.
+- Trial activo (90 dias, uma vez por conta): também os 8 (`EXERCICIOS_TRIAL`).
 - Trial terminado ou nunca iniciado: nenhum.
 
 Os ids são os que o frontend já grava em `sessoes_exercicio.exercicio_id`
@@ -12,7 +12,7 @@ Os ids são os que o frontend já grava em `sessoes_exercicio.exercicio_id`
 
 O que o utilizador podia falsear e é recusado aqui (nunca só na interface):
 - gravar sessões / pedir o vídeo de um exercício sem direito → sem acesso
-- iniciar o trial uma segunda vez (ganhava mais 7 dias) → `TrialJaUtilizadoError`
+- iniciar o trial uma segunda vez (ganhava mais 90 dias) → `TrialJaUtilizadoError`
 """
 
 from dataclasses import dataclass
@@ -25,7 +25,9 @@ from app.repositories.acesso_exercicios_repository import (
     EstadoAcessoRegisto,
 )
 
-TRIAL_DURACAO_DIAS = 7
+# 2026-10-28 (decisão do dono do projecto): 90 dias em vez de 7. Vale para
+# os trials iniciados a partir daí; os que já existiam mantêm a data de fim.
+TRIAL_DURACAO_DIAS = 90
 
 # Desde 2026-09-28 os exercícios não usam webcam (testes de triagem e treinos
 # com resposta do utilizador). Os ids ficam iguais -- o acesso não muda --
@@ -47,14 +49,22 @@ TRIAL_DURACAO_DIAS = 7
 # mostrar o treino com mais valor e mais evidência, em vez de um treino de
 # convergência contra-indicado em parte do público (esotropia) e com resultado
 # só auto-declarado.
-EXERCICIOS_TRIAL: tuple[str, ...] = ("figure8", "ambliopia", "cerebro", "relax")
-EXERCICIOS_PREMIUM: tuple[str, ...] = (
+#
+# Desde 2026-10-28 (decisão do dono do projecto) o trial dá os 8: deixa de
+# haver exercícios só Premium. `EXERCICIOS_PREMIUM` fica vazio (a API continua
+# a mandar a lista, para o frontend não depender de um campo que desaparece).
+TODOS_OS_EXERCICIOS: tuple[str, ...] = (
+    "figure8",
+    "ambliopia",
+    "cerebro",
+    "relax",
     "convergence",
     "sacadas-convergencia",
     "flexibilidade-acomodativa",
     "estereopsia",
 )
-TODOS_OS_EXERCICIOS: tuple[str, ...] = EXERCICIOS_TRIAL + EXERCICIOS_PREMIUM
+EXERCICIOS_TRIAL: tuple[str, ...] = TODOS_OS_EXERCICIOS
+EXERCICIOS_PREMIUM: tuple[str, ...] = ()
 # Os treinos (os outros quatro são testes de triagem): contam para a dose, a
 # sequência de dias, os lembretes e o bónus de assiduidade.
 IDS_TREINOS: tuple[str, ...] = ("ambliopia", "sacadas-convergencia", "convergence", "flexibilidade-acomodativa")

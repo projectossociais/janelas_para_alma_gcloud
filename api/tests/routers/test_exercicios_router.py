@@ -58,8 +58,8 @@ def test_visitante_ve_estado_sem_sessao_e_nada_desbloqueado(ambiente) -> None:
     corpo = c.get("/exercicios/acesso").json()
     assert corpo["estado"] == "sem_sessao"
     assert corpo["exercicios_desbloqueados"] == []
-    assert len(corpo["exercicios_trial"]) == 4
-    assert len(corpo["exercicios_premium"]) == 4
+    assert len(corpo["exercicios_trial"]) == 8
+    assert corpo["exercicios_premium"] == []
 
 
 def test_conta_nova_tem_trial_disponivel(ambiente) -> None:
@@ -80,10 +80,8 @@ def test_iniciar_trial_uma_vez_e_depois_409(ambiente) -> None:
     primeira = c.post("/exercicios/trial")
     assert primeira.status_code == 200
     assert primeira.json()["estado"] == "trial_ativo"
-    assert primeira.json()["trial_dias_restantes"] == 7
-    assert sorted(primeira.json()["exercicios_desbloqueados"]) == sorted(
-        ["figure8", "ambliopia", "cerebro", "relax"]
-    )
+    assert primeira.json()["trial_dias_restantes"] == 90
+    assert len(primeira.json()["exercicios_desbloqueados"]) == 8
     assert c.post("/exercicios/trial").status_code == 409
 
 
@@ -99,13 +97,13 @@ def test_video_sem_acesso_devolve_403_sem_assinar_nada(ambiente) -> None:
     assert presigner.chaves == []
 
 
-def test_video_premium_durante_trial_devolve_403(ambiente) -> None:
+def test_video_de_qualquer_exercicio_durante_o_trial(ambiente) -> None:
     c, _, presigner = ambiente
     _entrar(c)
     c.post("/exercicios/trial")
     assert c.get("/exercicios/figure8/video").status_code == 200
-    assert c.get("/exercicios/estereopsia/video").status_code == 403
-    assert presigner.chaves == ["videos-exercicios/figure8.mp4"]
+    assert c.get("/exercicios/estereopsia/video").status_code == 200
+    assert presigner.chaves == ["videos-exercicios/figure8.mp4", "videos-exercicios/estereopsia.mp4"]
 
 
 def test_video_de_exercicio_eliminado_devolve_404(ambiente) -> None:

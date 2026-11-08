@@ -44,7 +44,7 @@ describe("BaseExercise (casca dos exercícios)", () => {
   it.each(IDS)("%s desbloqueado: cabeçalho só com título, descrição e Sair", (id) => {
     render(
       <MemoryRouter>
-        <BaseExercise title="Título" description="Descrição" exercicioId={id} grupo="trial" tipo="teste">
+        <BaseExercise title="Título" description="Descrição" exercicioId={id} tipo="teste">
           <p>conteúdo</p>
         </BaseExercise>
       </MemoryRouter>,

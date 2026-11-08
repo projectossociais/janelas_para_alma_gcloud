@@ -29,7 +29,7 @@ describe("BaseExercise sem consentimento para dados de saúde", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter>
-        <BaseExercise title="Teste" description="d" exercicioId="figure8" grupo="trial" tipo="teste">
+        <BaseExercise title="Teste" description="d" exercicioId="figure8" tipo="teste">
           <p>conteúdo do exercício</p>
         </BaseExercise>
       </MemoryRouter>,

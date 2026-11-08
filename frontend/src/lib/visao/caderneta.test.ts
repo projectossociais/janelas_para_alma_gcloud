@@ -1,28 +1,53 @@
 import { describe, expect, it } from "vitest";
 import {
-  ALVO_OMISSAO_MIN,
   TOTAL_CROMOS,
   VERIFICAR_CADA_MIN,
+  ajustarAlvo,
   confirmar,
   cromoDoDia,
   diasCumpridos,
   guardarAlvo,
   guardarPeriodo,
+  guardarVerificar,
   horasEMinutos,
   iniciarPeriodo,
   lerAlvo,
   lerPeriodo,
+  lerVerificar,
   minutosDeTapaPorDia,
+  minutosManuaisNaSemana,
   precisaVerificar,
   resumoSemana,
+  segundosAoTirar,
   segundosContados,
+  tiradoAntesPossiveis,
+  type PeriodoTapa,
 } from "./caderneta";
 
 const MIN = 60_000;
 
 describe("período de tapa-olho", () => {
-  it("conta o tempo até à hora de perguntar; depois, só até à última confirmação", () => {
+  it("sem a pergunta (por omissão desde a versão 2), conta o tempo todo", () => {
     const p = iniciarPeriodo(0, 120, "esquerdo");
+    expect(precisaVerificar(p, 3 * 60 * MIN)).toBe(false);
+    expect(segundosContados(p, 90 * MIN)).toBe(90 * 60);
+  });
+
+  it("os períodos guardados pela versão 1 (sem o campo) continuam a perguntar", () => {
+    const antigo: PeriodoTapa = { inicio: 0, confirmadoAte: 0, alvoMin: 120, verificacoes: 0, olhoTreinado: "esquerdo" };
+    expect(precisaVerificar(antigo, VERIFICAR_CADA_MIN * MIN)).toBe(true);
+  });
+
+  it("ao tirar, desconta o tempo em que já estava tirado", () => {
+    const p = iniciarPeriodo(0, 120, null);
+    expect(segundosAoTirar(p, 50 * MIN, 15)).toBe(35 * 60);
+    expect(segundosAoTirar(p, 10 * MIN, 15)).toBe(0);
+    expect(tiradoAntesPossiveis(45)).toEqual([15, 30]);
+    expect(tiradoAntesPossiveis(90)).toEqual([15, 30, 60]);
+  });
+
+  it("com a pergunta ligada, conta o tempo até à hora de perguntar; depois, só até à última confirmação", () => {
+    const p = iniciarPeriodo(0, 120, "esquerdo", true);
     expect(segundosContados(p, 10 * MIN)).toBe(600);
     expect(precisaVerificar(p, VERIFICAR_CADA_MIN * MIN)).toBe(true);
     // Esqueceram-se de responder (ou fecharam a página): 40 min depois só contam os confirmados (0).
@@ -53,6 +78,11 @@ describe("dias e cromos", () => {
     expect(cromoDoDia(TOTAL_CROMOS + 2)).toBe(2);
   });
 
+  it("o tempo acrescentado à mão, nos últimos 7 dias", () => {
+    const manual = (dia: number, minutos: number) => ({ ...sessao(dia, minutos), sinais: { modo: "tapa_olho_horas", manual: true } });
+    expect(minutosManuaisNaSemana([manual(21, 60), manual(10, 90), sessao(21, 30)], new Date(2026, 9, 21, 20))).toBe(60);
+  });
+
   it("resumo da semana para o médico", () => {
     const m = minutosDeTapaPorDia([sessao(15, 120), sessao(21, 60)]);
     const r = resumoSemana(m, 120, new Date(2026, 9, 21, 20));
@@ -69,6 +99,14 @@ describe("horas e minutos", () => {
   });
 });
 
+describe("tempo receitado", () => {
+  it("outro tempo: de 30 min a 12 h, em passos de 30 min", () => {
+    expect(ajustarAlvo(0)).toBe(30);
+    expect(ajustarAlvo(100)).toBe(90);
+    expect(ajustarAlvo(800)).toBe(720);
+  });
+});
+
 describe("guardado no aparelho", () => {
   it("o período em curso e o tempo receitado", () => {
     window.localStorage.clear();
@@ -78,9 +116,13 @@ describe("guardado no aparelho", () => {
     expect(lerPeriodo()).toEqual(p);
     guardarPeriodo(null);
     expect(lerPeriodo()).toBeNull();
-    expect(lerAlvo()).toBe(ALVO_OMISSAO_MIN);
+    // Ainda não escolhido: o ecrã pergunta o tempo receitado.
+    expect(lerAlvo()).toBeNull();
     guardarAlvo(240);
     expect(lerAlvo()).toBe(240);
+    expect(lerVerificar()).toBe(false);
+    guardarVerificar(true);
+    expect(lerVerificar()).toBe(true);
     window.localStorage.clear();
   });
 });

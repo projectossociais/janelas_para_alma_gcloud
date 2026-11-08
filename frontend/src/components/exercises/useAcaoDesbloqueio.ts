@@ -6,12 +6,11 @@ import { useAcessoExercicios } from "@/contexts/AcessoExerciciosContext";
 import { mensagemDeErroApi } from "@/lib/apiClient";
 import { localizar } from "@/i18n/rotas";
 
-export type GrupoExercicio = "trial" | "premium";
 export type TipoDesbloqueio = "criar_conta" | "iniciar_trial" | "premium";
 
 /**
- * O que desbloqueia um exercício bloqueado, conforme o estado de acesso e
- * o grupo do exercício. Uma só regra para a página /exercicios e para o
+ * O que desbloqueia um exercício bloqueado, conforme o estado de acesso
+ * (desde 2026-10-28 o teste gratuito inclui os 8). Uma só regra para a página /exercicios e para o
  * bloqueio dentro de cada exercício, para os estados nunca divergirem.
  * Devolve `null` quando o exercício já está desbloqueado.
  */
@@ -21,10 +20,10 @@ export const useAcaoDesbloqueio = () => {
   const { acesso, temAcesso, iniciarTrial } = useAcessoExercicios();
   const [aIniciarTrial, setAIniciarTrial] = useState(false);
 
-  const tipoPara = (exercicioId: string, grupo: GrupoExercicio): TipoDesbloqueio | null => {
+  const tipoPara = (exercicioId: string): TipoDesbloqueio | null => {
     if (temAcesso(exercicioId)) return null;
     if (acesso.estado === "sem_sessao") return "criar_conta";
-    if (grupo === "trial" && acesso.estado === "trial_disponivel") return "iniciar_trial";
+    if (acesso.estado === "trial_disponivel") return "iniciar_trial";
     return "premium";
   };
 

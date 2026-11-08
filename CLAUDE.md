@@ -85,7 +85,7 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   nem MediaPipe** (o scanner é outro produto e continua a usá-los). **8, todos pagos** (desde
   2026-09-23). Os ids históricos mantêm-se (acesso e preços iguais), mas quatro mudaram de
   significado — `sessoes_exercicio.versao` separa as sessões antigas (1) das novas (2):
-  teste de 7 dias = `figure8` **Olhos de Palanca ao longe** (desde 2026-10-21: "E" a 3 m,
+  antigo teste de 7 dias = `figure8` **Olhos de Palanca ao longe** (desde 2026-10-21: "E" a 3 m,
   a criança aponta e o adulto desliza o dedo; antes, anel de Landolt ao perto),
   `ambliopia` **Kianda** (desde 2026-10-21: sem óculos, por omissão,
   pesca com o olho forte tapado, em graus; com óculos 3D, jogo dicóptico; o Treino de Anéis
@@ -117,9 +117,14 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   máximo 5 activos por conta, e é revogada na anonimização (W-03). Mostra só o primeiro
   nome, olho mais fraco, óculos e os resultados dos últimos 90 dias — nunca email nem
   contactos (`PartilhaRelatorioService`)
-- **Modelo de acesso** — Premium a 15.000 Kz/mês (pagamento por transferência + comprovativo)
-  dá os 8; o teste de 7 dias (`utilizadores.trial_iniciado_em`/`trial_termina_em`, UTC) é
-  iniciado pelo próprio utilizador, uma única vez por conta, e dá só os 4 do teste. Regra
+- **Modelo de acesso** — Premium a 10.000 Kz/mês ou 100.000 Kz/ano (desde 2026-10-28; antes
+  15.000 e 150.000; pagamento por transferência + comprovativo) dá os 8; o teste gratuito de
+  **90 dias** (desde 2026-10-28; antes 7 dias e só os 4 base) também dá **os 8**
+  (`utilizadores.trial_iniciado_em`/`trial_termina_em`, UTC). É iniciado pelo próprio
+  utilizador, uma única vez por conta; os trials anteriores mantêm a data de fim (não houve
+  migração), mas desbloqueiam os 8 até lá. O preço que a validação do comprovativo exige vem
+  de `SUBSCRIPTION_PRICE_KZ` (variável `GCP_SUBSCRIPTION_PRICE_KZ` do GitHub Actions) e tem
+  de bater com o preço mostrado no site. Regra
   única em `api/app/services/acesso_exercicios_service.py`; a API recusa com 403 sessões
   (`POST /sessoes-exercicio`) e vídeos (`GET /exercicios/{id}/video`) sem direito de acesso.
   O frontend (`AcessoExerciciosContext`) só espelha `GET /exercicios/acesso`. Os vídeos vivem
@@ -326,6 +331,25 @@ mantida pelo rewrite do Vercel exactamente como antes pelo NGINX — que torna o
 `httpOnly` de sessão viável (§3b) sem CORS a sério; o CORS na API (`frontend_origins`)
 fica só como rede de segurança para pedidos verdadeiramente cross-origin.
 
+**App nativa (Google Play / App Store, preparada a 2026-10-30, ainda não publicada):**
+Capacitor (`frontend/capacitor.config.ts`, projectos em `frontend/android` e
+`frontend/ios`). A app abre o site publicado (`server.url`), nunca uma cópia do build —
+assim `/api/*` continua na mesma origem e o cookie de sessão funciona; deploys do Vercel
+chegam à app sem nova versão nas lojas. O site sabe que está na app por
+`estaNaAppNativa()` (`lib/appNativa.ts`); lá dentro não há login com Google. **Na app, o
+Premium e os diamantes/moedas compram-se pela App Store / Google Play** (decisão do dono
+do projecto, 2026-10-30 — as lojas não aceitam transferência + comprovativo para
+produtos digitais): `lib/comprasLoja.ts` (SDK do RevenueCat, `app_user_id` = id da
+conta), `PremiumNaApp` e `BotaoCompraNaLoja`; no site nada muda. **Quem credita é só a
+API**, pelo webhook `POST /webhooks/revenuecat` (segredo `REVENUECAT_WEBHOOK_SEGREDO` no
+`Authorization`, mesma regra de §4.8) e `CompraLojaService`: uma linha por transacção da
+loja em `compras_loja` (índice único: nunca aplica duas vezes), Premium = período pago
+somado à validade actual (tecto de 35 dias por transacção), diamantes/moedas do catálogo
+da loja do jogo, reembolso tira só o que essa compra deu, sandbox conta (o revisor da
+Apple compra assim). Os ids dos produtos são iguais nas lojas e no código; os preços
+vivem só nas consolas das lojas. A app só celebra quando a API já mostra a compra
+(`esperarPelaApi`). Passos, custos e privacidade em `docs/APP_LOJAS.md`.
+
 Produção da API (Cloud Run): scripts de provisionamento e deploy em `infra/gcloud/` (ver
 o `README.md` lá). **Decisão do dono do projecto (2026-09-15): o deploy da API passa a
 ser automático**, tal como o do frontend — um push/merge para `main` builda a imagem,
@@ -445,6 +469,17 @@ activa; verificar e testar isso explicitamente.**
    `consentimento_dados_saude_em_falta`); no frontend, `ConsentimentoSaudeContext`
    pede-o antes da câmara do scanner e dos exercícios. Sem jurista no projecto: a
    leitura da lei e o que falta junto da APD estão em `docs/APD_NOTIFICACAO.md`.
+10. **A clínica recebe cada pedido de consulta com uma ficha de encaminhamento em PDF
+    (2026-11-07).** `AgendamentoClinicoService.pedir` gera-a
+    (`services/ficha_encaminhamento.py`, fpdf2) e anexa-a ao email da clínica; o paciente
+    recebe só o email de confirmação. Leva apenas o que o próprio paciente escreveu no
+    pedido, marcada como confidencial (Lei n.º 22/11) -- nunca resultados de rastreio,
+    só a indicação de que existe um. Gerar o PDF é melhor esforço: se falhar, o pedido
+    fica gravado e o email segue sem anexo. Clínica nova com logótipo: o PNG em
+    `app/assets/clinicas/` e uma linha em `LOGOTIPOS_CLINICAS`. O emitente é a sociedade
+    que opera a plataforma -- Olhar Alinhado, Comércio e Prestação de Serviços, Lda., NIF
+    5003659364 (`FIRMA`/`NIF`/`CAPITAL_SOCIAL`), como intermediária que não realiza actos
+    clínicos. A morada da sede nunca entra: é a residência de uma sócia.
 
 ---
 
@@ -540,13 +575,24 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   Pontes e grava igual (`sinais.pontes`, `sinais.modo = "fusao_livre"`), por isso o relatório
   lê os dois. Ao alto, um telemóvel só chega a ~7 Δ: pede para o deitar e continua
   (`alargarRampa`).
-- **Som opcional e desligado por omissão (pedido do dono do projecto, 2026-10-22).** Nenhum
-  exercício fala nem faz bips sozinho: `falar` e `sinalSonoro` (`lib/visao/voz.ts`) só tocam
-  com o som ligado (`jpa.visao.som` no aparelho). O `BotaoSom` (fixo no canto inferior
-  esquerdo, por cima também dos ecrãs inteiros, vem do `BaseExercise`) liga e desliga a
-  qualquer momento, e desligar cala logo. "Ouvir as instruções" é um pedido explícito: fala
-  mesmo com o som desligado e passa a "Parar" enquanto fala. Sair do exercício cala tudo.
-  Os controlos dos ecrãs inteiros não podem ficar nesse canto.
+  **Versão 2 (2026-11-01): começa no cartão do pássaro e da gaiola** (`OlhoMagicoGaiola.tsx`).
+  Uma animação (vista de cima) ensina o dedo-guia; a pessoa diz por desenhos o que vê no meio
+  (pássaro na gaiola com o sol e a nuvem / falta um deles = supressão / dois / quatro) e depois
+  "continua dentro" / "saiu da gaiola" com os cartões a afastar (`responderGaiola`: uma
+  resposta chega, é declarada). Grava `sinais.modo = "fusao_gaiola"`, `sinais.gaiola`
+  (resumo da rampa), **sem unidade e com `limiar = null`**: é auto-avaliação, fica fora da
+  vergência medida e aparece à parte no relatório (`resumoClinico.gaiola`). Os quadros de pano
+  são o nível seguinte (`TarefaPano`), recomendado depois de 3 dias seguidos com o pássaro a
+  entrar à primeira (`diasSeguidosAPrimeira`); escolhe-se no topo e fica fixo na sessão a
+  partir da primeira resposta. Só o pano tem Relaxar (esotropia).
+- **Sem narração falada (pedido do dono do projecto, 2026-10-31: "é ineficaz").** Os
+  exercícios não falam: nada de síntese de voz nem de "Ouvir as instruções"; tudo o que a
+  pessoa precisa de saber está escrito no ecrã. Ficam só os bips (`sinalSonoro`,
+  `lib/visao/voz.ts`), opcionais e desligados por omissão (`jpa.visao.som` no aparelho). O
+  `BotaoSom` (fixo no canto inferior esquerdo, por cima também dos ecrãs inteiros, vem do
+  `BaseExercise`) liga e desliga a qualquer momento. Os controlos dos ecrãs inteiros não
+  podem ficar nesse canto. A resposta *por voz* da criança na Palanca (microfone,
+  `useRespostaPorVoz`) não é narração e fica.
 - **Olhos de Palanca ao longe (2026-10-21): acuidade a 3 m sem ninguém ver o ecrã**
   (`lib/visao/palancaLonge.ts`, `TesteAcuidade`). "E" de Snellen (a "mãozinha"); a criança
   aponta para onde apontam os dedos e o adulto, com o ecrã virado para ela, desliza o dedo
@@ -554,30 +600,52 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   desligada por omissão: no Chrome o som vai para a Google (o texto diz isto). 3 m ou 2 m;
   grava `distancia_mm` e `sinais.ao_longe = true`. A tendência só compara sessões do mesmo
   tipo (`tipoDeAcuidade`: longe, barras ou isolado).
-- **Luz nos Olhos (2026-10-21): reflexo da luz e teste de tapar, feitos pelos pais**
-  (`lib/visao/luzOlhos.ts`, `TesteLuzOlhos`). Ecrã branco a meio metro; marca-se num
-  desenho onde ficou o reflexo em cada olho (o direito da criança fica à esquerda de quem
-  vê); ~15 Δ por mm de descentração (Hirschberg). Depois tapa-se um olho de cada vez e
-  diz-se para onde o outro se mexeu. `unidade = "dioptrias_prismaticas"`, `limiar` = maior
-  desvio, `sinais.modo = "luz_olhos"`, mais o diário de 7 dias (frequência e quando).
-- **Fio de Missangas (2026-10-21): cordão de Brock com um fio e missangas de casa**
-  (`lib/visao/fioMissangas.ts`). A voz pergunta, em cada missanga, onde os fios se cruzam
-  ("só vejo um fio" = supressão); no fim o telemóvel é a régua do ponto próximo de
-  convergência (2 medições, `unidade = "cm"`). As instruções faladas também aparecem escritas.
-- **Desafio da Agulha (2026-10-21): profundidade num jogo de família** (`lib/visao/agulha.ts`).
-  Dois lápis ponta com ponta, ou palhinha na garrafa; por jogador, 3 rondas com os dois
-  olhos e 3 com um tapado; o telemóvel é árbitro e cronómetro. Só o jogador 1 é avaliado
-  (vantagem dos dois olhos: grande, pequena ou nenhuma); o outro é a comparação.
-  `limiar = null`, `sinais.modo = "agulha"`. Com óculos 3D: o Teste de Estereopsia.
+- **Luz nos Olhos (versão 2, 2026-10-31): reflexo da lanterna e teste de tapar, feitos pelos
+  pais** (`lib/visao/luzOlhos.ts`, `TesteLuzOlhos`). O adulto segura o telemóvel abaixo dos
+  olhos, ecrã para si e lanterna (ligada no menu do telemóvel; a página não a acende) para
+  a criança, a um braço. Responde por desenhos: os pontinhos estão iguais? em que olho está
+  fora (o direito da criança fica à esquerda de quem vê)? para que lado? quão longe (4
+  posições: ~15, 30, 60, 90 Δ, Hirschberg)? Depois uma animação mostra o teste de tapar e
+  tapa-se um olho de cada vez; no fim, o diário de 7 dias. `unidade = "dioptrias_prismaticas"`,
+  `limiar` = maior desvio (`null` sem lanterna ou sem pontinhos vistos), `sinais.modo =
+  "luz_olhos"`, `sinais.versao = 2`, `achados`/`desvio_tapar` no mesmo formato da versão 1
+  (2026-10-21: ecrã branco como luz e reflexo marcado ao milímetro num desenho -- saiu porque
+  o reflexo mal se via e o adulto não lia o ecrã virado para a criança).
+- **Fio de Missangas (versão 2, 2026-10-31): o ponto próximo de convergência só com o
+  telemóvel** (`lib/visao/fioMissangas.ts`). O telemóvel fica deitado, com a ponta de baixo
+  encostada ao nariz (régua RAF); uma missanga desce pelo fio desenhado no ecrã a 1 cm/s e
+  a pessoa toca quando a vê a dobrar (rotura) e quando volta a ser uma (recuperação). Três
+  rondas; `limiar` = média das roturas, `unidade = "cm"`, `sinais.versao = 2`
+  (`rotura_cm`, `recuperacao_cm`, `cansaco`, `alem_do_ecra`, `inicio_cm`). A distância conta
+  do fundo da página (pede ecrã inteiro; no iPhone a barra do Safari soma um desvio) -- a
+  Fase 0 compara com a régua RAF. A versão 1 (2026-10-21, cordão de Brock com fio e
+  missangas a sério; "só vejo um fio" = supressão) saiu por ser difícil de perceber; as
+  sessões antigas ainda se lêem no relatório (`x_no_sitio`, `supressao`).
+- **Desafio da Agulha (versão 2, 2026-11-01): o dedo na ponta do lápis** (`lib/visao/agulha.ts`).
+  O adulto segura um lápis de pé a um braço; a criança desce o dedo e tenta tocar na ponta à
+  primeira (teste dos lápis de Lang). 5 tentativas com os dois olhos e 5 com um tapado (o
+  tapado alterna, a começar pelo esquerdo), sem tempo; o adulto toca em Acertou ou Falhou
+  (e pode corrigir a anterior). Vantagem dos dois olhos: 2 ou mais acertos a mais = grande,
+  1 = pequena (repetir), 0 ou menos = nenhuma (mostrar ao médico). `limiar = null`,
+  `sinais.modo = "agulha"`, `sinais.versao = 2`, `sinais.jogador` no formato da versão 1
+  mais `tentativas: 5` (o relatório e o rótulo usam-no como total; sem ele, 3). A versão 1
+  (2026-10-21: dois jogadores, dois lápis ou palhinha, 3 + 3 cronometradas, pontos) saiu
+  por ser difícil de perceber. Com óculos 3D: o Teste de Estereopsia.
 - **Pintar o Samakaka (2026-10-21): o olho fraco a guiar a mão** (`lib/visao/samakaka.ts`,
   `PintarSamakaka`). Com tapa-olho, segue-se com o dedo os pontinhos de seis motivos do
   pano; cada motivo com pontos mais pequenos e claros e menos folga. Desenha só quando o
   dedo mexe (sem animação contínua). `unidade = "mm"` (afastamento médio do dedo ao traço).
 - **Caderneta do Tapa-olho (2026-10-21): as horas de tapa-olho, para o médico**
-  (`lib/visao/caderneta.ts`). Não é para olhar para o ecrã: conta o tempo e pergunta de 15
-  em 15 min se o tapa-olho continua posto -- só conta o tempo confirmado. O período em curso
-  sobrevive a fechar a página (localStorage). Um cromo por dia cumprido.
-  `sinais.modo = "tapa_olho_horas"`, `segundos_activos` = tempo confirmado; **não conta para
+  (`lib/visao/caderneta.ts`). Não é para olhar para o ecrã: Pôr quando se põe o tapa-olho,
+  Tirar quando se tira, e o tempo pode ser feito aos bocados (cada bocado é uma sessão). O
+  bocado em curso sobrevive a fechar a página (localStorage). Um cromo por dia cumprido.
+  **Versão 2 (2026-11-01):** o tempo receitado escolhe-se na primeira vez -- 2 h (moderada) ou
+  6 h (grave), como nos estudos PEDIG, ou outro em passos de 30 min; a pergunta de 15 em 15
+  min "continua posto?" é opcional e vem desligada; num bocado de 30 min ou mais, ao tirar
+  pergunta-se "tirou-o agora?" (`sinais.tirado_antes_min`); o tempo feito sem o telemóvel
+  acrescenta-se à mão (`sinais.manual = true`), à parte no relatório (`manualMin`). A
+  versão 1 perguntava sempre e só contava o tempo confirmado.
+  `sinais.modo = "tapa_olho_horas"`, `segundos_activos` = tempo que conta; **não conta para
   a dose de treino** (`contaParaDose`), só para a adesão no relatório.
 - **Pontes de Fusão (2026-10-20): fusão verificada pelo estímulo, não declarada.** Dois anéis
   em anáglifo afastam-se (convergência: imagem do olho esquerdo para a direita); dentro, um

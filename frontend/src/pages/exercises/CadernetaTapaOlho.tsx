@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import BaseExercise from "@/components/exercises/BaseExercise";
@@ -8,27 +8,38 @@ import { useHistoricoVisao, useRegistoSessao } from "@/components/visao/hooks";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import {
+  ACRESCENTAR_MIN,
   ALVOS_MIN,
+  ALVO_OMISSAO_MIN,
   MODO_TAPA_OLHO,
+  PASSO_ALVO_MIN,
+  PERGUNTAR_AO_TIRAR_MIN,
   TOTAL_CROMOS,
+  ajustarAlvo,
   confirmar,
   cromoDoDia,
   diasCumpridos,
+  eManual,
+  eSessaoDeTapa,
   guardarAlvo,
   guardarPeriodo,
+  guardarVerificar,
   horasEMinutos,
   iniciarPeriodo,
   lerAlvo,
   lerPeriodo,
+  lerVerificar,
   minutosDeTapaPorDia,
   precisaVerificar,
   resumoSemana,
+  segundosAoTirar,
   segundosContados,
+  tiradoAntesPossiveis,
   type PeriodoTapa,
 } from "@/lib/visao/caderneta";
 import { ID_PERTO_LONGE } from "@/lib/visao/ids";
 import { diaLocal, ultimosDias } from "@/lib/visao/progresso";
-import { falar, sinalSonoro } from "@/lib/visao/voz";
+import { sinalSonoro } from "@/lib/visao/voz";
 import { cn } from "@/lib/utils";
 
 /** O id histórico `flexibilidade-acomodativa` (antes, Treino Perto e longe). */
@@ -149,9 +160,48 @@ const MarCalmo = () => {
   return <canvas ref={ref} width={600} height={220} className="block h-auto w-full rounded-xl" aria-hidden />;
 };
 
+/** "09:45", na hora local. */
+const horaDe = (ms: number, lingua: string) => new Date(ms).toLocaleTimeString(lingua, { hour: "2-digit", minute: "2-digit" });
+
+/** O desenho do tapa-olho no botão de Pôr. */
+const IconeTapa = () => (
+  <svg width="30" height="22" viewBox="0 0 30 22" aria-hidden>
+    <path d="M1 6 C8 2 22 2 29 6" stroke="currentColor" strokeWidth={2} fill="none" />
+    <ellipse cx={11} cy={12} rx={8} ry={7} fill="currentColor" />
+    <circle cx={23} cy={12} r={4} fill="none" stroke="currentColor" strokeWidth={2} />
+    <circle cx={23} cy={12} r={1.6} fill="currentColor" />
+  </svg>
+);
+
+/** Botões de escolha única em fila (os tempos de "tirei há..." e de acrescentar). */
+const Escolhas = ({ rotulo, valores, valor, aoEscolher, texto }: {
+  rotulo: string;
+  valores: readonly number[];
+  valor: number;
+  aoEscolher: (v: number) => void;
+  texto: (v: number) => string;
+}) => (
+  <div role="radiogroup" aria-label={rotulo} className="flex flex-wrap gap-2">
+    {valores.map((v) => (
+      <Button
+        key={v}
+        role="radio"
+        aria-checked={valor === v}
+        variant={valor === v ? "default" : "outline"}
+        className={cn("rounded-full", valor === v && "bg-navy text-navy-foreground hover:bg-navy/90")}
+        onClick={() => aoEscolher(v)}
+      >
+        {texto(v)}
+      </Button>
+    ))}
+  </div>
+);
+
+type Ecra = "inicio" | "configurar" | "tirar" | "acrescentar";
+
 /**
  * Caderneta do Tapa-olho (id `flexibilidade-acomodativa`, Premium): conta as
- * horas de tapa-olho longe do ecrã. Ver `lib/visao/caderneta.ts`.
+ * horas de tapa-olho longe do ecrã, aos bocados. Ver `lib/visao/caderneta.ts`.
  */
 const CadernetaTapaOlho = () => {
   const { t, i18n } = useTranslation();
@@ -159,9 +209,15 @@ const CadernetaTapaOlho = () => {
   const { profile } = useProfile();
   const { sessoes, recarregar } = useHistoricoVisao();
   const { estado: gravacao, gravar, tentarDeNovo } = useRegistoSessao();
-  const [alvo, setAlvo] = useState(() => lerAlvo());
+  const [alvoGuardado, setAlvoGuardado] = useState(() => lerAlvo());
+  const alvo = alvoGuardado ?? ALVO_OMISSAO_MIN;
+  const [verificar, setVerificar] = useState(() => lerVerificar());
   const [periodo, setPeriodo] = useState<PeriodoTapa | null>(() => lerPeriodo());
   const [agora, setAgora] = useState(() => Date.now());
+  const [ecra, setEcra] = useState<Ecra>(() => (lerAlvo() === null && !lerPeriodo() ? "configurar" : "inicio"));
+  const [escolha, setEscolha] = useState(alvo);
+  const [tiradoAntes, setTiradoAntes] = useState(0);
+  const [acrescentar, setAcrescentar] = useState(60);
   const [cromoNovo, setCromoNovo] = useState<number | null>(null);
   const perguntou = useRef(false);
 
@@ -178,6 +234,14 @@ const CadernetaTapaOlho = () => {
   const cumpridos = diasCumpridos(porDia, alvo);
   const semana = resumoSemana(porDia, alvo, new Date(agora));
   const aVerificar = !!periodo && precisaVerificar(periodo, agora);
+  // Os bocados de hoje, do mais antigo para o mais recente (a API devolve os mais recentes primeiro).
+  const bocadosHoje = useMemo(
+    () =>
+      (sessoes ?? [])
+        .filter((s) => eSessaoDeTapa(s) && diaLocal(new Date(s.created_at)) === hoje)
+        .sort((a, b) => a.created_at.localeCompare(b.created_at)),
+    [hoje, sessoes],
+  );
 
   // Um relógio de segundo a segundo enquanto o tapa-olho está posto.
   useEffect(() => {
@@ -194,55 +258,84 @@ const CadernetaTapaOlho = () => {
     if (perguntou.current) return;
     perguntou.current = true;
     sinalSonoro("tic");
-    falar(t("Visao.cadernetaVozVerificar"), i18n.language);
-  }, [aVerificar, i18n.language, t]);
+  }, [aVerificar]);
 
-  // Dia cumprido durante este período: mostra o cromo novo uma vez.
-  const cumpridoHojeAntes = useRef<boolean | null>(null);
+  // Chegou-se hoje ao tempo receitado (com o tapa-olho posto ou ao acrescentar à mão): mostra o cromo novo uma vez.
+  // Uma vez por dia: ao gravar um bocado, os minutos descem por instantes (até recarregar) e não podem dar outro cromo.
+  const diaDoCromo = useRef<string | null | undefined>(undefined);
   useEffect(() => {
-    if (!periodo || sessoes === null) return;
+    if (sessoes === null) return;
     const cumpridoHoje = minutosHoje >= alvo;
-    if (cumpridoHojeAntes.current === null) cumpridoHojeAntes.current = cumpridoHoje;
-    else if (cumpridoHoje && !cumpridoHojeAntes.current) {
-      cumpridoHojeAntes.current = true;
-      const i = cromoDoDia(cumpridos.indexOf(hoje));
-      setCromoNovo(i);
+    if (diaDoCromo.current === undefined) diaDoCromo.current = cumpridoHoje ? hoje : null;
+    else if (cumpridoHoje && diaDoCromo.current !== hoje) {
+      diaDoCromo.current = hoje;
+      setCromoNovo(cromoDoDia(cumpridos.indexOf(hoje)));
       sinalSonoro("festa");
-      falar(t("Visao.cadernetaVozCromo", { nome: t(`Visao.cadernetaCromo_${i}`) }), i18n.language);
     }
-  }, [alvo, cumpridos, hoje, i18n.language, minutosHoje, periodo, sessoes, t]);
+  }, [alvo, cumpridos, hoje, minutosHoje, sessoes]);
 
-  const comecar = () => {
-    const p = iniciarPeriodo(Date.now(), alvo, olhoTreinado);
+  const gravarBocado = (sessao: { inicio: number; fim: number; segundos: number; manual: boolean; tiradoAntesMin: number; verificacoes: number | null }) =>
+    void gravar([
+      {
+        exercicio_id: EXERCICIO_ID,
+        olho: olhoTreinado ?? "ambos",
+        duracao_segundos: Math.max(1, Math.round((sessao.fim - sessao.inicio) / 1000)),
+        segundos_activos: sessao.segundos,
+        limiar: null,
+        sinais: {
+          modo: MODO_TAPA_OLHO,
+          versao: 2,
+          alvo_min: alvo,
+          minutos: Math.round(sessao.segundos / 60),
+          manual: sessao.manual,
+          verificacoes: sessao.verificacoes,
+          tirado_antes_min: sessao.tiradoAntesMin,
+          inicio: new Date(sessao.inicio).toISOString(),
+          fim: new Date(sessao.fim - sessao.tiradoAntesMin * 60_000).toISOString(),
+        },
+      },
+    ]).then(() => void recarregar());
+
+  const por = () => {
+    const p = iniciarPeriodo(Date.now(), alvo, olhoTreinado, verificar);
     guardarPeriodo(p);
     setPeriodo(p);
     setAgora(Date.now());
-    cumpridoHojeAntes.current = null;
     sinalSonoro("tic");
-    falar(t("Visao.cadernetaVozComecar"), i18n.language);
   };
 
-  const terminar = useCallback(
-    (p: PeriodoTapa) => {
-      const fim = Date.now();
-      const segundos = segundosContados(p, fim);
-      guardarPeriodo(null);
-      setPeriodo(null);
-      setAgora(fim);
-      if (segundos < MINIMO_SEGUNDOS) return;
-      void gravar([
-        {
-          exercicio_id: EXERCICIO_ID,
-          olho: p.olhoTreinado ?? "ambos",
-          duracao_segundos: Math.max(1, Math.round((fim - p.inicio) / 1000)),
-          segundos_activos: segundos,
-          limiar: null,
-          sinais: { modo: MODO_TAPA_OLHO, alvo_min: p.alvoMin, verificacoes: p.verificacoes, minutos: Math.round(segundos / 60) },
-        },
-      ]).then(() => void recarregar());
-    },
-    [gravar, recarregar],
-  );
+  /** Fecha o bocado em curso; `tiradoAntesMin` desconta o tempo em que já estava tirado. */
+  const terminar = (p: PeriodoTapa, tiradoAntesMin = 0) => {
+    const fim = Date.now();
+    const segundos = segundosAoTirar(p, fim, tiradoAntesMin);
+    guardarPeriodo(null);
+    setPeriodo(null);
+    setAgora(fim);
+    setEcra("inicio");
+    if (segundos < MINIMO_SEGUNDOS) return;
+    gravarBocado({ inicio: p.inicio, fim, segundos, manual: false, tiradoAntesMin, verificacoes: p.verificar === false ? null : p.verificacoes });
+  };
+
+  const tirar = (p: PeriodoTapa) => {
+    // Bocados compridos: pergunta-se se o tirou agora, para quem se esqueceu de tocar em Tirar.
+    if (!precisaVerificar(p, Date.now()) && segundosContados(p, Date.now()) / 60 >= PERGUNTAR_AO_TIRAR_MIN) {
+      setTiradoAntes(0);
+      setEcra("tirar");
+    } else terminar(p);
+  };
+
+  const acrescentarAgora = () => {
+    const fim = Date.now();
+    setEcra("inicio");
+    gravarBocado({ inicio: fim - acrescentar * 60_000, fim, segundos: acrescentar * 60, manual: true, tiradoAntesMin: 0, verificacoes: null });
+  };
+
+  const guardarConfiguracao = () => {
+    setAlvoGuardado(escolha);
+    guardarAlvo(escolha);
+    guardarVerificar(verificar);
+    setEcra("inicio");
+  };
 
   if (!isLoggedIn)
     return (
@@ -259,25 +352,112 @@ const CadernetaTapaOlho = () => {
         <div className="w-full max-w-[220px]">
           <Cromo i={cromoNovo} grande />
         </div>
+        <p className="text-sm text-foreground">{t("Visao.cadernetaFez", { feito: horas(minutosHoje, t) })}</p>
         <Button size="lg" onClick={() => setCromoNovo(null)}>
           {t("Visao.cadernetaColar")}
         </Button>
       </div>
     );
-  else if (periodo)
+  else if (ecra === "configurar") {
+    const primeiraVez = alvoGuardado === null;
+    const outro = !(ALVOS_MIN as readonly number[]).includes(escolha);
+    const opcao = (min: number | null, titulo: string, texto: string) => {
+      const marcada = min === null ? outro : escolha === min;
+      return (
+        <button
+          key={titulo}
+          type="button"
+          role="radio"
+          aria-checked={marcada}
+          onClick={() => setEscolha(min ?? (outro ? escolha : 90))}
+          className={cn(
+            "grid gap-0.5 rounded-xl border-2 px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            marcada ? "border-teal bg-teal/10" : "border-border",
+          )}
+        >
+          <span className="text-lg font-bold text-foreground">{titulo}</span>
+          <span className="text-sm text-muted-foreground">{texto}</span>
+        </button>
+      );
+    };
+    conteudo = (
+      <div className="flex flex-col gap-4 text-left">
+        <p className="text-xl font-bold text-foreground">{t("Visao.cadernetaQuantoTempo")}</p>
+        <div role="radiogroup" aria-label={t("Visao.cadernetaQuantoTempo")} className="grid gap-2">
+          {opcao(120, t("Visao.cadernetaDuasHoras"), t("Visao.cadernetaAlvo2h"))}
+          {opcao(360, t("Visao.cadernetaSeisHoras"), t("Visao.cadernetaAlvo6h"))}
+          {opcao(null, t("Visao.cadernetaAlvoOutro"), t("Visao.cadernetaAlvoOutroTexto"))}
+        </div>
+        {outro && (
+          <div className="flex items-center justify-center gap-4">
+            <Button size="icon" className="rounded-full" aria-label={t("Visao.cadernetaMenos")} onClick={() => setEscolha(ajustarAlvo(escolha - PASSO_ALVO_MIN))}>
+              −
+            </Button>
+            <span className="min-w-24 text-center text-xl font-bold tabular-nums text-foreground">{horas(escolha, t)}</span>
+            <Button size="icon" className="rounded-full" aria-label={t("Visao.cadernetaMais")} onClick={() => setEscolha(ajustarAlvo(escolha + PASSO_ALVO_MIN))}>
+              +
+            </Button>
+          </div>
+        )}
+        {!primeiraVez && (
+          <label className="flex items-start justify-between gap-3">
+            <span>
+              <span className="block font-semibold text-foreground">{t("Visao.cadernetaVerificar")}</span>
+              <span className="block text-sm text-muted-foreground">{t("Visao.cadernetaVerificarTexto")}</span>
+            </span>
+            <input type="checkbox" role="switch" className="mt-1 h-6 w-6 shrink-0 accent-teal" checked={verificar} onChange={(e) => setVerificar(e.target.checked)} />
+          </label>
+        )}
+        <p className="text-sm text-muted-foreground">{t("Visao.cadernetaNaDuvida")}</p>
+        <Button size="lg" onClick={guardarConfiguracao}>
+          {t("Visao.cadernetaGuardar")}
+        </Button>
+        {!primeiraVez && (
+          <Button size="lg" variant="outline" onClick={() => setEcra("inicio")}>
+            {t("Visao.cadernetaVoltar")}
+          </Button>
+        )}
+      </div>
+    );
+  } else if (periodo && ecra === "tirar") {
+    const minutos = segundosContados(periodo, agora) / 60;
+    conteudo = (
+      <div className="flex flex-col gap-4 text-left">
+        <p className="text-xl font-bold text-foreground">{t("Visao.cadernetaTirouAgora")}</p>
+        <p className="text-foreground">{t("Visao.cadernetaTirouAgoraTexto", { hora: horaDe(periodo.inicio, i18n.language) })}</p>
+        <Escolhas
+          rotulo={t("Visao.cadernetaTirouAgora")}
+          valores={[0, ...tiradoAntesPossiveis(minutos)]}
+          valor={tiradoAntes}
+          aoEscolher={setTiradoAntes}
+          texto={(m) => (m ? t("Visao.cadernetaHa", { tempo: horas(m, t) }) : t("Visao.cadernetaAgora"))}
+        />
+        <p className="text-sm text-muted-foreground">{t("Visao.cadernetaConta", { tempo: horas(Math.max(0, minutos - tiradoAntes), t) })}</p>
+        <Button size="lg" onClick={() => terminar(periodo, tiradoAntes)}>
+          {t("Visao.cadernetaGuardar")}
+        </Button>
+        <Button size="lg" variant="outline" onClick={() => setEcra("inicio")}>
+          {t("Visao.cadernetaAindaPosto")}
+        </Button>
+      </div>
+    );
+  } else if (periodo)
     conteudo = (
       <div className="flex flex-col gap-4 text-center">
-        <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("Visao.cadernetaPosto")}</p>
+        <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("Visao.cadernetaPostoDesde", { hora: horaDe(periodo.inicio, i18n.language) })}</p>
         <p className="text-6xl font-bold tabular-nums text-teal">{horas(segundosContados(periodo, agora) / 60, t)}</p>
+        <div className="h-3 overflow-hidden rounded-full bg-border" aria-hidden>
+          <div className="h-full rounded-full bg-teal transition-all" style={{ width: `${Math.min(100, (minutosHoje / alvo) * 100)}%` }} />
+        </div>
         <p className="text-sm text-muted-foreground">
-          {minutosHoje >= alvo ? t("Visao.cadernetaJaCumpriu") : t("Visao.cadernetaFalta", { falta: horas(alvo - minutosHoje, t) })}
+          {minutosHoje >= alvo ? t("Visao.cadernetaJaCumpriu") : t("Visao.cadernetaHoje", { feito: horas(minutosHoje, t), alvo: horas(alvo, t) })}
         </p>
         <MarCalmo />
         <p className="text-sm text-foreground">{t("Visao.cadernetaBrincar")}</p>
-        {aVerificar ? (
+        {aVerificar && (
           <div className="rounded-xl border-2 border-teal p-4" role="alertdialog" aria-label={t("Visao.cadernetaPergunta")}>
             <p className="mb-3 font-semibold text-foreground">{t("Visao.cadernetaPergunta")}</p>
-            <div className="flex flex-col justify-center gap-2 sm:flex-row">
+            <div className="grid grid-cols-2 gap-2">
               <Button
                 size="lg"
                 onClick={() => {
@@ -295,11 +475,25 @@ const CadernetaTapaOlho = () => {
               </Button>
             </div>
           </div>
-        ) : (
-          <Button variant="outline" onClick={() => terminar(periodo)}>
-            {t("Visao.cadernetaTirei")}
-          </Button>
         )}
+        <Button size="lg" variant="destructive" className="h-16 text-lg" onClick={() => tirar(periodo)}>
+          {t("Visao.cadernetaTirar")}
+        </Button>
+      </div>
+    );
+  else if (ecra === "acrescentar")
+    conteudo = (
+      <div className="flex flex-col gap-4 text-left">
+        <p className="text-xl font-bold text-foreground">{t("Visao.cadernetaAcrescentarTitulo")}</p>
+        <p className="text-foreground">{t("Visao.cadernetaAcrescentarTexto")}</p>
+        <Escolhas rotulo={t("Visao.cadernetaAcrescentarTitulo")} valores={ACRESCENTAR_MIN} valor={acrescentar} aoEscolher={setAcrescentar} texto={(m) => horas(m, t)} />
+        <p className="text-sm text-muted-foreground">{t("Visao.cadernetaAcrescentarNota")}</p>
+        <Button size="lg" onClick={acrescentarAgora}>
+          {t("Visao.cadernetaAcrescentarBotao", { tempo: horas(acrescentar, t) })}
+        </Button>
+        <Button size="lg" variant="outline" onClick={() => setEcra("inicio")}>
+          {t("Visao.cadernetaVoltar")}
+        </Button>
       </div>
     );
   else {
@@ -307,6 +501,7 @@ const CadernetaTapaOlho = () => {
     const ganhos = cumpridos.length;
     conteudo = (
       <div className="flex flex-col gap-5 text-left">
+        <p className="text-foreground">{t("Visao.cadernetaInstrucao")}</p>
         <div className="flex items-center gap-4">
           <svg viewBox="0 0 120 120" className="h-28 w-28 shrink-0" aria-hidden>
             <circle cx={60} cy={60} r={50} fill="none" className="stroke-border" strokeWidth={12} />
@@ -328,35 +523,51 @@ const CadernetaTapaOlho = () => {
           <div className="min-w-0 space-y-1">
             <p className="text-lg font-semibold text-foreground">{t("Visao.cadernetaHoje", { feito: horas(minutosHoje, t), alvo: horas(alvo, t) })}</p>
             <p className="text-sm text-muted-foreground">
-              {t("Visao.cadernetaParaMedico", { media: horas(semana.mediaMin, t), pct: semana.pctDoReceitado, cumpridos: semana.cumpridos })}
+              {minutosHoje >= alvo ? t("Visao.cadernetaGanho") : t("Visao.cadernetaFalta", { falta: horas(alvo - minutosHoje, t) })}
             </p>
           </div>
         </div>
-        <div className="space-y-2">
-          <p className="text-sm text-muted-foreground">{t("Visao.cadernetaReceitado")}</p>
-          <div role="radiogroup" aria-label={t("Visao.cadernetaReceitado")} className="flex flex-wrap gap-2">
-            {ALVOS_MIN.map((m) => (
-              <Button
-                key={m}
-                role="radio"
-                aria-checked={alvo === m}
-                size="sm"
-                variant={alvo === m ? "default" : "outline"}
-                className={cn(alvo === m && "bg-navy text-navy-foreground hover:bg-navy/90")}
-                onClick={() => {
-                  setAlvo(m);
-                  guardarAlvo(m);
-                }}
-              >
-                {horas(m, t)}
-              </Button>
-            ))}
-          </div>
-        </div>
-        <Button size="lg" onClick={comecar}>
-          {t("Visao.cadernetaComecar")}
+        <Button size="lg" className="h-16 gap-3 text-lg [&_svg]:size-auto" onClick={por}>
+          <IconeTapa />
+          {t("Visao.cadernetaPor")}
         </Button>
         <EstadoDaGravacao estado={gravacao} aoTentarDeNovo={() => void tentarDeNovo()} />
+        <div className="space-y-2">
+          <p className="font-semibold text-foreground">{t("Visao.cadernetaHojeLista")}</p>
+          {bocadosHoje.length ? (
+            <ul className="space-y-1 text-sm">
+              {bocadosHoje.map((s) => {
+                const inicio = typeof s.sinais?.inicio === "string" ? Date.parse(s.sinais.inicio) : NaN;
+                const fim = typeof s.sinais?.fim === "string" ? Date.parse(s.sinais.fim) : Date.parse(s.created_at);
+                return (
+                  <li key={s.id} className="flex justify-between gap-2 rounded-lg bg-muted px-3 py-1.5 tabular-nums">
+                    <span>
+                      {eManual(s)
+                        ? t("Visao.cadernetaManual")
+                        : Number.isNaN(inicio)
+                          ? horaDe(fim, i18n.language)
+                          : `${horaDe(inicio, i18n.language)}–${horaDe(fim, i18n.language)}`}
+                      {Number(s.sinais?.tirado_antes_min) > 0 && <span className="text-xs text-muted-foreground"> {t("Visao.cadernetaCorrigido")}</span>}
+                    </span>
+                    <span className="font-semibold">{horas((s.segundos_activos ?? 0) / 60, t)}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">{t("Visao.cadernetaNenhumBocado")}</p>
+          )}
+          <Button
+            variant="link"
+            className="h-auto px-0"
+            onClick={() => {
+              setAcrescentar(60);
+              setEcra("acrescentar");
+            }}
+          >
+            {t("Visao.cadernetaAcrescentar")}
+          </Button>
+        </div>
         <div className="space-y-2">
           <p className="font-semibold text-foreground">{t("Visao.cadernetaSemana")}</p>
           <ol className="grid h-28 grid-cols-7 items-end gap-1" aria-label={t("Visao.cadernetaSemana")}>
@@ -373,6 +584,9 @@ const CadernetaTapaOlho = () => {
               );
             })}
           </ol>
+          <p className="text-xs text-muted-foreground">
+            {t("Visao.cadernetaParaMedico", { media: horas(semana.mediaMin, t), pct: semana.pctDoReceitado, cumpridos: semana.cumpridos })}
+          </p>
         </div>
         <div className="space-y-2">
           <p className="font-semibold text-foreground">{t("Visao.cadernetaAlbum", { n: Math.min(ganhos, TOTAL_CROMOS), total: TOTAL_CROMOS })}</p>
@@ -388,13 +602,23 @@ const CadernetaTapaOlho = () => {
             )}
           </div>
         </div>
+        <Button
+          variant="link"
+          className="h-auto justify-start px-0"
+          onClick={() => {
+            setEscolha(alvo);
+            setEcra("configurar");
+          }}
+        >
+          {t("Visao.cadernetaMudar", { alvo: horas(alvo, t) })}
+        </Button>
       </div>
     );
   }
 
   return (
     <PaginaExercicio>
-      <BaseExercise title={t("Visao.pertoLongeTitulo")} description={t("Visao.pertoLongeDescricao")} exercicioId={EXERCICIO_ID} grupo="premium" tipo="treino">
+      <BaseExercise title={t("Visao.pertoLongeTitulo")} description={t("Visao.pertoLongeDescricao")} exercicioId={EXERCICIO_ID} tipo="treino">
         {conteudo}
       </BaseExercise>
     </PaginaExercicio>

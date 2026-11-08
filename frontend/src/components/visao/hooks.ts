@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import {
@@ -184,4 +184,16 @@ export function useHistoricoVisao(desde?: string) {
   );
 
   return { sessoes, erro, carregando: sessoes === null && !erro, recarregar: carregar, ultimo };
+}
+
+/** Largura (px CSS) de um contentor, actualizada quando a janela muda (rodar o telemóvel). */
+export function useLarguraDe(ref: MutableRefObject<HTMLDivElement | null>): number {
+  const [largura, setLargura] = useState(0);
+  useEffect(() => {
+    const medir = () => setLargura(ref.current?.clientWidth ?? 0);
+    medir();
+    window.addEventListener("resize", medir);
+    return () => window.removeEventListener("resize", medir);
+  }, [ref]);
+  return largura;
 }

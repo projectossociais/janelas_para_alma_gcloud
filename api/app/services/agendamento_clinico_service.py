@@ -16,16 +16,25 @@ import secrets
 from datetime import UTC, datetime, timedelta
 from html import escape
 
-from app.core.email import EmailEnvioFalhouError, EmailSender
+from app.core.email import Anexo, EmailEnvioFalhouError, EmailSender
+from app.core.feriados_angola import e_feriado
 from app.core.fuso import FUSO_LUANDA
 from app.repositories.agendamento_clinico_repository import (
     AgendamentoClinicoRegisto,
     AgendamentoClinicoRepository,
 )
-from app.repositories.clinica_parceira_repository import ClinicaParceiraRepository
+from app.repositories.clinica_parceira_repository import (
+    ClinicaParceiraRegisto,
+    ClinicaParceiraRepository,
+)
 from app.repositories.disponibilidade_clinica_repository import DisponibilidadeClinicaRepository
 from app.repositories.teleconsulta_repository import TeleconsultaRepository
 from app.schemas.agendamento import HorarioDisponivel
+from app.services.ficha_encaminhamento import (
+    FichaEncaminhamento,
+    gerar_ficha_encaminhamento,
+    referencia_do_agendamento,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -47,9 +56,10 @@ DURACAO_SLOT_MINUTOS = 30
 # daqui a 2 minutos que a clínica nunca vai conseguir honrar.
 ANTECEDENCIA_MINIMA = timedelta(hours=2)
 
-# Não gerar uma lista infinita de horários -- 14 dias é suficiente para
-# reservar sem forçar a clínica a planear meses à frente.
-DIAS_A_GERAR = 14
+# Cerca de três meses à frente: as famílias marcam com semanas de antecedência
+# (pedido do dono do projecto, 2026-11-07: chegar até Janeiro). O browser
+# escolhe primeiro o dia e só depois a hora, por isso a lista não pesa.
+DIAS_A_GERAR = 90
 
 
 # As janelas de disponibilidade são escritas pela clínica no portal em hora
@@ -116,15 +126,25 @@ class AgendamentoClinicoService:
         hoje_em_luanda = agora.astimezone(FUSO_LUANDA).date()
         resultado: list[HorarioDisponivel] = []
 
+        inicio_periodo = datetime.combine(hoje_em_luanda, datetime.min.time(), tzinfo=FUSO_LUANDA)
+        ocupados = {
+            _com_fuso(h)
+            for h in self._agendamentos.horarios_ocupados(
+                clinica_id, inicio_periodo, inicio_periodo + timedelta(days=DIAS_A_GERAR + 1)
+            )
+        }
+
         for i in range(DIAS_A_GERAR):
             dia = hoje_em_luanda + timedelta(days=i)
+            if e_feriado(dia):
+                continue
             for janela in janelas:
                 if janela.dia_semana != dia.weekday():
                     continue
                 cursor = datetime.combine(dia, janela.hora_inicio, tzinfo=FUSO_LUANDA)
                 fim_janela = datetime.combine(dia, janela.hora_fim, tzinfo=FUSO_LUANDA)
                 while cursor + duracao <= fim_janela:
-                    if cursor >= limite_inferior and not self._agendamentos.existe_conflito(clinica_id, cursor):
+                    if cursor >= limite_inferior and cursor not in ocupados:
                         resultado.append(HorarioDisponivel(inicio=cursor, fim=cursor + duracao))
                     cursor += duracao
 
@@ -134,6 +154,8 @@ class AgendamentoClinicoService:
     def _horario_e_valido(self, clinica_id: str, modalidade: str, horario_inicio: datetime) -> bool:
         janelas = [j for j in self._disponibilidades.listar_por_clinica(clinica_id) if j.modalidade == modalidade]
         local = horario_inicio.astimezone(FUSO_LUANDA)
+        if e_feriado(local.date()):
+            return False
         for janela in janelas:
             if janela.dia_semana != local.weekday():
                 continue
@@ -186,22 +208,62 @@ class AgendamentoClinicoService:
 
         # Tudo o que o utilizador escreveu é escapado antes de entrar no HTML.
         quando = formatar_horario(horario_inicio)
+        referencia = referencia_do_agendamento(agendamento.id)
         self._enviar_email_best_effort(
             email,
             f"Pedido de consulta recebido — {clinica.nome}",
             f"<p>Recebemos o seu pedido de consulta {modalidade} com {escape(clinica.nome)} "
             f"para {quando}.</p>"
-            "<p>A clínica vai confirmar e entrará em contacto consigo em breve.</p>",
+            "<p>A clínica vai confirmar e entrará em contacto consigo em breve.</p>"
+            f"<p>Referência do pedido: <strong>{referencia}</strong></p>",
         )
         self._enviar_email_best_effort(
             clinica.email_contacto,
-            "Novo pedido de consulta — Janelas Para a Alma",
+            f"Novo pedido de consulta {referencia} — Janelas Para a Alma",
             f"<p>{escape(nome)} pediu uma consulta {modalidade} através da Janelas Para a Alma, "
             f"para {quando}.</p>"
             f"<p>Contacto: {escape(telefone)} / {escape(email)}</p>"
-            f"<p>Motivo: {escape(motivo) if motivo else '(não indicado)'}</p>",
+            f"<p>Motivo: {escape(motivo) if motivo else '(não indicado)'}</p>"
+            f"<p>Em anexo segue a ficha de encaminhamento {referencia}, com todos os dados do pedido "
+            "e os próximos passos. Contém dados pessoais e de saúde: trate-a como confidencial.</p>",
+            anexos=self._ficha_em_anexo(clinica, agendamento, referencia, horario_inicio, screening_id),
         )
         return agendamento
+
+    def _ficha_em_anexo(
+        self,
+        clinica: ClinicaParceiraRegisto,
+        agendamento: AgendamentoClinicoRegisto,
+        referencia: str,
+        horario_inicio: datetime,
+        screening_id: str | None,
+    ) -> list[Anexo]:
+        """A ficha em PDF é um extra: se falhar a gerar, a clínica recebe o
+        email na mesma, sem anexo -- nunca se perde o pedido por causa disto."""
+        try:
+            pdf = gerar_ficha_encaminhamento(
+                FichaEncaminhamento(
+                    referencia=referencia,
+                    emitida_em=datetime.now(UTC),
+                    clinica_nome=clinica.nome,
+                    clinica_email=clinica.email_contacto,
+                    clinica_telefone=clinica.telefone_contacto,
+                    clinica_cidade=clinica.cidade,
+                    paciente_nome=agendamento.nome,
+                    paciente_email=agendamento.email,
+                    paciente_telefone=agendamento.telefone,
+                    conta_registada=agendamento.utilizador_id is not None,
+                    modalidade=agendamento.modalidade,
+                    horario_inicio=horario_inicio,
+                    duracao_minutos=DURACAO_SLOT_MINUTOS,
+                    motivo=agendamento.motivo,
+                    rastreio_associado=screening_id is not None,
+                )
+            )
+        except Exception:
+            logger.exception("falha ao gerar a ficha de encaminhamento %s", referencia)
+            return []
+        return [Anexo(nome_ficheiro=f"ficha-encaminhamento-{referencia}.pdf", conteudo=pdf)]
 
     def confirmar(self, agendamento_id: str, admin_id: str) -> AgendamentoClinicoRegisto:
         agendamento = self._obter_pendente(agendamento_id)
@@ -244,8 +306,15 @@ class AgendamentoClinicoService:
             raise AgendamentoJaDecididoError(agendamento_id)
         return agendamento
 
-    def _enviar_email_best_effort(self, destinatario: str, assunto: str, corpo_html: str) -> None:
+    def _enviar_email_best_effort(
+        self, destinatario: str, assunto: str, corpo_html: str, anexos: list[Anexo] | None = None
+    ) -> None:
         try:
-            self._email.enviar(destinatario=destinatario, assunto=assunto, corpo_html=corpo_html)
+            if anexos:
+                self._email.enviar(
+                    destinatario=destinatario, assunto=assunto, corpo_html=corpo_html, anexos=anexos
+                )
+            else:
+                self._email.enviar(destinatario=destinatario, assunto=assunto, corpo_html=corpo_html)
         except EmailEnvioFalhouError:
             logger.warning("falha ao enviar email de agendamento clínico para %s", destinatario)

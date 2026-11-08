@@ -110,3 +110,31 @@ def test_recusa_comprovativo_fora_do_prefixo_com_403(client_ok: TestClient) -> N
     )
 
     assert resposta.status_code == 403
+
+
+def test_rejeita_materiais_demasiado_longos_ou_demasiados(client_ok: TestClient) -> None:
+    longo = client_ok.post(
+        "/doacoes/materiais",
+        json={"email": "ana@example.com", "materiais": ["x" * 201], "provincia": "Luanda"},
+    )
+    demasiados = client_ok.post(
+        "/doacoes/materiais",
+        json={"email": "ana@example.com", "materiais": [f"item {i}" for i in range(41)], "provincia": "Luanda"},
+    )
+
+    assert longo.status_code == 422
+    assert demasiados.status_code == 422
+
+
+def test_financeira_recusa_uma_frequencia_desconhecida(client_ok: TestClient) -> None:
+    resposta = client_ok.post(
+        "/doacoes/financeiro",
+        json={
+            "email": "ana@example.com",
+            "detalhes": "25.000 Kz",
+            "comprovativo_chave": "comprovativos/abc.pdf",
+            "frequencia": "semanal",
+        },
+    )
+
+    assert resposta.status_code == 422

@@ -41,7 +41,7 @@ afterEach(() => {
 });
 
 describe("Fio de Missangas", () => {
-  it("três missangas, duas medições na régua: grava o ponto mais próximo em cm e a supressão", async () => {
+  it("três rondas a tocar no ecrã: grava o ponto mais próximo, a recuperação e quem chegou ao nariz", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     registar.mockReset().mockResolvedValue({});
     window.localStorage.setItem("jpa.visao.calibracao", JSON.stringify({ pxPorMm: 6, calibrado: true }));
@@ -52,35 +52,39 @@ describe("Fio de Missangas", () => {
         </AcessoExerciciosProvider>
       </MemoryRouter>,
     );
-    fireEvent.click(await screen.findByRole("button", { name: "Continuar" })); // montar o fio (já calibrado: salta o cartão)
-
-    for (const r of ["x", "um", "depois"] as const) {
-      fireEvent.click(await screen.findByRole("button", { name: new RegExp(V[`fioResposta_${r}`]) }));
-      await act(async () => {
-        await vi.advanceTimersByTimeAsync(11_000);
+    fireEvent.click(await screen.findByRole("button", { name: V.fioComecar })); // já calibrado: salta o cartão
+    const esperar = (ms: number) =>
+      act(async () => {
+        await vi.advanceTimersByTimeAsync(ms);
       });
-    }
+    const tocar = async (nome: string) => fireEvent.pointerDown(await screen.findByRole("button", { name: nome }));
 
-    const regua = await screen.findByRole("img", { name: V.fioRotuloRegua });
-    const tocar = (cm: number) => regua.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true, clientX: 100, clientY: 28 + cm * 10 * 6 }));
-    for (const cm of [8, 9]) {
-      act(() => tocar(cm));
-      await act(async () => {
-        await vi.advanceTimersByTimeAsync(1000);
-      });
-    }
+    // 768 px de altura a 6 px/mm: a missanga parte dos 12 cm.
+    await esperar(1200 + 4000); // 12 -> 8 cm
+    await tocar(V.fioToqueDuas);
+    await esperar(2000); // 8 -> 10 cm
+    await tocar(V.fioToqueUma);
+
+    await esperar(1200 + 3000); // 12 -> 9 cm
+    await tocar(V.fioToqueDuas);
+    await esperar(1000);
+    await tocar(V.fioToqueUma);
+
+    await esperar(1200 + 12_000); // nunca fica a dobrar: chega ao nariz
 
     expect(await screen.findByText(V.fioResultadoTitulo)).toBeInTheDocument();
-    expect(screen.getByText(V.fioSinalSupressao)).toBeInTheDocument();
     await waitFor(() => expect(registar).toHaveBeenCalledTimes(1));
     const s = registar.mock.calls[0][0];
-    expect(s).toMatchObject({ exercicio_id: "cerebro", olho: "ambos", limiar: 8.5, unidade: "cm", calibrado: true });
+    expect(s).toMatchObject({ exercicio_id: "cerebro", olho: "ambos", limiar: 5.7, unidade: "cm", calibrado: true });
     expect(s.sinais).toMatchObject({
       modo: "fio_missangas",
-      respostas: { vermelha: "x", amarela: "um", verde: "depois" },
-      supressao: true,
-      x_no_sitio: 1,
-      ppc_medicoes_cm: [8, 9],
+      versao: 2,
+      rotura_cm: [8, 9, 0],
+      recuperacao_cm: [10, 10, 0],
+      chegou_ao_nariz: false,
+      alem_do_ecra: false,
+      cansaco: false,
+      inicio_cm: 12,
     });
     window.localStorage.clear();
   });

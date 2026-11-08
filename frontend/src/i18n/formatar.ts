@@ -13,18 +13,79 @@ type Data = Date | string | number;
 
 const emIngles = () => i18n.language === IDIOMA_EN;
 
+const SO_DATA = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/**
+ * Converte para `Date`. Uma data sem hora ("2026-09-12", como `data_evento`)
+ * é um dia do calendário, não um instante: o JavaScript lê-a como meia-noite
+ * UTC, o que nos fusos a oeste de UTC (Américas) ainda é o dia anterior.
+ * Por isso constrói-se à meia-noite local — mostra sempre o mesmo dia.
+ */
+function paraData(data: Data): Date {
+  if (typeof data === "string") {
+    const m = SO_DATA.exec(data);
+    if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  }
+  return new Date(data);
+}
+
 export function formatarData(data: Data): string {
-  const d = new Date(data);
+  const d = paraData(data);
   return emIngles()
     ? d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
     : d.toLocaleDateString("pt-PT");
 }
 
 export function formatarDataHora(data: Data): string {
-  const d = new Date(data);
+  const d = paraData(data);
   return emIngles()
     ? d.toLocaleString("en-US", { month: "long", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })
     : d.toLocaleString("pt-PT");
+}
+
+/**
+ * Hora de uma consulta: sempre no fuso de Luanda e em 24h, seja qual for o
+ * fuso do computador de quem vê -- as clínicas definem o horário em hora de
+ * Luanda, e um browser noutro fuso mostrava horas fora do expediente.
+ */
+export function formatarHorarioConsulta(data: Data): string {
+  const d = paraData(data);
+  return d.toLocaleString(emIngles() ? "en-US" : "pt-PT", {
+    timeZone: "Africa/Luanda",
+    weekday: "long",
+    day: "numeric",
+    month: emIngles() ? "long" : "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  });
+}
+
+/** "2026-11-09": o dia de Luanda em que cai este instante -- para agrupar horários por dia. */
+export function chaveDiaEmLuanda(data: Data): string {
+  return paraData(data).toLocaleDateString("en-CA", { timeZone: "Africa/Luanda" });
+}
+
+/** "segunda-feira, 09/11/2026" -- o dia de uma consulta, em Luanda. */
+export function formatarDiaConsulta(data: Data): string {
+  return paraData(data).toLocaleDateString(emIngles() ? "en-US" : "pt-PT", {
+    timeZone: "Africa/Luanda",
+    weekday: "long",
+    day: "numeric",
+    month: emIngles() ? "long" : "2-digit",
+    year: "numeric",
+  });
+}
+
+/** "08:00" -- a hora de uma consulta, em Luanda e em 24h. */
+export function formatarHoraConsulta(data: Data): string {
+  return paraData(data).toLocaleTimeString(emIngles() ? "en-US" : "pt-PT", {
+    timeZone: "Africa/Luanda",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  });
 }
 
 /** Número decimal com `casas` casas, vírgula em português, ponto em inglês. */
@@ -40,7 +101,7 @@ export const separadorDecimal = (): string => (emIngles() ? "." : ",");
 
 /** Dia e mês curtos ("23/09" em português, "Sep 23" em inglês). */
 export function formatarDiaCurto(data: Data): string {
-  const d = new Date(data);
+  const d = paraData(data);
   return emIngles()
     ? d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
     : d.toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" });

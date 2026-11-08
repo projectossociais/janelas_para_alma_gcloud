@@ -342,6 +342,34 @@ def test_listar_atividades_publicadas(ambiente) -> None:
     assert len(r.json()) == 1
 
 
+def test_listar_atividades_sem_sessao_mostra_so_publicadas(ambiente) -> None:
+    """A página pública /kamba (UpcomingActivities) lista as actividades a
+    quem não tem conta. Só as publicadas, e sem quem as publicou."""
+    c, _, repo_ativ, token_admin, *_ = ambiente
+    publicada = _publicar_atividade(c, token_admin, titulo="Rastreio na Gamek")
+    cancelada = _publicar_atividade(c, token_admin, titulo="Cancelada")
+    arquivada = _publicar_atividade(c, token_admin, titulo="Arquivada")
+    repo_ativ.cancelar_atividade(cancelada)
+    repo_ativ.arquivar_atividade(arquivada)
+
+    c.cookies.clear()
+    r = c.get("/voluntariado/atividades")
+
+    assert r.status_code == 200
+    corpo = r.json()
+    assert [a["id"] for a in corpo] == [publicada]
+    assert corpo[0]["titulo"] == "Rastreio na Gamek"
+    assert "criado_por" not in corpo[0]
+
+
+def test_inscrever_continua_a_exigir_sessao(ambiente) -> None:
+    c, *_, token_admin, _, _ = ambiente
+    atividade_id = _publicar_atividade(c, token_admin)
+    c.cookies.clear()
+    r = c.post(f"/voluntariado/atividades/{atividade_id}/inscrever")
+    assert r.status_code == 401
+
+
 # --- inscrições ------------------------------------------------------------
 
 

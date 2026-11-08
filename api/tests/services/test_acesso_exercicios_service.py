@@ -56,15 +56,14 @@ def _service(conta: EstadoAcessoRegisto | None, agora: datetime = AGORA):
     return AcessoExerciciosService(repo, relogio=lambda: agora), repo
 
 
-def test_os_8_exercicios_sao_4_do_trial_mais_4_premium() -> None:
-    assert len(TODOS_OS_EXERCICIOS) == 8
-    assert set(EXERCICIOS_TRIAL) == {"figure8", "ambliopia", "cerebro", "relax"}
-    assert set(EXERCICIOS_PREMIUM) == {
-        "convergence",
-        "sacadas-convergencia",
-        "flexibilidade-acomodativa",
-        "estereopsia",
-    }
+def test_o_trial_inclui_os_8_exercicios_e_nenhum_e_so_premium() -> None:
+    assert len(set(TODOS_OS_EXERCICIOS)) == 8
+    assert set(EXERCICIOS_TRIAL) == set(TODOS_OS_EXERCICIOS)
+    assert EXERCICIOS_PREMIUM == ()
+
+
+def test_o_trial_dura_90_dias() -> None:
+    assert TRIAL_DURACAO_DIAS == 90
 
 
 def test_conta_existente_sem_trial_fica_com_trial_disponivel_e_nada_desbloqueado() -> None:
@@ -93,13 +92,13 @@ def test_admin_tem_os_8_sem_premium() -> None:
     assert acesso.exercicios_desbloqueados == TODOS_OS_EXERCICIOS
 
 
-def test_trial_ativo_desbloqueia_so_os_4_do_trial() -> None:
+def test_trial_ativo_desbloqueia_os_8() -> None:
     service, _ = _service(
         _conta(trial_iniciado_em=AGORA - timedelta(days=1), trial_termina_em=AGORA + timedelta(days=6))
     )
     acesso = service.obter_acesso("u1")
     assert acesso.estado is EstadoAcesso.trial_ativo
-    assert acesso.exercicios_desbloqueados == EXERCICIOS_TRIAL
+    assert acesso.exercicios_desbloqueados == TODOS_OS_EXERCICIOS
     assert acesso.trial_dias_restantes == 6
 
 
@@ -132,14 +131,14 @@ def test_premium_ganha_ao_trial_ativo() -> None:
     assert service.obter_acesso("u1").estado is EstadoAcesso.premium
 
 
-def test_iniciar_trial_grava_7_dias_completos_em_utc() -> None:
+def test_iniciar_trial_grava_90_dias_completos_em_utc() -> None:
     service, repo = _service(_conta())
     acesso = service.iniciar_trial("u1")
     assert acesso.estado is EstadoAcesso.trial_ativo
     assert repo.conta.trial_iniciado_em == AGORA
     assert repo.conta.trial_termina_em == AGORA + timedelta(days=TRIAL_DURACAO_DIAS)
     assert repo.conta.trial_termina_em.tzinfo is UTC
-    assert acesso.trial_dias_restantes == 7
+    assert acesso.trial_dias_restantes == 90
 
 
 def test_iniciar_trial_segunda_vez_e_recusado() -> None:
@@ -169,14 +168,17 @@ def test_conta_inexistente() -> None:
         service.obter_acesso("u1")
 
 
-def test_verificar_acesso_recusa_premium_durante_trial() -> None:
+def test_verificar_acesso_deixa_os_8_durante_o_trial_e_nenhum_depois() -> None:
     service, _ = _service(
-        _conta(trial_iniciado_em=AGORA, trial_termina_em=AGORA + timedelta(days=7))
+        _conta(trial_iniciado_em=AGORA, trial_termina_em=AGORA + timedelta(days=90))
     )
-    service.verificar_acesso("u1", "figure8")  # não levanta
-    service.verificar_acesso("u1", "ambliopia")  # Treino de Anéis: no trial desde 2026-09-29
+    for exercicio in TODOS_OS_EXERCICIOS:
+        service.verificar_acesso("u1", exercicio)  # não levanta
+    terminado, _ = _service(
+        _conta(trial_iniciado_em=AGORA - timedelta(days=90), trial_termina_em=AGORA)
+    )
     with pytest.raises(SemAcessoAoExercicioError):
-        service.verificar_acesso("u1", "convergence")
+        terminado.verificar_acesso("u1", "convergence")
 
 
 def test_verificar_acesso_recusa_exercicio_eliminado_ou_desconhecido() -> None:

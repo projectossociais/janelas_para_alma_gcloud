@@ -20,12 +20,11 @@ from app.core.config import obter_settings
 from app.core.dependencies import obter_utilizador_admin, obter_utilizador_atual
 from app.core.ocr import TesseractLeitorOcr
 from app.db import obter_sessao
-from app.repositories.admin_repository import SQLAlchemyAdminRepository
 from app.repositories.comprovativos_pagamento_repository import (
     ComprovativoRegisto,
     SQLAlchemyComprovativosPagamentoRepository,
 )
-from app.repositories.notification_repository import SQLAlchemyNotificationRepository
+from app.repositories.notificador_admins import NotificadorAdminsNaApp
 from app.repositories.orm_models import ESTADOS_COMPROVATIVO_PAGAMENTO
 from app.repositories.storage import R2ComprovativosStorage
 from app.repositories.utilizadores_repository import UtilizadorRegisto
@@ -64,19 +63,6 @@ router_admin = APIRouter(
 )
 
 _INDISPONIVEL = "a validação automática de comprovativos ainda não está disponível"
-
-
-class NotificadorAdminsNaApp:
-    """Avisa todos os admins por notificação na app (sino do painel)."""
-
-    def __init__(self, sessao: Session) -> None:
-        self._admins = SQLAlchemyAdminRepository(sessao)
-        self._notificacoes = SQLAlchemyNotificationRepository(sessao)
-
-    def notificar(self, titulo: str, mensagem: str) -> None:
-        ids = [a.id for a in self._admins.listar(papel="admin")]
-        if ids:
-            self._notificacoes.criar_em_massa(ids, titulo, mensagem)
 
 
 def obter_validacao_service(sessao: Session = Depends(obter_sessao)) -> ValidacaoComprovativoService:

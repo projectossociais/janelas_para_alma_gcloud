@@ -1,31 +1,64 @@
 import { describe, expect, it } from "vitest";
-import { ZERO_REGUA_PX, classeDoPpc, cmNaRegua, linhasDoFio, resumirFio } from "./fioMissangas";
+import { NARIZ_MM, TOPO_PX, classeDoPpc, inicioDaMissanga, posicaoDaMissanga, resumirFio, roturaAlem, yDoCm, type RondaFio } from "./fioMissangas";
 
-describe("régua no ecrã", () => {
-  it("a 6 píxeis por mm, 60 px abaixo do zero são 1 cm", () => {
-    expect(cmNaRegua(ZERO_REGUA_PX + 60, 6)).toBe(1);
-    expect(cmNaRegua(ZERO_REGUA_PX + 6 * 83, 6)).toBe(8.5); // 8,3 cm -> meio centímetro mais perto
+const ronda = (rotura: number, recuperacao: number | null = rotura + 2, alem = false): RondaFio => ({ rotura, recuperacao, alem });
+
+describe("o ecrã como régua", () => {
+  it("a missanga parte do ponto mais alto do ecrã, a meio centímetro", () => {
+    // 6 px/mm: 768 px de altura, menos o topo, são 12,3 cm.
+    expect(inicioDaMissanga(768, 6)).toBe(12);
+    expect(inicioDaMissanga(TOPO_PX + 6 * 87, 6)).toBe(8.5);
   });
 
-  it("acima do zero conta como 0", () => {
-    expect(cmNaRegua(0, 6)).toBe(0);
+  it("num tablet não parte de mais longe do que 20 cm", () => {
+    expect(inicioDaMissanga(3000, 6)).toBe(20);
+  });
+
+  it("1 cm a partir do fundo são 10 mm de píxeis", () => {
+    expect(yDoCm(1, 768, 6)).toBe(708);
+    expect(yDoCm(0, 768, 6)).toBe(768);
   });
 });
 
-describe("resumo do fio", () => {
-  it("um fio só em alguma missanga é supressão", () => {
-    expect(resumirFio(["x", "um", "depois"], [8, 8]).supressao).toBe(true);
-    expect(resumirFio(["x", "x", "x"], [5, 6]).supressao).toBe(false);
+describe("a missanga a andar", () => {
+  it("desce 1 cm por segundo e pára no nariz", () => {
+    expect(posicaoDaMissanga(12, 3, "aproximar", 12)).toBe(9);
+    expect(posicaoDaMissanga(12, 30, "aproximar", 12)).toBe(NARIZ_MM / 10);
   });
 
-  it("PPC: média das duas medições e a classe", () => {
-    expect(resumirFio(["x", "x", "x"], [5, 6])).toMatchObject({ ppcCm: 5.5, classe: "esperado", xNoSitio: 3, alemDaRegua: false });
-    expect(resumirFio(["x"], [8, 9]).classe).toBe("limite");
-    expect(resumirFio(["x"], [12, 11]).classe).toBe("alto");
+  it("sobe a partir da rotura e pára no início", () => {
+    expect(posicaoDaMissanga(5, 2, "afastar", 12)).toBe(7);
+    expect(posicaoDaMissanga(5, 20, "afastar", 12)).toBe(12);
   });
 
-  it("uma medição para lá da régua: sem média, conta como acima", () => {
-    expect(resumirFio(["x"], [7, null])).toMatchObject({ ppcCm: null, alemDaRegua: true, classe: "alto" });
+  it("tocar logo à partida é mais longe do que o ecrã", () => {
+    expect(roturaAlem(11.5, 12)).toBe(true);
+    expect(roturaAlem(11, 12)).toBe(false);
+  });
+});
+
+describe("resumo das três rondas", () => {
+  it("PPC e recuperação: médias, com a classe", () => {
+    expect(resumirFio([ronda(5, 7), ronda(6, 8), ronda(5.5, 7.5)])).toMatchObject({ ppcCm: 5.5, recuperacaoCm: 7.5, classe: "esperado", cansaco: false });
+    expect(resumirFio([ronda(8), ronda(9), ronda(8.5)]).classe).toBe("limite");
+    expect(resumirFio([ronda(11), ronda(12), ronda(11)]).classe).toBe("alto");
+  });
+
+  it("uma rotura para lá do ecrã: sem média, conta como acima", () => {
+    expect(resumirFio([ronda(7), ronda(12, null, true), ronda(7)])).toMatchObject({ ppcCm: null, alemDoEcra: true, classe: "alto" });
+  });
+
+  it("uma recuperação fora do ecrã: sem média de recuperação", () => {
+    expect(resumirFio([ronda(7, 9), ronda(7, null), ronda(7, 9)]).recuperacaoCm).toBeNull();
+  });
+
+  it("chegou sempre ao nariz: PPC 0, esperado", () => {
+    expect(resumirFio([ronda(0, 0), ronda(0, 0), ronda(0, 0)])).toMatchObject({ ppcCm: 0, chegouAoNariz: true, classe: "esperado" });
+  });
+
+  it("a última rotura 3 cm mais longe do que a primeira é cansaço", () => {
+    expect(resumirFio([ronda(5), ronda(6), ronda(8)]).cansaco).toBe(true);
+    expect(resumirFio([ronda(5), ronda(6), ronda(7.5)]).cansaco).toBe(false);
   });
 
   it("limites das classes", () => {
@@ -33,18 +66,5 @@ describe("resumo do fio", () => {
     expect(classeDoPpc(10)).toBe("limite");
     expect(classeDoPpc(10.5)).toBe("alto");
     expect(classeDoPpc(null)).toBe("alto");
-  });
-});
-
-describe("desenho das respostas", () => {
-  it("em X na missanga, os dois fios cruzam-se à altura dela (y = 46, x = 36)", () => {
-    const [a, b] = linhasDoFio("x");
-    const xEm = (l: typeof a, y: number) => l.x1 + ((l.x2 - l.x1) * (l.y1 - y)) / (l.y1 - l.y2);
-    expect(xEm(a, 46)).toBeCloseTo(36, 5);
-    expect(xEm(b, 46)).toBeCloseTo(36, 5);
-  });
-
-  it("um fio só, uma linha", () => {
-    expect(linhasDoFio("um")).toHaveLength(1);
   });
 });

@@ -59,7 +59,7 @@ const APROVADO = {
   motivo_codigo: null,
   motivo: null,
   referencia_transacao: "202610140001234",
-  montante_kz: "15000.00",
+  montante_kz: "10000.00",
   premium_expira_em: "2026-11-13T08:30:00Z",
 };
 
@@ -75,7 +75,7 @@ describe("CheckoutInstantaneo", () => {
 
   it("mostra o valor, os dados bancários com botão de copiar e as instruções", () => {
     montar();
-    expect(screen.getByText("15.000,00 Kz / mês")).toBeInTheDocument();
+    expect(screen.getByText("10.000,00 Kz / mês")).toBeInTheDocument();
     expect(screen.getByText("AO06 0040 0000 9103 4094 1018 9")).toBeInTheDocument();
     expect(screen.getByText("+244 946 538 507")).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: /Copiar/i })).toHaveLength(3);
@@ -113,7 +113,7 @@ describe("CheckoutInstantaneo", () => {
 
   it("rejeitado: mostra o motivo exacto da API e deixa tentar outra vez", async () => {
     validarComprovativo.mockRejectedValue(
-      Object.assign(new Error("Valor inferior ao da subscrição: o comprovativo mostra 5.000,00 Kz e são precisos 15.000,00 Kz."), { status: 422 }),
+      Object.assign(new Error("Valor inferior ao da subscrição: o comprovativo mostra 5.000,00 Kz e são precisos 10.000,00 Kz."), { status: 422 }),
     );
     const user = userEvent.setup();
     montar();

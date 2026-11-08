@@ -102,26 +102,34 @@ o médico por **link temporário partilhado pelo pai** (nunca envio automático)
 - [x] **Sem óculos primeiro** (2026-10-21, pedido do dono do projecto: a maior parte das
       famílias não tem óculos 3D). **Kianda com tapa-olho** (pesca a cores, em graus) substitui
       o Treino de Anéis; **Olho Mágico** (fusão livre, em Δ) passa a ser o `convergence`, com
-      as Pontes como opção com óculos. **A validar:** se as crianças aprendem a juntar as
-      imagens sem óculos (e com que idade), a concordância do Olho Mágico com a régua de
+      as Pontes como opção com óculos. Desde 2026-11-01 começa no cartão do pássaro e da
+      gaiola (dedo-guia animado, rotura declarada, sol e nuvem para a supressão); os quadros de
+      pano passam a nível seguinte. **A validar:** se as crianças aprendem a juntar as
+      imagens sem óculos (e com que idade), se a rotura declarada no cartão concorda com a
+      dos quadros de pano, a concordância do Olho Mágico com a régua de
       prismas, e a dose do Kianda com tapa-olho.
 - [x] **Seis exercícios novos, todos diferentes e sem óculos** (2026-10-21, pedido do dono do
       projecto: "não o mesmo teste com outra camada"). Os ids ficam; muda o exercício.
       **Olhos de Palanca ao longe** (`figure8`, "E" a 3 m, a criança aponta e o adulto desliza
-      o dedo; as barras de Flom ao perto saíram), **Luz nos Olhos** (`relax`, reflexo da luz e
-      teste de tapar feitos pelos pais, em Δ), **Fio de Missangas** (`cerebro`, cordão de
-      Brock e ponto próximo de convergência em cm), **Desafio da Agulha** (`estereopsia`, jogo
-      de família, dois olhos contra um; o estereograma fica como opção com óculos),
+      o dedo; as barras de Flom ao perto saíram), **Luz nos Olhos** (`relax`, reflexo da lanterna
+      do telemóvel e teste de tapar feitos pelos pais, respondidos por desenhos, em Δ -- desde
+      2026-10-31; antes, a luz era o ecrã), **Fio de Missangas** (`cerebro`, ponto próximo de
+      convergência em cm só com o telemóvel deitado no nariz -- desde 2026-10-31; antes,
+      cordão de Brock com fio a sério), **Desafio da Agulha** (`estereopsia`, o dedo
+      na ponta de um lápis, 5 vezes com os dois olhos contra 5 com um -- desde 2026-11-01;
+      antes, jogo de família com pontos; o estereograma fica como opção com óculos),
       **Pintar o Samakaka** (`sacadas-convergencia`, seguir pontinhos com o olho fraco, em mm)
       e **Caderneta do Tapa-olho** (`flexibilidade-acomodativa`, horas de tapa-olho
-      confirmadas de 15 em 15 min). **A validar com a Optioptika:** acuidade a 3 m contra a
+      aos bocados, com Pôr e Tirar -- desde 2026-11-01; antes, confirmadas sempre de 15 em 15
+      min, que passou a opcional; o tempo acrescentado à mão fica à parte). **A validar com a Optioptika:** acuidade a 3 m contra a
       tabela do consultório (e a partir de que idade a criança aponta com segurança); desvio
       marcado pelos pais contra o *cover test* do ortoptista (o Hirschberg é só aproximado, e a
       razão Δ por mm varia de pessoa para pessoa);
       ponto próximo do Fio contra a régua RAF; a Agulha contra um teste de estereopsia do
       consultório (Lang ou Titmus); se o Samakaka melhora a acuidade (a medida de resultado
       continua a ser a Palanca); e quanto as horas da Caderneta se afastam de um medidor de
-      oclusão (o auto-relato costuma exagerar; a confirmação de 15 em 15 min reduz isso).
+      oclusão (o auto-relato costuma exagerar; a confirmação opcional de 15 em 15 min e o tempo à mão
+      marcado à parte reduzem isso).
 - [x] **Relatório clínico** (2026-10-21), último passo da Vaga 1: resumo de 90 dias no topo do
       relatório (ecrã do pai e link do médico), com o mais recente, o primeiro e as condições
       de cada medida, a adesão em 4 semanas e os relatos de visão dupla. **A validar com a

@@ -114,17 +114,26 @@ export const limiarFormatado = (
   // Pintar o Samakaka (id `sacadas-convergencia`, desde 2026-10-21): afastamento médio do traço.
   if (sinais?.modo === "samakaka")
     return limiar === null ? "—" : i18n.t("Visao.samakakaLimiarCurto", { mm: formatarDecimal(limiar, 1) });
-  // Desafio da Agulha (id `estereopsia`, desde 2026-10-21): acertos com os dois olhos e com um.
+  // Desafio da Agulha (id `estereopsia`, desde 2026-10-21): acertos com os dois olhos e com um (3 + 3 até 01/11/2026; depois 5 + 5).
   if (sinais?.modo === "agulha") {
-    const j = sinais.jogador as { acertos_dois?: unknown; acertos_um?: unknown } | undefined;
-    return i18n.t("Visao.agulhaLimiarCurto", { dois: j?.acertos_dois ?? "–", um: j?.acertos_um ?? "–" });
+    const j = sinais.jogador as { acertos_dois?: unknown; acertos_um?: unknown; tentativas?: unknown } | undefined;
+    return i18n.t("Visao.agulhaLimiarCurto", { dois: j?.acertos_dois ?? "–", um: j?.acertos_um ?? "–", total: j?.tentativas ?? 3 });
   }
   // Fio de Missangas (id `cerebro`, desde 2026-10-21): ponto mais próximo de convergência.
   if (sinais?.modo === "fio_missangas")
     return limiar === null ? i18n.t("Visao.fioLimiarAlem") : i18n.t("Visao.fioLimiarCurto", { cm: formatarDecimal(limiar, limiar % 1 ? 1 : 0) });
-  // Luz nos Olhos (id `relax`, desde 2026-10-21): desvio estimado pelo reflexo.
+  // Luz nos Olhos (id `relax`, desde 2026-10-21): desvio estimado pelo reflexo (`null` = só se fez o tapar).
   if (sinais?.modo === "luz_olhos")
-    return limiar ? i18n.t("Visao.luzLimiarCurto", { delta: limiar }) : i18n.t("Visao.luzSemDesvioCurto");
+    return limiar === null
+      ? i18n.t("Visao.luzSemLuzCurto")
+      : limiar
+        ? i18n.t("Visao.luzLimiarCurto", { delta: limiar })
+        : i18n.t("Visao.luzSemDesvioCurto");
+  // Olho Mágico, cartão do pássaro e da gaiola (id `convergence`, desde 2026-11-01): rotura declarada.
+  if (sinais?.modo === "fusao_gaiola")
+    return eResumoSentido(sinais.gaiola) && sinais.gaiola.rampas > 0
+      ? i18n.t("Visao.gaiolaLimiarCurto", { valores: rotuloRoturaRecuperacao(sinais.gaiola) })
+      : i18n.t("Visao.gaiolaSemRampa");
   if (sinais && typeof sinais.astigmatismo === "boolean")
     return sinais.astigmatismo ? i18n.t("Visao.astigmatismoSinalCurto") : i18n.t("Visao.astigmatismoSemSinalCurto");
   if (unidade === "dioptrias_prismaticas") return rotuloPontes(sinais?.pontes) ?? (limiar === null ? "—" : rotuloDelta(limiar));

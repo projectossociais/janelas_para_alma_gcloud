@@ -1,24 +1,26 @@
 import { useState } from "react";
 import {
   Heart,
-  CreditCard,
   Check,
   Package,
   Wallet,
-  Sparkles,
-  Crown,
   Glasses,
   Eye,
+  EyeOff,
   Boxes,
-  ArrowRight,
-  UploadCloud,
+  ChevronRight,
+  Wrench,
+  Disc,
+  Layers,
+  Paperclip,
+  Ellipsis,
+  Recycle,
+  type LucideIcon,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
-import FileDropzone from "@/components/FileDropzone";
 import PontosRecolha from "@/components/PontosRecolha";
-import CopyRow from "@/components/CopyRow";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -34,141 +36,127 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import DoacaoFinanceira from "@/components/DoacaoFinanceira";
 import { toast } from "sonner";
-import {
-  comprovativosApi,
-  doacoesApi,
-  mensagemDeErroApi,
-  TIPOS_DE_COMPROVATIVO_ACEITES,
-} from "@/lib/apiClient";
-import { DEFAULT_BANK_DATA, ofuscarValor } from "@/lib/pagamento";
+import { doacoesApi, mensagemDeErroApi } from "@/lib/apiClient";
 import { Trans, useTranslation } from "react-i18next";
 import i18n, { tPt } from "@/i18n";
 import { PROVINCES } from "@/contexts/AuthContext";
 
 type Mode = "materiais" | "financeiro";
 
+/** Um material concreto aceite numa categoria, seleccionável no painel de detalhe. */
+interface ItemAceite {
+  /** A chave i18n: identifica o item e dá o texto em português que vai para a API. */
+  id: string;
+  readonly nome: string;
+  icon: LucideIcon;
+  /** Fotografia de referência. Enquanto não houver uma real, mostra-se o ícone. */
+  imagem?: string;
+}
+
+const itemAceite = (chave: string, icon: LucideIcon, imagem?: string): ItemAceite => ({
+  id: chave,
+  get nome() {
+    return i18n.t(chave);
+  },
+  icon,
+  imagem,
+});
+
+/** Quem escolhe este item tem de o descrever no campo de detalhes. */
+const ITEM_OUTRO_MATERIAL = "Apoiar.outrosItemOutroMaterial";
+
 interface MaterialItem {
   id: string;
+  /** Chave i18n do nome: o registo e o aviso à equipa usam sempre o português. */
+  chaveLabel: string;
   label: string;
   description: string;
-  icon: typeof Glasses;
+  /** Texto de apoio do painel. */
+  reaproveitamento: string;
+  /** `false`: texto neutro, sem o título "Como é reaproveitado". */
+  comTituloReaproveitamento: boolean;
+  itens: ItemAceite[];
+  icon: LucideIcon;
 }
 
 const materialItems: MaterialItem[] = [
   {
     id: "armacoes",
+    chaveLabel: "Apoiar.armacoes",
     get label() {
       return i18n.t("Apoiar.armacoes");
     },
     get description() {
       return i18n.t("Apoiar.armacoesNovasOuUsadas");
     },
+    get reaproveitamento() {
+      return i18n.t("Apoiar.armacoesReaproveitamento");
+    },
+    comTituloReaproveitamento: true,
+    itens: [
+      itemAceite("Apoiar.armacoesItemGraduados", Glasses),
+      itemAceite("Apoiar.armacoesItemPartidas", Wrench),
+      itemAceite("Apoiar.armacoesItemLentes", Disc),
+    ],
     icon: Glasses,
   },
   {
     id: "tampoes",
+    chaveLabel: "Apoiar.tampoesOclusores",
     get label() {
       return i18n.t("Apoiar.tampoesOclusores");
     },
     get description() {
       return i18n.t("Apoiar.oclusoresOftalmologicosParaTratamento");
     },
+    get reaproveitamento() {
+      return i18n.t("Apoiar.tampoesReaproveitamento");
+    },
+    comTituloReaproveitamento: true,
+    itens: [
+      itemAceite("Apoiar.tampoesItemAdesivos", EyeOff),
+      itemAceite("Apoiar.tampoesItemTecido", Eye),
+    ],
     icon: Eye,
   },
   {
     id: "outros",
+    chaveLabel: "Apoiar.outros",
     get label() {
       return i18n.t("Apoiar.outros");
     },
     get description() {
-      return i18n.t("Apoiar.lentesEstojosProdutosDe");
+      return i18n.t("Apoiar.outrosDescricao");
     },
+    get reaproveitamento() {
+      return i18n.t("Apoiar.outrosReaproveitamento");
+    },
+    comTituloReaproveitamento: false,
+    itens: [
+      itemAceite("Apoiar.outrosItemPapelao", Package),
+      itemAceite("Apoiar.outrosItemPelicula", Layers),
+      itemAceite("Apoiar.outrosItemFita", Paperclip),
+      itemAceite(ITEM_OUTRO_MATERIAL, Ellipsis),
+    ],
     icon: Boxes,
   },
 ];
 
-interface Tier {
-  id: "tier1" | "tier2" | "tier3";
-  /** Chaves i18n do nome e do intervalo: os detalhes enviados à API usam sempre o texto português. */
-  chaveNome: string;
-  chaveIntervalo: string;
-  name: string;
-  range: string;
-  short: string;
-  impact: string;
-  icon: typeof Sparkles;
-  accent: string;
-  ring: string;
-  chip: string;
-}
+/** Itens escolhidos por categoria (id da categoria -> ids dos itens). */
+type ItensPorMaterial = Record<string, string[]>;
 
-const tiers: Tier[] = [
-  {
-    id: "tier1",
-    chaveNome: "Apoiar.aliado",
-    chaveIntervalo: "Apoiar.n10000A250",
-    get name() {
-      return i18n.t("Apoiar.aliado");
-    },
-    get range() {
-      return i18n.t("Apoiar.n10000A250");
-    },
-    get short() {
-      return i18n.t("Apoiar.umGestoSignificativo");
-    },
-    get impact() {
-      return i18n.t("Apoiar.financiaConsultasDeRastreio");
-    },
-    icon: Sparkles,
-    accent: "text-teal",
-    ring: "ring-teal border-teal",
-    chip: "bg-teal/10 text-teal",
-  },
-  {
-    id: "tier2",
-    chaveNome: "Apoiar.padrinho",
-    chaveIntervalo: "Apoiar.n250000A500",
-    get name() {
-      return i18n.t("Apoiar.padrinho");
-    },
-    get range() {
-      return i18n.t("Apoiar.n250000A500");
-    },
-    get short() {
-      return i18n.t("Apoiar.impactoSustentado");
-    },
-    get impact() {
-      return i18n.t("Apoiar.cobreUmCicloCompleto");
-    },
-    icon: Heart,
-    accent: "text-navy",
-    ring: "ring-navy border-navy",
-    chip: "bg-navy/10 text-navy",
-  },
-  {
-    id: "tier3",
-    chaveNome: "Apoiar.benfeitor",
-    chaveIntervalo: "Apoiar.acimaDe500000",
-    get name() {
-      return i18n.t("Apoiar.benfeitor");
-    },
-    get range() {
-      return i18n.t("Apoiar.acimaDe500000");
-    },
-    get short() {
-      return i18n.t("Apoiar.transformacaoEmEscala");
-    },
-    get impact() {
-      return i18n.t("Apoiar.viabilizaUmaCampanhaComunitaria");
-    },
-    icon: Crown,
-    accent: "text-gold",
-    ring: "ring-gold border-gold",
-    chip: "bg-gold/10 text-gold",
-  },
-];
+/** "Armações: Lentes soltas", um por item, sempre em português (como os detalhes do donativo). */
+function materiaisParaEnvio(itensPorMaterial: ItensPorMaterial): string[] {
+  return materialItems.flatMap((m) =>
+    m.itens
+      .filter((item) => itensPorMaterial[m.id]?.includes(item.id))
+      .map((item) => `${tPt(m.chaveLabel)}: ${tPt(item.id)}`),
+  );
+}
 
 const LIMITE_NOTAS_MATERIAIS = 500;
 
@@ -179,22 +167,14 @@ interface MaterialDonationReceipt {
   notes?: string;
 }
 
-type DialogStep = "form" | "recolha" | "upload";
+type DialogStep = "form" | "recolha";
 
-const StepIndicator = ({
-  current,
-  total,
-  tone,
-}: {
-  current: number;
-  total: number;
-  tone: "teal" | "navy";
-}) => (
+const StepIndicator = ({ current, total }: { current: number; total: number }) => (
   <div className="flex items-center gap-3 pb-1">
     <Progress
       value={(current / total) * 100}
       className="h-1.5 flex-1"
-      indicatorClassName={tone === "teal" ? "bg-teal" : "bg-navy"}
+      indicatorClassName="bg-teal"
     />
     <span className="shrink-0 text-xs font-medium text-muted-foreground">
       <Trans i18nKey="Apoiar.etapaDe" values={{ current, total }} />
@@ -205,9 +185,19 @@ const StepIndicator = ({
 const Apoiar = () => {
   const { t: tr } = useTranslation();
   const [mode, setMode] = useState<Mode>("materiais");
-  const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
+  const [itensPorMaterial, setItensPorMaterial] = useState<ItensPorMaterial>({});
   const [materialNotes, setMaterialNotes] = useState("");
-  const [selectedTier, setSelectedTier] = useState<Tier["id"] | null>(null);
+  // Painéis de detalhe: o cartão mostra só ícone e título, o resto abre aqui.
+  const [detalheMaterial, setDetalheMaterial] = useState<string | null>(null);
+  const [materialAberto, setMaterialAberto] = useState(false);
+  // Itens marcados no painel aberto; só passam para `itensPorMaterial` com "Quero Doar Isto".
+  const [rascunhoItens, setRascunhoItens] = useState<string[]>([]);
+  // O id fica depois de fechar, para o painel não ficar vazio durante a animação de saída.
+  const abrirMaterial = (id: string) => {
+    setDetalheMaterial(id);
+    setRascunhoItens(itensPorMaterial[id] ?? []);
+    setMaterialAberto(true);
+  };
 
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<DialogStep>("form");
@@ -217,19 +207,35 @@ const Apoiar = () => {
   const [provincia, setProvincia] = useState("");
   const [receipt, setReceipt] = useState<MaterialDonationReceipt | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [comprovativo, setComprovativo] = useState<File | null>(null);
 
-  const bankData = DEFAULT_BANK_DATA;
+  const materiaisEscolhidos = materialItems.filter((m) => (itensPorMaterial[m.id]?.length ?? 0) > 0);
 
-  const toggleMaterial = (id: string) => {
-    setSelectedMaterials((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+  const alternarItem = (itemId: string) => {
+    setRascunhoItens((prev) =>
+      prev.includes(itemId) ? prev.filter((x) => x !== itemId) : [...prev, itemId]
     );
   };
 
+  // "Quero Doar Isto": guarda o que ficou marcado (nada marcado desfaz a escolha
+  // da categoria) e fecha. Fechar de outra forma descarta as alterações.
+  const confirmarItens = () => {
+    if (detalheMaterial) {
+      setItensPorMaterial((prev) => ({ ...prev, [detalheMaterial]: rascunhoItens }));
+    }
+    setMaterialAberto(false);
+  };
+
   const handleMaterialSubmit = () => {
-    if (selectedMaterials.length === 0) {
+    if (materiaisEscolhidos.length === 0) {
       toast.error(tr("Apoiar.seleccionePeloMenosUm"));
+      return;
+    }
+    const escolheuOutroMaterial = Object.values(itensPorMaterial).some((itens) =>
+      itens.includes(ITEM_OUTRO_MATERIAL)
+    );
+    if (escolheuOutroMaterial && !materialNotes.trim()) {
+      toast.error(tr("Apoiar.descrevaOOutroMaterial"));
+      document.getElementById("material-notes")?.focus();
       return;
     }
     setReceipt(null);
@@ -237,22 +243,13 @@ const Apoiar = () => {
     setOpen(true);
   };
 
-  const handleFinanceSubmit = () => {
-    if (!selectedTier) {
-      toast.error(tr("Apoiar.seleccioneUmTierDe"));
-      return;
-    }
-    setStep("form");
-    setOpen(true);
-  };
-
-  const activeTier = tiers.find((t) => t.id === selectedTier) ?? null;
+  const materialEmDetalhe = materialItems.find((m) => m.id === detalheMaterial) ?? null;
 
   const handleConfirm = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
 
-    if (mode === "materiais") {
+    {
       if (!provincia) {
         toast.error(tr("Apoiar.seleccioneASuaProvincia"));
         return;
@@ -267,17 +264,18 @@ const Apoiar = () => {
         // falha em qualquer um dos dois passos (gravar ou enviar o email)
         // devolve erro, nunca um 201 fabricado (ver CLAUDE.md, "nunca
         // mostrar sucesso antes de verificar erro").
-        const doacao = await doacoesApi.registarMateriais(email, selectedMaterials, provincia, detalhesDoacao);
+        const materiais = materiaisParaEnvio(itensPorMaterial);
+        const doacao = await doacoesApi.registarMateriais(email, materiais, provincia, detalhesDoacao);
 
         setReceipt({
           id: doacao.recibo_id,
           email,
-          materials: [...selectedMaterials],
+          materials: materiais,
           notes: materialNotes,
         });
         setStep("recolha");
         toast.success(tr("Apoiar.doacaoRegistadaEnviamosUm"));
-        setSelectedMaterials([]);
+        setItensPorMaterial({});
         setMaterialNotes("");
         setProvincia("");
       } catch (err) {
@@ -286,44 +284,6 @@ const Apoiar = () => {
       } finally {
         setSubmitting(false);
       }
-      return;
-    }
-
-    setStep("upload");
-  };
-
-  const handleConcluirDoacao = async () => {
-    if (!comprovativo) {
-      toast.error(tr("Apoiar.anexeOComprovativoDa2"));
-      return;
-    }
-    if (!TIPOS_DE_COMPROVATIVO_ACEITES.includes(comprovativo.type as never)) {
-      toast.error(tr("Apoiar.formatoNaoSuportadoUse"));
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const detalhesDonativo = activeTier
-        ? `${tPt(activeTier.chaveNome)} (${tPt(activeTier.chaveIntervalo)})`
-        : tPt("Apoiar.donativoFinanceiro");
-
-      // Três passos (CROSS-02, mesmo padrão do avatar): a API assina o
-      // URL, o browser envia os bytes directamente ao R2, e só depois a
-      // doação é criada com a chave -- nunca os bytes passam pela nossa
-      // API. Nunca mostrar sucesso antes de todos os passos confirmarem.
-      const preparado = await comprovativosApi.preparar(comprovativo.type);
-      await comprovativosApi.enviarParaStorage(preparado.url_de_upload, comprovativo);
-      await doacoesApi.registarFinanceira(email, detalhesDonativo, preparado.chave);
-
-      toast.success(tr("Apoiar.comprovativoRecebidoComSucesso"));
-      setSelectedTier(null);
-      closeDialog();
-    } catch (err) {
-      console.error("Falha ao processar comprovativo:", err);
-      toast.error(mensagemDeErroApi(err, tr("Apoiar.naoFoiPossivelEnviar")));
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -332,7 +292,6 @@ const Apoiar = () => {
     setEmail("");
     setReceipt(null);
     setStep("form");
-    setComprovativo(null);
   };
 
   return (
@@ -399,22 +358,25 @@ const Apoiar = () => {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-8">
                   {materialItems.map((item) => {
-                    const selected = selectedMaterials.includes(item.id);
+                    const quantos = itensPorMaterial[item.id]?.length ?? 0;
+                    const selected = quantos > 0;
                     return (
-                      <button
+                      <div
                         key={item.id}
-                        type="button"
-                        aria-pressed={selected}
-                        onClick={() => toggleMaterial(item.id)}
-                        className={`relative text-left p-6 rounded-2xl border-2 bg-card transition-all duration-200 hover:-translate-y-1 hover:shadow-elevated focus:outline-none focus:ring-2 focus:ring-teal focus:ring-offset-2 ${
+                        className={`relative rounded-2xl border-2 bg-card transition-all duration-200 hover:-translate-y-1 hover:shadow-elevated ${
                           selected
                             ? "border-teal shadow-elevated bg-teal/5"
                             : "border-border/60 shadow-card"
                         }`}
                       >
-                        <div className="flex items-start justify-between mb-4">
+                        <button
+                          type="button"
+                          aria-haspopup="dialog"
+                          onClick={() => abrirMaterial(item.id)}
+                          className="flex h-full w-full flex-col items-start gap-3 rounded-2xl p-4 md:p-6 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2"
+                        >
                           <div
                             className={`inline-flex items-center justify-center w-12 h-12 rounded-xl transition-colors ${
                               selected ? "bg-teal text-teal-foreground" : "bg-teal/10 text-teal"
@@ -422,13 +384,23 @@ const Apoiar = () => {
                           >
                             <item.icon className="w-6 h-6" />
                           </div>
-                          <Checkbox checked={selected} className="pointer-events-none mt-1" />
-                        </div>
-                        <h3 className="text-lg font-bold text-foreground mb-1">{item.label}</h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          {item.description}
-                        </p>
-                      </button>
+                          <h3 className="text-base md:text-lg font-bold text-foreground leading-snug">
+                            {item.label}
+                          </h3>
+                          <span className="mt-auto inline-flex items-center gap-1 text-xs font-medium text-teal">
+                            {tr("Apoiar.verDetalhes")}
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </span>
+                          {selected && (
+                            <span className="absolute top-4 right-4 inline-flex items-center gap-1 rounded-full bg-teal px-2.5 py-1 text-xs font-semibold text-teal-foreground">
+                              <Check className="w-3.5 h-3.5" aria-hidden="true" />
+                              {quantos === 1
+                                ? tr("Apoiar.umItem")
+                                : tr("Apoiar.nItens", { count: quantos })}
+                            </span>
+                          )}
+                        </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -471,72 +443,17 @@ const Apoiar = () => {
 
               {/* Financeiro */}
               <TabsContent value="financeiro" className="mt-0">
-                <div className="text-center max-w-2xl mx-auto mb-10 space-y-2">
+                <div className="text-center max-w-2xl mx-auto mb-8 space-y-2">
                   <span className="inline-block text-xs font-bold uppercase tracking-widest text-navy">
                     {tr("Apoiar.escolhaOSeuImpacto")}
                   </span>
                   <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-                    {tr("Apoiar.tresTiersTresFormas")}
+                    {tr("Apoiar.doeUmaVezOuTodosOsMeses")}
                   </h2>
-                  <p className="text-muted-foreground">
-                    {tr("Apoiar.cadaNivelCorrespondeA")}
-                  </p>
+                  <p className="text-muted-foreground">{tr("Apoiar.cadaDonativoAjuda")}</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                  {tiers.map((tier) => {
-                    const selected = selectedTier === tier.id;
-                    return (
-                      <button
-                        key={tier.id}
-                        type="button"
-                        aria-pressed={selected}
-                        onClick={() => setSelectedTier(tier.id)}
-                        className={`relative text-left p-8 rounded-2xl border-2 bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-elevated focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                          selected
-                            ? `${tier.ring} shadow-elevated ring-2`
-                            : "border-border/60 shadow-card"
-                        }`}
-                      >
-                        {selected && (
-                          <span className="absolute top-4 right-4 inline-flex items-center justify-center w-6 h-6 rounded-full bg-teal text-teal-foreground">
-                            <Check className="w-4 h-4" />
-                          </span>
-                        )}
-                        <div
-                          className={`inline-flex items-center justify-center w-14 h-14 rounded-2xl ${tier.chip} mb-5`}
-                        >
-                          <tier.icon className="w-7 h-7" />
-                        </div>
-                        <span
-                          className={`inline-block text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full ${tier.chip} mb-3`}
-                        >
-                          {tier.name}
-                        </span>
-                        <p className={`text-2xl font-bold ${tier.accent} leading-tight mb-1`}>
-                          {tier.range}
-                        </p>
-                        <p className="text-sm font-medium text-foreground/70 mb-4">{tier.short}</p>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          {tier.impact}
-                        </p>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="max-w-2xl mx-auto">
-                  <Button
-                    onClick={handleFinanceSubmit}
-                    className="w-full bg-navy text-navy-foreground hover:bg-navy/90"
-                    size="lg"
-                    disabled={!selectedTier}
-                  >
-                    {selectedTier
-                      ? tr("Apoiar.apoiarComo", { name: activeTier?.name })
-                      : tr("Apoiar.seleccioneUmTierPara")}
-                  </Button>
-                </div>
+                <DoacaoFinanceira />
               </TabsContent>
             </Tabs>
 
@@ -548,6 +465,89 @@ const Apoiar = () => {
       </main>
       <Footer />
 
+      {/* Detalhe de uma categoria de materiais */}
+      <Sheet open={materialAberto && materialEmDetalhe !== null} onOpenChange={setMaterialAberto}>
+        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto flex flex-col gap-6">
+          {materialEmDetalhe && (
+            <>
+              <SheetHeader className="space-y-3 text-left pr-6">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-teal/10 text-teal">
+                  <materialEmDetalhe.icon className="w-6 h-6" />
+                </div>
+                <SheetTitle className="text-xl">{materialEmDetalhe.label}</SheetTitle>
+                <SheetDescription>{materialEmDetalhe.description}</SheetDescription>
+              </SheetHeader>
+
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-teal">
+                  {tr("Apoiar.materiaisAceites")}
+                </h4>
+                <ul className="space-y-2">
+                  {materialEmDetalhe.itens.map((itemAceite) => {
+                    const marcado = rascunhoItens.includes(itemAceite.id);
+                    return (
+                      <li key={itemAceite.id}>
+                        <label
+                          className={`flex cursor-pointer items-center gap-3 rounded-xl border-2 p-2.5 transition-colors ${
+                            marcado ? "border-teal bg-teal/5" : "border-border/60 bg-card hover:border-teal/40"
+                          }`}
+                        >
+                          <Checkbox
+                            checked={marcado}
+                            onCheckedChange={() => alternarItem(itemAceite.id)}
+                            className="h-5 w-5 shrink-0 data-[state=checked]:bg-teal data-[state=checked]:border-teal"
+                          />
+                          {itemAceite.imagem ? (
+                            <img
+                              src={itemAceite.imagem}
+                              alt=""
+                              className="w-14 h-14 shrink-0 rounded-lg object-cover"
+                            />
+                          ) : (
+                            <div
+                              className="w-14 h-14 shrink-0 rounded-lg bg-teal/10 text-teal flex items-center justify-center"
+                              aria-hidden="true"
+                            >
+                              <itemAceite.icon className="w-6 h-6" />
+                            </div>
+                          )}
+                          <span className="text-sm font-medium text-foreground">{itemAceite.nome}</span>
+                        </label>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+
+              <div className="space-y-2 rounded-xl bg-teal/5 border border-teal/20 p-4">
+                {materialEmDetalhe.comTituloReaproveitamento && (
+                  <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <Recycle className="w-4 h-4 text-teal" />
+                    {tr("Apoiar.comoEReaproveitado")}
+                  </h4>
+                )}
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {materialEmDetalhe.reaproveitamento}
+                </p>
+              </div>
+
+              <div className="mt-auto flex flex-col gap-2">
+                <Button
+                  onClick={confirmarItens}
+                  className="w-full bg-teal text-teal-foreground hover:bg-teal/90"
+                  size="lg"
+                >
+                  {tr("Apoiar.queroDoarIsto")}
+                </Button>
+                <Button variant="outline" onClick={() => setMaterialAberto(false)} className="w-full">
+                  {tr("Apoiar.fechar")}
+                </Button>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+
       <Dialog open={open} onOpenChange={(v) => (v ? setOpen(true) : closeDialog())}>
         <DialogContent className={step === "recolha" ? "max-w-lg" : "max-w-md"}>
           {step === "recolha" ? (
@@ -556,7 +556,7 @@ const Apoiar = () => {
               className="animate-in fade-in-0 slide-in-from-right-4 duration-300 space-y-4"
             >
               <DialogHeader className="space-y-3">
-                <StepIndicator current={2} total={2} tone="teal" />
+                <StepIndicator current={2} total={2} />
                 <DialogTitle className="flex items-center gap-2">
                   <Check className="w-5 h-5 text-teal" />
                   {tr("Apoiar.doacaoRegistada")}
@@ -583,104 +583,41 @@ const Apoiar = () => {
                 </Button>
               </DialogFooter>
             </div>
-          ) : step === "upload" ? (
-            <div
-              key="upload"
-              className="animate-in fade-in-0 slide-in-from-right-4 duration-300 space-y-4"
-            >
-              <DialogHeader className="space-y-3">
-                <StepIndicator current={2} total={2} tone="navy" />
-                <DialogTitle className="flex items-center gap-2">
-                  <UploadCloud className="w-5 h-5 text-navy" />
-                  {tr("Apoiar.enviarComprovativo")}
-                </DialogTitle>
-                <DialogDescription>
-                  {activeTier?.name ?? tr("Apoiar.donativo")}: {activeTier?.range ?? ""}{tr("Apoiar.anexeOComprovativoDa")}
-                </DialogDescription>
-              </DialogHeader>
-
-              <FileDropzone file={comprovativo} onFileChange={setComprovativo} />
-
-              <DialogFooter className="flex-col gap-2 sm:flex-col">
-                <Button
-                  onClick={handleConcluirDoacao}
-                  disabled={submitting || !comprovativo}
-                  className="w-full bg-navy text-navy-foreground hover:bg-navy/90"
-                >
-                  {submitting
-                    ? tr("Apoiar.aEnviar")
-                    : comprovativo
-                      ? tr("Apoiar.concluirDoacao")
-                      : tr("Apoiar.anexeOComprovativoPara")}
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setStep("form")}
-                  disabled={submitting}
-                  className="w-full text-muted-foreground"
-                >
-                  {tr("Apoiar.voltar")}
-                </Button>
-              </DialogFooter>
-            </div>
           ) : (
             <div key="form" className="animate-in fade-in-0 slide-in-from-left-4 duration-300">
               <DialogHeader className="space-y-3">
-                <StepIndicator current={1} total={2} tone={mode === "materiais" ? "teal" : "navy"} />
+                <StepIndicator current={1} total={2} />
                 <DialogTitle className="flex items-center gap-2">
-                  {mode === "materiais" ? (
-                    <Package className="w-5 h-5 text-teal" />
-                  ) : (
-                    <CreditCard className="w-5 h-5 text-navy" />
-                  )}
-                  {mode === "materiais" ? tr("Apoiar.combinarRecolha") : tr("Apoiar.detalhesParaPagamento")}
+                  <Package className="w-5 h-5 text-teal" />
+                  {tr("Apoiar.combinarRecolha")}
                 </DialogTitle>
-                <DialogDescription>
-                  {mode === "materiais"
-                    ? tr("Apoiar.deixeOSeuEmail")
-                    : tr("Apoiar.nivelObrigado", { nome: activeTier?.name ?? tr("Apoiar.donativo"), intervalo: activeTier?.range ?? "" })}
-                </DialogDescription>
+                <DialogDescription>{tr("Apoiar.deixeOSeuEmail")}</DialogDescription>
               </DialogHeader>
 
               <form onSubmit={handleConfirm} className="space-y-4 mt-4">
-                {mode === "financeiro" && (
-                  <div className="rounded-lg border border-navy/20 bg-navy/5 p-4 space-y-1 divide-y divide-navy/10">
-                    <CopyRow label={tr("Apoiar.beneficiario")} value={bankData.beneficiario} />
-                    <CopyRow
-                      label={bankData.pagamento_rapido.metodo}
-                      value={bankData.pagamento_rapido.telefone}
-                      displayValue={ofuscarValor(bankData.pagamento_rapido.telefone)}
-                    />
-                    <CopyRow
-                      label={`IBAN ${bankData.transferencia_nacional.banco}`}
-                      value={bankData.transferencia_nacional.iban}
-                      displayValue={ofuscarValor(bankData.transferencia_nacional.iban)}
-                    />
-                  </div>
-                )}
-
-                {mode === "materiais" && selectedMaterials.length > 0 && (
+                {materiaisEscolhidos.length > 0 && (
                   <div className="rounded-lg border border-teal/20 bg-teal/5 p-4">
                     <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium mb-2">
                       {tr("Apoiar.materiaisSeleccionados")}
                     </p>
                     <ul className="space-y-1">
-                      {selectedMaterials.map((id) => {
-                        const item = materialItems.find((m) => m.id === id);
-                        return (
-                          <li key={id} className="flex items-center gap-2 text-sm text-foreground">
-                            <Check className="w-4 h-4 text-teal" />
-                            {item?.label}
-                          </li>
-                        );
-                      })}
+                      {materiaisEscolhidos.map((m) => (
+                        <li key={m.id} className="flex items-start gap-2 text-sm text-foreground">
+                          <Check className="w-4 h-4 mt-0.5 shrink-0 text-teal" />
+                          <span>
+                            <span className="font-medium">{m.label}:</span>{" "}
+                            {m.itens
+                              .filter((i) => itensPorMaterial[m.id]?.includes(i.id))
+                              .map((i) => i.nome)
+                              .join(", ")}
+                          </span>
+                        </li>
+                      ))}
                     </ul>
                   </div>
                 )}
 
-                {mode === "materiais" && (
-                  <div className="space-y-2">
+                <div className="space-y-2">
                     <Label htmlFor="donor-provincia">{tr("Apoiar.provinciaParaRecolha")}</Label>
                     <Select value={provincia} onValueChange={setProvincia}>
                       <SelectTrigger id="donor-provincia">
@@ -695,14 +632,9 @@ const Apoiar = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                )}
 
                 <div className="space-y-2">
-                  <Label htmlFor="donor-email">
-                    {mode === "materiais"
-                      ? tr("Apoiar.oSeuEmailPara")
-                      : tr("Apoiar.insiraOSeuEmail")}
-                  </Label>
+                  <Label htmlFor="donor-email">{tr("Apoiar.oSeuEmailPara")}</Label>
                   <Input
                     id="donor-email"
                     type="email"
@@ -717,20 +649,9 @@ const Apoiar = () => {
                   <Button
                     type="submit"
                     disabled={submitting}
-                    className={`w-full ${
-                      mode === "materiais"
-                        ? "bg-teal text-teal-foreground hover:bg-teal/90"
-                        : "bg-navy text-navy-foreground hover:bg-navy/90"
-                    }`}
+                    className="w-full bg-teal text-teal-foreground hover:bg-teal/90"
                   >
-                    {mode === "materiais" ? (
-                      submitting ? tr("Apoiar.aEnviar") : tr("Apoiar.confirmarDoacao")
-                    ) : (
-                      <span className="inline-flex items-center gap-2">
-                        {tr("Apoiar.continuar")}
-                        <ArrowRight className="h-4 w-4" />
-                      </span>
-                    )}
+                    {submitting ? tr("Apoiar.aEnviar") : tr("Apoiar.confirmarDoacao")}
                   </Button>
                 </DialogFooter>
               </form>

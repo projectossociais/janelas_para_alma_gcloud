@@ -1,7 +1,8 @@
 """Voluntariado: candidatura, actividades publicadas por um admin, e
 inscrições dos voluntários activos nelas.
 
-Candidatar-se exige sessão (ver docs/BACKLOG.md — decisão do dono do
+Listar as actividades publicadas é público (a página /kamba mostra-as a
+visitantes sem conta). Candidatar-se exige sessão (ver docs/BACKLOG.md — decisão do dono do
 projecto: sem conta não há como ligar "as minhas actividades" nem
 notificações). Publicar/cancelar actividades e decidir candidaturas exigem
 `papel: admin`, via `obter_utilizador_admin`.
@@ -180,9 +181,12 @@ def publicar_atividade(
 
 @router.get("/atividades", response_model=list[AtividadeVoluntariadoPublica])
 def listar_atividades(
-    _utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
     servico: AtividadeVoluntariadoService = Depends(obter_atividade_service),
 ) -> list[AtividadeVoluntariadoRegisto]:
+    """Público, sem sessão: a página /kamba mostra as próximas actividades a
+    quem ainda não tem conta (decisão do Lukeny, 2026-11-04). Só devolve as
+    publicadas, no esquema público -- sem `criado_por` nem dados de inscritos
+    (só o número). Inscrever-se continua a exigir sessão."""
     return servico.listar_publicadas()
 
 
