@@ -216,6 +216,6 @@ describe("título e descrição por página", () => {
 
   it("em português, páginas fora do mapa (admin) ficam com o título do site", () => {
     expect(tituloEDescricao("/admin").titulo).toBe("Janelas Para a Alma | Saúde Ocular e Estrabismo em Angola");
-    expect(tituloEDescricao("/faq").titulo).toBe("Perguntas Frequentes | Janelas Para a Alma");
+    expect(tituloEDescricao("/faq").titulo).toBe("Perguntas frequentes | Janelas Para a Alma");
   });
 });
