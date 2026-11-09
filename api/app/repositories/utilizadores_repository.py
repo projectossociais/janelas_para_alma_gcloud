@@ -93,8 +93,11 @@ class SQLAlchemyUtilizadoresRepository:
         return self._para_registo(row) if row else None
 
     def obter_por_id(self, utilizador_id: str) -> UtilizadorRegisto | None:
+        # Uma conta anonimizada (W-03 ou eliminada por um admin) "já não
+        # existe" para a autenticação: os cookies de sessão que ainda tenha
+        # deixam de valer logo, sem esperar que expirem.
         row = self._sessao.get(Utilizador, uuid.UUID(utilizador_id))
-        return self._para_registo(row) if row else None
+        return self._para_registo(row) if row and row.anonimizado_em is None else None
 
     def criar(
         self,

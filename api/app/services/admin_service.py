@@ -13,6 +13,8 @@ A promoção nunca aceita um `papel` arbitrário: promove para `admin`,
 despromove para `comum`, e mais nada.
 """
 
+from typing import Protocol
+
 from app.repositories.admin_repository import AdminRepository, AdminUtilizadorRegisto
 from app.repositories.orm_models import AppRole
 
@@ -43,9 +45,39 @@ class NaoPodeAlterarAdminPorAquiError(Exception):
     protecção do último admin, que este caminho não repete)."""
 
 
+class NaoPodeEliminarASiProprioError(Exception):
+    pass
+
+
+class NaoPodeEliminarAdminError(Exception):
+    """O alvo é admin -- tem de perder o acesso primeiro (`despromover`,
+    com a protecção do último admin) antes de a conta poder ser eliminada."""
+
+
+class AnonimizadorDeConta(Protocol):
+    def anonimizar_agora(self, utilizador_id: str) -> None: ...
+
+
 class AdminService:
-    def __init__(self, repositorio: AdminRepository) -> None:
+    def __init__(self, repositorio: AdminRepository, anonimizador: AnonimizadorDeConta | None = None) -> None:
         self._repo = repositorio
+        self._anonimizador = anonimizador
+
+    def eliminar_conta(self, utilizador_id: str, executor_id: str) -> None:
+        """Elimina (anonimiza, nunca `DELETE`, CLAUDE.md §4.7) a conta de
+        outra pessoa. Recusa a própria conta e contas de admin -- um admin
+        tira-se primeiro em "Administradores", onde está a protecção do
+        último admin."""
+        if self._anonimizador is None:
+            raise RuntimeError("AdminService sem anonimizador configurado")
+        if utilizador_id == executor_id:
+            raise NaoPodeEliminarASiProprioError(utilizador_id)
+        alvo = self._repo.obter_por_id(utilizador_id)
+        if alvo is None:
+            raise UtilizadorNaoEncontradoError(utilizador_id)
+        if alvo.papel == "admin":
+            raise NaoPodeEliminarAdminError(utilizador_id)
+        self._anonimizador.anonimizar_agora(utilizador_id)
 
     def promover_a_admin(self, email: str) -> AdminUtilizadorRegisto:
         alvo = self._repo.obter_por_email(email)

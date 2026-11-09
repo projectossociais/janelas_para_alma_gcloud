@@ -56,7 +56,10 @@ class SQLAlchemyAdminRepository:
         self._sessao = sessao
 
     def listar(self, papel: str | None = None, desde: datetime | None = None) -> list[AdminUtilizadorRegisto]:
-        consulta = select(Utilizador).order_by(Utilizador.created_at.desc())
+        # Contas anonimizadas (eliminadas) não aparecem na gestão de contas.
+        consulta = (
+            select(Utilizador).where(Utilizador.anonimizado_em.is_(None)).order_by(Utilizador.created_at.desc())
+        )
         if papel is not None:
             consulta = consulta.where(Utilizador.papel == AppRole(papel))
         if desde is not None:
@@ -72,8 +75,12 @@ class SQLAlchemyAdminRepository:
         return _para_registo(row) if row else None
 
     def obter_por_id(self, utilizador_id: str) -> AdminUtilizadorRegisto | None:
-        row = self._sessao.get(Utilizador, uuid.UUID(utilizador_id))
-        return _para_registo(row) if row else None
+        try:
+            id_ = uuid.UUID(utilizador_id)
+        except ValueError:
+            return None
+        row = self._sessao.get(Utilizador, id_)
+        return _para_registo(row) if row and row.anonimizado_em is None else None
 
     def definir_papel(self, utilizador_id: str, papel: str) -> AdminUtilizadorRegisto | None:
         row = self._sessao.get(Utilizador, uuid.UUID(utilizador_id))

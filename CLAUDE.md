@@ -435,6 +435,17 @@ activa; verificar e testar isso explicitamente.**
    `utilizadores` e nas tabelas que copiam nome/email/telefone directamente
    (`premium_requests`, `agendamentos_clinicos`, `contact_messages`,
    `candidaturas_voluntariado`), mantendo o `id` e tudo o resto intacto.
+   **Um admin também pode eliminar uma conta na hora** (2026-11-08, botão em
+   `/admin/utilizadores`, `DELETE /admin/utilizadores/{id}`, regras em
+   `AdminService.eliminar_conta`): é a mesma anonimização (`anonimizar_agora`), sem os 30
+   dias; recusa a própria conta e contas de admin (tira-se primeiro o acesso em
+   Administradores). Uma conta anonimizada deixa de valer para a autenticação logo
+   (`obter_por_id` devolve `None`: cookies antigos caem), sai da listagem do admin e perde
+   a ligação a uma clínica (`equipa_clinica`).
+   **Clínicas parceiras** criam-se e removem-se em `/admin/clinicas`
+   (`POST`/`DELETE /admin/clinicas[/{id}]`): uma clínica com pedidos de consulta nunca se
+   apaga (`agendamentos_clinicos` tem `RESTRICT`) -- fica desactivada e pode ser
+   reactivada (`ClinicaParceiraService.remover`).
 8. **Endpoints internos (Cloud Scheduler, nunca um browser) usam um segredo partilhado
    em cabeçalho, nunca sessão.** `obter_cron_valido` (`core/dependencies.py`) compara
    `X-Cron-Secret` com `CRON_SECRET` via `hmac.compare_digest`; sem o segredo configurado,
@@ -458,6 +469,17 @@ activa; verificar e testar isso explicitamente.**
    `consentimento_dados_saude_em_falta`); no frontend, `ConsentimentoSaudeContext`
    pede-o antes da câmara do scanner e dos exercícios. Sem jurista no projecto: a
    leitura da lei e o que falta junto da APD estão em `docs/APD_NOTIFICACAO.md`.
+10. **A clínica recebe cada pedido de consulta com uma ficha de encaminhamento em PDF
+    (2026-11-07).** `AgendamentoClinicoService.pedir` gera-a
+    (`services/ficha_encaminhamento.py`, fpdf2) e anexa-a ao email da clínica; o paciente
+    recebe só o email de confirmação. Leva apenas o que o próprio paciente escreveu no
+    pedido, marcada como confidencial (Lei n.º 22/11) -- nunca resultados de rastreio,
+    só a indicação de que existe um. Gerar o PDF é melhor esforço: se falhar, o pedido
+    fica gravado e o email segue sem anexo. Clínica nova com logótipo: o PNG em
+    `app/assets/clinicas/` e uma linha em `LOGOTIPOS_CLINICAS`. O emitente é a sociedade
+    que opera a plataforma -- Olhar Alinhado, Comércio e Prestação de Serviços, Lda., NIF
+    5003659364 (`FIRMA`/`NIF`/`CAPITAL_SOCIAL`), como intermediária que não realiza actos
+    clínicos. A morada da sede nunca entra: é a residência de uma sócia.
 
 ---
 

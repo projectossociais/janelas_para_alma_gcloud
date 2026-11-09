@@ -20,6 +20,7 @@ const PUBLICACAO = {
   slug: "campanha-gamek",
   titulo: "Campanha Gamek",
   resumo: "resumo",
+  corpo: "texto completo",
   local: "Luanda",
   data_evento: "2026-09-12",
   capa_url: null,
@@ -50,6 +51,7 @@ describe("Publicacoes (lista pública)", () => {
         slug: "campanha-gamek",
         titulo: "Campanha Gamek",
         resumo: "resumo",
+        corpo: "texto completo",
         local: "Luanda",
         data_evento: "2026-09-12",
         capa_url: null,
@@ -100,7 +102,7 @@ describe("Publicacoes (lista pública)", () => {
       expect(titulo).toHaveAttribute("lang", "pt-AO");
       expect(screen.getByText("resumo")).toHaveAttribute("lang", "pt-AO");
       expect(screen.getByText("In Portuguese")).toBeInTheDocument();
-      expect(screen.getByText("Out in the Community")).not.toHaveAttribute("lang");
+      expect(screen.getByRole("heading", { name: "Stories of Sight" })).not.toHaveAttribute("lang");
     });
   });
 });

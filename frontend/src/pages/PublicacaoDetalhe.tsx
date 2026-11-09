@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { CalendarDays, Languages, Loader2, MapPin } from "lucide-react";
+import { CalendarDays, Clock, Languages, Loader2, MapPin } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
+import AccoesPublicacao from "@/components/blog/AccoesPublicacao";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import { publicacoesApi, mensagemDeErroApi, type PublicacaoPublica } from "@/lib/apiClient";
@@ -13,8 +14,28 @@ import { localizar } from "@/i18n/rotas";
 import { formatarData } from "@/i18n/formatar";
 import { useIdioma } from "@/i18n/useIdioma";
 import { IDIOMA_EN, IDIOMA_PT } from "@/i18n/idiomas";
+import { minutosDeLeitura } from "@/lib/leitura";
 
 const INTERVALO_CARROSSEL_MS = 10_000;
+
+/**
+ * Conta uma visualização por publicação e por separador: recarregar a página
+ * não volta a contar. Uma falha aqui nunca estraga a leitura (é só um número).
+ */
+async function registarVisualizacao(slug: string): Promise<number | null> {
+  const chave = `jpa.publicacao.vista.${slug}`;
+  try {
+    if (sessionStorage.getItem(chave)) return null;
+    sessionStorage.setItem(chave, "1");
+  } catch {
+    // Sem sessionStorage (modo privado restrito): conta na mesma.
+  }
+  try {
+    return (await publicacoesApi.registarVisualizacao(slug)).visualizacoes;
+  } catch {
+    return null;
+  }
+}
 
 const PublicacaoDetalhe = () => {
   const { t } = useTranslation();
@@ -38,7 +59,12 @@ const PublicacaoDetalhe = () => {
     setNaoEncontrada(false);
     (async () => {
       try {
-        setPublicacao(await publicacoesApi.obterPorSlug(slug));
+        const encontrada = await publicacoesApi.obterPorSlug(slug);
+        setPublicacao(encontrada);
+        // Sem esperar: a página mostra-se já, o número actualiza quando a API responder.
+        void registarVisualizacao(slug).then((vistas) => {
+          if (vistas !== null) setPublicacao((p) => (p && p.slug === slug ? { ...p, visualizacoes: vistas } : p));
+        });
       } catch (err) {
         // Duck-typing na propriedade `status`, não `instanceof ApiError` --
         // este módulo é mockado nos testes de página (ver CLAUDE.md, "Testes
@@ -95,6 +121,10 @@ const PublicacaoDetalhe = () => {
                       {publicacao.local}
                     </span>
                   )}
+                  <span className="inline-flex items-center gap-1.5">
+                    <Clock className="w-4 h-4" />
+                    {t("Publicacoes.minDeLeitura", { count: minutosDeLeitura(publicacao.corpo) })}
+                  </span>
                 </div>
                 <h1 lang={langConteudo} className="text-3xl md:text-4xl font-bold">{publicacao.titulo}</h1>
                 <p lang={langConteudo} className="text-muted-foreground text-lg">{publicacao.resumo}</p>
@@ -104,6 +134,14 @@ const PublicacaoDetalhe = () => {
                     {t("PublicacaoDetalhe.disponivelSoEmPortugues")}
                   </p>
                 )}
+                <AccoesPublicacao
+                  key={publicacao.slug}
+                  slug={publicacao.slug}
+                  titulo={publicacao.titulo}
+                  visualizacoes={publicacao.visualizacoes ?? 0}
+                  gostos={publicacao.gostos ?? 0}
+                  gostei={publicacao.gostei ?? false}
+                />
               </header>
 
               {publicacao.capa_url && (

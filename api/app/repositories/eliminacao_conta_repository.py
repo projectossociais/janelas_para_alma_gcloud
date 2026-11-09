@@ -18,7 +18,7 @@ import uuid
 from datetime import datetime
 from typing import Protocol
 
-from sqlalchemy import func, select, update
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.orm import Session
 
 from app.repositories.orm_models import (
@@ -26,6 +26,7 @@ from app.repositories.orm_models import (
     CandidaturaVoluntariado,
     ComprovativoPagamento,
     ContactMessage,
+    EquipaClinica,
     PartilhaRelatorio,
     PremiumRequest,
     Utilizador,
@@ -137,5 +138,8 @@ class SQLAlchemyEliminacaoContaRepository:
             .where(PartilhaRelatorio.utilizador_id == id_, PartilhaRelatorio.revogado_em.is_(None))
             .values(revogado_em=agora)
         )
+
+        # Acesso ao portal de uma clínica: uma conta eliminada deixa de o ter.
+        self._sessao.execute(delete(EquipaClinica).where(EquipaClinica.utilizador_id == id_))
 
         self._sessao.commit()

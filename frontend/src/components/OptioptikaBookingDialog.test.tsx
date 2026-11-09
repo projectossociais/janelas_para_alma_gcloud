@@ -38,8 +38,10 @@ async function preencherFormulario(user: ReturnType<typeof userEvent.setup>) {
   await user.type(await screen.findByLabelText(/Nome completo/i), "Ana Silva");
   await user.type(screen.getByLabelText(/^Email$/i), "ana@example.com");
   await user.type(screen.getByLabelText(/Telefone/i), "+244900000000");
-  await user.click(await screen.findByRole("combobox"));
+  await user.click(await screen.findByRole("combobox", { name: /^Dia$/i }));
   await user.click(await screen.findByRole("option"));
+  await user.click(screen.getByRole("combobox", { name: /Hora \(hora de Luanda\)/i }));
+  await user.click(await screen.findByRole("option", { name: "10:00" }));
   await user.click(screen.getByRole("button", { name: /Solicitar consulta/i }));
 }
 
@@ -95,5 +97,44 @@ describe("OptioptikaBookingDialog", () => {
     await waitFor(() => expect(toastError).toHaveBeenCalledWith("Serviço indisponível"));
     expect(screen.queryByText("Pedido de consulta confirmado")).not.toBeInTheDocument();
     expect(toastSuccess).not.toHaveBeenCalled();
+  });
+
+  it("sem horários livres, aponta para o WhatsApp da clínica em vez de um beco sem saída", async () => {
+    horariosDisponiveis.mockResolvedValue([]);
+    render(<OptioptikaBookingDialog open onOpenChange={() => {}} />);
+
+    const link = await screen.findByRole("link", { name: /WhatsApp/i });
+    expect(link).toHaveAttribute("href", "https://wa.me/244931240304");
+  });
+
+  it("com horários livres, não mostra o contacto alternativo", async () => {
+    render(<OptioptikaBookingDialog open onOpenChange={() => {}} />);
+
+    await waitFor(() => expect(horariosDisponiveis).toHaveBeenCalled());
+    expect(await screen.findByText("Escolher dia")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /WhatsApp/i })).not.toBeInTheDocument();
+  });
+
+  it("escolhe primeiro o dia e só mostra as horas desse dia, em hora de Luanda", async () => {
+    horariosDisponiveis.mockResolvedValue([
+      { inicio: "2027-01-04T07:00:00Z", fim: "2027-01-04T07:30:00Z" }, // segunda 08:00
+      { inicio: "2027-01-04T07:30:00Z", fim: "2027-01-04T08:00:00Z" }, // segunda 08:30
+      { inicio: "2027-01-09T11:30:00Z", fim: "2027-01-09T12:00:00Z" }, // sábado 12:30
+    ]);
+    const user = userEvent.setup();
+    render(<OptioptikaBookingDialog open onOpenChange={() => {}} />);
+
+    const hora = await screen.findByRole("combobox", { name: /Hora \(hora de Luanda\)/i });
+    await waitFor(() => expect(screen.getByRole("combobox", { name: /^Dia$/i })).toBeEnabled());
+    expect(hora).toBeDisabled();
+
+    await user.click(screen.getByRole("combobox", { name: /^Dia$/i }));
+    const dias = (await screen.findAllByRole("option")).map((o) => o.textContent);
+    expect(dias).toEqual(["segunda-feira, 04/01/2027", "sábado, 09/01/2027"]);
+    await user.click(screen.getByRole("option", { name: "sábado, 09/01/2027" }));
+
+    await user.click(screen.getByRole("combobox", { name: /Hora \(hora de Luanda\)/i }));
+    const horas = (await screen.findAllByRole("option")).map((o) => o.textContent);
+    expect(horas).toEqual(["12:30"]);
   });
 });

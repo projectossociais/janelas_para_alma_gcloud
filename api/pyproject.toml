@@ -30,6 +30,9 @@ dependencies = [
     # dos nossos servidores.
     "Pillow>=10.0",
     "pytesseract>=0.3.10",
+    # Ficha de encaminhamento em PDF enviada à clínica com cada pedido de
+    # consulta. Python puro (usa o Pillow acima para os logótipos).
+    "fpdf2>=2.8",
 ]
 
 [project.optional-dependencies]
@@ -41,6 +44,9 @@ dev = [
 
 [tool.setuptools.packages.find]
 include = ["app*"]
+
+[tool.setuptools.package-data]
+app = ["assets/*.png", "assets/clinicas/*.png"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -35,6 +35,31 @@ class ClinicaPerfilAtualizar(BaseModel):
     preco_indicativo: str | None = Field(default=None, max_length=100)
 
 
+class ClinicaCriar(BaseModel):
+    nome: str = Field(min_length=2, max_length=200)
+    email_contacto: EmailStr
+    telefone_contacto: str = Field(min_length=6, max_length=30)
+    especialidades: list[str] = Field(default_factory=list)
+    cidade: str | None = Field(default=None, max_length=100)
+    modalidades_suportadas: list[Modalidade] = Field(default_factory=list)
+    preco_indicativo: str | None = Field(default=None, max_length=100)
+
+    @field_validator("nome", "telefone_contacto")
+    @classmethod
+    def _sem_espacos_a_volta(cls, valor: str) -> str:
+        valor = valor.strip()
+        if not valor:
+            raise ValueError("campo obrigatório")
+        return valor
+
+
+class ClinicaRemovida(BaseModel):
+    """`apagada` -- saiu de vez; `desativada` -- tinha pedidos de consulta,
+    por isso ficou só escondida do público (ver `ClinicaParceiraService`)."""
+
+    resultado: Literal["apagada", "desativada"]
+
+
 class EquipaClinicaAdicionar(BaseModel):
     """Liga uma conta já existente à clínica -- pelo email, nunca por um
     `utilizador_id` solto (nunca confiar num id vindo do corpo, CLAUDE.md
