@@ -282,7 +282,8 @@ página inicial (`components/inicio/HeroInicio.tsx`) é um carrossel em ecrã in
 fotografia por criança, que muda a cada 5 s, com um véu azul suave por cima; "Doar Agora",
 "Exercícios Visuais" e "Entrar" (só sem sessão) ficam sempre visíveis, e por baixo deles os
 números do projecto (`components/inicio/numerosCapa.ts`: valores do pitch deck do Desafio
-Genial; actualizam-se aí, sempre com fonte). **Todas as páginas têm fundo branco**, e os tokens do
+Genial, com "+" nas contagens e "≈" nas estimativas; os voluntários Kamba são 30, corrigido
+pela coordenação a 2026-11-09; actualizam-se aí, sempre com fonte). **Todas as páginas têm fundo branco**, e os tokens do
 tema em `index.css` (`--teal`, `--navy`, `--gold`, `--green`, `--primary`...) usam os valores
 exactos da paleta da marca (`marca.*` em `tailwind.config.ts`) — não reintroduzir fundos
 creme, cinzentos ou faixas azul-marinho de secção. Ficam de fora, por agora, os cabeçalhos
