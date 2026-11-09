@@ -175,7 +175,7 @@ const FaixaDeAviso = () => {
             <Label>Activo</Label>
           </div>
           <Button onClick={create} disabled={aGravar}>
-            <Plus className="w-4 h-4" /> {aGravar ? "A criar..." : "Criar banner"}
+            <Plus className="w-4 h-4" /> {aGravar ? "A criar…" : "Criar banner"}
           </Button>
         </CardContent>
       </Card>
@@ -244,7 +244,7 @@ const FaixaDeAviso = () => {
           </div>
           <DialogFooter>
             <Button onClick={guardarEdicao} disabled={aGuardarEdicao}>
-              {aGuardarEdicao ? "A guardar..." : "Guardar alterações"}
+              {aGuardarEdicao ? "A guardar…" : "Guardar alterações"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -410,7 +410,7 @@ const BannerHomepage = () => {
             />
           </div>
           <Button onClick={create} disabled={aGravar}>
-            <Plus className="w-4 h-4" /> {aGravar ? "A criar..." : "Criar banner"}
+            <Plus className="w-4 h-4" /> {aGravar ? "A criar…" : "Criar banner"}
           </Button>
         </CardContent>
       </Card>
@@ -454,7 +454,7 @@ const BannerHomepage = () => {
                   onClick={() => inputRefs.current[b.id]?.click()}
                 >
                   <ImagePlus className="w-4 h-4" />
-                  {aEnviarImagem === b.id ? "A enviar..." : b.imagem_url ? "Trocar foto" : "Adicionar foto"}
+                  {aEnviarImagem === b.id ? "A enviar…" : b.imagem_url ? "Trocar foto" : "Adicionar foto"}
                 </Button>
                 <Switch checked={b.ativo} onCheckedChange={(v) => toggle(b, v)} />
                 <Button size="icon" variant="ghost" onClick={() => abrirEdicao(b)} aria-label={`Editar ${b.titulo}`}>
@@ -505,7 +505,7 @@ const BannerHomepage = () => {
           </div>
           <DialogFooter>
             <Button onClick={guardarEdicao} disabled={aGuardarEdicao}>
-              {aGuardarEdicao ? "A guardar..." : "Guardar alterações"}
+              {aGuardarEdicao ? "A guardar…" : "Guardar alterações"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -131,7 +131,7 @@ const AdminNotifications = () => {
             </Label>
           </div>
           <Button onClick={enviar} disabled={aEnviar}>
-            <Send className="w-4 h-4" /> {aEnviar ? "A enviar..." : "Enviar"}
+            <Send className="w-4 h-4" /> {aEnviar ? "A enviar…" : "Enviar"}
           </Button>
         </CardContent>
       </Card>

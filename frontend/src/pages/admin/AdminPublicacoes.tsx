@@ -162,7 +162,7 @@ const AdminPublicacoes = () => {
             </div>
           </div>
           <Button onClick={criar} disabled={aCriar}>
-            <Plus className="w-4 h-4" /> {aCriar ? "A criar..." : "Criar rascunho"}
+            <Plus className="w-4 h-4" /> {aCriar ? "A criar…" : "Criar rascunho"}
           </Button>
         </CardContent>
       </Card>
@@ -405,7 +405,7 @@ const EditorDialog = ({ publicacao, onClose, onChanged }: EditorDialogProps) => 
             </div>
           </div>
           <Button onClick={gravar} disabled={aGravar}>
-            {aGravar ? "A guardar..." : "Guardar alterações"}
+            {aGravar ? "A guardar…" : "Guardar alterações"}
           </Button>
 
           <div className="border-t pt-4">
@@ -439,7 +439,7 @@ const EditorDialog = ({ publicacao, onClose, onChanged }: EditorDialogProps) => 
                 onClick={() => capaInputRef.current?.click()}
               >
                 {aEnviarCapa ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImagePlus className="w-4 h-4" />}
-                {aEnviarCapa ? "A enviar..." : "Alterar capa"}
+                {aEnviarCapa ? "A enviar…" : "Alterar capa"}
               </Button>
             </div>
           </div>
