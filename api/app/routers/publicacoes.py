@@ -161,7 +161,7 @@ def apagar_publicacao(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="publicação não encontrada") from exc
 
 
-# --- Fotos (capa + galeria) -- upload directo ao R2, mesmo padrão do avatar ----
+# --- Fotos e vídeos (capa + galeria) -- upload directo ao R2, mesmo padrão do avatar ----
 
 
 @router.post(
@@ -214,11 +214,11 @@ def preparar_midia(
     servico: PublicacaoMidiaService = Depends(obter_publicacao_midia_service),
 ) -> MidiaUploadPreparado:
     try:
-        preparado = servico.preparar(publicacao_id, pedido.content_type)
+        preparado = servico.preparar(publicacao_id, pedido.content_type, permitir_video=True)
     except TipoDeFicheiroNaoPermitidoError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail="tipo de ficheiro não permitido (só PNG, JPEG ou WebP)",
+            detail="tipo de ficheiro não permitido (só PNG, JPEG, WebP, MP4 ou WebM)",
         ) from exc
     return MidiaUploadPreparado(**preparado.__dict__)
 

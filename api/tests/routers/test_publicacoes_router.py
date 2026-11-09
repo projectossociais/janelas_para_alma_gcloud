@@ -231,6 +231,21 @@ def test_preparar_capa_recusa_tipo_invalido(ambiente) -> None:
     assert resposta.status_code == 422
 
 
+def test_preparar_capa_recusa_video(ambiente) -> None:
+    c, _, token_admin, _ = ambiente
+    criada = _criar(c, token_admin)
+    resposta = c.post(f"/publicacoes/{criada['id']}/capa/preparar", json={"content_type": "video/mp4"})
+    assert resposta.status_code == 422
+
+
+def test_preparar_midia_aceita_video_mp4(ambiente) -> None:
+    c, _, token_admin, _ = ambiente
+    criada = _criar(c, token_admin)
+    resposta = c.post(f"/publicacoes/{criada['id']}/midias/preparar", json={"content_type": "video/mp4"})
+    assert resposta.status_code == 200
+    assert resposta.json()["chave"].endswith(".mp4")
+
+
 def test_confirmar_capa_grava_url(ambiente) -> None:
     c, _, token_admin, _ = ambiente
     criada = _criar(c, token_admin)
