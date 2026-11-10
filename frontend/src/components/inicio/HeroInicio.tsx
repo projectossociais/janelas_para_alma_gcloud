@@ -76,8 +76,8 @@ const HeroInicio = () => {
         <ul className="mb-6 grid max-w-xl grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 md:mb-8 md:gap-y-6">
           {NUMEROS_CAPA.map((n) => (
             <li key={n.legenda}>
-              <span className="block text-3xl font-bold leading-none text-white md:text-5xl">{n.valor}</span>
-              <span className="mt-1.5 block text-sm leading-snug text-white/85 md:mt-2 md:text-base">{t(n.legenda)}</span>
+              <span className="block text-2xl font-bold leading-none text-white md:text-4xl">{n.valor}</span>
+              <span className="mt-1 block text-xs leading-snug text-white/85 md:mt-1.5 md:text-sm">{t(n.legenda)}</span>
             </li>
           ))}
         </ul>

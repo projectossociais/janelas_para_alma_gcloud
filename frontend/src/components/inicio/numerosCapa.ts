@@ -19,6 +19,12 @@ export const NUMEROS_CAPA: readonly NumeroCapa[] = [
   // oficial para Angola (o INE não desagrega o estrabismo), por isso a legenda começa por
   // "Estimativa"; sem o sinal "≈" na capa, a pedido da coordenação.
   { valor: "293 mil", legenda: "Inicio.numeros.estrabismoAngola" },
+  // IONA (Instituto Oftalmológico Nacional de Angola), Julho a Dezembro de 2024: 702 casos de
+  // estrabismo entre as crianças atendidas (8.170 casos pediátricos no total). Dados da
+  // Dra. Solange Sinadinse, oftalmologista pediátrica do IONA, em "Problemas oftalmológicos
+  // em crianças", Jornal de Angola, 29-1-2025, p. 24 (enviado pela equipa a 2026-11-06; é o
+  // mesmo número do pitch deck). Número exacto, por isso sem "+".
+  { valor: "702", legenda: "Inicio.numeros.estrabismoIona" },
   // Campanha Meu Kamba Estrábico, Gamek, 12 de Setembro de 2026 (195+ indicado pela coordenação).
   { valor: "195+", legenda: "Inicio.numeros.pessoasSensibilizadas" },
   // Comunidade "O Meu Olhar É Mesmo Assim" (115+ indicado pela coordenação).
