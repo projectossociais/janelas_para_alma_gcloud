@@ -342,13 +342,13 @@
     "oculosASeremReciclados": "Óculos a serem reciclados num ambiente sustentável",
     "prototipoDosOculos3d": "Óculos 3D de cartão leve, com lentes vermelha e ciano e a marca Janelas Para a Alma",
     "oculos3d": "Óculos 3D",
-    "produtoDaPlataforma": "Produto da plataforma",
+    "paraOsExerciciosVisuais": "Para os exercícios visuais",
     "oculos3dParaOsExercicios": "Óculos 3D para os Exercícios Visuais",
-    "oculos3dProduto": "Os óculos 3D são um produto da plataforma, usados nos exercícios visuais com óculos, como o jogo Kianda e as Pontes de Fusão. São produzidos pelo projecto em cartão leve.",
-    "oculos3dRendimento": "O rendimento da venda reverte para financiar o programa e os beneficiários que apoiamos.",
-    "producao": "Produção",
-    "venda": "Venda",
-    "reinvestimentoNoPrograma": "Reinvestimento no programa"
+    "oculos3dDescricao": "Alguns exercícios visuais têm uma versão com óculos 3D, de lente vermelha e lente ciano, como o jogo Kianda e as Pontes de Fusão. Com eles, cada olho vê uma imagem diferente no ecrã, e o exercício consegue pôr os dois olhos a trabalhar em conjunto.",
+    "oculos3dSemOculos": "Os óculos são opcionais: todos os exercícios têm uma versão sem óculos, feita só com o telemóvel e o que há em casa. Quem tiver uns óculos 3D vermelho e ciano escolhe a versão com óculos.",
+    "passoEscolherComOculos": "Escolher a versão com óculos",
+    "passoAfinarCores": "Afinar as cores no ecrã",
+    "passoFazerExercicio": "Fazer o exercício"
   },
   "ClinicalPartners": {
     "parceirosClinicos": "Parceiros Clínicos",
