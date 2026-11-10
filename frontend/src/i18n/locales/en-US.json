@@ -3040,7 +3040,14 @@
     "capaVerDiapositivo": "Show photo {{numero}}",
     "capaFotoOculos": "Smiling boy wearing blue glasses",
     "capaFotoMenina": "Smiling girl in a hallway",
-    "capaFotoMeninaEscola": "Girl in an open-air classroom holding a slate"
+    "capaFotoMeninaEscola": "Girl in an open-air classroom holding a slate",
+    "numeros": {
+      "estrabismoAngola": "People with strabismus in Angola (estimate)",
+      "pessoasSensibilizadas": "People reached with awareness",
+      "membrosMoam": "MOAM community members",
+      "voluntariosKamba": "Kamba volunteers",
+      "exerciciosVisuais": "Vision exercises"
+    }
   },
   "Visionarios": {
     "titulo": "Guided by Visionaries in Science and Service",

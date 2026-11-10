@@ -184,12 +184,12 @@ const Circular = () => {
         </section>
 
         {/* Impact Block */}
-        <section className="py-20 bg-gradient-to-br from-primary to-primary/80">
+        <section className="py-20 bg-white">
           <div className="container">
             <div className="max-w-4xl mx-auto text-center">
-              <Recycle className="w-12 h-12 text-green mx-auto mb-6" />
-              <p className="text-2xl md:text-4xl font-bold text-primary-foreground leading-tight">
-                <Trans i18nKey="Circular.aNossaLogisticaReduz" components={{ span: <span className="text-green" /> }} />
+              <Recycle className="w-12 h-12 text-marca-verde mx-auto mb-6" />
+              <p className="text-2xl md:text-4xl font-bold text-marca-marinho leading-tight">
+                <Trans i18nKey="Circular.aNossaLogisticaReduz" components={{ span: <span className="text-marca-verde" /> }} />
               </p>
             </div>
           </div>

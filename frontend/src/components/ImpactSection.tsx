@@ -88,7 +88,7 @@ const ImpactSection = () => {
   };
 
   return (
-    <section id="impacto" className="py-20 md:py-28 bg-navy text-navy-foreground">
+    <section id="impacto" className="py-20 md:py-28 bg-white text-marca-marinho">
       {/* Preload impact images */}
       <div className="hidden" aria-hidden="true">
         {impacts.map((impact, i) => (
@@ -101,7 +101,7 @@ const ImpactSection = () => {
           <h2 className="text-3xl md:text-5xl font-bold">
             {t("ImpactSection.cuidarDasPessoasE")}
           </h2>
-          <p className="text-lg text-navy-foreground/70 max-w-2xl mx-auto">
+          <p className="text-lg text-marca-marinho/70 max-w-2xl mx-auto">
             {t("ImpactSection.aoTransformarDesafiosEm")}
           </p>
         </div>
@@ -117,13 +117,13 @@ const ImpactSection = () => {
               <button
                 key={i}
                 onClick={() => setOpenIndex(i)}
-                className="snap-start shrink-0 w-[80%] sm:w-[60%] md:w-[45%] lg:w-[24%] p-8 rounded-2xl bg-navy-foreground/5 border border-navy-foreground/10 backdrop-blur transition-all hover:bg-navy-foreground/10 hover:scale-[1.03] cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-teal focus:ring-offset-2 focus:ring-offset-navy"
+                className="snap-start shrink-0 w-[80%] sm:w-[60%] md:w-[45%] lg:w-[24%] p-8 rounded-2xl bg-marca-marinho/5 border border-marca-marinho/10 backdrop-blur transition-all hover:bg-marca-marinho/10 hover:scale-[1.03] cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-teal focus:ring-offset-2 focus:ring-offset-white"
               >
                 <div className={`inline-flex items-center justify-center w-14 h-14 rounded-xl ${impact.color} mb-6`}>
                   <impact.icon className="w-7 h-7" />
                 </div>
-                <h3 className="text-xl font-bold mb-3 text-navy-foreground">{impact.title}</h3>
-                <p className="text-navy-foreground/70 leading-relaxed text-sm">{impact.description}</p>
+                <h3 className="text-xl font-bold mb-3 text-marca-marinho">{impact.title}</h3>
+                <p className="text-marca-marinho/70 leading-relaxed text-sm">{impact.description}</p>
                 <p className="text-xs text-teal mt-4 font-medium">{t("ImpactSection.saberMais")}</p>
               </button>
             ))}
@@ -132,14 +132,14 @@ const ImpactSection = () => {
           {/* Navigation arrows — visible below lg, fade on hover */}
           <button
             onClick={() => scroll("left")}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 flex lg:hidden items-center justify-center w-10 h-10 rounded-full bg-navy-foreground/10 border border-navy-foreground/10 text-navy-foreground hover:bg-navy-foreground/20 z-10 opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300"
+            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 flex lg:hidden items-center justify-center w-10 h-10 rounded-full bg-marca-marinho/10 border border-marca-marinho/10 text-marca-marinho hover:bg-marca-marinho/20 z-10 opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300"
             aria-label={t("ImpactSection.anterior")}
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
           <button
             onClick={() => scroll("right")}
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 flex lg:hidden items-center justify-center w-10 h-10 rounded-full bg-navy-foreground/10 border border-navy-foreground/10 text-navy-foreground hover:bg-navy-foreground/20 z-10 opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300"
+            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 flex lg:hidden items-center justify-center w-10 h-10 rounded-full bg-marca-marinho/10 border border-marca-marinho/10 text-marca-marinho hover:bg-marca-marinho/20 z-10 opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300"
             aria-label={t("ImpactSection.proximo")}
           >
             <ChevronRight className="w-5 h-5" />

@@ -3040,7 +3040,14 @@
     "capaVerDiapositivo": "Ver fotografia {{numero}}",
     "capaFotoOculos": "Menino sorridente com óculos azuis",
     "capaFotoMenina": "Menina sorridente num corredor",
-    "capaFotoMeninaEscola": "Menina numa sala de aula ao ar livre, com uma lousa nas mãos"
+    "capaFotoMeninaEscola": "Menina numa sala de aula ao ar livre, com uma lousa nas mãos",
+    "numeros": {
+      "estrabismoAngola": "Pessoas com estrabismo em Angola (estimativa)",
+      "pessoasSensibilizadas": "Pessoas sensibilizadas",
+      "membrosMoam": "Membros da comunidade MOAM",
+      "voluntariosKamba": "Voluntários Kamba",
+      "exerciciosVisuais": "Exercícios visuais"
+    }
   },
   "Visionarios": {
     "titulo": "Guiados por Visionários na Ciência e no Serviço",

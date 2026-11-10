@@ -49,7 +49,7 @@ const ConfirmarEmail = () => {
   }, [token, t]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-muted/40">
+    <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
       <main className="flex-1 container max-w-md pt-28 pb-16 flex items-center">
         <Card className="w-full shadow-lg border-border/60">
