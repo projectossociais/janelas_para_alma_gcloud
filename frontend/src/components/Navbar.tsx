@@ -1,9 +1,8 @@
-import { useState, useEffect, useMemo, useRef, useCallback, type KeyboardEvent } from "react";
+import { useState, useEffect, useRef, useCallback, type KeyboardEvent } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   Menu,
   Search,
-  ArrowRight,
   User,
   Settings,
   Shield,
@@ -20,285 +19,19 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import NotificationBell from "@/components/NotificationBell";
+import PesquisaSite from "@/components/PesquisaSite";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useSiteBannerAltura } from "@/contexts/SiteBannerContext";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
-import i18n from "@/i18n";
 import { disponivelNoIdiomaActual, localizar } from "@/i18n/rotas";
 import { MENU_DOAR, MENU_PRINCIPAL, type ItemMenu } from "@/lib/menuPrincipal";
-
-interface SearchItem {
-  id: string;
-  title: string;
-  description: string;
-  keywords: string;
-  route: string;
-  elementId?: string;
-}
-
-const searchIndex: SearchItem[] = [
-  {
-    id: "sobre",
-    get title() {
-      return i18n.t("Navbar.sobreOJanelasPara");
-    },
-    get description() {
-      return i18n.t("Navbar.janelasParaAAlma");
-    },
-    get keywords() {
-      return i18n.t("Navbar.sobreStartUpJanelas");
-    },
-    get route() {
-      return localizar("/impacto");
-    },
-    elementId: "sobre",
-  },
-  {
-    id: "estrabismo",
-    get title() {
-      return i18n.t("Navbar.compreenderOEstrabismo");
-    },
-    get description() {
-      return i18n.t("Navbar.oQueEO");
-    },
-    get keywords() {
-      return i18n.t("Navbar.estrabismoDefinicaoCausasTipos");
-    },
-    get route() {
-      return localizar("/sobre");
-    },
-    elementId: "estrabismo",
-  },
-  {
-    id: "pilares-economia",
-    get title() {
-      return i18n.t("Navbar.pilarEconomiaCircular");
-    },
-    get description() {
-      return i18n.t("Navbar.transformarResiduosEmRecursos");
-    },
-    get keywords() {
-      return i18n.t("Navbar.economiaCircularReciclagemSustentabilida");
-    },
-    get route() {
-      return localizar("/circular");
-    },
-  },
-  {
-    id: "pilares-educacao",
-    get title() {
-      return i18n.t("Navbar.pilarEducacao");
-    },
-    get description() {
-      return i18n.t("Navbar.promoverAEducacaoInclusiva");
-    },
-    get keywords() {
-      return i18n.t("Navbar.educacaoInclusaoConhecimentoEscola");
-    },
-    get route() {
-      return localizar("/kamba");
-    },
-  },
-  {
-    id: "pilares-saude",
-    get title() {
-      return i18n.t("Navbar.pilarSaudeVisual");
-    },
-    get description() {
-      return i18n.t("Navbar.garantirAcessoACuidados");
-    },
-    get keywords() {
-      return i18n.t("Navbar.saudeVisualOftalmologiaOculos");
-    },
-    get route() {
-      return localizar("/scanner");
-    },
-  },
-  {
-    id: "impacto",
-    get title() {
-      return i18n.t("Navbar.impacto");
-    },
-    get description() {
-      return i18n.t("Navbar.dadosEEstatisticasSobre");
-    },
-    get keywords() {
-      return i18n.t("Navbar.impactoEstatisticasSocialEducacional");
-    },
-    get route() {
-      return localizar("/impacto");
-    },
-    elementId: "impacto",
-  },
-  {
-    id: "equipa",
-    get title() {
-      return i18n.t("Navbar.aNossaEquipa");
-    },
-    get description() {
-      return i18n.t("Navbar.conhecaOsMembrosDa");
-    },
-    get keywords() {
-      return i18n.t("Navbar.equipaMembrosFundadoresVoluntarios");
-    },
-    get route() {
-      return localizar("/equipa");
-    },
-  },
-  {
-    id: "voluntariado",
-    get title() {
-      return i18n.t("Navbar.voluntariado");
-    },
-    get description() {
-      return i18n.t("Navbar.junteSeComoVoluntario");
-    },
-    get keywords() {
-      return i18n.t("Navbar.voluntariadoVoluntarioInscricaoJuntar");
-    },
-    get route() {
-      return localizar("/kamba");
-    },
-    elementId: "voluntariado",
-  },
-  {
-    id: "programa-kamba",
-    get title() {
-      return i18n.t("Navbar.programaMeuKambaEstrabico");
-    },
-    get description() {
-      return i18n.t("Navbar.redeDeApoioComunitario");
-    },
-    get keywords() {
-      return i18n.t("Navbar.kambaEstrabicoProgramaEmbaixadores");
-    },
-    get route() {
-      return localizar("/kamba");
-    },
-    elementId: "voluntariado",
-  },
-  {
-    id: "contacto",
-    get title() {
-      return i18n.t("Navbar.contacto");
-    },
-    get description() {
-      return i18n.t("Navbar.entreEmContactoConnosco");
-    },
-    get keywords() {
-      return i18n.t("Navbar.contactoEmailFormularioMensagem");
-    },
-    get route() {
-      return localizar("/junte-se");
-    },
-    elementId: "contacto",
-  },
-  {
-    id: "parceiros",
-    get title() {
-      return i18n.t("Navbar.redeDeParceirosDe");
-    },
-    get description() {
-      return i18n.t("Navbar.clinicasOpticasEEspecialistas");
-    },
-    get keywords() {
-      return i18n.t("Navbar.parceirosClinicasOpticasEspecialistas");
-    },
-    get route() {
-      return localizar("/parceiros");
-    },
-  },
-  {
-    id: "tecnologia",
-    get title() {
-      return i18n.t("Navbar.interfaceTecnologica");
-    },
-    get description() {
-      return i18n.t("Navbar.plataformaIntuitivaQueCentraliza");
-    },
-    get keywords() {
-      return i18n.t("Navbar.tecnologiaInterfaceAppPlataforma");
-    },
-    get route() {
-      return localizar("/tecnologia");
-    },
-  },
-  {
-    id: "scanner",
-    get title() {
-      return i18n.t("Navbar.scannerDeEstrabismoIa");
-    },
-    get description() {
-      return i18n.t("Navbar.diagnosticoAssistidoPorInteligencia");
-    },
-    get keywords() {
-      return i18n.t("Navbar.scannerIaAiInteligencia");
-    },
-    get route() {
-      return localizar("/scanner");
-    },
-  },
-  {
-    id: "doar-uma-vez",
-    get title() {
-      return i18n.t("Cabecalho.doarUmaVez");
-    },
-    get description() {
-      return i18n.t("Cabecalho.doarUmaVezDescricao");
-    },
-    get keywords() {
-      return i18n.t("Cabecalho.pesquisaDoarPalavras");
-    },
-    get route() {
-      return localizar("/apoiar?modo=unica#como-apoiar");
-    },
-  },
-  {
-    id: "doar-mensal",
-    get title() {
-      return i18n.t("Cabecalho.doarMensalmente");
-    },
-    get description() {
-      return i18n.t("Cabecalho.doarMensalmenteDescricao");
-    },
-    get keywords() {
-      return i18n.t("Cabecalho.pesquisaDoarPalavras");
-    },
-    get route() {
-      return localizar("/apoiar?modo=mensal#como-apoiar");
-    },
-  },
-  {
-    id: "blog",
-    get title() {
-      return i18n.t("Cabecalho.blog");
-    },
-    get description() {
-      return i18n.t("Cabecalho.blogDescricao");
-    },
-    get keywords() {
-      return i18n.t("Cabecalho.pesquisaBlogPalavras");
-    },
-    get route() {
-      return localizar("/publicacoes");
-    },
-  },
-];
 
 /** Itens do menu que existem no idioma da página (o jogo, por exemplo, pode não ter versão inglesa). */
 const visiveis = (itens: readonly ItemMenu[]) => itens.filter((i) => disponivelNoIdiomaActual(i.caminho));
@@ -435,7 +168,6 @@ const Navbar = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
   const { isLoggedIn, user, logout, isAdmin } = useAuth();
@@ -466,24 +198,6 @@ const Navbar = () => {
     setProfileOpen(false);
     toast.success(t("Navbar.sessaoTerminada"));
     navigate(localizar("/"));
-  };
-
-  const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return [];
-    const q = searchQuery.toLowerCase().trim();
-    return searchIndex.filter(
-      (item) =>
-        item.title.toLowerCase().includes(q) ||
-        item.keywords.toLowerCase().includes(q) ||
-        item.description.toLowerCase().includes(q)
-    );
-  }, [searchQuery]);
-
-  const handleSearchSelect = (item: SearchItem) => {
-    setSearchOpen(false);
-    setSearchQuery("");
-    // O ScrollToTop leva à secção pela âncora, também na mesma página.
-    navigate(item.elementId ? `${item.route}#${item.elementId}` : item.route);
   };
 
   return (
@@ -730,58 +444,7 @@ const Navbar = () => {
         </SheetContent>
       </Sheet>
 
-      <Dialog
-        open={searchOpen}
-        onOpenChange={(open) => {
-          setSearchOpen(open);
-          if (!open) setSearchQuery("");
-        }}
-      >
-        <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden">
-          <DialogHeader className="px-6 pt-6 pb-3">
-            <DialogTitle className="flex items-center gap-3">
-              <Search className="w-5 h-5 text-teal" />
-              {t("Navbar.pesquisar")}
-            </DialogTitle>
-            <DialogDescription>{t("Navbar.encontreSeccoesEConteudos")}</DialogDescription>
-          </DialogHeader>
-          <div className="px-6 pb-2">
-            <Input
-              placeholder={t("Navbar.oQueProcura")}
-              autoFocus
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="text-base"
-            />
-          </div>
-          <ScrollArea className="max-h-[280px]">
-            <div className="px-4 pb-4">
-              {searchQuery.trim() && searchResults.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-6">
-                  {t("Navbar.nenhumResultadoEncontrado")}
-                </p>
-              )}
-              {searchResults.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => handleSearchSelect(item)}
-                  className="w-full text-left px-3 py-3 rounded-lg hover:bg-muted transition-colors flex items-start gap-3 group"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
-                      {item.title}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
-                      {item.description}
-                    </p>
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-muted-foreground mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                </button>
-              ))}
-            </div>
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
+      <PesquisaSite aberta={searchOpen} onMudar={setSearchOpen} />
     </>
   );
 };
