@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Heart,
   CreditCard,
@@ -12,12 +13,14 @@ import {
   Boxes,
   ArrowRight,
   UploadCloud,
+  Repeat,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
 import FileDropzone from "@/components/FileDropzone";
 import PontosRecolha from "@/components/PontosRecolha";
+import DoacaoMensal from "@/components/apoiar/DoacaoMensal";
 import CopyRow from "@/components/CopyRow";
 import { Button } from "@/components/ui/button";
 import {
@@ -48,6 +51,9 @@ import i18n, { tPt } from "@/i18n";
 import { PROVINCES } from "@/contexts/AuthContext";
 
 type Mode = "materiais" | "financeiro";
+
+/** Doação única (financeira ou em materiais) ou apoio mensal; vem de `?modo=` (menu "Doar agora"). */
+type Periodicidade = "unica" | "mensal";
 
 interface MaterialItem {
   id: string;
@@ -204,6 +210,17 @@ const StepIndicator = ({
 
 const Apoiar = () => {
   const { t: tr } = useTranslation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const periodicidade: Periodicidade = searchParams.get("modo") === "mensal" ? "mensal" : "unica";
+  const escolherPeriodicidade = (p: Periodicidade) =>
+    setSearchParams(
+      (actuais) => {
+        const novos = new URLSearchParams(actuais);
+        novos.set("modo", p);
+        return novos;
+      },
+      { replace: true },
+    );
   const [mode, setMode] = useState<Mode>("materiais");
   const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
   const [materialNotes, setMaterialNotes] = useState("");
@@ -365,6 +382,34 @@ const Apoiar = () => {
         {/* Tabs */}
         <section className="py-16 md:py-20 bg-background">
           <div className="container max-w-5xl">
+            {/* Doação única vs. mensal: o selector principal da página */}
+            <div className="flex justify-center mb-12">
+              <div
+                role="group"
+                aria-label={tr("ApoioMensal.tipoDeDoacao")}
+                className="inline-grid grid-cols-2 w-full max-w-xl rounded-full border-2 border-marca-marinho/15 bg-marca-marfim p-1.5 shadow-card"
+              >
+                {(["unica", "mensal"] as const).map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    aria-pressed={periodicidade === p}
+                    onClick={() => escolherPeriodicidade(p)}
+                    className={`inline-flex items-center justify-center gap-2 rounded-full px-4 py-3 text-sm md:text-base font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-marca-marinho focus-visible:ring-offset-2 ${
+                      periodicidade === p ? "bg-marca-marinho text-marca-marfim shadow" : "text-marca-marinho hover:bg-marca-celeste/25"
+                    }`}
+                  >
+                    {p === "unica" ? <Heart className="w-4 h-4" /> : <Repeat className="w-4 h-4" />}
+                    {p === "unica" ? tr("ApoioMensal.doacaoUnica") : tr("ApoioMensal.doacaoMensal")}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {periodicidade === "mensal" ? (
+              <DoacaoMensal />
+            ) : (
+            <>
             <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)} className="w-full">
               <div className="flex justify-center mb-10">
                 <TabsList className="grid grid-cols-2 w-full max-w-xl h-auto p-1.5">
@@ -539,6 +584,9 @@ const Apoiar = () => {
                 </div>
               </TabsContent>
             </Tabs>
+
+            </>
+            )}
 
             <p className="text-center text-sm text-muted-foreground mt-12 max-w-xl mx-auto">
               {tr("Apoiar.todosOsDonativosSao")}

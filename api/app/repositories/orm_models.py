@@ -272,7 +272,48 @@ class Doacao(Base):
     # Comprovativo de transferência (doação financeira) -- upload directo ao
     # R2, mesmo padrão do avatar (CROSS-02). Nunca os bytes pela API.
     comprovativo_url: Mapped[str | None] = mapped_column(Text)
+    # Comprovativo de um mês do apoio mensal (Kamba Mensal, 2026-10-26).
+    # Nulo numa doação única. Cada mês é uma doação financeira normal, para o
+    # painel de administração as ver todas no mesmo sítio.
+    apoio_mensal_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("apoios_mensais.id", ondelete="SET NULL"), index=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class ApoioMensal(Base):
+    """Promessa de doação mensal (Kamba Mensal, 2026-10-26). Não há débito
+    automático: cada mês a pessoa transfere e envia o comprovativo, que fica
+    em `doacoes` com `apoio_mensal_id`. Exige conta (o estatuto aparece no
+    painel e o lembrete mensal vai para o email da conta), por isso não copia
+    nome nem email -- a anonimização (W-03) não precisa de tocar aqui.
+
+    No máximo um apoio `ativo` por utilizador (índice único parcial); cancelar
+    não apaga a linha, para os comprovativos já enviados continuarem ligados."""
+
+    __tablename__ = "apoios_mensais"
+    __table_args__ = (
+        CheckConstraint("estado IN ('ativo', 'cancelado')", name="ck_apoios_mensais_estado"),
+        CheckConstraint("valor_mensal_kz > 0", name="ck_apoios_mensais_valor_positivo"),
+        Index(
+            "uq_apoios_mensais_um_ativo_por_utilizador",
+            "utilizador_id",
+            unique=True,
+            postgresql_where=text("estado = 'ativo'"),
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    utilizador_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    valor_mensal_kz: Mapped[int] = mapped_column(nullable=False)
+    estado: Mapped[str] = mapped_column(Text, nullable=False, server_default="ativo")
+    criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    cancelado_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    ultimo_comprovativo_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Último lembrete por email: no máximo um por ciclo de 30 dias.
+    ultimo_lembrete_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class DoacaoMaterial(Base):
@@ -680,6 +721,9 @@ class Publicacao(Base):
     capa_url: Mapped[str | None] = mapped_column(Text)
     # "rascunho" | "publicada"
     estado: Mapped[str] = mapped_column(Text, nullable=False, server_default="rascunho")
+    # Quantas vezes a página pública foi aberta (2026-10-26). Um contador
+    # simples, incrementado numa só instrução (`UPDATE ... + 1`).
+    visualizacoes: Mapped[int] = mapped_column(nullable=False, server_default="0")
     criado_por: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("utilizadores.id", ondelete="SET NULL")
     )
@@ -701,6 +745,21 @@ class MidiaPublicacao(Base):
     url: Mapped[str] = mapped_column(Text, nullable=False)
     ordem: Mapped[int] = mapped_column(nullable=False, server_default="0")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class GostoPublicacao(Base):
+    """Um "Gosto" numa publicação (2026-10-26): uma conta, um gosto -- a
+    chave primária composta impede o segundo, também com pedidos em simultâneo."""
+
+    __tablename__ = "gostos_publicacao"
+
+    publicacao_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("publicacoes.id", ondelete="CASCADE"), primary_key=True
+    )
+    utilizador_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="CASCADE"), primary_key=True, index=True
+    )
+    criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class UserFeedback(Base):

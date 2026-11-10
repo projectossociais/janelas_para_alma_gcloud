@@ -56,6 +56,8 @@ vi.mock("sonner", () => ({
   toast: { success: (...a: unknown[]) => toastSuccess(...a), error: (...a: unknown[]) => toastError(...a) },
 }));
 
+vi.mock("@/components/apoiar/DoacaoMensal", () => ({ default: () => <div>Formulário da doação mensal</div> }));
+
 import Apoiar from "./Apoiar";
 
 async function abrirDialogoDeMateriais(user: ReturnType<typeof userEvent.setup>) {
@@ -285,5 +287,41 @@ describe("Apoiar -- em inglês, o que vai para a API continua em português", ()
 
     await waitFor(() => expect(registarFinanceira).toHaveBeenCalled());
     expect(registarFinanceira).toHaveBeenCalledWith("doador@example.com", "Aliado (10.000 a 250.000 Kz)", "comprovativos/x.pdf");
+  });
+});
+
+
+describe("Apoiar — doação única vs. mensal", () => {
+  it("abre na doação única por omissão", () => {
+    render(
+      <MemoryRouter initialEntries={["/apoiar"]}>
+        <Apoiar />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("button", { name: /Doação Única/ })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("tab", { name: /Apoio com Materiais/i })).toBeInTheDocument();
+    expect(screen.queryByText("Formulário da doação mensal")).not.toBeInTheDocument();
+  });
+
+  it("?modo=mensal (menu Doar Mensalmente) abre directamente a doação mensal", () => {
+    render(
+      <MemoryRouter initialEntries={["/apoiar?modo=mensal"]}>
+        <Apoiar />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("button", { name: /Doação Mensal/ })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("Formulário da doação mensal")).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: /Apoio com Materiais/i })).not.toBeInTheDocument();
+  });
+
+  it("o selector troca entre as duas", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/apoiar"]}>
+        <Apoiar />
+      </MemoryRouter>,
+    );
+    await user.click(screen.getByRole("button", { name: /Doação Mensal/ }));
+    expect(screen.getByText("Formulário da doação mensal")).toBeInTheDocument();
   });
 });

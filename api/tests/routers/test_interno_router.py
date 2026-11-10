@@ -102,3 +102,28 @@ def test_lembretes_com_segredo_envia_e_devolve_as_contagens(client) -> None:
 
     assert resposta.status_code == 200
     assert resposta.json() == {"enviados": 1, "falhados": 1}
+
+
+# --- Lembretes do apoio mensal (Kamba Mensal, 2026-10-26) --------------------
+
+
+def test_lembretes_apoio_mensal_sem_segredo_devolve_403(client) -> None:
+    assert client.post("/interno/lembretes-apoio-mensal").status_code == 403
+
+
+def test_lembretes_apoio_mensal_com_segredo_envia_e_devolve_as_contagens(client) -> None:
+    from app.repositories.apoios_mensais_repository import DestinatarioLembreteApoio
+    from app.services.apoio_mensal_service import ApoioMensalService
+    from tests.services.test_apoio_mensal_service import EmailSenderFalso, RepositorioApoiosFalso
+
+    repo = RepositorioApoiosFalso()
+    repo.destinatarios = [DestinatarioLembreteApoio("a1", "a@example.com", "Ana", 15_000)]
+    app.dependency_overrides[obter_cron_valido] = lambda: None
+    app.dependency_overrides[interno_router.obter_lembrete_apoio_mensal_service] = lambda: ApoioMensalService(
+        repo, EmailSenderFalso()
+    )
+
+    resposta = client.post("/interno/lembretes-apoio-mensal")
+
+    assert resposta.status_code == 200
+    assert resposta.json() == {"enviados": 1, "falhados": 0}

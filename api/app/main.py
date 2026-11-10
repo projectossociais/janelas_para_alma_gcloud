@@ -11,6 +11,7 @@ from app.core.config import obter_settings
 from app.routers import (
     admin,
     agendamentos,
+    apoios_mensais,
     auth,
     banner_homepage,
     banners,
@@ -21,6 +22,7 @@ from app.routers import (
     doacoes,
     exercicios,
     feedback,
+    impacto,
     interno,
     jogo,
     notificacoes,
@@ -76,6 +78,8 @@ app.include_router(conta.router)
 app.include_router(banners.router)
 app.include_router(banner_homepage.router)
 app.include_router(doacoes.router)
+app.include_router(apoios_mensais.router)
+app.include_router(impacto.router)
 app.include_router(feedback.router)
 app.include_router(uploads.router)
 app.include_router(sessoes_exercicio.router)

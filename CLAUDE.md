@@ -270,6 +270,30 @@ documentos do redesenho (`REDESENHO_FRONTEND.md`, `SISTEMA_DESIGN.md`, `LAYOUTS.
 `MARCA.md`, `ESTRUTURA_SITE.md`) ficam como histórico — não retomar nem introduzir padrões
 visuais novos sem nova decisão da equipa.
 
+**Nova página inicial e navegação (2026-10-26, decisão do dono do projecto, para o Desafio
+Genial; ainda em revisão):** inspiradas na arquitectura do Project Prakash e restritas à
+paleta da marca (`marca.*` em `tailwind.config.ts`; nada de cinzentos nem branco puro nas
+partes novas). Um só cabeçalho fixo com menus suspensos (`lib/menuPrincipal.ts`, fonte única,
+com teste que garante que todo o destino existe no mapa de rotas): Sobre Nós, O Nosso
+Trabalho, Serviços, Portal Clínico e o botão "Doar Agora" (uma vez / mensalmente); em mobile,
+acordeão. A página inicial são secções em `components/inicio/` (pilares, visão/missão,
+números de impacto reais por `GET /impacto/numeros`, equipa, vídeos, parceiros, histórias) e o
+conteúdo trocável (vídeos, fotos, histórias) vive em `components/inicio/conteudoInicio.ts`.
+**As histórias são ilustrativas** (`ilustrativa: true`, o cartão di-lo): uma história real só
+entra com consentimento escrito do representante legal. O blog (`/publicacoes`) passou a ter
+tempo de leitura, visualizações (`publicacoes.visualizacoes`, `POST
+/publicacoes/{slug}/visualizacoes`) e "Gosto" com sessão (`gostos_publicacao`, uma conta um
+gosto).
+
+**Apoio mensal / Kamba Mensal (2026-10-26):** doação recorrente **sem débito automático** (não
+há gateway): a conta promete um valor por mês (`apoios_mensais`, mínimo 1.000 Kz, no máximo um
+activo por conta por índice único parcial), transfere e envia o comprovativo, que fica em
+`doacoes` com `apoio_mensal_id` (`ApoioMensalService`, `/apoios-mensais`). O estatuto aparece
+em `/apoiar?modo=mensal` e no painel. Lembrete suave por email a quem passou 30 dias sem
+comprovativo, no máximo um por ciclo: `POST /interno/lembretes-apoio-mensal` -- **o job do
+Cloud Scheduler ainda não foi criado** (mesmo padrão dos outros, sem novas tentativas).
+Níveis mostrados: 5.000 / 15.000 / 30.000 Kz (preços: confirmação do dono do projecto).
+
 Público-alvo inclui **crianças**. Todo o tratamento de dados deve assumir isso.
 
 Idioma do produto e do código: **português (pt-PT)**. Nomes de colunas, rotas e variáveis
@@ -426,7 +450,8 @@ activa; verificar e testar isso explicitamente.**
    em cabeçalho, nunca sessão.** `obter_cron_valido` (`core/dependencies.py`) compara
    `X-Cron-Secret` com `CRON_SECRET` via `hmac.compare_digest`; sem o segredo configurado,
    recusa sempre — nunca fica "aberto por engano" em produção por falta de configuração.
-   Hoje há dois: `/interno/eliminar-contas-pendentes` (W-03) e
+   Hoje há três: `/interno/lembretes-apoio-mensal` (Kamba Mensal, 2026-10-26, job ainda por
+   criar), `/interno/eliminar-contas-pendentes` (W-03) e
    `/interno/lembretes-exercicios` (lembrete diário de treino por email, só a quem activou
    "Lembretes de Exercícios Visuais", tem acesso, treinou nos últimos 14 dias e ainda não
    treinou hoje em Luanda — `LembreteExerciciosService`). Os jobs do Cloud Scheduler correm
