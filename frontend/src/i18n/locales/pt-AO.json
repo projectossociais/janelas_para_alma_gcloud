@@ -950,6 +950,7 @@
     "notificacoesPorLer": "Notificações ({{contagem}} por ler)"
   },
   "NovidadesSection": {
+    "tagPublicacao": "Publicação",
     "fiquePorDentro": "Fique por dentro",
     "novidades": "Novidades",
     "externo": "Externo",

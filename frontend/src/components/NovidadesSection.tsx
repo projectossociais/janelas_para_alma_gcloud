@@ -1,12 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowUpRight, FileBadge, Gamepad2 } from "lucide-react";
+import { ArrowUpRight, FileBadge, Gamepad2, Newspaper } from "lucide-react";
 import FirmaOlharAlinhadoModal from "@/components/FirmaOlharAlinhadoModal";
 import teamGroupPhoto from "@/assets/team-group-stairs.jpg";
 import saudeMundialPhoto from "@/assets/novidade-saude-mundial.jpg";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { disponivelNoIdiomaActual, localizar } from "@/i18n/rotas";
+import { publicacoesApi, type PublicacaoPublica } from "@/lib/apiClient";
+import { eVideoDaGaleria } from "@/lib/midiaPublicacao";
+
+/** Quantas publicações do blog entram nas Novidades (as mais recentes). */
+export const MAX_PUBLICACOES_NAS_NOVIDADES = 3;
 
 type Novidade = {
   readonly title: string;
@@ -14,6 +19,10 @@ type Novidade = {
   readonly to?: string;
   external: boolean;
   image: string | null;
+  /** Vídeo mostrado como miniatura quando não há imagem (publicação só com vídeo). */
+  video?: string;
+  /** Texto em português vindo da API (marca-se com `lang` no site inglês). */
+  conteudoPt?: boolean;
   /** Ícone mostrado no lugar da imagem, quando não há imagem. */
   icon?: typeof Gamepad2;
   readonly tag?: string;
@@ -67,9 +76,47 @@ const novidades: Novidade[] = [
   },
 ];
 
+/** Uma publicação do blog (`/publicacoes`) como cartão das Novidades. A
+ *  miniatura é a capa; sem capa, a primeira foto da galeria; só com vídeo,
+ *  o primeiro fotograma do vídeo. */
+function novidadeDaPublicacao(p: PublicacaoPublica): Novidade {
+  const foto = p.midias.find((m) => !eVideoDaGaleria(m.url));
+  const video = p.midias.find((m) => eVideoDaGaleria(m.url));
+  return {
+    title: p.titulo,
+    resumo: p.resumo,
+    get tag() {
+      return i18n.t("NovidadesSection.tagPublicacao");
+    },
+    get to() {
+      return localizar(`/publicacoes/${p.slug}`);
+    },
+    external: false,
+    image: p.capa_url ?? foto?.url ?? null,
+    video: p.capa_url || foto ? undefined : video?.url,
+    icon: Newspaper,
+    conteudoPt: true,
+  };
+}
+
 const NovidadesSection = () => {
   const { t } = useTranslation();
   const [modalAberto, setModalAberto] = useState<Novidade["modal"] | null>(null);
+  const [publicacoes, setPublicacoes] = useState<Novidade[]>([]);
+
+  useEffect(() => {
+    let activo = true;
+    // Uma falha aqui nunca estraga a página inicial: ficam só os cartões fixos.
+    publicacoesApi
+      .listarPublicadas()
+      .then((lista) => {
+        if (activo) setPublicacoes(lista.slice(0, MAX_PUBLICACOES_NAS_NOVIDADES).map(novidadeDaPublicacao));
+      })
+      .catch(() => {});
+    return () => {
+      activo = false;
+    };
+  }, []);
   return (
     <section className="py-16 md:py-24 bg-white">
       <div className="container">
@@ -81,7 +128,7 @@ const NovidadesSection = () => {
         </div>
 
         <div className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-4 scrollbar-hide touch-pan-x">
-          {novidades.filter((item) => !item.to || disponivelNoIdiomaActual(item.to)).map((item) => {
+          {[...publicacoes, ...novidades].filter((item) => !item.to || disponivelNoIdiomaActual(item.to)).map((item) => {
             const Icone = item.icon ?? Gamepad2;
             const cardContent = (
               <>
@@ -92,6 +139,15 @@ const NovidadesSection = () => {
                       alt={item.title}
                       className="w-full h-48 object-cover"
                       loading="lazy"
+                    />
+                  ) : item.video ? (
+                    <video
+                      src={`${item.video}#t=0.1`}
+                      muted
+                      playsInline
+                      preload="metadata"
+                      aria-hidden="true"
+                      className="w-full h-48 object-cover bg-marca-marinho"
                     />
                   ) : (
                     <div className="w-full h-48 bg-gradient-to-br from-marca-ouro/20 to-marca-marinho/10 flex items-center justify-center">
@@ -110,11 +166,11 @@ const NovidadesSection = () => {
                   )}
                 </div>
                 <div className="p-6 space-y-3 flex flex-col flex-1">
-                  <h3 className="text-lg font-bold text-marca-marinho leading-snug">
+                  <h3 lang={item.conteudoPt ? "pt-AO" : undefined} className="text-lg font-bold text-marca-marinho leading-snug">
                     {item.title}
                   </h3>
                   {item.resumo && (
-                    <p className="text-sm text-marca-marinho/70 leading-relaxed line-clamp-3">{item.resumo}</p>
+                    <p lang={item.conteudoPt ? "pt-AO" : undefined} className="text-sm text-marca-marinho/70 leading-relaxed line-clamp-3">{item.resumo}</p>
                   )}
                   <span className="inline-flex items-center gap-1 text-sm text-marca-azul font-medium mt-auto pt-2">
                     {t("NovidadesSection.saibaMais")}
@@ -152,7 +208,7 @@ const NovidadesSection = () => {
                 {cardContent}
               </a>
             ) : (
-              <Link key={item.title} to={item.to ?? "/"} className={cardClass}>
+              <Link key={item.to ?? item.title} to={item.to ?? "/"} className={cardClass}>
                 {cardContent}
               </Link>
             );

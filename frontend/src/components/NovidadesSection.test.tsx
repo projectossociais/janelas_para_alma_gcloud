@@ -1,8 +1,38 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
+import { vi } from "vitest";
+
+const listarPublicadas = vi.fn();
+vi.mock("@/lib/apiClient", () => ({
+  publicacoesApi: { listarPublicadas: (...a: unknown[]) => listarPublicadas(...a) },
+}));
+
 import i18n from "@/i18n";
 import NovidadesSection from "./NovidadesSection";
+
+function publicacao(n: number, extra: Record<string, unknown> = {}) {
+  return {
+    id: `p${n}`,
+    slug: `publicacao-${n}`,
+    titulo: `Publicação ${n}`,
+    resumo: `resumo ${n}`,
+    corpo: "c",
+    local: null,
+    data_evento: null,
+    capa_url: null,
+    midias: [],
+    visualizacoes: 0,
+    gostos: 0,
+    gostei: false,
+    ...extra,
+  };
+}
+
+beforeEach(() => {
+  listarPublicadas.mockReset();
+  listarPublicadas.mockResolvedValue([]);
+});
 
 describe("NovidadesSection -- cartão da firma Olhar Alinhado", () => {
   afterEach(async () => {
@@ -41,5 +71,53 @@ describe("NovidadesSection -- cartão da firma Olhar Alinhado", () => {
       "href",
       "https://www.cnnbrasil.com.br/tudo-sobre/saude-ocular/",
     );
+  });
+});
+
+describe("NovidadesSection -- publicações do blog", () => {
+  it("mostra as 3 publicações mais recentes primeiro, com link para cada uma", async () => {
+    listarPublicadas.mockResolvedValue([1, 2, 3, 4].map((n) => publicacao(n)));
+    render(
+      <MemoryRouter>
+        <NovidadesSection />
+      </MemoryRouter>,
+    );
+
+    const primeira = await screen.findByRole("link", { name: /Publicação 1/ });
+    expect(primeira).toHaveAttribute("href", "/publicacoes/publicacao-1");
+    expect(within(primeira).getByText("Publicação")).toBeInTheDocument();
+    expect(within(primeira).getByText("resumo 1")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Publicação 3/ })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Publicação 4/ })).not.toBeInTheDocument();
+
+    const links = screen.getAllByRole("link");
+    expect(links[0]).toBe(primeira);
+  });
+
+  it("publicação só com vídeo usa o vídeo como miniatura", async () => {
+    listarPublicadas.mockResolvedValue([
+      publicacao(1, { midias: [{ id: "v", url: "https://cdn.test/publicacoes/p1/v.mp4", ordem: 1 }] }),
+    ]);
+    const { container } = render(
+      <MemoryRouter>
+        <NovidadesSection />
+      </MemoryRouter>,
+    );
+
+    await screen.findByRole("link", { name: /Publicação 1/ });
+    expect(container.querySelector("video")).toHaveAttribute("src", "https://cdn.test/publicacoes/p1/v.mp4#t=0.1");
+  });
+
+  it("sem API, ficam só os cartões fixos", async () => {
+    listarPublicadas.mockRejectedValue(new Error("sem ligação"));
+    render(
+      <MemoryRouter>
+        <NovidadesSection />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole("link", { name: /Notícias sobre a Saúde Visual/i })).toBeInTheDocument();
+    expect(listarPublicadas).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText("Publicação")).not.toBeInTheDocument();
   });
 });
