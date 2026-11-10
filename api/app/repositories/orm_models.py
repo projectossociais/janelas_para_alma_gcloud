@@ -1004,6 +1004,121 @@ class PartidaLocalJogo(Base):
     terminada_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+class SalaJogo(Base):
+    """Uma sala do Multijogador Online do "Inclusivamente": dois jogadores,
+    cada um no seu aparelho, a responder à mesma pergunta ao mesmo tempo.
+
+    Todo o estado da partida vive aqui e nos `jogadores_sala_jogo`, decidido
+    só pelo servidor (`SalaJogoService`): a pergunta em curso, o prazo de
+    resposta (relógio do servidor, nunca o do aparelho), os pontos e quem
+    ganhou. Entra-se pelo `codigo` -- não há emparelhamento com desconhecidos.
+
+    `estado`: `a_aguardar` -> `em_curso` -> `terminada`, ou `abandonada`.
+    `fase` (só em curso): `pergunta` (à espera das respostas) ou `revelacao`
+    (resposta certa à vista, uns segundos antes da ronda seguinte)."""
+
+    __tablename__ = "salas_jogo"
+    __table_args__ = (
+        CheckConstraint(
+            "estado IN ('a_aguardar', 'em_curso', 'terminada', 'abandonada')", name="ck_salas_jogo_estado"
+        ),
+        CheckConstraint("fase IS NULL OR fase IN ('pergunta', 'revelacao')", name="ck_salas_jogo_fase"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    codigo: Mapped[str] = mapped_column(String(8), nullable=False, unique=True, index=True)
+    anfitriao_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    estado: Mapped[str] = mapped_column(Text, nullable=False, server_default="a_aguardar")
+    fase: Mapped[str | None] = mapped_column(Text)
+    ronda: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    desempate: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    pergunta_atual_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    perguntas_entregues: Mapped[list[uuid.UUID]] = mapped_column(
+        ARRAY(UUID(as_uuid=True)), nullable=False, server_default="{}"
+    )
+    prazo_resposta: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revelacao_ate: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Depois de uma denúncia, o chat da sala fecha para os dois.
+    chat_bloqueado: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    vencedores: Mapped[list[uuid.UUID]] = mapped_column(
+        ARRAY(UUID(as_uuid=True)), nullable=False, server_default="{}"
+    )
+    # `completa` (todas as rondas) ou `desistencia` (alguém saiu ou sumiu).
+    motivo_fim: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    terminada_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class JogadorSalaJogo(Base):
+    """Um jogador numa sala do Multijogador Online. `nome` é só o primeiro
+    nome, copiado ao entrar (nunca o email); `adulto` é a fotografia, ao
+    entrar, de `e_adulto` (ver `services/sala_jogo_service.py`) -- o chat da
+    sala só existe com os dois adultos."""
+
+    __tablename__ = "jogadores_sala_jogo"
+    __table_args__ = (UniqueConstraint("sala_id", "utilizador_id", name="uq_jogadores_sala_jogo_sala_utilizador"),)
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    sala_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("salas_jogo.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    utilizador_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    ordem: Mapped[int] = mapped_column(nullable=False)
+    nome: Mapped[str] = mapped_column(Text, nullable=False)
+    adulto: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    pontos: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    acertos: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    # A ronda em curso: se já respondeu, o quê ("A".."D"; `None` com
+    # `respondeu_em` preenchido não existe -- sem resposta fica tudo `None`).
+    resposta_ronda: Mapped[str | None] = mapped_column(Text)
+    respondeu_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    certa_ronda: Mapped[bool | None] = mapped_column(Boolean)
+    pontos_ronda: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    # Último sinal de vida (o aparelho pergunta pelo estado de segundo a segundo).
+    visto_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    # Preenchidos ao terminar: o prémio antes do tecto diário e o creditado.
+    moedas_sem_limite: Mapped[int | None] = mapped_column()
+    moedas_ganhas: Mapped[int | None] = mapped_column()
+
+
+class MensagemSalaJogo(Base):
+    """Mensagem do chat de uma sala (só entre dois adultos, já filtrada por
+    `services/filtro_chat.py`). Fica guardada para uma denúncia poder ser
+    vista por um admin; apaga-se com a conta de quem a escreveu."""
+
+    __tablename__ = "mensagens_sala_jogo"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    sala_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("salas_jogo.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    utilizador_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    texto: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class DenunciaChatJogo(Base):
+    """Denúncia do chat de uma sala, feita por um dos dois jogadores."""
+
+    __tablename__ = "denuncias_chat_jogo"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    sala_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("salas_jogo.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    denunciante_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class EstatisticaCategoriaJogador(Base):
     """Respostas dadas e certas, por jogador e por categoria de pergunta --
     agregado (uma linha por par), actualizado na mesma transacção que regista
