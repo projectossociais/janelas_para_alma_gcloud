@@ -1846,6 +1846,8 @@ export interface SalaJogo {
   tempo_por_pergunta: number;
   // Pelo relógio do servidor; o aparelho só faz a contagem entre pedidos.
   segundos_restantes: number | null;
+  // Na revelação: quanto falta para a pergunta seguinte (ou para o fim).
+  segundos_ate_proxima: number | null;
   minha_resposta: RespostaOpcaoJogo | null;
   revelacao: { resposta_correta: RespostaOpcaoJogo; explicacao: string | null } | null;
   motivo_fim: "completa" | "desistencia" | null;

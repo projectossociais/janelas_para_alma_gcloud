@@ -44,7 +44,8 @@ const estadoDoErro = (err: unknown) => (err as { status?: unknown } | null)?.sta
 const detalheDoErro = (err: unknown) => String((err as { message?: unknown } | null)?.message ?? "");
 
 interface JogoOnlineProps {
-  /** De quanto em quanto tempo se pergunta pelo estado da sala (os testes encurtam). */
+  /** De quanto em quanto tempo se pergunta pelo estado da sala durante a
+   *  partida (à espera e depois do fim pergunta-se menos vezes). */
   intervaloMs?: number;
 }
 
@@ -57,7 +58,7 @@ interface JogoOnlineProps {
  * O chat só aparece quando o servidor diz que está disponível (os dois
  * jogadores adultos); as mensagens recusadas pelo filtro mostram o motivo.
  */
-const JogoOnline = ({ intervaloMs = 1500 }: JogoOnlineProps) => {
+const JogoOnline = ({ intervaloMs = 700 }: JogoOnlineProps) => {
   const { t } = useTranslation();
   const { profile, loading: aCarregarPerfil } = useProfile();
   const { recarregar } = useCarteiraJogo();
@@ -72,31 +73,36 @@ const JogoOnline = ({ intervaloMs = 1500 }: JogoOnlineProps) => {
   const [erro, setErro] = useState<string | null>(null);
   const [semLigacao, setSemLigacao] = useState(false);
   const [segundos, setSegundos] = useState<number | null>(null);
-  const [aResponder, setAResponder] = useState(false);
+  // A opção em que o jogador tocou, marcada logo no ecrã enquanto o pedido
+  // vai e vem -- sem isto o toque parecia não fazer nada durante a viagem.
+  const [escolha, setEscolha] = useState<{ perguntaId: string; opcao: RespostaOpcaoJogo } | null>(null);
   const [copiado, setCopiado] = useState(false);
   const [mensagem, setMensagem] = useState("");
   const [erroChat, setErroChat] = useState<string | null>(null);
   const [aEnviar, setAEnviar] = useState(false);
   const [confirmarDenuncia, setConfirmarDenuncia] = useState(false);
 
-  // Só a resposta mais recente do servidor se aplica: um pedido de estado
-  // antigo que chegue depois de uma resposta não a pode desfazer.
-  const pedidos = useRef(0);
-  const aplicado = useRef(0);
+  // Muda sempre que uma acção do jogador (responder, começar, mensagem...)
+  // parte e quando chega. Um pedido de estado que estivesse a meio durante
+  // uma acção é deitado fora: pode trazer o estado de antes dela e desfazia
+  // no ecrã o que o jogador acabou de fazer (a resposta "desaparecia" até ao
+  // pedido seguinte -- o jogo parecia colar).
+  const epoca = useRef(0);
+  const aResponder = useRef(false);
   const falhasSeguidas = useRef(0);
   const premioVisto = useRef<string | null>(null);
 
-  const aplicar = useCallback((numero: number, nova: SalaJogo) => {
-    if (numero < aplicado.current) return;
-    aplicado.current = numero;
+  const aplicar = useCallback((nova: SalaJogo) => {
     setSala(nova);
-    setSegundos(nova.segundos_restantes);
+    // `?? null`: uma API ainda sem `segundos_ate_proxima` (deploy a meio) não parte o ecrã.
+    setSegundos(nova.segundos_restantes ?? nova.segundos_ate_proxima ?? null);
     guardarSala(nova.estado === "abandonada" ? null : nova.codigo);
   }, []);
 
   const esquecerSala = useCallback(() => {
-    aplicado.current = ++pedidos.current;
+    epoca.current++;
     setSala(null);
+    setEscolha(null);
     setSegundos(null);
     guardarSala(null);
   }, []);
@@ -109,10 +115,12 @@ const JogoOnline = ({ intervaloMs = 1500 }: JogoOnlineProps) => {
     if (!profile?.id || emIngles || sala) return;
     const guardada = lerSalaGuardada();
     if (!guardada) return;
-    const numero = ++pedidos.current;
+    const epocaNoInicio = epoca.current;
     jogoOnlineApi
       .estado(guardada)
-      .then((nova) => aplicar(numero, nova))
+      .then((nova) => {
+        if (epoca.current === epocaNoInicio) aplicar(nova);
+      })
       .catch(() => guardarSala(null));
     // Só ao abrir a página com sessão.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -126,13 +134,13 @@ const JogoOnline = ({ intervaloMs = 1500 }: JogoOnlineProps) => {
     let cancelado = false;
     let temporizador: number | undefined;
     const perguntar = async () => {
-      const numero = ++pedidos.current;
+      const epocaNoInicio = epoca.current;
       try {
         const nova = await jogoOnlineApi.estado(codigo);
         if (cancelado) return;
         falhasSeguidas.current = 0;
         setSemLigacao(false);
-        aplicar(numero, nova);
+        if (epoca.current === epocaNoInicio) aplicar(nova);
       } catch (err) {
         if (cancelado) return;
         if (estadoDoErro(err) === 404) {
@@ -143,18 +151,22 @@ const JogoOnline = ({ intervaloMs = 1500 }: JogoOnlineProps) => {
         falhasSeguidas.current++;
         if (falhasSeguidas.current >= 2) setSemLigacao(true);
       }
-      if (!cancelado) temporizador = window.setTimeout(perguntar, estado === "terminada" ? intervaloMs * 3 : intervaloMs);
+      if (!cancelado) temporizador = window.setTimeout(perguntar, espera);
     };
-    temporizador = window.setTimeout(perguntar, intervaloMs);
+    // Em jogo pergunta-se depressa (cada pedido só parte depois de o anterior
+    // chegar, por isso nunca se acumulam); à espera e depois do fim, menos.
+    const espera = estado === "em_curso" ? intervaloMs : estado === "terminada" ? intervaloMs * 4 : intervaloMs * 1.5;
+    temporizador = window.setTimeout(perguntar, espera);
     return () => {
       cancelado = true;
       window.clearTimeout(temporizador);
     };
   }, [codigo, estado, chatAberto, intervaloMs, aplicar, esquecerSala, t]);
 
-  // Contagem entre pedidos: o valor certo volta sempre do servidor.
+  // Contagem entre pedidos (do tempo da pergunta e da espera pela pergunta
+  // seguinte): o valor certo volta sempre do servidor.
   useEffect(() => {
-    if (segundos === null || segundos <= 0 || sala?.fase !== "pergunta") return;
+    if (segundos === null || segundos <= 0 || !sala?.fase) return;
     const temporizador = window.setTimeout(() => setSegundos((s) => (s === null ? s : Math.max(0, s - 1))), 1000);
     return () => window.clearTimeout(temporizador);
   }, [segundos, sala?.fase]);
@@ -171,14 +183,15 @@ const JogoOnline = ({ intervaloMs = 1500 }: JogoOnlineProps) => {
     if (aPedir) return;
     setAPedir(true);
     setErro(null);
-    const numero = ++pedidos.current;
+    epoca.current++;
     try {
-      aplicar(numero, await accao());
+      aplicar(await accao());
     } catch (err) {
       console.error("Falha num pedido do Multijogador Online:", err);
       const chave = estadoDoErro(err) === 404 ? "404" : detalheDoErro(err);
       setErro(mensagens[chave] ?? t("JogoOnline.naoFoiPossivel"));
     } finally {
+      epoca.current++;
       setAPedir(false);
     }
   };
@@ -198,18 +211,24 @@ const JogoOnline = ({ intervaloMs = 1500 }: JogoOnlineProps) => {
   const comecar = () => sala && pedir(() => jogoOnlineApi.comecar(sala.codigo));
 
   const responder = async (opcao: RespostaOpcaoJogo) => {
-    if (!sala?.pergunta || aResponder || sala.minha_resposta) return;
-    setAResponder(true);
+    if (!sala?.pergunta || aResponder.current || sala.minha_resposta) return;
+    const perguntaId = sala.pergunta.id;
+    aResponder.current = true;
+    setEscolha({ perguntaId, opcao });
     setErro(null);
-    const numero = ++pedidos.current;
+    epoca.current++;
     try {
-      aplicar(numero, await jogoOnlineApi.responder(sala.codigo, sala.pergunta.id, opcao));
+      aplicar(await jogoOnlineApi.responder(sala.codigo, perguntaId, opcao));
     } catch (err) {
       // "ronda_fechada": o prazo passou ou já tinha respondido -- o próximo
       // pedido de estado mostra o que ficou; qualquer outro erro, pode tentar de novo.
-      if (detalheDoErro(err) !== "ronda_fechada") setErro(t("JogoOnline.naoFoiPossivelResponder"));
+      if (detalheDoErro(err) !== "ronda_fechada") {
+        setEscolha(null);
+        setErro(t("JogoOnline.naoFoiPossivelResponder"));
+      }
     } finally {
-      setAResponder(false);
+      epoca.current++;
+      aResponder.current = false;
     }
   };
 
@@ -245,9 +264,9 @@ const JogoOnline = ({ intervaloMs = 1500 }: JogoOnlineProps) => {
     if (!sala || !texto || aEnviar) return;
     setAEnviar(true);
     setErroChat(null);
-    const numero = ++pedidos.current;
+    epoca.current++;
     try {
-      aplicar(numero, await jogoOnlineApi.enviarMensagem(sala.codigo, texto));
+      aplicar(await jogoOnlineApi.enviarMensagem(sala.codigo, texto));
       setMensagem("");
     } catch (err) {
       const detalhe = detalheDoErro(err);
@@ -268,6 +287,7 @@ const JogoOnline = ({ intervaloMs = 1500 }: JogoOnlineProps) => {
             : t("JogoOnline.chat.naoEnviada")
       );
     } finally {
+      epoca.current++;
       setAEnviar(false);
     }
   };
@@ -275,15 +295,21 @@ const JogoOnline = ({ intervaloMs = 1500 }: JogoOnlineProps) => {
   const denunciar = async () => {
     if (!sala) return;
     setConfirmarDenuncia(false);
-    const numero = ++pedidos.current;
+    epoca.current++;
     try {
-      aplicar(numero, await jogoOnlineApi.denunciarChat(sala.codigo));
+      aplicar(await jogoOnlineApi.denunciarChat(sala.codigo));
     } catch (err) {
       console.error("Falha ao denunciar o chat:", err);
       setErroChat(t("JogoOnline.chat.naoDenunciada"));
+    } finally {
+      epoca.current++;
     }
   };
 
+  // O que o servidor já confirmou ou, enquanto não chega, o toque do jogador.
+  const minhaResposta =
+    sala?.minha_resposta ??
+    (sala?.fase === "pergunta" && escolha && escolha.perguntaId === sala.pergunta?.id ? escolha.opcao : null);
   const eu = sala?.jogadores.find((j) => j.eu) ?? null;
   const adversario = sala?.jogadores.find((j) => !j.eu) ?? null;
   const rotuloDaRonda = sala
@@ -479,10 +505,10 @@ const JogoOnline = ({ intervaloMs = 1500 }: JogoOnlineProps) => {
                 </p>
                 <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
                   {OPCOES.map((opcao) => {
-                    const minha = (sala.fase === "revelacao" ? eu?.resposta : sala.minha_resposta) === opcao;
+                    const minha = (sala.fase === "revelacao" ? eu?.resposta : minhaResposta) === opcao;
                     const certa = sala.revelacao?.resposta_correta === opcao;
                     const errada = !!sala.revelacao && minha && !certa;
-                    const fechado = sala.fase !== "pergunta" || !!sala.minha_resposta || aResponder || segundos === 0;
+                    const fechado = sala.fase !== "pergunta" || !!minhaResposta || segundos === 0;
                     const texto = { A: sala.pergunta!.opcao_a, B: sala.pergunta!.opcao_b, C: sala.pergunta!.opcao_c, D: sala.pergunta!.opcao_d }[opcao];
                     return (
                       <button
@@ -516,7 +542,7 @@ const JogoOnline = ({ intervaloMs = 1500 }: JogoOnlineProps) => {
                   })}
                 </div>
 
-                {sala.fase === "pergunta" && sala.minha_resposta && (
+                {sala.fase === "pergunta" && minhaResposta && (
                   <p role="status" className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                     <Loader2 className="w-4 h-4 animate-spin" />
                     {t("JogoOnline.aEsperaDe", { nome: adversario?.nome ?? "" })}
@@ -532,7 +558,9 @@ const JogoOnline = ({ intervaloMs = 1500 }: JogoOnlineProps) => {
                           : t("JogoOnline.errado")}
                     </p>
                     {sala.revelacao?.explicacao && <p className="text-sm text-muted-foreground">{sala.revelacao.explicacao}</p>}
-                    <p className="text-xs text-muted-foreground">{t("JogoOnline.proximaASeguir")}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {segundos ? t("JogoOnline.continuaEm", { segundos }) : t("JogoOnline.proximaASeguir")}
+                    </p>
                   </div>
                 )}
 

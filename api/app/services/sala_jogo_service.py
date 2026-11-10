@@ -56,7 +56,7 @@ PATAMAR_DO_DESEMPATE = 15
 
 TEMPO_POR_PERGUNTA = timedelta(seconds=30)
 # Uma resposta enviada mesmo no fim ainda pode vir a caminho.
-TOLERANCIA_DE_REDE = timedelta(seconds=2)
+TOLERANCIA_DE_REDE = timedelta(seconds=1)
 TEMPO_DE_REVELACAO = timedelta(seconds=6)
 
 PONTOS_POR_ACERTO = 100

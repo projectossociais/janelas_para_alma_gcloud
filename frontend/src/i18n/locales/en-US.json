@@ -956,6 +956,7 @@
     "errado": "Wrong.",
     "tempoEsgotado": "Time is up.",
     "proximaASeguir": "The next question is coming up...",
+    "continuaEm": "Continuing in {{segundos}}...",
     "fimDaPartida": "End of the match",
     "ganhou": "You won!",
     "ganhouOutro": "{{nome}} won",

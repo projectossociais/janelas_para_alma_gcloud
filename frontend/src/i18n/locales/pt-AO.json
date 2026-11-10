@@ -956,6 +956,7 @@
     "errado": "Errado.",
     "tempoEsgotado": "O tempo acabou.",
     "proximaASeguir": "A próxima pergunta vem a seguir...",
+    "continuaEm": "A continuar em {{segundos}}...",
     "fimDaPartida": "Fim da partida",
     "ganhou": "Ganhou!",
     "ganhouOutro": "{{nome}} ganhou",
