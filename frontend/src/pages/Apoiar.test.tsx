@@ -572,4 +572,22 @@ describe("Apoiar -- Doar Uma Vez / Doar Mensalmente (menu)", () => {
     expect(screen.getByRole("button", { name: "25.000 Kz" })).toHaveAttribute("aria-pressed", "false");
     expect(screen.getByRole("button", { name: /^Continuar$/ })).toBeDisabled();
   });
+
+  it("cada frequência tem a sua cor: marinho para uma vez, verde para mensal", async () => {
+    const user = userEvent.setup();
+    render(<Apoiar />, { wrapper: MemoryRouter });
+    await user.click(screen.getByRole("tab", { name: /Apoio Financeiro/i }));
+
+    expect(screen.getByRole("button", { name: "Uma única vez" })).toHaveClass("bg-navy");
+    await user.click(screen.getByRole("button", { name: "25.000 Kz" }));
+    expect(screen.getByRole("button", { name: "25.000 Kz" })).toHaveClass("bg-navy");
+    expect(screen.getByRole("button", { name: /^Continuar$/ })).toHaveClass("bg-navy");
+
+    await user.click(screen.getByRole("button", { name: "Mensalmente" }));
+    expect(screen.getByRole("button", { name: "Mensalmente" })).toHaveClass("bg-green");
+    expect(screen.getByRole("button", { name: "Uma única vez" })).not.toHaveClass("bg-navy");
+    await user.click(screen.getByRole("button", { name: "5.000 Kz" }));
+    expect(screen.getByRole("button", { name: "5.000 Kz" })).toHaveClass("bg-green");
+    expect(screen.getByRole("button", { name: /^Continuar$/ })).toHaveClass("bg-green");
+  });
 });
