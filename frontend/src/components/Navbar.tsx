@@ -265,7 +265,7 @@ const searchIndex: SearchItem[] = [
       return i18n.t("Cabecalho.pesquisaDoarPalavras");
     },
     get route() {
-      return localizar("/apoiar?modo=mensal");
+      return localizar("/apoiar?modo=mensal#como-apoiar");
     },
   },
   {

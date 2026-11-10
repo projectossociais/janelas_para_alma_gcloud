@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Heart,
   Check,
@@ -39,6 +40,7 @@ import { Progress } from "@/components/ui/progress";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DoacaoFinanceira from "@/components/DoacaoFinanceira";
+import { frequenciaDoModo } from "@/lib/doacao";
 import { toast } from "sonner";
 import { doacoesApi, mensagemDeErroApi } from "@/lib/apiClient";
 import { Trans, useTranslation } from "react-i18next";
@@ -184,7 +186,15 @@ const StepIndicator = ({ current, total }: { current: number; total: number }) =
 
 const Apoiar = () => {
   const { t: tr } = useTranslation();
-  const [mode, setMode] = useState<Mode>("materiais");
+  // `?modo=mensal` ("Doar Mensalmente" no menu) abre logo o Apoio Financeiro
+  // em mensal; `?modo=unica` fica na página geral, com "Uma única vez".
+  const [searchParams] = useSearchParams();
+  const frequenciaPedida = frequenciaDoModo(searchParams.get("modo"));
+  const [mode, setMode] = useState<Mode>(frequenciaPedida === "mensal" ? "financeiro" : "materiais");
+  // O link traz `#como-apoiar`: o ScrollToTop leva até aos separadores.
+  useEffect(() => {
+    if (frequenciaPedida === "mensal") setMode("financeiro");
+  }, [frequenciaPedida]);
   const [itensPorMaterial, setItensPorMaterial] = useState<ItensPorMaterial>({});
   const [materialNotes, setMaterialNotes] = useState("");
   // Painéis de detalhe: o cartão mostra só ícone e título, o resto abre aqui.
@@ -322,7 +332,7 @@ const Apoiar = () => {
         </section>
 
         {/* Tabs */}
-        <section className="py-16 md:py-20 bg-background">
+        <section id="como-apoiar" className="py-16 md:py-20 bg-background scroll-mt-16">
           <div className="container max-w-5xl">
             <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)} className="w-full">
               <div className="flex justify-center mb-10">
@@ -453,7 +463,8 @@ const Apoiar = () => {
                   <p className="text-muted-foreground">{tr("Apoiar.cadaDonativoAjuda")}</p>
                 </div>
 
-                <DoacaoFinanceira />
+                {/* A chave refaz o formulário quando o menu muda o modo com a página já aberta. */}
+                <DoacaoFinanceira key={frequenciaPedida ?? "unica"} frequenciaInicial={frequenciaPedida ?? "unica"} />
               </TabsContent>
             </Tabs>
 

@@ -151,7 +151,7 @@ describe("Navbar — menus suspensos do cabeçalho", () => {
     await user.click(screen.getByRole("button", { name: "Doar Agora" }));
 
     expect(screen.getByRole("link", { name: /Doar Uma Vez/ })).toHaveAttribute("href", "/apoiar?modo=unica");
-    expect(screen.getByRole("link", { name: /Doar Mensalmente/ })).toHaveAttribute("href", "/apoiar?modo=mensal");
+    expect(screen.getByRole("link", { name: /Doar Mensalmente/ })).toHaveAttribute("href", "/apoiar?modo=mensal#como-apoiar");
   });
 
   it("O Nosso Trabalho e Portal Clínico têm os destinos pedidos", async () => {
