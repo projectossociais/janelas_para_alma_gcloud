@@ -355,6 +355,15 @@ exactos da paleta da marca (`marca.*` em `tailwind.config.ts`) — não reintrod
 creme, cinzentos ou faixas azul-marinho de secção. Ficam de fora, por agora, os cabeçalhos
 com fotografia e véu escuro de algumas páginas e as cores da marca da Optioptika no portal.
 
+**Pesquisa do site (a lupa do cabeçalho, refeita a 2026-11-10):** o índice deixou de ser uma
+lista escrita à mão no `Navbar` e passou a ser gerado (`lib/pesquisa/indiceSite.ts`): páginas
+do mapa de rotas com o título e a descrição de `seo.*`, o texto das páginas (secções de
+tradução), destinos do menu com âncora, perguntas da FAQ e, pela API, publicações e clínicas.
+Uma página nova no mapa de rotas tem de entrar em `PAGINAS` ou em `FORA_DA_PESQUISA` (há teste);
+o `/rastreio-completo` fica de fora de propósito. Motor em `lib/pesquisa/procurar.ts` (sem
+acentos, plurais, um erro de letra, ordenação por relevância), painel em
+`components/PesquisaSite.tsx` (Ctrl/Cmd+K, setas e Enter). Sinónimos em `Pesquisa.palavras.*`.
+
 **Blog e números de impacto (2026-11-10):** as publicações (`/publicacoes`) contam
 visualizações (`publicacoes.visualizacoes`, `POST /publicacoes/{slug}/visualizacoes`, uma
 por separador do browser) e aceitam "Gosto" com sessão (`gostos_publicacao`, chave composta:
