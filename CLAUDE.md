@@ -266,6 +266,23 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   (`perfis_jogador.patamares_superados_total`): 0-15 Iniciante, 16-45 Aprendiz, 46-90
   Conhecedor, 91-150 Especialista, 151+ Mestre da Visão (`estatisticas_jogador_service.py`,
   exposto em `GET /jogo/perfil/estatisticas`)
+  **Multijogador Local** (desde 2026-11-10; `/jogo-curiosidades/local`, `pages/jogo/JogoLocal.tsx`):
+  2 pessoas à vez no mesmo aparelho (só 2, decisão do dono do projecto: com mais, o ecrã
+  do telemóvel ficava comprido demais). 5 rondas em que os dois respondem (ninguém é
+  eliminado), dificuldade a subir, 100 pontos por acerto mais bónus de rapidez, 30 s por
+  pergunta; empate = até 3 rondas de desempate,
+  depois vitória partilhada. Turnos, pontos e empates são lógica pura em
+  `frontend/src/lib/jogo/partidaLocal.ts`; **os nomes e os pontos nunca saem do aparelho**
+  (nem se gravam). Com sessão (site português), a pergunta e a validação são do servidor
+  (`routers/jogo_local.py`, `JogoLocalService`, tabela `partidas_locais_jogo`: uma em curso
+  por conta, só a pergunta entregue se pode responder, nunca duas vezes) e a partida paga
+  **moedas à conta do aparelho**: 10 por acerto de qualquer jogador, até 100 por partida, só
+  com todas as rondas jogadas, e no máximo **400 por dia UTC** (prémios criados a pedido do
+  dono do projecto, 2026-11-10; constantes em `jogo_local_service.py`; o tecto existe porque
+  no mesmo aparelho uma pessoa pode jogar por todos). Sem diamantes. O crédito grava-se com
+  a partida, uma única vez, com a linha do perfil bloqueada. Sem sessão, no site inglês, ou
+  se o servidor não abrir a partida, joga-se com a reserva local **sem prémio**, e o ecrã
+  diz isso. O Multijogador Online continua "Em breve"
 
 **Redesenho do frontend revertido (2026-10-09, decisão da equipa):** o redesenho da
 Sprint 7 (PRs #134 a #150, `docs/REDESENHO_FRONTEND.md`) chegou a produção, mas a equipa

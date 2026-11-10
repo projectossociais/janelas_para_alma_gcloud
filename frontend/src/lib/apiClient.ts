@@ -1758,6 +1758,58 @@ export interface AjudaMercado {
   perfil: PerfilJogadorPublico;
 }
 
+export interface PartidaLocalJogo {
+  id: string;
+  numero_jogadores: number;
+  rondas: number;
+  maximo_desempates: number;
+  moedas_por_acerto: number;
+  maximo_moedas_por_partida: number;
+  limite_diario_moedas: number;
+}
+
+export interface RespostaLocalJogo {
+  correta: boolean;
+  resposta_correta: RespostaOpcaoJogo;
+  explicacao: string | null;
+}
+
+export interface PartidaLocalTerminadaJogo {
+  moedas_ganhas: number;
+  // O prémio existia, mas o tecto diário já não deixou creditá-lo todo.
+  limite_diario_atingido: boolean;
+  perfil: PerfilJogadorPublico;
+}
+
+// Multijogador Local (2 a 4 pessoas no mesmo aparelho). Exige sessão: a
+// pergunta, a validação e o prémio em moedas são do servidor; os nomes e os
+// pontos de cada jogador ficam só no aparelho.
+export const jogoLocalApi = {
+  iniciar: (numeroJogadores: number) =>
+    pedido<PartidaLocalJogo>("/jogo/local/partidas", {
+      method: "POST",
+      body: JSON.stringify({ numero_jogadores: numeroJogadores }),
+    }),
+
+  /** Idempotente enquanto a pergunta entregue não for respondida. */
+  obterPergunta: (partidaId: string, patamar: number) =>
+    pedido<PerguntaJogoPublica>(`/jogo/local/partidas/${partidaId}/pergunta`, {
+      method: "POST",
+      body: JSON.stringify({ patamar }),
+    }),
+
+  /** `resposta: null` = o tempo esgotou. */
+  responder: (partidaId: string, perguntaId: string, resposta: RespostaOpcaoJogo | null) =>
+    pedido<RespostaLocalJogo>(`/jogo/local/partidas/${partidaId}/responder`, {
+      method: "POST",
+      body: JSON.stringify({ pergunta_id: perguntaId, resposta }),
+    }),
+
+  /** Fecha a partida e credita o prémio, uma única vez. */
+  terminar: (partidaId: string) =>
+    pedido<PartidaLocalTerminadaJogo>(`/jogo/local/partidas/${partidaId}/terminar`, { method: "POST" }),
+};
+
 export const jogoApi = {
   // `patamar` (1-15) é só do jogo -- o backend mapeia-o para um dos 3 níveis
   // de dificuldade da reserva de perguntas (ver nivel_dificuldade_do_patamar).

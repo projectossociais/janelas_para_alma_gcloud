@@ -24,6 +24,7 @@ from app.routers import (
     impacto,
     interno,
     jogo,
+    jogo_local,
     notificacoes,
     pagamentos,
     perfil,
@@ -94,6 +95,7 @@ app.include_router(notificacoes.router)
 app.include_router(rastreio_completo.router)
 app.include_router(screenings.router)
 app.include_router(jogo.router)
+app.include_router(jogo_local.router)
 app.include_router(agendamentos.router)
 app.include_router(clinicas.router)
 app.include_router(interno.router)

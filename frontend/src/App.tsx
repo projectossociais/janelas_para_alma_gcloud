@@ -47,6 +47,7 @@ import JogoCuriosidades from "./pages/jogo/JogoCuriosidades";
 import PerfilJogador from "./pages/jogo/PerfilJogador";
 import LojaDiamantes from "./pages/jogo/LojaDiamantes";
 import LojaMoedas from "./pages/jogo/LojaMoedas";
+import JogoLocal from "./pages/jogo/JogoLocal";
 
 import TesteAcuidade from "./pages/exercises/TesteAcuidade";
 import FioMissangas from "./pages/exercises/FioMissangas";
@@ -138,6 +139,7 @@ const PAGINAS: Record<ChaveRota, ReactElement> = {
   jogoPerfil: <PerfilJogador />,
   jogoLoja: <LojaDiamantes />,
   jogoLojaMoedas: <LojaMoedas />,
+  jogoLocal: <JogoLocal />,
 };
 
 const queryClient = new QueryClient();

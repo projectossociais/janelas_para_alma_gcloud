@@ -297,3 +297,43 @@ class EstatisticasJogadorPublicas(BaseModel):
 # `RecompensaSequenciaPublica` refere-se a `PerfilJogadorPublico`, definido mais abaixo.
 RecompensaSequenciaPublica.model_rebuild()
 ValidarRespostaResponse.model_rebuild()
+
+
+# --- Multijogador Local -----------------------------------------------------
+
+
+class IniciarPartidaLocalRequest(BaseModel):
+    # Hoje só 2 (ver `MAXIMO_JOGADORES` em jogo_local_service.py).
+    numero_jogadores: int = Field(ge=2, le=2)
+
+
+class PartidaLocalPublica(BaseModel):
+    id: str
+    numero_jogadores: int
+    rondas: int
+    maximo_desempates: int
+    moedas_por_acerto: int
+    maximo_moedas_por_partida: int
+    limite_diario_moedas: int
+
+
+class PerguntaLocalRequest(BaseModel):
+    patamar: int = Field(ge=1, le=15)
+
+
+class ResponderLocalRequest(BaseModel):
+    pergunta_id: str
+    # `None` = o tempo esgotou sem resposta.
+    resposta: RespostaOpcao | None = None
+
+
+class RespostaLocalResponse(BaseModel):
+    correta: bool
+    resposta_correta: RespostaOpcao
+    explicacao: str | None
+
+
+class PartidaLocalTerminadaResponse(BaseModel):
+    moedas_ganhas: int
+    limite_diario_atingido: bool
+    perfil: PerfilJogadorPublico
