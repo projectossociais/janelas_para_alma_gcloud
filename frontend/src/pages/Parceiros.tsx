@@ -6,7 +6,7 @@ import BackButton from "@/components/BackButton";
 import PartnerDialog from "@/components/PartnerDialog";
 import ClinicalPartners from "@/components/ClinicalPartners";
 import { useAuth } from "@/contexts/AuthContext";
-import heroImg from "@/assets/parceiros-hero.jpg";
+import heroImg from "@/assets/parceiros-medicos-hero.jpg";
 import { Trans, useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 
@@ -58,8 +58,8 @@ const Parceiros = () => {
             src={heroImg}
             alt={t("Parceiros.especialistasEmSaudeVisual")}
             className="w-full h-full object-cover"
-            width={1920}
-            height={1080}
+            width={1024}
+            height={683}
           />
           <div className="absolute inset-0 bg-hero-gradient opacity-90" />
         </div>
