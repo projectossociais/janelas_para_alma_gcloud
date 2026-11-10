@@ -950,6 +950,9 @@
     "notificacoesPorLer": "Notificações ({{contagem}} por ler)"
   },
   "NovidadesSection": {
+    "tagEvento": "Evento",
+    "feiraInovacao": "Janelas para Alma na Feira de Inovação do Desafio Genial",
+    "feiraInovacaoResumo": "Finalistas do Desafio Genial Geração Digital, apresentamos a nossa solução a 13 de Novembro, às 15h00, no Centro de Ciências de Luanda.",
     "tagPublicacao": "Publicação",
     "fiquePorDentro": "Fique por dentro",
     "novidades": "Novidades",
@@ -961,6 +964,17 @@
     "tagInstitucional": "Institucional / Marco",
     "oficializacaoDaFirma": "Oficialização da Nossa Firma Comercial: Olhar Alinhado",
     "oficializacaoDaFirmaResumo": "O projecto dá mais um passo decisivo rumo à estruturação formal e conformidade legal com a constituição da Olhar Alinhado - Comércio & Prestação de Serviços, Lda."
+  },
+  "FeiraInovacaoModal": {
+    "titulo": "Janelas para Alma na Feira de Inovação",
+    "subtitulo": "Uma das 5 startups finalistas do Desafio Genial Geração Digital.",
+    "paragrafo1": "A tecnologia ao serviço da humanidade, especialmente das nossas crianças.",
+    "paragrafo2": "Enquanto uma das 5 startups finalistas do Desafio Genial Geração Digital, no dia 13 de Novembro, o Janelas para Alma estará na Feira de Inovação para apresentar a solução desenvolvida durante o período de incubação, reafirmando o nosso compromisso com a inclusão visual de crianças com estrabismo.",
+    "paragrafo3": "Acreditamos que a tecnologia ganha verdadeiro significado quando a colocamos ao serviço das pessoas e quando contribui para transformar vidas.",
+    "local": "Centro de Ciências de Luanda",
+    "dataHora": "13 de Novembro | 15h00",
+    "inscrever": "Faça a sua inscrição",
+    "lema": "Janelas para Alma — Um Olhar Alinhado, Uma Vida Transformada."
   },
   "FirmaOlharAlinhadoModal": {
     "titulo": "Um Novo Capítulo: Formalização da \"Olhar Alinhado\"",
