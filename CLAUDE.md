@@ -171,6 +171,24 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   URL público continuam a abrir tal como estão (nenhum registo é reescrito; os ficheiros
   antigos continuam no bucket público). Sem o bucket configurado, fica o comportamento antigo
 - **Rede de clínicas parceiras**, doações, programa de voluntariado, painel administrativo
+- **Registo de parceiros (empresas)** (2026-11-10, pedido do dono do projecto) — página
+  pública `/parceiros/registo` (`pages/RegistoParceiro.tsx`), aberta pelo botão "Registar a
+  minha empresa" de `/parceiros` (as secções de benefícios e do convite passaram a ser
+  visíveis a visitantes sem conta). Mostra os dados legais da sociedade (firma, NIF,
+  matrícula 47643-26/261001, capital, objecto; **nunca** a morada da sede nem os sócios) e
+  recolhe os da empresa candidata: denominação, NIF, tipo (lista fechada), representante,
+  proposta e até 5 documentos (PDF/PNG/JPEG). Os documentos sobem directos ao R2
+  **privado** (`r2_bucket_comprovativos`, prefixo `parcerias/`; sem o bucket não há upload,
+  o registo segue sem documentos). `POST /parcerias/candidaturas`
+  (`CandidaturaParceriaService`) grava em `candidaturas_parceria`, envia à caixa da equipa
+  (`EMAIL_EQUIPA`) os dados com os documentos em anexo, e à empresa uma confirmação com um
+  **comprovativo de registo em PDF** (`services/comprovativo_parceria.py`; diz que não é
+  contrato). Os emails são melhor esforço; a gravação nunca se perde por causa deles. Uma
+  chave fora de `parcerias/` é recusada (403): o bucket guarda comprovativos de pagamento de
+  outras pessoas. Substituiu o formulário curto que ia por formsubmit.co (`PartnerDialog`,
+  apagado). Ainda sem ecrã de admin: a equipa trata os pedidos pelo email. Logótipo da
+  Olhar Alinhado no PDF: pôr o PNG em `api/app/assets/logo-olhar-alinhado.png` (sem ele sai
+  o da plataforma)
 - **Jogo "Inclusivamente"** (`frontend/src/pages/jogo/`, API `routers/jogo.py`) — quiz com
   economia virtual: moedas (ganhas a jogar) e diamantes. Saldo sempre decidido pela API
   (`JogoService`, `LojaJogoService`); o frontend só espelha em `CarteiraJogoContext`. A Loja

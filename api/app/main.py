@@ -28,6 +28,7 @@ from app.routers import (
     jogo_online,
     notificacoes,
     pagamentos,
+    parcerias,
     perfil,
     premium,
     publicacoes,
@@ -93,6 +94,7 @@ app.include_router(admin.router)
 app.include_router(voluntariado.router)
 app.include_router(publicacoes.router)
 app.include_router(notificacoes.router)
+app.include_router(parcerias.router)
 app.include_router(rastreio_completo.router)
 app.include_router(screenings.router)
 app.include_router(jogo.router)
