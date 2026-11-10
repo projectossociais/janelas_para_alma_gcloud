@@ -62,10 +62,10 @@ const CHAVE_FREQUENCIA_DETALHES: Record<FrequenciaDoacao, string> = {
  * habituais: valor e frequência -> resumo e forma de pagar -> comprovativo.
  * O sucesso só aparece depois de a API confirmar o registo (CLAUDE.md §6).
  */
-const DoacaoFinanceira = () => {
+const DoacaoFinanceira = ({ frequenciaInicial = "unica" }: { frequenciaInicial?: FrequenciaDoacao }) => {
   const { t } = useTranslation();
   const [passo, setPasso] = useState<Passo>("valor");
-  const [frequencia, setFrequencia] = useState<FrequenciaDoacao>("unica");
+  const [frequencia, setFrequencia] = useState<FrequenciaDoacao>(frequenciaInicial);
   const [valorSugerido, setValorSugerido] = useState<number | null>(null);
   const [outroValor, setOutroValor] = useState("");
   const [comNota, setComNota] = useState(false);
@@ -161,7 +161,11 @@ const DoacaoFinanceira = () => {
                   key={f}
                   type="button"
                   aria-pressed={frequencia === f}
-                  onClick={() => setFrequencia(f)}
+                  onClick={() => {
+                    // Cada frequência tem os seus valores: o escolhido deixa de fazer sentido.
+                    if (f !== frequencia) setValorSugerido(null);
+                    setFrequencia(f);
+                  }}
                   className={`rounded-lg py-2.5 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-navy ${
                     frequencia === f
                       ? "bg-card text-navy shadow-sm ring-1 ring-navy/40"
@@ -174,7 +178,7 @@ const DoacaoFinanceira = () => {
             </div>
 
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {VALORES_DOACAO_KZ.map((v) => {
+              {VALORES_DOACAO_KZ[frequencia].map((v) => {
                 const escolhido = valorSugerido === v;
                 return (
                   <button

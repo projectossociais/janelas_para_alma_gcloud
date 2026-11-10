@@ -67,5 +67,5 @@ export const MENU_PRINCIPAL: readonly GrupoMenu[] = [
 /** O botão de destaque "Doar agora", com o seu próprio menu. */
 export const MENU_DOAR: readonly ItemMenu[] = [
   { rotulo: "Cabecalho.doarUmaVez", descricao: "Cabecalho.doarUmaVezDescricao", caminho: "/apoiar?modo=unica" },
-  { rotulo: "Cabecalho.doarMensalmente", descricao: "Cabecalho.doarMensalmenteDescricao", caminho: "/apoiar?modo=mensal" },
+  { rotulo: "Cabecalho.doarMensalmente", descricao: "Cabecalho.doarMensalmenteDescricao", caminho: "/apoiar?modo=mensal#como-apoiar" },
 ];
