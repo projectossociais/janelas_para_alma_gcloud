@@ -16,8 +16,8 @@ export const NUMEROS_CAPA: readonly NumeroCapa[] = [
   // Estimativa (confirmada a 2026-11-09): população do Censo 2024 do INE (36.604.681) ×
   // prevalência de estrabismo em África de 0,8% (IC 95%: 0,4%-1,4%; Akowuah et al., revisão
   // sistemática e meta-análise, Strabismus 2023;31(1):31-44) = 292.837. Não há contagem
-  // oficial para Angola (o INE não desagrega o estrabismo), por isso a legenda diz
-  // "(estimativa)"; sem o sinal "≈" na capa, a pedido da coordenação.
+  // oficial para Angola (o INE não desagrega o estrabismo), por isso a legenda começa por
+  // "Estimativa"; sem o sinal "≈" na capa, a pedido da coordenação.
   { valor: "293 mil", legenda: "Inicio.numeros.estrabismoAngola" },
   // Campanha Meu Kamba Estrábico, Gamek, 12 de Setembro de 2026 (195+ indicado pela coordenação).
   { valor: "195+", legenda: "Inicio.numeros.pessoasSensibilizadas" },
