@@ -57,7 +57,7 @@ const Parceiros = () => {
           <img
             src={heroImg}
             alt={t("Parceiros.especialistasEmSaudeVisual")}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover object-top"
             width={1024}
             height={683}
           />
