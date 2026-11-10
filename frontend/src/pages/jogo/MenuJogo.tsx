@@ -12,12 +12,10 @@ import CarteiraJogo from "@/components/jogo/CarteiraJogo";
 import { useTranslation } from "react-i18next";
 import { localizar } from "@/i18n/rotas";
 
-type ModoEmBreve = "local" | "online" | null;
-
 const MenuJogo = () => {
   const { t } = useTranslation();
   const { profile } = useProfile();
-  const [modoEmBreve, setModoEmBreve] = useState<ModoEmBreve>(null);
+  const [onlineEmBreve, setOnlineEmBreve] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -81,24 +79,20 @@ const MenuJogo = () => {
               <p className="text-sm text-muted-foreground">{t("MenuJogo.subaOs15Patamares")}</p>
             </Link>
 
-            <button
-              type="button"
-              onClick={() => setModoEmBreve("local")}
-              className="relative rounded-2xl bg-card border border-border/60 shadow-card hover:shadow-elevated transition-all p-6 text-center space-y-3"
+            <Link
+              to={localizar("/jogo-curiosidades/local")}
+              className="group rounded-2xl bg-card border border-border/60 shadow-card hover:shadow-elevated hover:-translate-y-1 transition-all p-6 text-center space-y-3"
             >
-              <span className="absolute top-3 right-3 text-[10px] font-bold uppercase tracking-wide bg-gold/15 text-gold rounded-full px-2 py-1">
-                {t("MenuJogo.emBreve")}
-              </span>
-              <div className="w-14 h-14 rounded-2xl bg-muted text-muted-foreground flex items-center justify-center mx-auto">
+              <div className="w-14 h-14 rounded-2xl bg-teal/10 text-teal flex items-center justify-center mx-auto transition-colors group-hover:bg-teal group-hover:text-teal-foreground">
                 <Users className="w-7 h-7" />
               </div>
               <h3 className="font-bold text-foreground">{t("MenuJogo.multijogadorLocal")}</h3>
               <p className="text-sm text-muted-foreground">{t("MenuJogo.desafieUmAmigoNo")}</p>
-            </button>
+            </Link>
 
             <button
               type="button"
-              onClick={() => setModoEmBreve("online")}
+              onClick={() => setOnlineEmBreve(true)}
               className="relative rounded-2xl bg-card border border-border/60 shadow-card hover:shadow-elevated transition-all p-6 text-center space-y-3"
             >
               <span className="absolute top-3 right-3 text-[10px] font-bold uppercase tracking-wide bg-gold/15 text-gold rounded-full px-2 py-1">
@@ -114,19 +108,15 @@ const MenuJogo = () => {
         </div>
       </main>
 
-      <Dialog open={modoEmBreve !== null} onOpenChange={(open) => !open && setModoEmBreve(null)}>
+      <Dialog open={onlineEmBreve} onOpenChange={setOnlineEmBreve}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{modoEmBreve === "online" ? t("MenuJogo.multijogadorOnline") : t("MenuJogo.multijogadorLocal")}</DialogTitle>
-            <DialogDescription>
-              {modoEmBreve === "online"
-                ? t("MenuJogo.estamosAConstruirO")
-                : t("MenuJogo.emBreveVaiPoder")}
-            </DialogDescription>
+            <DialogTitle>{t("MenuJogo.multijogadorOnline")}</DialogTitle>
+            <DialogDescription>{t("MenuJogo.estamosAConstruirO")}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button
-              onClick={() => setModoEmBreve(null)}
+              onClick={() => setOnlineEmBreve(false)}
               className="w-full bg-teal text-teal-foreground hover:bg-teal/90"
             >
               {t("MenuJogo.entendi")}

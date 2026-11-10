@@ -959,6 +959,51 @@ class PartidaJogo(Base):
     terminada_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+class PartidaLocalJogo(Base):
+    """Uma partida do Multijogador Local do "Inclusivamente": 2 pessoas à
+    vez no mesmo aparelho, com a conta de quem está com sessão (a regra dos
+    2 jogadores é do service; o CHECK aqui aceita até 4).
+
+    Os nomes e os pontos de cada jogador vivem só no aparelho (nunca se
+    gravam: o público inclui crianças). Aqui fica só o que decide o prémio
+    em moedas da conta: a pergunta que o servidor entregou e ainda espera
+    resposta, quantas já foram respondidas e quantas certas. Regras e
+    valores em `services/jogo_local_service.py`. No máximo uma partida local
+    em curso por utilizador (índice único parcial)."""
+
+    __tablename__ = "partidas_locais_jogo"
+    __table_args__ = (
+        CheckConstraint("estado IN ('em_curso', 'terminada')", name="ck_partidas_locais_jogo_estado"),
+        CheckConstraint("numero_jogadores BETWEEN 2 AND 4", name="ck_partidas_locais_jogo_jogadores"),
+        Index(
+            "uq_partidas_locais_jogo_uma_em_curso",
+            "utilizador_id",
+            unique=True,
+            postgresql_where=text("estado = 'em_curso'"),
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    utilizador_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    numero_jogadores: Mapped[int] = mapped_column(nullable=False)
+    estado: Mapped[str] = mapped_column(Text, nullable=False, server_default="em_curso")
+    # A pergunta entregue e ainda por responder -- só essa se pode validar.
+    pergunta_atual_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    # Todas as perguntas já entregues nesta partida, para não repetir.
+    perguntas_entregues: Mapped[list[uuid.UUID]] = mapped_column(
+        ARRAY(UUID(as_uuid=True)), nullable=False, server_default="{}"
+    )
+    perguntas_respondidas: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    acertos: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    # Moedas creditadas ao terminar (0 numa partida abandonada ou com o
+    # limite diário já atingido); `None` enquanto está em curso.
+    moedas_ganhas: Mapped[int | None] = mapped_column()
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    terminada_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class EstatisticaCategoriaJogador(Base):
     """Respostas dadas e certas, por jogador e por categoria de pergunta --
     agregado (uma linha por par), actualizado na mesma transacção que regista
