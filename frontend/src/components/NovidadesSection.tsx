@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, FileBadge, Gamepad2, Newspaper } from "lucide-react";
 import FirmaOlharAlinhadoModal from "@/components/FirmaOlharAlinhadoModal";
@@ -9,7 +9,11 @@ import i18n from "@/i18n";
 import { disponivelNoIdiomaActual, localizar } from "@/i18n/rotas";
 import { publicacoesApi, type PublicacaoPublica } from "@/lib/apiClient";
 import { eVideoDaGaleria } from "@/lib/midiaPublicacao";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+
+/** Tempo entre duas novidades quando o carrossel anda sozinho. */
+const INTERVALO_NOVIDADES_MS = 5_000;
 
 type Novidade = {
   readonly title: string;
@@ -101,6 +105,10 @@ const NovidadesSection = () => {
   const { t } = useTranslation();
   const [modalAberto, setModalAberto] = useState<Novidade["modal"] | null>(null);
   const [publicacoes, setPublicacoes] = useState<Novidade[]>([]);
+  // `stopOnInteraction: false`: depois de a pessoa arrastar, volta a andar sozinho.
+  const autoplay = useRef(
+    Autoplay({ delay: INTERVALO_NOVIDADES_MS, stopOnInteraction: false, stopOnMouseEnter: true }),
+  );
 
   useEffect(() => {
     let activo = true;
@@ -126,8 +134,13 @@ const NovidadesSection = () => {
         </div>
 
         {/* Todas as publicações (mais recentes primeiro) e depois os cartões
-            fixos, num carrossel: arrasta-se com o dedo ou muda-se com as setas. */}
-        <Carousel opts={{ align: "start" }} aria-label={t("NovidadesSection.novidades")}>
+            fixos, num carrossel sem setas: anda sozinho, em volta, e também se
+            arrasta com o dedo ou o rato. Pára enquanto o rato está por cima. */}
+        <Carousel
+          opts={{ align: "start", loop: true }}
+          plugins={[autoplay.current]}
+          aria-label={t("NovidadesSection.novidades")}
+        >
           <CarouselContent className="-ml-6 py-2">
           {[...publicacoes, ...novidades].filter((item) => !item.to || disponivelNoIdiomaActual(item.to)).map((item) => {
             const Icone = item.icon ?? Gamepad2;
@@ -211,16 +224,6 @@ const NovidadesSection = () => {
             );
           })}
           </CarouselContent>
-          <div className="mt-6 flex justify-center gap-3">
-            <CarouselPrevious
-              aria-label={t("NovidadesSection.anterior")}
-              className="static h-10 w-10 translate-y-0 border-marca-marinho/20 text-marca-marinho"
-            />
-            <CarouselNext
-              aria-label={t("NovidadesSection.seguinte")}
-              className="static h-10 w-10 translate-y-0 border-marca-marinho/20 text-marca-marinho"
-            />
-          </div>
         </Carousel>
       </div>
 

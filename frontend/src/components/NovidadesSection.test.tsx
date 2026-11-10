@@ -75,7 +75,7 @@ describe("NovidadesSection -- cartão da firma Olhar Alinhado", () => {
 });
 
 describe("NovidadesSection -- publicações do blog", () => {
-  it("mostra todas as publicações, mais recentes primeiro, num carrossel com setas", async () => {
+  it("mostra todas as publicações, mais recentes primeiro, num carrossel sem setas", async () => {
     listarPublicadas.mockResolvedValue([1, 2, 3, 4, 5].map((n) => publicacao(n)));
     render(
       <MemoryRouter>
@@ -90,8 +90,7 @@ describe("NovidadesSection -- publicações do blog", () => {
     expect(screen.getByRole("link", { name: /Publicação 5/ })).toHaveAttribute("href", "/publicacoes/publicacao-5");
     expect(screen.getAllByRole("link")[0]).toBe(primeira);
 
-    expect(screen.getByRole("button", { name: "Novidade anterior" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Novidade seguinte" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /anterior|seguinte|previous|next/i })).not.toBeInTheDocument();
   });
 
   it("publicação só com vídeo usa o vídeo como miniatura", async () => {
