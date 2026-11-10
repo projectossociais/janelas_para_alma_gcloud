@@ -681,6 +681,9 @@ class Publicacao(Base):
     capa_url: Mapped[str | None] = mapped_column(Text)
     # "rascunho" | "publicada"
     estado: Mapped[str] = mapped_column(Text, nullable=False, server_default="rascunho")
+    # Quantas vezes a página pública foi aberta (2026-10-26). Um contador
+    # simples, incrementado numa só instrução (`UPDATE ... + 1`).
+    visualizacoes: Mapped[int] = mapped_column(nullable=False, server_default="0")
     criado_por: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("utilizadores.id", ondelete="SET NULL")
     )
@@ -702,6 +705,21 @@ class MidiaPublicacao(Base):
     url: Mapped[str] = mapped_column(Text, nullable=False)
     ordem: Mapped[int] = mapped_column(nullable=False, server_default="0")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class GostoPublicacao(Base):
+    """Um "Gosto" numa publicação (2026-10-26): uma conta, um gosto -- a
+    chave primária composta impede o segundo, também com pedidos em simultâneo."""
+
+    __tablename__ = "gostos_publicacao"
+
+    publicacao_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("publicacoes.id", ondelete="CASCADE"), primary_key=True
+    )
+    utilizador_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="CASCADE"), primary_key=True, index=True
+    )
+    criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class UserFeedback(Base):
