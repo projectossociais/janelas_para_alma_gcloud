@@ -51,12 +51,17 @@ describe("NovidadesSection -- cartão da firma Olhar Alinhado", () => {
     expect(within(cartao).getByText("Institucional / Marco")).toBeInTheDocument();
     expect(within(cartao).getByText(/constituição da Olhar Alinhado/i)).toBeInTheDocument();
     expect(within(cartao).getByText("Saiba mais...")).toBeInTheDocument();
+    expect(within(cartao).getByRole("img", { name: /Oficialização da Nossa Firma/i })).toHaveAttribute(
+      "src",
+      expect.stringContaining("logo-olhar-alinhado"),
+    );
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 
     await user.click(cartao);
 
     const modal = await screen.findByRole("dialog");
     expect(within(modal).getByRole("heading", { name: /Um Novo Capítulo/i })).toBeInTheDocument();
+    expect(within(modal).getByRole("img", { name: /Olhar Alinhado/i })).toBeInTheDocument();
     expect(within(modal).getByText(/Compromisso com a transparência/i)).toBeInTheDocument();
     expect(within(modal).getByText(/teleconsultas médicas especializadas/i)).toBeInTheDocument();
   });

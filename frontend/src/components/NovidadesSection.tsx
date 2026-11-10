@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowUpRight, FileBadge, Gamepad2, Newspaper } from "lucide-react";
+import { ArrowUpRight, Gamepad2, Newspaper } from "lucide-react";
 import FirmaOlharAlinhadoModal from "@/components/FirmaOlharAlinhadoModal";
 import FeiraInovacaoModal, { VIDEO_FEIRA_INOVACAO } from "@/components/FeiraInovacaoModal";
 import teamGroupPhoto from "@/assets/team-group-stairs.jpg";
+import logoOlharAlinhado from "@/assets/logo-olhar-alinhado.png";
 import saudeMundialPhoto from "@/assets/novidade-saude-mundial.jpg";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
@@ -22,6 +23,8 @@ type Novidade = {
   readonly to?: string;
   external: boolean;
   image: string | null;
+  /** Logótipo: mostra-se inteiro, sem cortar, sobre fundo branco. */
+  imagemInteira?: boolean;
   /** Vídeo mostrado como miniatura quando não há imagem (publicação só com vídeo). */
   video?: string;
   /** Texto em português vindo da API (marca-se com `lang` no site inglês). */
@@ -60,8 +63,8 @@ const novidades: Novidade[] = [
       return i18n.t("NovidadesSection.oficializacaoDaFirmaResumo");
     },
     external: false,
-    image: null,
-    icon: FileBadge,
+    image: logoOlharAlinhado,
+    imagemInteira: true,
     modal: "firma",
   },
   {
@@ -167,7 +170,7 @@ const NovidadesSection = () => {
                     <img
                       src={item.image}
                       alt={item.title}
-                      className="w-full h-48 object-cover"
+                      className={item.imagemInteira ? "w-full h-48 object-contain bg-white p-4" : "w-full h-48 object-cover"}
                       loading="lazy"
                     />
                   ) : item.video ? (
