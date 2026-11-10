@@ -1,7 +1,7 @@
 """candidaturas_parceria: registo de empresas parceiras
 
 Revision ID: c3f8a1d6e2b9
-Revises: b4e7c2d9a1f6
+Revises: c8f3a5d1e7b2
 Create Date: 2026-11-10 00:00:00.000000
 
 Formulário público `/parceiros/registo`: uma clínica, óptica ou organização
@@ -18,7 +18,7 @@ from alembic import op
 from sqlalchemy.dialects import postgresql
 
 revision: str = "c3f8a1d6e2b9"
-down_revision: Union[str, None] = "b4e7c2d9a1f6"
+down_revision: Union[str, None] = "c8f3a5d1e7b2"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
