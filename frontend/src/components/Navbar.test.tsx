@@ -150,7 +150,7 @@ describe("Navbar — menus suspensos do cabeçalho", () => {
     renderComRota();
     await user.click(screen.getByRole("button", { name: "Doar Agora" }));
 
-    expect(screen.getByRole("link", { name: /Doar Uma Vez/ })).toHaveAttribute("href", "/apoiar?modo=unica");
+    expect(screen.getByRole("link", { name: /Doar Uma Vez/ })).toHaveAttribute("href", "/apoiar?modo=unica#como-apoiar");
     expect(screen.getByRole("link", { name: /Doar Mensalmente/ })).toHaveAttribute("href", "/apoiar?modo=mensal#como-apoiar");
   });
 

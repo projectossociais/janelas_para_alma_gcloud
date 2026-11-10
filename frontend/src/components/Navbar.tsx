@@ -254,6 +254,21 @@ const searchIndex: SearchItem[] = [
     },
   },
   {
+    id: "doar-uma-vez",
+    get title() {
+      return i18n.t("Cabecalho.doarUmaVez");
+    },
+    get description() {
+      return i18n.t("Cabecalho.doarUmaVezDescricao");
+    },
+    get keywords() {
+      return i18n.t("Cabecalho.pesquisaDoarPalavras");
+    },
+    get route() {
+      return localizar("/apoiar?modo=unica#como-apoiar");
+    },
+  },
+  {
     id: "doar-mensal",
     get title() {
       return i18n.t("Cabecalho.doarMensalmente");

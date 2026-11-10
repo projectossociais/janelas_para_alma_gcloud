@@ -18,7 +18,7 @@ export const VALORES_DOACAO_KZ: Record<FrequenciaDoacao, readonly number[]> = {
   mensal: [2_500, 5_000, 10_000, 15_000, 25_000, 50_000],
 };
 
-/** `?modo=unica|mensal` (links "Doar Uma Vez" / "Doar Mensalmente" do menu). */
+/** `?modo=unica|mensal` (links "Doar Uma Vez" / "Doar Mensalmente" do menu e "Doar Agora"). */
 export function frequenciaDoModo(modo: string | null): FrequenciaDoacao | null {
   return modo === "unica" || modo === "mensal" ? modo : null;
 }

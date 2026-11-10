@@ -84,7 +84,7 @@ const HeroInicio = () => {
 
         <div className="flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:flex-wrap sm:gap-4">
           <Link
-            to={localizar("/apoiar?modo=unica")}
+            to={localizar("/apoiar?modo=unica#como-apoiar")}
             className="inline-flex items-center justify-center gap-3 rounded-full bg-marca-azul px-8 py-4 text-base font-bold uppercase tracking-[0.08em] text-white shadow-lg transition-colors hover:bg-marca-azul/85 lg:px-10 lg:py-5 lg:text-lg"
           >
             <Heart className="h-5 w-5 lg:h-6 lg:w-6" aria-hidden="true" />
