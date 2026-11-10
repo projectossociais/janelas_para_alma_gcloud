@@ -37,6 +37,9 @@ class RepositorioFalso:
     def obter(self, clinica_id: str):
         return self.clinicas.get(clinica_id)
 
+    def obter_para_remocao(self, clinica_id: str):
+        return self.obter(clinica_id)
+
     def tem_agendamentos(self, clinica_id: str) -> bool:
         return clinica_id in self.com_agendamentos
 

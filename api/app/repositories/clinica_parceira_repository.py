@@ -32,6 +32,7 @@ class ClinicaParceiraRepository(Protocol):
     def listar_ativas(self) -> list[ClinicaParceiraRegisto]: ...
     def listar_todas(self) -> list[ClinicaParceiraRegisto]: ...
     def obter(self, clinica_id: str) -> ClinicaParceiraRegisto | None: ...
+    def obter_para_remocao(self, clinica_id: str) -> ClinicaParceiraRegisto | None: ...
     def atualizar_perfil(
         self,
         clinica_id: str,
@@ -86,6 +87,15 @@ class SQLAlchemyClinicaParceiraRepository:
 
     def obter(self, clinica_id: str) -> ClinicaParceiraRegisto | None:
         row = self._sessao.get(ClinicaParceira, uuid.UUID(clinica_id))
+        return _para_registo(row) if row is not None else None
+
+    def obter_para_remocao(self, clinica_id: str) -> ClinicaParceiraRegisto | None:
+        row = self._sessao.scalar(
+            select(ClinicaParceira)
+            .where(ClinicaParceira.id == uuid.UUID(clinica_id))
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
         return _para_registo(row) if row is not None else None
 
     def atualizar_perfil(
