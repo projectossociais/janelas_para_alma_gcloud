@@ -73,7 +73,7 @@ const HeroInicio = () => {
 
       <div className="container relative z-10 pb-8 md:pb-12">
         {/* Números do projecto, à esquerda e por cima dos botões (fonte e actualização em numerosCapa.ts). */}
-        <ul className="mb-6 grid max-w-3xl grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-3 md:mb-8 md:gap-y-6">
+        <ul className="mb-6 grid max-w-xl grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 md:mb-8 md:gap-y-6">
           {NUMEROS_CAPA.map((n) => (
             <li key={n.legenda}>
               <span className="block text-3xl font-bold leading-none text-white md:text-5xl">{n.valor}</span>
