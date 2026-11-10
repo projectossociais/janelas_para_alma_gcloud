@@ -37,7 +37,7 @@ const FirmaOlharAlinhadoModal = ({ open, onOpenChange }: FirmaOlharAlinhadoModal
 
           <img
             src={logoOlharAlinhado}
-            alt="Olhar Alinhado - Comércio & Prestação de Serviços, Lda."
+            alt={t("FirmaOlharAlinhadoModal.logotipoAlt")}
             className="mx-auto w-full max-w-sm h-auto"
           />
 
