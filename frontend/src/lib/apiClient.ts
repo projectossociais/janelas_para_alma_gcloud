@@ -509,6 +509,65 @@ export const comprovativosApi = {
   enviarParaStorage: uploadsApi.enviarParaStorage,
 };
 
+// --- Registo de parceiros (empresas) -----------------------------------------
+// Página pública `/parceiros/registo`: dados legais da empresa, representante
+// e documentos opcionais. Os documentos sobem directos ao R2 privado (mesmo
+// fluxo do avatar); a API grava o registo e envia tudo por email à equipa.
+
+export const TIPOS_DE_PARCEIRO = [
+  "clinica_oftalmologica",
+  "optica",
+  "hospital",
+  "seguradora",
+  "empresa",
+  "ong",
+  "instituicao_ensino",
+  "outro",
+] as const;
+export type TipoDeParceiro = (typeof TIPOS_DE_PARCEIRO)[number];
+
+export const TIPOS_DE_DOCUMENTO_DE_PARCERIA = ["application/pdf", "image/png", "image/jpeg"] as const;
+export const MAX_DOCUMENTOS_DE_PARCERIA = 5;
+export const MAX_BYTES_DOCUMENTO_DE_PARCERIA = 8 * 1024 * 1024;
+
+export interface DocumentoDeParceria {
+  chave: string;
+  nome: string;
+  content_type: string;
+}
+
+export interface CandidaturaParceriaCriar {
+  denominacao: string;
+  nif: string;
+  tipo: TipoDeParceiro;
+  provincia: string;
+  morada: string | null;
+  website: string | null;
+  representante_nome: string;
+  representante_cargo: string;
+  email: string;
+  telefone: string;
+  mensagem: string | null;
+  documentos: DocumentoDeParceria[];
+  declaracao: boolean;
+}
+
+export const parceriasApi = {
+  prepararDocumento: (contentType: string) =>
+    pedido<{ url_de_upload: string; chave: string }>("/parcerias/documentos", {
+      method: "POST",
+      body: JSON.stringify({ content_type: contentType }),
+    }),
+
+  enviarParaStorage: uploadsApi.enviarParaStorage,
+
+  submeter: (dados: CandidaturaParceriaCriar) =>
+    pedido<{ referencia: string }>("/parcerias/candidaturas", {
+      method: "POST",
+      body: JSON.stringify(dados),
+    }),
+};
+
 /** Unidade do `limiar` de uma sessão de exercício (versão 2). */
 export type UnidadeLimiar = "logmar" | "log_cs" | "arcsec" | "segundos" | "dioptrias_prismaticas" | "razao_contraste" | "graus" | "cm" | "mm";
 

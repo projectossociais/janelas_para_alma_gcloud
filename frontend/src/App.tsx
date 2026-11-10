@@ -19,6 +19,7 @@ import CampanhaGamek from "./pages/CampanhaGamek";
 import Publicacoes from "./pages/Publicacoes";
 import PublicacaoDetalhe from "./pages/PublicacaoDetalhe";
 import Parceiros from "./pages/Parceiros";
+import RegistoParceiro from "./pages/RegistoParceiro";
 import PortalClinicoOptioptika from "./pages/PortalClinicoOptioptika";
 import Tecnologia from "./pages/Tecnologia";
 import Circular from "./pages/Circular";
@@ -96,6 +97,7 @@ const PAGINAS: Record<ChaveRota, ReactElement> = {
   publicacoes: <Publicacoes />,
   publicacaoDetalhe: <PublicacaoDetalhe />,
   parceiros: <Parceiros />,
+  registoParceiro: <RegistoParceiro />,
   portalClinico: <Parceiros />,
   portalClinicoOptioptika: <PortalClinicoOptioptika />,
   tecnologia: <Tecnologia />,

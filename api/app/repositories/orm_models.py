@@ -619,6 +619,35 @@ class CandidaturaVoluntariado(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class CandidaturaParceria(Base):
+    """Registo de uma empresa (clínica, óptica, organização) que pede para
+    se juntar à rede de parceiros -- formulário público em
+    `/parceiros/registo`. Dados legais da entidade, o representante e os
+    documentos que quis anexar (`documentos`: lista de `{chave, nome,
+    content_type}`; as chaves vivem no bucket R2 **privado**, prefixo
+    `parcerias/`). Ver `CandidaturaParceriaService`."""
+
+    __tablename__ = "candidaturas_parceria"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    referencia: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    denominacao: Mapped[str] = mapped_column(Text, nullable=False)
+    nif: Mapped[str] = mapped_column(Text, nullable=False)
+    tipo: Mapped[str] = mapped_column(Text, nullable=False)
+    provincia: Mapped[str] = mapped_column(Text, nullable=False)
+    morada: Mapped[str | None] = mapped_column(Text)
+    website: Mapped[str | None] = mapped_column(Text)
+    representante_nome: Mapped[str] = mapped_column(Text, nullable=False)
+    representante_cargo: Mapped[str] = mapped_column(Text, nullable=False)
+    email: Mapped[str] = mapped_column(Text, nullable=False)
+    telefone: Mapped[str] = mapped_column(Text, nullable=False)
+    mensagem: Mapped[str | None] = mapped_column(Text)
+    documentos: Mapped[list] = mapped_column(JSONB, nullable=False, server_default="[]")
+    # "pendente" por agora; a decisão é tratada pela equipa fora da plataforma.
+    estado: Mapped[str] = mapped_column(Text, nullable=False, server_default="pendente")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class AtividadeVoluntariado(Base):
     """Uma actividade publicada por um admin para os voluntários activos se
     inscreverem. `vagas` nulo significa sem limite."""

@@ -29,6 +29,7 @@ export const ROTAS = [
   { chave: "publicacoes", pt: "/publicacoes", en: "/en/publications" },
   { chave: "publicacaoDetalhe", pt: "/publicacoes/:slug", en: "/en/publications/:slug" },
   { chave: "parceiros", pt: "/parceiros", en: "/en/partners" },
+  { chave: "registoParceiro", pt: "/parceiros/registo", en: "/en/partners/register" },
   { chave: "portalClinico", pt: "/portal-clinico", en: "/en/clinical-portal" },
   { chave: "portalClinicoOptioptika", pt: "/portal-clinico/optioptika", en: "/en/clinical-portal/optioptika" },
   { chave: "tecnologia", pt: "/tecnologia", en: "/en/technology" },
