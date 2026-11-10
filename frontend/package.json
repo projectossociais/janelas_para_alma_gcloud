@@ -11,9 +11,18 @@
     "preview": "vite preview",
     "telemovel": "vite build --mode development --outDir dist-teste && vite preview --outDir dist-teste --port 8080 --strictPort",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "app:sync": "cap sync",
+    "app:android": "cap open android",
+    "app:ios": "cap open ios",
+    "app:icones": "capacitor-assets generate --android --ios --assetPath app-nativa/recursos --iconBackgroundColor '#FFFFFF' --iconBackgroundColorDark '#FFFFFF' --splashBackgroundColor '#FFFFFF' --splashBackgroundColorDark '#FFFFFF'"
   },
   "dependencies": {
+    "@capacitor/android": "8.5.3",
+    "@capacitor/core": "8.5.3",
+    "@capacitor/ios": "8.5.3",
+    "@capacitor/splash-screen": "8.0.2",
+    "@capacitor/status-bar": "8.0.4",
     "@hookform/resolvers": "^3.10.0",
     "@mediapipe/camera_utils": "^0.3.1675466862",
     "@mediapipe/face_mesh": "^0.4.1633559619",
@@ -44,6 +53,7 @@
     "@radix-ui/react-toggle": "^1.1.9",
     "@radix-ui/react-toggle-group": "^1.1.10",
     "@radix-ui/react-tooltip": "^1.2.7",
+    "@revenuecat/purchases-capacitor": "13.7.4",
     "@supabase/supabase-js": "^2.104.1",
     "@tanstack/react-query": "^5.83.0",
     "class-variance-authority": "^0.7.1",
@@ -73,6 +83,8 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@capacitor/assets": "3.0.5",
+    "@capacitor/cli": "8.5.3",
     "@eslint/js": "^9.32.0",
     "@tailwindcss/typography": "^0.5.16",
     "@testing-library/jest-dom": "^6.6.0",

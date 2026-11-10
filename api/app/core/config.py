@@ -125,6 +125,14 @@ class Settings(BaseSettings):
     # sempre (nunca "aberto por engano" em produção por falta de configuração).
     cron_secret: str = ""
 
+    # Webhook do RevenueCat (compras na app nativa, `routers/webhooks.py`): o
+    # valor exacto do cabeçalho `Authorization` configurado no painel do
+    # RevenueCat. Vazio por omissão: sem valor, o webhook recusa sempre.
+    revenuecat_webhook_segredo: str = ""
+    # Compras de teste (sandbox) creditam: o revisor da Apple compra em
+    # sandbox na app de produção. Ver services/compra_loja_service.py.
+    revenuecat_aceitar_sandbox: bool = True
+
     @property
     def cookie_seguro(self) -> bool:
         """Cookies com `Secure` fora de desenvolvimento — exige HTTPS, que só

@@ -902,6 +902,47 @@ class PedidoLojaJogo(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class CompraLoja(Base):
+    """Uma compra feita dentro da app nativa, pela App Store ou pelo Google
+    Play (2026-10-30). Chega à API pelo webhook do RevenueCat
+    (`CompraLojaService`); uma linha por transacção da loja -- cada renovação
+    mensal do Premium é uma transacção nova.
+
+    `uq_compras_loja_transacao` é o anti-replay: o RevenueCat repete o
+    webhook até receber 200, e a mesma transacção nunca se aplica duas vezes.
+    O efeito (Premium ou saldo do jogo) grava-se na mesma transacção da base
+    de dados que a linha. `premium_segundos` guarda o que esta compra somou à
+    validade do Premium, para o reembolso tirar só isso (como a revogação de
+    um comprovativo)."""
+
+    __tablename__ = "compras_loja"
+    __table_args__ = (
+        UniqueConstraint("loja", "transacao_id", name="uq_compras_loja_transacao"),
+        CheckConstraint("loja IN ('app_store', 'play_store')", name="ck_compras_loja_loja"),
+        CheckConstraint("ambiente IN ('producao', 'sandbox')", name="ck_compras_loja_ambiente"),
+        CheckConstraint("tipo IN ('premium', 'diamantes', 'moedas')", name="ck_compras_loja_tipo"),
+        CheckConstraint("estado IN ('aplicada', 'reembolsada')", name="ck_compras_loja_estado"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    # SET NULL e não CASCADE: é um registo financeiro -- sobrevive à conta.
+    utilizador_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("utilizadores.id", ondelete="SET NULL"), index=True
+    )
+    loja: Mapped[str] = mapped_column(Text, nullable=False)
+    ambiente: Mapped[str] = mapped_column(Text, nullable=False)
+    produto_id: Mapped[str] = mapped_column(Text, nullable=False)
+    tipo: Mapped[str] = mapped_column(Text, nullable=False)
+    quantidade: Mapped[int | None] = mapped_column()
+    premium_segundos: Mapped[int | None] = mapped_column()
+    transacao_id: Mapped[str] = mapped_column(Text, nullable=False)
+    transacao_original_id: Mapped[str | None] = mapped_column(Text)
+    comprado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    estado: Mapped[str] = mapped_column(Text, nullable=False, server_default="aplicada")
+    reembolsada_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class PartidaJogo(Base):
     """Uma partida do jogo "Inclusivamente", do primeiro patamar até terminar
     (vitória, derrota, desistência ou nova partida). Todo o estado que o

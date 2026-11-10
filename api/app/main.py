@@ -36,6 +36,7 @@ from app.routers import (
     sessoes_exercicio,
     uploads,
     voluntariado,
+    webhooks,
 )
 
 app = FastAPI(title="Janelas Para a Alma — API")
@@ -100,6 +101,7 @@ app.include_router(clinicas.router)
 app.include_router(interno.router)
 app.include_router(relatorios.router)
 app.include_router(consentimento.router)
+app.include_router(webhooks.router)
 
 
 @app.get("/saude")
