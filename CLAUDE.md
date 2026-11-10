@@ -300,7 +300,34 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   no mesmo aparelho uma pessoa pode jogar por todos). Sem diamantes. O crédito grava-se com
   a partida, uma única vez, com a linha do perfil bloqueada. Sem sessão, no site inglês, ou
   se o servidor não abrir a partida, joga-se com a reserva local **sem prémio**, e o ecrã
-  diz isso. O Multijogador Online continua "Em breve"
+  diz isso.
+  **Multijogador Online** (desde 2026-11-10; `/jogo-curiosidades/online`, `pages/jogo/JogoOnline.tsx`):
+  duas pessoas, cada uma no seu aparelho, numa **sala por código** (6 caracteres; nunca
+  emparelhamento com desconhecidos). Mesmo formato do local (5 rondas, 30 s, pontos por acerto e
+  rapidez, até 3 desempates), mas os dois respondem à mesma pergunta ao mesmo tempo. Só com
+  sessão e só no site português. Tudo é decidido pelo servidor (`routers/jogo_online.py`,
+  `SalaJogoService`, tabelas `salas_jogo` e `jogadores_sala_jogo`): pergunta, prazo (relógio
+  do servidor), pontos, vencedor e prémio; a resposta certa e a do adversário só saem com a
+  ronda fechada. **Sem WebSockets:** cada aparelho pergunta pelo estado de 1,5 em 1,5 s
+  (`GET /jogo/salas/{codigo}`, pelo `/api` do Vercel, com o cookie de sessão); não há relógio
+  no servidor -- o estado avança quando um pedido chega, por funções puras aplicadas com a
+  linha da sala bloqueada (`SalaJogoRepository.atualizar`, `FOR UPDATE`). Esse pedido é também
+  o sinal de vida: 25 s sem ele, em jogo, é desistência (o outro ganha); sair também. Prémio
+  por conta: 10 moedas por acerto próprio + 30 para o vencedor (15 a cada um na vitória
+  partilhada), até **300 por dia UTC**; quem desiste não recebe, quem fica recebe só os
+  acertos (constantes em `sala_jogo_service.py`, criadas a pedido do dono do projecto).
+  **Chat da sala só entre adultos, com filtros** (decisão do dono do projecto, 2026-11-10): só
+  existe quando os **dois** jogadores são adultos -- `e_adulto`: `data_nascimento` no perfil
+  com 18 anos feitos **e** `faixa_etaria` que não seja de criança (uma criança pode usar a
+  conta do representante legal); sem data de nascimento não há chat. É uma declaração do
+  próprio, não uma prova de idade. Cada mensagem passa por `services/filtro_chat.py`, que
+  **recusa** (não mascara) palavrões e insultos (pt/en, também disfarçados), contactos (links,
+  emails, telefones, @nomes, redes sociais) e pedidos de dados pessoais; máximo 200 caracteres,
+  uma mensagem de 2 em 2 s e 40 por jogador e sala. "Denunciar" fecha o chat da sala para os
+  dois, esconde as mensagens, regista em `denuncias_chat_jogo` e avisa os admins pelo sino; as
+  mensagens (`mensagens_sala_jogo`) ficam guardadas para consulta e apagam-se na anonimização
+  da conta (W-03). **Falta:** um ecrã de admin para ler as mensagens de uma sala denunciada
+  (hoje só pela base de dados)
 
 **Redesenho do frontend revertido (2026-10-09, decisão da equipa):** o redesenho da
 Sprint 7 (PRs #134 a #150, `docs/REDESENHO_FRONTEND.md`) chegou a produção, mas a equipa

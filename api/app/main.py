@@ -25,6 +25,7 @@ from app.routers import (
     interno,
     jogo,
     jogo_local,
+    jogo_online,
     notificacoes,
     pagamentos,
     parcerias,
@@ -98,6 +99,7 @@ app.include_router(rastreio_completo.router)
 app.include_router(screenings.router)
 app.include_router(jogo.router)
 app.include_router(jogo_local.router)
+app.include_router(jogo_online.router)
 app.include_router(agendamentos.router)
 app.include_router(clinicas.router)
 app.include_router(interno.router)

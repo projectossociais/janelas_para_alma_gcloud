@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
 const obterPerfil = vi.fn();
@@ -68,7 +67,7 @@ describe("MenuJogo (Lobby)", () => {
     expect(screen.getByRole("link", { name: /^Diamantes/ })).toHaveAttribute("href", "/jogo-curiosidades/loja");
   });
 
-  it("os três modos de jogo estão presentes; só o online continua 'Em breve'", async () => {
+  it("os três modos de jogo levam às suas páginas", async () => {
     render(<MenuJogo />, { wrapper: Envoltorio });
 
     expect(await screen.findByRole("link", { name: /Um Jogador/i })).toHaveAttribute(
@@ -79,17 +78,10 @@ describe("MenuJogo (Lobby)", () => {
       "href",
       "/jogo-curiosidades/local"
     );
-    expect(screen.getByRole("button", { name: /Multijogador Online/i })).toBeInTheDocument();
-    expect(screen.getAllByText("Em breve")).toHaveLength(1);
-  });
-
-  it("clicar em 'Multijogador Online' abre o modal a explicar que está em desenvolvimento", async () => {
-    render(<MenuJogo />, { wrapper: Envoltorio });
-
-    await userEvent.click(screen.getByRole("button", { name: /Multijogador Online/i }));
-
-    expect(await screen.findByText(/sistema de salas/i)).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "Entendi" }));
-    await waitFor(() => expect(screen.queryByText(/sistema de salas/i)).not.toBeInTheDocument());
+    expect(screen.getByRole("link", { name: /Multijogador Online/i })).toHaveAttribute(
+      "href",
+      "/jogo-curiosidades/online"
+    );
+    expect(screen.queryByText("Em breve")).not.toBeInTheDocument();
   });
 });
