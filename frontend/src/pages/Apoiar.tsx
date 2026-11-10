@@ -318,8 +318,9 @@ const Apoiar = () => {
       <Navbar />
       <main className="flex-1">
         {/* Hero */}
-        <section className="relative pt-28 pb-16 min-h-[60vh] flex items-center text-primary-foreground overflow-hidden">
-          {/* Fotografia por baixo de um véu, como a capa da Rede de Parceiros de Saúde. */}
+        <section className="relative pt-28 pb-16 min-h-[60vh] md:min-h-0 md:aspect-[736/341] flex items-center text-primary-foreground overflow-hidden">
+          {/* Fotografia por baixo de um véu, como a capa da Rede de Parceiros de Saúde.
+              A partir de md, a capa tem a proporção da fotografia: vê-se a roda inteira. */}
           <div className="absolute inset-0">
             <img src={heroImg} alt="" className="w-full h-full object-cover" width={736} height={341} />
             <div className="absolute inset-0 bg-hero-gradient opacity-90" />
