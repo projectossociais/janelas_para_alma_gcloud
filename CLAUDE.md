@@ -280,7 +280,7 @@ cabeçalho com menus suspensos (`lib/menuPrincipal.ts`, fonte única, com teste 
 que todo o destino existe no mapa de rotas) e logótipo só com o nome completo. A capa da
 página inicial (`components/inicio/HeroInicio.tsx`) é um carrossel em ecrã inteiro, uma
 fotografia por criança, que muda a cada 5 s, com um véu azul suave por cima; "Doar Agora",
-"Exercícios Visuais" e "Entrar" (só sem sessão) ficam sempre visíveis, e por baixo deles os
+"Exercícios Visuais" e "Entrar" (só sem sessão) ficam sempre visíveis, e por cima deles os
 números do projecto (`components/inicio/numerosCapa.ts`: valores do pitch deck do Desafio
 Genial e da coordenação, com "+" nas contagens e sem o sinal "≈" (uma estimativa diz-se na
 legenda); actualizam-se aí, sempre com fonte). **Todas as páginas têm fundo branco**, e os tokens do
@@ -288,6 +288,13 @@ tema em `index.css` (`--teal`, `--navy`, `--gold`, `--green`, `--primary`...) us
 exactos da paleta da marca (`marca.*` em `tailwind.config.ts`) — não reintroduzir fundos
 creme, cinzentos ou faixas azul-marinho de secção. Ficam de fora, por agora, os cabeçalhos
 com fotografia e véu escuro de algumas páginas e as cores da marca da Optioptika no portal.
+
+**Blog e números de impacto (2026-11-10):** as publicações (`/publicacoes`) contam
+visualizações (`publicacoes.visualizacoes`, `POST /publicacoes/{slug}/visualizacoes`, uma
+por separador do browser) e aceitam "Gosto" com sessão (`gostos_publicacao`, chave composta:
+uma conta, um gosto). A página inicial mostra números reais da base de dados em
+`GET /impacto/numeros` (rastreios, sessões de treino, encaminhamentos). A doação mensal é a
+do fluxo em três passos de `POST /doacoes/financeiro` (`frequencia`), sem tabela própria.
 
 Público-alvo inclui **crianças**. Todo o tratamento de dados deve assumir isso.
 

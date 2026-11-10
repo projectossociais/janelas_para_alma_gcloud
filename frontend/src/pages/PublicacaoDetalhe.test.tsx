@@ -82,6 +82,25 @@ describe("PublicacaoDetalhe", () => {
     expect(screen.getByText("Galeria de Fotos")).toBeInTheDocument();
   });
 
+  it("mostra o vídeo da galeria com controlos, fora do carrossel das fotos", async () => {
+    obterPorSlug.mockResolvedValue({
+      ...PUBLICACAO,
+      midias: [
+        { id: "v1", url: "https://cdn.test/video.mp4", ordem: 1 },
+        { id: "m1", url: "https://cdn.test/foto1.jpg", ordem: 2 },
+      ],
+    });
+    const { container } = renderComSlug("campanha-gamek");
+
+    expect(await screen.findByText("texto completo do evento")).toBeInTheDocument();
+    const video = container.querySelector("video");
+    expect(video).not.toBeNull();
+    expect(video).toHaveAttribute("src", "https://cdn.test/video.mp4");
+    expect(video).toHaveAttribute("controls");
+    expect(container.querySelector('img[src="https://cdn.test/video.mp4"]')).toBeNull();
+    expect(container.querySelector('img[src="https://cdn.test/foto1.jpg"]')).not.toBeNull();
+  });
+
   it("mostra um erro genérico quando a API falha por outro motivo", async () => {
     obterPorSlug.mockRejectedValue(Object.assign(new Error("falhou"), { status: 500 }));
     renderComSlug("campanha-gamek");
