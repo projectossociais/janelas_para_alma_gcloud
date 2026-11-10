@@ -111,7 +111,7 @@ const Footer = () => {
               {[
                 { label: t("Footer.scannerDeEstrabismo"), to: localizar("/scanner") },
                 { label: t("Footer.exerciciosVisuais"), to: localizar("/exercicios") },
-                { label: t("Footer.doacaoDeOculos"), to: localizar("/circular") },
+                { label: t("Footer.doarAgora"), to: localizar("/apoiar") },
               ].map((l) => (
                 <li key={l.to}>
                   <Link
