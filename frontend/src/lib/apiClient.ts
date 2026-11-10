@@ -1810,6 +1810,77 @@ export const jogoLocalApi = {
     pedido<PartidaLocalTerminadaJogo>(`/jogo/local/partidas/${partidaId}/terminar`, { method: "POST" }),
 };
 
+export interface JogadorSalaJogo {
+  nome: string;
+  eu: boolean;
+  anfitriao: boolean;
+  pontos: number;
+  acertos: number;
+  respondeu: boolean;
+  // Só com a ronda fechada: antes disso só se sabe que "já respondeu".
+  resposta: RespostaOpcaoJogo | null;
+  certa: boolean | null;
+  pontos_ronda: number | null;
+  vencedor: boolean;
+}
+
+export interface MensagemSalaJogo {
+  id: string;
+  minha: boolean;
+  nome: string;
+  texto: string;
+}
+
+export type MotivoChatIndisponivel = "a_espera" | "so_adultos" | "denunciado" | "fechado";
+
+export interface SalaJogo {
+  codigo: string;
+  estado: "a_aguardar" | "em_curso" | "terminada" | "abandonada";
+  fase: "pergunta" | "revelacao" | null;
+  ronda: number;
+  rondas: number;
+  desempate: number;
+  sou_anfitriao: boolean;
+  jogadores: JogadorSalaJogo[];
+  pergunta: PerguntaJogoPublica | null;
+  tempo_por_pergunta: number;
+  // Pelo relógio do servidor; o aparelho só faz a contagem entre pedidos.
+  segundos_restantes: number | null;
+  minha_resposta: RespostaOpcaoJogo | null;
+  revelacao: { resposta_correta: RespostaOpcaoJogo; explicacao: string | null } | null;
+  motivo_fim: "completa" | "desistencia" | null;
+  premio: { moedas_ganhas: number; limite_diario_atingido: boolean } | null;
+  chat: {
+    disponivel: boolean;
+    motivo: MotivoChatIndisponivel | null;
+    eu_adulto: boolean;
+    mensagens: MensagemSalaJogo[];
+  };
+}
+
+// Multijogador Online: duas pessoas, cada uma no seu aparelho, na mesma sala
+// (entra-se pelo código). Exige sessão. O aparelho pergunta pelo estado de
+// segundo a segundo (`estado`); tudo o que decide a partida é do servidor.
+export const jogoOnlineApi = {
+  criar: () => pedido<SalaJogo>("/jogo/salas", { method: "POST" }),
+  entrar: (codigo: string) =>
+    pedido<SalaJogo>(`/jogo/salas/${encodeURIComponent(codigo)}/entrar`, { method: "POST" }),
+  comecar: (codigo: string) => pedido<SalaJogo>(`/jogo/salas/${codigo}/comecar`, { method: "POST" }),
+  estado: (codigo: string) => pedido<SalaJogo>(`/jogo/salas/${codigo}`),
+  responder: (codigo: string, perguntaId: string, resposta: RespostaOpcaoJogo) =>
+    pedido<SalaJogo>(`/jogo/salas/${codigo}/responder`, {
+      method: "POST",
+      body: JSON.stringify({ pergunta_id: perguntaId, resposta }),
+    }),
+  /** Em jogo conta como desistência: o outro jogador ganha. */
+  sair: (codigo: string) => pedido<void>(`/jogo/salas/${codigo}/sair`, { method: "POST" }),
+  /** Chat da sala: só entre dois adultos, e depois de passar o filtro. */
+  enviarMensagem: (codigo: string, texto: string) =>
+    pedido<SalaJogo>(`/jogo/salas/${codigo}/mensagens`, { method: "POST", body: JSON.stringify({ texto }) }),
+  /** Fecha o chat da sala para os dois e avisa os admins. */
+  denunciarChat: (codigo: string) => pedido<SalaJogo>(`/jogo/salas/${codigo}/denunciar`, { method: "POST" }),
+};
+
 export const jogoApi = {
   // `patamar` (1-15) é só do jogo -- o backend mapeia-o para um dos 3 níveis
   // de dificuldade da reserva de perguntas (ver nivel_dificuldade_do_patamar).
