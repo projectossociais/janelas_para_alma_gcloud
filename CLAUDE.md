@@ -326,7 +326,7 @@ página inicial (`components/inicio/HeroInicio.tsx`) é um carrossel em ecrã in
 fotografia por criança, que muda a cada 5 s, com um véu azul suave por cima; "Doar Agora",
 "Exercícios Visuais" e "Entrar" (só sem sessão) ficam sempre visíveis, e por cima deles os
 seis números (`components/inicio/numerosCapa.ts`: valores do pitch deck do Desafio
-Genial, da coordenação e do IONA (8.545 crianças atendidas no 1.º semestre de 2023), com "+" nas contagens e sem o sinal "≈" (uma estimativa diz-se na
+Genial, da coordenação e do IONA (702 casos de estrabismo infantil em Julho-Dezembro de 2024, Jornal de Angola, 29-1-2025), com "+" nas contagens e sem o sinal "≈" (uma estimativa diz-se na
 legenda); actualizam-se aí, sempre com fonte). **Todas as páginas têm fundo branco**, e os tokens do
 tema em `index.css` (`--teal`, `--navy`, `--gold`, `--green`, `--primary`...) usam os valores
 exactos da paleta da marca (`marca.*` em `tailwind.config.ts`) — não reintroduzir fundos
