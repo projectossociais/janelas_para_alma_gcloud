@@ -198,6 +198,7 @@ def test_com_as_duas_respostas_a_ronda_revela_se_aos_dois(amb) -> None:
     assert (eu["resposta"], eu["certa"]) == ("B", True)
     assert (rui["resposta"], rui["certa"], rui["pontos_ronda"]) == ("C", False, 0)
     assert corpo["segundos_restantes"] is None
+    assert corpo["segundos_ate_proxima"] == 6
 
 
 def test_responder_duas_vezes_ou_com_opcao_invalida(amb) -> None:

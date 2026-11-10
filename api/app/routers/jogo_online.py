@@ -136,6 +136,10 @@ def _publica(vista: VistaDaSala, utilizador_id: str) -> SalaPublica:
     if sala.estado == "em_curso" and sala.fase == "pergunta" and sala.prazo_resposta is not None:
         segundos = max(0, math.ceil((sala.prazo_resposta - vista.agora).total_seconds()))
 
+    ate_proxima = None
+    if sala.estado == "em_curso" and ronda_fechada and sala.revelacao_ate is not None:
+        ate_proxima = max(0, math.ceil((sala.revelacao_ate - vista.agora).total_seconds()))
+
     revelacao = None
     if sala.estado == "em_curso" and ronda_fechada and vista.pergunta is not None:
         revelacao = RevelacaoPublica(
@@ -175,6 +179,7 @@ def _publica(vista: VistaDaSala, utilizador_id: str) -> SalaPublica:
         pergunta=PerguntaPublica.model_validate(vista.pergunta) if vista.pergunta is not None else None,
         tempo_por_pergunta=int(TEMPO_POR_PERGUNTA.total_seconds()),
         segundos_restantes=segundos,
+        segundos_ate_proxima=ate_proxima,
         minha_resposta=eu.resposta_ronda if sala.estado == "em_curso" else None,
         revelacao=revelacao,
         motivo_fim=sala.motivo_fim,

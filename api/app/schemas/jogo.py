@@ -407,6 +407,8 @@ class SalaPublica(BaseModel):
     tempo_por_pergunta: int
     # Calculado pelo relógio do servidor; o aparelho só faz a contagem.
     segundos_restantes: int | None
+    # Na revelação: quanto falta para a pergunta seguinte (ou para o fim).
+    segundos_ate_proxima: int | None = None
     minha_resposta: RespostaOpcao | None
     revelacao: RevelacaoPublica | None
     motivo_fim: Literal["completa", "desistencia"] | None

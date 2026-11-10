@@ -71,6 +71,7 @@ const sala = (extra: Partial<SalaJogo> = {}): SalaJogo => ({
   pergunta: null,
   tempo_por_pergunta: 30,
   segundos_restantes: null,
+  segundos_ate_proxima: null,
   minha_resposta: null,
   revelacao: null,
   motivo_fim: null,
@@ -201,6 +202,47 @@ describe("JogoOnline (Multijogador Online)", () => {
     expect(screen.queryByText(/Certo!|Errado\./)).not.toBeInTheDocument();
   });
 
+  it("a opção fica marcada logo ao tocar, antes de o servidor responder", async () => {
+    await naSala(EM_JOGO);
+    let chegar: (valor: SalaJogo) => void = () => {};
+    api.responder.mockReturnValue(new Promise<SalaJogo>((resolve) => (chegar = resolve)));
+
+    await userEvent.click(await screen.findByRole("button", { name: /Dois/ }));
+
+    // O pedido ainda vai a caminho, mas o ecrã já reagiu ao toque.
+    expect(await screen.findByText("À espera de Rui...")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Dois/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Três/ })).toBeDisabled();
+
+    await userEvent.click(screen.getByRole("button", { name: /Três/ }));
+    expect(api.responder).toHaveBeenCalledTimes(1);
+    chegar({ ...EM_JOGO, minha_resposta: "B" });
+  });
+
+  it("um pedido de estado que se cruza com a resposta não desfaz a escolha no ecrã", async () => {
+    await naSala(EM_JOGO);
+    await screen.findByText(PERGUNTA.texto_pergunta);
+    const respondida = { ...EM_JOGO, minha_resposta: "B" as const, jogadores: [{ ...ANA, respondeu: true }, RUI] };
+    // O pedido de estado parte antes da resposta e só chega depois dela,
+    // ainda com o estado antigo (sem a resposta).
+    let chegarEstadoAntigo: (valor: SalaJogo) => void = () => {};
+    api.estado.mockReturnValueOnce(new Promise<SalaJogo>((resolve) => (chegarEstadoAntigo = resolve)));
+    await waitFor(() => expect(api.estado.mock.results.at(-1)?.value).toBeInstanceOf(Promise));
+    api.responder.mockResolvedValue(respondida);
+    api.estado.mockResolvedValue(respondida);
+
+    await userEvent.click(screen.getByRole("button", { name: /Dois/ }));
+    await waitFor(() => expect(api.responder).toHaveBeenCalled());
+    chegarEstadoAntigo(EM_JOGO);
+
+    // Em nenhum momento a escolha volta a ficar por fazer.
+    for (let i = 0; i < 5; i++) {
+      await new Promise((r) => setTimeout(r, 15));
+      expect(screen.getByRole("button", { name: /Dois/ })).toBeDisabled();
+      expect(screen.getByText("À espera de Rui...")).toBeInTheDocument();
+    }
+  });
+
   it("se a resposta não chegar ao servidor, avisa e deixa tentar outra vez", async () => {
     await naSala(EM_JOGO);
     api.responder.mockRejectedValueOnce(new Error("sem rede"));
@@ -217,6 +259,7 @@ describe("JogoOnline (Multijogador Online)", () => {
         ...EM_JOGO,
         fase: "revelacao",
         segundos_restantes: null,
+        segundos_ate_proxima: 4,
         revelacao: { resposta_correta: "B", explicacao: "Temos dois olhos." },
         jogadores: [
           { ...ANA, respondeu: true, resposta: "B", certa: true, pontos_ronda: 140, pontos: 140, acertos: 1 },
@@ -228,6 +271,7 @@ describe("JogoOnline (Multijogador Online)", () => {
     expect(await screen.findByText("Certo! +140 pontos")).toBeInTheDocument();
     expect(screen.getByText("Temos dois olhos.")).toBeInTheDocument();
     expect(screen.getByText("+140")).toBeInTheDocument();
+    expect(screen.getByText("A continuar em 4...")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Dois/ })).toBeDisabled();
     expect(screen.queryByRole("timer")).not.toBeInTheDocument();
   });

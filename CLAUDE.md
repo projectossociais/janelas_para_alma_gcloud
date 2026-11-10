@@ -308,7 +308,7 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   sessão e só no site português. Tudo é decidido pelo servidor (`routers/jogo_online.py`,
   `SalaJogoService`, tabelas `salas_jogo` e `jogadores_sala_jogo`): pergunta, prazo (relógio
   do servidor), pontos, vencedor e prémio; a resposta certa e a do adversário só saem com a
-  ronda fechada. **Sem WebSockets:** cada aparelho pergunta pelo estado de 1,5 em 1,5 s
+  ronda fechada. **Sem WebSockets:** cada aparelho pergunta pelo estado de 0,7 em 0,7 s em jogo
   (`GET /jogo/salas/{codigo}`, pelo `/api` do Vercel, com o cookie de sessão); não há relógio
   no servidor -- o estado avança quando um pedido chega, por funções puras aplicadas com a
   linha da sala bloqueada (`SalaJogoRepository.atualizar`, `FOR UPDATE`). Esse pedido é também
@@ -316,6 +316,10 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   por conta: 10 moedas por acerto próprio + 30 para o vencedor (15 a cada um na vitória
   partilhada), até **300 por dia UTC**; quem desiste não recebe, quem fica recebe só os
   acertos (constantes em `sala_jogo_service.py`, criadas a pedido do dono do projecto).
+  **Fluidez (2026-11-10, depois do primeiro teste real):** o toque numa opção marca-a logo
+  no ecrã, sem esperar pelo servidor, e um pedido de estado que se cruze com uma acção do
+  jogador é deitado fora (`epoca` em `JogoOnline.tsx`) -- antes podia chegar com o estado
+  antigo e desfazer a escolha até ao pedido seguinte.
   **Chat da sala só entre adultos, com filtros** (decisão do dono do projecto, 2026-11-10): só
   existe quando os **dois** jogadores são adultos -- `e_adulto`: `data_nascimento` no perfil
   com 18 anos feitos **e** `faixa_etaria` que não seja de criança (uma criança pode usar a
