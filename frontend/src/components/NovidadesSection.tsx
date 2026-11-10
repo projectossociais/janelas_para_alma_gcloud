@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, FileBadge, Gamepad2, Newspaper } from "lucide-react";
 import FirmaOlharAlinhadoModal from "@/components/FirmaOlharAlinhadoModal";
+import FeiraInovacaoModal, { VIDEO_FEIRA_INOVACAO } from "@/components/FeiraInovacaoModal";
 import teamGroupPhoto from "@/assets/team-group-stairs.jpg";
 import saudeMundialPhoto from "@/assets/novidade-saude-mundial.jpg";
 import { useTranslation } from "react-i18next";
@@ -29,10 +30,25 @@ type Novidade = {
   icon?: typeof Gamepad2;
   readonly tag?: string;
   readonly resumo?: string;
-  modal?: "firma";
+  modal?: "firma" | "feira";
 };
 
 const novidades: Novidade[] = [
+  {
+    get title() {
+      return i18n.t("NovidadesSection.feiraInovacao");
+    },
+    get tag() {
+      return i18n.t("NovidadesSection.tagEvento");
+    },
+    get resumo() {
+      return i18n.t("NovidadesSection.feiraInovacaoResumo");
+    },
+    external: false,
+    image: null,
+    video: VIDEO_FEIRA_INOVACAO,
+    modal: "feira",
+  },
   {
     get title() {
       return i18n.t("NovidadesSection.oficializacaoDaFirma");
@@ -227,6 +243,10 @@ const NovidadesSection = () => {
         </Carousel>
       </div>
 
+      <FeiraInovacaoModal
+        open={modalAberto === "feira"}
+        onOpenChange={(aberto) => setModalAberto(aberto ? "feira" : null)}
+      />
       <FirmaOlharAlinhadoModal
         open={modalAberto === "firma"}
         onOpenChange={(aberto) => setModalAberto(aberto ? "firma" : null)}

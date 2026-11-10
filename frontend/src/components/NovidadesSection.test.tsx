@@ -120,3 +120,29 @@ describe("NovidadesSection -- publicações do blog", () => {
     expect(screen.queryByText("Publicação")).not.toBeInTheDocument();
   });
 });
+
+describe("NovidadesSection -- Feira de Inovação", () => {
+  it("é o primeiro cartão fixo e abre o vídeo com o link de inscrição", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <NovidadesSection />
+      </MemoryRouter>,
+    );
+
+    const cartao = screen.getByRole("button", { name: /Feira de Inovação do Desafio Genial/i });
+    expect(within(cartao).getByText("Evento")).toBeInTheDocument();
+    expect(screen.getAllByRole("button")[0]).toBe(cartao);
+
+    await user.click(cartao);
+
+    const modal = await screen.findByRole("dialog");
+    expect(modal.querySelector("video")).toHaveAttribute("src", "/videos/feira-inovacao-desafio-genial.mp4");
+    expect(modal.querySelector("video")).toHaveAttribute("controls");
+    expect(within(modal).getByText("Centro de Ciências de Luanda")).toBeInTheDocument();
+    expect(within(modal).getByRole("link", { name: /Faça a sua inscrição/i })).toHaveAttribute(
+      "href",
+      expect.stringContaining("docs.google.com/forms"),
+    );
+  });
+});
