@@ -1,12 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowUpRight, FileBadge, Gamepad2 } from "lucide-react";
+import { ArrowUpRight, FileBadge, Gamepad2, Newspaper } from "lucide-react";
 import FirmaOlharAlinhadoModal from "@/components/FirmaOlharAlinhadoModal";
 import teamGroupPhoto from "@/assets/team-group-stairs.jpg";
 import saudeMundialPhoto from "@/assets/novidade-saude-mundial.jpg";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { disponivelNoIdiomaActual, localizar } from "@/i18n/rotas";
+import { publicacoesApi, type PublicacaoPublica } from "@/lib/apiClient";
+import { eVideoDaGaleria } from "@/lib/midiaPublicacao";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 type Novidade = {
   readonly title: string;
@@ -14,6 +17,10 @@ type Novidade = {
   readonly to?: string;
   external: boolean;
   image: string | null;
+  /** Vídeo mostrado como miniatura quando não há imagem (publicação só com vídeo). */
+  video?: string;
+  /** Texto em português vindo da API (marca-se com `lang` no site inglês). */
+  conteudoPt?: boolean;
   /** Ícone mostrado no lugar da imagem, quando não há imagem. */
   icon?: typeof Gamepad2;
   readonly tag?: string;
@@ -67,9 +74,47 @@ const novidades: Novidade[] = [
   },
 ];
 
+/** Uma publicação do blog (`/publicacoes`) como cartão das Novidades. A
+ *  miniatura é a capa; sem capa, a primeira foto da galeria; só com vídeo,
+ *  o primeiro fotograma do vídeo. */
+function novidadeDaPublicacao(p: PublicacaoPublica): Novidade {
+  const foto = p.midias.find((m) => !eVideoDaGaleria(m.url));
+  const video = p.midias.find((m) => eVideoDaGaleria(m.url));
+  return {
+    title: p.titulo,
+    resumo: p.resumo,
+    get tag() {
+      return i18n.t("NovidadesSection.tagPublicacao");
+    },
+    get to() {
+      return localizar(`/publicacoes/${p.slug}`);
+    },
+    external: false,
+    image: p.capa_url ?? foto?.url ?? null,
+    video: p.capa_url || foto ? undefined : video?.url,
+    icon: Newspaper,
+    conteudoPt: true,
+  };
+}
+
 const NovidadesSection = () => {
   const { t } = useTranslation();
   const [modalAberto, setModalAberto] = useState<Novidade["modal"] | null>(null);
+  const [publicacoes, setPublicacoes] = useState<Novidade[]>([]);
+
+  useEffect(() => {
+    let activo = true;
+    // Uma falha aqui nunca estraga a página inicial: ficam só os cartões fixos.
+    publicacoesApi
+      .listarPublicadas()
+      .then((lista) => {
+        if (activo) setPublicacoes(lista.map(novidadeDaPublicacao));
+      })
+      .catch(() => {});
+    return () => {
+      activo = false;
+    };
+  }, []);
   return (
     <section className="py-16 md:py-24 bg-white">
       <div className="container">
@@ -80,8 +125,11 @@ const NovidadesSection = () => {
           <h2 className="text-3xl md:text-5xl font-bold text-marca-marinho">{t("NovidadesSection.novidades")}</h2>
         </div>
 
-        <div className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-4 scrollbar-hide touch-pan-x">
-          {novidades.filter((item) => !item.to || disponivelNoIdiomaActual(item.to)).map((item) => {
+        {/* Todas as publicações (mais recentes primeiro) e depois os cartões
+            fixos, num carrossel: arrasta-se com o dedo ou muda-se com as setas. */}
+        <Carousel opts={{ align: "start" }} aria-label={t("NovidadesSection.novidades")}>
+          <CarouselContent className="-ml-6 py-2">
+          {[...publicacoes, ...novidades].filter((item) => !item.to || disponivelNoIdiomaActual(item.to)).map((item) => {
             const Icone = item.icon ?? Gamepad2;
             const cardContent = (
               <>
@@ -92,6 +140,15 @@ const NovidadesSection = () => {
                       alt={item.title}
                       className="w-full h-48 object-cover"
                       loading="lazy"
+                    />
+                  ) : item.video ? (
+                    <video
+                      src={`${item.video}#t=0.1`}
+                      muted
+                      playsInline
+                      preload="metadata"
+                      aria-hidden="true"
+                      className="w-full h-48 object-cover bg-marca-marinho"
                     />
                   ) : (
                     <div className="w-full h-48 bg-gradient-to-br from-marca-ouro/20 to-marca-marinho/10 flex items-center justify-center">
@@ -110,11 +167,11 @@ const NovidadesSection = () => {
                   )}
                 </div>
                 <div className="p-6 space-y-3 flex flex-col flex-1">
-                  <h3 className="text-lg font-bold text-marca-marinho leading-snug">
+                  <h3 lang={item.conteudoPt ? "pt-AO" : undefined} className="text-lg font-bold text-marca-marinho leading-snug">
                     {item.title}
                   </h3>
                   {item.resumo && (
-                    <p className="text-sm text-marca-marinho/70 leading-relaxed line-clamp-3">{item.resumo}</p>
+                    <p lang={item.conteudoPt ? "pt-AO" : undefined} className="text-sm text-marca-marinho/70 leading-relaxed line-clamp-3">{item.resumo}</p>
                   )}
                   <span className="inline-flex items-center gap-1 text-sm text-marca-azul font-medium mt-auto pt-2">
                     {t("NovidadesSection.saibaMais")}
@@ -125,39 +182,46 @@ const NovidadesSection = () => {
             );
 
             const cardClass =
-              "snap-start shrink-0 w-[85%] sm:w-[70%] md:w-[45%] lg:w-[32%] xl:w-[calc(25%-1.125rem)] rounded-2xl overflow-hidden bg-white shadow-card border border-border/50 transition-all hover:shadow-elevated hover:scale-[1.02] cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 flex flex-col";
+              "h-full w-full rounded-2xl overflow-hidden bg-white shadow-card border border-border/50 transition-shadow hover:shadow-elevated cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 flex flex-col";
+            const itemClass = "pl-6 basis-[85%] sm:basis-[70%] md:basis-1/2 lg:basis-1/3 xl:basis-1/4";
 
             if (item.modal) {
               const modal = item.modal;
               return (
-                <button
-                  key={item.title}
-                  type="button"
-                  onClick={() => setModalAberto(modal)}
-                  className={cardClass}
-                >
-                  {cardContent}
-                </button>
+                <CarouselItem key={item.title} className={itemClass}>
+                  <button type="button" onClick={() => setModalAberto(modal)} className={cardClass}>
+                    {cardContent}
+                  </button>
+                </CarouselItem>
               );
             }
 
-            return item.external ? (
-              <a
-                key={item.title}
-                href={item.to}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={cardClass}
-              >
-                {cardContent}
-              </a>
-            ) : (
-              <Link key={item.title} to={item.to ?? "/"} className={cardClass}>
-                {cardContent}
-              </Link>
+            return (
+              <CarouselItem key={item.to ?? item.title} className={itemClass}>
+                {item.external ? (
+                  <a href={item.to} target="_blank" rel="noopener noreferrer" className={cardClass}>
+                    {cardContent}
+                  </a>
+                ) : (
+                  <Link to={item.to ?? "/"} className={cardClass}>
+                    {cardContent}
+                  </Link>
+                )}
+              </CarouselItem>
             );
           })}
-        </div>
+          </CarouselContent>
+          <div className="mt-6 flex justify-center gap-3">
+            <CarouselPrevious
+              aria-label={t("NovidadesSection.anterior")}
+              className="static h-10 w-10 translate-y-0 border-marca-marinho/20 text-marca-marinho"
+            />
+            <CarouselNext
+              aria-label={t("NovidadesSection.seguinte")}
+              className="static h-10 w-10 translate-y-0 border-marca-marinho/20 text-marca-marinho"
+            />
+          </div>
+        </Carousel>
       </div>
 
       <FirmaOlharAlinhadoModal
