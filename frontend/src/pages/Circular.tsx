@@ -1,4 +1,4 @@
-import { Recycle, Wrench, Sparkles, Glasses, Scissors, ShoppingBag, HeartHandshake, ArrowRight } from "lucide-react";
+import { Recycle, Wrench, Sparkles, Glasses, SlidersHorizontal, Gamepad2, ArrowRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
@@ -40,27 +40,27 @@ const steps = [
   },
 ];
 
-// Óculos 3D: um produto da plataforma, não uma etapa do processo circular.
-// Nenhum texto diz que são feitos de material doado ou reaproveitado -- se
-// isso um dia passar a ser verdade (cartão de embalagens recolhidas), é aqui
-// que se acrescenta, com a equipa a confirmar.
+// Óculos 3D: material para os exercícios visuais com óculos, não um produto à venda
+// (decisão da coordenação, 2026-11-10: talvez venha a ser um produto no futuro, mas ainda
+// não é -- nada de "venda" nem "rendimento" enquanto isso não acontecer). Nenhum texto diz
+// que são feitos de material doado ou reaproveitado.
 const passosOculos3d = [
   {
-    icon: Scissors,
+    icon: Glasses,
     get title() {
-      return i18n.t("Circular.producao");
+      return i18n.t("Circular.passoEscolherComOculos");
     },
   },
   {
-    icon: ShoppingBag,
+    icon: SlidersHorizontal,
     get title() {
-      return i18n.t("Circular.venda");
+      return i18n.t("Circular.passoAfinarCores");
     },
   },
   {
-    icon: HeartHandshake,
+    icon: Gamepad2,
     get title() {
-      return i18n.t("Circular.reinvestimentoNoPrograma");
+      return i18n.t("Circular.passoFazerExercicio");
     },
   },
 ];
@@ -130,20 +130,20 @@ const Circular = () => {
           </div>
         </section>
 
-        {/* Óculos 3D para os exercícios visuais (produto da plataforma) */}
+        {/* Óculos 3D para os exercícios visuais (material de apoio, não um produto à venda) */}
         <section id="oculos-3d" className="pb-20 md:pb-28 scroll-mt-24">
           <div className="container">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center max-w-5xl mx-auto">
               <div className="animate-fade-in">
                 <span className="inline-block px-3 py-1 rounded-full bg-green/10 text-green text-xs font-bold uppercase tracking-widest mb-4">
-                  {t("Circular.produtoDaPlataforma")}
+                  {t("Circular.paraOsExerciciosVisuais")}
                 </span>
                 <h2 className="text-3xl md:text-4xl font-bold text-foreground leading-tight mb-6">
                   {t("Circular.oculos3dParaOsExercicios")}
                 </h2>
                 <div className="space-y-4 text-muted-foreground leading-relaxed">
-                  <p>{t("Circular.oculos3dProduto")}</p>
-                  <p>{t("Circular.oculos3dRendimento")}</p>
+                  <p>{t("Circular.oculos3dDescricao")}</p>
+                  <p>{t("Circular.oculos3dSemOculos")}</p>
                 </div>
               </div>
 
@@ -186,7 +186,7 @@ const Circular = () => {
         {/* Impact Block */}
         <section className="py-20 bg-white">
           <div className="container">
-            <div className="max-w-4xl mx-auto text-center">
+            <div className="max-w-4xl mx-auto text-center rounded-3xl border-2 border-marca-verde/40 bg-marca-lima/20 px-6 py-12 shadow-card md:px-14 md:py-16">
               <Recycle className="w-12 h-12 text-marca-verde mx-auto mb-6" />
               <p className="text-2xl md:text-4xl font-bold text-marca-marinho leading-tight">
                 <Trans i18nKey="Circular.aNossaLogisticaReduz" components={{ span: <span className="text-marca-verde" /> }} />

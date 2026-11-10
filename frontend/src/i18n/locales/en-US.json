@@ -342,13 +342,13 @@
     "oculosASeremReciclados": "Eyeglasses being recycled in a sustainable setting",
     "prototipoDosOculos3d": "Lightweight cardboard 3D glasses, with red and cyan lenses and the Janelas Para a Alma brand",
     "oculos3d": "3D Glasses",
-    "produtoDaPlataforma": "Platform product",
+    "paraOsExerciciosVisuais": "For the vision exercises",
     "oculos3dParaOsExercicios": "3D Glasses for the Vision Exercises",
-    "oculos3dProduto": "The 3D glasses are a platform product, used in the glasses-based vision exercises, such as the Kianda game and Fusion Bridges. The project makes them out of lightweight cardboard.",
-    "oculos3dRendimento": "The proceeds from sales go back into funding the program and the beneficiaries we support.",
-    "producao": "Production",
-    "venda": "Sale",
-    "reinvestimentoNoPrograma": "Reinvested in the program"
+    "oculos3dDescricao": "Some vision exercises have a version with 3D glasses, with one red lens and one cyan lens, such as the Kianda game and Fusion Bridges. With them, each eye sees a different image on the screen, so the exercise can get both eyes working together.",
+    "oculos3dSemOculos": "The glasses are optional: every exercise has a version without glasses, done with just a phone and things you have at home. If you have red and cyan 3D glasses, choose the version with glasses.",
+    "passoEscolherComOculos": "Choose the version with glasses",
+    "passoAfinarCores": "Adjust the colors on screen",
+    "passoFazerExercicio": "Do the exercise"
   },
   "ClinicalPartners": {
     "parceirosClinicos": "Clinical Partners",
