@@ -1,5 +1,5 @@
 import { useSearchParams } from "react-router-dom";
-import { Eye, Tag, Handshake } from "lucide-react";
+import { CalendarCheck, Handshake, Users } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
@@ -12,30 +12,30 @@ import i18n from "@/i18n";
 
 const benefits = [
   {
-    icon: Eye,
+    icon: Users,
     get title() {
-      return i18n.t("Parceiros.acessoFacilitado");
+      return i18n.t("Parceiros.novosPacientes");
     },
     get text() {
-      return i18n.t("Parceiros.acessoDirectoARastreios");
+      return i18n.t("Parceiros.novosPacientesTexto");
     },
   },
   {
-    icon: Tag,
+    icon: CalendarCheck,
     get title() {
-      return i18n.t("Parceiros.precosAdaptados");
+      return i18n.t("Parceiros.portalClinico");
     },
     get text() {
-      return i18n.t("Parceiros.estruturacaoDeAcordosE");
+      return i18n.t("Parceiros.portalClinicoTexto");
     },
   },
   {
     icon: Handshake,
     get title() {
-      return i18n.t("Parceiros.maiorInclusao");
+      return i18n.t("Parceiros.visibilidadeEImpacto");
     },
     get text() {
-      return i18n.t("Parceiros.eliminacaoDeBarreirasGeograficas");
+      return i18n.t("Parceiros.visibilidadeEImpactoTexto");
     },
   },
 ];
