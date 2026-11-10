@@ -1,12 +1,9 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Globe, User, Users, UserRound } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useProfile } from "@/contexts/ProfileContext";
 import CarteiraJogo from "@/components/jogo/CarteiraJogo";
 import { useTranslation } from "react-i18next";
@@ -15,7 +12,6 @@ import { localizar } from "@/i18n/rotas";
 const MenuJogo = () => {
   const { t } = useTranslation();
   const { profile } = useProfile();
-  const [onlineEmBreve, setOnlineEmBreve] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -90,40 +86,19 @@ const MenuJogo = () => {
               <p className="text-sm text-muted-foreground">{t("MenuJogo.desafieUmAmigoNo")}</p>
             </Link>
 
-            <button
-              type="button"
-              onClick={() => setOnlineEmBreve(true)}
-              className="relative rounded-2xl bg-card border border-border/60 shadow-card hover:shadow-elevated transition-all p-6 text-center space-y-3"
+            <Link
+              to={localizar("/jogo-curiosidades/online")}
+              className="group rounded-2xl bg-card border border-border/60 shadow-card hover:shadow-elevated hover:-translate-y-1 transition-all p-6 text-center space-y-3"
             >
-              <span className="absolute top-3 right-3 text-[10px] font-bold uppercase tracking-wide bg-gold/15 text-gold rounded-full px-2 py-1">
-                {t("MenuJogo.emBreve")}
-              </span>
-              <div className="w-14 h-14 rounded-2xl bg-muted text-muted-foreground flex items-center justify-center mx-auto">
+              <div className="w-14 h-14 rounded-2xl bg-teal/10 text-teal flex items-center justify-center mx-auto transition-colors group-hover:bg-teal group-hover:text-teal-foreground">
                 <Globe className="w-7 h-7" />
               </div>
               <h3 className="font-bold text-foreground">{t("MenuJogo.multijogadorOnline")}</h3>
               <p className="text-sm text-muted-foreground">{t("MenuJogo.jogueEmTempoReal")}</p>
-            </button>
+            </Link>
           </div>
         </div>
       </main>
-
-      <Dialog open={onlineEmBreve} onOpenChange={setOnlineEmBreve}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{t("MenuJogo.multijogadorOnline")}</DialogTitle>
-            <DialogDescription>{t("MenuJogo.estamosAConstruirO")}</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              onClick={() => setOnlineEmBreve(false)}
-              className="w-full bg-teal text-teal-foreground hover:bg-teal/90"
-            >
-              {t("MenuJogo.entendi")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <Footer />
     </div>
