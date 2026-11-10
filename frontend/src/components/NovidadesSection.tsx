@@ -9,9 +9,7 @@ import i18n from "@/i18n";
 import { disponivelNoIdiomaActual, localizar } from "@/i18n/rotas";
 import { publicacoesApi, type PublicacaoPublica } from "@/lib/apiClient";
 import { eVideoDaGaleria } from "@/lib/midiaPublicacao";
-
-/** Quantas publicações do blog entram nas Novidades (as mais recentes). */
-export const MAX_PUBLICACOES_NAS_NOVIDADES = 3;
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 type Novidade = {
   readonly title: string;
@@ -110,7 +108,7 @@ const NovidadesSection = () => {
     publicacoesApi
       .listarPublicadas()
       .then((lista) => {
-        if (activo) setPublicacoes(lista.slice(0, MAX_PUBLICACOES_NAS_NOVIDADES).map(novidadeDaPublicacao));
+        if (activo) setPublicacoes(lista.map(novidadeDaPublicacao));
       })
       .catch(() => {});
     return () => {
@@ -127,7 +125,10 @@ const NovidadesSection = () => {
           <h2 className="text-3xl md:text-5xl font-bold text-marca-marinho">{t("NovidadesSection.novidades")}</h2>
         </div>
 
-        <div className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-4 scrollbar-hide touch-pan-x">
+        {/* Todas as publicações (mais recentes primeiro) e depois os cartões
+            fixos, num carrossel: arrasta-se com o dedo ou muda-se com as setas. */}
+        <Carousel opts={{ align: "start" }} aria-label={t("NovidadesSection.novidades")}>
+          <CarouselContent className="-ml-6 py-2">
           {[...publicacoes, ...novidades].filter((item) => !item.to || disponivelNoIdiomaActual(item.to)).map((item) => {
             const Icone = item.icon ?? Gamepad2;
             const cardContent = (
@@ -181,39 +182,46 @@ const NovidadesSection = () => {
             );
 
             const cardClass =
-              "snap-start shrink-0 w-[85%] sm:w-[70%] md:w-[45%] lg:w-[32%] xl:w-[calc(25%-1.125rem)] rounded-2xl overflow-hidden bg-white shadow-card border border-border/50 transition-all hover:shadow-elevated hover:scale-[1.02] cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 flex flex-col";
+              "h-full w-full rounded-2xl overflow-hidden bg-white shadow-card border border-border/50 transition-shadow hover:shadow-elevated cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 flex flex-col";
+            const itemClass = "pl-6 basis-[85%] sm:basis-[70%] md:basis-1/2 lg:basis-1/3 xl:basis-1/4";
 
             if (item.modal) {
               const modal = item.modal;
               return (
-                <button
-                  key={item.title}
-                  type="button"
-                  onClick={() => setModalAberto(modal)}
-                  className={cardClass}
-                >
-                  {cardContent}
-                </button>
+                <CarouselItem key={item.title} className={itemClass}>
+                  <button type="button" onClick={() => setModalAberto(modal)} className={cardClass}>
+                    {cardContent}
+                  </button>
+                </CarouselItem>
               );
             }
 
-            return item.external ? (
-              <a
-                key={item.title}
-                href={item.to}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={cardClass}
-              >
-                {cardContent}
-              </a>
-            ) : (
-              <Link key={item.to ?? item.title} to={item.to ?? "/"} className={cardClass}>
-                {cardContent}
-              </Link>
+            return (
+              <CarouselItem key={item.to ?? item.title} className={itemClass}>
+                {item.external ? (
+                  <a href={item.to} target="_blank" rel="noopener noreferrer" className={cardClass}>
+                    {cardContent}
+                  </a>
+                ) : (
+                  <Link to={item.to ?? "/"} className={cardClass}>
+                    {cardContent}
+                  </Link>
+                )}
+              </CarouselItem>
             );
           })}
-        </div>
+          </CarouselContent>
+          <div className="mt-6 flex justify-center gap-3">
+            <CarouselPrevious
+              aria-label={t("NovidadesSection.anterior")}
+              className="static h-10 w-10 translate-y-0 border-marca-marinho/20 text-marca-marinho"
+            />
+            <CarouselNext
+              aria-label={t("NovidadesSection.seguinte")}
+              className="static h-10 w-10 translate-y-0 border-marca-marinho/20 text-marca-marinho"
+            />
+          </div>
+        </Carousel>
       </div>
 
       <FirmaOlharAlinhadoModal

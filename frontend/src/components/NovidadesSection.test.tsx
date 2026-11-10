@@ -75,8 +75,8 @@ describe("NovidadesSection -- cartão da firma Olhar Alinhado", () => {
 });
 
 describe("NovidadesSection -- publicações do blog", () => {
-  it("mostra as 3 publicações mais recentes primeiro, com link para cada uma", async () => {
-    listarPublicadas.mockResolvedValue([1, 2, 3, 4].map((n) => publicacao(n)));
+  it("mostra todas as publicações, mais recentes primeiro, num carrossel com setas", async () => {
+    listarPublicadas.mockResolvedValue([1, 2, 3, 4, 5].map((n) => publicacao(n)));
     render(
       <MemoryRouter>
         <NovidadesSection />
@@ -87,11 +87,11 @@ describe("NovidadesSection -- publicações do blog", () => {
     expect(primeira).toHaveAttribute("href", "/publicacoes/publicacao-1");
     expect(within(primeira).getByText("Publicação")).toBeInTheDocument();
     expect(within(primeira).getByText("resumo 1")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Publicação 3/ })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /Publicação 4/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Publicação 5/ })).toHaveAttribute("href", "/publicacoes/publicacao-5");
+    expect(screen.getAllByRole("link")[0]).toBe(primeira);
 
-    const links = screen.getAllByRole("link");
-    expect(links[0]).toBe(primeira);
+    expect(screen.getByRole("button", { name: "Novidade anterior" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Novidade seguinte" })).toBeInTheDocument();
   });
 
   it("publicação só com vídeo usa o vídeo como miniatura", async () => {
