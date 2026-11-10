@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import {
   Heart,
   Check,
@@ -186,15 +186,23 @@ const StepIndicator = ({ current, total }: { current: number; total: number }) =
 
 const Apoiar = () => {
   const { t: tr } = useTranslation();
-  // `?modo=mensal` ("Doar Mensalmente" no menu) abre logo o Apoio Financeiro
-  // em mensal; `?modo=unica` fica na página geral, com "Uma única vez".
+  // `?modo=unica` / `?modo=mensal` ("Doar Uma Vez" / "Doar Mensalmente" no
+  // menu) abrem logo o Apoio Financeiro nessa frequência. Sem `modo`, a
+  // página começa nos materiais.
   const [searchParams] = useSearchParams();
+  const { hash } = useLocation();
   const frequenciaPedida = frequenciaDoModo(searchParams.get("modo"));
-  const [mode, setMode] = useState<Mode>(frequenciaPedida === "mensal" ? "financeiro" : "materiais");
-  // O link traz `#como-apoiar`: o ScrollToTop leva até aos separadores.
+  const [mode, setMode] = useState<Mode>(frequenciaPedida ? "financeiro" : "materiais");
+  // O link traz `#como-apoiar`. Ao chegar de outra página, o ScrollToTop desce
+  // até lá; mas trocar só o `modo` com a página aberta não muda a âncora, e o
+  // ScrollToTop não volta a correr -- por isso desce-se também aqui.
   useEffect(() => {
-    if (frequenciaPedida === "mensal") setMode("financeiro");
-  }, [frequenciaPedida]);
+    if (!frequenciaPedida) return;
+    setMode("financeiro");
+    if (hash === "#como-apoiar") {
+      document.getElementById("como-apoiar")?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+    }
+  }, [frequenciaPedida, hash]);
   const [itensPorMaterial, setItensPorMaterial] = useState<ItensPorMaterial>({});
   const [materialNotes, setMaterialNotes] = useState("");
   // Painéis de detalhe: o cartão mostra só ícone e título, o resto abre aqui.

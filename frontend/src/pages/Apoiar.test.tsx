@@ -540,19 +540,23 @@ describe("Apoiar -- Doar Uma Vez / Doar Mensalmente (menu)", () => {
     expect(screen.queryByRole("button", { name: "500.000 Kz" })).not.toBeInTheDocument();
   });
 
-  it("?modo=unica fica na página geral e, no financeiro, mostra os valores de uma vez", async () => {
-    const user = userEvent.setup();
+  it("?modo=unica abre logo o Apoio Financeiro, em uma única vez, com os valores de uma vez", () => {
     render(
       <MemoryRouter initialEntries={["/apoiar?modo=unica"]}>
         <Apoiar />
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole("tab", { name: /Apoio com Materiais/i })).toHaveAttribute("aria-selected", "true");
-    await user.click(screen.getByRole("tab", { name: /Apoio Financeiro/i }));
+    expect(screen.getByRole("tab", { name: /Apoio Financeiro/i })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("button", { name: "Uma única vez" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "500.000 Kz" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "2.500 Kz" })).not.toBeInTheDocument();
+  });
+
+  it("sem modo, a página começa no Apoio com Materiais", () => {
+    render(<Apoiar />, { wrapper: MemoryRouter });
+
+    expect(screen.getByRole("tab", { name: /Apoio com Materiais/i })).toHaveAttribute("aria-selected", "true");
   });
 
   it("trocar a frequência troca os valores e desfaz o valor escolhido", async () => {
