@@ -275,6 +275,13 @@ documentos do redesenho (`REDESENHO_FRONTEND.md`, `SISTEMA_DESIGN.md`, `LAYOUTS.
 `MARCA.md`, `ESTRUTURA_SITE.md`) ficam como histórico — não retomar nem introduzir padrões
 visuais novos sem nova decisão da equipa.
 
+**Blog e números de impacto (2026-11-10):** as publicações (`/publicacoes`) contam
+visualizações (`publicacoes.visualizacoes`, `POST /publicacoes/{slug}/visualizacoes`, uma
+por separador do browser) e aceitam "Gosto" com sessão (`gostos_publicacao`, chave composta:
+uma conta, um gosto). A página inicial mostra números reais da base de dados em
+`GET /impacto/numeros` (rastreios, sessões de treino, encaminhamentos). A doação mensal é a
+do fluxo em três passos de `POST /doacoes/financeiro` (`frequencia`), sem tabela própria.
+
 Público-alvo inclui **crianças**. Todo o tratamento de dados deve assumir isso.
 
 Idioma do produto e do código: **português (pt-PT)**. Nomes de colunas, rotas e variáveis

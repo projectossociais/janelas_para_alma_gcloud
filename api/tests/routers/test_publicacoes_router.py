@@ -309,3 +309,66 @@ def test_rotas_de_midia_exigem_admin(ambiente) -> None:
     resposta = c.post(f"/publicacoes/{criada['id']}/capa/preparar", json={"content_type": "image/png"})
 
     assert resposta.status_code == 403
+
+
+# --- Visualizações e gostos (2026-10-26) --------------------------------------
+
+
+def _publicada(c: TestClient, token_admin: str) -> dict:
+    criada = _criar(c, token_admin)
+    c.post(f"/publicacoes/{criada['id']}/publicar")
+    c.cookies.clear()
+    return criada
+
+
+def test_visualizacao_e_publica_e_soma_um(ambiente) -> None:
+    c, _, token_admin, _ = ambiente
+    criada = _publicada(c, token_admin)
+
+    assert c.post(f"/publicacoes/{criada['slug']}/visualizacoes").json() == {"visualizacoes": 1}
+    assert c.post(f"/publicacoes/{criada['slug']}/visualizacoes").json() == {"visualizacoes": 2}
+    assert c.get(f"/publicacoes/{criada['slug']}").json()["visualizacoes"] == 2
+
+
+def test_visualizacao_de_rascunho_devolve_404(ambiente) -> None:
+    c, _, token_admin, _ = ambiente
+    criada = _criar(c, token_admin)
+    c.cookies.clear()
+    assert c.post(f"/publicacoes/{criada['slug']}/visualizacoes").status_code == 404
+
+
+def test_gostar_sem_sessao_devolve_401(ambiente) -> None:
+    c, _, token_admin, _ = ambiente
+    criada = _publicada(c, token_admin)
+    assert c.post(f"/publicacoes/{criada['slug']}/gostos").status_code == 401
+
+
+def test_gosto_conta_uma_vez_por_conta_e_aparece_no_detalhe(ambiente) -> None:
+    c, _, token_admin, token_comum = ambiente
+    criada = _publicada(c, token_admin)
+    c.cookies.set("access_token", token_comum)
+
+    assert c.post(f"/publicacoes/{criada['slug']}/gostos").json() == {"gostos": 1, "gostei": True}
+    assert c.post(f"/publicacoes/{criada['slug']}/gostos").json() == {"gostos": 1, "gostei": True}
+    detalhe = c.get(f"/publicacoes/{criada['slug']}").json()
+    assert detalhe["gostos"] == 1 and detalhe["gostei"] is True
+
+    c.cookies.clear()
+    anonimo = c.get(f"/publicacoes/{criada['slug']}").json()
+    assert anonimo["gostos"] == 1 and anonimo["gostei"] is False
+
+
+def test_retirar_gosto(ambiente) -> None:
+    c, _, token_admin, token_comum = ambiente
+    criada = _publicada(c, token_admin)
+    c.cookies.set("access_token", token_comum)
+    c.post(f"/publicacoes/{criada['slug']}/gostos")
+
+    assert c.delete(f"/publicacoes/{criada['slug']}/gostos").json() == {"gostos": 0, "gostei": False}
+
+
+def test_gostar_de_rascunho_devolve_404(ambiente) -> None:
+    c, _, token_admin, token_comum = ambiente
+    criada = _criar(c, token_admin)
+    c.cookies.set("access_token", token_comum)
+    assert c.post(f"/publicacoes/{criada['slug']}/gostos").status_code == 404

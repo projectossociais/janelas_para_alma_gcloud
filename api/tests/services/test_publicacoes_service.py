@@ -13,6 +13,7 @@ class RepositorioPublicacoesFalso:
     def __init__(self) -> None:
         self._registos: dict[str, PublicacaoRegisto] = {}
         self._proximo = 1
+        self._gostos: set[tuple[str, str]] = set()
 
     def criar(self, slug, titulo, resumo, corpo, local, data_evento, criado_por) -> PublicacaoRegisto:
         registo = PublicacaoRegisto(
@@ -38,7 +39,9 @@ class RepositorioPublicacoesFalso:
         return self._registos.get(publicacao_id)
 
     def obter_por_slug(self, slug: str) -> PublicacaoRegisto | None:
-        return next((r for r in self._registos.values() if r.slug == slug), None)
+        registo = next((r for r in self._registos.values() if r.slug == slug), None)
+        # Como o repositório real, a contagem de gostos vem com o registo.
+        return PublicacaoRegisto(**{**registo.__dict__, "gostos": self.contar_gostos(registo.id)}) if registo else None
 
     def existe_slug(self, slug: str) -> bool:
         return any(r.slug == slug for r in self._registos.values())
@@ -79,6 +82,25 @@ class RepositorioPublicacoesFalso:
         for publicacao_id, atual in self._registos.items():
             midias = [m for m in atual.midias if m.id != midia_id]
             self._registos[publicacao_id] = PublicacaoRegisto(**{**atual.__dict__, "midias": midias})
+
+    def incrementar_visualizacoes(self, publicacao_id: str) -> int:
+        atual = self._registos[publicacao_id]
+        self._registos[publicacao_id] = PublicacaoRegisto(
+            **{**atual.__dict__, "visualizacoes": atual.visualizacoes + 1}
+        )
+        return atual.visualizacoes + 1
+
+    def adicionar_gosto(self, publicacao_id: str, utilizador_id: str) -> None:
+        self._gostos.add((publicacao_id, utilizador_id))
+
+    def remover_gosto(self, publicacao_id: str, utilizador_id: str) -> None:
+        self._gostos.discard((publicacao_id, utilizador_id))
+
+    def contar_gostos(self, publicacao_id: str) -> int:
+        return sum(1 for p, _ in self._gostos if p == publicacao_id)
+
+    def gostou(self, publicacao_id: str, utilizador_id: str) -> bool:
+        return (publicacao_id, utilizador_id) in self._gostos
 
 
 @pytest.fixture
@@ -167,3 +189,44 @@ class TestDatasEvento:
         assert registo.local == "Luanda"
         assert registo.data_evento == date(2026, 10, 1)
         assert registo.criado_por == "admin-1"
+
+
+class TestVisualizacoesEGostos:
+    """2026-10-26: contador de visualizações e "Gosto" (uma conta, um gosto)."""
+
+    def _publicada(self, svc: PublicacoesService) -> PublicacaoRegisto:
+        registo = svc.criar("Acção em Cacuaco", "r", "c", None, None, None)
+        return svc.publicar(registo.id)
+
+    def test_cada_visualizacao_soma_um(self, servico) -> None:
+        svc, _ = servico
+        pub = self._publicada(svc)
+        assert svc.registar_visualizacao(pub.slug) == 1
+        assert svc.registar_visualizacao(pub.slug) == 2
+
+    def test_rascunho_nao_conta_visualizacoes(self, servico) -> None:
+        svc, _ = servico
+        rascunho = svc.criar("Ainda por publicar", "r", "c", None, None, None)
+        with pytest.raises(PublicacaoNaoEncontradaError):
+            svc.registar_visualizacao(rascunho.slug)
+
+    def test_a_mesma_conta_so_conta_um_gosto(self, servico) -> None:
+        svc, _ = servico
+        pub = self._publicada(svc)
+        assert svc.gostar(pub.slug, "u1") == (1, True)
+        assert svc.gostar(pub.slug, "u1") == (1, True)
+        assert svc.gostar(pub.slug, "u2") == (2, True)
+
+    def test_retirar_gosto(self, servico) -> None:
+        svc, _ = servico
+        pub = self._publicada(svc)
+        svc.gostar(pub.slug, "u1")
+        assert svc.retirar_gosto(pub.slug, "u1") == (0, False)
+        # Retirar um gosto que não existe não é erro.
+        assert svc.retirar_gosto(pub.slug, "u1") == (0, False)
+
+    def test_rascunho_nao_recebe_gostos(self, servico) -> None:
+        svc, _ = servico
+        rascunho = svc.criar("Ainda por publicar", "r", "c", None, None, None)
+        with pytest.raises(PublicacaoNaoEncontradaError):
+            svc.gostar(rascunho.slug, "u1")
