@@ -22,6 +22,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
 import PontosRecolha from "@/components/PontosRecolha";
+import heroImg from "@/assets/apoiar-hero.jpg";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -317,14 +318,12 @@ const Apoiar = () => {
       <Navbar />
       <main className="flex-1">
         {/* Hero */}
-        <section className="relative pt-28 pb-16 bg-gradient-to-br from-navy via-navy to-teal/80 text-primary-foreground overflow-hidden">
-          <div
-            className="absolute inset-0 opacity-10 pointer-events-none"
-            style={{
-              backgroundImage: "radial-gradient(circle at 20% 20%, white 1px, transparent 1px)",
-              backgroundSize: "24px 24px",
-            }}
-          />
+        <section className="relative pt-28 pb-16 min-h-[60vh] flex items-center text-primary-foreground overflow-hidden">
+          {/* Fotografia por baixo de um véu, como a capa da Rede de Parceiros de Saúde. */}
+          <div className="absolute inset-0">
+            <img src={heroImg} alt="" className="w-full h-full object-cover" width={736} height={341} />
+            <div className="absolute inset-0 bg-hero-gradient opacity-90" />
+          </div>
           <div className="container relative">
             <BackButton />
             <div className="max-w-3xl mx-auto text-center mt-6">

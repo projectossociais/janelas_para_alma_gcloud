@@ -52,7 +52,7 @@
     "confirmarEmailTitulo": "Confirmar Email",
     "confirmarEmailDescricao": "Confirme o seu email para activar a sua conta no Janelas para a Alma.",
     "apoiarTitulo": "Apoiar a Causa",
-    "apoiarDescricao": "Faça a diferença: doe materiais essenciais para os nossos pacientes ou apoie financeiramente o Janelas para a Alma.",
+    "apoiarDescricao": "Faça a diferença: doe materiais essenciais para os nossos beneficiários ou apoie financeiramente o Janelas para a Alma.",
     "configuracoesTitulo": "Configurações da Conta",
     "configuracoesDescricao": "Gira as suas preferências, notificações e dados pessoais.",
     "editarPerfilTitulo": "Editar Perfil",
@@ -149,7 +149,7 @@
   "Apoiar": {
     "etapaDe": "Etapa {{current}} de {{total}}",
     "facaADiferenca": "Faça a Diferença",
-    "escolhaComoQuerContribuir": "Escolha como quer contribuir: doe materiais essenciais para os nossos pacientes ou apoie financeiramente a organização.",
+    "escolhaComoQuerContribuir": "Escolha como quer contribuir: doe materiais essenciais para os nossos beneficiários ou apoie financeiramente a organização.",
     "apoioComMateriais": "Apoio com Materiais",
     "apoioFinanceiro": "Apoio Financeiro",
     "doeOQueJa": "Doe o que já não usa",
@@ -158,7 +158,7 @@
     "detalhesAdicionaisOpcional": "Detalhes adicionais (opcional)",
     "confirmarDoacaoDeMateriais": "Confirmar Doação de Materiais",
     "escolhaOSeuImpacto": "Escolha o seu impacto",
-    "todosOsDonativosSao": "Todos os donativos são geridos com total transparência e revertem integralmente para os pacientes apoiados pelo Janelas Para a Alma.",
+    "todosOsDonativosSao": "Todos os donativos são geridos com total transparência e revertem integralmente para os beneficiários apoiados pelo Janelas Para a Alma.",
     "doacaoRegistada": "Doação registada!",
     "escolhaOPontoDe": "Escolha o ponto de recolha mais conveniente para si.",
     "referenciaDoPedido": "Referência do pedido: <span>{{id}}</span>",
@@ -340,7 +340,7 @@
     "produtoDaPlataforma": "Produto da plataforma",
     "oculos3dParaOsExercicios": "Óculos 3D para os Exercícios Visuais",
     "oculos3dProduto": "Os óculos 3D são um produto da plataforma, usados nos exercícios visuais com óculos, como o jogo Kianda e as Pontes de Fusão. São produzidos pelo projecto em cartão leve.",
-    "oculos3dRendimento": "O rendimento da venda reverte para financiar o programa e os pacientes que apoiamos.",
+    "oculos3dRendimento": "O rendimento da venda reverte para financiar o programa e os beneficiários que apoiamos.",
     "producao": "Produção",
     "venda": "Venda",
     "reinvestimentoNoPrograma": "Reinvestimento no programa"
@@ -771,9 +771,9 @@
     "umaAbordagemIntegradaPara": "Uma abordagem integrada para transformar a saúde visual em Angola.",
     "saberMais": "Saber mais",
     "redeDeParceiros": "Rede de Parceiros",
-    "sistemaQueConectaPacientes": "Sistema que conecta pacientes a parceiros de saúde visual, facilitando o acesso a rastreios e consultas através de preços ajustados à realidade do utilizador.",
+    "sistemaQueConectaPacientes": "Sistema que conecta beneficiários a parceiros de saúde visual, facilitando o acesso a rastreios e consultas através de preços ajustados à realidade do utilizador.",
     "logisticaDeEconomiaCircular": "Logística de Economia Circular",
-    "canalDedicadoARecolha": "Canal dedicado à recolha e reutilização de armações. Transformamos resíduos em materiais terapêuticos, reduzindo os custos para os pacientes e o impacto ambiental."
+    "canalDedicadoARecolha": "Canal dedicado à recolha e reutilização de armações. Transformamos resíduos em materiais terapêuticos, reduzindo os custos para os beneficiários e o impacto ambiental."
   },
   "JogoCuriosidades": {
     "inclusivamente": "Inclusivamente",
@@ -1699,7 +1699,7 @@
     "marketplaceDeServicosE": "Marketplace de Serviços e Produtos",
     "acessoDirectoAProdutos": "Acesso directo a produtos (como armações recondicionadas) e serviços especializados, centralizando todas as necessidades do utilizador num único local.",
     "canalDeComunicacaoDirecta": "Canal de Comunicação Directa",
-    "facilitaAComunicacaoFluida": "Facilita a comunicação fluida entre pacientes e parceiros de saúde, garantindo um acompanhamento próximo e humano.",
+    "facilitaAComunicacaoFluida": "Facilita a comunicação fluida entre beneficiários e parceiros de saúde, garantindo um acompanhamento próximo e humano.",
     "plataformaTecnologicaAssistiva": "Plataforma tecnológica assistiva",
     "botoesAmplosELegiveis": "Botões amplos e legíveis",
     "tipografiaDeAltoContraste": "Tipografia de alto contraste",

@@ -52,7 +52,7 @@
     "confirmarEmailTitulo": "Confirm Your Email",
     "confirmarEmailDescricao": "Confirm your email address to activate your Janelas para a Alma account.",
     "apoiarTitulo": "Support the Cause",
-    "apoiarDescricao": "Make a difference: donate essential supplies for our patients or support Janelas para a Alma financially.",
+    "apoiarDescricao": "Make a difference: donate essential supplies for our beneficiaries or support Janelas para a Alma financially.",
     "configuracoesTitulo": "Account Settings",
     "configuracoesDescricao": "Manage your preferences, notifications and personal data.",
     "editarPerfilTitulo": "Edit Profile",
@@ -149,7 +149,7 @@
   "Apoiar": {
     "etapaDe": "Step {{current}} of {{total}}",
     "facaADiferenca": "Make a Difference",
-    "escolhaComoQuerContribuir": "Choose how you would like to contribute: donate essential supplies for our patients or support the organization financially.",
+    "escolhaComoQuerContribuir": "Choose how you would like to contribute: donate essential supplies for our beneficiaries or support the organization financially.",
     "apoioComMateriais": "Donate Supplies",
     "apoioFinanceiro": "Financial Support",
     "doeOQueJa": "Donate what you no longer use",
@@ -158,7 +158,7 @@
     "detalhesAdicionaisOpcional": "Additional details (optional)",
     "confirmarDoacaoDeMateriais": "Confirm Supply Donation",
     "escolhaOSeuImpacto": "Choose your impact",
-    "todosOsDonativosSao": "All donations are managed with full transparency and go entirely to the patients supported by Janelas para a Alma.",
+    "todosOsDonativosSao": "All donations are managed with full transparency and go entirely to the beneficiaries supported by Janelas para a Alma.",
     "doacaoRegistada": "Donation recorded!",
     "escolhaOPontoDe": "Choose the drop-off point that is most convenient for you.",
     "referenciaDoPedido": "Request reference: <span>{{id}}</span>",
@@ -340,7 +340,7 @@
     "produtoDaPlataforma": "Platform product",
     "oculos3dParaOsExercicios": "3D Glasses for the Vision Exercises",
     "oculos3dProduto": "The 3D glasses are a platform product, used in the glasses-based vision exercises, such as the Kianda game and Fusion Bridges. The project makes them out of lightweight cardboard.",
-    "oculos3dRendimento": "The proceeds from sales go back into funding the program and the patients we support.",
+    "oculos3dRendimento": "The proceeds from sales go back into funding the program and the beneficiaries we support.",
     "producao": "Production",
     "venda": "Sale",
     "reinvestimentoNoPrograma": "Reinvested in the program"
@@ -771,9 +771,9 @@
     "umaAbordagemIntegradaPara": "An integrated approach to transforming vision health in Angola.",
     "saberMais": "Learn more",
     "redeDeParceiros": "Partner Network",
-    "sistemaQueConectaPacientes": "A system that connects patients with vision care partners, making screenings and appointments easier to access through prices adjusted to each user's circumstances.",
+    "sistemaQueConectaPacientes": "A system that connects beneficiaries with vision care partners, making screenings and appointments easier to access through prices adjusted to each user's circumstances.",
     "logisticaDeEconomiaCircular": "Circular Economy Logistics",
-    "canalDedicadoARecolha": "A dedicated channel for collecting and reusing frames. We turn waste into therapeutic materials, lowering costs for patients and reducing environmental impact."
+    "canalDedicadoARecolha": "A dedicated channel for collecting and reusing frames. We turn waste into therapeutic materials, lowering costs for beneficiaries and reducing environmental impact."
   },
   "JogoCuriosidades": {
     "inclusivamente": "Inclusivamente",
@@ -1699,7 +1699,7 @@
     "marketplaceDeServicosE": "Services and Products Marketplace",
     "acessoDirectoAProdutos": "Direct access to products (such as refurbished frames) and specialized services, bringing all of a user's needs together in one place.",
     "canalDeComunicacaoDirecta": "Direct Communication Channel",
-    "facilitaAComunicacaoFluida": "Makes communication between patients and health partners easy, ensuring close, human follow-up care.",
+    "facilitaAComunicacaoFluida": "Makes communication between beneficiaries and health partners easy, ensuring close, human follow-up care.",
     "plataformaTecnologicaAssistiva": "Assistive technology platform",
     "botoesAmplosELegiveis": "Large, legible buttons",
     "tipografiaDeAltoContraste": "High-contrast typography",
