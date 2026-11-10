@@ -68,7 +68,7 @@ const Footer = () => {
             <p className="text-sm leading-relaxed text-slate-600 text-justify">
               {t("Footer.umaInstituicaoAngolanaQue")}
             </p>
-            <div className="flex flex-wrap items-center gap-2 pt-1">
+            <div className="flex flex-nowrap items-center gap-1.5 pt-1">
               {REDES_SOCIAIS.map((rede) => (
                 <a
                   key={rede.nome}
@@ -76,9 +76,9 @@ const Footer = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={rede.nome}
-                  className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
+                  className="inline-flex shrink-0 items-center justify-center w-7 h-7 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
                 >
-                  <rede.Icone className="w-4 h-4" />
+                  <rede.Icone className="w-3.5 h-3.5" />
                 </a>
               ))}
             </div>
