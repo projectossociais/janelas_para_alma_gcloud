@@ -9,7 +9,7 @@ import AssistenteTreino, {
   type ResultadoTreino,
 } from "@/components/visao/AssistenteTreino";
 import { EcraPasso } from "@/components/visao/EcraPasso";
-import EscolherOculos, { type ComOuSemOculos } from "@/components/visao/EscolherOculos";
+import EscolherOculos, { TrocarModo, type ComOuSemOculos } from "@/components/visao/EscolherOculos";
 import PaginaExercicio from "@/components/visao/PaginaExercicio";
 import PalcoVisual from "@/components/visao/PalcoVisual";
 import { useLarguraDe } from "@/components/visao/hooks";
@@ -501,7 +501,7 @@ const ComoFazer = ({ modo }: { modo: ModoOlhoMagico }) => {
   );
 };
 
-const AvisoOlhoMagico = () => {
+const AvisoOlhoMagico = ({ aoTrocar }: { aoTrocar: () => void }) => {
   const { t } = useTranslation();
   return (
     <div className="space-y-3 text-left text-sm">
@@ -514,6 +514,7 @@ const AvisoOlhoMagico = () => {
         <span>{t("Visao.olhoMagicoAvisoEstrabismo")}</span>
       </p>
       <p className="text-muted-foreground">{t("Visao.olhoMagicoExplicacao")}</p>
+      <TrocarModo para="com" aoTrocar={aoTrocar} />
     </div>
   );
 };
@@ -534,9 +535,18 @@ const lerOculos = (): ComOuSemOculos | null => {
  */
 const OlhoMagico = () => {
   const { t } = useTranslation();
-  const [oculos, setOculos] = useState<ComOuSemOculos | null>(null);
+  // Com a escolha guardada neste aparelho, entra directo nesse modo.
+  const [oculos, setOculos] = useState<ComOuSemOculos | null>(() => lerOculos());
+  const escolher = (o: ComOuSemOculos) => {
+    try {
+      window.localStorage.setItem(CHAVE_OCULOS, o);
+    } catch {
+      // armazenamento bloqueado: pergunta-se outra vez
+    }
+    setOculos(o);
+  };
 
-  if (oculos === "com") return <PontesFusao />;
+  if (oculos === "com") return <PontesFusao aoTrocarModo={() => escolher("sem")} />;
 
   if (oculos === "sem")
     return (
@@ -547,7 +557,7 @@ const OlhoMagico = () => {
           descricao={t("Visao.convergenciaDescricao")}
           monocular={false}
           comDistancia
-          aviso={<AvisoOlhoMagico />}
+          aviso={<AvisoOlhoMagico aoTrocar={() => escolher("com")} />}
           tarefa={(api, ctx, resultado) => <TarefaOlhoMagico api={api} ctx={ctx} resultado={resultado} />}
         />
       </PaginaExercicio>
@@ -565,15 +575,8 @@ const OlhoMagico = () => {
           titulo={t("Visao.olhoMagicoOculosTitulo")}
           sem={{ titulo: t("Visao.olhoMagicoSemOculos"), texto: t("Visao.olhoMagicoSemOculosTexto") }}
           com={{ titulo: t("Visao.olhoMagicoComOculos"), texto: t("Visao.olhoMagicoComOculosTexto") }}
-          inicial={lerOculos()}
-          aoEscolher={(o) => {
-            try {
-              window.localStorage.setItem(CHAVE_OCULOS, o);
-            } catch {
-              // armazenamento bloqueado: pergunta-se outra vez
-            }
-            setOculos(o);
-          }}
+          inicial={null}
+          aoEscolher={escolher}
         />
       </BaseExercise>
     </PaginaExercicio>

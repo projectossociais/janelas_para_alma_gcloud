@@ -144,9 +144,9 @@ describe("Teste de Acuidade (sem câmara)", () => {
 
     const aviso = /Teste de triagem\. Não é um exame médico/;
     await screen.findByText(aviso);
-    await screen.findByText("Ponha o brilho do ecrã no máximo");
-    fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
+    // O brilho já não é um ecrã: é uma linha por baixo dos passos.
     await screen.findByText("Ajuste ao tamanho de um cartão");
+    expect(screen.getByText(V.brilhoLinha)).toBeInTheDocument();
     expect(screen.getByText(aviso)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Não tenho cartão" }));
     await screen.findByText("Óculos ou lentes de contacto");
@@ -184,17 +184,14 @@ describe("Teste de Acuidade (sem câmara)", () => {
         </AcessoExerciciosProvider>
       </MemoryRouter>,
     );
-    await screen.findByText("Ponha o brilho do ecrã no máximo");
-    fireEvent.click(screen.getByRole("button", { name: "Continuar" })); // brilho
     fireEvent.click(await screen.findByRole("button", { name: "Não tenho cartão" }));
     fireEvent.click(await screen.findByRole("button", { name: /Não uso óculos nem lentes/ }));
     await screen.findByText(V.palancaPrepararTitulo);
     fireEvent.click(screen.getByRole("button", { name: "Continuar" })); // montar a 3 metros
-    fireEvent.click(await screen.findByRole("button", { name: "Continuar" })); // tapar o esquerdo
+    // "Tape o outro olho" e "Começar" são um só ecrã, antes de cada olho.
 
     // Começa em 0,7. Direito: 0,7 ✓✓ · 0,6 ✓✓ · 0,5 ✓✗✗
     await responderOlho([true, true, true, true, true, false, false]);
-    fireEvent.click(await screen.findByRole("button", { name: "Continuar" })); // tapar o direito
     // Esquerdo: 0,7 ✓✓ · 0,6 ✓✗✓ · 0,5 ✗✗ -- o mesmo nível, mais erros
     await responderOlho([true, true, true, false, true, false, false]);
 
