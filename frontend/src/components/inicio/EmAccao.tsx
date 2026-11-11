@@ -64,7 +64,7 @@ const EmAccao = () => {
   };
 
   return (
-    <section className="bg-marca-marfim py-16 md:py-24">
+    <section className="bg-white py-16 md:py-24">
       <div className="container">
         <h2 className="text-center text-3xl font-bold text-marca-marinho md:text-4xl">
           {t("EmAccao.vejaO")} <span className="text-marca-azul">Janelas Para a Alma</span> {t("EmAccao.emAccao")}

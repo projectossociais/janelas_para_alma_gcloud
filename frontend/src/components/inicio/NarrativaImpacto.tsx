@@ -42,7 +42,7 @@ const NarrativaImpacto = () => {
   const formatar = (n: number) => n.toLocaleString(ingles ? "en-US" : "pt-PT");
 
   return (
-    <section id="duplo-impacto" className="bg-marca-marfim py-16 md:py-24">
+    <section id="duplo-impacto" className="bg-white py-16 md:py-24">
       <div className="container">
         <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
           <div className="max-w-xl">

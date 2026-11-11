@@ -6,6 +6,7 @@ const auth = { isLoggedIn: false };
 vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => auth }));
 
 import HeroInicio, { DIAPOSITIVOS_CAPA, INTERVALO_CAPA_MS } from "./HeroInicio";
+import { NUMEROS_CAPA } from "./numerosCapa";
 
 function visivel() {
   return screen.getAllByTestId("diapositivo-capa").findIndex((d) => d.className.includes("opacity-100"));
@@ -37,13 +38,19 @@ describe("HeroInicio (carrossel da capa)", () => {
     expect(visivel()).toBe(0);
   });
 
-  it("os botões Doar Agora e Entrar ficam visíveis em todos os diapositivos", () => {
+  it("os botões Doar Agora, Exercícios Visuais e Entrar ficam visíveis em todos os diapositivos", () => {
     renderCapa();
     for (let i = 0; i < DIAPOSITIVOS_CAPA.length; i++) {
       expect(screen.getByRole("link", { name: /doar agora/i })).toBeVisible();
+      expect(screen.getByRole("link", { name: /exercícios visuais/i })).toHaveAttribute("href", "/exercicios");
       expect(screen.getByRole("link", { name: /entrar/i })).toBeVisible();
       act(() => vi.advanceTimersByTime(INTERVALO_CAPA_MS));
     }
+  });
+
+  it("mostra os números do projecto", () => {
+    renderCapa();
+    for (const n of NUMEROS_CAPA) expect(screen.getByText(n.valor)).toBeInTheDocument();
   });
 
   it("com sessão iniciada não mostra Entrar", () => {

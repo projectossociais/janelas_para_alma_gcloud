@@ -36,11 +36,11 @@ const Publicacoes = () => {
   }, [t]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-marca-marfim">
+    <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
       <main className="flex-1 pt-16">
         {/* Cabeçalho ao estilo "Stories of Sight": faixa clara com o título centrado */}
-        <header className="bg-marca-celeste/25">
+        <header className="bg-white">
           <BackButton fallbackPath={localizar("/")} label={t("Publicacoes.voltar")} />
           <div className="container max-w-3xl pb-14 pt-4 text-center md:pb-16">
             <span className="text-sm font-bold uppercase tracking-widest text-marca-turquesa">

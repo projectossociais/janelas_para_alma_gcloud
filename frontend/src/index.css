@@ -5,47 +5,49 @@
 @tailwind utilities;
 
 @layer base {
+  /* Tema claro (2026-11-08, pedido do dono do projecto): fundo branco em todo o site e
+     cores da paleta da marca (marca.* em tailwind.config.ts) nos tokens antigos. */
   :root {
-    --background: 60 33% 97%;
-    --foreground: 210 50% 10%;
+    --background: 0 0% 100%;
+    --foreground: 218 60% 14%;
 
     --card: 0 0% 100%;
-    --card-foreground: 210 50% 10%;
+    --card-foreground: 218 60% 14%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 210 50% 10%;
+    --popover-foreground: 218 60% 14%;
 
-    --primary: 207 85% 15%;
-    --primary-foreground: 60 33% 97%;
+    --primary: 218 100% 16%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 170 60% 40%;
+    --secondary: 177 80% 39%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 60 20% 92%;
-    --muted-foreground: 210 15% 40%;
+    --muted: 208 60% 96%;
+    --muted-foreground: 218 25% 38%;
 
-    --accent: 43 70% 55%;
-    --accent-foreground: 210 50% 10%;
+    --accent: 47 70% 60%;
+    --accent-foreground: 218 100% 16%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 60 15% 88%;
-    --input: 60 15% 88%;
-    --ring: 170 60% 40%;
+    --border: 208 40% 90%;
+    --input: 208 40% 90%;
+    --ring: 206 100% 33%;
 
     --radius: 0.75rem;
 
-    --teal: 170 72% 42%;
+    --teal: 177 80% 39%;
     --teal-foreground: 0 0% 100%;
-    --navy: 207 85% 15%;
-    --navy-foreground: 60 33% 97%;
-    --gold: 43 70% 55%;
-    --gold-foreground: 210 50% 10%;
-    --green: 160 50% 30%;
+    --navy: 218 100% 16%;
+    --navy-foreground: 0 0% 100%;
+    --gold: 47 70% 60%;
+    --gold-foreground: 218 100% 16%;
+    --green: 155 49% 28%;
     --green-foreground: 0 0% 100%;
-    --sky: 210 60% 70%;
-    --sky-foreground: 210 50% 10%;
+    --sky: 208 87% 79%;
+    --sky-foreground: 218 100% 16%;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -56,11 +58,11 @@
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
 
-    --gradient-hero: linear-gradient(135deg, hsl(207 85% 15%) 0%, hsl(207 85% 22%) 50%, hsl(170 60% 30%) 100%);
-    --gradient-teal: linear-gradient(135deg, hsl(170 72% 42%), hsl(170 60% 50%));
-    --gradient-gold: linear-gradient(135deg, hsl(43 70% 55%), hsl(43 80% 65%));
-    --shadow-card: 0 4px 24px -4px hsl(207 85% 15% / 0.08);
-    --shadow-elevated: 0 12px 40px -8px hsl(207 85% 15% / 0.15);
+    --gradient-hero: linear-gradient(135deg, hsl(218 100% 16%) 0%, hsl(206 100% 33%) 60%, hsl(177 80% 39%) 100%);
+    --gradient-teal: linear-gradient(135deg, hsl(177 80% 39%), hsl(177 70% 47%));
+    --gradient-gold: linear-gradient(135deg, hsl(47 70% 60%), hsl(47 80% 70%));
+    --shadow-card: 0 4px 24px -4px hsl(218 100% 16% / 0.08);
+    --shadow-elevated: 0 12px 40px -8px hsl(218 100% 16% / 0.15);
   }
 
   .dark {

@@ -183,7 +183,7 @@ const ConteudoDashboardPro = ({ clinica }: { clinica: ClinicaParceiraAdmin }) =>
   const confirmados = agendamentos.filter((a) => a.estado === "confirmada");
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-muted/40">
+    <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
       <main className="flex-1 container pt-28 pb-16 space-y-8">
         <div>

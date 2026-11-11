@@ -19,6 +19,7 @@ import CampanhaGamek from "./pages/CampanhaGamek";
 import Publicacoes from "./pages/Publicacoes";
 import PublicacaoDetalhe from "./pages/PublicacaoDetalhe";
 import Parceiros from "./pages/Parceiros";
+import RegistoParceiro from "./pages/RegistoParceiro";
 import PortalClinicoOptioptika from "./pages/PortalClinicoOptioptika";
 import Tecnologia from "./pages/Tecnologia";
 import Circular from "./pages/Circular";
@@ -47,6 +48,8 @@ import JogoCuriosidades from "./pages/jogo/JogoCuriosidades";
 import PerfilJogador from "./pages/jogo/PerfilJogador";
 import LojaDiamantes from "./pages/jogo/LojaDiamantes";
 import LojaMoedas from "./pages/jogo/LojaMoedas";
+import JogoLocal from "./pages/jogo/JogoLocal";
+import JogoOnline from "./pages/jogo/JogoOnline";
 
 import TesteAcuidade from "./pages/exercises/TesteAcuidade";
 import FioMissangas from "./pages/exercises/FioMissangas";
@@ -95,6 +98,7 @@ const PAGINAS: Record<ChaveRota, ReactElement> = {
   publicacoes: <Publicacoes />,
   publicacaoDetalhe: <PublicacaoDetalhe />,
   parceiros: <Parceiros />,
+  registoParceiro: <RegistoParceiro />,
   portalClinico: <Parceiros />,
   portalClinicoOptioptika: <PortalClinicoOptioptika />,
   tecnologia: <Tecnologia />,
@@ -138,6 +142,8 @@ const PAGINAS: Record<ChaveRota, ReactElement> = {
   jogoPerfil: <PerfilJogador />,
   jogoLoja: <LojaDiamantes />,
   jogoLojaMoedas: <LojaMoedas />,
+  jogoLocal: <JogoLocal />,
+  jogoOnline: <JogoOnline />,
 };
 
 const queryClient = new QueryClient();
