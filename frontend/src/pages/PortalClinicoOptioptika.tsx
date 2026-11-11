@@ -226,7 +226,7 @@ const PortalClinicoOptioptika = () => {
         </section>
 
         {/* App / Carteira de Desconto */}
-        <section className="py-16 md:py-24 bg-muted/40">
+        <section className="py-16 md:py-24 bg-white">
           <div className="container px-6">
             <div className="max-w-4xl mx-auto rounded-3xl bg-card border border-border/60 shadow-elevated p-8 md:p-12">
               <div className="grid md:grid-cols-[1fr_420px] gap-10 items-center">
@@ -312,7 +312,7 @@ const PortalClinicoOptioptika = () => {
         </section>
 
         {/* Contactos */}
-        <section className="py-16 md:py-24 bg-muted/40">
+        <section className="py-16 md:py-24 bg-white">
           <div className="container px-6">
             <div className="max-w-3xl mx-auto text-center mb-10">
               <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">

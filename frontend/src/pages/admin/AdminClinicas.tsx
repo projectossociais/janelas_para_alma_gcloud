@@ -12,9 +12,11 @@ import {
   type MembroEquipaPublico,
 } from "@/lib/apiClient";
 import { toast } from "sonner";
-import { Trash2, UserPlus } from "lucide-react";
+import { Plus, RotateCcw, Trash2, UserPlus } from "lucide-react";
 
 const MODALIDADES = ["presencial", "online"] as const;
+
+const NOVA_CLINICA_VAZIA = { nome: "", email: "", telefone: "", cidade: "" };
 
 const AdminClinicas = () => {
   const [clinicas, setClinicas] = useState<ClinicaParceiraAdmin[]>([]);
@@ -27,6 +29,8 @@ const AdminClinicas = () => {
   }>>({});
   const [novoEmail, setNovoEmail] = useState<Record<string, string>>({});
   const [ocupado, setOcupado] = useState<string | null>(null);
+  const [nova, setNova] = useState(NOVA_CLINICA_VAZIA);
+  const [aCriar, setACriar] = useState(false);
 
   const carregar = async () => {
     try {
@@ -104,6 +108,66 @@ const AdminClinicas = () => {
     }
   };
 
+  const criarClinica = async () => {
+    if (!nova.nome.trim() || !nova.email.trim() || !nova.telefone.trim()) return;
+    setACriar(true);
+    try {
+      await clinicasApi.criar({
+        nome: nova.nome.trim(),
+        email_contacto: nova.email.trim(),
+        telefone_contacto: nova.telefone.trim(),
+        cidade: nova.cidade.trim() || null,
+        especialidades: [],
+        modalidades_suportadas: ["presencial"],
+        preco_indicativo: null,
+      });
+      toast.success("Clínica adicionada.");
+      setNova(NOVA_CLINICA_VAZIA);
+      await carregar();
+    } catch (err) {
+      toast.error(mensagemDeErroApi(err, "Não foi possível adicionar a clínica."));
+    } finally {
+      setACriar(false);
+    }
+  };
+
+  const removerClinica = async (clinica: ClinicaParceiraAdmin) => {
+    if (
+      !confirm(
+        `Remover a clínica ${clinica.nome}?\n\nSe já tiver pedidos de consulta, fica só desactivada ` +
+          "(deixa de aparecer ao público) para não perder esse histórico.",
+      )
+    )
+      return;
+    setOcupado(clinica.id);
+    try {
+      const { resultado } = await clinicasApi.remover(clinica.id);
+      toast.success(
+        resultado === "apagada"
+          ? "Clínica removida."
+          : "A clínica tem pedidos de consulta: ficou desactivada, sem apagar o histórico.",
+      );
+      await carregar();
+    } catch (err) {
+      toast.error(mensagemDeErroApi(err, "Não foi possível remover a clínica."));
+    } finally {
+      setOcupado(null);
+    }
+  };
+
+  const reativarClinica = async (clinicaId: string) => {
+    setOcupado(clinicaId);
+    try {
+      await clinicasApi.reativar(clinicaId);
+      toast.success("Clínica reactivada.");
+      await carregar();
+    } catch (err) {
+      toast.error(mensagemDeErroApi(err, "Não foi possível reactivar a clínica."));
+    } finally {
+      setOcupado(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -112,6 +176,55 @@ const AdminClinicas = () => {
           Perfil de cada clínica parceira e quem tem acesso ao portal próprio.
         </p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Plus className="w-5 h-5" /> Nova clínica
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid md:grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="nova-nome">Nome</Label>
+              <Input id="nova-nome" value={nova.nome} onChange={(e) => setNova((n) => ({ ...n, nome: e.target.value }))} />
+            </div>
+            <div>
+              <Label htmlFor="nova-cidade">Cidade</Label>
+              <Input id="nova-cidade" value={nova.cidade} onChange={(e) => setNova((n) => ({ ...n, cidade: e.target.value }))} />
+            </div>
+            <div>
+              <Label htmlFor="nova-email">Email de contacto</Label>
+              <Input
+                id="nova-email"
+                type="email"
+                placeholder="geral@clinica.ao"
+                value={nova.email}
+                onChange={(e) => setNova((n) => ({ ...n, email: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="nova-telefone">Telefone de contacto</Label>
+              <Input
+                id="nova-telefone"
+                placeholder="+244 9xx xxx xxx"
+                value={nova.telefone}
+                onChange={(e) => setNova((n) => ({ ...n, telefone: e.target.value }))}
+              />
+            </div>
+          </div>
+          <Button
+            size="sm"
+            onClick={criarClinica}
+            disabled={aCriar || !nova.nome.trim() || !nova.email.trim() || !nova.telefone.trim()}
+          >
+            Adicionar clínica
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            Especialidades, modalidades e preço editam-se no cartão da clínica, depois de criada.
+          </p>
+        </CardContent>
+      </Card>
 
       {clinicas.map((clinica) => {
         const form = formularios[clinica.id];
@@ -122,6 +235,27 @@ const AdminClinicas = () => {
               <CardTitle className="flex items-center gap-2 flex-wrap">
                 {clinica.nome}
                 <Badge variant={clinica.ativa ? "default" : "outline"}>{clinica.ativa ? "activa" : "inactiva"}</Badge>
+                <span className="ml-auto flex gap-1">
+                  {!clinica.ativa && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={ocupado === clinica.id}
+                      onClick={() => reativarClinica(clinica.id)}
+                    >
+                      <RotateCcw className="w-3 h-3" /> Reactivar
+                    </Button>
+                  )}
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    aria-label={`Remover a clínica ${clinica.nome}`}
+                    disabled={ocupado === clinica.id}
+                    onClick={() => removerClinica(clinica)}
+                  >
+                    <Trash2 className="w-4 h-4 text-destructive" />
+                  </Button>
+                </span>
               </CardTitle>
               <p className="text-xs text-muted-foreground">{clinica.email_contacto} · {clinica.telefone_contacto}</p>
             </CardHeader>

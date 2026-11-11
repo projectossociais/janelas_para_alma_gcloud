@@ -77,3 +77,12 @@ class TestProcessarPendentes:
         assert instantes[0] == instantes[1]
         assert instantes[0].tzinfo is not None
         assert instantes[0] <= datetime.now(UTC)
+
+
+class TestAnonimizarAgora:
+    def test_anonimiza_so_essa_conta_sem_esperar_o_prazo(self) -> None:
+        repo = RepositorioFalso(pendentes=["outra"])
+        EliminacaoContaService(repo).anonimizar_agora("u-9")
+
+        assert [a["utilizador_id"] for a in repo.anonimizados] == ["u-9"]
+        assert repo.anonimizados[0]["email_anonimo"].startswith("conta-eliminada+u-9@")

@@ -144,7 +144,7 @@ const TeamSection = () => {
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
 
   return (
-    <section id="equipa" className="py-20 md:py-28 bg-slate-50">
+    <section id="equipa" className="py-20 md:py-28 bg-white">
       <div className="container">
         <div className="text-center mb-16 space-y-4">
           <span className="text-sm font-medium tracking-widest uppercase text-teal">
