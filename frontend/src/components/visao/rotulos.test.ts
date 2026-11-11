@@ -10,7 +10,7 @@ describe("nomeDaSessao", () => {
     expect(nomeDaSessao({ exercicio_id: "cerebro", sinais: { modo: "fio_missangas" } })).toBe(V.contrasteTitulo);
     expect(nomeDaSessao({ exercicio_id: "estereopsia", sinais: { modo: "agulha" } })).toBe(V.estereoTitulo);
     expect(nomeDaSessao({ exercicio_id: "flexibilidade-acomodativa", sinais: { modo: "tapa_olho_horas" } })).toBe(V.pertoLongeTitulo);
-    expect(nomeDaSessao({ exercicio_id: "convergence", sinais: { modo: "fio_treino" } })).toBe(V.convergenciaTitulo);
+    expect(nomeDaSessao({ exercicio_id: "convergence", sinais: { modo: "fusao_livre", pontes: {} } })).toBe(V.convergenciaTitulo);
   });
 
   it("as sessões antigas com o mesmo id levam o nome do teste que as gravou", () => {
@@ -21,16 +21,13 @@ describe("nomeDaSessao", () => {
     expect(nomeDaSessao({ exercicio_id: "sacadas-convergencia", sinais: {} })).toBe(V.nomeAntigoContrasteBlocos);
     expect(nomeDaSessao({ exercicio_id: "flexibilidade-acomodativa", sinais: {} })).toBe(V.nomeAntigoPertoLonge);
     expect(nomeDaSessao({ exercicio_id: "convergence", sinais: { pontes: {} } })).toBe(V.pontesTitulo);
-    // O Olho Mágico (2026-10-21 a 2026-11-11) e o Treino de Convergência antes dele.
-    expect(nomeDaSessao({ exercicio_id: "convergence", sinais: { modo: "fusao_livre", pontes: {} } })).toBe(V.nomeAntigoOlhoMagico);
-    expect(nomeDaSessao({ exercicio_id: "convergence", sinais: { modo: "fusao_gaiola" } })).toBe(V.nomeAntigoOlhoMagico);
-    expect(nomeDaSessao({ exercicio_id: "convergence", sinais: null })).toBe(V.nomeAntigoConvergencia);
   });
 });
 
-describe("limiarFormatado: Vaivém da Missanga", () => {
-  it("mostra onde a missanga ficou a dobrar e as repetições; sem repetições, di-lo", async () => {
+describe("sessões do Vaivém da Missanga (11/11/2026, revertido no mesmo dia)", () => {
+  it("continuam a ler-se no histórico, com o nome e o resultado delas", async () => {
     const { limiarFormatado } = await import("./rotulos");
+    expect(nomeDaSessao({ exercicio_id: "convergence", sinais: { modo: "fio_treino" } })).toBe(V.nomeAntigoVaivem);
     expect(limiarFormatado(6.5, "cm", { modo: "fio_treino", repeticoes: 14 })).toBe("dobra a 6,5 cm (14 repetições)");
     expect(limiarFormatado(null, "cm", { modo: "fio_treino", repeticoes: 0 })).toBe(V.fioTreinoSemRepsCurto);
   });

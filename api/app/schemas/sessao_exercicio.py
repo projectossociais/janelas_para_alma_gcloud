@@ -13,9 +13,8 @@ OlhoSessao = Literal["direito", "esquerdo", "ambos"]
 # graus (Kianda com tapa-olho, desde 2026-10-21: diferença de inclinação das
 # riscas que o olho fraco distingue), cm (Fio de Missangas: ponto mais
 # próximo de convergência) e mm (Pintar o Samakaka: afastamento médio do
-# traço). O Vaivém da Missanga (id `convergence`, desde 2026-11-11) também
-# grava em cm. O Olho Mágico (até 2026-11-11) e a Luz nos Olhos gravam em
-# dioptrias prismáticas. O astigmatismo antigo não tem limiar -- é Sim/Não, em `sinais`.
+# traço). O Olho Mágico (sem óculos) e a Luz nos Olhos gravam em dioptrias
+# prismáticas. O astigmatismo antigo não tem limiar -- é Sim/Não, em `sinais`.
 UnidadeLimiar = Literal["logmar", "log_cs", "arcsec", "segundos", "dioptrias_prismaticas", "razao_contraste", "graus", "cm", "mm"]
 
 

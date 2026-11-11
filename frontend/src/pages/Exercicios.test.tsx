@@ -92,7 +92,7 @@ describe("Exercicios — os 8 exercícios no teste gratuito de 90 dias", () => {
       "Fio de Missangas",
       "Luz nos Olhos",
       "Desafio da Agulha",
-      "Vaivém da Missanga",
+      "Olho Mágico",
       "Pintar o Samakaka",
       "Caderneta do Tapa-olho",
     ])
