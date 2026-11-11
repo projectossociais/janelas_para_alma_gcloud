@@ -349,7 +349,7 @@ describe("Apoiar — doação financeira (comprovativo via R2, CROSS-02)", () =>
     const user = userEvent.setup();
     render(<Apoiar />, { wrapper: MemoryRouter });
     await user.click(screen.getByRole("tab", { name: /Apoio Financeiro/i }));
-    await user.click(screen.getByRole("button", { name: "5.000 Kz" }));
+    await user.click(screen.getByRole("button", { name: "10.000 Kz" }));
     await user.click(screen.getByRole("button", { name: /^Continuar$/ }));
 
     const avancar = await screen.findByRole("button", { name: /Já transferi/i });
@@ -523,5 +523,71 @@ describe("Apoiar -- cartões com detalhe (materiais)", () => {
       await user.click(within(painel).getByRole("button", { name: /^Fechar$/ }));
       await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     }
+  });
+});
+
+describe("Apoiar -- Doar Uma Vez / Doar Mensalmente (menu)", () => {
+  it("?modo=mensal abre logo o Apoio Financeiro, em mensal, com os valores mensais", () => {
+    render(
+      <MemoryRouter initialEntries={["/apoiar?modo=mensal"]}>
+        <Apoiar />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("tab", { name: /Apoio Financeiro/i })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("button", { name: "Mensalmente" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "2.500 Kz" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "500.000 Kz" })).not.toBeInTheDocument();
+  });
+
+  it("?modo=unica abre logo o Apoio Financeiro, em uma única vez, com os valores de uma vez", () => {
+    render(
+      <MemoryRouter initialEntries={["/apoiar?modo=unica"]}>
+        <Apoiar />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("tab", { name: /Apoio Financeiro/i })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("button", { name: "Uma única vez" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "500.000 Kz" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "2.500 Kz" })).not.toBeInTheDocument();
+  });
+
+  it("sem modo, a página começa no Apoio com Materiais", () => {
+    render(<Apoiar />, { wrapper: MemoryRouter });
+
+    expect(screen.getByRole("tab", { name: /Apoio com Materiais/i })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("trocar a frequência troca os valores e desfaz o valor escolhido", async () => {
+    const user = userEvent.setup();
+    render(<Apoiar />, { wrapper: MemoryRouter });
+    await user.click(screen.getByRole("tab", { name: /Apoio Financeiro/i }));
+
+    await user.click(screen.getByRole("button", { name: "25.000 Kz" }));
+    expect(screen.getByRole("button", { name: /^Continuar$/ })).toBeEnabled();
+
+    await user.click(screen.getByRole("button", { name: "Mensalmente" }));
+    expect(screen.getByRole("button", { name: "2.500 Kz" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "25.000 Kz" })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: /^Continuar$/ })).toBeDisabled();
+  });
+
+  it("cada frequência tem a sua cor: marinho para uma vez, verde para mensal", async () => {
+    const user = userEvent.setup();
+    render(<Apoiar />, { wrapper: MemoryRouter });
+    await user.click(screen.getByRole("tab", { name: /Apoio Financeiro/i }));
+
+    expect(screen.getByRole("button", { name: "Uma única vez" })).toHaveClass("bg-navy");
+    await user.click(screen.getByRole("button", { name: "25.000 Kz" }));
+    expect(screen.getByRole("button", { name: "25.000 Kz" })).toHaveClass("bg-navy");
+    expect(screen.getByRole("button", { name: /^Continuar$/ })).toHaveClass("bg-navy");
+
+    await user.click(screen.getByRole("button", { name: "Mensalmente" }));
+    expect(screen.getByRole("button", { name: "Mensalmente" })).toHaveClass("bg-green");
+    expect(screen.getByRole("button", { name: "Uma única vez" })).not.toHaveClass("bg-navy");
+    await user.click(screen.getByRole("button", { name: "5.000 Kz" }));
+    expect(screen.getByRole("button", { name: "5.000 Kz" })).toHaveClass("bg-green");
+    expect(screen.getByRole("button", { name: /^Continuar$/ })).toHaveClass("bg-green");
   });
 });

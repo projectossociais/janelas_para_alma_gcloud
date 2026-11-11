@@ -43,6 +43,51 @@ export function formatarDataHora(data: Data): string {
     : d.toLocaleString("pt-PT");
 }
 
+/**
+ * Hora de uma consulta: sempre no fuso de Luanda e em 24h, seja qual for o
+ * fuso do computador de quem vê -- as clínicas definem o horário em hora de
+ * Luanda, e um browser noutro fuso mostrava horas fora do expediente.
+ */
+export function formatarHorarioConsulta(data: Data): string {
+  const d = paraData(data);
+  return d.toLocaleString(emIngles() ? "en-US" : "pt-PT", {
+    timeZone: "Africa/Luanda",
+    weekday: "long",
+    day: "numeric",
+    month: emIngles() ? "long" : "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  });
+}
+
+/** "2026-11-09": o dia de Luanda em que cai este instante -- para agrupar horários por dia. */
+export function chaveDiaEmLuanda(data: Data): string {
+  return paraData(data).toLocaleDateString("en-CA", { timeZone: "Africa/Luanda" });
+}
+
+/** "segunda-feira, 09/11/2026" -- o dia de uma consulta, em Luanda. */
+export function formatarDiaConsulta(data: Data): string {
+  return paraData(data).toLocaleDateString(emIngles() ? "en-US" : "pt-PT", {
+    timeZone: "Africa/Luanda",
+    weekday: "long",
+    day: "numeric",
+    month: emIngles() ? "long" : "2-digit",
+    year: "numeric",
+  });
+}
+
+/** "08:00" -- a hora de uma consulta, em Luanda e em 24h. */
+export function formatarHoraConsulta(data: Data): string {
+  return paraData(data).toLocaleTimeString(emIngles() ? "en-US" : "pt-PT", {
+    timeZone: "Africa/Luanda",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  });
+}
+
 /** Número decimal com `casas` casas, vírgula em português, ponto em inglês. */
 export function formatarDecimal(n: number, casas: number): string {
   return n.toLocaleString(emIngles() ? "en-US" : "pt-PT", {

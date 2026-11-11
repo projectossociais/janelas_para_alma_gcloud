@@ -72,6 +72,18 @@ export default {
           DEFAULT: "hsl(var(--sky))",
           foreground: "hsl(var(--sky-foreground))",
         },
+        // Paleta da marca (2026-10-26): usada pelo cabeçalho, página inicial e
+        // rodapé. Valores fixos -- o contraste destas secções não muda com o tema.
+        marca: {
+          marinho: "#001F54",
+          azul: "#0060A8",
+          celeste: "#9BCDF8",
+          turquesa: "#14B5AE",
+          verde: "#24694C",
+          ouro: "#E0C050",
+          lima: "#DCEBA3",
+          marfim: "#FAFDEF",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

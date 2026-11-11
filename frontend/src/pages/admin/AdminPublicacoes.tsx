@@ -19,6 +19,7 @@ import {
   type PublicacaoAdmin,
   type MidiaPublicacao,
 } from "@/lib/apiClient";
+import { eVideoDaGaleria, TIPOS_DE_VIDEO_ACEITES } from "@/lib/midiaPublicacao";
 import { toast } from "sonner";
 import { Plus, Trash2, ImagePlus, Eye, EyeOff, Loader2, Calendar, MapPin } from "lucide-react";
 
@@ -29,6 +30,9 @@ type TipoMidiaAceite = (typeof TIPOS_DE_MIDIA_ACEITES)[number];
 function tipoAceite(ficheiro: File): ficheiro is File & { type: TipoMidiaAceite } {
   return (TIPOS_DE_MIDIA_ACEITES as readonly string[]).includes(ficheiro.type);
 }
+
+/** A galeria aceita também vídeo (MP4 ou WebM); a capa continua só imagem. */
+const TIPOS_DA_GALERIA: readonly string[] = [...TIPOS_DE_MIDIA_ACEITES, ...TIPOS_DE_VIDEO_ACEITES];
 
 const AdminPublicacoes = () => {
   const [publicacoes, setPublicacoes] = useState<PublicacaoAdmin[]>([]);
@@ -323,8 +327,8 @@ const EditorDialog = ({ publicacao, onClose, onChanged }: EditorDialogProps) => 
   };
 
   const enviarFoto = async (ficheiro: File) => {
-    if (!publicacao || !tipoAceite(ficheiro)) {
-      toast.error("Formato não suportado. Use PNG, JPEG ou WebP.");
+    if (!publicacao || !TIPOS_DA_GALERIA.includes(ficheiro.type)) {
+      toast.error("Formato não suportado. Use PNG, JPEG, WebP, MP4 ou WebM.");
       return;
     }
     setAEnviarFoto(true);
@@ -333,7 +337,7 @@ const EditorDialog = ({ publicacao, onClose, onChanged }: EditorDialogProps) => 
       await publicacoesApi.enviarParaStorage(preparado.url_de_upload, ficheiro);
       const midia = await publicacoesApi.confirmarMidia(publicacao.id, preparado.chave);
       setMidias((atual) => [...atual, midia]);
-      toast.success("Foto adicionada à galeria.");
+      toast.success(ficheiro.type.startsWith("video/") ? "Vídeo adicionado à galeria." : "Foto adicionada à galeria.");
       await onChanged();
     } catch (err) {
       toast.error(mensagemDeErroApi(err, "Não foi possível enviar a foto."));
@@ -445,11 +449,15 @@ const EditorDialog = ({ publicacao, onClose, onChanged }: EditorDialogProps) => 
           </div>
 
           <div className="border-t pt-4">
-            <Label>Galeria de fotos</Label>
+            <Label>Galeria de fotos e vídeos</Label>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mt-2">
               {midias.map((m) => (
                 <div key={m.id} className="relative group">
-                  <img src={m.url} alt="" className="w-full aspect-square rounded-lg object-cover" />
+                  {eVideoDaGaleria(m.url) ? (
+                    <video src={m.url} muted preload="metadata" className="w-full aspect-square rounded-lg object-cover bg-black" />
+                  ) : (
+                    <img src={m.url} alt="" className="w-full aspect-square rounded-lg object-cover" />
+                  )}
                   <button
                     type="button"
                     onClick={() => removerFoto(m.id)}
@@ -463,9 +471,9 @@ const EditorDialog = ({ publicacao, onClose, onChanged }: EditorDialogProps) => 
               <input
                 ref={fotoInputRef}
                 type="file"
-                accept={TIPOS_DE_MIDIA_ACEITES.join(",")}
+                accept={TIPOS_DA_GALERIA.join(",")}
                 className="hidden"
-                aria-label="Carregar foto para a galeria"
+                aria-label="Carregar foto ou vídeo para a galeria"
                 onChange={(e) => e.target.files?.[0] && enviarFoto(e.target.files[0])}
               />
               <button

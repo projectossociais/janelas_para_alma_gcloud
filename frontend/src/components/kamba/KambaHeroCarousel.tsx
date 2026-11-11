@@ -73,7 +73,7 @@ const KambaHeroCarousel = ({ onOpenForm }: KambaHeroCarouselProps) => {
                 <h2 className="text-3xl md:text-5xl font-bold">
                   {t("KambaHeroCarousel.tornaTeUmKamba")}
                 </h2>
-                <p className="text-lg text-navy-foreground/70 max-w-2xl mx-auto">
+                <p className="text-lg text-marca-marinho/70 max-w-2xl mx-auto">
                   {t("KambaHeroCarousel.juntaTeANos")}
                 </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -88,18 +88,18 @@ const KambaHeroCarousel = ({ onOpenForm }: KambaHeroCarouselProps) => {
               </div>
 
               <div className="max-w-4xl mx-auto mt-12 text-left space-y-3">
-                <h3 className="text-base font-semibold text-navy-foreground flex items-center gap-2">
+                <h3 className="text-base font-semibold text-marca-marinho flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-teal" />
                   {t("KambaHeroCarousel.sobreOPrograma")}
                 </h3>
-                <p className="text-navy-foreground/70 leading-relaxed">
+                <p className="text-marca-marinho/70 leading-relaxed">
                   {t("KambaHeroCarousel.oProgramaEUma")}
                 </p>
               </div>
 
               <div className="max-w-4xl mx-auto mt-8 grid sm:grid-cols-2 gap-6">
-                <div className="rounded-2xl bg-navy-foreground/5 border border-navy-foreground/10 p-6 space-y-3">
-                  <h3 className="text-base font-semibold text-navy-foreground flex items-center gap-2">
+                <div className="rounded-2xl bg-marca-marinho/5 border border-marca-marinho/10 p-6 space-y-3">
+                  <h3 className="text-base font-semibold text-marca-marinho flex items-center gap-2">
                     <Target className="w-4 h-4 text-teal" />
                     {t("KambaHeroCarousel.objectivos")}
                   </h3>
@@ -107,25 +107,25 @@ const KambaHeroCarousel = ({ onOpenForm }: KambaHeroCarouselProps) => {
                     {objectives().map((obj, i) => (
                       <li key={i} className="flex items-start gap-3">
                         <ChevronRight className="w-4 h-4 text-teal shrink-0 mt-1" />
-                        <span className="text-navy-foreground/70 leading-relaxed text-sm">{obj}</span>
+                        <span className="text-marca-marinho/70 leading-relaxed text-sm">{obj}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
 
-                <div className="rounded-2xl bg-navy-foreground/5 border border-navy-foreground/10 p-6 space-y-3">
-                  <h3 className="text-base font-semibold text-navy-foreground flex items-center gap-2">
+                <div className="rounded-2xl bg-marca-marinho/5 border border-marca-marinho/10 p-6 space-y-3">
+                  <h3 className="text-base font-semibold text-marca-marinho flex items-center gap-2">
                     <Users className="w-4 h-4 text-teal" />
                     {t("KambaHeroCarousel.publicoAlvo")}
                   </h3>
                   <div className="space-y-2">
                     <div className="p-3 rounded-xl bg-teal/10 border border-teal/20">
-                      <p className="text-sm font-medium text-navy-foreground mb-1">{t("KambaHeroCarousel.primario")}</p>
-                      <p className="text-navy-foreground/70 text-sm">{t("KambaHeroCarousel.pessoasEstrabicasECom")}</p>
+                      <p className="text-sm font-medium text-marca-marinho mb-1">{t("KambaHeroCarousel.primario")}</p>
+                      <p className="text-marca-marinho/70 text-sm">{t("KambaHeroCarousel.pessoasEstrabicasECom")}</p>
                     </div>
-                    <div className="p-3 rounded-xl bg-navy-foreground/5 border border-navy-foreground/10">
-                      <p className="text-sm font-medium text-navy-foreground mb-1">{t("KambaHeroCarousel.secundario")}</p>
-                      <p className="text-navy-foreground/70 text-sm">
+                    <div className="p-3 rounded-xl bg-marca-marinho/5 border border-marca-marinho/10">
+                      <p className="text-sm font-medium text-marca-marinho mb-1">{t("KambaHeroCarousel.secundario")}</p>
+                      <p className="text-marca-marinho/70 text-sm">
                         {t("KambaHeroCarousel.familiasVoluntariosLideresComunitarios")}
                       </p>
                     </div>
@@ -146,7 +146,7 @@ const KambaHeroCarousel = ({ onOpenForm }: KambaHeroCarouselProps) => {
                   <h2 className="text-3xl md:text-4xl font-bold leading-tight">
                     {t("KambaHeroCarousel.campanhaDeConsciencializacaoNa")}
                   </h2>
-                  <p className="text-lg text-navy-foreground/70">
+                  <p className="text-lg text-marca-marinho/70">
                     {t("KambaHeroCarousel.aComunidadeMeuKamba")}
                   </p>
                   <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4">
@@ -159,7 +159,7 @@ const KambaHeroCarousel = ({ onOpenForm }: KambaHeroCarouselProps) => {
                     </button>
                   </div>
                 </div>
-                <div className="rounded-2xl overflow-hidden shadow-elevated border border-navy-foreground/10 aspect-[4/5] md:aspect-square">
+                <div className="rounded-2xl overflow-hidden shadow-elevated border border-marca-marinho/10 aspect-[4/5] md:aspect-square">
                   <video
                     ref={groupVideoRef}
                     className="w-full h-full object-cover"
@@ -185,7 +185,7 @@ const KambaHeroCarousel = ({ onOpenForm }: KambaHeroCarouselProps) => {
                   <h2 className="text-3xl md:text-4xl font-bold leading-tight">
                     {t("KambaHeroCarousel.kambasUnidosPelaMesma")}
                   </h2>
-                  <p className="text-lg text-navy-foreground/70">
+                  <p className="text-lg text-marca-marinho/70">
                     {t("KambaHeroCarousel.voluntariosEmbaixadoresEParceiros")}
                   </p>
                   <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4">
@@ -198,7 +198,7 @@ const KambaHeroCarousel = ({ onOpenForm }: KambaHeroCarouselProps) => {
                     </button>
                   </div>
                 </div>
-                <div className="rounded-2xl overflow-hidden shadow-elevated border border-navy-foreground/10 aspect-[4/5] md:aspect-square">
+                <div className="rounded-2xl overflow-hidden shadow-elevated border border-marca-marinho/10 aspect-[4/5] md:aspect-square">
                   <img
                     src="/assets/kamba/equipa-auditorio.jpg"
                     alt={t("KambaHeroCarousel.equipaMeuKambaEstrabico")}
@@ -219,7 +219,7 @@ const KambaHeroCarousel = ({ onOpenForm }: KambaHeroCarouselProps) => {
             onClick={() => api?.scrollTo(index)}
             className={cn(
               "h-2.5 rounded-full transition-all",
-              current === index ? "w-8 bg-teal" : "w-2.5 bg-navy-foreground/20",
+              current === index ? "w-8 bg-teal" : "w-2.5 bg-marca-marinho/20",
             )}
           />
         ))}

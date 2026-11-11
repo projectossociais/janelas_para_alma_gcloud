@@ -73,7 +73,7 @@ const ClinicalPartners = ({ defaultOpen = false }: ClinicalPartnersProps) => {
   }, [defaultOpen]);
 
   return (
-    <section id="parceiros-clinicos" className="pt-8 pb-20 md:pt-12 md:pb-28 bg-muted/40">
+    <section id="parceiros-clinicos" className="pt-8 pb-20 md:pt-12 md:pb-28 bg-white">
       <div className="container px-6">
         <div className="text-center max-w-2xl mx-auto mb-14 space-y-3">
           <span className="text-sm font-medium tracking-widest uppercase text-teal">

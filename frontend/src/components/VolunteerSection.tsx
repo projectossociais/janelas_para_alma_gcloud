@@ -85,7 +85,7 @@ const VolunteerSection = () => {
   };
 
   return (
-    <section id="voluntariado" className="py-20 md:py-28 bg-navy text-navy-foreground">
+    <section id="voluntariado" className="py-20 md:py-28 bg-white text-marca-marinho">
       <KambaHeroCarousel onOpenForm={abrirFormulario} />
 
       <Dialog open={open} onOpenChange={setOpen}>

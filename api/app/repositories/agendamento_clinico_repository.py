@@ -64,6 +64,7 @@ class AgendamentoClinicoRepository(Protocol):
     def confirmar(self, agendamento_id: str, admin_id: str, quando: datetime) -> AgendamentoClinicoRegisto: ...
     def recusar(self, agendamento_id: str, admin_id: str, quando: datetime) -> AgendamentoClinicoRegisto: ...
     def existe_conflito(self, clinica_id: str, horario_inicio: datetime) -> bool: ...
+    def horarios_ocupados(self, clinica_id: str, desde: datetime, ate: datetime) -> set[datetime]: ...
 
 
 def _esta_premium(utilizador: Utilizador | None) -> bool:
@@ -140,6 +141,20 @@ class SQLAlchemyAgendamentoClinicoRepository:
                 )
             )
             is not None
+        )
+
+    def horarios_ocupados(self, clinica_id: str, desde: datetime, ate: datetime) -> set[datetime]:
+        """Inícios já pedidos ou confirmados neste intervalo -- uma só consulta,
+        em vez de uma por horário ao gerar semanas de disponibilidade."""
+        return set(
+            self._sessao.scalars(
+                select(AgendamentoClinico.horario_inicio).where(
+                    AgendamentoClinico.clinica_id == uuid.UUID(clinica_id),
+                    AgendamentoClinico.horario_inicio >= desde,
+                    AgendamentoClinico.horario_inicio < ate,
+                    AgendamentoClinico.estado.in_(["pendente", "confirmada"]),
+                )
+            )
         )
 
     def obter(self, agendamento_id: str) -> AgendamentoClinicoRegisto | None:

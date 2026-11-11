@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import i18n from "@/i18n";
 import App from "./App";
 import { EXERCICIOS_RETIRADOS } from "./i18n/rotas";
@@ -52,7 +52,9 @@ describe("com VITE_ENABLE_EN desligada (omissão)", () => {
     abrir("/termos-de-utilizacao");
     await screen.findByRole("heading", { name: "Termos de Utilização" });
     expect(screen.queryByRole("note")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Jogo: Inclusivamente" })).toBeInTheDocument();
+    // Desde o redesenho da navegação (2026-10-26) o jogo vive no menu "Serviços".
+    fireEvent.click(screen.getByRole("button", { name: "Serviços" }));
+    expect(screen.getByRole("link", { name: /^Inclusivamente/ })).toHaveAttribute("href", "/jogo-curiosidades");
   });
 
   it("o site é português e o botão EN não aparece", async () => {
@@ -142,7 +144,7 @@ describe("com VITE_ENABLE_EN=true", () => {
     await waitFor(() => expect(document.title).toBe("Support the Cause | Janelas para a Alma"));
     expect(meta).toHaveAttribute(
       "content",
-      "Make a difference: donate essential supplies for our patients or support Janelas para a Alma financially.",
+      "Make a difference: donate essential supplies for our beneficiaries or support Janelas para a Alma financially.",
     );
     expect(ogUrl).toHaveAttribute("content", "https://www.janelasparaalma.com/en/donate");
     expect(ogLocale).toHaveAttribute("content", "en_US");
@@ -159,9 +161,8 @@ describe("com VITE_ENABLE_EN=true", () => {
     menu.unmount();
     abrir("/en");
     await waitFor(() => expect(document.documentElement.lang).toBe("en-US"));
-    expect(await screen.findByRole("button", { name: "Game: Inclusivamente" })).toBeInTheDocument();
-    expect(screen.getByText("Launching our game: Inclusivamente")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Try our game/ })).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole("button", { name: "Services" }));
+    expect(screen.getByRole("link", { name: /^Inclusivamente/ })).toHaveAttribute("href", "/en/trivia-game");
   });
 
   it("as páginas legais em inglês avisam que prevalece a versão portuguesa", async () => {

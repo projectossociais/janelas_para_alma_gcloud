@@ -1,20 +1,42 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { CalendarDays, Languages, Loader2, MapPin } from "lucide-react";
+import { CalendarDays, Clock, Languages, Loader2, MapPin } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
+import AccoesPublicacao from "@/components/blog/AccoesPublicacao";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import { publicacoesApi, mensagemDeErroApi, type PublicacaoPublica } from "@/lib/apiClient";
+import { eVideoDaGaleria, partirEmLinks } from "@/lib/midiaPublicacao";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { localizar } from "@/i18n/rotas";
 import { formatarData } from "@/i18n/formatar";
 import { useIdioma } from "@/i18n/useIdioma";
 import { IDIOMA_EN, IDIOMA_PT } from "@/i18n/idiomas";
+import { minutosDeLeitura } from "@/lib/leitura";
 
 const INTERVALO_CARROSSEL_MS = 10_000;
+
+/**
+ * Conta uma visualização por publicação e por separador: recarregar a página
+ * não volta a contar. Uma falha aqui nunca estraga a leitura (é só um número).
+ */
+async function registarVisualizacao(slug: string): Promise<number | null> {
+  const chave = `jpa.publicacao.vista.${slug}`;
+  try {
+    if (sessionStorage.getItem(chave)) return null;
+    sessionStorage.setItem(chave, "1");
+  } catch {
+    // Sem sessionStorage (modo privado restrito): conta na mesma.
+  }
+  try {
+    return (await publicacoesApi.registarVisualizacao(slug)).visualizacoes;
+  } catch {
+    return null;
+  }
+}
 
 const PublicacaoDetalhe = () => {
   const { t } = useTranslation();
@@ -38,7 +60,12 @@ const PublicacaoDetalhe = () => {
     setNaoEncontrada(false);
     (async () => {
       try {
-        setPublicacao(await publicacoesApi.obterPorSlug(slug));
+        const encontrada = await publicacoesApi.obterPorSlug(slug);
+        setPublicacao(encontrada);
+        // Sem esperar: a página mostra-se já, o número actualiza quando a API responder.
+        void registarVisualizacao(slug).then((vistas) => {
+          if (vistas !== null) setPublicacao((p) => (p && p.slug === slug ? { ...p, visualizacoes: vistas } : p));
+        });
       } catch (err) {
         // Duck-typing na propriedade `status`, não `instanceof ApiError` --
         // este módulo é mockado nos testes de página (ver CLAUDE.md, "Testes
@@ -79,7 +106,12 @@ const PublicacaoDetalhe = () => {
             </div>
           )}
 
-          {!aCarregar && publicacao && (
+          {!aCarregar && publicacao && (() => {
+            // Os vídeos mostram-se à parte, por cima das fotos: dentro do
+            // carrossel automático, o diapositivo mudava a meio do vídeo.
+            const videos = publicacao.midias.filter((m) => eVideoDaGaleria(m.url));
+            const fotos = publicacao.midias.filter((m) => !eVideoDaGaleria(m.url));
+            return (
             <article className="max-w-3xl mx-auto flex flex-col gap-8">
               <header className="text-center space-y-3">
                 <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground flex-wrap">
@@ -95,6 +127,10 @@ const PublicacaoDetalhe = () => {
                       {publicacao.local}
                     </span>
                   )}
+                  <span className="inline-flex items-center gap-1.5">
+                    <Clock className="w-4 h-4" />
+                    {t("Publicacoes.minDeLeitura", { count: minutosDeLeitura(publicacao.corpo) })}
+                  </span>
                 </div>
                 <h1 lang={langConteudo} className="text-3xl md:text-4xl font-bold">{publicacao.titulo}</h1>
                 <p lang={langConteudo} className="text-muted-foreground text-lg">{publicacao.resumo}</p>
@@ -104,6 +140,14 @@ const PublicacaoDetalhe = () => {
                     {t("PublicacaoDetalhe.disponivelSoEmPortugues")}
                   </p>
                 )}
+                <AccoesPublicacao
+                  key={publicacao.slug}
+                  slug={publicacao.slug}
+                  titulo={publicacao.titulo}
+                  visualizacoes={publicacao.visualizacoes ?? 0}
+                  gostos={publicacao.gostos ?? 0}
+                  gostei={publicacao.gostei ?? false}
+                />
               </header>
 
               {publicacao.capa_url && (
@@ -120,10 +164,40 @@ const PublicacaoDetalhe = () => {
               )}
 
               <div lang={langConteudo} className="text-muted-foreground leading-relaxed whitespace-pre-wrap max-w-2xl mx-auto">
-                {publicacao.corpo}
+                {partirEmLinks(publicacao.corpo).map((pedaco, i) =>
+                  pedaco.tipo === "link" ? (
+                    <a
+                      key={i}
+                      href={pedaco.valor}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-teal font-medium underline break-all"
+                    >
+                      {pedaco.valor}
+                    </a>
+                  ) : (
+                    pedaco.valor
+                  ),
+                )}
               </div>
 
-              {publicacao.midias.length > 0 && (
+              {videos.length > 0 && (
+                <div className="space-y-4 max-w-2xl mx-auto w-full">
+                  {videos.map((m) => (
+                    <video
+                      key={m.id}
+                      src={m.url}
+                      controls
+                      playsInline
+                      preload="metadata"
+                      aria-label={publicacao.titulo}
+                      className="w-full max-h-[80vh] rounded-2xl shadow-elevated bg-black"
+                    />
+                  ))}
+                </div>
+              )}
+
+              {fotos.length > 0 && (
                 <div className="space-y-4">
                   <hr className="border-slate-200" />
                   <h2 className="text-xl font-bold text-center">{t("PublicacaoDetalhe.galeriaDeFotos")}</h2>
@@ -133,7 +207,7 @@ const PublicacaoDetalhe = () => {
                     className="max-w-lg mx-auto"
                   >
                     <CarouselContent>
-                      {publicacao.midias.map((m) => (
+                      {fotos.map((m) => (
                         <CarouselItem key={m.id}>
                           <img
                             src={m.url}
@@ -144,7 +218,7 @@ const PublicacaoDetalhe = () => {
                         </CarouselItem>
                       ))}
                     </CarouselContent>
-                    {publicacao.midias.length > 1 && (
+                    {fotos.length > 1 && (
                       <>
                         <CarouselPrevious />
                         <CarouselNext />
@@ -154,7 +228,8 @@ const PublicacaoDetalhe = () => {
                 </div>
               )}
             </article>
-          )}
+            );
+          })()}
         </div>
       </main>
       <Footer />

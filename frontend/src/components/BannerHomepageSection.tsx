@@ -31,7 +31,7 @@ const BannerHomepageSection = () => {
         alt=""
         className="absolute inset-0 w-full h-full object-cover"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-navy/90 via-navy/40 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-marca-marinho/90 via-marca-marinho/40 to-transparent" />
       <div className="relative h-full flex flex-col justify-end gap-2 p-6 md:p-10 text-white">
         <h2 className="text-2xl md:text-4xl font-bold">{banner.titulo}</h2>
         {banner.descricao && <p className="max-w-xl text-white/90">{banner.descricao}</p>}
