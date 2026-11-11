@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTranslation } from "react-i18next";
+import logoOlharAlinhado from "@/assets/logo-olhar-alinhado.png";
 
 interface FirmaOlharAlinhadoModalProps {
   open: boolean;
@@ -33,6 +34,12 @@ const FirmaOlharAlinhadoModal = ({ open, onOpenChange }: FirmaOlharAlinhadoModal
             </DialogTitle>
             <DialogDescription>{t("FirmaOlharAlinhadoModal.subtitulo")}</DialogDescription>
           </DialogHeader>
+
+          <img
+            src={logoOlharAlinhado}
+            alt={t("FirmaOlharAlinhadoModal.logotipoAlt")}
+            className="mx-auto w-full max-w-sm h-auto"
+          />
 
           <div className="space-y-4 pt-2 pb-4">
             <p className="text-muted-foreground leading-relaxed text-justify">

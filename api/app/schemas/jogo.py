@@ -297,3 +297,120 @@ class EstatisticasJogadorPublicas(BaseModel):
 # `RecompensaSequenciaPublica` refere-se a `PerfilJogadorPublico`, definido mais abaixo.
 RecompensaSequenciaPublica.model_rebuild()
 ValidarRespostaResponse.model_rebuild()
+
+
+# --- Multijogador Local -----------------------------------------------------
+
+
+class IniciarPartidaLocalRequest(BaseModel):
+    # Hoje só 2 (ver `MAXIMO_JOGADORES` em jogo_local_service.py).
+    numero_jogadores: int = Field(ge=2, le=2)
+
+
+class PartidaLocalPublica(BaseModel):
+    id: str
+    numero_jogadores: int
+    rondas: int
+    maximo_desempates: int
+    moedas_por_acerto: int
+    maximo_moedas_por_partida: int
+    limite_diario_moedas: int
+
+
+class PerguntaLocalRequest(BaseModel):
+    patamar: int = Field(ge=1, le=15)
+
+
+class ResponderLocalRequest(BaseModel):
+    pergunta_id: str
+    # `None` = o tempo esgotou sem resposta.
+    resposta: RespostaOpcao | None = None
+
+
+class RespostaLocalResponse(BaseModel):
+    correta: bool
+    resposta_correta: RespostaOpcao
+    explicacao: str | None
+
+
+class PartidaLocalTerminadaResponse(BaseModel):
+    moedas_ganhas: int
+    limite_diario_atingido: bool
+    perfil: PerfilJogadorPublico
+
+
+# --- Multijogador Online ----------------------------------------------------
+
+
+class ResponderNaSalaRequest(BaseModel):
+    pergunta_id: str
+    resposta: RespostaOpcao
+
+
+class MensagemSalaRequest(BaseModel):
+    texto: str = Field(min_length=1, max_length=1000)
+
+
+class JogadorSalaPublico(BaseModel):
+    """Um jogador da sala, visto por um dos dois. Só o primeiro nome. A
+    resposta dada e se estava certa só aparecem com a ronda fechada."""
+
+    nome: str
+    eu: bool
+    anfitriao: bool
+    pontos: int
+    acertos: int
+    respondeu: bool
+    resposta: RespostaOpcao | None = None
+    certa: bool | None = None
+    pontos_ronda: int | None = None
+    vencedor: bool = False
+
+
+class RevelacaoPublica(BaseModel):
+    resposta_correta: RespostaOpcao
+    explicacao: str | None
+
+
+class PremioSalaPublico(BaseModel):
+    moedas_ganhas: int
+    limite_diario_atingido: bool
+
+
+class MensagemSalaPublica(BaseModel):
+    id: str
+    minha: bool
+    nome: str
+    texto: str
+
+
+class ChatSalaPublico(BaseModel):
+    disponivel: bool
+    # Porque não está: `a_espera` (falta o segundo jogador), `so_adultos`,
+    # `denunciado` ou `fechado`.
+    motivo: str | None
+    # Se a conta de quem pede conta como adulta (para explicar o `so_adultos`).
+    eu_adulto: bool
+    mensagens: list[MensagemSalaPublica]
+
+
+class SalaPublica(BaseModel):
+    codigo: str
+    estado: Literal["a_aguardar", "em_curso", "terminada", "abandonada"]
+    fase: Literal["pergunta", "revelacao"] | None
+    ronda: int
+    rondas: int
+    desempate: int
+    sou_anfitriao: bool
+    jogadores: list[JogadorSalaPublico]
+    pergunta: PerguntaPublica | None
+    tempo_por_pergunta: int
+    # Calculado pelo relógio do servidor; o aparelho só faz a contagem.
+    segundos_restantes: int | None
+    # Na revelação: quanto falta para a pergunta seguinte (ou para o fim).
+    segundos_ate_proxima: int | None = None
+    minha_resposta: RespostaOpcao | None
+    revelacao: RevelacaoPublica | None
+    motivo_fim: Literal["completa", "desistencia"] | None
+    premio: PremioSalaPublico | None
+    chat: ChatSalaPublico

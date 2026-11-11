@@ -33,9 +33,6 @@ const AboutTeaserSection = () => {
             <p className="text-marca-marinho/70 leading-relaxed text-base md:text-lg text-justify">
               {t("AboutTeaserSection.somosJovensAngolanosQue")}
             </p>
-            <p className="text-marca-marinho/70 leading-relaxed text-base md:text-lg text-justify">
-              {t("AboutTeaserSection.cadaRastreioFeitoCada")}
-            </p>
             <button
               onClick={() => navigate(localizar("/impacto"))}
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-marca-turquesa text-white font-semibold transition-all hover:opacity-90 hover:gap-3 self-start"

@@ -166,7 +166,7 @@ const ContactSection = () => {
   };
 
   return (
-    <section id="contacto" className="py-20 md:py-28 bg-muted/50">
+    <section id="contacto" className="py-20 md:py-28 bg-white">
       {/* Preload volunteer benefit images for instant modal rendering */}
       <div className="hidden" aria-hidden="true">
         <img src={benefitTeamwork} alt="" />

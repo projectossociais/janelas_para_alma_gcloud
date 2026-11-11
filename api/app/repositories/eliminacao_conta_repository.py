@@ -31,6 +31,7 @@ from app.repositories.orm_models import (
     PremiumRequest,
     Utilizador,
 )
+from app.repositories.sala_jogo_repository import apagar_mensagens_de
 
 
 class EliminacaoContaRepository(Protocol):
@@ -138,6 +139,9 @@ class SQLAlchemyEliminacaoContaRepository:
             .where(PartilhaRelatorio.utilizador_id == id_, PartilhaRelatorio.revogado_em.is_(None))
             .values(revogado_em=agora)
         )
+
+        # Multijogador Online: mensagens de chat e o primeiro nome nas salas.
+        apagar_mensagens_de(self._sessao, id_, nome_anonimo)
 
         # Acesso ao portal de uma clínica: uma conta eliminada deixa de o ter.
         self._sessao.execute(delete(EquipaClinica).where(EquipaClinica.utilizador_id == id_))

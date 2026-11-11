@@ -32,7 +32,7 @@ const UpcomingActivities = () => {
   if (atividades !== null && proximas.length === 0) return null;
 
   return (
-    <section className="py-20 md:py-28 bg-muted/30">
+    <section className="py-20 md:py-28 bg-white">
       <div className="container">
         <div className="max-w-2xl mx-auto text-center space-y-4 mb-12">
           <span className="text-sm font-medium tracking-widest uppercase text-teal">

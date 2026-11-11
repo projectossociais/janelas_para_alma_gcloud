@@ -144,7 +144,7 @@ describe("com VITE_ENABLE_EN=true", () => {
     await waitFor(() => expect(document.title).toBe("Support the Cause | Janelas para a Alma"));
     expect(meta).toHaveAttribute(
       "content",
-      "Make a difference: donate essential supplies for our patients or support Janelas para a Alma financially.",
+      "Make a difference: donate essential supplies for our beneficiaries or support Janelas para a Alma financially.",
     );
     expect(ogUrl).toHaveAttribute("content", "https://www.janelasparaalma.com/en/donate");
     expect(ogLocale).toHaveAttribute("content", "en_US");
