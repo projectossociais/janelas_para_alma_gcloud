@@ -645,6 +645,18 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   + `AssistenteTeste`/`AssistenteTreino` (`components/visao/`) + a lógica pura de
   `lib/visao/` (geometria, escadas, contraste, tempo activo). Um passo por ecrã, um olho de
   cada vez; no máximo **um** `requestAnimationFrame` por exercício.
+- **Antes de começar, só se pergunta o que ainda não se sabe (2026-11-11, pedido do dono do
+  projecto: os passos de preparação atrapalhavam).** O brilho é uma linha por baixo dos
+  passos (`NotaPreparacao`), não um ecrã; o passo do cartão salta com o ecrã já calibrado
+  neste aparelho (a mesma linha deixa calibrar de novo); os óculos de graduação
+  perguntam-se uma vez e ficam em `utilizadores.usa_oculos`; com a escolha "com ou sem
+  óculos 3D" guardada, o exercício abre directo nesse modo e troca-se por um link
+  (`TrocarModo`) nos ecrãs antes de começar. Na Palanca, "tape o outro olho" e "Começar"
+  são um só ecrã (`semPassoTapar`), e a montagem a 3 m resume-se da segunda vez. O Teste de
+  Estereopsia reusa a distância da última vez (gravada como não medida). O Kianda com
+  óculos 3D deixou de medir a distância: assume 40 cm. O passo do tapa-olho dos treinos
+  aceita a mão ou um pano (antes dizia "a mão não basta", contra o aviso da pesca). Não
+  reintroduzir ecrãs de preparação que só servem para carregar em Continuar.
 - **Régua Invisível (2026-10-20): unidades reais sem câmara.** Cartão de banco -> px/mm
   (`calibracao.ts`); ponto cego -> distância olhos-ecrã (`pontoCego.ts`, Li et al. 2020);
   afinação dos óculos vermelho-ciano -> fuga de cor de cada filtro (`anaglifo.ts`). Duas

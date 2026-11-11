@@ -10,7 +10,7 @@ import { EstadoDaGravacao } from "@/components/visao/Resultados";
 import {
   BotaoContinuar,
   EcraPasso,
-  PassoBrilho,
+  NotaPreparacao,
   PassoCalibracao,
   PassoDistancia,
   PassoOculos,
@@ -102,7 +102,6 @@ interface AssistenteTreinoProps {
 type Etapa =
   | "olho"
   | "rapida"
-  | "brilho"
   | "aviso"
   | "calibracao"
   | "oculos"
@@ -279,9 +278,15 @@ export const ContadorDiario = ({ historico }: { historico: SessaoExercicioPublic
 };
 
 /**
- * Assistente comum aos treinos: olho mais fraco -> brilho -> cartão ->
- * óculos -> tapa-olho no outro olho -> (distância) -> blocos de 2 minutos
+ * Assistente comum aos treinos: olho mais fraco -> (aviso) -> cartão ->
+ * óculos -> (distância) -> tapa-olho no outro olho -> blocos de 2 minutos
  * de tempo activo com pausa de respiração entre eles -> resumo e gravação.
+ *
+ * Só se pergunta o que ainda não se sabe (2026-11-11): o cartão salta com o
+ * ecrã já calibrado neste aparelho, os óculos de graduação perguntam-se uma
+ * vez e ficam no perfil (`usa_oculos`), e o brilho é uma linha por baixo dos
+ * passos (`NotaPreparacao`), não um ecrã. "Alterar definições" volta a
+ * mostrar os dois.
  *
  * A tarefa fica montada durante toda a sessão (só se esconde nas pausas),
  * para o nível da escada continuar de um bloco para o seguinte.
@@ -301,7 +306,7 @@ const AssistenteTreino = ({
 }: AssistenteTreinoProps) => {
   const { t } = useTranslation();
   const { isLoggedIn } = useAuth();
-  const { profile, loading: perfilLoading } = useProfile();
+  const { profile, setProfile, loading: perfilLoading } = useProfile();
   const { calibracao, guardar } = useCalibracao();
   const dpr = useDevicePixelRatio();
   const tempo = useTempoActivo();
@@ -323,16 +328,25 @@ const AssistenteTreino = ({
   const rapidaDisponivel = podeUsarSessaoRapida({ escolhas, calibracao, monocular: precisaOlho, olhoActual: olho });
   const [modoRapido, setModoRapido] = useState(false);
 
-  const [etapa, setEtapa] = useState<Etapa>(() => (precisaOlho ? "olho" : rapidaDisponivel ? "rapida" : "brilho"));
-  // Perfil ainda a carregar mostra a escolha por instantes; salta-a quando chega.
-  useEffect(() => {
-    if (etapa === "olho" && olho) setEtapa(rapidaDisponivel ? "rapida" : "brilho");
-  }, [etapa, olho, rapidaDisponivel]);
+  // "olho" é também o ponto de partida enquanto o perfil carrega: só com ele
+  // se sabe o que falta perguntar (olho mais fraco, óculos de graduação).
+  const [etapa, setEtapa] = useState<Etapa>("olho");
+  /** "Alterar definições": volta a mostrar o cartão e a pergunta dos óculos. */
+  const [aAlterar, setAAlterar] = useState(false);
+  // Um passo que já apareceu nesta sessão fica na barra de passos até ao fim.
+  const vistos = useRef({ cartao: false, oculos: false });
+  if (etapa === "calibracao") vistos.current.cartao = true;
+  if (etapa === "oculos") vistos.current.oculos = true;
+  const oculosPerfil = typeof profile?.usa_oculos === "boolean" ? profile.usa_oculos : null;
+  const comCartao = calibracao === null || aAlterar || vistos.current.cartao;
+  const comOculos = oculosPerfil === null || aAlterar || vistos.current.oculos;
 
   const [distanciaMm, setDistanciaMm] = useState(distanciaFixaMm);
   /** Medida pelo ponto cego nesta sessão (a da sessão rápida vem da última vez). */
   const [distanciaMedida, setDistanciaMedida] = useState(false);
-  const [usaCorreccao, setUsaCorreccao] = useState(false);
+  /** Resposta desta sessão; sem ela, vale a do perfil. */
+  const [respostaOculos, setRespostaOculos] = useState<boolean | null>(null);
+  const usaCorreccao = respostaOculos ?? oculosPerfil ?? false;
   const [oculosVerificados, setOculosVerificados] = useState(false);
   const [afinacao, setAfinacao] = useState<Afinacao | null>(null);
   const [bloco, setBloco] = useState(1);
@@ -452,34 +466,25 @@ const AssistenteTreino = ({
     t("Visao.passoResumo"),
   ];
   const ordemRapida: Etapa[] = [...(precisaOlho ? (["olho"] as Etapa[]) : []), "rapida", "bloco", "resumo"];
-  const passosCompletos = [
-    ...(precisaOlho ? [t("Visao.passoOlhoMaisFraco")] : []),
-    t("Visao.passoEcra"),
-    ...(aviso ? [t("Visao.passoAviso")] : []),
-    t("Visao.passoCartao"),
-    t("Visao.passoOculos"),
+  // [etapa, nome na barra de passos, entra?]
+  const completa: [Etapa, string, boolean][] = [
+    ["olho", t("Visao.passoOlhoMaisFraco"), precisaOlho],
+    ["aviso", t("Visao.passoAviso"), !!aviso],
+    ["calibracao", t("Visao.passoCartao"), comCartao],
+    ["oculos", t("Visao.passoOculos"), comOculos],
     // A distância mede-se antes do tapa-olho: o ponto cego mede-se com o
     // olho que vê melhor, e é esse que o tapa-olho vai cobrir.
-    ...(comDistancia ? [t("Visao.passoDistancia")] : []),
+    ["distancia", t("Visao.passoDistancia"), comDistancia],
     // Os óculos 3D põem-se depois de medir a distância (a medição faz-se sem eles).
-    ...(oculos3D ? [t("Visao.passoOculosVC"), t("Visao.passoAfinar")] : []),
-    ...(monocular ? [t("Visao.passoTapaOlho")] : []),
-    t("Visao.passoTreino"),
-    t("Visao.passoResumo"),
+    ["verificar3d", t("Visao.passoOculosVC"), oculos3D],
+    ["afinar", t("Visao.passoAfinar"), oculos3D],
+    ["tapar", t("Visao.passoTapaOlho"), monocular],
+    ["bloco", t("Visao.passoTreino"), true],
+    ["resumo", t("Visao.passoResumo"), true],
   ];
-  const ordemCompleta: Etapa[] = [
-    ...(precisaOlho ? (["olho"] as Etapa[]) : []),
-    "brilho",
-    ...(aviso ? (["aviso"] as Etapa[]) : []),
-    "calibracao",
-    "oculos",
-    ...(comDistancia ? (["distancia"] as Etapa[]) : []),
-    ...(oculos3D ? (["verificar3d", "afinar"] as Etapa[]) : []),
-    ...(monocular ? (["tapar"] as Etapa[]) : []),
-    "bloco",
-    "resumo",
-  ];
-  const passos = usarOrdemRapida ? passosRapidos : passosCompletos;
+  const activas = completa.filter(([, , entra]) => entra);
+  const ordemCompleta = activas.map(([e]) => e);
+  const passos = usarOrdemRapida ? passosRapidos : activas.map(([, nome]) => nome);
   const ordem = usarOrdemRapida ? ordemRapida : ordemCompleta;
   const passoActual = ordem.indexOf(etapa === "pausa" ? "bloco" : etapa);
   const seguinte = (de: Etapa) => {
@@ -487,9 +492,27 @@ const AssistenteTreino = ({
     if (proxima === "bloco") comecarBlocos();
     else setEtapa(proxima);
   };
+  /** O primeiro passo depois do olho mais fraco, na ordem completa. */
+  const primeiroPasso = (lista: Etapa[] = ordemCompleta) => {
+    const proxima = lista.find((e) => e !== "olho") ?? "bloco";
+    if (proxima === "bloco") comecarBlocos();
+    else setEtapa(proxima);
+  };
+
+  // Com o perfil carregado e o olho mais fraco conhecido (ou dispensado),
+  // sai do ponto de partida: sessão rápida, ou o primeiro passo que falta.
+  useEffect(() => {
+    if (etapa !== "olho" || perfilLoading || (precisaOlho && !olho)) return;
+    if (rapidaDisponivel) setEtapa("rapida");
+    else primeiroPasso();
+    // `primeiroPasso` muda a cada render; só interessa quando o ponto de partida fica resolvido.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [etapa, olho, perfilLoading, precisaOlho, rapidaDisponivel]);
 
   const bloqueio = isLoggedIn && historico !== null && requisito ? requisito(ctx) : null;
-  const aCarregar = precisaOlho && perfilLoading;
+  // Sem olho por escolher, a etapa "olho" é só a espera pelo perfil.
+  const aCarregar = perfilLoading || (etapa === "olho" && (!precisaOlho || !!olho));
+  const aPreparar = etapa === "aviso" || etapa === "calibracao" || etapa === "oculos" || etapa === "tapar";
 
   let conteudo: ReactNode;
   if (aCarregar) conteudo = <div className="h-40" aria-busy />;
@@ -515,18 +538,16 @@ const AssistenteTreino = ({
                 }
                 // Sessão rápida: a afinação guardada neste aparelho, sem voltar a verificar.
                 if (oculos3D) setAfinacao(lerAfinacao());
-                setUsaCorreccao(escolhas.usaCorreccao);
+                setRespostaOculos(escolhas.usaCorreccao);
                 setModoRapido(true);
                 comecarBlocos();
               }}
-              aoAlterar={() => setEtapa("brilho")}
+              aoAlterar={() => {
+                setAAlterar(true);
+                // O estado ainda não assentou: a ordem com o cartão e os óculos, à mão.
+                primeiroPasso(completa.filter(([e, , entra]) => entra || e === "calibracao" || e === "oculos").map(([e]) => e));
+              }}
             />
-            {historico && <ContadorDiario historico={historico} />}
-          </div>
-        )}
-        {etapa === "brilho" && (
-          <div className="flex flex-col gap-4">
-            <PassoBrilho aoContinuar={() => seguinte("brilho")} />
             {historico && <ContadorDiario historico={historico} />}
           </div>
         )}
@@ -536,13 +557,25 @@ const AssistenteTreino = ({
           </EcraPasso>
         )}
         {etapa === "calibracao" && (
-          <PassoCalibracao calibracao={calibracao} aoGuardar={guardar} aoContinuar={() => seguinte("calibracao")} />
+          <PassoCalibracao
+            calibracao={calibracao}
+            forcar={aAlterar}
+            aoGuardar={guardar}
+            aoContinuar={() => seguinte("calibracao")}
+          />
         )}
         {etapa === "oculos" && (
           <PassoOculos
             exercicioDePerto={!comDistancia}
             aoResponder={(c) => {
-              setUsaCorreccao(c);
+              setRespostaOculos(c);
+              // Fica no perfil para não se voltar a perguntar. Se a gravação
+              // falhar, a sessão segue e pergunta-se outra vez da próxima.
+              if (isLoggedIn && c !== oculosPerfil)
+                perfilApi
+                  .atualizar({ usa_oculos: c })
+                  .then((p) => profile && setProfile({ ...profile, usa_oculos: p.usa_oculos ?? null }))
+                  .catch(() => undefined);
               seguinte("oculos");
             }}
           />
@@ -580,6 +613,18 @@ const AssistenteTreino = ({
               setDistanciaMedida(medida);
               seguinte("distancia");
             }}
+          />
+        )}
+        {aPreparar && (
+          <NotaPreparacao
+            aoCalibrarDeNovo={
+              calibracao && etapa !== "calibracao"
+                ? () => {
+                    setAAlterar(true);
+                    setEtapa("calibracao");
+                  }
+                : undefined
+            }
           />
         )}
 
