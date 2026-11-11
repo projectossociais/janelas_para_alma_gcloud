@@ -65,6 +65,13 @@ export interface ApiTarefa {
   registar: (r: { controlo: boolean; acertou: boolean }) => void;
   /** Só uma actividade em curso (não em pausa entre blocos). */
   activo: boolean;
+  /**
+   * A pessoa está a olhar para um estímulo que se mexe sozinho (ex.: os cartões
+   * da gaiola a afastar): conta tempo activo sem contar como tentativa.
+   */
+  presente?: () => void;
+  /** "Terminar agora", para as tarefas que ocupam o ecrã inteiro e tapam o botão do assistente. */
+  terminar?: () => void;
 }
 
 export interface ResultadoTreino {
@@ -456,6 +463,8 @@ const AssistenteTreino = ({
       tempo.registar();
     },
     activo: etapa === "bloco",
+    presente: () => tempo.registar(),
+    terminar,
   };
 
   const usarOrdemRapida = etapa === "rapida" || modoRapido;

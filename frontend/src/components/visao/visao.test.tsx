@@ -171,9 +171,16 @@ describe("Teste de Acuidade (sem câmara)", () => {
     };
     const responderOlho = async (respostas: boolean[]) => {
       fireEvent.click(await screen.findByRole("button", { name: V.palancaComecar }));
-      for (const certa of respostas) {
+      const seta = { direita: "ArrowRight", esquerda: "ArrowLeft", cima: "ArrowUp", baixo: "ArrowDown" } as const;
+      for (const [i, certa] of respostas.entries()) {
         const d = document.querySelector("svg[data-direccao]")!.getAttribute("data-direccao") as keyof typeof vector;
-        act(() => deslizar(certa ? d : oposto[d]));
+        // A primeira resposta de cada olho vai pelas setas do teclado (num computador); as outras, pelo deslize.
+        if (i === 0) {
+          fireEvent.keyDown(window, { key: seta[certa ? d : oposto[d]] });
+          // O adulto vê que a resposta contou, e que o teste pára sozinho.
+          expect(screen.getByText(/Respostas: 1/)).toBeInTheDocument();
+          expect(screen.getByText(V.palancaParaSozinho)).toBeInTheDocument();
+        } else act(() => deslizar(certa ? d : oposto[d]));
       }
     };
 

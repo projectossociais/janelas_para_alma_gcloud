@@ -5,6 +5,7 @@ import { BotaoContinuar, EcraPasso } from "@/components/visao/EcraPasso";
 import PaginaExercicio from "@/components/visao/PaginaExercicio";
 import { PassoCalibracao } from "@/components/visao/Passos";
 import { CartaoOlho, EcraResultado } from "@/components/visao/Resultados";
+import { desenharFio, eComputador } from "@/components/visao/desenhoFio";
 import { useCalibracao, useRegistoSessao } from "@/components/visao/hooks";
 import { formatarDecimal } from "@/i18n/formatar";
 import { PX_POR_MM_NOMINAL } from "@/lib/visao/calibracao";
@@ -38,7 +39,7 @@ const TOQUE_DUPLO_MS = 500;
 const cmTexto = (cm: number) => `${formatarDecimal(cm, cm % 1 ? 1 : 0)} cm`;
 
 /** De lado: a cabeça, o telemóvel deitado com a ponta encostada ao nariz e o olhar na missanga. */
-const DesenhoComoSegurar = () => {
+export const DesenhoComoSegurar = () => {
   const { t } = useTranslation();
   return (
     <svg viewBox="0 0 300 150" role="img" aria-label={t("Visao.fioRotuloDesenho")} className="h-auto w-full">
@@ -167,48 +168,7 @@ const EcraMissanga = ({ pxPorMm, aoAcabar }: { pxPorMm: number; aoAcabar: (ronda
     const cv = ref.current;
     const g = cv?.getContext("2d");
     if (!cv || !g) return;
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    cv.width = Math.round(tam.w * dpr);
-    cv.height = Math.round(tam.h * dpr);
-    g.setTransform(dpr, 0, 0, dpr, 0, 0);
-    g.fillStyle = "#ffffff";
-    g.fillRect(0, 0, tam.w, tam.h);
-    const x = tam.w / 2;
-    const narizY = yDoCm(NARIZ_MM / 10, tam.h, pxPorMm);
-    // Marcas discretas de centímetro, à direita e sem números (não influenciam a resposta).
-    g.strokeStyle = "#dfe7e5";
-    g.lineWidth = 1;
-    for (let c = 1; yDoCm(c, tam.h, pxPorMm) > 0; c++) {
-      const y = yDoCm(c, tam.h, pxPorMm);
-      g.beginPath();
-      g.moveTo(tam.w, y);
-      g.lineTo(tam.w - (c % 5 === 0 ? 22 : 12), y);
-      g.stroke();
-    }
-    g.strokeStyle = "#8a6d4b";
-    g.lineWidth = 2.5;
-    g.beginPath();
-    g.moveTo(x, narizY);
-    g.lineTo(x, yDoCm(inicioCm, tam.h, pxPorMm));
-    g.stroke();
-    if (roturaActual !== null) {
-      g.fillStyle = "rgba(178,59,46,0.85)";
-      g.fillRect(x - 18, yDoCm(roturaActual, tam.h, pxPorMm) - 1.5, 36, 3);
-    }
-    const y = yDoCm(cm, tam.h, pxPorMm);
-    g.fillStyle = MISSANGAS[ronda % MISSANGAS.length].hex;
-    g.beginPath();
-    g.arc(x, y, 13, 0, Math.PI * 2);
-    g.fill();
-    g.fillStyle = "rgba(255,255,255,0.75)";
-    g.beginPath();
-    g.arc(x - 4, y - 4, 3.5, 0, Math.PI * 2);
-    g.fill();
-    // Um pormenor pequeno para os olhos focarem.
-    g.fillStyle = "#111111";
-    g.beginPath();
-    g.arc(x + 3, y + 3, 1.6, 0, Math.PI * 2);
-    g.fill();
+    desenharFio(cv, g, { w: tam.w, h: tam.h, pxPorMm, inicioCm, cm, cor: MISSANGAS[ronda % MISSANGAS.length].hex, marcaCm: roturaActual });
   }, [cm, inicioCm, pxPorMm, ronda, roturaActual, tam]);
 
   const narizPx = NARIZ_MM * pxPorMm;
@@ -257,7 +217,17 @@ const FioMissangas = () => {
   const passoActual = { preparar: 0, calibracao: 1, medir: 2, resultado: 3 }[etapa];
 
   let conteudo;
-  if (etapa === "preparar") {
+  if (etapa === "preparar" && eComputador())
+    conteudo = (
+      <EcraPasso titulo={t("Visao.fioSoTelemovelTitulo")}>
+        <div className="w-full space-y-3 text-left text-sm">
+          <DesenhoComoSegurar />
+          <p className="text-base text-foreground">{t("Visao.fioSoTelemovelTexto")}</p>
+          <p className="text-muted-foreground">{t("Visao.fioParaQueServe")}</p>
+        </div>
+      </EcraPasso>
+    );
+  else if (etapa === "preparar") {
     const lista = [1, 2, 3].map((n) => t(`Visao.fioPreparar${n}`));
     conteudo = (
       <EcraPasso
@@ -265,12 +235,18 @@ const FioMissangas = () => {
         accao={<BotaoContinuar aoClicar={() => setEtapa(calibracao?.calibrado ? "medir" : "calibracao")}>{t("Visao.fioComecar")}</BotaoContinuar>}
       >
         <div className="w-full space-y-3 text-left text-sm">
+          <p className="text-muted-foreground">{t("Visao.fioParaQueServe")}</p>
           <DesenhoComoSegurar />
           <ol className="list-decimal space-y-1 pl-5 text-base text-foreground">
             {lista.map((p) => (
               <li key={p}>{p}</li>
             ))}
           </ol>
+          <ul className="list-disc space-y-1 rounded-lg bg-muted/40 py-2 pl-7 pr-3 text-muted-foreground">
+            {[1, 2, 3].map((n) => (
+              <li key={n}>{t(`Visao.fioSeguranca${n}`)}</li>
+            ))}
+          </ul>
         </div>
       </EcraPasso>
     );
@@ -359,7 +335,10 @@ const ResultadoFio = ({
     ]);
   }, [calibrado, gravar, inicioCm, pxPorMm, r, rondas, segundos]);
 
-  const sinais = [...(r.classe === "alto" ? [t("Visao.fioSinalPpc")] : []), ...(r.cansaco ? [t("Visao.fioCansaco")] : [])];
+  // Sem o cartão, os centímetros são aproximados: mostra-se o que se mediu,
+  // mas nunca como "sinal a investigar" (nem como "dentro do esperado").
+  const sinais = calibrado ? [...(r.classe === "alto" ? [t("Visao.fioSinalPpc")] : []), ...(r.cansaco ? [t("Visao.fioCansaco")] : [])] : [];
+  const estadoPpc = !calibrado ? "indeterminado" : r.classe === "alto" ? "sinal" : r.classe === "limite" ? "indeterminado" : "ok";
   const ppcTexto = r.chegouAoNariz ? t("Visao.fioChegouNariz") : r.ppcCm === null ? t("Visao.fioPpcAlem", { cm: inicioCm }) : cmTexto(r.ppcCm);
 
   return (
@@ -369,11 +348,11 @@ const ResultadoFio = ({
       aoTentarDeNovo={() => void tentarDeNovo()}
       sinais={sinais}
       cartoes={[
-        <CartaoOlho key="ppc" titulo={t("Visao.fioPpcTitulo")} estado={r.classe === "alto" ? "sinal" : r.classe === "limite" ? "indeterminado" : "ok"}>
+        <CartaoOlho key="ppc" titulo={t("Visao.fioPpcTitulo")} estado={estadoPpc}>
           <p className="text-2xl font-bold text-foreground">{ppcTexto}</p>
-          <p>{r.chegouAoNariz ? t("Visao.fioChegouNarizTexto") : t(`Visao.fioPpcClasse_${r.classe}`)}</p>
+          <p>{!calibrado ? t("Visao.fioSemCartao") : r.chegouAoNariz ? t("Visao.fioChegouNarizTexto") : t(`Visao.fioPpcClasse_${r.classe}`)}</p>
         </CartaoOlho>,
-        <CartaoOlho key="rec" titulo={t("Visao.fioRecuperacaoTitulo")} estado={r.cansaco ? "sinal" : "ok"}>
+        <CartaoOlho key="rec" titulo={t("Visao.fioRecuperacaoTitulo")} estado={!calibrado ? "indeterminado" : r.cansaco ? "sinal" : "ok"}>
           <p className="text-2xl font-bold text-foreground">{r.recuperacaoCm === null ? t("Visao.fioRecuperacaoAlem") : cmTexto(r.recuperacaoCm)}</p>
           <p>{t("Visao.fioRondas", { lista: rondas.map((x) => (x.alem ? `> ${inicioCm} cm` : cmTexto(x.rotura))).join(" · ") })}</p>
           <p>{r.cansaco ? t("Visao.fioCansaco") : t("Visao.fioSemCansaco")}</p>

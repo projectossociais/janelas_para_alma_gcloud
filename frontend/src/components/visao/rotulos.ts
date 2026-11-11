@@ -50,8 +50,11 @@ export const nomeDaSessao = (s: { exercicio_id: string; sinais?: Record<string, 
     case "flexibilidade-acomodativa":
       return sinais.modo === "tapa_olho_horas" ? actual : i18n.t("Visao.nomeAntigoPertoLonge");
     case "convergence":
-      // O Olho Mágico também guarda `pontes` (as rampas); só as sessões sem `modo` são das Pontes de Fusão.
-      return sinais.modo !== "fusao_livre" && sinais.pontes ? i18n.t("Visao.pontesTitulo") : actual;
+      // Vaivém da Missanga desde 2026-11-11. Antes, o Olho Mágico (quadros de pano e pássaro na
+      // gaiola); as sessões com `pontes` e sem esses modos são das Pontes de Fusão (óculos 3D).
+      if (sinais.modo === "fio_treino") return actual;
+      if (sinais.modo === "fusao_livre" || sinais.modo === "fusao_gaiola") return i18n.t("Visao.nomeAntigoOlhoMagico");
+      return sinais.pontes ? i18n.t("Visao.pontesTitulo") : i18n.t("Visao.nomeAntigoConvergencia");
     default:
       return actual;
   }
@@ -129,6 +132,11 @@ export const limiarFormatado = (
       : limiar
         ? i18n.t("Visao.luzLimiarCurto", { delta: limiar })
         : i18n.t("Visao.luzSemDesvioCurto");
+  // Vaivém da Missanga (id `convergence`, desde 2026-11-11): onde a missanga ficou a dobrar, em treino.
+  if (sinais?.modo === "fio_treino")
+    return limiar === null
+      ? i18n.t("Visao.fioTreinoSemRepsCurto")
+      : i18n.t("Visao.fioTreinoLimiarCurto", { cm: formatarDecimal(limiar, limiar % 1 ? 1 : 0), n: sinais.repeticoes ?? "–" });
   // Olho Mágico, cartão do pássaro e da gaiola (id `convergence`, desde 2026-11-01): rotura declarada.
   if (sinais?.modo === "fusao_gaiola")
     return eResumoSentido(sinais.gaiola) && sinais.gaiola.rampas > 0

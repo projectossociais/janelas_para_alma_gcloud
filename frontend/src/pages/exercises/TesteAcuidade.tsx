@@ -198,6 +198,8 @@ const EcraPalanca = ({
   const [escada, setEscada] = useState(() => iniciarEscadaTeste(niveis.length, indiceMaisProximo(niveis, LOGMAR_INICIAL_LONGE)));
   const [direccao, setDireccao] = useState<DireccaoE>(() => direccaoAleatoriaE(null));
   const terminou = useRef(false);
+  /** A última resposta recebida, para o adulto saber que contou (não diz se estava certa). */
+  const [ultima, setUltima] = useState<RespostaE | null>(null);
 
   useEffect(() => {
     tempo.iniciar();
@@ -209,6 +211,7 @@ const EcraPalanca = ({
     if (terminou.current) return;
     sinalSonoro("tic");
     tempo.registar();
+    setUltima(r);
     const seguinte = responderTeste(escada, r === direccao);
     if (seguinte.terminado) {
       terminou.current = true;
@@ -232,6 +235,21 @@ const EcraPalanca = ({
   const voz = useRespostaPorVoz(comVoz, i18n.language, responder);
   const logmar = niveis[escada.indice];
 
+  // Num computador (o monitor virado para a criança): as setas respondem, o espaço é "não sei".
+  const responderRef = useRef(responder);
+  responderRef.current = responder;
+  useEffect(() => {
+    const TECLAS: Record<string, RespostaE> = { ArrowUp: "cima", ArrowDown: "baixo", ArrowLeft: "esquerda", ArrowRight: "direita", " ": "naosabe" };
+    const aoTecla = (e: KeyboardEvent) => {
+      const r = TECLAS[e.key];
+      if (!r || e.repeat) return;
+      e.preventDefault();
+      responderRef.current(r);
+    };
+    window.addEventListener("keydown", aoTecla);
+    return () => window.removeEventListener("keydown", aoTecla);
+  }, []);
+
   return (
     <div
       {...gestos}
@@ -253,14 +271,22 @@ const EcraPalanca = ({
         <Square className="h-3.5 w-3.5" aria-hidden />
         {t("Visao.palancaParar")}
       </button>
-      <p className="absolute inset-x-0 bottom-16 flex items-center justify-center gap-2 px-4 text-xs" style={{ color: "#999999" }}>
-        {voz.aOuvir && <Mic className="h-3.5 w-3.5" aria-label={t("Visao.palancaAOuvir")} />}
-        {t("Visao.palancaRodape", {
-          olho: t(olho === "direito" ? "Visao.olhoDireito" : "Visao.olhoEsquerdo"),
-          fraccao: fraccao6(logmar, separadorDecimal()),
-          metros: distancia / 1000,
-        })}
-      </p>
+      <div className="absolute inset-x-0 bottom-16 space-y-1 px-4 text-center text-xs" style={{ color: "#999999" }} aria-live="polite">
+        <p className="flex items-center justify-center gap-2">
+          {voz.aOuvir && <Mic className="h-3.5 w-3.5" aria-label={t("Visao.palancaAOuvir")} />}
+          {t("Visao.palancaRodape", {
+            olho: t(olho === "direito" ? "Visao.olhoDireito" : "Visao.olhoEsquerdo"),
+            fraccao: fraccao6(logmar, separadorDecimal()),
+            metros: distancia / 1000,
+          })}
+        </p>
+        <p>
+          {t("Visao.palancaRespostas", { n: escada.respostas })}
+          {ultima && ` · ${t("Visao.palancaUltima", { resposta: t(ultima === "naosabe" ? "Visao.palancaNaoSei" : `Visao.direccaoE_${ultima}`) })}`}
+        </p>
+        <p>{t("Visao.palancaParaSozinho")}</p>
+        {comVoz && voz.erro && <p style={{ color: "#b23b2e" }}>{t("Visao.palancaVozErro")}</p>}
+      </div>
     </div>
   );
 };
@@ -309,6 +335,7 @@ const TarefaPalancaLonge = ({
       }
     >
       <p className="text-sm text-muted-foreground">{t("Visao.palancaOlhoTexto", { metros: distancia / 1000 })}</p>
+      <p className="text-sm text-muted-foreground">{t("Visao.palancaComoAcaba")}</p>
     </EcraPasso>
   );
 };

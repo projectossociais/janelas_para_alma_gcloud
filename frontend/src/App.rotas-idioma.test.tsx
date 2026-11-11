@@ -54,7 +54,11 @@ describe("com VITE_ENABLE_EN desligada (omissão)", () => {
     expect(screen.queryByRole("note")).not.toBeInTheDocument();
     // Desde o redesenho da navegação (2026-10-26) o jogo vive no menu "Serviços".
     fireEvent.click(screen.getByRole("button", { name: "Serviços" }));
-    expect(screen.getByRole("link", { name: /^Inclusivamente/ })).toHaveAttribute("href", "/jogo-curiosidades");
+    // Só no cabeçalho: o rodapé também tem um link para o jogo (2026-11-10).
+    expect(within(screen.getByRole("banner")).getByRole("link", { name: /^Inclusivamente/ })).toHaveAttribute(
+      "href",
+      "/jogo-curiosidades",
+    );
   });
 
   it("o site é português e o botão EN não aparece", async () => {
@@ -162,7 +166,10 @@ describe("com VITE_ENABLE_EN=true", () => {
     abrir("/en");
     await waitFor(() => expect(document.documentElement.lang).toBe("en-US"));
     fireEvent.click(await screen.findByRole("button", { name: "Services" }));
-    expect(screen.getByRole("link", { name: /^Inclusivamente/ })).toHaveAttribute("href", "/en/trivia-game");
+    expect(within(screen.getByRole("banner")).getByRole("link", { name: /^Inclusivamente/ })).toHaveAttribute(
+      "href",
+      "/en/trivia-game",
+    );
   });
 
   it("as páginas legais em inglês avisam que prevalece a versão portuguesa", async () => {
@@ -203,7 +210,7 @@ describe("exercícios retirados (2026-09-28) redireccionam para a lista de exerc
 
   it("as páginas que continuam (convergência e estereopsia) não redireccionam", async () => {
     abrir("/exercicios/convergencia");
-    expect(await screen.findByRole("heading", { name: "Olho Mágico" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Vaivém da Missanga" })).toBeInTheDocument();
     expect(window.location.pathname).toBe("/exercicios/convergencia");
   });
 });

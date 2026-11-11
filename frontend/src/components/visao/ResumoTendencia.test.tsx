@@ -90,7 +90,8 @@ describe("Relatório semanal: auto-avaliação separada das medições", () => {
     );
     const marcas = screen.getAllByText(/\(auto-avaliação\)/);
     expect(marcas).toHaveLength(1);
-    expect(marcas[0].closest("tr")).toHaveTextContent("Olho Mágico");
+    // A sessão antiga leva o nome do treino que a gravou, não o do exercício que hoje tem esse id.
+    expect(marcas[0].closest("tr")).toHaveTextContent("Treino de Convergência");
     expect(marcas[0].closest("tr")).toHaveTextContent("42");
     expect(screen.getByText("Convergência: rotura 18 Δ, recuperação 12 Δ")).toBeInTheDocument();
     expect(screen.getByText(/Os resultados marcados como auto-avaliação/)).toBeInTheDocument();

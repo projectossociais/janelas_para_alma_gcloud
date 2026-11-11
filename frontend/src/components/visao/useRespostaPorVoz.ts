@@ -42,13 +42,19 @@ export function useRespostaPorVoz(activo: boolean, idioma: string, aoOuvir: (r: 
     const r = new C();
     r.lang = idioma.startsWith("pt") ? "pt-PT" : "en-US";
     r.continuous = true;
-    r.interimResults = false;
+    // Resultados provisórios: a resposta conta assim que a palavra se percebe.
+    // À espera do resultado final, o navegador só respondia depois de um ou
+    // dois segundos de silêncio (queixa do dono do projecto, 2026-11-11).
+    r.interimResults = true;
+    /** Frases que já deram uma resposta: o resto da mesma frase não conta outra vez. */
+    const respondidas = new Set<number>();
     r.onresult = (e) => {
       for (let i = e.resultIndex; i < e.results.length; i++) {
-        const res = e.results[i];
-        if (!res.isFinal) continue;
-        const resposta = direccaoDaFala(res[0]?.transcript ?? "");
-        if (resposta) aoOuvirRef.current(resposta);
+        if (respondidas.has(i)) continue;
+        const resposta = direccaoDaFala(e.results[i][0]?.transcript ?? "");
+        if (!resposta) continue;
+        respondidas.add(i);
+        aoOuvirRef.current(resposta);
       }
     };
     r.onerror = (e) => {
@@ -60,6 +66,8 @@ export function useRespostaPorVoz(activo: boolean, idioma: string, aoOuvir: (r: 
     };
     // O reconhecimento pára sozinho depois de algum silêncio: recomeça enquanto estiver ligado.
     r.onend = () => {
+      // Uma sessão nova recomeça a numerar as frases.
+      respondidas.clear();
       if (parado) return;
       try {
         r.start();

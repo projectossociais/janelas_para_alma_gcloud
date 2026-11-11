@@ -92,8 +92,9 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   saiu), `cerebro` **Fio de Missangas** (desde 2026-10-21; antes, Teste de Contraste),
   `relax` **Luz nos Olhos** (desde 2026-10-21; antes, Teste de Astigmatismo); só Premium =
   `estereopsia` **Desafio da Agulha** (desde 2026-10-21; com óculos 3D, o Teste de
-  Estereopsia), `convergence` **Olho Mágico** (desde 2026-10-21: sem óculos, fusão
-  livre; com óculos 3D, as Pontes de Fusão de 2026-10-20; antes, Treino de Convergência
+  Estereopsia), `convergence` **Vaivém da Missanga** (desde 2026-11-11: sem óculos, o
+  Fio de Missangas em treino diário; com óculos 3D, as Pontes de Fusão de 2026-10-20. De
+  2026-10-21 a 2026-11-11 foi o Olho Mágico, fusão livre; antes, Treino de Convergência
   auto-declarado, "Vejo 1 / Vejo 2", em segundos), `sacadas-convergencia` **Pintar o
   Samakaka** (desde 2026-10-21; antes, Treino de Contraste em blocos),
   `flexibilidade-acomodativa` **Caderneta do Tapa-olho** (desde 2026-10-21; antes, Treino
@@ -657,6 +658,31 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   óculos 3D deixou de medir a distância: assume 40 cm. O passo do tapa-olho dos treinos
   aceita a mão ou um pano (antes dizia "a mão não basta", contra o aviso da pesca). Não
   reintroduzir ecrãs de preparação que só servem para carregar em Continuar.
+- **Depois do primeiro teste do dono do projecto em produção (2026-11-11):** (1) Palanca: o
+  ecrã da mãozinha mostra quantas respostas já contou, a última recebida e que pára
+  sozinho; num computador responde-se com as setas (espaço = "não sei"); a voz responde ao
+  resultado **provisório** do reconhecimento (antes esperava pelo final e atrasava 1 a 2 s).
+  (2) Fio de Missangas: só em aparelhos de toque (num portátil deu 16,8 cm e "sinal a
+  investigar"); o primeiro ecrã diz para que serve, que é no nariz e nunca no olho, e os
+  cuidados; **sem o ecrã calibrado nunca mostra "sinal"**, só os centímetros como
+  aproximados. (3) Pássaro e gaiola: os cartões passaram a afastar-se sozinhos (substituído no mesmo dia
+  pelo Vaivém da Missanga, ver abaixo). Um estímulo que se mexe sozinho conta tempo activo por
+  `ApiTarefa.presente`, sem contar como tentativa.
+- **Vaivém da Missanga (2026-11-11): o Fio de Missangas em treino diário, no lugar do Olho
+  Mágico** (decisão do dono do projecto: cruzar os olhos de propósito era difícil e o
+  exercício "só fazia perguntas"). `lib/visao/fioTreino.ts`, `components/visao/TreinoFio.tsx`,
+  `pages/exercises/VaivemMissanga.tsx`. A mesma montagem do teste (telemóvel deitado,
+  encostado ao nariz), mas a missanga anda em vaivém a 1,5 cm/s à volta do ponto em que os
+  olhos se separam: toque quando dobra, toque quando volta a ser uma, 2 cm de folga e
+  repete. `unidade = "cm"`, `limiar` = mediana de onde ficou a dobrar, `sinais.modo =
+  "fio_treino"` (`repeticoes`, `melhor_cm`, `chegou_ao_nariz`, `rotura_cm`). É declarado:
+  conta como auto-avaliação e **não entra no resumo clínico** -- a medida para o médico
+  continua a ser o teste do Fio (`cerebro`, a 1 cm/s). Só em aparelhos de toque; num
+  computador oferece as Pontes de Fusão. É treino de convergência: o aviso manda não o
+  fazer com desvio para dentro. O código do Olho Mágico (quadros de pano, pássaro e gaiola)
+  foi apagado; as sessões antigas (`fusao_livre`, `fusao_gaiola`) continuam a ler-se no
+  histórico e no relatório, com o nome "Olho Mágico". Uma tarefa em ecrã inteiro usa
+  `ApiTarefa.terminar` para ter o seu "Terminar agora".
 - **Régua Invisível (2026-10-20): unidades reais sem câmara.** Cartão de banco -> px/mm
   (`calibracao.ts`); ponto cego -> distância olhos-ecrã (`pontoCego.ts`, Li et al. 2020);
   afinação dos óculos vermelho-ciano -> fuga de cor de cada filtro (`anaglifo.ts`). Duas
@@ -677,7 +703,7 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   nova da API). Níveis com peixes mais pequenos e riscas mais finas e esbatidas. Peixe dourado
   = controlo de atenção. Substituiu o Treino de Anéis; o gráfico e a tendência só comparam
   sessões na unidade da mais recente.
-- **Olho Mágico (2026-10-21): vergência sem óculos, por fusão livre** (`lib/visao/olhoMagico.ts`).
+- **Olho Mágico (2026-10-21; saiu a 2026-11-11, substituído pelo Vaivém da Missanga; o código foi apagado): vergência sem óculos, por fusão livre.**
   Dois quadros de pano (pontos aleatórios coloridos); cruzar os olhos = convergência, relaxar
   = divergência; a forma escondida só se vê com os quadros fundidos. Usa a rampa e o resumo das
   Pontes e grava igual (`sinais.pontes`, `sinais.modo = "fusao_livre"`), por isso o relatório
