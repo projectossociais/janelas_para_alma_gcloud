@@ -447,36 +447,36 @@ export const TarefaOlhoMagico = ({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col items-center gap-1">
-        <div role="radiogroup" aria-label={t("Visao.olhoMagicoNivel")} className="flex flex-wrap justify-center gap-2">
-          {NIVEIS.map((n) => (
-            <Button
-              key={n}
-              role="radio"
-              aria-checked={nivel === n}
-              size="sm"
-              disabled={comecou && nivel !== n}
-              variant={nivel === n ? "default" : "outline"}
-              className={cn(nivel === n && "bg-navy text-navy-foreground hover:bg-navy/90")}
-              onClick={() => {
-                setNivel(n);
-                guardarNivelOlhoMagico(n);
-              }}
-            >
-              {t(`Visao.olhoMagicoNivel_${n}`)}
-            </Button>
-          ))}
+      {/* Só antes de começar: depois, o ecrã é do exercício (o nível fica fixo na sessão). */}
+      {!comecou && (
+        <div className="flex flex-col items-center gap-1">
+          <div role="radiogroup" aria-label={t("Visao.olhoMagicoNivel")} className="flex flex-wrap justify-center gap-2">
+            {NIVEIS.map((n) => (
+              <Button
+                key={n}
+                role="radio"
+                aria-checked={nivel === n}
+                size="sm"
+                                variant={nivel === n ? "default" : "outline"}
+                className={cn(nivel === n && "bg-navy text-navy-foreground hover:bg-navy/90")}
+                onClick={() => {
+                  setNivel(n);
+                  guardarNivelOlhoMagico(n);
+                }}
+              >
+                {t(`Visao.olhoMagicoNivel_${n}`)}
+              </Button>
+            ))}
+          </div>
+          <p className="max-w-md text-center text-xs text-muted-foreground">
+            {nivel === "pano" && !pronto
+                ? t("Visao.olhoMagicoNivelPanoCedo", { n: DIAS_PARA_PANO })
+                : nivel === "gaiola"
+                  ? t("Visao.olhoMagicoNivelGaiolaNota")
+                  : null}
+          </p>
         </div>
-        <p className="max-w-md text-center text-xs text-muted-foreground">
-          {comecou
-            ? t("Visao.olhoMagicoNivelFixo")
-            : nivel === "pano" && !pronto
-              ? t("Visao.olhoMagicoNivelPanoCedo", { n: DIAS_PARA_PANO })
-              : nivel === "gaiola"
-                ? t("Visao.olhoMagicoNivelGaiolaNota")
-                : null}
-        </p>
-      </div>
+      )}
       {nivel === "gaiola" ? (
         <TarefaGaiola api={apiComInicio} ctx={ctx} resultado={resultado} />
       ) : (

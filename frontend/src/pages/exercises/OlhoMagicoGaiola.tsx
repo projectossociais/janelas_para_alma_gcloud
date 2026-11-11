@@ -253,6 +253,10 @@ export const TarefaGaiola = ({
   const rotura = useRef<number | null>(null);
   const rampas = useRef<RampaEmDelta[]>([]);
   const [ultima, setUltima] = useState<RampaEmDelta | null>(null);
+  /** "Não estou a conseguir": abre as duas saídas (vejo dois / vejo quatro) e as dicas. */
+  const [aPedirAjuda, setAPedirAjuda] = useState(false);
+  /** O sol e a nuvem estiveram lá? Pergunta-se uma vez por sessão, depois da primeira ronda. */
+  const [solNuvem, setSolNuvem] = useState<boolean | null>(null);
 
   /** A marca a bater: o mais longe das sessões anteriores (as rondas de hoje comparam-se com ela). */
   const recorde = useMemo(() => recordeDaGaiola(ctx.historico), [ctx.historico]);
@@ -288,8 +292,16 @@ export const TarefaGaiola = ({
     if (!api.activo) return;
     api.registar({ controlo: false, acertou: juntou(r) });
     setRespostas((rs) => [...rs, r]);
+    setAPedirAjuda(false);
     if (r === "dentro") comecarRampa();
     else setEtapa("dica");
+  };
+
+  // Faltar o sol ou a nuvem quer dizer que um olho desligou por momentos (supressão): fica
+  // nas respostas da sessão, como quando se perguntava antes de começar.
+  const responderSolNuvem = (osDois: boolean) => {
+    setSolNuvem(osDois);
+    if (!osDois) setRespostas((rs) => [...rs, "falta"]);
   };
 
   const min = niveis[0] ?? 0;
@@ -417,29 +429,44 @@ export const TarefaGaiola = ({
       </div>
     );
   else if (etapa === "tentar")
+    // Um só botão para começar (até 2026-11-11 eram quatro respostas a escolher: "só faz
+    // perguntas"). Quem não consegue juntar os desenhos pede ajuda, e só aí diz o que vê.
     conteudo = (
       <div className="flex flex-col gap-3">
         {palco(min)}
-        <p className="text-foreground">
-          {t("Visao.gaiolaJunte")} <b>{t("Visao.gaiolaQueVe")}</b>
-        </p>
-        <div className="grid gap-2">
-          {RESPOSTAS_GAIOLA.map((r) => (
-            <Button
-              key={r}
-              variant="outline"
-              className="h-auto justify-start gap-3 whitespace-normal py-2 text-left"
-              disabled={naoCabe || !larguraCss}
-              onClick={() => responderTentativa(r)}
-            >
-              <MiniResposta r={r} />
-              <span className="font-semibold">{t(`Visao.gaiolaResposta_${r}`)}</span>
-            </Button>
-          ))}
-        </div>
-        <Button variant="ghost" onClick={() => setEtapa("como")}>
-          {t("Visao.gaiolaVerAnimacao")}
+        <p className="text-center text-foreground">{t("Visao.gaiolaJunte")}</p>
+        <Button
+          size="lg"
+          className="h-auto gap-3 whitespace-normal py-3 text-lg [&_svg]:size-auto"
+          disabled={naoCabe || !larguraCss}
+          onClick={() => responderTentativa("dentro")}
+        >
+          <MiniResposta r="dentro" />
+          {t("Visao.gaiolaJaVejo")}
         </Button>
+        {aPedirAjuda ? (
+          <div className="grid gap-2 rounded-xl border border-border p-3">
+            <p className="text-sm font-semibold text-foreground">{t("Visao.gaiolaQueVe")}</p>
+            {(["dois", "quatro"] as const).map((r) => (
+              <Button
+                key={r}
+                variant="outline"
+                className="h-auto justify-start gap-3 whitespace-normal py-2 text-left [&_svg]:size-auto"
+                onClick={() => responderTentativa(r)}
+              >
+                <MiniResposta r={r} />
+                <span className="font-semibold">{t(`Visao.gaiolaResposta_${r}`)}</span>
+              </Button>
+            ))}
+            <Button variant="ghost" onClick={() => setEtapa("como")}>
+              {t("Visao.gaiolaVerAnimacao")}
+            </Button>
+          </div>
+        ) : (
+          <Button variant="ghost" onClick={() => setAPedirAjuda(true)}>
+            {t("Visao.gaiolaNaoConsigo")}
+          </Button>
+        )}
       </div>
     );
   else if (etapa === "dica") {
@@ -453,12 +480,7 @@ export const TarefaGaiola = ({
         <div className="mx-auto w-full max-w-sm">
           <DemoDedoGuia />
         </div>
-        {r === "falta" && (
-          <Button size="lg" onClick={comecarRampa}>
-            {t("Visao.gaiolaContinuarAssim")}
-          </Button>
-        )}
-        <Button size="lg" variant={r === "falta" ? "outline" : "default"} onClick={() => setEtapa("tentar")}>
+        <Button size="lg" onClick={() => setEtapa("tentar")}>
           {t("Visao.tentarDeNovo")}
         </Button>
       </div>
@@ -470,7 +492,9 @@ export const TarefaGaiola = ({
     const marca = recorde !== null && recorde > min && recorde <= max ? emPct(recorde) : null;
     conteudo = (
       <div className="flex flex-col gap-3">
-        <p className="text-lg font-bold text-foreground">{afastar ? t("Visao.gaiolaAfastarTitulo") : t("Visao.gaiolaAproximarTitulo")}</p>
+        <p className="text-lg font-bold text-foreground">
+          {Date.now() < mov.t0 ? t("Visao.gaiolaPrepare") : afastar ? t("Visao.gaiolaAfastarTitulo") : t("Visao.gaiolaAproximarTitulo")}
+        </p>
         <p className="text-sm text-foreground">{afastar ? t("Visao.gaiolaAfastarTexto") : t("Visao.gaiolaAproximarTexto")}</p>
         {palco(delta, true)}
         {/* Até onde já foi: a barra enche enquanto os cartões se afastam. */}
@@ -503,7 +527,22 @@ export const TarefaGaiola = ({
             <p className="text-lg font-bold text-foreground">
               {r.rotura === null ? t("Visao.gaiolaAteAoFim") : t("Visao.gaiolaSaiuA", { delta: rotuloDelta(r.rotura) })}
             </p>
-            <p className="text-sm text-foreground">{supressao ? t("Visao.gaiolaComSupressao") : t("Visao.gaiolaSemSupressao")}</p>
+            {solNuvem === null ? (
+              // Uma vez por sessão: é o que diz se um olho desligou por momentos.
+              <div className="space-y-2 pt-1">
+                <p className="text-sm font-semibold text-foreground">{t("Visao.gaiolaSolNuvemPergunta")}</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button variant="outline" className="h-auto whitespace-normal bg-background" onClick={() => responderSolNuvem(true)}>
+                    {t("Visao.gaiolaSolNuvemSim")}
+                  </Button>
+                  <Button variant="outline" className="h-auto whitespace-normal bg-background" onClick={() => responderSolNuvem(false)}>
+                    {t("Visao.gaiolaSolNuvemNao")}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-foreground">{supressao ? t("Visao.gaiolaComSupressao") : t("Visao.gaiolaSemSupressao")}</p>
+            )}
           </div>
         )}
         {r && (
