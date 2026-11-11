@@ -5,7 +5,6 @@ import { BotaoContinuar, EcraPasso } from "@/components/visao/EcraPasso";
 import PaginaExercicio from "@/components/visao/PaginaExercicio";
 import { PassoCalibracao } from "@/components/visao/Passos";
 import { CartaoOlho, EcraResultado } from "@/components/visao/Resultados";
-import { desenharFio, eComputador } from "@/components/visao/desenhoFio";
 import { useCalibracao, useRegistoSessao } from "@/components/visao/hooks";
 import { formatarDecimal } from "@/i18n/formatar";
 import { PX_POR_MM_NOMINAL } from "@/lib/visao/calibracao";
@@ -36,10 +35,23 @@ const PASSO_MS = 33;
 /** Logo a seguir a "ficou a dobrar", um segundo toque é o mesmo toque repetido, não "voltou a ser uma". */
 const TOQUE_DUPLO_MS = 500;
 
+/**
+ * Um computador (rato, sem ecrã de toque): não se encosta ao nariz, e a
+ * medida saía sem sentido (caso real, 2026-11-11: 16,8 cm e "sinal a
+ * investigar" num portátil). Sem `matchMedia`, deixa fazer.
+ */
+const eComputador = (): boolean => {
+  try {
+    return window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  } catch {
+    return false;
+  }
+};
+
 const cmTexto = (cm: number) => `${formatarDecimal(cm, cm % 1 ? 1 : 0)} cm`;
 
 /** De lado: a cabeça, o telemóvel deitado com a ponta encostada ao nariz e o olhar na missanga. */
-export const DesenhoComoSegurar = () => {
+const DesenhoComoSegurar = () => {
   const { t } = useTranslation();
   return (
     <svg viewBox="0 0 300 150" role="img" aria-label={t("Visao.fioRotuloDesenho")} className="h-auto w-full">
@@ -168,7 +180,48 @@ const EcraMissanga = ({ pxPorMm, aoAcabar }: { pxPorMm: number; aoAcabar: (ronda
     const cv = ref.current;
     const g = cv?.getContext("2d");
     if (!cv || !g) return;
-    desenharFio(cv, g, { w: tam.w, h: tam.h, pxPorMm, inicioCm, cm, cor: MISSANGAS[ronda % MISSANGAS.length].hex, marcaCm: roturaActual });
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    cv.width = Math.round(tam.w * dpr);
+    cv.height = Math.round(tam.h * dpr);
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.fillStyle = "#ffffff";
+    g.fillRect(0, 0, tam.w, tam.h);
+    const x = tam.w / 2;
+    const narizY = yDoCm(NARIZ_MM / 10, tam.h, pxPorMm);
+    // Marcas discretas de centímetro, à direita e sem números (não influenciam a resposta).
+    g.strokeStyle = "#dfe7e5";
+    g.lineWidth = 1;
+    for (let c = 1; yDoCm(c, tam.h, pxPorMm) > 0; c++) {
+      const y = yDoCm(c, tam.h, pxPorMm);
+      g.beginPath();
+      g.moveTo(tam.w, y);
+      g.lineTo(tam.w - (c % 5 === 0 ? 22 : 12), y);
+      g.stroke();
+    }
+    g.strokeStyle = "#8a6d4b";
+    g.lineWidth = 2.5;
+    g.beginPath();
+    g.moveTo(x, narizY);
+    g.lineTo(x, yDoCm(inicioCm, tam.h, pxPorMm));
+    g.stroke();
+    if (roturaActual !== null) {
+      g.fillStyle = "rgba(178,59,46,0.85)";
+      g.fillRect(x - 18, yDoCm(roturaActual, tam.h, pxPorMm) - 1.5, 36, 3);
+    }
+    const y = yDoCm(cm, tam.h, pxPorMm);
+    g.fillStyle = MISSANGAS[ronda % MISSANGAS.length].hex;
+    g.beginPath();
+    g.arc(x, y, 13, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = "rgba(255,255,255,0.75)";
+    g.beginPath();
+    g.arc(x - 4, y - 4, 3.5, 0, Math.PI * 2);
+    g.fill();
+    // Um pormenor pequeno para os olhos focarem.
+    g.fillStyle = "#111111";
+    g.beginPath();
+    g.arc(x + 3, y + 3, 1.6, 0, Math.PI * 2);
+    g.fill();
   }, [cm, inicioCm, pxPorMm, ronda, roturaActual, tam]);
 
   const narizPx = NARIZ_MM * pxPorMm;

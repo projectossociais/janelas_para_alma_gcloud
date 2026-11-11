@@ -57,7 +57,7 @@ import TesteLuzOlhos from "./pages/exercises/TesteLuzOlhos";
 import DesafioAgulha from "./pages/exercises/DesafioAgulha";
 import Kianda from "./pages/exercises/Kianda";
 import TreinoSamakaka from "./pages/exercises/TreinoSamakaka";
-import VaivemMissanga from "./pages/exercises/VaivemMissanga";
+import OlhoMagico from "./pages/exercises/OlhoMagico";
 import CadernetaTapaOlho from "./pages/exercises/CadernetaTapaOlho";
 import ProgressoVisao from "./pages/exercises/ProgressoVisao";
 import RelatorioSemanal from "./pages/exercises/RelatorioSemanal";
@@ -111,7 +111,7 @@ const PAGINAS: Record<ChaveRota, ReactElement> = {
   exercicioEstereopsia: <DesafioAgulha />,
   exercicioAneis: <Kianda />,
   exercicioContrasteBlocos: <TreinoSamakaka />,
-  exercicioConvergencia: <VaivemMissanga />,
+  exercicioConvergencia: <OlhoMagico />,
   exercicioPertoLonge: <CadernetaTapaOlho />,
   exerciciosProgresso: <ProgressoVisao />,
   exerciciosRelatorio: <RelatorioSemanal />,

@@ -50,11 +50,11 @@ export const nomeDaSessao = (s: { exercicio_id: string; sinais?: Record<string, 
     case "flexibilidade-acomodativa":
       return sinais.modo === "tapa_olho_horas" ? actual : i18n.t("Visao.nomeAntigoPertoLonge");
     case "convergence":
-      // Vaivém da Missanga desde 2026-11-11. Antes, o Olho Mágico (quadros de pano e pássaro na
-      // gaiola); as sessões com `pontes` e sem esses modos são das Pontes de Fusão (óculos 3D).
-      if (sinais.modo === "fio_treino") return actual;
-      if (sinais.modo === "fusao_livre" || sinais.modo === "fusao_gaiola") return i18n.t("Visao.nomeAntigoOlhoMagico");
-      return sinais.pontes ? i18n.t("Visao.pontesTitulo") : i18n.t("Visao.nomeAntigoConvergencia");
+      // De 11/11/2026, durante umas horas, este id foi o "Vaivém da Missanga" (o Fio em treino);
+      // a decisão foi revertida no mesmo dia, mas as sessões gravadas mantêm o nome.
+      if (sinais.modo === "fio_treino") return i18n.t("Visao.nomeAntigoVaivem");
+      // O Olho Mágico também guarda `pontes` (as rampas); só as sessões sem `modo` são das Pontes de Fusão.
+      return sinais.modo !== "fusao_livre" && sinais.pontes ? i18n.t("Visao.pontesTitulo") : actual;
     default:
       return actual;
   }
@@ -132,7 +132,7 @@ export const limiarFormatado = (
       : limiar
         ? i18n.t("Visao.luzLimiarCurto", { delta: limiar })
         : i18n.t("Visao.luzSemDesvioCurto");
-  // Vaivém da Missanga (id `convergence`, desde 2026-11-11): onde a missanga ficou a dobrar, em treino.
+  // Vaivém da Missanga (id `convergence`, só a 11/11/2026): onde a missanga ficou a dobrar.
   if (sinais?.modo === "fio_treino")
     return limiar === null
       ? i18n.t("Visao.fioTreinoSemRepsCurto")
