@@ -657,6 +657,18 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   óculos 3D deixou de medir a distância: assume 40 cm. O passo do tapa-olho dos treinos
   aceita a mão ou um pano (antes dizia "a mão não basta", contra o aviso da pesca). Não
   reintroduzir ecrãs de preparação que só servem para carregar em Continuar.
+- **Depois do primeiro teste do dono do projecto em produção (2026-11-11):** (1) Palanca: o
+  ecrã da mãozinha mostra quantas respostas já contou, a última recebida e que pára
+  sozinho; num computador responde-se com as setas (espaço = "não sei"); a voz responde ao
+  resultado **provisório** do reconhecimento (antes esperava pelo final e atrasava 1 a 2 s).
+  (2) Fio de Missangas: só em aparelhos de toque (num portátil deu 16,8 cm e "sinal a
+  investigar"); o primeiro ecrã diz para que serve, que é no nariz e nunca no olho, e os
+  cuidados; **sem o ecrã calibrado nunca mostra "sinal"**, só os centímetros como
+  aproximados. (3) Pássaro e gaiola: os cartões afastam-se sozinhos (1,5 Δ/s) e toca-se
+  quando o pássaro sai e quando volta a entrar (`deltaDaGaiola`, `rampaDaGaiola`); a
+  pergunta "o que vê no meio" faz-se uma vez por sessão. Continua a ser auto-avaliação e
+  grava no mesmo formato. Um estímulo que se mexe sozinho conta tempo activo por
+  `ApiTarefa.presente`, sem contar como tentativa.
 - **Régua Invisível (2026-10-20): unidades reais sem câmara.** Cartão de banco -> px/mm
   (`calibracao.ts`); ponto cego -> distância olhos-ecrã (`pontoCego.ts`, Li et al. 2020);
   afinação dos óculos vermelho-ciano -> fuga de cor de cada filtro (`anaglifo.ts`). Duas

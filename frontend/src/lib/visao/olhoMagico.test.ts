@@ -14,7 +14,7 @@ import {
   sentidoDoModo,
 } from "./olhoMagico";
 import { iniciarRampa, responderRampa, separacaoMm } from "./pontes";
-import { diasSeguidosAPrimeira, fusaoDaSessao, responderGaiola } from "./olhoMagico";
+import { deltaDaGaiola, diasSeguidosAPrimeira, fusaoDaSessao, rampaDaGaiola } from "./olhoMagico";
 
 /** Gerador determinista (Park-Miller), para os testes não dependerem da sorte. */
 const rngFixo = (semente = 7) => {
@@ -136,21 +136,25 @@ describe("modo guardado", () => {
 });
 
 describe("cartão do pássaro e da gaiola", () => {
-  it("rampa declarada: uma resposta chega para a rotura e para a recuperação", () => {
-    let e = iniciarRampa(5);
-    e = responderGaiola(e, true);
-    e = responderGaiola(e, true);
-    e = responderGaiola(e, false);
-    expect(e).toMatchObject({ fase: "descer", rotura: 2, indice: 1 });
-    e = responderGaiola(e, false);
-    e = responderGaiola(e, true);
-    expect(e).toMatchObject({ terminado: true, recuperacao: 0 });
+  it("os cartões afastam-se e aproximam-se a 1,5 Δ por segundo, sem sair do que cabe no ecrã", () => {
+    expect(deltaDaGaiola(6, 0, "afastar", 6, 20)).toBe(6);
+    expect(deltaDaGaiola(6, 2, "afastar", 6, 20)).toBe(9);
+    expect(deltaDaGaiola(6, 60, "afastar", 6, 20)).toBe(20);
+    expect(deltaDaGaiola(12, 2, "aproximar", 6, 20)).toBe(9);
+    expect(deltaDaGaiola(12, 60, "aproximar", 6, 20)).toBe(6);
+    // Antes de arrancar (tempo negativo), ficam onde estão.
+    expect(deltaDaGaiola(6, -1, "afastar", 6, 20)).toBe(6);
   });
 
-  it("chegar ao último degrau sem sair é o limite do ecrã", () => {
-    let e = iniciarRampa(2);
-    e = responderGaiola(responderGaiola(e, true), true);
-    expect(e).toMatchObject({ terminado: true, atingiuLimite: true, rotura: null });
+  it("a rampa contínua grava-se a meio Δ, e a recuperação nunca passa a rotura", () => {
+    expect(rampaDaGaiola(11.7, 8.2, 20)).toEqual({ rotura: 11.5, recuperacao: 8, limiteEcra: false, maximo: 20 });
+    expect(rampaDaGaiola(9, 9.4, 20)).toMatchObject({ rotura: 9, recuperacao: 9 });
+    // Voltou ao início sem o pássaro entrar.
+    expect(rampaDaGaiola(9, null, 20)).toMatchObject({ rotura: 9, recuperacao: null, limiteEcra: false });
+  });
+
+  it("chegar ao fim do ecrã sem o pássaro sair é o limite do ecrã", () => {
+    expect(rampaDaGaiola(null, null, 20)).toEqual({ rotura: null, recuperacao: null, limiteEcra: true, maximo: 20 });
   });
 
   it("a fusão da sessão é a pior que se viu", () => {

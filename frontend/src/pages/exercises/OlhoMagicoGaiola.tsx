@@ -9,25 +9,39 @@ import {
   CARTAO_GAIOLA_MM,
   DIAS_PARA_PANO,
   MODO_GAIOLA,
+  ESPERA_GAIOLA_MS,
   RESPOSTAS_GAIOLA,
+  deltaDaGaiola,
   diasSeguidosAPrimeira,
   fusaoDaSessao,
   guardarNivelOlhoMagico,
   juntou,
   niveisOlhoMagico,
   niveisQueCabem,
-  responderGaiola,
+  rampaDaGaiola,
   type RespostaGaiola,
 } from "@/lib/visao/olhoMagico";
-import { iniciarRampa, rampaEmDelta, resumirRampas, separacaoMm, type EstadoRampa, type RampaEmDelta } from "@/lib/visao/pontes";
+import { resumirRampas, separacaoMm, type RampaEmDelta } from "@/lib/visao/pontes";
+import { sinalSonoro } from "@/lib/visao/voz";
 import { cn } from "@/lib/utils";
 
 /** Altura do espaço para os dois pontos de referência, por cima dos cartões. */
 const PONTOS_PX = 28;
+/** De quanto em quanto tempo os cartões andam (≈ 30 imagens por segundo). */
+const PASSO_MS = 33;
+/** De quanto em quanto tempo se diz ao assistente que a pessoa continua a olhar. */
+const PRESENCA_MS = 2000;
+/** A asa a bater: só enfeite, numa propriedade em que mais nada mexe. */
+const CSS_ASA = `
+@keyframes jpa-gaiola-asa { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-22deg); } }
+.jpa-gaiola-asa { transform-box: fill-box; transform-origin: 20% 60%; animation: jpa-gaiola-asa 0.5s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .jpa-gaiola-asa { animation: none; } }
+`;
 
 /** O cartão do pássaro (com o sol, que só este olho vê). viewBox 100. */
-export const Passaro = ({ semSol = false }: { semSol?: boolean }) => (
+export const Passaro = ({ semSol = false, aVoar = false }: { semSol?: boolean; aVoar?: boolean }) => (
   <>
+    {aVoar && <style>{CSS_ASA}</style>}
     {!semSol && (
       <>
         <circle cx={16} cy={16} r={9} fill="#e3a21a" />
@@ -40,7 +54,7 @@ export const Passaro = ({ semSol = false }: { semSol?: boolean }) => (
     <circle cx={64.6} cy={50} r={1.2} fill="#111111" />
     <path d="M69 52 L78 55 L69 57 Z" fill="#e3a21a" />
     <path d="M36 62 L24 56 L27 68 Z" fill="#8f2620" />
-    <path d="M44 62 Q52 54 58 64 Q50 70 44 62 Z" fill="#8f2620" />
+    <path className={aVoar ? "jpa-gaiola-asa" : undefined} d="M44 62 Q52 54 58 64 Q50 70 44 62 Z" fill="#8f2620" />
     <path d="M46 76 v6 M54 76 v6" stroke="#5e3b12" strokeWidth={2.5} strokeLinecap="round" />
   </>
 );
@@ -203,10 +217,11 @@ const MiniResposta = ({ r }: { r: RespostaGaiola }) => {
 type Etapa = "como" | "tentar" | "dica" | "rampa" | "fim";
 
 /**
- * Olho Mágico, nível do pássaro e da gaiola (versão 2): aprender a cruzar os
- * olhos com o dedo como guia; dizer o que se vê no meio (por desenhos); e,
- * já com o pássaro na gaiola, afastar os cartões até sair (rotura) e
- * aproximá-los até voltar a entrar (recuperação), em Δ. Ver
+ * Olho Mágico, nível do pássaro e da gaiola: aprender a cruzar os olhos com o
+ * dedo como guia; dizer uma vez o que se vê no meio (por desenhos); e, já com
+ * o pássaro na gaiola, os cartões afastam-se sozinhos até ele sair (rotura) e
+ * voltam a aproximar-se até ele entrar (recuperação), em Δ. Desde 2026-11-11
+ * o movimento é contínuo e cada ronda é um toque em cada sentido. Ver
  * `lib/visao/olhoMagico.ts`.
  */
 export const TarefaGaiola = ({
@@ -231,7 +246,10 @@ export const TarefaGaiola = ({
 
   const [etapa, setEtapa] = useState<Etapa>("como");
   const [respostas, setRespostas] = useState<RespostaGaiola[]>([]);
-  const [rampa, setRampa] = useState<EstadoRampa | null>(null);
+  /** O movimento em curso: de onde partiu e quando. `null` fora da rampa. */
+  const [mov, setMov] = useState<{ fase: "afastar" | "aproximar"; desde: number; t0: number; parado?: boolean } | null>(null);
+  const [delta, setDelta] = useState(0);
+  const rotura = useRef<number | null>(null);
   const rampas = useRef<RampaEmDelta[]>([]);
   const [ultima, setUltima] = useState<RampaEmDelta | null>(null);
 
@@ -271,31 +289,83 @@ export const TarefaGaiola = ({
     else setEtapa("dica");
   };
 
+  const min = niveis[0] ?? 0;
+  const max = niveis[niveis.length - 1] ?? 0;
+  const posicao = (m: NonNullable<typeof mov>, agora: number) => deltaDaGaiola(m.desde, (agora - m.t0) / 1000, m.fase, min, max);
+
   function comecarRampa() {
     if (niveis.length < 2) return;
-    setRampa(iniciarRampa(niveis.length));
+    rotura.current = null;
+    setDelta(min);
+    setMov({ fase: "afastar", desde: min, t0: Date.now() + ESPERA_GAIOLA_MS });
     setEtapa("rampa");
   }
 
-  const responderRampa = (dentro: boolean) => {
-    if (!api.activo || !rampa) return;
-    api.registar({ controlo: false, acertou: dentro });
-    const seguinte = responderGaiola(rampa, dentro);
-    if (seguinte.terminado) {
-      const r = rampaEmDelta(seguinte, todos);
-      rampas.current = [...rampas.current, r];
-      setUltima(r);
-      setRampa(null);
-      setEtapa("fim");
-    } else setRampa(seguinte);
+  const fecharRampa = (recuperacao: number | null) => {
+    const r = rampaDaGaiola(rotura.current, recuperacao, max);
+    rampas.current = [...rampas.current, r];
+    setUltima(r);
+    setMov(null);
+    setEtapa("fim");
+    sinalSonoro(r.limiteEcra ? "festa" : "fim");
+  };
+  const fecharRef = useRef(fecharRampa);
+  fecharRef.current = fecharRampa;
+  const apiRef = useRef(api);
+  apiRef.current = api;
+
+  // Os cartões a andar. Em pausa (entre blocos) ficam onde estão e retomam daí.
+  const activo = api.activo;
+  useEffect(() => {
+    if (!mov || !activo) return;
+    // De volta de uma pausa: o relógio do movimento recomeça agora, sem salto.
+    if (mov.parado) {
+      setMov({ ...mov, t0: Date.now(), parado: false });
+      return;
+    }
+    let presenca = Date.now();
+    const id = window.setInterval(() => {
+      const agora = Date.now();
+      const d = posicao(mov, agora);
+      setDelta(d);
+      if (agora - presenca >= PRESENCA_MS) {
+        presenca = agora;
+        apiRef.current.presente?.();
+      }
+      // Chegou ao fim do ecrã sem o pássaro sair, ou voltou ao início sem ele entrar.
+      if (mov.fase === "afastar" ? d >= max : d <= min) {
+        window.clearInterval(id);
+        fecharRef.current(null);
+      }
+    }, PASSO_MS);
+    return () => {
+      window.clearInterval(id);
+      // Pausa a meio: o movimento seguinte parte de onde este ficou.
+      setMov((m) => (m === mov ? { ...mov, desde: posicao(mov, Date.now()), t0: Date.now(), parado: true } : m));
+    };
+    // `posicao` só depende de `mov`, `min` e `max`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activo, mov?.fase, mov?.t0, mov?.parado, min, max]);
+
+  const tocarRampa = () => {
+    if (!api.activo || !mov) return;
+    const agora = Date.now();
+    if (agora < mov.t0) return; // ainda parados no início
+    const d = posicao(mov, agora);
+    api.registar({ controlo: false, acertou: true });
+    sinalSonoro("tic");
+    if (mov.fase === "afastar") {
+      rotura.current = d;
+      setDelta(d);
+      setMov({ fase: "aproximar", desde: d, t0: agora });
+    } else fecharRampa(d);
   };
 
   // O palco: os dois cartões, à separação do degrau, com dois pontos por cima.
-  const palco = (indice: number) => {
+  const palco = (delta: number, aVoar = false) => {
     if (naoCabe)
       return <p className="rounded-lg bg-gold/10 px-3 py-2 text-center text-sm font-medium text-foreground">{t("Visao.olhoMagicoEcraEstreito")}</p>;
     if (!larguraCss) return null;
-    const delta = niveis[Math.min(indice, niveis.length - 1)];
     const ladoCss = CARTAO_GAIOLA_MM * pxPorMm;
     const separacaoCss = separacaoMm(delta, distanciaMm) * pxPorMm;
     const centro = (larguraCss - 2) / 2;
@@ -313,11 +383,11 @@ export const TarefaGaiola = ({
               style={{ left: c - ladoCss / 2, top: PONTOS_PX, width: ladoCss, height: ladoCss }}
               aria-hidden
             >
-              {i ? <Gaiola /> : <Passaro />}
+              {i ? <Gaiola /> : <Passaro aVoar={aVoar} />}
             </svg>
           ))}
           <span className="absolute bottom-1 right-2 text-xs tabular-nums" style={{ color: "#5e5b53" }}>
-            {rotuloDelta(delta)}
+            {rotuloDelta(Math.round(delta * 2) / 2)}
           </span>
         </div>
       </PalcoVisual>
@@ -345,7 +415,7 @@ export const TarefaGaiola = ({
   else if (etapa === "tentar")
     conteudo = (
       <div className="flex flex-col gap-3">
-        {palco(0)}
+        {palco(min)}
         <p className="text-foreground">
           {t("Visao.gaiolaJunte")} <b>{t("Visao.gaiolaQueVe")}</b>
         </p>
@@ -389,32 +459,33 @@ export const TarefaGaiola = ({
         </Button>
       </div>
     );
-  } else if (etapa === "rampa" && rampa) {
-    const afastar = rampa.fase === "subir";
+  } else if (etapa === "rampa" && mov) {
+    const afastar = mov.fase === "afastar";
+    const percurso = max > min ? Math.round(((delta - min) / (max - min)) * 100) : 0;
     conteudo = (
       <div className="flex flex-col gap-3">
         <p className="text-lg font-bold text-foreground">{afastar ? t("Visao.gaiolaAfastarTitulo") : t("Visao.gaiolaAproximarTitulo")}</p>
         <p className="text-sm text-foreground">{afastar ? t("Visao.gaiolaAfastarTexto") : t("Visao.gaiolaAproximarTexto")}</p>
-        {palco(rampa.indice)}
-        <p className="text-center text-xs text-muted-foreground">{t("Visao.gaiolaDegrau", { n: rampa.indice + 1, total: rampa.total })}</p>
-        <div className="grid grid-cols-2 gap-2">
-          <Button size="lg" className="h-auto whitespace-normal bg-green py-4 text-green-foreground hover:bg-green/90" onClick={() => responderRampa(true)}>
-            {afastar ? t("Visao.gaiolaContinuaDentro") : t("Visao.gaiolaVoltou")}
-          </Button>
-          <Button
-            size="lg"
-            variant={afastar ? "destructive" : "outline"}
-            className="h-auto whitespace-normal py-4"
-            onClick={() => responderRampa(false)}
-          >
-            {afastar ? t("Visao.gaiolaSaiu") : t("Visao.gaiolaAindaFora")}
-          </Button>
+        {palco(delta, true)}
+        {/* Até onde já foi: a barra enche enquanto os cartões se afastam. */}
+        <div className="h-2 w-full overflow-hidden rounded-full bg-muted" role="img" aria-label={t("Visao.gaiolaPercurso", { pct: percurso })}>
+          <div className="h-full bg-teal" style={{ width: `${percurso}%` }} />
         </div>
+        <Button
+          size="lg"
+          className={cn("h-auto whitespace-normal py-6 text-lg", afastar ? "" : "bg-green text-green-foreground hover:bg-green/90")}
+          variant={afastar ? "destructive" : "default"}
+          onClick={tocarRampa}
+        >
+          {afastar ? t("Visao.gaiolaSaiu") : t("Visao.gaiolaVoltou")}
+        </Button>
       </div>
     );
   } else {
     const r = ultima;
     const supressao = respostas.includes("falta");
+    const roturas = rampas.current.map((x) => x.rotura ?? x.maximo);
+    const melhor = roturas.length > 1 ? Math.max(...roturas) : null;
     conteudo = (
       <div className="flex flex-col gap-3 text-left">
         {r && (
@@ -439,12 +510,19 @@ export const TarefaGaiola = ({
             </div>
           </div>
         )}
+        {melhor !== null && (
+          <p className="text-sm font-semibold text-foreground">{t("Visao.gaiolaMelhor", { n: roturas.length, delta: rotuloDelta(melhor) })}</p>
+        )}
         <p className="text-sm text-muted-foreground">{t(r?.limiteEcra ? "Visao.gaiolaRodarParaMais" : "Visao.gaiolaTreinar")}</p>
         <p className="rounded-xl border border-dashed border-border p-3 text-sm text-foreground">
           {pronto ? t("Visao.gaiolaPanoPronto") : t("Visao.gaiolaPanoDepois", { n: DIAS_PARA_PANO, feitos: dias })}
         </p>
-        <Button size="lg" onClick={() => setEtapa("tentar")}>
+        {/* Outra ronda começa logo a afastar; a pergunta "o que vê" faz-se uma vez por sessão. */}
+        <Button size="lg" onClick={comecarRampa}>
           {t("Visao.gaiolaOutraVez")}
+        </Button>
+        <Button variant="ghost" onClick={() => setEtapa("tentar")}>
+          {t("Visao.gaiolaPerdi")}
         </Button>
       </div>
     );

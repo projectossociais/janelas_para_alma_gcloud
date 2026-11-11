@@ -35,6 +35,19 @@ const PASSO_MS = 33;
 /** Logo a seguir a "ficou a dobrar", um segundo toque é o mesmo toque repetido, não "voltou a ser uma". */
 const TOQUE_DUPLO_MS = 500;
 
+/**
+ * Um computador (rato, sem ecrã de toque): não se encosta ao nariz, e a
+ * medida saía sem sentido (caso real, 2026-11-11: 16,8 cm e "sinal a
+ * investigar" num portátil). Sem `matchMedia`, deixa fazer.
+ */
+const eComputador = (): boolean => {
+  try {
+    return window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  } catch {
+    return false;
+  }
+};
+
 const cmTexto = (cm: number) => `${formatarDecimal(cm, cm % 1 ? 1 : 0)} cm`;
 
 /** De lado: a cabeça, o telemóvel deitado com a ponta encostada ao nariz e o olhar na missanga. */
@@ -257,7 +270,17 @@ const FioMissangas = () => {
   const passoActual = { preparar: 0, calibracao: 1, medir: 2, resultado: 3 }[etapa];
 
   let conteudo;
-  if (etapa === "preparar") {
+  if (etapa === "preparar" && eComputador())
+    conteudo = (
+      <EcraPasso titulo={t("Visao.fioSoTelemovelTitulo")}>
+        <div className="w-full space-y-3 text-left text-sm">
+          <DesenhoComoSegurar />
+          <p className="text-base text-foreground">{t("Visao.fioSoTelemovelTexto")}</p>
+          <p className="text-muted-foreground">{t("Visao.fioParaQueServe")}</p>
+        </div>
+      </EcraPasso>
+    );
+  else if (etapa === "preparar") {
     const lista = [1, 2, 3].map((n) => t(`Visao.fioPreparar${n}`));
     conteudo = (
       <EcraPasso
@@ -265,12 +288,18 @@ const FioMissangas = () => {
         accao={<BotaoContinuar aoClicar={() => setEtapa(calibracao?.calibrado ? "medir" : "calibracao")}>{t("Visao.fioComecar")}</BotaoContinuar>}
       >
         <div className="w-full space-y-3 text-left text-sm">
+          <p className="text-muted-foreground">{t("Visao.fioParaQueServe")}</p>
           <DesenhoComoSegurar />
           <ol className="list-decimal space-y-1 pl-5 text-base text-foreground">
             {lista.map((p) => (
               <li key={p}>{p}</li>
             ))}
           </ol>
+          <ul className="list-disc space-y-1 rounded-lg bg-muted/40 py-2 pl-7 pr-3 text-muted-foreground">
+            {[1, 2, 3].map((n) => (
+              <li key={n}>{t(`Visao.fioSeguranca${n}`)}</li>
+            ))}
+          </ul>
         </div>
       </EcraPasso>
     );
@@ -359,7 +388,10 @@ const ResultadoFio = ({
     ]);
   }, [calibrado, gravar, inicioCm, pxPorMm, r, rondas, segundos]);
 
-  const sinais = [...(r.classe === "alto" ? [t("Visao.fioSinalPpc")] : []), ...(r.cansaco ? [t("Visao.fioCansaco")] : [])];
+  // Sem o cartão, os centímetros são aproximados: mostra-se o que se mediu,
+  // mas nunca como "sinal a investigar" (nem como "dentro do esperado").
+  const sinais = calibrado ? [...(r.classe === "alto" ? [t("Visao.fioSinalPpc")] : []), ...(r.cansaco ? [t("Visao.fioCansaco")] : [])] : [];
+  const estadoPpc = !calibrado ? "indeterminado" : r.classe === "alto" ? "sinal" : r.classe === "limite" ? "indeterminado" : "ok";
   const ppcTexto = r.chegouAoNariz ? t("Visao.fioChegouNariz") : r.ppcCm === null ? t("Visao.fioPpcAlem", { cm: inicioCm }) : cmTexto(r.ppcCm);
 
   return (
@@ -369,11 +401,11 @@ const ResultadoFio = ({
       aoTentarDeNovo={() => void tentarDeNovo()}
       sinais={sinais}
       cartoes={[
-        <CartaoOlho key="ppc" titulo={t("Visao.fioPpcTitulo")} estado={r.classe === "alto" ? "sinal" : r.classe === "limite" ? "indeterminado" : "ok"}>
+        <CartaoOlho key="ppc" titulo={t("Visao.fioPpcTitulo")} estado={estadoPpc}>
           <p className="text-2xl font-bold text-foreground">{ppcTexto}</p>
-          <p>{r.chegouAoNariz ? t("Visao.fioChegouNarizTexto") : t(`Visao.fioPpcClasse_${r.classe}`)}</p>
+          <p>{!calibrado ? t("Visao.fioSemCartao") : r.chegouAoNariz ? t("Visao.fioChegouNarizTexto") : t(`Visao.fioPpcClasse_${r.classe}`)}</p>
         </CartaoOlho>,
-        <CartaoOlho key="rec" titulo={t("Visao.fioRecuperacaoTitulo")} estado={r.cansaco ? "sinal" : "ok"}>
+        <CartaoOlho key="rec" titulo={t("Visao.fioRecuperacaoTitulo")} estado={!calibrado ? "indeterminado" : r.cansaco ? "sinal" : "ok"}>
           <p className="text-2xl font-bold text-foreground">{r.recuperacaoCm === null ? t("Visao.fioRecuperacaoAlem") : cmTexto(r.recuperacaoCm)}</p>
           <p>{t("Visao.fioRondas", { lista: rondas.map((x) => (x.alem ? `> ${inicioCm} cm` : cmTexto(x.rotura))).join(" · ") })}</p>
           <p>{r.cansaco ? t("Visao.fioCansaco") : t("Visao.fioSemCansaco")}</p>
