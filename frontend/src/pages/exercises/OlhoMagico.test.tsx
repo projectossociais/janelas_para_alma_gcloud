@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { MutableRefObject } from "react";
 import { TarefaOlhoMagico } from "./OlhoMagico";
 import type { ApiTarefa, ContextoTreino, ResultadoTreino } from "@/components/visao/AssistenteTreino";
@@ -120,6 +120,33 @@ describe("Olho Mágico", () => {
     expect(screen.getByText(/A praticar/)).toBeInTheDocument();
     expect(window.localStorage.getItem("jpa.visao.olhoMagico.modo")).toBe("relaxar");
     expect(resultado.current!().sinais).toMatchObject({ modo_fusao: "relaxar" });
+  });
+});
+
+describe("Olho Mágico: ecrã reestruturado (2026-11-11)", () => {
+  it("o estímulo vem antes das instruções e das opções, e 'Como fazer' só abre sozinho da primeira vez", () => {
+    montar();
+    const palco = screen.getByRole("img", { name: V.olhoMagicoRotuloPalco });
+    const como = screen.getByText(V.olhoMagicoComoFazer);
+    const modo = screen.getByRole("radio", { name: V.olhoMagicoCruzar });
+    const depois = (a: Element, b: Element) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(depois(palco, como)).toBe(true);
+    expect(depois(palco, modo)).toBe(true);
+    expect(como.closest("details")).toHaveAttribute("open");
+    cleanup();
+    // Da segunda vez neste aparelho, fica recolhido (e pode abrir-se à mão).
+    window.localStorage.setItem("jpa.visao.olhoMagico.nivel", "pano");
+    montar();
+    expect(screen.getByText(V.olhoMagicoComoFazer).closest("details")).not.toHaveAttribute("open");
+  });
+
+  it("no pássaro e gaiola, diz o objectivo e que no ecrã nada se mexe até tocar no botão", () => {
+    window.localStorage.removeItem("jpa.visao.olhoMagico.nivel");
+    montar();
+    fireEvent.click(screen.getByRole("button", { name: V.gaiolaExperimentar }));
+    expect(screen.getByText(V.gaiolaObjectivo)).toBeInTheDocument();
+    expect(screen.getByText(V.gaiolaNadaMexe)).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: V.gaiolaVeRotulo })).toBeInTheDocument();
   });
 });
 

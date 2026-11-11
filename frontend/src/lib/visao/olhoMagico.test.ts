@@ -14,7 +14,7 @@ import {
   sentidoDoModo,
 } from "./olhoMagico";
 import { iniciarRampa, responderRampa, separacaoMm } from "./pontes";
-import { deltaDaGaiola, diasSeguidosAPrimeira, fusaoDaSessao, rampaDaGaiola, recordeDaGaiola } from "./olhoMagico";
+import { deltaDaGaiola, diasSeguidosAPrimeira, fusaoDaSessao, ladoDoEstimulo, niveisOlhoMagico as niveisDe, rampaDaGaiola, recordeDaGaiola } from "./olhoMagico";
 
 /** Gerador determinista (Park-Miller), para os testes não dependerem da sorte. */
 const rngFixo = (semente = 7) => {
@@ -132,6 +132,30 @@ describe("modo guardado", () => {
     guardarModoOlhoMagico("relaxar");
     expect(lerModoOlhoMagico()).toBe("relaxar");
     window.localStorage.clear();
+  });
+});
+
+// Caso real (2026-11-11): a 1 metro, num computador, os quadros de 20 mm viam-se minúsculos.
+describe("tamanho dos desenhos pelo ângulo de visão", () => {
+  it("a 40 cm fica o tamanho de base; mais longe, cresce na mesma proporção", () => {
+    expect(ladoDoEstimulo(20, 400, 300)).toBe(20);
+    expect(ladoDoEstimulo(20, 600, 300)).toBe(30);
+    expect(ladoDoEstimulo(20, 1000, 300)).toBe(50);
+    expect(ladoDoEstimulo(22, 1000, 300)).toBe(55);
+  });
+
+  it("nunca passa um quarto do palco (têm de caber dois e de se afastar), nem desce da base", () => {
+    expect(ladoDoEstimulo(20, 1000, 120)).toBe(30);
+    // Telemóvel ao alto: o palco é estreito, fica a base.
+    expect(ladoDoEstimulo(22, 600, 55)).toBe(22);
+    // Antes de se saber a largura do palco.
+    expect(ladoDoEstimulo(20, 1000, 0)).toBe(20);
+  });
+
+  it("com o desenho a crescer com a distância, o primeiro degrau pede sempre a mesma vergência", () => {
+    const primeiro = (d: number) => niveisDe("convergencia", d, ladoDoEstimulo(20, d, 400))[0];
+    expect(primeiro(400)).toBe(5.5);
+    expect(primeiro(1000)).toBe(5.5);
   });
 });
 

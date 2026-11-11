@@ -14,6 +14,7 @@ import {
   deltaDaGaiola,
   diasSeguidosAPrimeira,
   fusaoDaSessao,
+  ladoDoEstimulo,
   guardarNivelOlhoMagico,
   juntou,
   niveisOlhoMagico,
@@ -177,6 +178,41 @@ export const DemoDedoGuia = () => {
   );
 };
 
+/**
+ * "O que vai ver": os dois desenhos deslizam um para o outro e passam a três,
+ * com o pássaro na gaiola no meio. É o que acontece *nos olhos* de quem os
+ * cruza -- no ecrã do exercício nada se mexe, e era isso que não se percebia
+ * ("parece que era para o pássaro andar até à gaiola", 2026-11-11). Animação
+ * em CSS: só enfeite, sem relógio próprio.
+ */
+const CSS_O_QUE_VE = `
+@keyframes jpa-gaiola-ve-e { 0%, 18% { transform: translateX(0); } 55%, 88% { transform: translateX(28px); } 100% { transform: translateX(0); } }
+@keyframes jpa-gaiola-ve-d { 0%, 18% { transform: translateX(0); } 55%, 88% { transform: translateX(-28px); } 100% { transform: translateX(0); } }
+.jpa-gaiola-ve-e { animation: jpa-gaiola-ve-e 5s ease-in-out infinite; }
+.jpa-gaiola-ve-d { animation: jpa-gaiola-ve-d 5s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .jpa-gaiola-ve-e { animation: none; transform: translateX(28px); } .jpa-gaiola-ve-d { animation: none; transform: translateX(-28px); } }
+`;
+export const DemoOQueVe = () => {
+  const { t } = useTranslation();
+  const L = 46;
+  return (
+    <svg viewBox="0 0 220 70" className="block h-auto w-full max-w-xs rounded-lg" style={{ backgroundColor: "#f6f1e4" }} role="img" aria-label={t("Visao.gaiolaVeRotulo")}>
+      <style>{CSS_O_QUE_VE}</style>
+      {/* O que cada olho vê: os mesmos dois desenhos, a deslizar em sentidos contrários. */}
+      {(["jpa-gaiola-ve-e", "jpa-gaiola-ve-d"] as const).map((classe) => (
+        <g key={classe} className={classe} opacity={0.62}>
+          <Desenho x={110 - 28 - L / 2} y={12} lado={L}>
+            <Passaro />
+          </Desenho>
+          <Desenho x={110 + 28 - L / 2} y={12} lado={L}>
+            <Gaiola />
+          </Desenho>
+        </g>
+      ))}
+    </svg>
+  );
+};
+
 /** O desenho de cada resposta "o que vê no meio?". */
 const MiniResposta = ({ r }: { r: RespostaGaiola }) => {
   const L = 26;
@@ -239,10 +275,12 @@ export const TarefaGaiola = ({
   const larguraCss = useLarguraDe(contentor);
   const { pxPorMm, distanciaMm } = ctx;
 
-  const todos = useMemo(() => niveisOlhoMagico("convergencia", distanciaMm, CARTAO_GAIOLA_MM), [distanciaMm]);
+  // O cartão cresce com a distância e com o ecrã (mesmo ângulo de visão que 22 mm a 40 cm).
+  const ladoMm = ladoDoEstimulo(CARTAO_GAIOLA_MM, distanciaMm, larguraCss / pxPorMm);
+  const todos = useMemo(() => niveisOlhoMagico("convergencia", distanciaMm, ladoMm), [distanciaMm, ladoMm]);
   const niveis = useMemo(
-    () => (larguraCss > 0 ? niveisQueCabem(todos, distanciaMm, larguraCss / pxPorMm, CARTAO_GAIOLA_MM) : []),
-    [distanciaMm, larguraCss, pxPorMm, todos],
+    () => (larguraCss > 0 ? niveisQueCabem(todos, distanciaMm, larguraCss / pxPorMm, ladoMm) : []),
+    [distanciaMm, ladoMm, larguraCss, pxPorMm, todos],
   );
 
   const [etapa, setEtapa] = useState<Etapa>("como");
@@ -281,7 +319,7 @@ export const TarefaGaiola = ({
         a_primeira: aPrimeira,
         respostas: Object.fromEntries(RESPOSTAS_GAIOLA.map((x) => [x, respostas.filter((y) => y === x).length])),
         gaiola: r,
-        cartao_mm: CARTAO_GAIOLA_MM,
+        cartao_mm: ladoMm,
       },
     };
   };
@@ -381,7 +419,7 @@ export const TarefaGaiola = ({
     if (naoCabe)
       return <p className="rounded-lg bg-gold/10 px-3 py-2 text-center text-sm font-medium text-foreground">{t("Visao.olhoMagicoEcraEstreito")}</p>;
     if (!larguraCss) return null;
-    const ladoCss = CARTAO_GAIOLA_MM * pxPorMm;
+    const ladoCss = ladoMm * pxPorMm;
     const separacaoCss = separacaoMm(delta, distanciaMm) * pxPorMm;
     const centro = (larguraCss - 2) / 2;
     return (
@@ -434,6 +472,13 @@ export const TarefaGaiola = ({
     conteudo = (
       <div className="flex flex-col gap-3">
         {palco(min)}
+        <div className="flex flex-col items-center gap-2 rounded-xl bg-muted/40 p-3 text-center sm:flex-row sm:text-left">
+          <DemoOQueVe />
+          <div className="space-y-1">
+            <p className="font-semibold text-foreground">{t("Visao.gaiolaObjectivo")}</p>
+            <p className="text-sm text-muted-foreground">{t("Visao.gaiolaNadaMexe")}</p>
+          </div>
+        </div>
         <p className="text-center text-foreground">{t("Visao.gaiolaJunte")}</p>
         <Button
           size="lg"
