@@ -4,6 +4,16 @@ import teamGroupPhoto from "@/assets/team-group-stairs.jpg";
 import { useTranslation } from "react-i18next";
 import { localizar } from "@/i18n/rotas";
 
+/**
+ * Prende as três últimas palavras com espaços que não quebram, para a última linha do
+ * parágrafo nunca ficar com uma palavra sozinha ("dele.", pedido da coordenação, 2026-11-11).
+ */
+const semPalavraSozinha = (texto: string) => {
+  const palavras = texto.trim().split(" ");
+  if (palavras.length < 4) return texto;
+  return [palavras.slice(0, -3).join(" "), palavras.slice(-3).join("\u00a0")].join(" ");
+};
+
 const AboutTeaserSection = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -30,8 +40,8 @@ const AboutTeaserSection = () => {
             <h2 className="text-3xl md:text-4xl font-bold text-marca-marinho leading-tight">
               {t("AboutTeaserSection.umaEquipaJovemA")}
             </h2>
-            <p className="text-marca-marinho/70 leading-relaxed text-base md:text-lg text-justify">
-              {t("AboutTeaserSection.somosJovensAngolanosQue")}
+            <p className="text-marca-marinho/70 leading-relaxed text-base md:text-lg text-justify text-pretty">
+              {semPalavraSozinha(t("AboutTeaserSection.somosJovensAngolanosQue"))}
             </p>
             <button
               onClick={() => navigate(localizar("/impacto"))}
