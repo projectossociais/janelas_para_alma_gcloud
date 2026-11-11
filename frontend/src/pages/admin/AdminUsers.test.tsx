@@ -5,11 +5,13 @@ import { MemoryRouter } from "react-router-dom";
 
 const listarUtilizadores = vi.fn();
 const definirPapel = vi.fn();
+const eliminarUtilizador = vi.fn();
 
 vi.mock("@/lib/apiClient", () => ({
   adminApi: {
     listarUtilizadores: (...a: unknown[]) => listarUtilizadores(...a),
     definirPapel: (...a: unknown[]) => definirPapel(...a),
+    eliminarUtilizador: (...a: unknown[]) => eliminarUtilizador(...a),
   },
   mensagemDeErroApi: (err: unknown, fallback: string) => {
     const status = (err as { status?: unknown } | null)?.status;
@@ -52,6 +54,8 @@ describe("AdminUsers", () => {
   beforeEach(() => {
     listarUtilizadores.mockReset().mockResolvedValue([]);
     definirPapel.mockReset();
+    eliminarUtilizador.mockReset();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
     toastSuccess.mockReset();
     toastError.mockReset();
   });
@@ -112,5 +116,48 @@ describe("AdminUsers", () => {
       "href",
       "/admin/administradores"
     );
+  });
+
+  it("elimina a conta de um utilizador comum depois de confirmar", async () => {
+    listarUtilizadores.mockResolvedValue([UTILIZADOR_COMUM]);
+    eliminarUtilizador.mockResolvedValue(undefined);
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Eliminar a conta de ana@example.com" }));
+
+    await waitFor(() => expect(eliminarUtilizador).toHaveBeenCalledWith("user-1"));
+    expect(toastSuccess).toHaveBeenCalledWith("Conta eliminada.");
+  });
+
+  it("nunca mostra sucesso se eliminar a conta falhar", async () => {
+    listarUtilizadores.mockResolvedValue([UTILIZADOR_COMUM]);
+    eliminarUtilizador.mockRejectedValue(Object.assign(new Error("conta não encontrada"), { status: 404 }));
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Eliminar a conta de ana@example.com" }));
+
+    await waitFor(() => expect(toastError).toHaveBeenCalledWith("conta não encontrada"));
+    expect(toastSuccess).not.toHaveBeenCalled();
+  });
+
+  it("não elimina nada se o admin cancelar a confirmação", async () => {
+    listarUtilizadores.mockResolvedValue([UTILIZADOR_COMUM]);
+    vi.spyOn(window, "confirm").mockReturnValue(false);
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Eliminar a conta de ana@example.com" }));
+
+    expect(eliminarUtilizador).not.toHaveBeenCalled();
+  });
+
+  it("não mostra o botão de eliminar para contas de admin", async () => {
+    listarUtilizadores.mockResolvedValue([UTILIZADOR_ADMIN]);
+    renderPage();
+
+    await screen.findByText("Chefe");
+    expect(screen.queryByRole("button", { name: /Eliminar a conta/ })).not.toBeInTheDocument();
   });
 });

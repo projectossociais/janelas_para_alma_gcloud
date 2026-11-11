@@ -105,6 +105,9 @@ class Settings(BaseSettings):
     # no Resend (ver docs/BACKLOG.md); "onboarding@resend.dev" é o remetente
     # de testes do Resend, só entrega à própria conta.
     email_remetente: str = "onboarding@resend.dev"
+    # Caixa da equipa: para onde vão os registos de parceiros (dados da
+    # empresa e documentos em anexo) -- ver candidatura_parceria_service.py.
+    email_equipa: str = "janelasparaalma18@gmail.com"
 
     # Login com Google (Sign In With Google) — ver core/google_auth.py. O
     # Client ID não é secreto (corre no browser, dentro do próprio token que

@@ -71,7 +71,7 @@ const ExercisesSection = () => {
   const navigate = useNavigate();
 
   return (
-    <section id="exercicios-home" className="py-20 md:py-28 bg-gradient-to-b from-background to-muted/40">
+    <section id="exercicios-home" className="py-20 md:py-28 bg-white">
       <div className="container">
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-12">
           <div className="max-w-2xl space-y-3">

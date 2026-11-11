@@ -40,8 +40,21 @@ class PublicacaoPublica(BaseModel):
     data_evento: date | None
     capa_url: str | None
     midias: list[MidiaPublica]
+    visualizacoes: int = 0
+    gostos: int = 0
+    # Só no detalhe, com sessão: se esta conta já marcou "Gosto".
+    gostei: bool = False
 
     model_config = {"from_attributes": True}
+
+
+class VisualizacoesPublicacao(BaseModel):
+    visualizacoes: int
+
+
+class GostoPublicacao(BaseModel):
+    gostos: int
+    gostei: bool
 
 
 class PublicacaoAdmin(PublicacaoPublica):

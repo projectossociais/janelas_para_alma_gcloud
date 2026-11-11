@@ -29,6 +29,7 @@ export const ROTAS = [
   { chave: "publicacoes", pt: "/publicacoes", en: "/en/publications" },
   { chave: "publicacaoDetalhe", pt: "/publicacoes/:slug", en: "/en/publications/:slug" },
   { chave: "parceiros", pt: "/parceiros", en: "/en/partners" },
+  { chave: "registoParceiro", pt: "/parceiros/registo", en: "/en/partners/register" },
   { chave: "portalClinico", pt: "/portal-clinico", en: "/en/clinical-portal" },
   { chave: "portalClinicoOptioptika", pt: "/portal-clinico/optioptika", en: "/en/clinical-portal/optioptika" },
   { chave: "tecnologia", pt: "/tecnologia", en: "/en/technology" },
@@ -76,6 +77,8 @@ export const ROTAS = [
   { chave: "jogoPerfil", pt: "/jogo-curiosidades/perfil", en: "/en/trivia-game/profile", foraDoSitemap: true },
   { chave: "jogoLoja", pt: "/jogo-curiosidades/loja", en: "/en/trivia-game/shop", foraDoSitemap: true },
   { chave: "jogoLojaMoedas", pt: "/jogo-curiosidades/loja-moedas", en: "/en/trivia-game/coin-shop", foraDoSitemap: true },
+  { chave: "jogoLocal", pt: "/jogo-curiosidades/local", en: "/en/trivia-game/local", foraDoSitemap: true },
+  { chave: "jogoOnline", pt: "/jogo-curiosidades/online", en: "/en/trivia-game/online", foraDoSitemap: true },
 ] as const;
 
 export type ChaveRota = (typeof ROTAS)[number]["chave"];

@@ -509,6 +509,65 @@ export const comprovativosApi = {
   enviarParaStorage: uploadsApi.enviarParaStorage,
 };
 
+// --- Registo de parceiros (empresas) -----------------------------------------
+// Página pública `/parceiros/registo`: dados legais da empresa, representante
+// e documentos opcionais. Os documentos sobem directos ao R2 privado (mesmo
+// fluxo do avatar); a API grava o registo e envia tudo por email à equipa.
+
+export const TIPOS_DE_PARCEIRO = [
+  "clinica_oftalmologica",
+  "optica",
+  "hospital",
+  "seguradora",
+  "empresa",
+  "ong",
+  "instituicao_ensino",
+  "outro",
+] as const;
+export type TipoDeParceiro = (typeof TIPOS_DE_PARCEIRO)[number];
+
+export const TIPOS_DE_DOCUMENTO_DE_PARCERIA = ["application/pdf", "image/png", "image/jpeg"] as const;
+export const MAX_DOCUMENTOS_DE_PARCERIA = 5;
+export const MAX_BYTES_DOCUMENTO_DE_PARCERIA = 8 * 1024 * 1024;
+
+export interface DocumentoDeParceria {
+  chave: string;
+  nome: string;
+  content_type: string;
+}
+
+export interface CandidaturaParceriaCriar {
+  denominacao: string;
+  nif: string;
+  tipo: TipoDeParceiro;
+  provincia: string;
+  morada: string | null;
+  website: string | null;
+  representante_nome: string;
+  representante_cargo: string;
+  email: string;
+  telefone: string;
+  mensagem: string | null;
+  documentos: DocumentoDeParceria[];
+  declaracao: boolean;
+}
+
+export const parceriasApi = {
+  prepararDocumento: (contentType: string) =>
+    pedido<{ url_de_upload: string; chave: string }>("/parcerias/documentos", {
+      method: "POST",
+      body: JSON.stringify({ content_type: contentType }),
+    }),
+
+  enviarParaStorage: uploadsApi.enviarParaStorage,
+
+  submeter: (dados: CandidaturaParceriaCriar) =>
+    pedido<{ referencia: string }>("/parcerias/candidaturas", {
+      method: "POST",
+      body: JSON.stringify(dados),
+    }),
+};
+
 /** Unidade do `limiar` de uma sessão de exercício (versão 2). */
 export type UnidadeLimiar = "logmar" | "log_cs" | "arcsec" | "segundos" | "dioptrias_prismaticas" | "razao_contraste" | "graus" | "cm" | "mm";
 
@@ -1051,6 +1110,10 @@ export const adminApi = {
   removerAdmin: (id: string) =>
     pedido<AdminUtilizador>(`/admin/utilizadores/${id}/remover-admin`, { method: "POST" }),
 
+  /** Elimina a conta na hora (anonimização, nunca apaga o histórico).
+   *  A API recusa (409) a própria conta e contas de admin. */
+  eliminarUtilizador: (id: string) => pedido<void>(`/admin/utilizadores/${id}`, { method: "DELETE" }),
+
   /** Nunca aceita `papel: "admin"` (a API recusa com 422) — para isso é
    *  sempre `promover`/`removerAdmin`, que têm a protecção do último admin. */
   definirPapel: (id: string, papel: string) =>
@@ -1295,6 +1358,12 @@ export interface ClinicaPerfilInput {
   preco_indicativo: string | null;
 }
 
+export interface ClinicaCriarInput extends ClinicaPerfilInput {
+  nome: string;
+  email_contacto: string;
+  telefone_contacto: string;
+}
+
 export interface MembroEquipaPublico {
   id: string;
   utilizador_id: string;
@@ -1370,6 +1439,17 @@ export const clinicasApi = {
   // Administração ------------------------------------------------------------
   listarAdmin: () => pedido<ClinicaParceiraAdmin[]>("/admin/clinicas"),
 
+  criar: (dados: ClinicaCriarInput) =>
+    pedido<ClinicaParceiraAdmin>("/admin/clinicas", { method: "POST", body: JSON.stringify(dados) }),
+
+  /** `apagada` -- saiu de vez; `desativada` -- tinha pedidos de consulta, por
+   *  isso ficou só escondida do público (e pode ser reactivada). */
+  remover: (clinicaId: string) =>
+    pedido<{ resultado: "apagada" | "desativada" }>(`/admin/clinicas/${clinicaId}`, { method: "DELETE" }),
+
+  reativar: (clinicaId: string) =>
+    pedido<ClinicaParceiraAdmin>(`/admin/clinicas/${clinicaId}/reativar`, { method: "POST" }),
+
   atualizarPerfil: (clinicaId: string, dados: ClinicaPerfilInput) =>
     pedido<ClinicaParceiraAdmin>(`/admin/clinicas/${clinicaId}`, {
       method: "PATCH",
@@ -1409,6 +1489,17 @@ export interface PublicacaoPublica {
   data_evento: string | null;
   capa_url: string | null;
   midias: MidiaPublicacao[];
+  /** Quantas vezes a página da publicação foi aberta (contado pela API). */
+  visualizacoes: number;
+  /** Quantas contas marcaram "Gosto". */
+  gostos: number;
+  /** `true` se a conta com sessão já marcou "Gosto"; sempre `false` sem sessão. */
+  gostei: boolean;
+}
+
+export interface GostoPublicacao {
+  gostos: number;
+  gostei: boolean;
 }
 
 export interface PublicacaoAdmin extends PublicacaoPublica {
@@ -1441,6 +1532,15 @@ export const publicacoesApi = {
   listarPublicadas: () => pedido<PublicacaoPublica[]>("/publicacoes"),
 
   obterPorSlug: (slug: string) => pedido<PublicacaoPublica>(`/publicacoes/${slug}`),
+
+  /** Conta uma visualização: chamado uma vez por abertura da página. */
+  registarVisualizacao: (slug: string) =>
+    pedido<{ visualizacoes: number }>(`/publicacoes/${slug}/visualizacoes`, { method: "POST" }),
+
+  /** "Gosto" exige sessão (401 sem ela): uma conta, um gosto. */
+  gostar: (slug: string) => pedido<GostoPublicacao>(`/publicacoes/${slug}/gostos`, { method: "POST" }),
+
+  retirarGosto: (slug: string) => pedido<GostoPublicacao>(`/publicacoes/${slug}/gostos`, { method: "DELETE" }),
 
   // Administração -------------------------------------------------------------
   listarTodas: () => pedido<PublicacaoAdmin[]>("/publicacoes/admin/todas"),
@@ -1717,6 +1817,131 @@ export interface AjudaMercado {
   perfil: PerfilJogadorPublico;
 }
 
+export interface PartidaLocalJogo {
+  id: string;
+  numero_jogadores: number;
+  rondas: number;
+  maximo_desempates: number;
+  moedas_por_acerto: number;
+  maximo_moedas_por_partida: number;
+  limite_diario_moedas: number;
+}
+
+export interface RespostaLocalJogo {
+  correta: boolean;
+  resposta_correta: RespostaOpcaoJogo;
+  explicacao: string | null;
+}
+
+export interface PartidaLocalTerminadaJogo {
+  moedas_ganhas: number;
+  // O prémio existia, mas o tecto diário já não deixou creditá-lo todo.
+  limite_diario_atingido: boolean;
+  perfil: PerfilJogadorPublico;
+}
+
+// Multijogador Local (2 a 4 pessoas no mesmo aparelho). Exige sessão: a
+// pergunta, a validação e o prémio em moedas são do servidor; os nomes e os
+// pontos de cada jogador ficam só no aparelho.
+export const jogoLocalApi = {
+  iniciar: (numeroJogadores: number) =>
+    pedido<PartidaLocalJogo>("/jogo/local/partidas", {
+      method: "POST",
+      body: JSON.stringify({ numero_jogadores: numeroJogadores }),
+    }),
+
+  /** Idempotente enquanto a pergunta entregue não for respondida. */
+  obterPergunta: (partidaId: string, patamar: number) =>
+    pedido<PerguntaJogoPublica>(`/jogo/local/partidas/${partidaId}/pergunta`, {
+      method: "POST",
+      body: JSON.stringify({ patamar }),
+    }),
+
+  /** `resposta: null` = o tempo esgotou. */
+  responder: (partidaId: string, perguntaId: string, resposta: RespostaOpcaoJogo | null) =>
+    pedido<RespostaLocalJogo>(`/jogo/local/partidas/${partidaId}/responder`, {
+      method: "POST",
+      body: JSON.stringify({ pergunta_id: perguntaId, resposta }),
+    }),
+
+  /** Fecha a partida e credita o prémio, uma única vez. */
+  terminar: (partidaId: string) =>
+    pedido<PartidaLocalTerminadaJogo>(`/jogo/local/partidas/${partidaId}/terminar`, { method: "POST" }),
+};
+
+export interface JogadorSalaJogo {
+  nome: string;
+  eu: boolean;
+  anfitriao: boolean;
+  pontos: number;
+  acertos: number;
+  respondeu: boolean;
+  // Só com a ronda fechada: antes disso só se sabe que "já respondeu".
+  resposta: RespostaOpcaoJogo | null;
+  certa: boolean | null;
+  pontos_ronda: number | null;
+  vencedor: boolean;
+}
+
+export interface MensagemSalaJogo {
+  id: string;
+  minha: boolean;
+  nome: string;
+  texto: string;
+}
+
+export type MotivoChatIndisponivel = "a_espera" | "so_adultos" | "denunciado" | "fechado";
+
+export interface SalaJogo {
+  codigo: string;
+  estado: "a_aguardar" | "em_curso" | "terminada" | "abandonada";
+  fase: "pergunta" | "revelacao" | null;
+  ronda: number;
+  rondas: number;
+  desempate: number;
+  sou_anfitriao: boolean;
+  jogadores: JogadorSalaJogo[];
+  pergunta: PerguntaJogoPublica | null;
+  tempo_por_pergunta: number;
+  // Pelo relógio do servidor; o aparelho só faz a contagem entre pedidos.
+  segundos_restantes: number | null;
+  // Na revelação: quanto falta para a pergunta seguinte (ou para o fim).
+  segundos_ate_proxima: number | null;
+  minha_resposta: RespostaOpcaoJogo | null;
+  revelacao: { resposta_correta: RespostaOpcaoJogo; explicacao: string | null } | null;
+  motivo_fim: "completa" | "desistencia" | null;
+  premio: { moedas_ganhas: number; limite_diario_atingido: boolean } | null;
+  chat: {
+    disponivel: boolean;
+    motivo: MotivoChatIndisponivel | null;
+    eu_adulto: boolean;
+    mensagens: MensagemSalaJogo[];
+  };
+}
+
+// Multijogador Online: duas pessoas, cada uma no seu aparelho, na mesma sala
+// (entra-se pelo código). Exige sessão. O aparelho pergunta pelo estado de
+// segundo a segundo (`estado`); tudo o que decide a partida é do servidor.
+export const jogoOnlineApi = {
+  criar: () => pedido<SalaJogo>("/jogo/salas", { method: "POST" }),
+  entrar: (codigo: string) =>
+    pedido<SalaJogo>(`/jogo/salas/${encodeURIComponent(codigo)}/entrar`, { method: "POST" }),
+  comecar: (codigo: string) => pedido<SalaJogo>(`/jogo/salas/${codigo}/comecar`, { method: "POST" }),
+  estado: (codigo: string) => pedido<SalaJogo>(`/jogo/salas/${codigo}`),
+  responder: (codigo: string, perguntaId: string, resposta: RespostaOpcaoJogo) =>
+    pedido<SalaJogo>(`/jogo/salas/${codigo}/responder`, {
+      method: "POST",
+      body: JSON.stringify({ pergunta_id: perguntaId, resposta }),
+    }),
+  /** Em jogo conta como desistência: o outro jogador ganha. */
+  sair: (codigo: string) => pedido<void>(`/jogo/salas/${codigo}/sair`, { method: "POST" }),
+  /** Chat da sala: só entre dois adultos, e depois de passar o filtro. */
+  enviarMensagem: (codigo: string, texto: string) =>
+    pedido<SalaJogo>(`/jogo/salas/${codigo}/mensagens`, { method: "POST", body: JSON.stringify({ texto }) }),
+  /** Fecha o chat da sala para os dois e avisa os admins. */
+  denunciarChat: (codigo: string) => pedido<SalaJogo>(`/jogo/salas/${codigo}/denunciar`, { method: "POST" }),
+};
+
 export const jogoApi = {
   // `patamar` (1-15) é só do jogo -- o backend mapeia-o para um dos 3 níveis
   // de dificuldade da reserva de perguntas (ver nivel_dificuldade_do_patamar).
@@ -1828,4 +2053,53 @@ export const jogoApi = {
     pedido<PedidoLojaAdmin>(`/admin/jogo/pedidos-loja/${id}/aprovar`, { method: "POST" }),
   rejeitarPedidoLoja: (id: string) =>
     pedido<PedidoLojaAdmin>(`/admin/jogo/pedidos-loja/${id}/rejeitar`, { method: "POST" }),
+};
+
+// --- Números de impacto (página inicial) ----------------------------------------
+// Contagens reais da base de dados, públicas e sem dados pessoais.
+
+export interface NumerosImpacto {
+  rastreios: number;
+  sessoes_treino: number;
+  encaminhamentos: number;
+}
+
+export const impactoApi = {
+  numeros: () => pedido<NumerosImpacto>("/impacto/numeros"),
+};
+
+// --- Apoio mensal (Kamba Mensal) -------------------------------------------------
+// Uma promessa de doação recorrente ligada à conta. Não há débito automático:
+// todos os meses a pessoa envia o comprovativo da transferência, como numa
+// doação única, e a API lembra-a por email quando passa um mês sem nenhum.
+
+export interface ApoioMensalPublico {
+  id: string;
+  valor_mensal_kz: number;
+  estado: "ativo" | "cancelado";
+  criado_em: string;
+  ultimo_comprovativo_em: string | null;
+  meses_com_comprovativo: number;
+  /** Já passou um mês desde o último comprovativo (ou desde a adesão). */
+  renovacao_em_falta: boolean;
+}
+
+export const apoiosMensaisApi = {
+  /** `null` quando a conta não tem apoio mensal activo. */
+  meu: () => pedido<ApoioMensalPublico | null>("/apoios-mensais/meu"),
+
+  aderir: (valorMensalKz: number) =>
+    pedido<ApoioMensalPublico>("/apoios-mensais", {
+      method: "POST",
+      body: JSON.stringify({ valor_mensal_kz: valorMensalKz }),
+    }),
+
+  /** `comprovativoChave` vem de `comprovativosApi.preparar` + upload directo ao R2. */
+  enviarComprovativo: (comprovativoChave: string) =>
+    pedido<ApoioMensalPublico>("/apoios-mensais/meu/comprovativos", {
+      method: "POST",
+      body: JSON.stringify({ comprovativo_chave: comprovativoChave }),
+    }),
+
+  cancelar: () => pedido<void>("/apoios-mensais/meu", { method: "DELETE" }),
 };
