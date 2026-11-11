@@ -327,14 +327,19 @@ const Apoiar = () => {
           </div>
           <div className="container relative">
             <BackButton />
-            <div className="max-w-3xl mx-auto text-center mt-6">
+            {/* O globo da fotografia não está ao centro: o seu eixo fica a 48,2% da
+                largura (355 de 736 px). A partir de lg a capa tem a proporção da
+                fotografia, por isso o bloco desloca-se 1,8vw para a esquerda e fica
+                centrado no globo, com a mesma margem dos dois lados. */}
+            <div className="max-w-3xl mx-auto text-center mt-6 lg:-translate-x-[1.8vw]">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary-foreground/10 backdrop-blur mb-6">
                 <Heart className="w-8 h-8 text-gold" />
               </div>
               <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-4">{tr("Apoiar.facaADiferenca")}</h1>
               {/* A partir de lg a capa cresce com a largura do ecrã, e o globo com ela:
-                  o texto mede-se em vw para ficar dentro do globo em qualquer largura. */}
-              <p className="mx-auto text-balance text-lg md:text-xl md:max-w-xl lg:max-w-[38vw] text-primary-foreground/85 leading-relaxed">
+                  o texto mede-se em vw (32vw, cerca de 2/3 do globo à altura do texto)
+                  para ficar dentro do globo, com folga, em qualquer largura. */}
+              <p className="mx-auto text-balance text-lg md:text-xl lg:text-lg xl:text-xl md:max-w-xl lg:max-w-[32vw] text-primary-foreground/85 leading-relaxed">
                 {tr("Apoiar.escolhaComoQuerContribuir")}
               </p>
             </div>
