@@ -678,6 +678,12 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   longe das sessões anteriores (`recordeDaGaiola`), mostrada na barra enquanto os cartões
   se afastam e no fim de cada ronda ("Nova marca"). Antes de trocar o que um exercício é,
   confirmar com o dono do projecto que é isso que ele quer.
+- **Pássaro e gaiola com menos perguntas (2026-11-11).** Antes de começar há um só botão
+  ("Já vejo o pássaro dentro da gaiola"), que arranca logo o movimento; as respostas "vejo
+  dois / vejo quatro" e as dicas só aparecem a quem toca em "Não estou a conseguir". A
+  pergunta do sol e da nuvem (supressão) faz-se uma vez por sessão, no fim da primeira
+  ronda, e grava-se como antes (`respostas.falta`, `fusao`). A escolha do nível sai do ecrã
+  depois da primeira resposta.
 - **Régua Invisível (2026-10-20): unidades reais sem câmara.** Cartão de banco -> px/mm
   (`calibracao.ts`); ponto cego -> distância olhos-ecrã (`pontoCego.ts`, Li et al. 2020);
   afinação dos óculos vermelho-ciano -> fuga de cor de cada filtro (`anaglifo.ts`). Duas
