@@ -55,6 +55,24 @@ export const PRATICA_SEGUIDAS = 2;
 /** Falhas a praticar depois das quais se mostram as dicas outra vez. */
 export const FALHAS_PARA_DICAS = 4;
 
+/** A distância a que os tamanhos de base (quadro de 20 mm, cartão de 22 mm) foram pensados. */
+export const DISTANCIA_REFERENCIA_MM = 400;
+/** Cada desenho ocupa, no máximo, esta fracção da largura do palco (têm de caber dois, e de se afastar). */
+export const FRACCAO_MAX_DO_PALCO = 0.25;
+
+/**
+ * Lado de cada desenho (mm) a esta distância e neste palco. O tamanho de base
+ * é para 40 cm; mais longe, o desenho cresce para ocupar o mesmo ângulo de
+ * visão -- a 1 metro, num computador, os 20 mm de sempre viam-se minúsculos
+ * ("não se consegue ver, até para quem tem bons olhos", 2026-11-11). Nunca
+ * abaixo da base, nem acima do que o palco deixa.
+ */
+export function ladoDoEstimulo(baseMm: number, distanciaMm: number, larguraPalcoMm: number): number {
+  const angular = (baseMm * distanciaMm) / DISTANCIA_REFERENCIA_MM;
+  const tecto = larguraPalcoMm > 0 ? larguraPalcoMm * FRACCAO_MAX_DO_PALCO : baseMm;
+  return Math.round(Math.max(baseMm, Math.min(angular, tecto)));
+}
+
 export type ModoOlhoMagico = "cruzar" | "relaxar";
 export const sentidoDoModo = (m: ModoOlhoMagico): Sentido => (m === "cruzar" ? "convergencia" : "divergencia");
 

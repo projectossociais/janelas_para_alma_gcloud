@@ -27,6 +27,7 @@ import {
   alargarRampa,
   diasSeguidosAPrimeira,
   gerarParPano,
+  ladoDoEstimulo,
   guardarNivelOlhoMagico,
   guardarModoOlhoMagico,
   lerModoOlhoMagico,
@@ -118,6 +119,22 @@ const novaForma = (anterior: number | null) => {
   return { forma, par: gerarParPano(FORMAS_PANO[forma]) };
 };
 
+const CHAVE_COMO_VISTO = "jpa.visao.olhoMagico.comoVisto";
+const comoJaVisto = (): boolean => {
+  try {
+    return window.localStorage.getItem(CHAVE_COMO_VISTO) === "1";
+  } catch {
+    return false;
+  }
+};
+const marcarComoVisto = () => {
+  try {
+    window.localStorage.setItem(CHAVE_COMO_VISTO, "1");
+  } catch {
+    // armazenamento bloqueado: abre outra vez da próxima
+  }
+};
+
 const aoAlto = () => typeof window !== "undefined" && window.innerWidth < window.innerHeight;
 
 type Fase = "praticar" | "dicas" | "rampas";
@@ -146,10 +163,12 @@ export const TarefaPano = ({
 
   const [modo, setModo] = useState<ModoOlhoMagico>(() => lerModoOlhoMagico());
   const sentido = sentidoDoModo(modo);
-  const todos = useMemo(() => niveisOlhoMagico(sentido, distanciaMm), [distanciaMm, sentido]);
+  // O quadro cresce com a distância e com o ecrã (mesmo ângulo de visão que 20 mm a 40 cm).
+  const ladoMm = ladoDoEstimulo(QUADRO_PANO_MM, distanciaMm, larguraCss / pxPorMm);
+  const todos = useMemo(() => niveisOlhoMagico(sentido, distanciaMm, ladoMm), [distanciaMm, ladoMm, sentido]);
   const niveis = useMemo(
-    () => (larguraCss > 0 ? niveisQueCabem(todos, distanciaMm, larguraCss / pxPorMm) : []),
-    [distanciaMm, larguraCss, pxPorMm, todos],
+    () => (larguraCss > 0 ? niveisQueCabem(todos, distanciaMm, larguraCss / pxPorMm, ladoMm) : []),
+    [distanciaMm, ladoMm, larguraCss, pxPorMm, todos],
   );
 
   const [fase, setFase] = useState<Fase>("praticar");
@@ -160,6 +179,9 @@ export const TarefaPano = ({
   const [apresentacao, setApresentacao] = useState(() => novaForma(null));
   const { forma, par } = apresentacao;
   const [aviso, setAviso] = useState<{ certo: boolean; forma: FormaPano } | null>(null);
+  /** "Como fazer" abre sozinho só da primeira vez neste aparelho; depois fica recolhido. */
+  const [comoAberto, setComoAberto] = useState(() => !comoJaVisto());
+  useEffect(() => marcarComoVisto(), []);
   const rampas = useRef<Record<Sentido, RampaEmDelta[]>>({ convergencia: [], divergencia: [] });
   const [ultima, setUltima] = useState<{ sentido: Sentido; r: RampaEmDelta } | null>(null);
 
@@ -198,7 +220,7 @@ export const TarefaPano = ({
         modo_fusao: modo,
         pontes: { convergencia: conv, divergencia: div },
         sentido_limiar: sentidoLimiar,
-        quadro_mm: QUADRO_PANO_MM,
+        quadro_mm: ladoMm,
       },
     };
   };
@@ -285,7 +307,7 @@ export const TarefaPano = ({
     );
 
   const delta = todos[indice] ?? todos[0];
-  const ladoCss = QUADRO_PANO_MM * pxPorMm;
+  const ladoCss = ladoMm * pxPorMm;
   const separacaoCss = separacaoMm(delta, distanciaMm) * pxPorMm;
   const alturaCss = Math.round(PONTOS_PX + ladoCss + 14);
   const centro = (larguraCss - 2) / 2;
@@ -295,34 +317,6 @@ export const TarefaPano = ({
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <div className="flex flex-col items-center gap-1">
-        <div role="radiogroup" aria-label={t("Visao.olhoMagicoModo")} className="flex flex-wrap justify-center gap-2">
-          {MODOS.map((m) => (
-            <Button
-              key={m}
-              role="radio"
-              aria-checked={modo === m}
-              size="sm"
-              variant={modo === m ? "default" : "outline"}
-              className={cn(modo === m && "bg-navy text-navy-foreground hover:bg-navy/90")}
-              onClick={() => mudarModo(m)}
-            >
-              {m === "cruzar" ? t("Visao.olhoMagicoCruzar") : t("Visao.olhoMagicoRelaxar")}
-            </Button>
-          ))}
-        </div>
-        <p className="max-w-md text-center text-xs text-muted-foreground">{t("Visao.olhoMagicoNotaEsotropia")}</p>
-      </div>
-
-      {fase === "praticar" && (
-        <details open className="w-full max-w-md rounded-lg border border-border bg-muted/30 p-3 text-sm">
-          <summary className="cursor-pointer font-semibold text-foreground">{t("Visao.olhoMagicoComoFazer")}</summary>
-          <div className="mt-2">
-            <ComoFazer modo={modo} />
-          </div>
-        </details>
-      )}
-
       <p className="text-center text-sm text-muted-foreground" aria-live="polite">
         {esperaRodar || foraDoEcra
           ? t("Visao.olhoMagicoRodar")
@@ -361,17 +355,6 @@ export const TarefaPano = ({
         )}
       </div>
 
-      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-        <span>{t("Visao.olhoMagicoSeparacao", { delta: rotuloDelta(delta) })}</span>
-        {aviso && (
-          <span className={cn("font-medium", aviso.certo ? "text-teal" : "text-foreground")}>
-            {aviso.certo
-              ? t("Visao.olhoMagicoCerto", { forma: t(CHAVES_FORMA[aviso.forma]).toLowerCase() })
-              : t("Visao.olhoMagicoEra", { forma: t(CHAVES_FORMA[aviso.forma]).toLowerCase() })}
-          </span>
-        )}
-      </div>
-
       {(esperaRodar || foraDoEcra) && (
         <p className="flex items-center gap-2 rounded-lg bg-gold/10 px-3 py-2 text-sm font-medium text-foreground">
           <RotateCw className="h-4 w-4 shrink-0" aria-hidden />
@@ -405,11 +388,49 @@ export const TarefaPano = ({
         </Button>
       </div>
 
+      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        <span>{t("Visao.olhoMagicoSeparacao", { delta: rotuloDelta(delta) })}</span>
+        {aviso && (
+          <span className={cn("font-medium", aviso.certo ? "text-teal" : "text-foreground")}>
+            {aviso.certo
+              ? t("Visao.olhoMagicoCerto", { forma: t(CHAVES_FORMA[aviso.forma]).toLowerCase() })
+              : t("Visao.olhoMagicoEra", { forma: t(CHAVES_FORMA[aviso.forma]).toLowerCase() })}
+          </span>
+        )}
+      </div>
+
       {ultima && (
         <p className="text-center text-xs text-muted-foreground">
           {t("Visao.pontesUltima", { resultado: rotuloSentidoPontes(ultima.sentido, resumirRampas([ultima.r])) })}
         </p>
       )}
+      {/* Recolhido por baixo do estímulo (até 2026-11-11 ficava aberto por cima e empurrava os quadros para fora do ecrã). */}
+      <details open={comoAberto} onToggle={(e) => setComoAberto(e.currentTarget.open)} className="w-full max-w-md rounded-lg border border-border bg-muted/30 p-3 text-sm">
+        <summary className="cursor-pointer font-semibold text-foreground">{t("Visao.olhoMagicoComoFazer")}</summary>
+        <div className="mt-2">
+          <ComoFazer modo={modo} />
+        </div>
+      </details>
+
+      <div className="flex flex-col items-center gap-1">
+        <div role="radiogroup" aria-label={t("Visao.olhoMagicoModo")} className="flex flex-wrap justify-center gap-2">
+          {MODOS.map((m) => (
+            <Button
+              key={m}
+              role="radio"
+              aria-checked={modo === m}
+              size="sm"
+              variant={modo === m ? "default" : "outline"}
+              className={cn(modo === m && "bg-navy text-navy-foreground hover:bg-navy/90")}
+              onClick={() => mudarModo(m)}
+            >
+              {m === "cruzar" ? t("Visao.olhoMagicoCruzar") : t("Visao.olhoMagicoRelaxar")}
+            </Button>
+          ))}
+        </div>
+        <p className="max-w-md text-center text-xs text-muted-foreground">{t("Visao.olhoMagicoNotaEsotropia")}</p>
+      </div>
+
     </div>
   );
 };
@@ -447,7 +468,12 @@ export const TarefaOlhoMagico = ({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Só antes de começar: depois, o ecrã é do exercício (o nível fica fixo na sessão). */}
+      {nivel === "gaiola" ? (
+        <TarefaGaiola api={apiComInicio} ctx={ctx} resultado={resultado} />
+      ) : (
+        <TarefaPano api={apiComInicio} ctx={ctx} resultado={resultado} />
+      )}
+      {/* Por baixo do exercício, e só antes de começar (o nível fica fixo na sessão). */}
       {!comecou && (
         <div className="flex flex-col items-center gap-1">
           <div role="radiogroup" aria-label={t("Visao.olhoMagicoNivel")} className="flex flex-wrap justify-center gap-2">
@@ -476,11 +502,6 @@ export const TarefaOlhoMagico = ({
                   : null}
           </p>
         </div>
-      )}
-      {nivel === "gaiola" ? (
-        <TarefaGaiola api={apiComInicio} ctx={ctx} resultado={resultado} />
-      ) : (
-        <TarefaPano api={apiComInicio} ctx={ctx} resultado={resultado} />
       )}
     </div>
   );

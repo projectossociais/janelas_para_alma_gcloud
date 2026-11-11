@@ -684,6 +684,15 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   pergunta do sol e da nuvem (supressão) faz-se uma vez por sessão, no fim da primeira
   ronda, e grava-se como antes (`respostas.falta`, `fusao`). A escolha do nível sai do ecrã
   depois da primeira resposta.
+- **Olho Mágico reestruturado (2026-11-11, depois de novo teste do dono do projecto).** (1) Os
+  desenhos crescem com a distância: `ladoDoEstimulo` mantém o ângulo de visão dos 20/22 mm a
+  40 cm (a 1 m ficam com 50/55 mm), até um quarto do palco; a 1 m num computador viam-se
+  minúsculos. O lado usado vai em `sinais.quadro_mm` / `cartao_mm`. (2) O estímulo e as
+  respostas vêm primeiro; "Como fazer" fica recolhido por baixo (abre sozinho só da primeira
+  vez no aparelho) e as escolhas de modo e de nível passam para o fim. (3) No pássaro e
+  gaiola, o ecrã diz o objectivo e mostra uma animação do que se vê (`DemoOQueVe`): **no
+  ecrã nada se mexe até tocar no botão; é nos olhos que o pássaro entra na gaiola.** Sem
+  esta frase, quem testava ficava à espera de ver o pássaro andar.
 - **Régua Invisível (2026-10-20): unidades reais sem câmara.** Cartão de banco -> px/mm
   (`calibracao.ts`); ponto cego -> distância olhos-ecrã (`pontoCego.ts`, Li et al. 2020);
   afinação dos óculos vermelho-ciano -> fuga de cor de cada filtro (`anaglifo.ts`). Duas
