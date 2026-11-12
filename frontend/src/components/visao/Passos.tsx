@@ -20,17 +20,25 @@ import { olhoParaMedir } from "@/lib/visao/pontoCego";
 
 export { BotaoContinuar, EcraPasso };
 
-/** Primeiro passo de cada exercício. */
-export const PassoBrilho = ({ aoContinuar }: { aoContinuar: () => void }) => {
+/**
+ * Por baixo dos passos de preparação: o brilho numa linha (até 2026-11-11 era
+ * um ecrã inteiro) e, com o ecrã já calibrado, a forma de o calibrar de novo
+ * (o passo do cartão salta sozinho).
+ */
+export const NotaPreparacao = ({ aoCalibrarDeNovo }: { aoCalibrarDeNovo?: () => void }) => {
   const { t } = useTranslation();
   return (
-    <EcraPasso
-      icone={<Sun className="h-7 w-7" />}
-      titulo={t("Visao.brilhoTitulo")}
-      accao={<BotaoContinuar aoClicar={aoContinuar} />}
-    >
-      <p className="text-sm text-muted-foreground">{t("Visao.brilhoTexto")}</p>
-    </EcraPasso>
+    <div className="mx-auto mt-6 flex max-w-xl flex-col items-center gap-1 text-center text-xs text-muted-foreground">
+      <p className="flex items-center gap-1.5">
+        <Sun className="h-3.5 w-3.5 shrink-0" aria-hidden />
+        {t("Visao.brilhoLinha")}
+      </p>
+      {aoCalibrarDeNovo && (
+        <button type="button" onClick={aoCalibrarDeNovo} className="underline underline-offset-2 hover:text-foreground">
+          {t("Visao.calibrarEcraDeNovo")}
+        </button>
+      )}
+    </div>
   );
 };
 
@@ -47,15 +55,18 @@ const LARGURA_JANELA_CARTAO_AO_ALTO = 640;
  */
 export const PassoCalibracao = ({
   calibracao,
+  forcar = false,
   aoGuardar,
   aoContinuar,
 }: {
   calibracao: Calibracao | null;
+  /** Abre logo a moldura, mesmo com o ecrã já calibrado ("calibrar de novo"). */
+  forcar?: boolean;
   aoGuardar: (c: Calibracao) => void;
   aoContinuar: () => void;
 }) => {
   const { t } = useTranslation();
-  const [aRecalibrar, setARecalibrar] = useState(calibracao === null);
+  const [aRecalibrar, setARecalibrar] = useState(calibracao === null || forcar);
   const [janela, setJanela] = useState(() => (typeof window === "undefined" ? 1024 : window.innerWidth));
   const aoAlto = janela < LARGURA_JANELA_CARTAO_AO_ALTO;
   const ladoHorizontalMm = aoAlto ? CARTAO_ALTURA_MM : CARTAO_LARGURA_MM;
@@ -177,7 +188,7 @@ export const PassoOculos = ({
 };
 
 /** Pequeno desenho de dois olhos com um tapado. */
-const DoisOlhos = ({ tapado }: { tapado: Olho }) => (
+export const DoisOlhos = ({ tapado }: { tapado: Olho }) => (
   <svg viewBox="0 0 120 50" className="h-14 w-32" aria-hidden>
     {/* O olho direito do utilizador aparece à esquerda de quem o vê de frente. */}
     {(["direito", "esquerdo"] as const).map((o, i) => {
@@ -198,8 +209,9 @@ const DoisOlhos = ({ tapado }: { tapado: Olho }) => (
 );
 
 /**
- * "Tape o olho X". Nos testes chega a palma da mão; nos treinos o outro
- * olho tem de estar tapado com tapa-olho (a mão cansa e deixa espreitar).
+ * "Tape o olho X". Nos testes, a palma da mão; nos treinos, a mão, um pano ou
+ * o tapa-olho do médico (sem óculos nem material primeiro, decisão de
+ * 2026-10-21 -- até 2026-11-11 este passo dizia que a mão não bastava).
  */
 export const PassoTaparOlho = ({
   olhoATapar,
@@ -215,9 +227,6 @@ export const PassoTaparOlho = ({
   return (
     <EcraPasso icone={<DoisOlhos tapado={olhoATapar} />} titulo={titulo} accao={<BotaoContinuar aoClicar={aoContinuar} />}>
       <p className="text-sm text-muted-foreground">{tapaOlho ? t("Visao.tapaOlhoTexto") : t("Visao.taparComAMao")}</p>
-      {tapaOlho && (
-        <p className="rounded-lg bg-gold/10 px-3 py-2 text-sm font-medium text-foreground">{t("Visao.aMaoNaoBasta")}</p>
-      )}
     </EcraPasso>
   );
 };
@@ -292,7 +301,7 @@ export const PassoDistancia = ({
 
 /**
  * Sessão rápida: da segunda vez em diante, um só ecrã com as escolhas da
- * última vez em vez dos 5-6 passos de preparação. O aviso de segurança do
+ * última vez em vez dos passos de preparação. O aviso de segurança do
  * treino (se houver) aparece sempre -- não é uma escolha que se lembre.
  */
 export const PassoRapido = ({

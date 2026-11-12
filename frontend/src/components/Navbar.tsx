@@ -45,7 +45,8 @@ interface MenuSuspensoProps {
   itens: readonly ItemMenu[];
   aberto: boolean;
   onAbrir: (id: string) => void;
-  onFechar: () => void;
+  /** Fecha o menu `id`, se ainda for ele o aberto. */
+  onFechar: (id: string) => void;
   destaque?: boolean;
 }
 
@@ -64,11 +65,14 @@ const MenuSuspenso = ({ id, rotulo, itens, aberto, onAbrir, onFechar, destaque }
   // (mantém aberto) em vez de fechar o que a pessoa acabou de abrir.
   const abertoPorPassagem = useRef(false);
   const idPainel = `menu-${id}`;
+  // Fecha só este menu: um fecho agendado ao sair dele não pode fechar o menu vizinho
+  // para onde o rato acabou de passar (bug real, 2026-11-11).
+  const fechar = () => onFechar(id);
 
   const cancelarFecho = () => window.clearTimeout(temporizador.current);
   const agendarFecho = () => {
     cancelarFecho();
-    temporizador.current = window.setTimeout(onFechar, ATRASO_FECHAR_MS);
+    temporizador.current = window.setTimeout(fechar, ATRASO_FECHAR_MS);
   };
   useEffect(() => () => window.clearTimeout(temporizador.current), []);
 
@@ -88,7 +92,7 @@ const MenuSuspenso = ({ id, rotulo, itens, aberto, onAbrir, onFechar, destaque }
     const actual = links.indexOf(document.activeElement as HTMLAnchorElement);
     if (e.key === "Escape") {
       e.preventDefault();
-      onFechar();
+      fechar();
       botao.current?.focus();
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
@@ -109,7 +113,7 @@ const MenuSuspenso = ({ id, rotulo, itens, aberto, onAbrir, onFechar, destaque }
       }}
       onMouseLeave={agendarFecho}
       onBlur={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) onFechar();
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) fechar();
       }}
     >
       <button
@@ -118,7 +122,7 @@ const MenuSuspenso = ({ id, rotulo, itens, aberto, onAbrir, onFechar, destaque }
         aria-expanded={aberto}
         aria-controls={idPainel}
         onClick={() => {
-          if (aberto && !abertoPorPassagem.current) onFechar();
+          if (aberto && !abertoPorPassagem.current) fechar();
           else onAbrir(id);
           abertoPorPassagem.current = false;
         }}
@@ -146,7 +150,7 @@ const MenuSuspenso = ({ id, rotulo, itens, aberto, onAbrir, onFechar, destaque }
             <li key={item.caminho}>
               <Link
                 to={localizar(item.caminho)}
-                onClick={onFechar}
+                onClick={fechar}
                 className="block rounded-lg px-3 py-2.5 transition-colors hover:bg-marca-celeste/25 focus-visible:bg-marca-celeste/25 focus-visible:outline-none"
               >
                 <span className="block text-sm font-semibold text-marca-marinho">{t(item.rotulo)}</span>
@@ -174,7 +178,7 @@ const Navbar = () => {
   const { profile } = useProfile();
   const bannerAltura = useSiteBannerAltura();
 
-  const fecharMenu = useCallback(() => setMenuAberto(null), []);
+  const fecharMenu = useCallback((id: string) => setMenuAberto((actual) => (actual === id ? null : actual)), []);
 
   // Mudar de página fecha qualquer menu aberto.
   useEffect(() => {
