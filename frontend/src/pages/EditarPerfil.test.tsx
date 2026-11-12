@@ -153,3 +153,17 @@ describe("EditarPerfil — foto de perfil", () => {
     expect(toastError).not.toHaveBeenCalled();
   });
 });
+
+describe("EditarPerfil — textos", () => {
+  it("a ajuda da foto diz os mesmos tipos e o mesmo tamanho que a validação aceita", () => {
+    render(<EditarPerfil />, { wrapper: MemoryRouter });
+    // A validação aceita PNG, JPEG e WebP até 5 MB (handleAvatarChange).
+    expect(screen.getByText("PNG, JPG ou WebP. Máximo 5 MB.")).toBeInTheDocument();
+  });
+
+  it("o botão de gravar diz 'Guardar', como o resto do site", () => {
+    render(<EditarPerfil />, { wrapper: MemoryRouter });
+    expect(screen.getByRole("button", { name: /guardar alterações/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /salvar/i })).not.toBeInTheDocument();
+  });
+});
