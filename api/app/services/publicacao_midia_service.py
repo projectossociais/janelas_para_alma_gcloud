@@ -1,4 +1,4 @@
-"""Upload de fotos de uma publicação (capa + galeria) — mesmo padrão de
+"""Upload de fotos e vídeos de uma publicação (capa + galeria) — mesmo padrão de
 `upload_service.py` (avatar): a API só assina um URL de `PUT`, o browser
 envia os bytes directamente ao R2, e só depois a API confirma que a chave
 pertence mesmo a esta publicação antes de a gravar. Nunca os bytes de uma
@@ -17,6 +17,15 @@ EXTENSAO_POR_CONTENT_TYPE = {
     "image/png": "png",
     "image/jpeg": "jpg",
     "image/webp": "webp",
+}
+
+# Vídeos só na galeria (2026-11-09), nunca na capa -- a capa aparece como
+# imagem na lista de publicações e na partilha. MP4 é o que os telemóveis
+# (WhatsApp incluído) gravam e todos os browsers tocam; WebM fica como
+# alternativa aberta.
+EXTENSAO_DE_VIDEO_POR_CONTENT_TYPE = {
+    "video/mp4": "mp4",
+    "video/webm": "webm",
 }
 
 
@@ -53,8 +62,12 @@ class PublicacaoMidiaService:
         base = obter_settings().r2_public_base_url.rstrip("/")
         return f"{base}/{chave}"
 
-    def preparar(self, publicacao_id: str, content_type: str) -> MidiaPreparada:
+    def preparar(
+        self, publicacao_id: str, content_type: str, permitir_video: bool = False
+    ) -> MidiaPreparada:
         extensao = EXTENSAO_POR_CONTENT_TYPE.get(content_type)
+        if extensao is None and permitir_video:
+            extensao = EXTENSAO_DE_VIDEO_POR_CONTENT_TYPE.get(content_type)
         if extensao is None:
             raise TipoDeFicheiroNaoPermitidoError(content_type)
 

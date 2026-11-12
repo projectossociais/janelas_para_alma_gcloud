@@ -8,8 +8,20 @@
 
 export type FrequenciaDoacao = "unica" | "mensal";
 
-/** Valores sugeridos, em Kz. */
-export const VALORES_DOACAO_KZ = [5_000, 10_000, 25_000, 50_000, 100_000, 250_000] as const;
+/**
+ * Valores sugeridos, em Kz. Diferentes por frequência: quem doa uma vez
+ * costuma dar mais de uma só vez; o mensal é um valor que se repete todos
+ * os meses, por isso começa mais baixo.
+ */
+export const VALORES_DOACAO_KZ: Record<FrequenciaDoacao, readonly number[]> = {
+  unica: [10_000, 25_000, 50_000, 100_000, 250_000, 500_000],
+  mensal: [2_500, 5_000, 10_000, 15_000, 25_000, 50_000],
+};
+
+/** `?modo=unica|mensal` (links "Doar Uma Vez" / "Doar Mensalmente" do menu e "Doar Agora"). */
+export function frequenciaDoModo(modo: string | null): FrequenciaDoacao | null {
+  return modo === "unica" || modo === "mensal" ? modo : null;
+}
 
 export const VALOR_MINIMO_KZ = 1_000;
 

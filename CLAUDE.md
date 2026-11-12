@@ -171,6 +171,24 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   URL público continuam a abrir tal como estão (nenhum registo é reescrito; os ficheiros
   antigos continuam no bucket público). Sem o bucket configurado, fica o comportamento antigo
 - **Rede de clínicas parceiras**, doações, programa de voluntariado, painel administrativo
+- **Registo de parceiros (empresas)** (2026-11-10, pedido do dono do projecto) — página
+  pública `/parceiros/registo` (`pages/RegistoParceiro.tsx`), aberta pelo botão "Registar a
+  minha empresa" de `/parceiros` (as secções de benefícios e do convite passaram a ser
+  visíveis a visitantes sem conta). Mostra os dados legais da sociedade (firma, NIF,
+  matrícula 47643-26/261001, capital, objecto; **nunca** a morada da sede nem os sócios) e
+  recolhe os da empresa candidata: denominação, NIF, tipo (lista fechada), representante,
+  proposta e até 5 documentos (PDF/PNG/JPEG). Os documentos sobem directos ao R2
+  **privado** (`r2_bucket_comprovativos`, prefixo `parcerias/`; sem o bucket não há upload,
+  o registo segue sem documentos). `POST /parcerias/candidaturas`
+  (`CandidaturaParceriaService`) grava em `candidaturas_parceria`, envia à caixa da equipa
+  (`EMAIL_EQUIPA`) os dados com os documentos em anexo, e à empresa uma confirmação com um
+  **comprovativo de registo em PDF** (`services/comprovativo_parceria.py`; diz que não é
+  contrato). Os emails são melhor esforço; a gravação nunca se perde por causa deles. Uma
+  chave fora de `parcerias/` é recusada (403): o bucket guarda comprovativos de pagamento de
+  outras pessoas. Substituiu o formulário curto que ia por formsubmit.co (`PartnerDialog`,
+  apagado). Ainda sem ecrã de admin: a equipa trata os pedidos pelo email. Logótipo da
+  Olhar Alinhado no PDF: pôr o PNG em `api/app/assets/logo-olhar-alinhado.png` (sem ele sai
+  o da plataforma)
 - **Jogo "Inclusivamente"** (`frontend/src/pages/jogo/`, API `routers/jogo.py`) — quiz com
   economia virtual: moedas (ganhas a jogar) e diamantes. Saldo sempre decidido pela API
   (`JogoService`, `LojaJogoService`); o frontend só espelha em `CarteiraJogoContext`. A Loja
@@ -266,6 +284,54 @@ Plataforma angolana de saúde visual focada em estrabismo e ambliopia:
   (`perfis_jogador.patamares_superados_total`): 0-15 Iniciante, 16-45 Aprendiz, 46-90
   Conhecedor, 91-150 Especialista, 151+ Mestre da Visão (`estatisticas_jogador_service.py`,
   exposto em `GET /jogo/perfil/estatisticas`)
+  **Multijogador Local** (desde 2026-11-10; `/jogo-curiosidades/local`, `pages/jogo/JogoLocal.tsx`):
+  2 pessoas à vez no mesmo aparelho (só 2, decisão do dono do projecto: com mais, o ecrã
+  do telemóvel ficava comprido demais). 5 rondas em que os dois respondem (ninguém é
+  eliminado), dificuldade a subir, 100 pontos por acerto mais bónus de rapidez, 30 s por
+  pergunta; empate = até 3 rondas de desempate,
+  depois vitória partilhada. Turnos, pontos e empates são lógica pura em
+  `frontend/src/lib/jogo/partidaLocal.ts`; **os nomes e os pontos nunca saem do aparelho**
+  (nem se gravam). Com sessão (site português), a pergunta e a validação são do servidor
+  (`routers/jogo_local.py`, `JogoLocalService`, tabela `partidas_locais_jogo`: uma em curso
+  por conta, só a pergunta entregue se pode responder, nunca duas vezes) e a partida paga
+  **moedas à conta do aparelho**: 10 por acerto de qualquer jogador, até 100 por partida, só
+  com todas as rondas jogadas, e no máximo **400 por dia UTC** (prémios criados a pedido do
+  dono do projecto, 2026-11-10; constantes em `jogo_local_service.py`; o tecto existe porque
+  no mesmo aparelho uma pessoa pode jogar por todos). Sem diamantes. O crédito grava-se com
+  a partida, uma única vez, com a linha do perfil bloqueada. Sem sessão, no site inglês, ou
+  se o servidor não abrir a partida, joga-se com a reserva local **sem prémio**, e o ecrã
+  diz isso.
+  **Multijogador Online** (desde 2026-11-10; `/jogo-curiosidades/online`, `pages/jogo/JogoOnline.tsx`):
+  duas pessoas, cada uma no seu aparelho, numa **sala por código** (6 caracteres; nunca
+  emparelhamento com desconhecidos). Mesmo formato do local (5 rondas, 30 s, pontos por acerto e
+  rapidez, até 3 desempates), mas os dois respondem à mesma pergunta ao mesmo tempo. Só com
+  sessão e só no site português. Tudo é decidido pelo servidor (`routers/jogo_online.py`,
+  `SalaJogoService`, tabelas `salas_jogo` e `jogadores_sala_jogo`): pergunta, prazo (relógio
+  do servidor), pontos, vencedor e prémio; a resposta certa e a do adversário só saem com a
+  ronda fechada. **Sem WebSockets:** cada aparelho pergunta pelo estado de 0,7 em 0,7 s em jogo
+  (`GET /jogo/salas/{codigo}`, pelo `/api` do Vercel, com o cookie de sessão); não há relógio
+  no servidor -- o estado avança quando um pedido chega, por funções puras aplicadas com a
+  linha da sala bloqueada (`SalaJogoRepository.atualizar`, `FOR UPDATE`). Esse pedido é também
+  o sinal de vida: 25 s sem ele, em jogo, é desistência (o outro ganha); sair também. Prémio
+  por conta: 10 moedas por acerto próprio + 30 para o vencedor (15 a cada um na vitória
+  partilhada), até **300 por dia UTC**; quem desiste não recebe, quem fica recebe só os
+  acertos (constantes em `sala_jogo_service.py`, criadas a pedido do dono do projecto).
+  **Fluidez (2026-11-10, depois do primeiro teste real):** o toque numa opção marca-a logo
+  no ecrã, sem esperar pelo servidor, e um pedido de estado que se cruze com uma acção do
+  jogador é deitado fora (`epoca` em `JogoOnline.tsx`) -- antes podia chegar com o estado
+  antigo e desfazer a escolha até ao pedido seguinte.
+  **Chat da sala só entre adultos, com filtros** (decisão do dono do projecto, 2026-11-10): só
+  existe quando os **dois** jogadores são adultos -- `e_adulto`: `data_nascimento` no perfil
+  com 18 anos feitos **e** `faixa_etaria` que não seja de criança (uma criança pode usar a
+  conta do representante legal); sem data de nascimento não há chat. É uma declaração do
+  próprio, não uma prova de idade. Cada mensagem passa por `services/filtro_chat.py`, que
+  **recusa** (não mascara) palavrões e insultos (pt/en, também disfarçados), contactos (links,
+  emails, telefones, @nomes, redes sociais) e pedidos de dados pessoais; máximo 200 caracteres,
+  uma mensagem de 2 em 2 s e 40 por jogador e sala. "Denunciar" fecha o chat da sala para os
+  dois, esconde as mensagens, regista em `denuncias_chat_jogo` e avisa os admins pelo sino; as
+  mensagens (`mensagens_sala_jogo`) ficam guardadas para consulta e apagam-se na anonimização
+  da conta (W-03). **Falta:** um ecrã de admin para ler as mensagens de uma sala denunciada
+  (hoje só pela base de dados)
 
 **Redesenho do frontend revertido (2026-10-09, decisão da equipa):** o redesenho da
 Sprint 7 (PRs #134 a #150, `docs/REDESENHO_FRONTEND.md`) chegou a produção, mas a equipa
@@ -274,6 +340,36 @@ Do redesenho ficou só o rastreio completo para voluntários, refeito no visual 
 documentos do redesenho (`REDESENHO_FRONTEND.md`, `SISTEMA_DESIGN.md`, `LAYOUTS.md`,
 `MARCA.md`, `ESTRUTURA_SITE.md`) ficam como histórico — não retomar nem introduzir padrões
 visuais novos sem nova decisão da equipa.
+
+**Cabeçalho, capa e fundo branco (2026-11-08, decisão do dono do projecto):** um só
+cabeçalho com menus suspensos (`lib/menuPrincipal.ts`, fonte única, com teste que garante
+que todo o destino existe no mapa de rotas) e logótipo só com o nome completo. A capa da
+página inicial (`components/inicio/HeroInicio.tsx`) é um carrossel em ecrã inteiro, uma
+fotografia por criança, que muda a cada 5 s, com um véu azul suave por cima; "Doar Agora",
+"Exercícios Visuais" e "Entrar" (só sem sessão) ficam sempre visíveis, e por cima deles os
+seis números (`components/inicio/numerosCapa.ts`: valores do pitch deck do Desafio
+Genial, da coordenação e do IONA (702 casos de estrabismo infantil em Julho-Dezembro de 2024, Jornal de Angola, 29-1-2025), com "+" nas contagens e sem o sinal "≈" (uma estimativa diz-se na
+legenda); actualizam-se aí, sempre com fonte). **Todas as páginas têm fundo branco**, e os tokens do
+tema em `index.css` (`--teal`, `--navy`, `--gold`, `--green`, `--primary`...) usam os valores
+exactos da paleta da marca (`marca.*` em `tailwind.config.ts`) — não reintroduzir fundos
+creme, cinzentos ou faixas azul-marinho de secção. Ficam de fora, por agora, os cabeçalhos
+com fotografia e véu escuro de algumas páginas e as cores da marca da Optioptika no portal.
+
+**Pesquisa do site (a lupa do cabeçalho, refeita a 2026-11-10):** o índice deixou de ser uma
+lista escrita à mão no `Navbar` e passou a ser gerado (`lib/pesquisa/indiceSite.ts`): páginas
+do mapa de rotas com o título e a descrição de `seo.*`, o texto das páginas (secções de
+tradução), destinos do menu com âncora, perguntas da FAQ e, pela API, publicações e clínicas.
+Uma página nova no mapa de rotas tem de entrar em `PAGINAS` ou em `FORA_DA_PESQUISA` (há teste);
+o `/rastreio-completo` fica de fora de propósito. Motor em `lib/pesquisa/procurar.ts` (sem
+acentos, plurais, um erro de letra, ordenação por relevância), painel em
+`components/PesquisaSite.tsx` (Ctrl/Cmd+K, setas e Enter). Sinónimos em `Pesquisa.palavras.*`.
+
+**Blog e números de impacto (2026-11-10):** as publicações (`/publicacoes`) contam
+visualizações (`publicacoes.visualizacoes`, `POST /publicacoes/{slug}/visualizacoes`, uma
+por separador do browser) e aceitam "Gosto" com sessão (`gostos_publicacao`, chave composta:
+uma conta, um gosto). A página inicial mostra números reais da base de dados em
+`GET /impacto/numeros` (rastreios, sessões de treino, encaminhamentos). A doação mensal é a
+do fluxo em três passos de `POST /doacoes/financeiro` (`frequencia`), sem tabela própria.
 
 Público-alvo inclui **crianças**. Todo o tratamento de dados deve assumir isso.
 
@@ -549,6 +645,54 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   + `AssistenteTeste`/`AssistenteTreino` (`components/visao/`) + a lógica pura de
   `lib/visao/` (geometria, escadas, contraste, tempo activo). Um passo por ecrã, um olho de
   cada vez; no máximo **um** `requestAnimationFrame` por exercício.
+- **Antes de começar, só se pergunta o que ainda não se sabe (2026-11-11, pedido do dono do
+  projecto: os passos de preparação atrapalhavam).** O brilho é uma linha por baixo dos
+  passos (`NotaPreparacao`), não um ecrã; o passo do cartão salta com o ecrã já calibrado
+  neste aparelho (a mesma linha deixa calibrar de novo); os óculos de graduação
+  perguntam-se uma vez e ficam em `utilizadores.usa_oculos`; com a escolha "com ou sem
+  óculos 3D" guardada, o exercício abre directo nesse modo e troca-se por um link
+  (`TrocarModo`) nos ecrãs antes de começar. Na Palanca, "tape o outro olho" e "Começar"
+  são um só ecrã (`semPassoTapar`), e a montagem a 3 m resume-se da segunda vez. O Teste de
+  Estereopsia reusa a distância da última vez (gravada como não medida). O Kianda com
+  óculos 3D deixou de medir a distância: assume 40 cm. O passo do tapa-olho dos treinos
+  aceita a mão ou um pano (antes dizia "a mão não basta", contra o aviso da pesca). Não
+  reintroduzir ecrãs de preparação que só servem para carregar em Continuar.
+- **Depois do primeiro teste do dono do projecto em produção (2026-11-11):** (1) Palanca: o
+  ecrã da mãozinha mostra quantas respostas já contou, a última recebida e que pára
+  sozinho; num computador responde-se com as setas (espaço = "não sei"); a voz responde ao
+  resultado **provisório** do reconhecimento (antes esperava pelo final e atrasava 1 a 2 s).
+  (2) Fio de Missangas: só em aparelhos de toque (num portátil deu 16,8 cm e "sinal a
+  investigar"); o primeiro ecrã diz para que serve, que é no nariz e nunca no olho, e os
+  cuidados; **sem o ecrã calibrado nunca mostra "sinal"**, só os centímetros como
+  aproximados. (3) Pássaro e gaiola: os cartões afastam-se sozinhos (1,5 Δ/s) e toca-se
+  quando o pássaro sai e quando volta a entrar (`deltaDaGaiola`, `rampaDaGaiola`); a
+  pergunta "o que vê no meio" faz-se uma vez por sessão. Continua a ser auto-avaliação e
+  grava no mesmo formato. Um estímulo que se mexe sozinho conta tempo activo por
+  `ApiTarefa.presente`, sem contar como tentativa.
+- **O Olho Mágico fica; não se substitui (decisão do dono do projecto, 2026-11-11).** No
+  mesmo dia, o id `convergence` chegou a produção como "Vaivém da Missanga" (o Fio de
+  Missangas em treino) e foi revertido: era o mesmo exercício do Fio com outro nome, e o
+  pedido era melhorar o Olho Mágico, não trocá-lo. As poucas sessões gravadas nesse
+  intervalo (`sinais.modo = "fio_treino"`, em cm) continuam a ler-se no histórico. O que o
+  pássaro e a gaiola ganharam: dizem para que servem, e têm uma **marca a bater** -- o mais
+  longe das sessões anteriores (`recordeDaGaiola`), mostrada na barra enquanto os cartões
+  se afastam e no fim de cada ronda ("Nova marca"). Antes de trocar o que um exercício é,
+  confirmar com o dono do projecto que é isso que ele quer.
+- **Pássaro e gaiola com menos perguntas (2026-11-11).** Antes de começar há um só botão
+  ("Já vejo o pássaro dentro da gaiola"), que arranca logo o movimento; as respostas "vejo
+  dois / vejo quatro" e as dicas só aparecem a quem toca em "Não estou a conseguir". A
+  pergunta do sol e da nuvem (supressão) faz-se uma vez por sessão, no fim da primeira
+  ronda, e grava-se como antes (`respostas.falta`, `fusao`). A escolha do nível sai do ecrã
+  depois da primeira resposta.
+- **Olho Mágico reestruturado (2026-11-11, depois de novo teste do dono do projecto).** (1) Os
+  desenhos crescem com a distância: `ladoDoEstimulo` mantém o ângulo de visão dos 20/22 mm a
+  40 cm (a 1 m ficam com 50/55 mm), até um quarto do palco; a 1 m num computador viam-se
+  minúsculos. O lado usado vai em `sinais.quadro_mm` / `cartao_mm`. (2) O estímulo e as
+  respostas vêm primeiro; "Como fazer" fica recolhido por baixo (abre sozinho só da primeira
+  vez no aparelho) e as escolhas de modo e de nível passam para o fim. (3) No pássaro e
+  gaiola, o ecrã diz o objectivo e mostra uma animação do que se vê (`DemoOQueVe`): **no
+  ecrã nada se mexe até tocar no botão; é nos olhos que o pássaro entra na gaiola.** Sem
+  esta frase, quem testava ficava à espera de ver o pássaro andar.
 - **Régua Invisível (2026-10-20): unidades reais sem câmara.** Cartão de banco -> px/mm
   (`calibracao.ts`); ponto cego -> distância olhos-ecrã (`pontoCego.ts`, Li et al. 2020);
   afinação dos óculos vermelho-ciano -> fuga de cor de cada filtro (`anaglifo.ts`). Duas

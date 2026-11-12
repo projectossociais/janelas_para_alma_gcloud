@@ -26,7 +26,7 @@ const references = [
 const StrabismusSection = () => {
   const { t } = useTranslation();
   return (
-    <section id="estrabismo" className="py-20 md:py-28 bg-muted/50">
+    <section id="estrabismo" className="py-20 md:py-28 bg-white">
       <div className="container">
         <div className="text-center mb-16 space-y-4">
           <span className="text-sm font-medium tracking-widest uppercase text-teal">

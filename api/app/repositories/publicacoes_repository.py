@@ -8,10 +8,11 @@ from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from typing import Protocol
 
-from sqlalchemy import select
+from sqlalchemy import delete, func, select, update
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from app.repositories.orm_models import MidiaPublicacao, Publicacao
+from app.repositories.orm_models import GostoPublicacao, MidiaPublicacao, Publicacao
 
 
 @dataclass(frozen=True)
@@ -37,6 +38,8 @@ class PublicacaoRegisto:
     created_at: datetime
     updated_at: datetime
     midias: list[MidiaRegisto]
+    visualizacoes: int = 0
+    gostos: int = 0
 
 
 class PublicacoesRepository(Protocol):
@@ -61,6 +64,11 @@ class PublicacoesRepository(Protocol):
     def definir_capa(self, publicacao_id: str, url: str) -> None: ...
     def adicionar_midia(self, publicacao_id: str, url: str) -> MidiaRegisto: ...
     def remover_midia(self, midia_id: str) -> None: ...
+    def incrementar_visualizacoes(self, publicacao_id: str) -> int: ...
+    def adicionar_gosto(self, publicacao_id: str, utilizador_id: str) -> None: ...
+    def remover_gosto(self, publicacao_id: str, utilizador_id: str) -> None: ...
+    def contar_gostos(self, publicacao_id: str) -> int: ...
+    def gostou(self, publicacao_id: str, utilizador_id: str) -> bool: ...
 
 
 class SQLAlchemyPublicacoesRepository:
@@ -93,6 +101,8 @@ class SQLAlchemyPublicacoesRepository:
             created_at=row.created_at,
             updated_at=row.updated_at,
             midias=self._midias_de(row.id),
+            visualizacoes=row.visualizacoes,
+            gostos=self.contar_gostos(str(row.id)),
         )
 
     def criar(
@@ -200,3 +210,47 @@ class SQLAlchemyPublicacoesRepository:
             return
         self._sessao.delete(row)
         self._sessao.commit()
+
+    def incrementar_visualizacoes(self, publicacao_id: str) -> int:
+        # Numa só instrução: duas aberturas em simultâneo contam as duas.
+        novo = self._sessao.scalar(
+            update(Publicacao)
+            .where(Publicacao.id == uuid.UUID(publicacao_id))
+            .values(visualizacoes=Publicacao.visualizacoes + 1)
+            .returning(Publicacao.visualizacoes)
+        )
+        self._sessao.commit()
+        return novo or 0
+
+    def adicionar_gosto(self, publicacao_id: str, utilizador_id: str) -> None:
+        # Repetir o gosto não é erro: a chave composta faz o segundo não contar.
+        self._sessao.execute(
+            insert(GostoPublicacao)
+            .values(publicacao_id=uuid.UUID(publicacao_id), utilizador_id=uuid.UUID(utilizador_id))
+            .on_conflict_do_nothing()
+        )
+        self._sessao.commit()
+
+    def remover_gosto(self, publicacao_id: str, utilizador_id: str) -> None:
+        self._sessao.execute(
+            delete(GostoPublicacao).where(
+                GostoPublicacao.publicacao_id == uuid.UUID(publicacao_id),
+                GostoPublicacao.utilizador_id == uuid.UUID(utilizador_id),
+            )
+        )
+        self._sessao.commit()
+
+    def contar_gostos(self, publicacao_id: str) -> int:
+        return (
+            self._sessao.scalar(
+                select(func.count())
+                .select_from(GostoPublicacao)
+                .where(GostoPublicacao.publicacao_id == uuid.UUID(publicacao_id))
+            )
+            or 0
+        )
+
+    def gostou(self, publicacao_id: str, utilizador_id: str) -> bool:
+        return (
+            self._sessao.get(GostoPublicacao, (uuid.UUID(publicacao_id), uuid.UUID(utilizador_id))) is not None
+        )
