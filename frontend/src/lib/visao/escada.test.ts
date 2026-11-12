@@ -106,6 +106,19 @@ describe("escada do teste", () => {
     expect(e.atingiuLimite).toBe(true);
   });
 
+  it("com outra regra (4 por nível, passa com 3), 2 acertos não passam e 2 erros falham", () => {
+    const regra = { tentativas: 4, acertos: 3 };
+    const e = iniciarEscadaTeste(5, 1, regra);
+    expect(responderVarias(e, [true, true]).indice).toBe(1);
+    expect(responderVarias(e, [true, true, true]).indice).toBe(2);
+    expect(responderVarias(e, [true, false, true, true]).indice).toBe(2);
+    expect(responderVarias(e, [false, true, false]).indice).toBe(0);
+    // A contagem fina divide pelos 4 do nível: um erro vale um quarto de nível.
+    const fim = responderVarias(e, [true, false, true, true, false, false]);
+    expect(fim.terminado).toBe(true);
+    expect(limiarFinoTeste(fim, [1, 0.9, 0.8, 0.7, 0.6])).toBeCloseTo(0.925, 5);
+  });
+
   it("depois de terminado, ignora respostas", () => {
     const e = simularTeste(8, 3, 5);
     expect(responderTeste(e, true)).toBe(e);

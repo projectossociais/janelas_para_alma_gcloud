@@ -744,6 +744,20 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   desligada por omissão: no Chrome o som vai para a Google (o texto diz isto). 3 m ou 2 m;
   grava `distancia_mm` e `sinais.ao_longe = true`. A tendência só compara sessões do mesmo
   tipo (`tipoDeAcuidade`: longe, barras ou isolado).
+  **Mais firme (2026-11-12, depois da pesquisa pedida pelo dono do projecto):** (1) a
+  mãozinha tem quatro barras à volta, a meia mãozinha de distância (aglomeração: na
+  ambliopia por estrabismo um símbolo isolado lê-se muito melhor); nos tamanhos em que não
+  cabem no ecrã fica isolada. (2) Medição em duas fases, como no ATS/e-ETDRS: descida
+  rápida de uma por tamanho até ao primeiro erro, depois o limiar dois tamanhos acima com
+  4 por tamanho e 3 para passar (`REGRA_PALANCA`; a adivinhar passa-se 5% das vezes, com 2
+  em 3 eram 16%). (3) Antes do primeiro olho, um treino com os dois olhos abertos (4
+  mãozinhas grandes, 3 certas); sem passar não há teste. Da segunda vez no aparelho o
+  treino é opcional. (4) Com 2 linhas ou mais de diferença, o olho pior repete-se antes
+  do resultado e fica o melhor dos dois (`olhoAConfirmar`, `sinais.confirmado`). (5) O
+  critério do sinal depende de `faixa_etaria`: até aos 5 anos a linha 6/12, depois 6/9
+  (`criterioAcuidade`; sem idade no perfil, 6/9). Grava `sinais.aglomeracao = true` e
+  `sinais.protocolo = "rapida_4_3"`: é um tipo novo (`longe_barras`), que não se compara
+  com as sessões da mãozinha isolada. Ainda sem validação contra a tabela de uma clínica.
 - **Luz nos Olhos (versão 2, 2026-10-31): reflexo da lanterna e teste de tapar, feitos pelos
   pais** (`lib/visao/luzOlhos.ts`, `TesteLuzOlhos`). O adulto segura o telemóvel abaixo dos
   olhos, ecrã para si e lanterna (ligada no menu do telemóvel; a página não a acende) para

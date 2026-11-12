@@ -30,6 +30,13 @@ export function escolhaAleatoria(n: number, anterior: number | null, rng: Rng = 
 export const TENTATIVAS_POR_NIVEL = 3;
 export const ACERTOS_PARA_PASSAR = 2;
 
+/** Quantos optótipos por nível e quantos acertos passam o nível. */
+export interface RegraNivel {
+  tentativas: number;
+  acertos: number;
+}
+export const REGRA_OMISSAO: RegraNivel = { tentativas: TENTATIVAS_POR_NIVEL, acertos: ACERTOS_PARA_PASSAR };
+
 export interface EstadoEscadaTeste {
   total: number;
   indice: number;
@@ -46,9 +53,11 @@ export interface EstadoEscadaTeste {
   respostas: number;
   /** Acertos e erros em cada nível mostrado (um nível nunca se repete no teste). */
   porNivel: Readonly<Record<number, { acertos: number; erros: number }>>;
+  /** A regra deste teste (por omissão, 3 por nível e passa com 2). */
+  regra: RegraNivel;
 }
 
-export function iniciarEscadaTeste(total: number, indiceInicial: number): EstadoEscadaTeste {
+export function iniciarEscadaTeste(total: number, indiceInicial: number, regra: RegraNivel = REGRA_OMISSAO): EstadoEscadaTeste {
   if (total < 1) throw new Error("escada sem niveis") // erro interno, nunca chega ao ecrã;
   return {
     total,
@@ -62,12 +71,13 @@ export function iniciarEscadaTeste(total: number, indiceInicial: number): Estado
     atingiuLimite: false,
     respostas: 0,
     porNivel: {},
+    regra,
   };
 }
 
 /**
- * Regista uma resposta. 3 optótipos por nível, passa com 2 acertos (decide
- * assim que 2 acertos ou 2 erros tornam o resultado certo). A passar sobe a
+ * Regista uma resposta. Por omissão, 3 optótipos por nível e passa com 2
+ * acertos (decide assim que os acertos ou os erros tornam o resultado certo). A passar sobe a
  * dificuldade; a falhar sem nenhum nível passado ainda, desce para níveis
  * maiores; pára quando um nível passado fica ao lado de um falhado.
  */
@@ -83,8 +93,8 @@ export function responderTeste(e: EstadoEscadaTeste, acertou: boolean): EstadoEs
     porNivel: { ...e.porNivel, [e.indice]: { acertos, erros } },
   };
 
-  const errosPermitidos = TENTATIVAS_POR_NIVEL - ACERTOS_PARA_PASSAR;
-  if (acertos >= ACERTOS_PARA_PASSAR) return passarNivel(base);
+  const errosPermitidos = e.regra.tentativas - e.regra.acertos;
+  if (acertos >= e.regra.acertos) return passarNivel(base);
   if (erros > errosPermitidos) return falharNivel(base);
   return base;
 }
@@ -135,10 +145,10 @@ export function limiarFinoTeste(e: EstadoEscadaTeste, valores: readonly number[]
   const passoFacil =
     n > 0 ? valores[n - 1] - valores[n] : n + 1 < valores.length ? valores[n] - valores[n + 1] : 0;
   const erros = e.porNivel[n]?.erros ?? 0;
-  valor += (passoFacil * erros) / TENTATIVAS_POR_NIVEL;
+  valor += (passoFacil * erros) / e.regra.tentativas;
   const seguinte = e.porNivel[n + 1];
   if (seguinte && n + 1 < valores.length) {
-    valor += ((valores[n + 1] - valores[n]) * seguinte.acertos) / TENTATIVAS_POR_NIVEL;
+    valor += ((valores[n + 1] - valores[n]) * seguinte.acertos) / e.regra.tentativas;
   }
   return valor;
 }

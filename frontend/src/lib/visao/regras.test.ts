@@ -1,5 +1,5 @@
 import { ContadorTempoActivo, PAUSA_AUTOMATICA_MS } from "./tempoActivo";
-import { diferencaContraste, olhoMaisFracoPelaAcuidade, sinaisAcuidade, sinalEstereopsia } from "./resultados";
+import { diferencaContraste, olhoMaisFracoPelaAcuidade, sinaisAcuidade, sinalEstereopsia, criterioAcuidade } from "./resultados";
 import { criarAgendaControlo, eTentativaDeControlo, sinaisDeControlo } from "./treino";
 import { minutosPorDia, sequenciaDeDias, type SessaoResumo } from "./progresso";
 
@@ -46,12 +46,24 @@ describe("tempo activo", () => {
 
 describe("sinais de acuidade", () => {
   it("pior do que 6/9 num olho", () => {
-    expect(sinaisAcuidade({ direito: 0.2, esquerdo: 0.1 }).abaixoDe6_9).toEqual(["direito"]);
-    expect(sinaisAcuidade({ direito: 0.1, esquerdo: 0.1 }).abaixoDe6_9).toEqual([]);
+    expect(sinaisAcuidade({ direito: 0.2, esquerdo: 0.1 }).abaixoDoCriterio).toEqual(["direito"]);
+    expect(sinaisAcuidade({ direito: 0.1, esquerdo: 0.1 }).abaixoDoCriterio).toEqual([]);
+  });
+
+  // 2026-11-12: o critério depende da idade (até aos 5 anos, a linha 6/12).
+  it("até aos 5 anos o critério é 6/12: passar essa linha com um erro não é sinal", () => {
+    expect(criterioAcuidade("ate_5").linha).toBe("6/12");
+    expect(criterioAcuidade("6_12").linha).toBe("6/9");
+    expect(criterioAcuidade(null).linha).toBe("6/9");
+    const c = criterioAcuidade("ate_5");
+    expect(sinaisAcuidade({ direito: 0.3, esquerdo: 0.325 }, c).abaixoDoCriterio).toEqual([]);
+    expect(sinaisAcuidade({ direito: 0.35, esquerdo: 0.2 }, c).abaixoDoCriterio).toEqual(["direito"]);
+    // A mesma criança, com o critério dos mais velhos, teria sinal nos dois olhos.
+    expect(sinaisAcuidade({ direito: 0.3, esquerdo: 0.325 }).abaixoDoCriterio).toEqual(["direito", "esquerdo"]);
   });
 
   it("não ler nem o maior nível também é sinal", () => {
-    expect(sinaisAcuidade({ direito: null, esquerdo: 0 }).abaixoDe6_9).toEqual(["direito"]);
+    expect(sinaisAcuidade({ direito: null, esquerdo: 0 }).abaixoDoCriterio).toEqual(["direito"]);
   });
 
   it("diferença de 2 linhas ou mais entre olhos", () => {

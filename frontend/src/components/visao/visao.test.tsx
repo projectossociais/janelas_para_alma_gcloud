@@ -158,60 +158,122 @@ describe("Teste de Acuidade (sem câmara)", () => {
   // Caso real (2026-10-08, teste feito pelo dono do projecto): os dois olhos
   // passaram os mesmos níveis, um com mais erros, e o resultado foi igual.
   // Desde 2026-10-21 o teste é ao longe (3 m), com a mãozinha e o deslize do adulto.
-  it("ao longe, com a mãozinha: dois olhos nos mesmos níveis, um com mais erros, dão resultados diferentes", async () => {
-    window.localStorage.clear(); // sem calibração nem distância guardadas pelo teste anterior
-    registar.mockReset().mockResolvedValue({});
+  // Desde 2026-11-12: treino com os dois olhos, barras à volta, descida rápida
+  // e limiar de 4 por tamanho, e o olho pior repetido com 2 linhas de diferença.
+  describe("Olhos de Palanca ao longe", () => {
     const oposto = { direita: "esquerda", esquerda: "direita", cima: "baixo", baixo: "cima" } as const;
     const vector = { direita: [100, 0], esquerda: [-100, 0], cima: [0, -100], baixo: [0, 100] } as const;
+    const seta = { direita: "ArrowRight", esquerda: "ArrowLeft", cima: "ArrowUp", baixo: "ArrowDown" } as const;
+    const mao = () => document.querySelector("svg[data-direccao]")!;
     const deslizar = (d: keyof typeof vector) => {
       const palco = screen.getByRole("application");
       // O jsdom não tem PointerEvent: um MouseEvent com o mesmo nome leva as coordenadas.
       palco.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true, clientX: 200, clientY: 300 }));
       palco.dispatchEvent(new MouseEvent("pointerup", { bubbles: true, clientX: 200 + vector[d][0], clientY: 300 + vector[d][1] }));
     };
-    const responderOlho = async (respostas: boolean[]) => {
-      fireEvent.click(await screen.findByRole("button", { name: V.palancaComecar }));
-      const seta = { direita: "ArrowRight", esquerda: "ArrowLeft", cima: "ArrowUp", baixo: "ArrowDown" } as const;
+    const responder = (respostas: boolean[], primeiraPorTeclado = false) => {
       for (const [i, certa] of respostas.entries()) {
-        const d = document.querySelector("svg[data-direccao]")!.getAttribute("data-direccao") as keyof typeof vector;
-        // A primeira resposta de cada olho vai pelas setas do teclado (num computador); as outras, pelo deslize.
-        if (i === 0) {
-          fireEvent.keyDown(window, { key: seta[certa ? d : oposto[d]] });
-          // O adulto vê que a resposta contou, e que o teste pára sozinho.
-          expect(screen.getByText(/Respostas: 1/)).toBeInTheDocument();
-          expect(screen.getByText(V.palancaParaSozinho)).toBeInTheDocument();
-        } else act(() => deslizar(certa ? d : oposto[d]));
+        const d = mao().getAttribute("data-direccao") as keyof typeof vector;
+        if (i === 0 && primeiraPorTeclado) fireEvent.keyDown(window, { key: seta[certa ? d : oposto[d]] });
+        else act(() => deslizar(certa ? d : oposto[d]));
       }
     };
-
-    render(
-      <MemoryRouter>
-        <AcessoExerciciosProvider>
-          <TesteAcuidade />
-        </AcessoExerciciosProvider>
-      </MemoryRouter>,
-    );
-    fireEvent.click(await screen.findByRole("button", { name: "Não tenho cartão" }));
-    fireEvent.click(await screen.findByRole("button", { name: /Não uso óculos nem lentes/ }));
-    await screen.findByText(V.palancaPrepararTitulo);
-    fireEvent.click(screen.getByRole("button", { name: "Continuar" })); // montar a 3 metros
-    // "Tape o outro olho" e "Começar" são um só ecrã, antes de cada olho.
-
-    // Começa em 0,7. Direito: 0,7 ✓✓ · 0,6 ✓✓ · 0,5 ✓✗✗
-    await responderOlho([true, true, true, true, true, false, false]);
-    // Esquerdo: 0,7 ✓✓ · 0,6 ✓✗✓ · 0,5 ✗✗ -- o mesmo nível, mais erros
-    await responderOlho([true, true, true, false, true, false, false]);
-
-    await screen.findByText(V.resultadoAcuidadeTitulo);
-    await waitFor(() => expect(registar).toHaveBeenCalledTimes(2));
+    const responderOlho = async (respostas: boolean[]) => {
+      fireEvent.click(await screen.findByRole("button", { name: V.palancaComecar }));
+      // A primeira resposta de cada olho vai pelas setas do teclado (num computador); as outras, pelo deslize.
+      responder(respostas.slice(0, 1), true);
+      // O adulto vê que a resposta contou, e que o teste pára sozinho.
+      expect(screen.getByText(/Respostas: 1/)).toBeInTheDocument();
+      expect(screen.getByText(V.palancaParaSozinho)).toBeInTheDocument();
+      responder(respostas.slice(1));
+    };
+    const abrir = async () => {
+      window.localStorage.clear(); // sem calibração nem distância guardadas pelo teste anterior
+      registar.mockReset().mockResolvedValue({});
+      render(
+        <MemoryRouter>
+          <AcessoExerciciosProvider>
+            <TesteAcuidade />
+          </AcessoExerciciosProvider>
+        </MemoryRouter>,
+      );
+      fireEvent.click(await screen.findByRole("button", { name: "Não tenho cartão" }));
+      fireEvent.click(await screen.findByRole("button", { name: /Não uso óculos nem lentes/ }));
+      await screen.findByText(V.palancaPrepararTitulo);
+      fireEvent.click(screen.getByRole("button", { name: V.palancaFazerTreino })); // montar a 3 metros
+    };
     const sessaoDe = (olho: string) => registar.mock.calls.find((c) => c[0].olho === olho)?.[0];
-    expect(sessaoDe("direito").distancia_mm).toBe(3000);
-    expect(sessaoDe("direito").sinais).toMatchObject({ ao_longe: true, optotipo: "E", resposta: "gesto" });
-    expect(screen.getByText(V.palancaDiferencaUma)).toBeInTheDocument();
-    expect(sessaoDe("direito").limiar).toBe(0.57);
-    expect(sessaoDe("esquerdo").limiar).toBe(0.63);
-    expect(screen.getByText(/logMAR 0,57/)).toBeInTheDocument();
-    expect(screen.getByText(/logMAR 0,63/)).toBeInTheDocument();
-  }, 20000);
+    // Descida rápida 0,7 ✓ · 0,6 ✓ · 0,5 ✗; limiar a partir de 0,7: 0,7 ✓✓✓ · 0,6 ✓✓✓ · 0,5 ✗✗
+    const ATE_0_6 = [true, true, false, true, true, true, true, true, true, false, false];
+
+    it("treino, barras, e dois olhos nos mesmos tamanhos com erros diferentes dão resultados diferentes", async () => {
+      await abrir();
+      // Treino com os dois olhos: mãozinha grande, sem barras; 4 certas e segue.
+      expect(mao().getAttribute("data-barras")).toBe("nao");
+      expect(screen.getByText(/Treino com os dois olhos abertos · 1 de 4/)).toBeInTheDocument();
+      responder([true, true, true, true]);
+      // "Tape o outro olho" e "Começar" são um só ecrã, antes de cada olho.
+
+      fireEvent.click(await screen.findByRole("button", { name: V.palancaComecar }));
+      expect(mao().getAttribute("data-barras")).toBe("sim"); // 0,7 a 3 m cabe com as barras
+      fireEvent.click(screen.getByRole("button", { name: V.palancaParar }));
+      await responderOlho(ATE_0_6);
+      // Esquerdo: igual, mas 0,6 ✓✗✓✓ -- o mesmo tamanho, com um erro
+      await responderOlho([true, true, false, true, true, true, true, false, true, true, false, false]);
+
+      await screen.findByText(V.resultadoAcuidadeTitulo);
+      await waitFor(() => expect(registar).toHaveBeenCalledTimes(2));
+      expect(sessaoDe("direito").distancia_mm).toBe(3000);
+      expect(sessaoDe("direito").sinais).toMatchObject({
+        ao_longe: true,
+        aglomeracao: true,
+        barras_no_limiar: true,
+        protocolo: "rapida_4_3",
+        confirmado: false,
+        criterio: "6/9",
+        optotipo: "E",
+        resposta: "gesto",
+      });
+      expect(sessaoDe("direito").limiar).toBe(0.6);
+      expect(sessaoDe("esquerdo").limiar).toBeGreaterThan(0.6);
+      expect(sessaoDe("esquerdo").limiar).toBeLessThan(0.65);
+      // Menos de 2 linhas de diferença: nenhum olho se repete.
+      expect(screen.queryByText(V.palancaConfirmarTexto)).not.toBeInTheDocument();
+      expect(screen.getByText(V.palancaCriterio6_9)).toBeInTheDocument();
+    }, 20000);
+
+    it("treino falhado: não segue para o teste, e pode treinar outra vez", async () => {
+      await abrir();
+      responder([true, false, false, true]);
+      expect(await screen.findByText(/Ainda não deu: acertou 2 de 4/)).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: V.palancaComecar })).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: V.palancaTreinarOutraVez }));
+      responder([true, true, true, false]);
+      expect(await screen.findByRole("button", { name: V.palancaComecar })).toBeInTheDocument();
+      expect(registar).not.toHaveBeenCalled();
+    }, 20000);
+
+    it("2 linhas ou mais de diferença: o olho pior repete-se e fica o melhor dos dois resultados", async () => {
+      await abrir();
+      responder([true, true, true, true]);
+      await responderOlho(ATE_0_6); // direito: 0,6
+      // Esquerdo: erra logo -> limiar a partir de 0,9: 0,9 ✓✓✓ · 0,8 ✗✗ -> 0,9
+      await responderOlho([false, true, true, true, false, false]);
+
+      // Ainda não há resultado nem gravação: primeiro repete-se o olho esquerdo.
+      expect(await screen.findByText(V.palancaConfirmarTexto)).toBeInTheDocument();
+      expect(screen.queryByText(V.resultadoAcuidadeTitulo)).not.toBeInTheDocument();
+      expect(registar).not.toHaveBeenCalled();
+      await responderOlho(ATE_0_6); // desta vez, 0,6: era distracção
+
+      await screen.findByText(V.resultadoAcuidadeTitulo);
+      await waitFor(() => expect(registar).toHaveBeenCalledTimes(2));
+      expect(sessaoDe("esquerdo").limiar).toBe(0.6);
+      expect(sessaoDe("esquerdo").sinais.confirmado).toBe(true);
+      expect(sessaoDe("direito").sinais.confirmado).toBe(false);
+      expect(screen.getByText(/foi repetido para confirmar/)).toBeInTheDocument();
+      expect(screen.queryByText(V.acuidadeSinalDiferenca)).not.toBeInTheDocument();
+    }, 20000);
+  });
 });
 
