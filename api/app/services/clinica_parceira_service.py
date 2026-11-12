@@ -9,7 +9,10 @@ e de receber pedidos novos) e pode ser reactivada mais tarde.
 
 from enum import StrEnum
 
-from app.repositories.clinica_parceira_repository import ClinicaParceiraRepository
+from app.repositories.clinica_parceira_repository import (
+    ClinicaComAgendamentosError,
+    ClinicaParceiraRepository,
+)
 
 
 class ClinicaNaoEncontradaError(Exception):
@@ -29,8 +32,18 @@ class ClinicaParceiraService:
         if self._repo.obter(clinica_id) is None:
             raise ClinicaNaoEncontradaError(clinica_id)
         if self._repo.tem_agendamentos(clinica_id):
-            self._repo.definir_ativa(clinica_id, False)
-            return ResultadoRemocao.desativada
-        if not self._repo.apagar(clinica_id):
+            return self._desativar(clinica_id)
+        try:
+            apagada = self._repo.apagar(clinica_id)
+        except ClinicaComAgendamentosError:
+            # Um pedido de consulta chegou entre a verificação e o DELETE:
+            # a mesma regra, só que decidida pela base de dados.
+            return self._desativar(clinica_id)
+        if not apagada:
             raise ClinicaNaoEncontradaError(clinica_id)
         return ResultadoRemocao.apagada
+
+    def _desativar(self, clinica_id: str) -> ResultadoRemocao:
+        if self._repo.definir_ativa(clinica_id, False) is None:
+            raise ClinicaNaoEncontradaError(clinica_id)
+        return ResultadoRemocao.desativada

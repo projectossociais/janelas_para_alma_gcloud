@@ -38,6 +38,37 @@ import { tPt } from "@/i18n";
 type Passo = "valor" | "pagamento" | "comprovativo" | "concluido";
 type Metodo = "express" | "transferencia";
 
+// Cada frequência tem a sua cor da paleta, do separador ao botão final, para
+// que o doador saiba sempre se está a doar uma vez (marinho) ou todos os meses
+// (verde). Classes escritas por extenso: o Tailwind não vê classes montadas.
+const COR_FREQUENCIA: Record<
+  FrequenciaDoacao,
+  { separador: string; separadorHover: string; valor: string; valorHover: string; borda: string; foco: string; botao: string; ponto: string; caixa: string }
+> = {
+  unica: {
+    separador: "bg-navy text-navy-foreground shadow-sm",
+    separadorHover: "hover:text-navy",
+    valor: "border-navy bg-navy text-navy-foreground",
+    valorHover: "hover:border-navy/30",
+    borda: "border-navy",
+    foco: "focus-within:border-navy",
+    botao: "bg-navy text-navy-foreground hover:bg-navy/90",
+    ponto: "bg-navy",
+    caixa: "divide-navy/10 bg-navy/5",
+  },
+  mensal: {
+    separador: "bg-green text-green-foreground shadow-sm",
+    separadorHover: "hover:text-green",
+    valor: "border-green bg-green text-green-foreground",
+    valorHover: "hover:border-green/30",
+    borda: "border-green",
+    foco: "focus-within:border-green",
+    botao: "bg-green text-green-foreground hover:bg-green/90",
+    ponto: "bg-green",
+    caixa: "divide-green/10 bg-green/5",
+  },
+};
+
 const LIMITE_NOTA = 300;
 const EMAIL_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -62,10 +93,10 @@ const CHAVE_FREQUENCIA_DETALHES: Record<FrequenciaDoacao, string> = {
  * habituais: valor e frequência -> resumo e forma de pagar -> comprovativo.
  * O sucesso só aparece depois de a API confirmar o registo (CLAUDE.md §6).
  */
-const DoacaoFinanceira = () => {
+const DoacaoFinanceira = ({ frequenciaInicial = "unica" }: { frequenciaInicial?: FrequenciaDoacao }) => {
   const { t } = useTranslation();
   const [passo, setPasso] = useState<Passo>("valor");
-  const [frequencia, setFrequencia] = useState<FrequenciaDoacao>("unica");
+  const [frequencia, setFrequencia] = useState<FrequenciaDoacao>(frequenciaInicial);
   const [valorSugerido, setValorSugerido] = useState<number | null>(null);
   const [outroValor, setOutroValor] = useState("");
   const [comNota, setComNota] = useState(false);
@@ -81,6 +112,7 @@ const DoacaoFinanceira = () => {
   const valorValido = valor !== null && valor >= VALOR_MINIMO_KZ;
   const outroInvalido = outroValor.trim() !== "" && !valorValido;
   const mensal = frequencia === "mensal";
+  const cor = COR_FREQUENCIA[frequencia];
   const valorTexto = valor !== null ? t("DoacaoFinanceira.valorKz", { valor: agruparMilhares(valor) }) : "";
 
   const recomecar = () => {
@@ -161,11 +193,15 @@ const DoacaoFinanceira = () => {
                   key={f}
                   type="button"
                   aria-pressed={frequencia === f}
-                  onClick={() => setFrequencia(f)}
+                  onClick={() => {
+                    // Cada frequência tem os seus valores: o escolhido deixa de fazer sentido.
+                    if (f !== frequencia) setValorSugerido(null);
+                    setFrequencia(f);
+                  }}
                   className={`rounded-lg py-2.5 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-navy ${
                     frequencia === f
-                      ? "bg-card text-navy shadow-sm ring-1 ring-navy/40"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? COR_FREQUENCIA[f].separador
+                      : `text-muted-foreground ${COR_FREQUENCIA[f].separadorHover}`
                   }`}
                 >
                   {t(CHAVE_FREQUENCIA[f])}
@@ -174,7 +210,7 @@ const DoacaoFinanceira = () => {
             </div>
 
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {VALORES_DOACAO_KZ.map((v) => {
+              {VALORES_DOACAO_KZ[frequencia].map((v) => {
                 const escolhido = valorSugerido === v;
                 return (
                   <button
@@ -187,8 +223,8 @@ const DoacaoFinanceira = () => {
                     }}
                     className={`rounded-xl border-2 py-3.5 text-base font-bold tabular-nums transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-navy ${
                       escolhido
-                        ? "border-navy bg-navy text-navy-foreground"
-                        : "border-transparent bg-muted text-foreground hover:border-navy/30"
+                        ? cor.valor
+                        : `border-transparent bg-muted text-foreground ${cor.valorHover}`
                     }`}
                   >
                     {t("DoacaoFinanceira.valorKz", { valor: agruparMilhares(v) })}
@@ -199,8 +235,8 @@ const DoacaoFinanceira = () => {
 
             <div className="space-y-1.5">
               <div
-                className={`flex items-center rounded-xl border-2 bg-muted px-4 focus-within:border-navy ${
-                  valorSugerido === null && valorValido ? "border-navy" : "border-transparent"
+                className={`flex items-center rounded-xl border-2 bg-muted px-4 ${cor.foco} ${
+                  valorSugerido === null && valorValido ? cor.borda : "border-transparent"
                 }`}
               >
                 <Input
@@ -248,7 +284,7 @@ const DoacaoFinanceira = () => {
 
             <Button
               size="lg"
-              className="w-full bg-navy text-navy-foreground hover:bg-navy/90"
+              className={`w-full ${cor.botao}`}
               disabled={!valorValido}
               onClick={() => setPasso("pagamento")}
             >
@@ -287,17 +323,17 @@ const DoacaoFinanceira = () => {
                       >
                         <span
                           className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
-                            escolhido ? "border-navy" : "border-muted-foreground/40"
+                            escolhido ? cor.borda : "border-muted-foreground/40"
                           }`}
                           aria-hidden="true"
                         >
-                          {escolhido && <span className="h-2.5 w-2.5 rounded-full bg-navy" />}
+                          {escolhido && <span className={`h-2.5 w-2.5 rounded-full ${cor.ponto}`} />}
                         </span>
                         <span className="flex-1 font-medium text-foreground">{t(m.chave)}</span>
                         <m.icon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
                       </button>
                       {escolhido && (
-                        <div className="space-y-1 divide-y divide-navy/10 bg-navy/5 px-4 py-3">
+                        <div className={`space-y-1 divide-y px-4 py-3 ${cor.caixa}`}>
                           <CopyRow label={t("Apoiar.beneficiario")} value={DEFAULT_BANK_DATA.beneficiario} />
                           {m.id === "express" ? (
                             <CopyRow
@@ -321,8 +357,8 @@ const DoacaoFinanceira = () => {
             </div>
 
             {mensal && (
-              <div className="flex gap-3 rounded-xl border border-gold/30 bg-gold/10 p-4 text-sm text-foreground">
-                <CalendarClock className="mt-0.5 h-5 w-5 shrink-0 text-gold" aria-hidden="true" />
+              <div className="flex gap-3 rounded-xl border border-green/30 bg-green/10 p-4 text-sm text-foreground">
+                <CalendarClock className="mt-0.5 h-5 w-5 shrink-0 text-green" aria-hidden="true" />
                 <p>{t("DoacaoFinanceira.comoDoarTodosOsMeses", { valor: valorTexto })}</p>
               </div>
             )}
@@ -341,7 +377,7 @@ const DoacaoFinanceira = () => {
 
             <Button
               size="lg"
-              className="w-full bg-navy text-navy-foreground hover:bg-navy/90"
+              className={`w-full ${cor.botao}`}
               disabled={!metodo || !EMAIL_VALIDO.test(email.trim())}
               onClick={() => setPasso("comprovativo")}
             >
@@ -362,7 +398,7 @@ const DoacaoFinanceira = () => {
             <FileDropzone file={comprovativo} onFileChange={setComprovativo} />
             <Button
               size="lg"
-              className="w-full bg-navy text-navy-foreground hover:bg-navy/90"
+              className={`w-full ${cor.botao}`}
               disabled={aEnviar || !comprovativo}
               onClick={concluir}
             >

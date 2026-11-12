@@ -60,6 +60,26 @@ class TestPreparar:
             svc.preparar("pub-1", "application/pdf")
         assert presigner.chamadas == []
 
+    def test_recusa_video_por_omissao_capa(self, servico) -> None:
+        # A capa é sempre imagem: aparece como <img> na lista e na partilha.
+        svc, presigner, _ = servico
+        with pytest.raises(TipoDeFicheiroNaoPermitidoError):
+            svc.preparar("pub-1", "video/mp4")
+        assert presigner.chamadas == []
+
+    @pytest.mark.parametrize(("content_type", "extensao"), [("video/mp4", ".mp4"), ("video/webm", ".webm")])
+    def test_aceita_video_na_galeria(self, servico, content_type: str, extensao: str) -> None:
+        svc, presigner, _ = servico
+        preparado = svc.preparar("pub-1", content_type, permitir_video=True)
+        assert preparado.chave.startswith("publicacoes/pub-1/")
+        assert preparado.chave.endswith(extensao)
+        assert presigner.chamadas == [(preparado.chave, content_type)]
+
+    def test_galeria_continua_a_recusar_outros_tipos(self, servico) -> None:
+        svc, _, _ = servico
+        with pytest.raises(TipoDeFicheiroNaoPermitidoError):
+            svc.preparar("pub-1", "video/quicktime", permitir_video=True)
+
 
 class TestConfirmarCapa:
     def test_grava_a_capa_quando_a_chave_e_da_publicacao(self, servico) -> None:

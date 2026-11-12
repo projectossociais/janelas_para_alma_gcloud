@@ -21,10 +21,14 @@ from app.routers import (
     doacoes,
     exercicios,
     feedback,
+    impacto,
     interno,
     jogo,
+    jogo_local,
+    jogo_online,
     notificacoes,
     pagamentos,
+    parcerias,
     perfil,
     premium,
     publicacoes,
@@ -77,6 +81,7 @@ app.include_router(conta.router)
 app.include_router(banners.router)
 app.include_router(banner_homepage.router)
 app.include_router(doacoes.router)
+app.include_router(impacto.router)
 app.include_router(feedback.router)
 app.include_router(uploads.router)
 app.include_router(sessoes_exercicio.router)
@@ -89,9 +94,12 @@ app.include_router(admin.router)
 app.include_router(voluntariado.router)
 app.include_router(publicacoes.router)
 app.include_router(notificacoes.router)
+app.include_router(parcerias.router)
 app.include_router(rastreio_completo.router)
 app.include_router(screenings.router)
 app.include_router(jogo.router)
+app.include_router(jogo_local.router)
+app.include_router(jogo_online.router)
 app.include_router(agendamentos.router)
 app.include_router(clinicas.router)
 app.include_router(interno.router)

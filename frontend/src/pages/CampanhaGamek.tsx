@@ -68,7 +68,7 @@ const CampanhaGamek = () => {
               </h1>
             </header>
 
-            <div className="flex flex-col items-center gap-6 bg-slate-50 border border-slate-200 rounded-2xl p-6 sm:p-8">
+            <div className="flex flex-col items-center gap-6 bg-white border border-slate-200 rounded-2xl p-6 sm:p-8">
               <img
                 src="/assets/kamba/campanha-gamek-poster.jpg"
                 alt={t("CampanhaGamek.cartazDaCampanhaDe")}
