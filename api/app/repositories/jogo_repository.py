@@ -101,6 +101,17 @@ class SQLAlchemyPerguntaJogoRepository:
         row = self._sessao.get(PerguntaJogo, uuid.UUID(pergunta_id))
         return _para_registo(row) if row is not None else None
 
+    def obter_aleatoria_fora_de(
+        self, nivel_dificuldade: int, excluir_ids: tuple[str, ...] = ()
+    ) -> PerguntaJogoRegisto | None:
+        """Uma pergunta do nível que não esteja em `excluir_ids` -- para o
+        Multijogador Local não repetir perguntas dentro da mesma partida."""
+        query = select(PerguntaJogo).where(PerguntaJogo.nivel_dificuldade == nivel_dificuldade)
+        if excluir_ids:
+            query = query.where(PerguntaJogo.id.not_in([uuid.UUID(i) for i in excluir_ids]))
+        row = self._sessao.scalars(query.order_by(func.random()).limit(1)).first()
+        return _para_registo(row) if row is not None else None
+
     def semear_reserva(self) -> int:
         """Semeia a reserva de perguntas (idempotente, ver
         `reserva_perguntas_jogo.py`) e devolve quantas inseriu."""

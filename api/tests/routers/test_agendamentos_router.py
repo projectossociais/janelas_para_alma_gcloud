@@ -81,6 +81,16 @@ class RepositorioAgendamentosFalso:
             for a in self._agendamentos.values()
         )
 
+    def horarios_ocupados(self, clinica_id: str, desde, ate) -> set:
+        return {
+            a.horario_inicio
+            for a in self._agendamentos.values()
+            if a.clinica_id == clinica_id
+            and a.horario_inicio is not None
+            and desde <= a.horario_inicio < ate
+            and a.estado in ("pendente", "confirmada")
+        }
+
     def confirmar(self, agendamento_id: str, admin_id: str, quando) -> AgendamentoClinicoRegisto:
         atual = self._agendamentos[agendamento_id]
         novo = self._registo(**{**atual.__dict__, "estado": "confirmada", "decidido_por": admin_id, "decidido_em": quando})

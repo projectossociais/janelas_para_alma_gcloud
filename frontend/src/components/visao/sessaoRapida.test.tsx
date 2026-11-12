@@ -20,7 +20,8 @@ vi.mock("@/contexts/ConsentimentoSaudeContext", () => ({
 
 
 // Sessão rápida (Fase A, docs/ANALISE_EXERCICIOS.md): da segunda vez em diante
-// um treino abre num só ecrã de confirmação, em vez dos 5-6 passos de preparação.
+// um treino abre num só ecrã de confirmação, em vez dos passos de preparação.
+// Desde 2026-11-11 o brilho é uma linha por baixo dos passos, não um ecrã.
 
 vi.mock("@/components/Navbar", () => ({ default: () => null }));
 vi.mock("@/components/Footer", () => ({ default: () => null }));
@@ -76,9 +77,10 @@ describe("Sessão rápida dos treinos", () => {
     });
   });
 
-  it("na primeira vez faz o fluxo completo, a começar pelo brilho", async () => {
+  it("na primeira vez faz o fluxo completo, a começar pelo aviso do treino", async () => {
     abrir();
-    await screen.findByText("Ponha o brilho do ecrã no máximo");
+    await screen.findByText(V.antesDeComecar);
+    expect(screen.getByText(V.brilhoLinha)).toBeInTheDocument();
     expect(screen.queryByText("Pronto para treinar?")).not.toBeInTheDocument();
   });
 
@@ -91,7 +93,6 @@ describe("Sessão rápida dos treinos", () => {
     // Treino com óculos 3D: o resumo lembra de os pôr.
     expect(screen.getByText(V.rapidoOculos3D)).toBeInTheDocument();
     expect(screen.getByText(/Pare se sentir dor de cabeça/)).toBeInTheDocument();
-    expect(screen.queryByText("Ponha o brilho do ecrã no máximo")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Começar treino/ }));
     // Primeiro, a verificação com os anéis sobrepostos.
@@ -103,12 +104,14 @@ describe("Sessão rápida dos treinos", () => {
     abrir();
 
     fireEvent.click(await screen.findByRole("button", { name: "Alterar definições" }));
-    await screen.findByText("Ponha o brilho do ecrã no máximo");
+    await screen.findByText(V.antesDeComecar);
+    // O ecrã já estava calibrado, mas quem pede para alterar volta a ver o cartão.
+    fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
+    await screen.findByText(V.calibracaoTitulo);
   });
 
   it("o fluxo completo guarda as escolhas quando o treino arranca, para a próxima vez", async () => {
     abrir();
-    fireEvent.click(await screen.findByRole("button", { name: "Continuar" })); // brilho
     fireEvent.click(await screen.findByRole("button", { name: "Continuar" })); // aviso das Pontes de Fusão
     fireEvent.click(await screen.findByRole("button", { name: "Não tenho cartão" }));
     fireEvent.click(await screen.findByRole("button", { name: /Não uso óculos nem lentes/ }));

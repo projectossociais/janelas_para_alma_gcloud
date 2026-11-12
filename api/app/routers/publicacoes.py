@@ -10,7 +10,11 @@ ninguém vai tentar adivinhar/enumerar)."""
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.dependencies import obter_utilizador_admin
+from app.core.dependencies import (
+    obter_utilizador_admin,
+    obter_utilizador_atual,
+    obter_utilizador_atual_opcional,
+)
 from app.db import obter_sessao
 from app.repositories.publicacoes_repository import (
     PublicacaoRegisto,
@@ -20,6 +24,7 @@ from app.repositories.storage import R2Presigner
 from app.repositories.utilizadores_repository import UtilizadorRegisto
 from app.schemas.publicacoes import (
     CapaConfirmada,
+    GostoPublicacao,
     MidiaConfirmar,
     MidiaPublica,
     MidiaUploadPedido,
@@ -28,6 +33,7 @@ from app.schemas.publicacoes import (
     PublicacaoAtualizar,
     PublicacaoCriar,
     PublicacaoPublica,
+    VisualizacoesPublicacao,
 )
 from app.services.publicacao_midia_service import (
     ChaveDeMidiaInvalidaError,
@@ -80,13 +86,53 @@ def listar_todas(
 def obter_por_slug(
     slug: str,
     repo: SQLAlchemyPublicacoesRepository = Depends(obter_publicacoes_repository),
-) -> PublicacaoRegisto:
+    utilizador: UtilizadorRegisto | None = Depends(obter_utilizador_atual_opcional),
+) -> PublicacaoPublica:
     registo = repo.obter_por_slug(slug)
     # Um rascunho nunca é devolvido aqui, mesmo com o slug exacto -- só a
     # listagem de admin (acima) vê rascunhos.
     if registo is None or registo.estado != "publicada":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="publicação não encontrada")
-    return registo
+    gostei = repo.gostou(registo.id, utilizador.id) if utilizador else False
+    return PublicacaoPublica.model_validate(registo).model_copy(update={"gostei": gostei})
+
+
+@router.post("/{slug}/visualizacoes", response_model=VisualizacoesPublicacao)
+def registar_visualizacao(
+    slug: str, servico: PublicacoesService = Depends(obter_publicacoes_service)
+) -> VisualizacoesPublicacao:
+    """Pública: o frontend chama-a uma vez por abertura da página (e não a
+    repete no mesmo separador). É só um contador, não um dado de ninguém."""
+    try:
+        return VisualizacoesPublicacao(visualizacoes=servico.registar_visualizacao(slug))
+    except PublicacaoNaoEncontradaError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="publicação não encontrada") from exc
+
+
+@router.post("/{slug}/gostos", response_model=GostoPublicacao)
+def gostar(
+    slug: str,
+    utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
+    servico: PublicacoesService = Depends(obter_publicacoes_service),
+) -> GostoPublicacao:
+    try:
+        gostos, gostei = servico.gostar(slug, utilizador.id)
+    except PublicacaoNaoEncontradaError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="publicação não encontrada") from exc
+    return GostoPublicacao(gostos=gostos, gostei=gostei)
+
+
+@router.delete("/{slug}/gostos", response_model=GostoPublicacao)
+def retirar_gosto(
+    slug: str,
+    utilizador: UtilizadorRegisto = Depends(obter_utilizador_atual),
+    servico: PublicacoesService = Depends(obter_publicacoes_service),
+) -> GostoPublicacao:
+    try:
+        gostos, gostei = servico.retirar_gosto(slug, utilizador.id)
+    except PublicacaoNaoEncontradaError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="publicação não encontrada") from exc
+    return GostoPublicacao(gostos=gostos, gostei=gostei)
 
 
 # --- Administração ---------------------------------------------------------
@@ -161,7 +207,7 @@ def apagar_publicacao(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="publicação não encontrada") from exc
 
 
-# --- Fotos (capa + galeria) -- upload directo ao R2, mesmo padrão do avatar ----
+# --- Fotos e vídeos (capa + galeria) -- upload directo ao R2, mesmo padrão do avatar ----
 
 
 @router.post(
@@ -214,11 +260,11 @@ def preparar_midia(
     servico: PublicacaoMidiaService = Depends(obter_publicacao_midia_service),
 ) -> MidiaUploadPreparado:
     try:
-        preparado = servico.preparar(publicacao_id, pedido.content_type)
+        preparado = servico.preparar(publicacao_id, pedido.content_type, permitir_video=True)
     except TipoDeFicheiroNaoPermitidoError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail="tipo de ficheiro não permitido (só PNG, JPEG ou WebP)",
+            detail="tipo de ficheiro não permitido (só PNG, JPEG, WebP, MP4 ou WebM)",
         ) from exc
     return MidiaUploadPreparado(**preparado.__dict__)
 

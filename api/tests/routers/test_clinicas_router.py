@@ -66,6 +66,36 @@ class RepositorioClinicasFalso:
         self._clinicas[clinica_id] = novo
         return novo
 
+    def criar(self, nome, email_contacto, telefone_contacto, especialidades, cidade, modalidades_suportadas,
+              preco_indicativo):
+        novo = ClinicaParceiraRegisto(
+            id=f"clinica-{len(self._clinicas) + 1}",
+            nome=nome,
+            email_contacto=email_contacto,
+            telefone_contacto=telefone_contacto,
+            ativa=True,
+            especialidades=especialidades,
+            cidade=cidade,
+            modalidades_suportadas=modalidades_suportadas,
+            preco_indicativo=preco_indicativo,
+            created_at=datetime.now(UTC),
+        )
+        self._clinicas[novo.id] = novo
+        return novo
+
+    def tem_agendamentos(self, clinica_id):
+        return clinica_id in getattr(self, "com_agendamentos", set())
+
+    def definir_ativa(self, clinica_id, ativa):
+        atual = self._clinicas.get(clinica_id)
+        if atual is None:
+            return None
+        self._clinicas[clinica_id] = ClinicaParceiraRegisto(**{**atual.__dict__, "ativa": ativa})
+        return self._clinicas[clinica_id]
+
+    def apagar(self, clinica_id):
+        return self._clinicas.pop(clinica_id, None) is not None
+
 
 class RepositorioAgendamentosFalso:
     def __init__(self) -> None:
@@ -560,3 +590,75 @@ def test_teleconsulta_sem_ligacao_a_clinica_403(ambiente) -> None:
     resposta = c.get(f"/clinica/teleconsultas/{ag.id}")
 
     assert resposta.status_code == 403
+
+
+# --- criar / remover clínicas ------------------------------------------------
+
+_NOVA_CLINICA = {
+    "nome": "Clínica Visão Huíla",
+    "email_contacto": "geral@visaohuila.ao",
+    "telefone_contacto": "+244923000000",
+    "cidade": "Lubango",
+    "modalidades_suportadas": ["presencial"],
+}
+
+
+def test_criar_clinica(ambiente) -> None:
+    c, *_, token_admin, _, _ = ambiente
+    c.cookies.set("access_token", token_admin)
+    r = c.post("/admin/clinicas", json=_NOVA_CLINICA)
+    assert r.status_code == 201
+    assert r.json()["nome"] == "Clínica Visão Huíla"
+    assert r.json()["ativa"] is True
+    assert any(cl["nome"] == "Clínica Visão Huíla" for cl in c.get("/admin/clinicas").json())
+
+
+def test_criar_clinica_com_email_invalido_422(ambiente) -> None:
+    c, *_, token_admin, _, _ = ambiente
+    c.cookies.set("access_token", token_admin)
+    r = c.post("/admin/clinicas", json={**_NOVA_CLINICA, "email_contacto": "nao-e-email"})
+    assert r.status_code == 422
+
+
+def test_criar_clinica_exige_admin(ambiente) -> None:
+    c, *_, token_medico, token_comum = ambiente
+    c.cookies.set("access_token", token_comum)
+    assert c.post("/admin/clinicas", json=_NOVA_CLINICA).status_code == 403
+    c.cookies.set("access_token", token_medico)
+    assert c.post("/admin/clinicas", json=_NOVA_CLINICA).status_code == 403
+
+
+def test_remover_clinica_sem_agendamentos_apaga(ambiente) -> None:
+    c, *_, token_admin, _, _ = ambiente
+    c.cookies.set("access_token", token_admin)
+    r = c.delete("/admin/clinicas/clinica-1")
+    assert r.status_code == 200
+    assert r.json() == {"resultado": "apagada"}
+    assert c.get("/admin/clinicas").json() == []
+
+
+def test_remover_clinica_com_agendamentos_so_desativa(ambiente) -> None:
+    c, *_, token_admin, _, _ = ambiente
+    app.dependency_overrides[obter_clinica_parceira_repository]().com_agendamentos = {"clinica-1"}
+    c.cookies.set("access_token", token_admin)
+    r = c.delete("/admin/clinicas/clinica-1")
+    assert r.status_code == 200
+    assert r.json() == {"resultado": "desativada"}
+    [clinica] = c.get("/admin/clinicas").json()
+    assert clinica["ativa"] is False
+
+    r = c.post("/admin/clinicas/clinica-1/reativar")
+    assert r.status_code == 200
+    assert r.json()["ativa"] is True
+
+
+def test_remover_clinica_inexistente_404(ambiente) -> None:
+    c, *_, token_admin, _, _ = ambiente
+    c.cookies.set("access_token", token_admin)
+    assert c.delete("/admin/clinicas/nao-existe").status_code == 404
+
+
+def test_remover_clinica_exige_admin(ambiente) -> None:
+    c, *_, token_comum = ambiente
+    c.cookies.set("access_token", token_comum)
+    assert c.delete("/admin/clinicas/clinica-1").status_code == 403

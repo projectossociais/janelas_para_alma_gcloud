@@ -8,10 +8,17 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol
 
-from sqlalchemy import select
+from sqlalchemy import exists, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.repositories.orm_models import ClinicaParceira
+from app.repositories.orm_models import AgendamentoClinico, ClinicaParceira
+
+
+class ClinicaComAgendamentosError(Exception):
+    """O `ON DELETE RESTRICT` de `agendamentos_clinicos` recusou o DELETE:
+    chegou um pedido de consulta depois de `tem_agendamentos` ter dito que
+    não havia nenhum. Quem chama desactiva em vez de apagar."""
 
 
 @dataclass(frozen=True)
@@ -40,6 +47,19 @@ class ClinicaParceiraRepository(Protocol):
         modalidades_suportadas: list[str],
         preco_indicativo: str | None,
     ) -> ClinicaParceiraRegisto | None: ...
+    def criar(
+        self,
+        nome: str,
+        email_contacto: str,
+        telefone_contacto: str,
+        especialidades: list[str],
+        cidade: str | None,
+        modalidades_suportadas: list[str],
+        preco_indicativo: str | None,
+    ) -> ClinicaParceiraRegisto: ...
+    def tem_agendamentos(self, clinica_id: str) -> bool: ...
+    def definir_ativa(self, clinica_id: str, ativa: bool) -> ClinicaParceiraRegisto | None: ...
+    def apagar(self, clinica_id: str) -> bool: ...
 
 
 def _para_registo(row: ClinicaParceira) -> ClinicaParceiraRegisto:
@@ -63,7 +83,9 @@ class SQLAlchemyClinicaParceiraRepository:
 
     def listar_ativas(self) -> list[ClinicaParceiraRegisto]:
         linhas = self._sessao.scalars(
-            select(ClinicaParceira).where(ClinicaParceira.ativa.is_(True)).order_by(ClinicaParceira.nome)
+            select(ClinicaParceira)
+            .where(ClinicaParceira.ativa.is_(True))
+            .order_by(ClinicaParceira.nome)
         ).all()
         return [_para_registo(r) for r in linhas]
 
@@ -93,3 +115,61 @@ class SQLAlchemyClinicaParceiraRepository:
         self._sessao.commit()
         self._sessao.refresh(row)
         return _para_registo(row)
+
+    def criar(
+        self,
+        nome: str,
+        email_contacto: str,
+        telefone_contacto: str,
+        especialidades: list[str],
+        cidade: str | None,
+        modalidades_suportadas: list[str],
+        preco_indicativo: str | None,
+    ) -> ClinicaParceiraRegisto:
+        row = ClinicaParceira(
+            nome=nome,
+            email_contacto=email_contacto,
+            telefone_contacto=telefone_contacto,
+            ativa=True,
+            especialidades=especialidades,
+            cidade=cidade,
+            modalidades_suportadas=modalidades_suportadas,
+            preco_indicativo=preco_indicativo,
+        )
+        self._sessao.add(row)
+        self._sessao.commit()
+        self._sessao.refresh(row)
+        return _para_registo(row)
+
+    def tem_agendamentos(self, clinica_id: str) -> bool:
+        return bool(
+            self._sessao.scalar(
+                select(exists().where(AgendamentoClinico.clinica_id == uuid.UUID(clinica_id)))
+            )
+        )
+
+    def definir_ativa(self, clinica_id: str, ativa: bool) -> ClinicaParceiraRegisto | None:
+        row = self._sessao.get(ClinicaParceira, uuid.UUID(clinica_id))
+        if row is None:
+            return None
+        row.ativa = ativa
+        self._sessao.commit()
+        self._sessao.refresh(row)
+        return _para_registo(row)
+
+    def apagar(self, clinica_id: str) -> bool:
+        """A equipa e a disponibilidade vão com ela (`ON DELETE CASCADE`).
+        Os agendamentos têm `RESTRICT`: quem chama verifica-os antes
+        (`ClinicaParceiraService.remover`), mas um pedido pode chegar entre
+        essa verificação e o DELETE -- aí a base de dados recusa e isso sobe
+        como `ClinicaComAgendamentosError`, nunca como um 500."""
+        row = self._sessao.get(ClinicaParceira, uuid.UUID(clinica_id))
+        if row is None:
+            return False
+        self._sessao.delete(row)
+        try:
+            self._sessao.commit()
+        except IntegrityError as exc:
+            self._sessao.rollback()
+            raise ClinicaComAgendamentosError(clinica_id) from exc
+        return True

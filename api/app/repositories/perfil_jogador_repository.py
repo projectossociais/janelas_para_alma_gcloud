@@ -15,6 +15,7 @@ from datetime import UTC, datetime
 from typing import Protocol
 
 from sqlalchemy import select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.repositories.orm_models import PerfilJogador
@@ -90,7 +91,16 @@ class SQLAlchemyPerfilJogadorRepository:
                 patamar_maximo_alcancado=0,
             )
             self._sessao.add(row)
-            self._sessao.commit()
+            try:
+                self._sessao.commit()
+            except IntegrityError:
+                # Outro pedido criou o perfil ao mesmo tempo (`utilizador_id`
+                # é único) -- fica esse, em vez de rebentar.
+                self._sessao.rollback()
+                row = self._obter_row(utilizador_id)
+                if row is None:
+                    raise
+                return para_registo(row)
             self._sessao.refresh(row)
         return para_registo(row)
 
