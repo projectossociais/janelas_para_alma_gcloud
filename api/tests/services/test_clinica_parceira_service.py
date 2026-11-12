@@ -5,7 +5,10 @@ from datetime import UTC, datetime
 
 import pytest
 
-from app.repositories.clinica_parceira_repository import ClinicaParceiraRegisto
+from app.repositories.clinica_parceira_repository import (
+    ClinicaComAgendamentosError,
+    ClinicaParceiraRegisto,
+)
 from app.services.clinica_parceira_service import (
     ClinicaNaoEncontradaError,
     ClinicaParceiraService,
@@ -29,10 +32,14 @@ def _clinica(id_: str, ativa: bool = True) -> ClinicaParceiraRegisto:
 
 
 class RepositorioFalso:
-    def __init__(self, clinicas: list[ClinicaParceiraRegisto], com_agendamentos: set[str] | None = None) -> None:
+    def __init__(
+        self, clinicas: list[ClinicaParceiraRegisto], com_agendamentos: set[str] | None = None
+    ) -> None:
         self.clinicas = {c.id: c for c in clinicas}
         self.com_agendamentos = com_agendamentos or set()
         self.apagadas: list[str] = []
+        # Simula um pedido de consulta a chegar entre `tem_agendamentos` e o DELETE.
+        self.pedido_chega_antes_do_delete = False
 
     def obter(self, clinica_id: str):
         return self.clinicas.get(clinica_id)
@@ -48,6 +55,8 @@ class RepositorioFalso:
         return self.clinicas[clinica_id]
 
     def apagar(self, clinica_id: str) -> bool:
+        if self.pedido_chega_antes_do_delete:
+            raise ClinicaComAgendamentosError(clinica_id)
         if self.clinicas.pop(clinica_id, None) is None:
             return False
         self.apagadas.append(clinica_id)
@@ -71,3 +80,13 @@ def test_clinica_inexistente() -> None:
     repo = RepositorioFalso([])
     with pytest.raises(ClinicaNaoEncontradaError):
         ClinicaParceiraService(repo).remover("c1")
+
+
+def test_pedido_que_chega_durante_a_remocao_desativa_em_vez_de_falhar() -> None:
+    """`tem_agendamentos` disse que não havia nenhum, mas o DELETE foi recusado
+    pelo RESTRICT: desactiva, como se o pedido já lá estivesse."""
+    repo = RepositorioFalso([_clinica("c1")])
+    repo.pedido_chega_antes_do_delete = True
+    assert ClinicaParceiraService(repo).remover("c1") == ResultadoRemocao.desativada
+    assert repo.apagadas == []
+    assert repo.clinicas["c1"].ativa is False

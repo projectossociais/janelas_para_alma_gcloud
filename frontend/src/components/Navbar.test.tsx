@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
@@ -145,13 +145,39 @@ describe("Navbar — menus suspensos do cabeçalho", () => {
     expect(screen.getByRole("link", { name: /Exercícios Visuais/ })).toHaveAttribute("href", "/exercicios");
   });
 
+  it("passar o rato depressa de um menu para os seguintes (até ao Doar Agora) mostra sempre o novo (bug real, 2026-11-11)", () => {
+    vi.useFakeTimers();
+    try {
+      renderComRota();
+      const nomes = ["Sobre Nós", "O Nosso Trabalho", "Serviços", "Portal Clínico", "Doar Agora"];
+      const caixa = (nome: string) => screen.getByRole("button", { name: nome }).parentElement!;
+
+      fireEvent.mouseEnter(caixa(nomes[0]));
+      for (let i = 1; i < nomes.length; i++) {
+        // Sai de um e entra logo no seguinte; o fecho agendado do anterior dispara depois.
+        fireEvent.mouseLeave(caixa(nomes[i - 1]));
+        fireEvent.mouseEnter(caixa(nomes[i]));
+        act(() => vi.advanceTimersByTime(500));
+        expect(screen.getByRole("button", { name: nomes[i] })).toHaveAttribute("aria-expanded", "true");
+        expect(screen.getByRole("button", { name: nomes[i - 1] })).toHaveAttribute("aria-expanded", "false");
+      }
+
+      // Sair do último continua a fechá-lo.
+      fireEvent.mouseLeave(caixa("Doar Agora"));
+      act(() => vi.advanceTimersByTime(500));
+      expect(screen.getByRole("button", { name: "Doar Agora" })).toHaveAttribute("aria-expanded", "false");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("Doar Agora oferece doar uma vez e doar mensalmente", async () => {
     const user = userEvent.setup();
     renderComRota();
     await user.click(screen.getByRole("button", { name: "Doar Agora" }));
 
-    expect(screen.getByRole("link", { name: /Doar Uma Vez/ })).toHaveAttribute("href", "/apoiar?modo=unica");
-    expect(screen.getByRole("link", { name: /Doar Mensalmente/ })).toHaveAttribute("href", "/apoiar?modo=mensal");
+    expect(screen.getByRole("link", { name: /Doar Uma Vez/ })).toHaveAttribute("href", "/apoiar?modo=unica#como-apoiar");
+    expect(screen.getByRole("link", { name: /Doar Mensalmente/ })).toHaveAttribute("href", "/apoiar?modo=mensal#como-apoiar");
   });
 
   it("O Nosso Trabalho e Portal Clínico têm os destinos pedidos", async () => {

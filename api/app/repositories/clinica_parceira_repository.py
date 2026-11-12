@@ -9,9 +9,16 @@ from datetime import datetime
 from typing import Protocol
 
 from sqlalchemy import exists, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.repositories.orm_models import AgendamentoClinico, ClinicaParceira
+
+
+class ClinicaComAgendamentosError(Exception):
+    """O `ON DELETE RESTRICT` de `agendamentos_clinicos` recusou o DELETE:
+    chegou um pedido de consulta depois de `tem_agendamentos` ter dito que
+    não havia nenhum. Quem chama desactiva em vez de apagar."""
 
 
 @dataclass(frozen=True)
@@ -76,7 +83,9 @@ class SQLAlchemyClinicaParceiraRepository:
 
     def listar_ativas(self) -> list[ClinicaParceiraRegisto]:
         linhas = self._sessao.scalars(
-            select(ClinicaParceira).where(ClinicaParceira.ativa.is_(True)).order_by(ClinicaParceira.nome)
+            select(ClinicaParceira)
+            .where(ClinicaParceira.ativa.is_(True))
+            .order_by(ClinicaParceira.nome)
         ).all()
         return [_para_registo(r) for r in linhas]
 
@@ -151,10 +160,16 @@ class SQLAlchemyClinicaParceiraRepository:
     def apagar(self, clinica_id: str) -> bool:
         """A equipa e a disponibilidade vão com ela (`ON DELETE CASCADE`).
         Os agendamentos têm `RESTRICT`: quem chama verifica-os antes
-        (`ClinicaParceiraService.remover`)."""
+        (`ClinicaParceiraService.remover`), mas um pedido pode chegar entre
+        essa verificação e o DELETE -- aí a base de dados recusa e isso sobe
+        como `ClinicaComAgendamentosError`, nunca como um 500."""
         row = self._sessao.get(ClinicaParceira, uuid.UUID(clinica_id))
         if row is None:
             return False
         self._sessao.delete(row)
-        self._sessao.commit()
+        try:
+            self._sessao.commit()
+        except IntegrityError as exc:
+            self._sessao.rollback()
+            raise ClinicaComAgendamentosError(clinica_id) from exc
         return True

@@ -93,3 +93,26 @@ class PublicacoesService:
     def apagar(self, publicacao_id: str) -> None:
         self._obter_ou_falhar(publicacao_id)
         self._repo.apagar(publicacao_id)
+
+    # --- Leitura pública: visualizações e gostos (2026-10-26) ----------------
+
+    def _publicada_por_slug(self, slug: str) -> PublicacaoRegisto:
+        # Um rascunho nunca conta visualizações nem recebe gostos, mesmo com o
+        # slug exacto -- tal como nunca é mostrado (ver router).
+        publicacao = self._repo.obter_por_slug(slug)
+        if publicacao is None or publicacao.estado != "publicada":
+            raise PublicacaoNaoEncontradaError(slug)
+        return publicacao
+
+    def registar_visualizacao(self, slug: str) -> int:
+        return self._repo.incrementar_visualizacoes(self._publicada_por_slug(slug).id)
+
+    def gostar(self, slug: str, utilizador_id: str) -> tuple[int, bool]:
+        publicacao = self._publicada_por_slug(slug)
+        self._repo.adicionar_gosto(publicacao.id, utilizador_id)
+        return self._repo.contar_gostos(publicacao.id), True
+
+    def retirar_gosto(self, slug: str, utilizador_id: str) -> tuple[int, bool]:
+        publicacao = self._publicada_por_slug(slug)
+        self._repo.remover_gosto(publicacao.id, utilizador_id)
+        return self._repo.contar_gostos(publicacao.id), False

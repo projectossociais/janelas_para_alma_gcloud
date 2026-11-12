@@ -81,7 +81,7 @@ describe("Resumo de um treino sem medição", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(await screen.findByRole("button", { name: "Continuar" })); // sem óculos
+    // Com o modo guardado neste aparelho, abre directo na pesca (sem a pergunta dos óculos 3D).
     fireEvent.click(await screen.findByRole("button", { name: /Começar treino/ }));
     fireEvent.click(await screen.findByRole("button", { name: /Terminar agora/ }));
 
