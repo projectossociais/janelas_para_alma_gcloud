@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { AlertTriangle } from "lucide-react";
 import BaseExercise from "@/components/exercises/BaseExercise";
 import AssistenteTreino from "@/components/visao/AssistenteTreino";
-import EscolherOculos from "@/components/visao/EscolherOculos";
+import EscolherOculos, { TrocarModo } from "@/components/visao/EscolherOculos";
 import JogoKianda from "@/components/visao/JogoKianda";
 import PaginaExercicio from "@/components/visao/PaginaExercicio";
 import PescaKianda from "@/components/visao/PescaKianda";
@@ -11,8 +11,10 @@ import { ID_ANEIS } from "@/lib/visao/ids";
 import { guardarModoKianda, lerModoKianda, type ModoKianda } from "@/lib/visao/kianda";
 
 const EXERCICIO_ID = ID_ANEIS;
+/** Distância assumida no jogo com óculos 3D: um braço dobrado. */
+const DISTANCIA_KIANDA_3D_MM = 400;
 
-/** Primeiro ecrã: sem óculos (tapa-olho, por omissão) ou com óculos 3D. Lembra a última escolha. */
+/** Primeiro ecrã da primeira vez: sem óculos (tapa-olho, por omissão) ou com óculos 3D. */
 export const EscolherModoKianda = ({ aoEscolher }: { aoEscolher: (m: ModoKianda) => void }) => {
   const { t } = useTranslation();
   const guardado = lerModoKianda();
@@ -31,7 +33,7 @@ export const EscolherModoKianda = ({ aoEscolher }: { aoEscolher: (m: ModoKianda)
   );
 };
 
-const AvisoKianda = () => {
+const AvisoKianda = ({ aoTrocar }: { aoTrocar: () => void }) => {
   const { t } = useTranslation();
   return (
     <div className="space-y-3 text-left text-sm">
@@ -44,16 +46,18 @@ const AvisoKianda = () => {
         <span>{t("Visao.kiandaAvisoAdultos")}</span>
       </p>
       <p className="text-muted-foreground">{t("Visao.kiandaComoJogar")}</p>
+      <TrocarModo para="sem" aoTrocar={aoTrocar} />
     </div>
   );
 };
 
-const AvisoPesca = () => {
+const AvisoPesca = ({ aoTrocar }: { aoTrocar: () => void }) => {
   const { t } = useTranslation();
   return (
     <div className="space-y-3 text-left text-sm">
       <p className="text-foreground">{t("Visao.pescaComoJogar")}</p>
       <p className="text-muted-foreground">{t("Visao.pescaTapaOlho")}</p>
+      <TrocarModo para="com" aoTrocar={aoTrocar} />
     </div>
   );
 };
@@ -65,17 +69,23 @@ const AvisoPesca = () => {
  */
 const Kianda = () => {
   const { t } = useTranslation();
-  const [modo, setModo] = useState<ModoKianda | null>(null);
+  // Com a escolha guardada neste aparelho, entra directo nesse modo.
+  const [modo, setModo] = useState<ModoKianda | null>(() => lerModoKianda());
+  const trocar = (m: ModoKianda) => {
+    guardarModoKianda(m);
+    setModo(m);
+  };
 
   if (modo === "tapaOlho")
     return (
       <PaginaExercicio>
         <AssistenteTreino
+          key="tapaOlho"
           exercicioId={EXERCICIO_ID}
           titulo={t("Visao.aneisTitulo")}
           descricao={t("Visao.pescaDescricao")}
           monocular
-          aviso={<AvisoPesca />}
+          aviso={<AvisoPesca aoTrocar={() => trocar("oculos")} />}
           tarefa={(api, ctx, resultado) => <PescaKianda api={api} ctx={ctx} resultado={resultado} />}
         />
       </PaginaExercicio>
@@ -85,14 +95,17 @@ const Kianda = () => {
     return (
       <PaginaExercicio>
         <AssistenteTreino
+          key="oculos"
           exercicioId={EXERCICIO_ID}
           titulo={t("Visao.aneisTitulo")}
           descricao={t("Visao.kiandaDescricaoOculos")}
           monocular={false}
           olhoFraco
-          comDistancia
+          // Sem medir a distância (3 ecrãs, com um olho tapado e sem os óculos 3D): aqui
+          // ela só afina a largura das riscas, e "um braço dobrado" chega.
+          distanciaFixaMm={DISTANCIA_KIANDA_3D_MM}
           oculos3D
-          aviso={<AvisoKianda />}
+          aviso={<AvisoKianda aoTrocar={() => trocar("tapaOlho")} />}
           tarefa={(api, ctx, resultado) => <JogoKianda api={api} ctx={ctx} resultado={resultado} />}
         />
       </PaginaExercicio>

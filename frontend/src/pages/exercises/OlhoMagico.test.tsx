@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { MutableRefObject } from "react";
 import { TarefaOlhoMagico } from "./OlhoMagico";
 import type { ApiTarefa, ContextoTreino, ResultadoTreino } from "@/components/visao/AssistenteTreino";
@@ -123,27 +123,65 @@ describe("Olho Mágico", () => {
   });
 });
 
+describe("Olho Mágico: ecrã reestruturado (2026-11-11)", () => {
+  it("o estímulo vem antes das instruções e das opções, e 'Como fazer' só abre sozinho da primeira vez", () => {
+    montar();
+    const palco = screen.getByRole("img", { name: V.olhoMagicoRotuloPalco });
+    const como = screen.getByText(V.olhoMagicoComoFazer);
+    const modo = screen.getByRole("radio", { name: V.olhoMagicoCruzar });
+    const depois = (a: Element, b: Element) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(depois(palco, como)).toBe(true);
+    expect(depois(palco, modo)).toBe(true);
+    expect(como.closest("details")).toHaveAttribute("open");
+    cleanup();
+    // Da segunda vez neste aparelho, fica recolhido (e pode abrir-se à mão).
+    window.localStorage.setItem("jpa.visao.olhoMagico.nivel", "pano");
+    montar();
+    expect(screen.getByText(V.olhoMagicoComoFazer).closest("details")).not.toHaveAttribute("open");
+  });
+
+  it("no pássaro e gaiola, diz o objectivo e que no ecrã nada se mexe até tocar no botão", () => {
+    window.localStorage.removeItem("jpa.visao.olhoMagico.nivel");
+    montar();
+    fireEvent.click(screen.getByRole("button", { name: V.gaiolaExperimentar }));
+    expect(screen.getByText(V.gaiolaObjectivo)).toBeInTheDocument();
+    expect(screen.getByText(V.gaiolaNadaMexe)).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: V.gaiolaVeRotulo })).toBeInTheDocument();
+  });
+});
+
 describe("Olho Mágico, nível do pássaro e da gaiola", () => {
   const clicar = (nome: string) => fireEvent.click(screen.getByRole("button", { name: nome }));
   beforeEach(() => window.localStorage.removeItem("jpa.visao.olhoMagico.nivel"));
 
-  it("começa pela gaiola: junta à primeira, mede a rotura e a recuperação declaradas e grava como auto-avaliação", () => {
+  const passar = (ms: number) => act(() => void vi.advanceTimersByTime(ms));
+  afterEach(() => vi.useRealTimers());
+
+  it("começa pela gaiola: os cartões afastam-se sozinhos; um toque marca a rotura e outro a recuperação, como auto-avaliação", () => {
+    vi.useFakeTimers();
     const { api, resultado } = montar();
     expect(screen.getByRole("radio", { name: V.olhoMagicoNivel_gaiola })).toHaveAttribute("aria-checked", "true");
     clicar(V.gaiolaExperimentar);
-    clicar(V.gaiolaResposta_dentro);
-    // Degraus de 6, 8, 10, 12 Δ (cartões de 22 mm a 40 cm): sai da gaiola a 12, volta a entrar a 8.
-    for (let i = 0; i < 3; i++) clicar(V.gaiolaContinuaDentro);
-    clicar(V.gaiolaSaiu);
+    clicar(V.gaiolaJaVejo);
+    // Cartões de 22 mm a 40 cm: partem dos 6 Δ, 1 s parados e depois 1,5 Δ por segundo.
+    // Um segundo parados, com o aviso; depois começam a afastar-se.
+    expect(screen.getByText(V.gaiolaPrepare)).toBeInTheDocument();
+    passar(1000 + 2000);
+    expect(screen.getByText(V.gaiolaAfastarTitulo)).toBeInTheDocument();
+    clicar(V.gaiolaSaiu); // a 9 Δ
     expect(screen.getByText(V.gaiolaAproximarTitulo)).toBeInTheDocument();
-    clicar(V.gaiolaAindaFora);
-    clicar(V.gaiolaVoltou);
-    expect(screen.getByText(/O pássaro saiu da gaiola a 12/)).toBeInTheDocument();
+    passar(1000);
+    clicar(V.gaiolaVoltou); // a 7,5 Δ
+    expect(screen.getByText(/O pássaro saiu da gaiola a 9/)).toBeInTheDocument();
+    // Só agora, e uma vez por sessão, pergunta pelo sol e pela nuvem (antes de começar já não há perguntas).
+    expect(screen.queryByText(V.gaiolaSemSupressao)).not.toBeInTheDocument();
+    clicar(V.gaiolaSolNuvemSim);
     expect(screen.getByText(V.gaiolaSemSupressao)).toBeInTheDocument();
-    // O nível fica fixo depois da primeira resposta.
-    expect(screen.getByRole("radio", { name: V.olhoMagicoNivel_pano })).toBeDisabled();
+    // Depois de começar, a escolha do nível sai do ecrã (fica fixo na sessão).
+    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
 
-    expect(api.registar).toHaveBeenCalledTimes(7);
+    // Uma tentativa, um toque a sair e um a voltar.
+    expect(api.registar).toHaveBeenCalledTimes(3);
     const r = resultado.current!();
     expect(r.limiar).toBeNull();
     expect(r.unidade).toBeUndefined();
@@ -153,22 +191,85 @@ describe("Olho Mágico, nível do pássaro e da gaiola", () => {
       fusao: "ambos",
       a_primeira: true,
       respostas: { dentro: 1, falta: 0, dois: 0, quatro: 0 },
-      gaiola: { rampas: 1, rotura: 12, recuperacao: 8 },
+      gaiola: { rampas: 1, rotura: 9, recuperacao: 7.5 },
     });
+
+    // Outra ronda começa logo, sem perguntas; e a do sol e da nuvem não se repete.
+    clicar(V.gaiolaOutraVez);
+    expect(screen.getByText(V.gaiolaPrepare)).toBeInTheDocument();
+    passar(1000 + 1000);
+    expect(screen.getByText(V.gaiolaAfastarTitulo)).toBeInTheDocument();
+    clicar(V.gaiolaSaiu);
+    passar(600);
+    clicar(V.gaiolaVoltou);
+    expect(screen.queryByText(V.gaiolaSolNuvemPergunta)).not.toBeInTheDocument();
   });
 
-  it("com o sol ou a nuvem a faltar, dá a dica e deixa continuar, registando a supressão", () => {
+  it("diz para que serve, mostra a marca dos outros dias e festeja quando é batida", () => {
+    vi.useFakeTimers();
+    const ontem = new Date();
+    ontem.setDate(ontem.getDate() - 1);
+    montar([{ created_at: ontem.toISOString(), sinais: { modo: "fusao_gaiola", gaiola: { rampas: 1, rotura: 8 } } } as unknown as ContextoTreino["historico"][number]]);
+    expect(screen.getByText(V.gaiolaParaQueServe)).toBeInTheDocument();
+    clicar(V.gaiolaExperimentar);
+    clicar(V.gaiolaJaVejo);
+    expect(screen.getByText("A sua marca: 8 Δ")).toBeInTheDocument();
+    passar(1000 + 2000);
+    clicar(V.gaiolaSaiu); // a 9 Δ: passa a marca de 8
+    passar(1000);
+    clicar(V.gaiolaVoltou);
+    expect(screen.getByText("Nova marca: 9 Δ (antes, 8 Δ).")).toBeInTheDocument();
+  });
+
+  it("sem sessões anteriores, a primeira ronda fica como primeira marca", () => {
+    vi.useFakeTimers();
+    montar();
+    clicar(V.gaiolaExperimentar);
+    clicar(V.gaiolaJaVejo);
+    passar(1000 + 2000);
+    clicar(V.gaiolaSaiu);
+    passar(1000);
+    clicar(V.gaiolaVoltou);
+    expect(screen.getByText(/Primeira marca: 9 Δ/)).toBeInTheDocument();
+  });
+
+  it("um toque antes de os cartões arrancarem não conta", () => {
+    vi.useFakeTimers();
+    const { api } = montar();
+    clicar(V.gaiolaExperimentar);
+    clicar(V.gaiolaJaVejo);
+    passar(300);
+    clicar(V.gaiolaSaiu);
+    expect(screen.getByText(V.gaiolaPrepare)).toBeInTheDocument();
+    expect(api.registar).toHaveBeenCalledTimes(1);
+  });
+
+  it("antes de começar há um só botão; quem não consegue pede ajuda e recebe a dica", () => {
+    vi.useFakeTimers();
+    montar();
+    clicar(V.gaiolaExperimentar);
+    // As respostas "vejo dois / vejo quatro" só aparecem a quem pede ajuda.
+    expect(screen.queryByRole("button", { name: V.gaiolaResposta_dois })).not.toBeInTheDocument();
+    clicar(V.gaiolaNaoConsigo);
+    clicar(V.gaiolaResposta_quatro);
+    expect(screen.getByText(V.gaiolaDicaTitulo_quatro)).toBeInTheDocument();
+    clicar(V.tentarDeNovo);
+    expect(screen.getByRole("button", { name: V.gaiolaJaVejo })).toBeInTheDocument();
+  });
+
+  it("com o sol ou a nuvem a faltar, regista a supressão", () => {
+    vi.useFakeTimers();
     const { resultado } = montar();
     clicar(V.gaiolaExperimentar);
+    clicar(V.gaiolaNaoConsigo);
     clicar(V.gaiolaResposta_dois);
     expect(screen.getByText(V.gaiolaDicaTitulo_dois)).toBeInTheDocument();
     clicar(V.tentarDeNovo);
-    clicar(V.gaiolaResposta_falta);
-    expect(screen.getByText(V.gaiolaDicaTitulo_falta)).toBeInTheDocument();
-    clicar(V.gaiolaContinuarAssim);
-    // Aguenta todos os degraus que cabem: fica "acima de".
-    while (screen.queryByRole("button", { name: V.gaiolaContinuaDentro })) clicar(V.gaiolaContinuaDentro);
+    clicar(V.gaiolaJaVejo);
+    // Sem tocar, os cartões chegam ao fim do ecrã: fica "acima de".
+    passar(30_000);
     expect(screen.getByText(V.gaiolaAteAoFim)).toBeInTheDocument();
+    clicar(V.gaiolaSolNuvemNao);
     expect(screen.getByText(V.gaiolaComSupressao)).toBeInTheDocument();
     expect(resultado.current!().sinais).toMatchObject({ fusao: "supressao", a_primeira: false, gaiola: { limiteEcra: true, rotura: null } });
   });
@@ -181,7 +282,7 @@ describe("Olho Mágico, nível do pássaro e da gaiola", () => {
     };
     montar([dia(1), dia(2)]);
     clicar(V.gaiolaExperimentar);
-    clicar(V.gaiolaResposta_dentro);
+    clicar(V.gaiolaJaVejo);
     expect(window.localStorage.getItem("jpa.visao.olhoMagico.nivel")).toBe("pano");
   });
 });
