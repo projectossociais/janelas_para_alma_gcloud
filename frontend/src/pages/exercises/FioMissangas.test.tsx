@@ -88,4 +88,56 @@ describe("Fio de Missangas", () => {
     });
     window.localStorage.clear();
   });
+
+  const abrir = () =>
+    render(
+      <MemoryRouter>
+        <AcessoExerciciosProvider>
+          <FioMissangas />
+        </AcessoExerciciosProvider>
+      </MemoryRouter>,
+    );
+
+  // Caso real (2026-11-11): feito num portátil, deu 16,8 cm e "sinal a investigar".
+  it("num computador explica para que serve e não deixa começar", async () => {
+    vi.spyOn(window, "matchMedia").mockImplementation((q) => ({ matches: q.includes("pointer: fine"), media: q }) as MediaQueryList);
+    abrir();
+    expect(await screen.findByText(V.fioSoTelemovelTitulo)).toBeInTheDocument();
+    expect(screen.getByText(V.fioParaQueServe)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: V.fioComecar })).not.toBeInTheDocument();
+  });
+
+  it("antes de começar diz para que serve, que é no nariz e não no olho, e os cuidados", async () => {
+    abrir();
+    expect(await screen.findByText(V.fioParaQueServe)).toBeInTheDocument();
+    expect(screen.getByText(/nunca no olho/)).toBeInTheDocument();
+    expect(screen.getByText(V.fioSeguranca1)).toBeInTheDocument();
+    expect(screen.getByText(V.fioSeguranca3)).toBeInTheDocument();
+  });
+
+  it("sem o ecrã calibrado, mostra os centímetros mas nunca como sinal a investigar", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    registar.mockReset().mockResolvedValue({});
+    window.localStorage.clear();
+    abrir();
+    fireEvent.click(await screen.findByRole("button", { name: V.fioComecar }));
+    fireEvent.click(await screen.findByRole("button", { name: V.naoTenhoCartao }));
+    const esperar = (ms: number) =>
+      act(async () => {
+        await vi.advanceTimersByTimeAsync(ms);
+      });
+    // Fica a dobrar logo ao fim de 2 cm, bem acima dos 10 cm, nas três rondas.
+    for (let i = 0; i < 3; i++) {
+      await esperar(1200 + 2000);
+      fireEvent.pointerDown(await screen.findByRole("button", { name: V.fioToqueDuas }));
+      await esperar(1000);
+      fireEvent.pointerDown(await screen.findByRole("button", { name: V.fioToqueUma }));
+    }
+    expect(await screen.findByText(V.fioResultadoTitulo)).toBeInTheDocument();
+    expect(screen.getByText(V.fioSemCartao)).toBeInTheDocument();
+    expect(screen.queryByText(V.fioSinalPpc)).not.toBeInTheDocument();
+    await waitFor(() => expect(registar).toHaveBeenCalledTimes(1));
+    expect(registar.mock.calls[0][0]).toMatchObject({ calibrado: false });
+    expect(registar.mock.calls[0][0].limiar).toBeGreaterThan(10);
+  });
 });

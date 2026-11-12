@@ -6,7 +6,9 @@ import BaseExercise from "@/components/exercises/BaseExercise";
 import PaginaExercicio from "@/components/visao/PaginaExercicio";
 import PalcoVisual from "@/components/visao/PalcoVisual";
 import { CartaoOlho, EcraResultado } from "@/components/visao/Resultados";
-import { PassoBrilho, PassoCalibracao, PassoDistancia } from "@/components/visao/Passos";
+import { Button } from "@/components/ui/button";
+import { TrocarModo } from "@/components/visao/EscolherOculos";
+import { NotaPreparacao, PassoCalibracao, PassoDistancia } from "@/components/visao/Passos";
 import { useCalibracao, useDevicePixelRatio, useRegistoSessao, useTempoActivo } from "@/components/visao/hooks";
 import { escolhaAleatoria, iniciarEscadaTeste, responderTeste } from "@/lib/visao/escada";
 import { FORMAS, gerarEstereograma, type Forma } from "@/lib/visao/estereograma";
@@ -16,6 +18,7 @@ import { DISTANCIA_OMISSAO_MM, arcsegParaPx, desenhavel } from "@/lib/visao/geom
 import { DISPARIDADES_ARCSEG, sinalEstereopsia } from "@/lib/visao/resultados";
 import { PX_POR_MM_NOMINAL } from "@/lib/visao/calibracao";
 import { ID_ESTEREOPSIA } from "@/lib/visao/ids";
+import { guardarEscolhas, lerEscolhas } from "@/lib/visao/preparacao";
 
 const EXERCICIO_ID = ID_ESTEREOPSIA;
 
@@ -55,8 +58,9 @@ const Estereograma = ({
   return <canvas ref={ref} width={ladoDisp} height={ladoDisp} style={{ width: ladoCss, height: ladoCss, display: "block" }} />;
 };
 
-type Etapa = "brilho" | "calibracao" | "distancia" | "oculos" | "afinar" | "tarefa" | "resultado";
-const ETAPAS: readonly Etapa[] = ["brilho", "calibracao", "distancia", "oculos", "afinar", "tarefa", "resultado"];
+type Etapa = "calibracao" | "distancia" | "oculos" | "afinar" | "tarefa" | "resultado";
+/** A distância da última vez, por aparelho (a chave é só deste teste com óculos 3D). */
+const CHAVE_ESCOLHAS = `${EXERCICIO_ID}.oculos3d`;
 
 interface ResultadoEstereo {
   limiar: number | null;
@@ -211,27 +215,38 @@ const ResultadoEstereoEcra = ({
   );
 };
 
-const TesteEstereopsia = () => {
+/**
+ * Teste de Estereopsia (com óculos 3D). Da segunda vez em diante neste
+ * aparelho, começa logo na verificação dos óculos: o cartão já está feito e a
+ * distância é a da última vez (gravada como não medida). "Alterar definições"
+ * volta ao fluxo completo.
+ */
+const TesteEstereopsia = ({ aoTrocarModo }: { aoTrocarModo?: () => void }) => {
   const { t } = useTranslation();
   const { calibracao, guardar } = useCalibracao();
   const dpr = useDevicePixelRatio();
-  const [etapa, setEtapa] = useState<Etapa>("brilho");
-  const [distanciaMm, setDistanciaMm] = useState(DISTANCIA_OMISSAO_MM);
+  const [guardadas] = useState(() => lerEscolhas(CHAVE_ESCOLHAS));
+  const [completo, setCompleto] = useState(() => !(guardadas && calibracao));
+  const [etapa, setEtapa] = useState<Etapa>(() => (completo ? (calibracao ? "distancia" : "calibracao") : "oculos"));
+  const [distanciaMm, setDistanciaMm] = useState(() => (completo || !guardadas ? DISTANCIA_OMISSAO_MM : guardadas.distanciaMm));
   const [distanciaMedida, setDistanciaMedida] = useState(false);
   const [oculosOk, setOculosOk] = useState(false);
   const [afinacao, setAfinacao] = useState<Afinacao | null>(null);
   const [resultado, setResultado] = useState<ResultadoEstereo | null>(null);
+  /** O cartão entra na barra de passos se foi preciso nesta sessão. */
+  const [comCartao, setComCartao] = useState(etapa === "calibracao");
   const pxPorMm = calibracao?.pxPorMm ?? PX_POR_MM_NOMINAL;
 
-  const nomes = [
-    t("Visao.passoEcra"),
-    t("Visao.passoCartao"),
-    t("Visao.passoDistancia"),
-    t("Visao.passoOculosVC"),
-    t("Visao.passoAfinar"),
-    t("Visao.passoTarefa"),
-    t("Visao.passoResultado"),
+  const lista: [Etapa, string, boolean][] = [
+    ["calibracao", t("Visao.passoCartao"), comCartao],
+    ["distancia", t("Visao.passoDistancia"), completo],
+    ["oculos", t("Visao.passoOculosVC"), true],
+    ["afinar", t("Visao.passoAfinar"), true],
+    ["tarefa", t("Visao.passoTarefa"), true],
+    ["resultado", t("Visao.passoResultado"), true],
   ];
+  const activas = lista.filter(([, , entra]) => entra);
+  const aPreparar = etapa === "calibracao" || etapa === "oculos" || etapa === "afinar";
 
   return (
     <PaginaExercicio>
@@ -240,12 +255,11 @@ const TesteEstereopsia = () => {
         description={t("Visao.estereoOculosDescricao")}
         exercicioId={EXERCICIO_ID}
         tipo="teste"
-        passos={nomes}
-        passoActual={ETAPAS.indexOf(etapa)}
+        passos={activas.map(([, nome]) => nome)}
+        passoActual={Math.max(0, activas.findIndex(([e]) => e === etapa))}
       >
-        {etapa === "brilho" && <PassoBrilho aoContinuar={() => setEtapa("calibracao")} />}
         {etapa === "calibracao" && (
-          <PassoCalibracao calibracao={calibracao} aoGuardar={guardar} aoContinuar={() => setEtapa("distancia")} />
+          <PassoCalibracao calibracao={calibracao} forcar aoGuardar={guardar} aoContinuar={() => setEtapa("distancia")} />
         )}
         {etapa === "distancia" && (
           <PassoDistancia
@@ -254,18 +268,35 @@ const TesteEstereopsia = () => {
             aoEscolher={(mm, medida) => {
               setDistanciaMm(mm);
               setDistanciaMedida(medida);
+              guardarEscolhas(CHAVE_ESCOLHAS, { distanciaMm: mm, usaCorreccao: false, olho: null });
               setEtapa("oculos");
             }}
           />
         )}
         {etapa === "oculos" && (
-          <VerificarOculos
-            aoContinuar={(ok) => {
-              setOculosOk(ok);
-              // Sem os óculos a funcionar, não há fuga que valha a pena medir.
-              setEtapa(ok ? "afinar" : "tarefa");
-            }}
-          />
+          <div className="flex flex-col items-center gap-3">
+            <VerificarOculos
+              aoContinuar={(ok) => {
+                setOculosOk(ok);
+                // Sem os óculos a funcionar, não há fuga que valha a pena medir.
+                setEtapa(ok ? "afinar" : "tarefa");
+              }}
+            />
+            {!completo && (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setCompleto(true);
+                  setComCartao(true);
+                  setDistanciaMm(DISTANCIA_OMISSAO_MM);
+                  setEtapa("calibracao");
+                }}
+              >
+                {t("Visao.rapidoAlterar")}
+              </Button>
+            )}
+            {aoTrocarModo && <TrocarModo para="sem" aoTrocar={aoTrocarModo} />}
+          </div>
         )}
         {etapa === "afinar" && (
           <AfinarOculos
@@ -275,6 +306,7 @@ const TesteEstereopsia = () => {
             }}
           />
         )}
+        {aPreparar && <NotaPreparacao />}
         {etapa === "tarefa" && (
           <TarefaEstereo
             distanciaMm={distanciaMm}

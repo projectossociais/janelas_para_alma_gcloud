@@ -645,6 +645,54 @@ Erros reais que já aconteceram neste produto. A infraestrutura mudou; estas li�
   + `AssistenteTeste`/`AssistenteTreino` (`components/visao/`) + a lógica pura de
   `lib/visao/` (geometria, escadas, contraste, tempo activo). Um passo por ecrã, um olho de
   cada vez; no máximo **um** `requestAnimationFrame` por exercício.
+- **Antes de começar, só se pergunta o que ainda não se sabe (2026-11-11, pedido do dono do
+  projecto: os passos de preparação atrapalhavam).** O brilho é uma linha por baixo dos
+  passos (`NotaPreparacao`), não um ecrã; o passo do cartão salta com o ecrã já calibrado
+  neste aparelho (a mesma linha deixa calibrar de novo); os óculos de graduação
+  perguntam-se uma vez e ficam em `utilizadores.usa_oculos`; com a escolha "com ou sem
+  óculos 3D" guardada, o exercício abre directo nesse modo e troca-se por um link
+  (`TrocarModo`) nos ecrãs antes de começar. Na Palanca, "tape o outro olho" e "Começar"
+  são um só ecrã (`semPassoTapar`), e a montagem a 3 m resume-se da segunda vez. O Teste de
+  Estereopsia reusa a distância da última vez (gravada como não medida). O Kianda com
+  óculos 3D deixou de medir a distância: assume 40 cm. O passo do tapa-olho dos treinos
+  aceita a mão ou um pano (antes dizia "a mão não basta", contra o aviso da pesca). Não
+  reintroduzir ecrãs de preparação que só servem para carregar em Continuar.
+- **Depois do primeiro teste do dono do projecto em produção (2026-11-11):** (1) Palanca: o
+  ecrã da mãozinha mostra quantas respostas já contou, a última recebida e que pára
+  sozinho; num computador responde-se com as setas (espaço = "não sei"); a voz responde ao
+  resultado **provisório** do reconhecimento (antes esperava pelo final e atrasava 1 a 2 s).
+  (2) Fio de Missangas: só em aparelhos de toque (num portátil deu 16,8 cm e "sinal a
+  investigar"); o primeiro ecrã diz para que serve, que é no nariz e nunca no olho, e os
+  cuidados; **sem o ecrã calibrado nunca mostra "sinal"**, só os centímetros como
+  aproximados. (3) Pássaro e gaiola: os cartões afastam-se sozinhos (1,5 Δ/s) e toca-se
+  quando o pássaro sai e quando volta a entrar (`deltaDaGaiola`, `rampaDaGaiola`); a
+  pergunta "o que vê no meio" faz-se uma vez por sessão. Continua a ser auto-avaliação e
+  grava no mesmo formato. Um estímulo que se mexe sozinho conta tempo activo por
+  `ApiTarefa.presente`, sem contar como tentativa.
+- **O Olho Mágico fica; não se substitui (decisão do dono do projecto, 2026-11-11).** No
+  mesmo dia, o id `convergence` chegou a produção como "Vaivém da Missanga" (o Fio de
+  Missangas em treino) e foi revertido: era o mesmo exercício do Fio com outro nome, e o
+  pedido era melhorar o Olho Mágico, não trocá-lo. As poucas sessões gravadas nesse
+  intervalo (`sinais.modo = "fio_treino"`, em cm) continuam a ler-se no histórico. O que o
+  pássaro e a gaiola ganharam: dizem para que servem, e têm uma **marca a bater** -- o mais
+  longe das sessões anteriores (`recordeDaGaiola`), mostrada na barra enquanto os cartões
+  se afastam e no fim de cada ronda ("Nova marca"). Antes de trocar o que um exercício é,
+  confirmar com o dono do projecto que é isso que ele quer.
+- **Pássaro e gaiola com menos perguntas (2026-11-11).** Antes de começar há um só botão
+  ("Já vejo o pássaro dentro da gaiola"), que arranca logo o movimento; as respostas "vejo
+  dois / vejo quatro" e as dicas só aparecem a quem toca em "Não estou a conseguir". A
+  pergunta do sol e da nuvem (supressão) faz-se uma vez por sessão, no fim da primeira
+  ronda, e grava-se como antes (`respostas.falta`, `fusao`). A escolha do nível sai do ecrã
+  depois da primeira resposta.
+- **Olho Mágico reestruturado (2026-11-11, depois de novo teste do dono do projecto).** (1) Os
+  desenhos crescem com a distância: `ladoDoEstimulo` mantém o ângulo de visão dos 20/22 mm a
+  40 cm (a 1 m ficam com 50/55 mm), até um quarto do palco; a 1 m num computador viam-se
+  minúsculos. O lado usado vai em `sinais.quadro_mm` / `cartao_mm`. (2) O estímulo e as
+  respostas vêm primeiro; "Como fazer" fica recolhido por baixo (abre sozinho só da primeira
+  vez no aparelho) e as escolhas de modo e de nível passam para o fim. (3) No pássaro e
+  gaiola, o ecrã diz o objectivo e mostra uma animação do que se vê (`DemoOQueVe`): **no
+  ecrã nada se mexe até tocar no botão; é nos olhos que o pássaro entra na gaiola.** Sem
+  esta frase, quem testava ficava à espera de ver o pássaro andar.
 - **Régua Invisível (2026-10-20): unidades reais sem câmara.** Cartão de banco -> px/mm
   (`calibracao.ts`); ponto cego -> distância olhos-ecrã (`pontoCego.ts`, Li et al. 2020);
   afinação dos óculos vermelho-ciano -> fuga de cor de cada filtro (`anaglifo.ts`). Duas

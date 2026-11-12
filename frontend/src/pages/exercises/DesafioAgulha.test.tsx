@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import DesafioAgulha from "./DesafioAgulha";
@@ -35,6 +35,8 @@ vi.mock("@/lib/apiClient", () => ({
   mensagemDeErroApi: (_e: unknown, fallback: string) => fallback,
 }));
 
+// Sem escolha guardada, cada teste começa pela pergunta "com ou sem óculos 3D".
+beforeEach(() => window.localStorage.clear());
 afterEach(() => vi.restoreAllMocks());
 
 describe("Desafio da Agulha (sem óculos)", () => {
