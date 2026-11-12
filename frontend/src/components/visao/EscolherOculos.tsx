@@ -14,7 +14,8 @@ interface Opcao {
 /**
  * Primeiro ecrã dos exercícios que têm uma versão com óculos 3D: sem óculos
  * vem primeiro e é a escolha por omissão (a maior parte das famílias não os
- * tem, decisão do dono do projecto, 2026-10-21).
+ * tem, decisão do dono do projecto, 2026-10-21). Só aparece enquanto não há
+ * escolha guardada neste aparelho; depois, troca-se com `TrocarModo`.
  */
 const EscolherOculos = ({
   titulo,
@@ -64,6 +65,24 @@ const EscolherOculos = ({
       </div>
       <p className="mt-2 text-xs text-muted-foreground">{t("Visao.escolhaFicaGuardada")}</p>
     </EcraPasso>
+  );
+};
+
+/**
+ * Com a escolha já guardada, o exercício abre directo nesse modo (2026-11-11);
+ * este link, nos ecrãs antes de começar, é a forma de mudar para o outro.
+ */
+export const TrocarModo = ({ para, aoTrocar }: { para: ComOuSemOculos; aoTrocar: () => void }) => {
+  const { t } = useTranslation();
+  return (
+    <button
+      type="button"
+      onClick={aoTrocar}
+      className="mx-auto flex items-center gap-1.5 text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground"
+    >
+      {para === "com" ? <Glasses className="h-4 w-4" aria-hidden /> : <Hand className="h-4 w-4" aria-hidden />}
+      {para === "com" ? t("Visao.trocarParaOculos3D") : t("Visao.trocarParaSemOculos")}
+    </button>
   );
 };
 
