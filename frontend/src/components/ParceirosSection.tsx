@@ -34,9 +34,11 @@ const ParceirosSection = () => {
           <h2 className="text-3xl md:text-5xl font-bold text-marca-marinho">{t("ParceirosSection.parceiros")}</h2>
         </div>
 
-        {/* Só 2 parceiros (UNICEF e Nelt Group retirados em 2026-10-15, Arotec
-            em 2026-11-08): cabem centrados sem carrossel. */}
-        <div className="flex flex-wrap justify-center gap-6">
+        {/* Ecrãs estreitos: os cartões ficam lado a lado e desliza-se para o
+            lado (nunca uns por cima dos outros); o segundo aparece cortado,
+            para se perceber que há mais. A partir de md cabem todos e ficam
+            centrados. */}
+        <div className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:mx-0 md:justify-center md:gap-6 md:overflow-visible md:px-0">
           {partners.map((partner) => (
             <a
               key={partner.name}
@@ -44,7 +46,7 @@ const ParceirosSection = () => {
               target="_blank"
               rel="noopener noreferrer"
               aria-label={partner.name}
-              className="w-52 sm:w-56 h-36 rounded-2xl bg-white border border-border/50 shadow-card flex items-center justify-center p-6 transition-all hover:shadow-elevated hover:scale-[1.02]"
+              className="snap-start shrink-0 w-44 sm:w-56 h-32 sm:h-36 rounded-2xl bg-white border border-border/50 shadow-card flex items-center justify-center p-6 transition-all hover:shadow-elevated hover:scale-[1.02]"
             >
               {partner.onDark ? (
                 <div className="w-full h-full rounded-lg bg-marca-marinho flex items-center justify-center p-4">

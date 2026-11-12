@@ -8,6 +8,7 @@ import AccoesPublicacao from "@/components/blog/AccoesPublicacao";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import { publicacoesApi, mensagemDeErroApi, type PublicacaoPublica } from "@/lib/apiClient";
+import { eVideoDaGaleria, partirEmLinks } from "@/lib/midiaPublicacao";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { localizar } from "@/i18n/rotas";
@@ -105,7 +106,12 @@ const PublicacaoDetalhe = () => {
             </div>
           )}
 
-          {!aCarregar && publicacao && (
+          {!aCarregar && publicacao && (() => {
+            // Os vídeos mostram-se à parte, por cima das fotos: dentro do
+            // carrossel automático, o diapositivo mudava a meio do vídeo.
+            const videos = publicacao.midias.filter((m) => eVideoDaGaleria(m.url));
+            const fotos = publicacao.midias.filter((m) => !eVideoDaGaleria(m.url));
+            return (
             <article className="max-w-3xl mx-auto flex flex-col gap-8">
               <header className="text-center space-y-3">
                 <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground flex-wrap">
@@ -158,10 +164,40 @@ const PublicacaoDetalhe = () => {
               )}
 
               <div lang={langConteudo} className="text-muted-foreground leading-relaxed whitespace-pre-wrap max-w-2xl mx-auto">
-                {publicacao.corpo}
+                {partirEmLinks(publicacao.corpo).map((pedaco, i) =>
+                  pedaco.tipo === "link" ? (
+                    <a
+                      key={i}
+                      href={pedaco.valor}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-teal font-medium underline break-all"
+                    >
+                      {pedaco.valor}
+                    </a>
+                  ) : (
+                    pedaco.valor
+                  ),
+                )}
               </div>
 
-              {publicacao.midias.length > 0 && (
+              {videos.length > 0 && (
+                <div className="space-y-4 max-w-2xl mx-auto w-full">
+                  {videos.map((m) => (
+                    <video
+                      key={m.id}
+                      src={m.url}
+                      controls
+                      playsInline
+                      preload="metadata"
+                      aria-label={publicacao.titulo}
+                      className="w-full max-h-[80vh] rounded-2xl shadow-elevated bg-black"
+                    />
+                  ))}
+                </div>
+              )}
+
+              {fotos.length > 0 && (
                 <div className="space-y-4">
                   <hr className="border-slate-200" />
                   <h2 className="text-xl font-bold text-center">{t("PublicacaoDetalhe.galeriaDeFotos")}</h2>
@@ -171,7 +207,7 @@ const PublicacaoDetalhe = () => {
                     className="max-w-lg mx-auto"
                   >
                     <CarouselContent>
-                      {publicacao.midias.map((m) => (
+                      {fotos.map((m) => (
                         <CarouselItem key={m.id}>
                           <img
                             src={m.url}
@@ -182,7 +218,7 @@ const PublicacaoDetalhe = () => {
                         </CarouselItem>
                       ))}
                     </CarouselContent>
-                    {publicacao.midias.length > 1 && (
+                    {fotos.length > 1 && (
                       <>
                         <CarouselPrevious />
                         <CarouselNext />
@@ -192,7 +228,8 @@ const PublicacaoDetalhe = () => {
                 </div>
               )}
             </article>
-          )}
+            );
+          })()}
         </div>
       </main>
       <Footer />

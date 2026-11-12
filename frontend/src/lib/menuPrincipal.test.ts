@@ -32,6 +32,6 @@ describe("menu principal do cabeçalho", () => {
   });
 
   it("o botão Doar Agora leva à doação única e à mensal", () => {
-    expect(MENU_DOAR.map((i) => i.caminho)).toEqual(["/apoiar?modo=unica", "/apoiar?modo=mensal"]);
+    expect(MENU_DOAR.map((i) => i.caminho)).toEqual(["/apoiar?modo=unica#como-apoiar", "/apoiar?modo=mensal#como-apoiar"]);
   });
 });
