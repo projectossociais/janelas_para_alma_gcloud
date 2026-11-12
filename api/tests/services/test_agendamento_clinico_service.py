@@ -88,16 +88,20 @@ class RepositorioAgendamentosFalso:
         existente: AgendamentoClinicoRegisto | None = None,
         conflito: bool = False,
         ocupados: set[datetime] | None = None,
+        clinica_indisponivel_ao_gravar: bool = False,
     ) -> None:
         self._existente = existente
         self._conflito = conflito
         self._ocupados = ocupados or set()
+        self._clinica_indisponivel_ao_gravar = clinica_indisponivel_ao_gravar
         self.criado: dict | None = None
         self.confirmado: dict | None = None
         self.recusado: dict | None = None
 
-    def criar(self, **kwargs) -> AgendamentoClinicoRegisto:
+    def criar(self, **kwargs) -> AgendamentoClinicoRegisto | None:
         self.criado = kwargs
+        if self._clinica_indisponivel_ao_gravar:
+            return None
         return _agendamento(**kwargs)
 
     def obter(self, agendamento_id: str) -> AgendamentoClinicoRegisto | None:
@@ -235,6 +239,11 @@ class TestPedir:
     def test_recusa_clinica_inativa(self) -> None:
         with pytest.raises(ClinicaNaoEncontradaError):
             _servico(clinicas=RepositorioClinicasFalso(_clinica(ativa=False))).pedir(**DADOS_PEDIDO)
+
+    def test_recusa_clinica_desactivada_entre_validacao_e_gravacao(self) -> None:
+        agendamentos = RepositorioAgendamentosFalso(clinica_indisponivel_ao_gravar=True)
+        with pytest.raises(ClinicaNaoEncontradaError):
+            _servico(agendamentos=agendamentos).pedir(**DADOS_PEDIDO)
 
     def test_recusa_horario_no_passado(self) -> None:
         agendamentos = RepositorioAgendamentosFalso()

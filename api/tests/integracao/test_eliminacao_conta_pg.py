@@ -3,14 +3,20 @@ todas as tabelas que os copiam -- e não rebenta (bug real, 2026-09-29)."""
 
 from datetime import UTC, datetime
 
+import pytest
+
+from app.core.security import criar_access_token
 from app.repositories.eliminacao_conta_repository import SQLAlchemyEliminacaoContaRepository
 from app.repositories.orm_models import (
     AgendamentoClinico,
     ClinicaParceira,
     ContactMessage,
+    EquipaClinica,
     PremiumRequest,
     Utilizador,
 )
+from app.repositories.utilizadores_repository import SQLAlchemyUtilizadoresRepository
+from app.services.auth_service import AuthService, CredenciaisInvalidasError
 
 
 def test_anonimizar_limpa_utilizador_premium_agendamentos_e_mensagens(sessao_pg) -> None:
@@ -22,6 +28,7 @@ def test_anonimizar_limpa_utilizador_premium_agendamentos_e_mensagens(sessao_pg)
     s.flush()
     s.add_all(
         [
+            EquipaClinica(utilizador_id=ana.id, clinica_id=clinica.id),
             PremiumRequest(user_id=ana.id, nome="Ana Silva", email="Ana@Example.com", telefone="+244900"),
             AgendamentoClinico(
                 clinica_id=clinica.id, utilizador_id=ana.id, nome="Ana Silva",
@@ -50,6 +57,11 @@ def test_anonimizar_limpa_utilizador_premium_agendamentos_e_mensagens(sessao_pg)
     assert (mensagens["Olá"].nome, mensagens["Olá"].email) == ("Conta eliminada", "anon@anonimo.test")
     assert (mensagens["Bom dia"].nome, mensagens["Bom dia"].email) == ("Outro", "outro@example.com")
     assert s.get(Utilizador, outro.id).email == "outro@example.com"
+    assert s.query(EquipaClinica).filter_by(utilizador_id=ana.id).count() == 0
+    with pytest.raises(CredenciaisInvalidasError):
+        AuthService(SQLAlchemyUtilizadoresRepository(s)).utilizador_a_partir_do_access_token(
+            criar_access_token(str(ana.id))
+        )
 
 
 def test_anonimizar_duas_vezes_nao_reprocessa(sessao_pg) -> None:

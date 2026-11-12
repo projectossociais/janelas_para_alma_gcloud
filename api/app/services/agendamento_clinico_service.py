@@ -205,6 +205,8 @@ class AgendamentoClinicoService:
             horario_inicio=horario_inicio,
             motivo=motivo,
         )
+        if agendamento is None:
+            raise ClinicaNaoEncontradaError(clinica_id)
 
         # Tudo o que o utilizador escreveu é escapado antes de entrar no HTML.
         quando = formatar_horario(horario_inicio)
