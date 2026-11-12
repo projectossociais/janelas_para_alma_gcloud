@@ -3,6 +3,7 @@ import {
   diferencaEmLinhas,
   eAglomerada,
   mesmoTipoDaUltima,
+  tipoAoLonge,
   tipoDeAcuidade,
 } from "./aglomeracao";
 
@@ -50,6 +51,19 @@ describe("mesmoTipoDaUltima", () => {
     expect(tipoDeAcuidade(longe(21))).toBe("longe");
     expect(tipoDeAcuidade(s(1, true))).toBe("barras");
     expect(tipoDeAcuidade(s(1))).toBe("isolado");
+  });
+
+  it("ao longe com barras (2026-11-12) é outro tipo: não se compara com a mãozinha isolada", () => {
+    const longe = (dia: number, barras: boolean) => ({
+      created_at: `2026-11-${String(dia).padStart(2, "0")}T10:00:00Z`,
+      sinais: barras ? { ao_longe: true, aglomeracao: true } : { ao_longe: true },
+    });
+    const sessoes = [longe(1, false), longe(5, false), longe(12, true), longe(13, true)];
+    expect(tipoDeAcuidade(longe(12, true))).toBe("longe_barras");
+    expect(mesmoTipoDaUltima(sessoes).map((x) => x.created_at.slice(8, 10))).toEqual(["12", "13"]);
+    expect(tipoAoLonge("longe_barras")).toBe(true);
+    expect(tipoAoLonge("longe")).toBe(true);
+    expect(tipoAoLonge("barras")).toBe(false);
   });
 
   it("eAglomerada só com o sinal explícito", () => {

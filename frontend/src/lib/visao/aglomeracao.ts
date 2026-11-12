@@ -7,8 +7,9 @@
  * barras: o resultado fica mais sensível ao olho preguiçoso e à sua evolução.
  *
  * O anel com barras de Flom foi substituído em 2026-10-21 pela mãozinha "E"
- * a 3 metros (`palancaLonge.ts`); ficam aqui só a distinção entre tipos de
- * sessão (as antigas continuam no histórico) e a diferença entre olhos.
+ * a 3 metros (`palancaLonge.ts`), que voltou a ter barras a 2026-11-12; ficam
+ * aqui a distinção entre tipos de sessão (as antigas continuam no histórico)
+ * e a diferença entre olhos.
  */
 
 /**
@@ -29,10 +30,17 @@ export const eAglomerada = (s: ComSinais): boolean => s.sinais?.aglomeracao === 
 /** A sessão foi feita ao longe, com a mãozinha (Olhos de Palanca ao longe, desde 2026-10-21)? */
 export const eAoLonge = (s: ComSinais): boolean => s.sinais?.ao_longe === true;
 
-export type TipoAcuidade = "longe" | "barras" | "isolado";
+export type TipoAcuidade = "longe_barras" | "longe" | "barras" | "isolado";
 
-/** Ao longe (3 m, mãozinha), de perto com barras, ou de perto com o anel isolado. */
-export const tipoDeAcuidade = (s: ComSinais): TipoAcuidade => (eAoLonge(s) ? "longe" : eAglomerada(s) ? "barras" : "isolado");
+/**
+ * Ao longe com barras à volta da mãozinha (desde 2026-11-12), ao longe com a
+ * mãozinha isolada, de perto com barras, ou de perto com o anel isolado.
+ */
+export const tipoDeAcuidade = (s: ComSinais): TipoAcuidade =>
+  eAoLonge(s) ? (eAglomerada(s) ? "longe_barras" : "longe") : eAglomerada(s) ? "barras" : "isolado";
+
+/** Qualquer das duas versões ao longe (para o nome do exercício e o título no relatório). */
+export const tipoAoLonge = (t: TipoAcuidade): boolean => t === "longe" || t === "longe_barras";
 
 /**
  * Só as sessões do mesmo tipo da mais recente: ao longe, com barras ou com o

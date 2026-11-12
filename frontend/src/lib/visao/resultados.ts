@@ -14,9 +14,29 @@ export const LOGMAR_6_9 = Math.log10(9 / 6);
 export const DIFERENCA_OLHOS_LOGMAR = 0.2;
 const EPS = 1e-6;
 
+/**
+ * Até aos 5 anos o critério é a linha 6/12 (AAP/AAPOS 2016: aos 4 anos, a
+ * maioria dos optótipos da linha 20/40). Com a contagem optótipo a optótipo,
+ * quem passa a linha 6/12 com um erro fica em 0,325: o limite fica logo acima.
+ */
+export const LOGMAR_PASSA_6_12 = 0.33;
+
+export interface CriterioAcuidade {
+  /** logMAR acima do qual há sinal. */
+  logmar: number;
+  /** A linha que se mostra no texto do sinal. */
+  linha: "6/9" | "6/12";
+}
+export const CRITERIO_6_9: CriterioAcuidade = { logmar: LOGMAR_6_9, linha: "6/9" };
+export const CRITERIO_6_12: CriterioAcuidade = { logmar: LOGMAR_PASSA_6_12, linha: "6/12" };
+
+/** O critério para a idade de quem faz o teste; sem idade no perfil, o dos 6 anos ou mais. */
+export const criterioAcuidade = (faixaEtaria: string | null | undefined): CriterioAcuidade =>
+  faixaEtaria === "ate_5" ? CRITERIO_6_12 : CRITERIO_6_9;
+
 export interface SinaisAcuidade {
-  /** Olhos piores do que 6/9 (ou sem nível nenhum lido). */
-  abaixoDe6_9: Olho[];
+  /** Olhos piores do que o critério da idade (ou sem nível nenhum lido). */
+  abaixoDoCriterio: Olho[];
   /** Diferença de 2 linhas ou mais entre os olhos. */
   diferencaEntreOlhos: boolean;
 }
@@ -25,16 +45,19 @@ export interface SinaisAcuidade {
  * `null` num olho = não leu nem o nível maior -- também é sinal. `undefined`
  * = olho não testado (não entra nas contas).
  */
-export function sinaisAcuidade(res: Partial<Record<Olho, number | null>>): SinaisAcuidade {
-  const abaixoDe6_9 = OLHOS.filter((o) => {
+export function sinaisAcuidade(
+  res: Partial<Record<Olho, number | null>>,
+  criterio: CriterioAcuidade = CRITERIO_6_9,
+): SinaisAcuidade {
+  const abaixoDoCriterio = OLHOS.filter((o) => {
     const v = res[o];
-    return v === null || (v !== undefined && v > LOGMAR_6_9 + EPS);
+    return v === null || (v !== undefined && v > criterio.logmar + EPS);
   });
   const d = res.direito;
   const e = res.esquerdo;
   const diferencaEntreOlhos =
     typeof d === "number" && typeof e === "number" && Math.abs(d - e) >= DIFERENCA_OLHOS_LOGMAR - EPS;
-  return { abaixoDe6_9, diferencaEntreOlhos };
+  return { abaixoDoCriterio, diferencaEntreOlhos };
 }
 
 /**

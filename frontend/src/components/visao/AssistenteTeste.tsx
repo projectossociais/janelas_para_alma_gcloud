@@ -41,7 +41,7 @@ interface AssistenteTesteProps<R> {
    * Um passo próprio do teste antes do primeiro olho (ex.: montar o teste a
    * 3 metros). `render` chama `aoContinuar` quando estiver pronto.
    */
-  preparacao?: { nome: string; render: (aoContinuar: () => void) => ReactNode };
+  preparacao?: { nome: string; render: (aoContinuar: () => void, ctx: ContextoTeste) => ReactNode };
   /**
    * A tarefa já tem o seu próprio ecrã "tape o outro olho e comece": sem isto,
    * eram dois ecrãs seguidos a dizer o mesmo.
@@ -190,7 +190,7 @@ function AssistenteTeste<R>({
           />
         );
       case "preparacao":
-        return preparacao?.render(() => depoisDe("preparacao"));
+        return preparacao?.render(() => depoisDe("preparacao"), ctx);
       case "tapar":
         return (
           <PassoTaparOlho

@@ -29,6 +29,7 @@ import {
   type ValorPesca,
   type ValorSamakaka,
 } from "@/lib/visao/resumoClinico";
+import { tipoAoLonge } from "@/lib/visao/aglomeracao";
 
 // Mesmo estilo do resto do relatório (ConteudoRelatorio): preto sobre branco,
 // linhas finas, um só cinzento para notas -- sem cores do site.
@@ -183,14 +184,14 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
         {r.acuidade && (
           <Medida
             titulo={
-              r.acuidade.tipo === "longe"
+              tipoAoLonge(r.acuidade.tipo)
                 ? t("Visao.clinicoAcuidadeLonge")
                 : r.acuidade.tipo === "barras"
                   ? t("Visao.clinicoAcuidade")
                   : t("Visao.clinicoAcuidadeIsolada")
             }
             // Os ids são históricos: antes de 21/10/2026 o "figure8" era o anel ao perto, e o "cerebro" o teste de contraste.
-            exercicio={r.acuidade.tipo === "longe" ? nomeDoExercicio(ID_ACUIDADE) : t("Visao.nomeAntigoAcuidadePerto")}
+            exercicio={tipoAoLonge(r.acuidade.tipo) ? nomeDoExercicio(ID_ACUIDADE) : t("Visao.nomeAntigoAcuidadePerto")}
             linhas={recenteEPrimeira(t, r.acuidade, (v) => porOlho(t, v, acuidade)).map((l, i) =>
               i === 0 && r.acuidade?.diferencaLinhas != null ? `${l} · ${diferenca(r.acuidade.diferencaLinhas)}` : l,
             )}
@@ -340,7 +341,9 @@ const ResumoClinico = ({ sessoes, hoje }: { sessoes: readonly SessaoParaRelatori
           <p className="font-semibold">{t("Visao.clinicoMetodoTitulo")}</p>
           {r.acuidade && (
             <p>
-              {r.acuidade.tipo === "longe"
+              {r.acuidade.tipo === "longe_barras"
+                ? t("Visao.clinicoMetodoAcuidadeLongeBarras")
+                : r.acuidade.tipo === "longe"
                 ? t("Visao.clinicoMetodoAcuidadeLonge")
                 : r.acuidade.tipo === "barras"
                   ? t("Visao.clinicoMetodoAcuidadeAglomeracao")
