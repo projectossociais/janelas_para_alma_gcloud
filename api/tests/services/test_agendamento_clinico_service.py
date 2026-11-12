@@ -83,9 +83,15 @@ def _disponibilidade(**over) -> DisponibilidadeRegisto:
 
 
 class RepositorioAgendamentosFalso:
-    def __init__(self, existente: AgendamentoClinicoRegisto | None = None, conflito: bool = False) -> None:
+    def __init__(
+        self,
+        existente: AgendamentoClinicoRegisto | None = None,
+        conflito: bool = False,
+        ocupados: set[datetime] | None = None,
+    ) -> None:
         self._existente = existente
         self._conflito = conflito
+        self._ocupados = ocupados or set()
         self.criado: dict | None = None
         self.confirmado: dict | None = None
         self.recusado: dict | None = None
@@ -102,6 +108,9 @@ class RepositorioAgendamentosFalso:
 
     def existe_conflito(self, clinica_id: str, horario_inicio: datetime) -> bool:
         return self._conflito
+
+    def horarios_ocupados(self, clinica_id: str, desde: datetime, ate: datetime) -> set[datetime]:
+        return {h for h in self._ocupados if desde <= h < ate}
 
     def confirmar(self, agendamento_id, admin_id, quando) -> AgendamentoClinicoRegisto:
         self.confirmado = {"agendamento_id": agendamento_id, "admin_id": admin_id, "quando": quando}
@@ -172,10 +181,12 @@ class EmailSenderFalso:
         self.enviados: list[dict] = []
         self._falha = falha
 
-    def enviar(self, destinatario: str, assunto: str, corpo_html: str) -> None:
+    def enviar(self, destinatario: str, assunto: str, corpo_html: str, anexos=None) -> None:
         if self._falha:
             raise EmailEnvioFalhouError("falha simulada do Resend")
-        self.enviados.append({"destinatario": destinatario, "assunto": assunto, "corpo_html": corpo_html})
+        self.enviados.append(
+            {"destinatario": destinatario, "assunto": assunto, "corpo_html": corpo_html, "anexos": anexos or []}
+        )
 
 
 def _servico(
@@ -308,6 +319,46 @@ class TestPedir:
         assert resultado.estado == "pendente"
 
 
+def test_pedir_num_feriado_e_recusado() -> None:
+    # Segunda 8/2/2027: ponte do Carnaval (terça 9/2) -- dentro da janela de
+    # segunda, mas sem expediente por lei. O browser nunca o oferece; o
+    # servidor também não o aceita se vier forjado.
+    ponte_do_carnaval = datetime(2027, 2, 8, 9, 0, tzinfo=UTC)
+    with pytest.raises(HorarioIndisponivelError):
+        _servico().pedir(**{**DADOS_PEDIDO, "horario_inicio": ponte_do_carnaval})
+
+
+class TestFichaDeEncaminhamento:
+    def test_a_clinica_recebe_a_ficha_em_pdf_e_o_paciente_nao(self) -> None:
+        email_sender = EmailSenderFalso()
+        agendamento = _servico(email_sender=email_sender).pedir(**DADOS_PEDIDO)
+
+        para_paciente, para_clinica = email_sender.enviados
+        referencia = f"JPA-{agendamento.id.replace('-', '')[:8].upper()}"
+        assert para_paciente["anexos"] == []
+        assert referencia in para_paciente["corpo_html"]
+        assert para_clinica["destinatario"] == "geral@optioptika.com"
+        assert referencia in para_clinica["assunto"]
+        (anexo,) = para_clinica["anexos"]
+        assert anexo.nome_ficheiro == f"ficha-encaminhamento-{referencia}.pdf"
+        assert anexo.conteudo.startswith(b"%PDF")
+
+    def test_se_o_pdf_falhar_o_pedido_e_o_email_seguem_na_mesma(self, monkeypatch) -> None:
+        def rebenta(_ficha):
+            raise RuntimeError("falha simulada")
+
+        monkeypatch.setattr(
+            "app.services.agendamento_clinico_service.gerar_ficha_encaminhamento", rebenta
+        )
+        email_sender = EmailSenderFalso()
+        agendamentos = RepositorioAgendamentosFalso()
+        _servico(agendamentos=agendamentos, email_sender=email_sender).pedir(**DADOS_PEDIDO)
+
+        assert agendamentos.criado is not None
+        assert len(email_sender.enviados) == 2
+        assert email_sender.enviados[1]["anexos"] == []
+
+
 class TestHorariosDisponiveis:
     def test_gera_horarios_dentro_da_janela_semanal(self) -> None:
         disponibilidades = RepositorioDisponibilidadesFalso(
@@ -333,13 +384,36 @@ class TestHorariosDisponiveis:
         assert primeiro.astimezone(UTC).time() == time(8, 0)
 
     def test_exclui_horario_ja_ocupado(self) -> None:
-        agendamentos = RepositorioAgendamentosFalso(conflito=True)
         disponibilidades = RepositorioDisponibilidadesFalso(
             janelas=[_disponibilidade(dia_semana=0, hora_inicio=time(8, 0), hora_fim=time(9, 0))]
         )
+        livres = _servico(disponibilidades=disponibilidades).horarios_disponiveis("clinica-1", "presencial")
+        ocupado = livres[0].inicio.astimezone(UTC)  # a base de dados devolve UTC
+
+        agendamentos = RepositorioAgendamentosFalso(ocupados={ocupado})
         resultado = _servico(agendamentos=agendamentos, disponibilidades=disponibilidades).horarios_disponiveis(
             "clinica-1", "presencial"
         )
+        assert ocupado not in {h.inicio for h in resultado}
+        assert len(resultado) == len(livres) - 1
+
+    def test_chega_cerca_de_tres_meses_a_frente(self) -> None:
+        # Pedido do dono do projecto (2026-11-07): marcações até Janeiro.
+        disponibilidades = RepositorioDisponibilidadesFalso(
+            janelas=[_disponibilidade(dia_semana=0, hora_inicio=time(8, 0), hora_fim=time(9, 0))]
+        )
+        resultado = _servico(disponibilidades=disponibilidades).horarios_disponiveis("clinica-1", "presencial")
+        ultimo = resultado[-1].inicio - datetime.now(UTC)
+        assert 80 <= ultimo.days < 90
+
+    def test_salta_feriados_nacionais(self, monkeypatch) -> None:
+        monkeypatch.setattr(
+            "app.services.agendamento_clinico_service.e_feriado", lambda dia: dia.weekday() == 0
+        )
+        disponibilidades = RepositorioDisponibilidadesFalso(
+            janelas=[_disponibilidade(dia_semana=0, hora_inicio=time(8, 0), hora_fim=time(9, 0))]
+        )
+        resultado = _servico(disponibilidades=disponibilidades).horarios_disponiveis("clinica-1", "presencial")
         assert resultado == []
 
     def test_ignora_janelas_de_outra_modalidade(self) -> None:

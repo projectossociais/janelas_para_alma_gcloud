@@ -6,7 +6,7 @@ import RequireAdmin from "@/components/admin/RequireAdmin";
 const AdminLayout = () => (
   <RequireAdmin>
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-muted/30">
+      <div className="min-h-screen flex w-full bg-white">
         <AdminSidebar />
         <div className="flex-1 flex flex-col">
           <header className="h-14 border-b bg-background flex items-center px-4 gap-3 sticky top-0 z-10">

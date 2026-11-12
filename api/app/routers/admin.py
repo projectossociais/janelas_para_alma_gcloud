@@ -21,6 +21,7 @@ from app.repositories.admin_stats_repository import (
     SQLAlchemyAdminStatsRepository,
     UtilizadorAtivoRegisto,
 )
+from app.repositories.eliminacao_conta_repository import SQLAlchemyEliminacaoContaRepository
 from app.repositories.storage import R2ComprovativosStorage
 from app.repositories.utilizadores_repository import UtilizadorRegisto
 from app.schemas.admin import (
@@ -37,6 +38,8 @@ from app.services.admin_service import (
     AdminService,
     NaoPodeAlterarAdminPorAquiError,
     NaoPodeDespromoverASiProprioError,
+    NaoPodeEliminarAdminError,
+    NaoPodeEliminarASiProprioError,
     PapelInvalidoError,
     UltimoAdminError,
     UtilizadorNaoEncontradoError,
@@ -45,12 +48,16 @@ from app.services.comprovativo_upload_service import (
     ChaveDeComprovativoInvalidaError,
     url_de_leitura_do_comprovativo,
 )
+from app.services.eliminacao_conta_service import EliminacaoContaService
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(obter_utilizador_admin)])
 
 
 def obter_admin_service(sessao: Session = Depends(obter_sessao)) -> AdminService:
-    return AdminService(SQLAlchemyAdminRepository(sessao))
+    return AdminService(
+        SQLAlchemyAdminRepository(sessao),
+        EliminacaoContaService(SQLAlchemyEliminacaoContaRepository(sessao)),
+    )
 
 
 def obter_admin_repository(sessao: Session = Depends(obter_sessao)) -> SQLAlchemyAdminRepository:
@@ -166,6 +173,29 @@ def remover_admin(
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="é o último admin — promova outra conta antes de remover esta",
+        ) from exc
+    except UtilizadorNaoEncontradoError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="conta não encontrada") from exc
+
+
+@router.delete("/utilizadores/{utilizador_id}", status_code=status.HTTP_204_NO_CONTENT)
+def eliminar_utilizador(
+    utilizador_id: str,
+    executor: UtilizadorRegisto = Depends(obter_utilizador_admin),
+    servico: AdminService = Depends(obter_admin_service),
+) -> None:
+    """Elimina a conta na hora -- anonimização, nunca `DELETE` da linha
+    (CLAUDE.md §4.7): o histórico clínico fica, a identidade não."""
+    try:
+        servico.eliminar_conta(utilizador_id, executor.id)
+    except NaoPodeEliminarASiProprioError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="não pode eliminar a sua própria conta por aqui"
+        ) from exc
+    except NaoPodeEliminarAdminError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="esta conta é admin — remova primeiro o acesso em Administradores",
         ) from exc
     except UtilizadorNaoEncontradoError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="conta não encontrada") from exc

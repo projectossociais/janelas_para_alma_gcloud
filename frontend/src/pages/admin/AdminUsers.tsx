@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
 import { adminApi, mensagemDeErroApi, type AdminUtilizador } from "@/lib/apiClient";
 import { toast } from "sonner";
 import { ROLE_LABEL, type UserRole } from "@/contexts/AuthContext";
@@ -54,6 +56,26 @@ const AdminUsers = () => {
     }
   };
 
+  const eliminar = async (u: AdminUtilizador) => {
+    if (
+      !confirm(
+        `Eliminar a conta de ${u.email}?\n\nOs dados pessoais são apagados e a pessoa deixa de poder entrar. ` +
+          "O histórico de rastreios e exercícios fica, sem identificação. Não se pode desfazer.",
+      )
+    )
+      return;
+    setAGuardar(u.id);
+    try {
+      await adminApi.eliminarUtilizador(u.id);
+      toast.success("Conta eliminada.");
+      await load();
+    } catch (err) {
+      toast.error(mensagemDeErroApi(err, "Não foi possível eliminar a conta."));
+    } finally {
+      setAGuardar(null);
+    }
+  };
+
   const filtered = rows.filter((r) => {
     const s = q.toLowerCase();
     return !s || r.nome_completo?.toLowerCase().includes(s) || r.email?.toLowerCase().includes(s);
@@ -83,6 +105,7 @@ const AdminUsers = () => {
                 <TableHead>Mudar para</TableHead>
                 <TableHead>Premium</TableHead>
                 <TableHead>Registado em</TableHead>
+                <TableHead />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -121,10 +144,23 @@ const AdminUsers = () => {
                   <TableCell className="text-xs text-muted-foreground">
                     {new Date(u.criado_em).toLocaleDateString("pt-PT")}
                   </TableCell>
+                  <TableCell>
+                    {u.papel !== "admin" && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        aria-label={`Eliminar a conta de ${u.email}`}
+                        disabled={aGuardar === u.id}
+                        onClick={() => eliminar(u)}
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    )}
+                  </TableCell>
                 </TableRow>
               ))}
               {!filtered.length && (
-                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">Sem utilizadores.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-6">Sem utilizadores.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>

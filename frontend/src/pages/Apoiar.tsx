@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLocation, useSearchParams } from "react-router-dom";
 import {
   Heart,
   Check,
@@ -21,6 +22,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackButton from "@/components/BackButton";
 import PontosRecolha from "@/components/PontosRecolha";
+import heroImg from "@/assets/apoiar-hero.jpg";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -39,6 +41,7 @@ import { Progress } from "@/components/ui/progress";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DoacaoFinanceira from "@/components/DoacaoFinanceira";
+import { frequenciaDoModo } from "@/lib/doacao";
 import { toast } from "sonner";
 import { doacoesApi, mensagemDeErroApi } from "@/lib/apiClient";
 import { Trans, useTranslation } from "react-i18next";
@@ -184,7 +187,23 @@ const StepIndicator = ({ current, total }: { current: number; total: number }) =
 
 const Apoiar = () => {
   const { t: tr } = useTranslation();
-  const [mode, setMode] = useState<Mode>("materiais");
+  // `?modo=unica` / `?modo=mensal` ("Doar Uma Vez" / "Doar Mensalmente" no
+  // menu) abrem logo o Apoio Financeiro nessa frequência. Sem `modo`, a
+  // página começa nos materiais.
+  const [searchParams] = useSearchParams();
+  const { hash } = useLocation();
+  const frequenciaPedida = frequenciaDoModo(searchParams.get("modo"));
+  const [mode, setMode] = useState<Mode>(frequenciaPedida ? "financeiro" : "materiais");
+  // O link traz `#como-apoiar`. Ao chegar de outra página, o ScrollToTop desce
+  // até lá; mas trocar só o `modo` com a página aberta não muda a âncora, e o
+  // ScrollToTop não volta a correr -- por isso desce-se também aqui.
+  useEffect(() => {
+    if (!frequenciaPedida) return;
+    setMode("financeiro");
+    if (hash === "#como-apoiar") {
+      document.getElementById("como-apoiar")?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+    }
+  }, [frequenciaPedida, hash]);
   const [itensPorMaterial, setItensPorMaterial] = useState<ItensPorMaterial>({});
   const [materialNotes, setMaterialNotes] = useState("");
   // Painéis de detalhe: o cartão mostra só ícone e título, o resto abre aqui.
@@ -299,22 +318,28 @@ const Apoiar = () => {
       <Navbar />
       <main className="flex-1">
         {/* Hero */}
-        <section className="relative pt-28 pb-16 bg-gradient-to-br from-navy via-navy to-teal/80 text-primary-foreground overflow-hidden">
-          <div
-            className="absolute inset-0 opacity-10 pointer-events-none"
-            style={{
-              backgroundImage: "radial-gradient(circle at 20% 20%, white 1px, transparent 1px)",
-              backgroundSize: "24px 24px",
-            }}
-          />
+        <section className="relative pt-28 pb-16 min-h-[60vh] lg:min-h-0 lg:aspect-[736/341] flex items-center text-primary-foreground overflow-hidden">
+          {/* Fotografia por baixo de um véu, como a capa da Rede de Parceiros de Saúde.
+              A partir de lg, a capa tem a proporção da fotografia: vê-se a roda inteira. */}
+          <div className="absolute inset-0">
+            <img src={heroImg} alt="" className="w-full h-full object-cover" width={736} height={341} />
+            <div className="absolute inset-0 bg-hero-gradient opacity-90" />
+          </div>
           <div className="container relative">
             <BackButton />
-            <div className="max-w-3xl mx-auto text-center mt-6">
+            {/* O globo da fotografia não está ao centro: o seu eixo fica a 48,2% da
+                largura (355 de 736 px). A partir de lg a capa tem a proporção da
+                fotografia, por isso o bloco desloca-se 1,8vw para a esquerda e fica
+                centrado no globo, com a mesma margem dos dois lados. */}
+            <div className="max-w-3xl mx-auto text-center mt-6 lg:-translate-x-[1.8vw]">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary-foreground/10 backdrop-blur mb-6">
                 <Heart className="w-8 h-8 text-gold" />
               </div>
               <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-4">{tr("Apoiar.facaADiferenca")}</h1>
-              <p className="text-lg md:text-xl text-primary-foreground/85 leading-relaxed">
+              {/* A partir de lg a capa cresce com a largura do ecrã, e o globo com ela:
+                  o texto mede-se em vw (32vw, cerca de 2/3 do globo à altura do texto)
+                  para ficar dentro do globo, com folga, em qualquer largura. */}
+              <p className="mx-auto text-balance text-lg md:text-xl lg:text-lg xl:text-xl md:max-w-xl lg:max-w-[32vw] text-primary-foreground/85 leading-relaxed">
                 {tr("Apoiar.escolhaComoQuerContribuir")}
               </p>
             </div>
@@ -322,7 +347,7 @@ const Apoiar = () => {
         </section>
 
         {/* Tabs */}
-        <section className="py-16 md:py-20 bg-background">
+        <section id="como-apoiar" className="py-16 md:py-20 bg-background scroll-mt-16">
           <div className="container max-w-5xl">
             <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)} className="w-full">
               <div className="flex justify-center mb-10">
@@ -453,7 +478,8 @@ const Apoiar = () => {
                   <p className="text-muted-foreground">{tr("Apoiar.cadaDonativoAjuda")}</p>
                 </div>
 
-                <DoacaoFinanceira />
+                {/* A chave refaz o formulário quando o menu muda o modo com a página já aberta. */}
+                <DoacaoFinanceira key={frequenciaPedida ?? "unica"} frequenciaInicial={frequenciaPedida ?? "unica"} />
               </TabsContent>
             </Tabs>
 

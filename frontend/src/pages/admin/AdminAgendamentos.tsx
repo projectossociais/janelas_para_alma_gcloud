@@ -8,6 +8,7 @@ import {
   type AgendamentoClinicoAdmin,
 } from "@/lib/apiClient";
 import { toast } from "sonner";
+import { formatarHorarioConsulta } from "@/i18n/formatar";
 import { Check, X, Mail, Phone, MapPinned, Video, Crown } from "lucide-react";
 
 const estadoBadge = (estado: string) => {
@@ -84,7 +85,7 @@ const AdminAgendamentos = () => {
                     <span className="inline-flex items-center gap-1"><Mail className="w-3 h-3" />{a.email}</span>
                     <span className="inline-flex items-center gap-1"><Phone className="w-3 h-3" />{a.telefone}</span>
                     {a.horario_inicio ? (
-                      <span>{new Date(a.horario_inicio).toLocaleString("pt-AO")}</span>
+                      <span>{formatarHorarioConsulta(a.horario_inicio)}</span>
                     ) : (
                       a.data_preferida && (
                         <span>

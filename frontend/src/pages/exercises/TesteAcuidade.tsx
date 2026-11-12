@@ -4,6 +4,7 @@ import { Mic, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AssistenteTeste, { type ContextoTeste } from "@/components/visao/AssistenteTeste";
 import { EcraPasso } from "@/components/visao/EcraPasso";
+import { DoisOlhos } from "@/components/visao/Passos";
 import PaginaExercicio from "@/components/visao/PaginaExercicio";
 import { CartaoOlho, EcraResultado } from "@/components/visao/Resultados";
 import { useRegistoSessao, useTempoActivo } from "@/components/visao/hooks";
@@ -34,6 +35,16 @@ import { cn } from "@/lib/utils";
 
 const EXERCICIO_ID = ID_ACUIDADE;
 const CHAVE_VOZ = "jpa.visao.palanca.voz";
+/** O teste já foi montado neste aparelho: da vez seguinte, um ecrã curto em vez das instruções todas. */
+const CHAVE_MONTADO = "jpa.visao.palanca.montado";
+
+const jaMontou = (): boolean => {
+  try {
+    return window.localStorage.getItem(CHAVE_MONTADO) === "1";
+  } catch {
+    return false;
+  }
+};
 
 export interface ResultadoAcuidade {
   /** logMAR do nível mais pequeno lido; `null` = nem o maior. */
@@ -77,11 +88,30 @@ const PrepararPalanca = ({ aoContinuar }: { aoContinuar: () => void }) => {
   const [distancia, setDistancia] = useState<DistanciaLonge>(() => lerDistanciaLonge());
   const [comVoz, setComVoz] = useState(() => reconhecimentoDisponivel() && lerVoz());
   const [gesto, setGesto] = useState<string | null>(null);
+  const [resumido, setResumido] = useState(jaMontou);
   const gestos = useGestos((r) => {
     sinalSonoro("tic");
     setGesto(r === "naosabe" ? t("Visao.palancaTreinoNaoSabe") : t("Visao.palancaTreinoDeslize", { direccao: t(`Visao.direccaoE_${r}`) }));
   });
   const passos = [1, 2, 3, 4].map((n) => t(`Visao.palancaPreparar${n}`));
+  if (resumido)
+    return (
+      <EcraPasso
+        titulo={t("Visao.palancaMesmaMontagemTitulo")}
+        accao={
+          <>
+            <Button size="lg" onClick={aoContinuar}>
+              {t("Visao.continuar")}
+            </Button>
+            <Button variant="ghost" onClick={() => setResumido(false)}>
+              {t("Visao.palancaVerInstrucoes")}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-muted-foreground">{t("Visao.palancaMesmaMontagemTexto", { metros: distancia / 1000 })}</p>
+      </EcraPasso>
+    );
   return (
     <EcraPasso
       titulo={t("Visao.palancaPrepararTitulo")}
@@ -92,6 +122,7 @@ const PrepararPalanca = ({ aoContinuar }: { aoContinuar: () => void }) => {
             guardarDistanciaLonge(distancia);
             try {
               window.localStorage.setItem(CHAVE_VOZ, comVoz ? "1" : "0");
+              window.localStorage.setItem(CHAVE_MONTADO, "1");
             } catch {
               // armazenamento bloqueado
             }
@@ -167,6 +198,8 @@ const EcraPalanca = ({
   const [escada, setEscada] = useState(() => iniciarEscadaTeste(niveis.length, indiceMaisProximo(niveis, LOGMAR_INICIAL_LONGE)));
   const [direccao, setDireccao] = useState<DireccaoE>(() => direccaoAleatoriaE(null));
   const terminou = useRef(false);
+  /** A última resposta recebida, para o adulto saber que contou (não diz se estava certa). */
+  const [ultima, setUltima] = useState<RespostaE | null>(null);
 
   useEffect(() => {
     tempo.iniciar();
@@ -178,6 +211,7 @@ const EcraPalanca = ({
     if (terminou.current) return;
     sinalSonoro("tic");
     tempo.registar();
+    setUltima(r);
     const seguinte = responderTeste(escada, r === direccao);
     if (seguinte.terminado) {
       terminou.current = true;
@@ -201,6 +235,21 @@ const EcraPalanca = ({
   const voz = useRespostaPorVoz(comVoz, i18n.language, responder);
   const logmar = niveis[escada.indice];
 
+  // Num computador (o monitor virado para a criança): as setas respondem, o espaço é "não sei".
+  const responderRef = useRef(responder);
+  responderRef.current = responder;
+  useEffect(() => {
+    const TECLAS: Record<string, RespostaE> = { ArrowUp: "cima", ArrowDown: "baixo", ArrowLeft: "esquerda", ArrowRight: "direita", " ": "naosabe" };
+    const aoTecla = (e: KeyboardEvent) => {
+      const r = TECLAS[e.key];
+      if (!r || e.repeat) return;
+      e.preventDefault();
+      responderRef.current(r);
+    };
+    window.addEventListener("keydown", aoTecla);
+    return () => window.removeEventListener("keydown", aoTecla);
+  }, []);
+
   return (
     <div
       {...gestos}
@@ -222,14 +271,22 @@ const EcraPalanca = ({
         <Square className="h-3.5 w-3.5" aria-hidden />
         {t("Visao.palancaParar")}
       </button>
-      <p className="absolute inset-x-0 bottom-16 flex items-center justify-center gap-2 px-4 text-xs" style={{ color: "#999999" }}>
-        {voz.aOuvir && <Mic className="h-3.5 w-3.5" aria-label={t("Visao.palancaAOuvir")} />}
-        {t("Visao.palancaRodape", {
-          olho: t(olho === "direito" ? "Visao.olhoDireito" : "Visao.olhoEsquerdo"),
-          fraccao: fraccao6(logmar, separadorDecimal()),
-          metros: distancia / 1000,
-        })}
-      </p>
+      <div className="absolute inset-x-0 bottom-16 space-y-1 px-4 text-center text-xs" style={{ color: "#999999" }} aria-live="polite">
+        <p className="flex items-center justify-center gap-2">
+          {voz.aOuvir && <Mic className="h-3.5 w-3.5" aria-label={t("Visao.palancaAOuvir")} />}
+          {t("Visao.palancaRodape", {
+            olho: t(olho === "direito" ? "Visao.olhoDireito" : "Visao.olhoEsquerdo"),
+            fraccao: fraccao6(logmar, separadorDecimal()),
+            metros: distancia / 1000,
+          })}
+        </p>
+        <p>
+          {t("Visao.palancaRespostas", { n: escada.respostas })}
+          {ultima && ` · ${t("Visao.palancaUltima", { resposta: t(ultima === "naosabe" ? "Visao.palancaNaoSei" : `Visao.direccaoE_${ultima}`) })}`}
+        </p>
+        <p>{t("Visao.palancaParaSozinho")}</p>
+        {comVoz && voz.erro && <p style={{ color: "#b23b2e" }}>{t("Visao.palancaVozErro")}</p>}
+      </div>
     </div>
   );
 };
@@ -269,6 +326,7 @@ const TarefaPalancaLonge = ({
     );
   return (
     <EcraPasso
+      icone={<DoisOlhos tapado={olho === "direito" ? "esquerdo" : "direito"} />}
       titulo={t("Visao.palancaOlhoTitulo", { olho: t(olho === "direito" ? "Visao.olhoDireito" : "Visao.olhoEsquerdo") })}
       accao={
         <Button size="lg" onClick={() => setATestar(true)}>
@@ -277,6 +335,7 @@ const TarefaPalancaLonge = ({
       }
     >
       <p className="text-sm text-muted-foreground">{t("Visao.palancaOlhoTexto", { metros: distancia / 1000 })}</p>
+      <p className="text-sm text-muted-foreground">{t("Visao.palancaComoAcaba")}</p>
     </EcraPasso>
   );
 };
@@ -385,6 +444,7 @@ const TesteAcuidade = () => {
         titulo={t("Visao.acuidadeTitulo")}
         descricao={t("Visao.acuidadeDescricao")}
         comDistancia={false}
+        semPassoTapar
         preparacao={{ nome: t("Visao.passoPreparar"), render: (aoContinuar) => <PrepararPalanca aoContinuar={aoContinuar} /> }}
         tarefa={(olho, ctx, aoTerminar) => <TarefaPalancaLonge olho={olho} ctx={ctx} aoTerminar={aoTerminar} />}
         resultado={(res, ctx) => <ResultadoAcuidadeEcra res={res} ctx={ctx} />}

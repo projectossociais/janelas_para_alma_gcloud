@@ -4,7 +4,7 @@ import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BaseExercise from "@/components/exercises/BaseExercise";
 import { BotaoContinuar, EcraPasso } from "@/components/visao/EcraPasso";
-import EscolherOculos, { type ComOuSemOculos } from "@/components/visao/EscolherOculos";
+import EscolherOculos, { TrocarModo, type ComOuSemOculos } from "@/components/visao/EscolherOculos";
 import PaginaExercicio from "@/components/visao/PaginaExercicio";
 import { CartaoOlho, EcraResultado } from "@/components/visao/Resultados";
 import { useRegistoSessao } from "@/components/visao/hooks";
@@ -104,7 +104,7 @@ const Pontos = ({ lista, agora, rotulo }: { lista: readonly boolean[]; agora?: n
 type Etapa = { e: "como" } | { e: "bloco"; c: Condicao } | { e: "tentativa"; c: Condicao } | { e: "fim" };
 
 /** O desafio sem óculos: como se faz, 5 tentativas com os dois olhos, 5 com um, resultado. */
-const DesafioSemOculos = () => {
+const DesafioSemOculos = ({ aoTrocarModo }: { aoTrocarModo: () => void }) => {
   const { t } = useTranslation();
   const [etapa, setEtapa] = useState<Etapa>({ e: "como" });
   const [tentativas, setTentativas] = useState<Record<Condicao, boolean[]>>({ dois: [], um: [] });
@@ -141,6 +141,7 @@ const DesafioSemOculos = () => {
               <li key={p}>{p}</li>
             ))}
           </ol>
+          <TrocarModo para="com" aoTrocar={aoTrocarModo} />
         </div>
       </EcraPasso>
     );
@@ -291,9 +292,18 @@ const lerOculos = (): ComOuSemOculos | null => {
  */
 const DesafioAgulha = () => {
   const { t } = useTranslation();
-  const [oculos, setOculos] = useState<ComOuSemOculos | null>(null);
-  if (oculos === "com") return <TesteEstereopsia />;
-  if (oculos === "sem") return <DesafioSemOculos />;
+  // Com a escolha guardada neste aparelho, entra directo nesse modo.
+  const [oculos, setOculos] = useState<ComOuSemOculos | null>(() => lerOculos());
+  const escolher = (o: ComOuSemOculos) => {
+    try {
+      window.localStorage.setItem(CHAVE_OCULOS, o);
+    } catch {
+      // armazenamento bloqueado: pergunta-se outra vez
+    }
+    setOculos(o);
+  };
+  if (oculos === "com") return <TesteEstereopsia aoTrocarModo={() => escolher("sem")} />;
+  if (oculos === "sem") return <DesafioSemOculos aoTrocarModo={() => escolher("com")} />;
   return (
     <PaginaExercicio>
       <BaseExercise title={t("Visao.estereoTitulo")} description={t("Visao.estereoDescricao")} exercicioId={EXERCICIO_ID} tipo="teste">
@@ -301,15 +311,8 @@ const DesafioAgulha = () => {
           titulo={t("Visao.olhoMagicoOculosTitulo")}
           sem={{ titulo: t("Visao.agulhaSemOculos"), texto: t("Visao.agulhaSemOculosTexto") }}
           com={{ titulo: t("Visao.agulhaComOculos"), texto: t("Visao.agulhaComOculosTexto") }}
-          inicial={lerOculos()}
-          aoEscolher={(o) => {
-            try {
-              window.localStorage.setItem(CHAVE_OCULOS, o);
-            } catch {
-              // armazenamento bloqueado: pergunta-se outra vez
-            }
-            setOculos(o);
-          }}
+          inicial={null}
+          aoEscolher={escolher}
         />
       </BaseExercise>
     </PaginaExercicio>

@@ -9,6 +9,7 @@ import AssistenteTreino, {
 } from "@/components/visao/AssistenteTreino";
 import { BotoesForma } from "@/components/visao/BotoesForma";
 import { EcraPasso } from "@/components/visao/EcraPasso";
+import { TrocarModo } from "@/components/visao/EscolherOculos";
 import PaginaExercicio from "@/components/visao/PaginaExercicio";
 import PalcoVisual from "@/components/visao/PalcoVisual";
 import { rotuloDelta, rotuloSentidoPontes } from "@/components/visao/rotulos";
@@ -331,7 +332,7 @@ export const TarefaPontes = ({
   );
 };
 
-const AvisoPontes = () => {
+const AvisoPontes = ({ aoTrocar }: { aoTrocar?: () => void }) => {
   const { t } = useTranslation();
   return (
     <div className="space-y-3 text-left text-sm">
@@ -344,11 +345,12 @@ const AvisoPontes = () => {
         <span>{t("Visao.convergenciaAvisoEstrabismo")}</span>
       </p>
       <p className="text-muted-foreground">{t("Visao.convergenciaComoFazer")}</p>
+      {aoTrocar && <TrocarModo para="sem" aoTrocar={aoTrocar} />}
     </div>
   );
 };
 
-const PontesFusao = () => {
+const PontesFusao = ({ aoTrocarModo }: { aoTrocarModo?: () => void }) => {
   const { t } = useTranslation();
   return (
     <PaginaExercicio>
@@ -359,7 +361,7 @@ const PontesFusao = () => {
         monocular={false}
         comDistancia
         oculos3D
-        aviso={<AvisoPontes />}
+        aviso={<AvisoPontes aoTrocar={aoTrocarModo} />}
         tarefa={(api, ctx, resultado) => <TarefaPontes api={api} ctx={ctx} resultado={resultado} />}
       />
     </PaginaExercicio>

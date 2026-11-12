@@ -1,5 +1,5 @@
 import Navbar from "@/components/Navbar";
-import HeroSection from "@/components/HeroSection";
+import HeroInicio from "@/components/inicio/HeroInicio";
 import BannerHomepageSection from "@/components/BannerHomepageSection";
 import StrabismusIntroCard from "@/components/StrabismusIntroCard";
 import AboutTeaserSection from "@/components/AboutTeaserSection";
@@ -11,10 +11,10 @@ import Footer from "@/components/Footer";
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
       <main className="flex-1">
-        <HeroSection />
+        <HeroInicio />
         <BannerHomepageSection />
         <StrabismusIntroCard />
         <AboutTeaserSection />

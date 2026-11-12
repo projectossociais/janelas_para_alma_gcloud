@@ -13,6 +13,8 @@ from app.services.admin_service import (
     AdminService,
     NaoPodeAlterarAdminPorAquiError,
     NaoPodeDespromoverASiProprioError,
+    NaoPodeEliminarAdminError,
+    NaoPodeEliminarASiProprioError,
     PapelInvalidoError,
     UltimoAdminError,
     UtilizadorNaoEncontradoError,
@@ -127,3 +129,40 @@ class TestDefinirPapel:
         repo = RepositorioAdminFalso([])
         with pytest.raises(UtilizadorNaoEncontradoError):
             AdminService(repo).definir_papel("fantasma", "comum")
+
+
+class AnonimizadorFalso:
+    def __init__(self) -> None:
+        self.anonimizados: list[str] = []
+
+    def anonimizar_agora(self, utilizador_id: str) -> None:
+        self.anonimizados.append(utilizador_id)
+
+
+class TestEliminarConta:
+    def test_anonimiza_conta_comum(self) -> None:
+        anonimizador = AnonimizadorFalso()
+        repo = RepositorioAdminFalso([_u("admin-1", "admin"), _u("u1", "estrabico")])
+        AdminService(repo, anonimizador).eliminar_conta("u1", "admin-1")
+        assert anonimizador.anonimizados == ["u1"]
+
+    def test_recusa_a_propria_conta(self) -> None:
+        anonimizador = AnonimizadorFalso()
+        repo = RepositorioAdminFalso([_u("admin-1", "admin")])
+        with pytest.raises(NaoPodeEliminarASiProprioError):
+            AdminService(repo, anonimizador).eliminar_conta("admin-1", "admin-1")
+        assert anonimizador.anonimizados == []
+
+    def test_recusa_conta_de_admin(self) -> None:
+        anonimizador = AnonimizadorFalso()
+        repo = RepositorioAdminFalso([_u("admin-1", "admin"), _u("admin-2", "admin")])
+        with pytest.raises(NaoPodeEliminarAdminError):
+            AdminService(repo, anonimizador).eliminar_conta("admin-2", "admin-1")
+        assert anonimizador.anonimizados == []
+
+    def test_conta_inexistente(self) -> None:
+        anonimizador = AnonimizadorFalso()
+        repo = RepositorioAdminFalso([_u("admin-1", "admin")])
+        with pytest.raises(UtilizadorNaoEncontradoError):
+            AdminService(repo, anonimizador).eliminar_conta("nao-existe", "admin-1")
+        assert anonimizador.anonimizados == []

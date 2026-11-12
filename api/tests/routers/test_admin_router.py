@@ -16,7 +16,7 @@ from app.repositories.utilizadores_repository import UtilizadorRegisto
 from app.routers import admin as admin_router
 from app.services.admin_service import AdminService
 from app.services.auth_service import AuthService
-from tests.services.test_admin_service import RepositorioAdminFalso, _u
+from tests.services.test_admin_service import AnonimizadorFalso, RepositorioAdminFalso, _u
 from tests.services.test_auth_service import RepositorioFalso as RepositorioAuthFalso
 
 
@@ -113,7 +113,9 @@ def ambiente():
     token_comum = _seed(repo_auth, "id-comum", "comum")
     app.dependency_overrides[obter_auth_service] = lambda: AuthService(repo_auth)
     app.dependency_overrides[admin_router.obter_admin_repository] = lambda: repo_admin
-    app.dependency_overrides[admin_router.obter_admin_service] = lambda: AdminService(repo_admin)
+    anonimizador = AnonimizadorFalso()
+    repo_admin.anonimizador = anonimizador
+    app.dependency_overrides[admin_router.obter_admin_service] = lambda: AdminService(repo_admin, anonimizador)
     repo_stats = RepositorioStatsFalso()
     app.dependency_overrides[admin_router.obter_admin_stats_repository] = lambda: repo_stats
     with TestClient(app) as c:
@@ -329,3 +331,44 @@ def test_admin_lista_ativos(ambiente) -> None:
     corpo = r.json()
     assert len(corpo) == 1
     assert corpo[0]["sessoes_no_periodo"] == 3
+
+
+def test_eliminar_utilizador_anonimiza(ambiente) -> None:
+    c, repo, token_admin, _, _ = ambiente
+    c.cookies.set("access_token", token_admin)
+    r = c.delete("/admin/utilizadores/u-comum")
+    assert r.status_code == 204
+    assert repo.anonimizador.anonimizados == ["u-comum"]
+
+
+def test_eliminar_a_propria_conta_409(ambiente) -> None:
+    c, repo, token_admin, _, _ = ambiente
+    c.cookies.set("access_token", token_admin)
+    assert c.delete("/admin/utilizadores/id-admin").status_code == 409
+    assert repo.anonimizador.anonimizados == []
+
+
+def test_eliminar_conta_de_admin_409(ambiente) -> None:
+    c, repo, token_admin, _, _ = ambiente
+    c.cookies.set("access_token", token_admin)
+    c.post("/admin/utilizadores/promover", json={"email": "rui@example.com"})
+    assert c.delete("/admin/utilizadores/u-comum").status_code == 409
+    assert repo.anonimizador.anonimizados == []
+
+
+def test_eliminar_conta_inexistente_404(ambiente) -> None:
+    c, _, token_admin, _, _ = ambiente
+    c.cookies.set("access_token", token_admin)
+    assert c.delete("/admin/utilizadores/nao-existe").status_code == 404
+
+
+def test_eliminar_exige_admin(ambiente) -> None:
+    c, repo, _, token_comum, _ = ambiente
+    c.cookies.set("access_token", token_comum)
+    assert c.delete("/admin/utilizadores/u-comum").status_code == 403
+    assert repo.anonimizador.anonimizados == []
+
+
+def test_eliminar_sem_sessao_401(ambiente) -> None:
+    c, *_ = ambiente
+    assert c.delete("/admin/utilizadores/u-comum").status_code == 401
