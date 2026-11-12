@@ -23,3 +23,12 @@ describe("nomeDaSessao", () => {
     expect(nomeDaSessao({ exercicio_id: "convergence", sinais: { pontes: {} } })).toBe(V.pontesTitulo);
   });
 });
+
+describe("sessões do Vaivém da Missanga (11/11/2026, revertido no mesmo dia)", () => {
+  it("continuam a ler-se no histórico, com o nome e o resultado delas", async () => {
+    const { limiarFormatado } = await import("./rotulos");
+    expect(nomeDaSessao({ exercicio_id: "convergence", sinais: { modo: "fio_treino" } })).toBe(V.nomeAntigoVaivem);
+    expect(limiarFormatado(6.5, "cm", { modo: "fio_treino", repeticoes: 14 })).toBe("dobra a 6,5 cm (14 repetições)");
+    expect(limiarFormatado(null, "cm", { modo: "fio_treino", repeticoes: 0 })).toBe(V.fioTreinoSemRepsCurto);
+  });
+});

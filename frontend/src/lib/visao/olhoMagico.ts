@@ -55,6 +55,24 @@ export const PRATICA_SEGUIDAS = 2;
 /** Falhas a praticar depois das quais se mostram as dicas outra vez. */
 export const FALHAS_PARA_DICAS = 4;
 
+/** A distância a que os tamanhos de base (quadro de 20 mm, cartão de 22 mm) foram pensados. */
+export const DISTANCIA_REFERENCIA_MM = 400;
+/** Cada desenho ocupa, no máximo, esta fracção da largura do palco (têm de caber dois, e de se afastar). */
+export const FRACCAO_MAX_DO_PALCO = 0.25;
+
+/**
+ * Lado de cada desenho (mm) a esta distância e neste palco. O tamanho de base
+ * é para 40 cm; mais longe, o desenho cresce para ocupar o mesmo ângulo de
+ * visão -- a 1 metro, num computador, os 20 mm de sempre viam-se minúsculos
+ * ("não se consegue ver, até para quem tem bons olhos", 2026-11-11). Nunca
+ * abaixo da base, nem acima do que o palco deixa.
+ */
+export function ladoDoEstimulo(baseMm: number, distanciaMm: number, larguraPalcoMm: number): number {
+  const angular = (baseMm * distanciaMm) / DISTANCIA_REFERENCIA_MM;
+  const tecto = larguraPalcoMm > 0 ? larguraPalcoMm * FRACCAO_MAX_DO_PALCO : baseMm;
+  return Math.round(Math.max(baseMm, Math.min(angular, tecto)));
+}
+
 export type ModoOlhoMagico = "cruzar" | "relaxar";
 export const sentidoDoModo = (m: ModoOlhoMagico): Sentido => (m === "cruzar" ? "convergencia" : "divergencia");
 
@@ -179,20 +197,37 @@ export const RESPOSTAS_GAIOLA: readonly RespostaGaiola[] = ["dentro", "falta", "
 export const juntou = (r: RespostaGaiola): boolean => r === "dentro" || r === "falta";
 
 /**
- * Uma resposta na rampa da gaiola. A resposta é declarada (não há palpites
- * ao acaso como na forma escondida), por isso basta uma: a subir, "saiu da
- * gaiola" é a rotura e começa a descer; a descer, "voltou a entrar" é a
- * recuperação. Usa o `EstadoRampa` das Pontes, para o resumo ser o mesmo.
+ * Versão 3 (2026-11-11): os cartões afastam-se sozinhos, devagar, em vez de
+ * darem um salto a cada resposta ("o boneco não se mexe, só faz perguntas").
+ * A pessoa toca quando o pássaro sai da gaiola (rotura); os cartões voltam a
+ * aproximar-se e toca quando ele volta a entrar (recuperação). Continua a ser
+ * declarado, e grava-se no mesmo formato.
  */
-export function responderGaiola(e: EstadoRampa, dentro: boolean): EstadoRampa {
-  if (e.terminado) return e;
-  if (e.fase === "subir") {
-    if (dentro)
-      return e.indice >= e.total - 1 ? { ...e, atingiuLimite: true, terminado: true } : { ...e, indice: e.indice + 1 };
-    return { ...e, fase: "descer", rotura: e.indice, indice: Math.max(0, e.indice - 1) };
-  }
-  if (dentro) return { ...e, recuperacao: e.indice, terminado: true };
-  return e.indice === 0 ? { ...e, terminado: true } : { ...e, indice: e.indice - 1 };
+export const VELOCIDADE_GAIOLA_DELTA_S = 1.5;
+/** Com os cartões parados no início, antes de começarem a afastar-se. */
+export const ESPERA_GAIOLA_MS = 1000;
+
+/** A procura (Δ) ao fim de `segundos` a afastar ou a aproximar a partir de `desde`, sem sair de [min, max]. */
+export function deltaDaGaiola(desde: number, segundos: number, fase: "afastar" | "aproximar", min: number, max: number): number {
+  const anda = VELOCIDADE_GAIOLA_DELTA_S * Math.max(0, segundos);
+  return Math.min(max, Math.max(min, fase === "afastar" ? desde + anda : desde - anda));
+}
+
+/** A rampa contínua da gaiola, no formato das Pontes (meio Δ; a recuperação nunca passa a rotura). */
+export function rampaDaGaiola(rotura: number | null, recuperacao: number | null, max: number): {
+  rotura: number | null;
+  recuperacao: number | null;
+  limiteEcra: boolean;
+  maximo: number;
+} {
+  const meio = (d: number) => Math.round(d * 2) / 2;
+  const rot = rotura === null ? null : meio(rotura);
+  return {
+    rotura: rot,
+    recuperacao: recuperacao === null || rot === null ? null : Math.min(meio(recuperacao), rot),
+    limiteEcra: rotura === null,
+    maximo: max,
+  };
 }
 
 /** Como correu a fusão na sessão: o pior que se viu. */
@@ -221,6 +256,21 @@ export function diasSeguidosAPrimeira(sessoes: readonly SessaoGaiola[], hoje: Da
     d.setDate(d.getDate() - 1);
   }
   return n;
+}
+
+/**
+ * O mais longe a que o pássaro já aguentou na gaiola, nas sessões anteriores
+ * (Δ): a rotura de cada sessão ou, se chegou ao fim do ecrã sem sair, esse
+ * fim. É a marca a bater -- sem ela, não se via se o treino adiantava.
+ */
+export function recordeDaGaiola(sessoes: readonly SessaoGaiola[]): number | null {
+  const marcas = sessoes.flatMap((s) => {
+    if (s.sinais?.modo !== MODO_GAIOLA) return [];
+    const g = s.sinais.gaiola as { rotura?: unknown; limiteEcra?: unknown; maximo?: unknown } | undefined;
+    if (typeof g?.rotura === "number") return [g.rotura];
+    return g?.limiteEcra === true && typeof g.maximo === "number" ? [g.maximo] : [];
+  });
+  return marcas.length ? Math.max(...marcas) : null;
 }
 
 const CHAVE_NIVEL = "jpa.visao.olhoMagico.nivel";

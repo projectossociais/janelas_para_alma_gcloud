@@ -14,7 +14,7 @@ import {
   sentidoDoModo,
 } from "./olhoMagico";
 import { iniciarRampa, responderRampa, separacaoMm } from "./pontes";
-import { diasSeguidosAPrimeira, fusaoDaSessao, responderGaiola } from "./olhoMagico";
+import { deltaDaGaiola, diasSeguidosAPrimeira, fusaoDaSessao, ladoDoEstimulo, niveisOlhoMagico as niveisDe, rampaDaGaiola, recordeDaGaiola } from "./olhoMagico";
 
 /** Gerador determinista (Park-Miller), para os testes não dependerem da sorte. */
 const rngFixo = (semente = 7) => {
@@ -135,22 +135,67 @@ describe("modo guardado", () => {
   });
 });
 
-describe("cartão do pássaro e da gaiola", () => {
-  it("rampa declarada: uma resposta chega para a rotura e para a recuperação", () => {
-    let e = iniciarRampa(5);
-    e = responderGaiola(e, true);
-    e = responderGaiola(e, true);
-    e = responderGaiola(e, false);
-    expect(e).toMatchObject({ fase: "descer", rotura: 2, indice: 1 });
-    e = responderGaiola(e, false);
-    e = responderGaiola(e, true);
-    expect(e).toMatchObject({ terminado: true, recuperacao: 0 });
+// Caso real (2026-11-11): a 1 metro, num computador, os quadros de 20 mm viam-se minúsculos.
+describe("tamanho dos desenhos pelo ângulo de visão", () => {
+  it("a 40 cm fica o tamanho de base; mais longe, cresce na mesma proporção", () => {
+    expect(ladoDoEstimulo(20, 400, 300)).toBe(20);
+    expect(ladoDoEstimulo(20, 600, 300)).toBe(30);
+    expect(ladoDoEstimulo(20, 1000, 300)).toBe(50);
+    expect(ladoDoEstimulo(22, 1000, 300)).toBe(55);
   });
 
-  it("chegar ao último degrau sem sair é o limite do ecrã", () => {
-    let e = iniciarRampa(2);
-    e = responderGaiola(responderGaiola(e, true), true);
-    expect(e).toMatchObject({ terminado: true, atingiuLimite: true, rotura: null });
+  it("nunca passa um quarto do palco (têm de caber dois e de se afastar), nem desce da base", () => {
+    expect(ladoDoEstimulo(20, 1000, 120)).toBe(30);
+    // Telemóvel ao alto: o palco é estreito, fica a base.
+    expect(ladoDoEstimulo(22, 600, 55)).toBe(22);
+    // Antes de se saber a largura do palco.
+    expect(ladoDoEstimulo(20, 1000, 0)).toBe(20);
+  });
+
+  it("com o desenho a crescer com a distância, o primeiro degrau pede sempre a mesma vergência", () => {
+    const primeiro = (d: number) => niveisDe("convergencia", d, ladoDoEstimulo(20, d, 400))[0];
+    expect(primeiro(400)).toBe(5.5);
+    expect(primeiro(1000)).toBe(5.5);
+  });
+});
+
+describe("cartão do pássaro e da gaiola", () => {
+  it("os cartões afastam-se e aproximam-se a 1,5 Δ por segundo, sem sair do que cabe no ecrã", () => {
+    expect(deltaDaGaiola(6, 0, "afastar", 6, 20)).toBe(6);
+    expect(deltaDaGaiola(6, 2, "afastar", 6, 20)).toBe(9);
+    expect(deltaDaGaiola(6, 60, "afastar", 6, 20)).toBe(20);
+    expect(deltaDaGaiola(12, 2, "aproximar", 6, 20)).toBe(9);
+    expect(deltaDaGaiola(12, 60, "aproximar", 6, 20)).toBe(6);
+    // Antes de arrancar (tempo negativo), ficam onde estão.
+    expect(deltaDaGaiola(6, -1, "afastar", 6, 20)).toBe(6);
+  });
+
+  it("a rampa contínua grava-se a meio Δ, e a recuperação nunca passa a rotura", () => {
+    expect(rampaDaGaiola(11.7, 8.2, 20)).toEqual({ rotura: 11.5, recuperacao: 8, limiteEcra: false, maximo: 20 });
+    expect(rampaDaGaiola(9, 9.4, 20)).toMatchObject({ rotura: 9, recuperacao: 9 });
+    // Voltou ao início sem o pássaro entrar.
+    expect(rampaDaGaiola(9, null, 20)).toMatchObject({ rotura: 9, recuperacao: null, limiteEcra: false });
+  });
+
+  it("chegar ao fim do ecrã sem o pássaro sair é o limite do ecrã", () => {
+    expect(rampaDaGaiola(null, null, 20)).toEqual({ rotura: null, recuperacao: null, limiteEcra: true, maximo: 20 });
+  });
+
+  it("a marca a bater é o mais longe das sessões anteriores da gaiola", () => {
+    const s = (sinais: Record<string, unknown> | null) => ({ created_at: "2026-11-10T10:00:00Z", sinais });
+    expect(recordeDaGaiola([])).toBeNull();
+    expect(
+      recordeDaGaiola([
+        s({ modo: "fusao_gaiola", gaiola: { rampas: 2, rotura: 9 } }),
+        s({ modo: "fusao_gaiola", gaiola: { rampas: 1, rotura: 12.5 } }),
+        // Sem medição nessa sessão, e sessões de outros modos, não contam.
+        s({ modo: "fusao_gaiola", gaiola: { rampas: 0, rotura: null } }),
+        s({ modo: "fusao_livre", pontes: { convergencia: { rotura: 30 } } }),
+        s(null),
+      ]),
+    ).toBe(12.5);
+    // Chegou ao fim do ecrã sem o pássaro sair: a marca é esse fim.
+    expect(recordeDaGaiola([s({ modo: "fusao_gaiola", gaiola: { rotura: null, limiteEcra: true, maximo: 20 } })])).toBe(20);
   });
 
   it("a fusão da sessão é a pior que se viu", () => {

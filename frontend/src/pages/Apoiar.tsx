@@ -318,21 +318,28 @@ const Apoiar = () => {
       <Navbar />
       <main className="flex-1">
         {/* Hero */}
-        <section className="relative pt-28 pb-16 min-h-[60vh] md:min-h-0 md:aspect-[736/341] flex items-center text-primary-foreground overflow-hidden">
+        <section className="relative pt-28 pb-16 min-h-[60vh] lg:min-h-0 lg:aspect-[736/341] flex items-center text-primary-foreground overflow-hidden">
           {/* Fotografia por baixo de um véu, como a capa da Rede de Parceiros de Saúde.
-              A partir de md, a capa tem a proporção da fotografia: vê-se a roda inteira. */}
+              A partir de lg, a capa tem a proporção da fotografia: vê-se a roda inteira. */}
           <div className="absolute inset-0">
             <img src={heroImg} alt="" className="w-full h-full object-cover" width={736} height={341} />
             <div className="absolute inset-0 bg-hero-gradient opacity-90" />
           </div>
           <div className="container relative">
             <BackButton />
-            <div className="max-w-3xl mx-auto text-center mt-6">
+            {/* O globo da fotografia não está ao centro: o seu eixo fica a 48,2% da
+                largura (355 de 736 px). A partir de lg a capa tem a proporção da
+                fotografia, por isso o bloco desloca-se 1,8vw para a esquerda e fica
+                centrado no globo, com a mesma margem dos dois lados. */}
+            <div className="max-w-3xl mx-auto text-center mt-6 lg:-translate-x-[1.8vw]">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary-foreground/10 backdrop-blur mb-6">
                 <Heart className="w-8 h-8 text-gold" />
               </div>
               <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-4">{tr("Apoiar.facaADiferenca")}</h1>
-              <p className="text-lg md:text-xl text-primary-foreground/85 leading-relaxed">
+              {/* A partir de lg a capa cresce com a largura do ecrã, e o globo com ela:
+                  o texto mede-se em vw (32vw, cerca de 2/3 do globo à altura do texto)
+                  para ficar dentro do globo, com folga, em qualquer largura. */}
+              <p className="mx-auto text-balance text-lg md:text-xl lg:text-lg xl:text-xl md:max-w-xl lg:max-w-[32vw] text-primary-foreground/85 leading-relaxed">
                 {tr("Apoiar.escolhaComoQuerContribuir")}
               </p>
             </div>
