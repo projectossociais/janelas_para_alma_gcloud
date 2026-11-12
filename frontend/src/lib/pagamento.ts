@@ -14,7 +14,7 @@ export const DEFAULT_BANK_DATA: DadosBancarios = {
   },
   pagamento_rapido: {
     metodo: "MULTICAIXA EXPRESS",
-    telefone: "+244 946 538 507",
+    telefone: "+244 926 969 819",
   },
   transferencia_nacional: {
     banco: "BAI",

@@ -77,7 +77,7 @@ describe("CheckoutInstantaneo", () => {
     montar();
     expect(screen.getByText("10.000,00 Kz / mês")).toBeInTheDocument();
     expect(screen.getByText("AO06 0040 0000 9103 4094 1018 9")).toBeInTheDocument();
-    expect(screen.getByText("+244 946 538 507")).toBeInTheDocument();
+    expect(screen.getByText("+244 926 969 819")).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: /Copiar/i })).toHaveLength(3);
     expect(screen.getByText(/de qualquer banco \(BAI, BFA, BIC, Atlântico/)).toBeInTheDocument();
   });
