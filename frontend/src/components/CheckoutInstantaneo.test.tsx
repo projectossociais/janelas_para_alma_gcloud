@@ -50,7 +50,7 @@ const pdf = () => new File(["%PDF-1.4"], "comprovativo.pdf", { type: "applicatio
 
 async function enviar(user: ReturnType<typeof userEvent.setup>) {
   await user.upload(screen.getByTestId("file-input"), pdf());
-  await user.click(screen.getByRole("button", { name: /Validar Comprovativo e Liberar Acesso/i }));
+  await user.click(screen.getByRole("button", { name: /Validar Comprovativo e Desbloquear Acesso/i }));
 }
 
 const APROVADO = {
@@ -122,7 +122,7 @@ describe("CheckoutInstantaneo", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("5.000,00 Kz");
     expect(screen.queryByText("Pagamento confirmado!")).not.toBeInTheDocument();
     expect(recarregarAcesso).not.toHaveBeenCalled();
-    expect(screen.getByRole("button", { name: /Validar Comprovativo e Liberar Acesso/i })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Validar Comprovativo e Desbloquear Acesso/i })).toBeEnabled();
   });
 
   it("se o envio ao storage falhar, nem chega a pedir a validação", async () => {
@@ -153,7 +153,7 @@ describe("CheckoutInstantaneo", () => {
     expect(screen.getByText(/captura de ecrã \(screenshot\) do pagamento/)).toBeInTheDocument();
 
     await user.upload(screen.getByTestId("file-input"), new File(["png"], "ecra.png", { type: "image/png" }));
-    await user.click(screen.getByRole("button", { name: /Validar Comprovativo e Liberar Acesso/i }));
+    await user.click(screen.getByRole("button", { name: /Validar Comprovativo e Desbloquear Acesso/i }));
 
     expect(await screen.findByText("Pagamento confirmado!")).toBeInTheDocument();
     expect(prepararComprovativo).toHaveBeenCalledWith("image/png");
@@ -163,7 +163,7 @@ describe("CheckoutInstantaneo", () => {
     const user = userEvent.setup({ applyAccept: false });
     montar();
     await user.upload(screen.getByTestId("file-input"), new File(["x"], "doc.zip", { type: "application/zip" }));
-    expect(screen.getByRole("button", { name: /Validar Comprovativo e Liberar Acesso/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Validar Comprovativo e Desbloquear Acesso/i })).toBeDisabled();
   });
 
   it("sem sessão: pede para entrar na conta e não deixa validar", () => {
@@ -171,6 +171,6 @@ describe("CheckoutInstantaneo", () => {
     montar();
     expect(screen.getByRole("link", { name: "Entrar na conta" })).toHaveAttribute("href", "/auth?next=/registo-premium");
     expect(screen.queryByTestId("file-input")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Validar Comprovativo e Liberar Acesso/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Validar Comprovativo e Desbloquear Acesso/i })).toBeDisabled();
   });
 });
