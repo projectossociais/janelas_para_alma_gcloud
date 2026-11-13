@@ -39,12 +39,12 @@ describe("com VITE_ENABLE_EN desligada (omissão)", () => {
   it("as rotas /en/* não existem: caem no 404", async () => {
     abrir("/en/faq");
     expect(await screen.findByRole("heading", { name: "404" })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Perguntas Frequentes" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Perguntas frequentes" })).not.toBeInTheDocument();
   });
 
   it("em português os links internos ficam exactamente como estavam", async () => {
     abrir("/faq");
-    await screen.findByRole("heading", { name: "Perguntas Frequentes" });
+    await screen.findByRole("heading", { name: "Perguntas frequentes" });
     expect(rodape().getByRole("link", { name: "Política de Privacidade" })).toHaveAttribute("href", "/politica-de-privacidade");
   });
 
@@ -63,7 +63,7 @@ describe("com VITE_ENABLE_EN desligada (omissão)", () => {
 
   it("o site é português e o botão EN não aparece", async () => {
     abrir("/faq");
-    expect(await screen.findByRole("heading", { name: "Perguntas Frequentes" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Perguntas frequentes" })).toBeInTheDocument();
     await waitFor(() => expect(document.documentElement.lang).toBe("pt-AO"));
     expect(rodape().queryByRole("link", { name: /^EN/ })).not.toBeInTheDocument();
   });
@@ -74,7 +74,7 @@ describe("com VITE_ENABLE_EN=true", () => {
 
   it("em português, o botão EN leva à mesma página em inglês", async () => {
     abrir("/faq");
-    await screen.findByRole("heading", { name: "Perguntas Frequentes" });
+    await screen.findByRole("heading", { name: "Perguntas frequentes" });
     await waitFor(() => expect(document.documentElement.lang).toBe("pt-AO"));
 
     const en = rodape().getByRole("link", { name: /^EN/ });
