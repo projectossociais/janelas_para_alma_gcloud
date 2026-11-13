@@ -607,7 +607,7 @@
     "personalizeASuaIdentidade": "Personalize a sua identidade visual e apresentação.",
     "aEnviar": "A enviar...",
     "alterarFoto": "Alterar Foto",
-    "jpgOuPngMaximo": "JPG ou PNG. Máximo 2MB.",
+    "jpgOuPngMaximo": "PNG, JPG ou WebP. Máximo 5 MB.",
     "biografia": "Biografia",
     "dadosPessoais": "Dados Pessoais",
     "asSuasInformacoesBasicas": "As suas informações básicas de identificação.",
@@ -636,7 +636,7 @@
     "oSeuNomeCompleto": "O seu nome completo",
     "seleccione": "Seleccione",
     "seleccioneASuaProvincia": "Seleccione a sua província",
-    "salvarAlteracoes": "Salvar Alterações"
+    "salvarAlteracoes": "Guardar Alterações"
   },
   "Exercicios": {
     "exerciciosVisuaisPraticos": "Testes e treinos visuais",
