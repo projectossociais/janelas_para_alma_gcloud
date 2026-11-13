@@ -209,7 +209,7 @@ const Apoiar = () => {
   // Painéis de detalhe: o cartão mostra só ícone e título, o resto abre aqui.
   const [detalheMaterial, setDetalheMaterial] = useState<string | null>(null);
   const [materialAberto, setMaterialAberto] = useState(false);
-  // Itens marcados no painel aberto; só passam para `itensPorMaterial` com "Quero Doar Isto".
+  // Itens marcados no painel aberto; só passam para `itensPorMaterial` com "Quero doar isto".
   const [rascunhoItens, setRascunhoItens] = useState<string[]>([]);
   // O id fica depois de fechar, para o painel não ficar vazio durante a animação de saída.
   const abrirMaterial = (id: string) => {
@@ -235,7 +235,7 @@ const Apoiar = () => {
     );
   };
 
-  // "Quero Doar Isto": guarda o que ficou marcado (nada marcado desfaz a escolha
+  // "Quero doar isto": guarda o que ficou marcado (nada marcado desfaz a escolha
   // da categoria) e fecha. Fechar de outra forma descarta as alterações.
   const confirmarItens = () => {
     if (detalheMaterial) {
