@@ -289,6 +289,12 @@
   "BackButton": {
     "voltar": "Back"
   },
+  "Interface": {
+    "fechar": "Close",
+    "anterior": "Previous",
+    "seguinte": "Next",
+    "menuLateral": "Show or hide the sidebar"
+  },
   "BannerHomepageSection": {
     "saberMais": "Learn more"
   },

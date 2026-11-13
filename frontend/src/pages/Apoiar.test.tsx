@@ -58,6 +58,11 @@ vi.mock("sonner", () => ({
 
 import Apoiar from "./Apoiar";
 
+// O painel tem dois botões "Fechar": o × do canto (nome para leitores de
+// ecrã) e o do rodapé. Estes testes carregam no do rodapé, o último.
+const botaoFecharDoPainel = (painel: HTMLElement) =>
+  within(painel).getAllByRole("button", { name: /^Fechar$/ }).at(-1)!;
+
 /** Cartão -> marcar itens no painel -> "Quero Doar Isto" (fecha o painel). */
 async function escolherItens(
   user: ReturnType<typeof userEvent.setup>,
@@ -438,7 +443,7 @@ describe("Apoiar -- cartões com detalhe (materiais)", () => {
     expect(within(painel).getByText("Óculos graduados usados")).toBeInTheDocument();
     expect(within(painel).getByText(/limpeza, reparação e validação técnica/i)).toBeInTheDocument();
 
-    await user.click(within(painel).getByRole("button", { name: /^Fechar$/ }));
+    await user.click(botaoFecharDoPainel(painel));
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   });
 
@@ -465,7 +470,7 @@ describe("Apoiar -- cartões com detalhe (materiais)", () => {
     await user.click(screen.getByRole("button", { name: /Tampões/i }));
     const painel = await screen.findByRole("dialog");
     await user.click(within(painel).getByRole("checkbox", { name: /Oclusores de tecido/i }));
-    await user.click(within(painel).getByRole("button", { name: /^Fechar$/ }));
+    await user.click(botaoFecharDoPainel(painel));
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
 
     expect(screen.getByRole("button", { name: /Tampões/i })).not.toHaveTextContent(/item/);
@@ -520,7 +525,7 @@ describe("Apoiar -- cartões com detalhe (materiais)", () => {
       await user.click(screen.getByRole("button", { name: categoria }));
       const painel = await screen.findByRole("dialog");
       expect(within(painel).queryByText(/3D/)).not.toBeInTheDocument();
-      await user.click(within(painel).getByRole("button", { name: /^Fechar$/ }));
+      await user.click(botaoFecharDoPainel(painel));
       await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     }
   });
