@@ -519,7 +519,7 @@ describe("JogoCuriosidades", () => {
     it("o × do modal de resposta errada volta ao menu do jogo e não recomeça a partida", async () => {
       await perderComSessao();
 
-      await userEvent.click(screen.getByRole("button", { name: "Close" }));
+      await userEvent.click(screen.getByRole("button", { name: "Fechar" }));
 
       expect(navigateMock).toHaveBeenCalledWith("/jogo-curiosidades");
       semRecomeco();
@@ -597,7 +597,7 @@ describe("JogoCuriosidades", () => {
       await userEvent.click(screen.getByText("Olhos de cores diferentes")); // errada
       await screen.findByText("Essa não era a resposta certa");
 
-      await userEvent.click(screen.getByRole("button", { name: "Close" }));
+      await userEvent.click(screen.getByRole("button", { name: "Fechar" }));
 
       expect(navigateMock).toHaveBeenCalledWith("/jogo-curiosidades");
       expect(terminarPartida).not.toHaveBeenCalled();

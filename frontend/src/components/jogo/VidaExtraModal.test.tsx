@@ -121,7 +121,7 @@ describe("VidaExtraModal", () => {
   it("não tem botão × -- só 'Usar Vida Extra' e 'Encerrar partida'", async () => {
     abrir();
     await screen.findByRole("heading", { name: "Vida Extra" });
-    expect(screen.queryByRole("button", { name: "Close" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Fechar" })).not.toBeInTheDocument();
     expect(screen.getAllByRole("button").map((b) => b.textContent?.trim())).toEqual([
       "Usar Vida Extra (20 diamantes)",
       "Encerrar partida",
