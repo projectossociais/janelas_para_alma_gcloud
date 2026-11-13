@@ -204,7 +204,7 @@ describe("exercícios retirados (2026-09-28) redireccionam para a lista de exerc
     it.each(EXERCICIOS_RETIRADOS.map((r) => r.en))("%s -> /en/exercises", async (antigo) => {
       abrir(antigo);
       await waitFor(() => expect(window.location.pathname).toBe("/en/exercises"));
-      expect(await screen.findByRole("heading", { name: "Vision tests and training" })).toBeInTheDocument();
+      expect(await screen.findByRole("heading", { name: "Vision Tests and Training" })).toBeInTheDocument();
     });
   });
 
