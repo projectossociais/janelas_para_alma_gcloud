@@ -1036,9 +1036,9 @@
     "notificacoesPorLer": "Notificações ({{contagem}} por ler)"
   },
   "NovidadesSection": {
-    "tagEvento": "Evento",
-    "feiraInovacao": "Janelas para Alma na Feira de Inovação do Desafio Genial",
-    "feiraInovacaoResumo": "Finalistas do Desafio Genial Geração Digital, apresentamos a nossa solução a 13 de Novembro, às 15h00, no Centro de Ciências de Luanda.",
+    "tagConquista": "Conquista",
+    "vitoriaDesafioGenial": "Vencemos o Desafio Genial Geração Digital",
+    "vitoriaDesafioGenialResumo": "A 13 de Novembro, no Centro de Ciências de Luanda, o Janelas para Alma venceu a 3.ª edição do Desafio Genial, a iniciativa do UNICEF Angola para jovens com soluções inovadoras.",
     "tagPublicacao": "Publicação",
     "fiquePorDentro": "Fique por dentro",
     "novidades": "Novidades",
@@ -1051,15 +1051,20 @@
     "oficializacaoDaFirma": "Oficialização da Nossa Firma Comercial: Olhar Alinhado",
     "oficializacaoDaFirmaResumo": "O projecto dá mais um passo decisivo rumo à estruturação formal e conformidade legal com a constituição da Olhar Alinhado - Comércio & Prestação de Serviços, Lda."
   },
-  "FeiraInovacaoModal": {
-    "titulo": "Janelas para Alma na Feira de Inovação",
-    "subtitulo": "Uma das 5 startups finalistas do Desafio Genial Geração Digital.",
-    "paragrafo1": "A tecnologia ao serviço da humanidade, especialmente das nossas crianças.",
-    "paragrafo2": "Enquanto uma das 5 startups finalistas do Desafio Genial Geração Digital, no dia 13 de Novembro, o Janelas para Alma estará na Feira de Inovação para apresentar a solução desenvolvida durante o período de incubação, reafirmando o nosso compromisso com a inclusão visual de crianças com estrabismo.",
-    "paragrafo3": "Acreditamos que a tecnologia ganha verdadeiro significado quando a colocamos ao serviço das pessoas e quando contribui para transformar vidas.",
+  "VitoriaDesafioGenialModal": {
+    "titulo": "Vencemos o Desafio Genial Geração Digital",
+    "subtitulo": "O Janelas para Alma venceu a 3.ª edição do Desafio Genial, do UNICEF Angola.",
+    "fotoPalcoAlt": "A equipa do Janelas para Alma no palco, com as medalhas ao peito e o cheque do prémio",
+    "paragrafo1": "No dia 13 de Novembro de 2026, no Centro de Ciências de Luanda, o Janelas para Alma foi anunciado como vencedor do Desafio Genial Geração Digital. A equipa subiu ao palco para receber as medalhas e o cheque do prémio.",
+    "paragrafo2": "Chegámos à final como uma das 5 startups finalistas, depois do período de incubação, e apresentámos na Feira de Inovação a solução que construímos para as crianças com estrabismo e para as suas famílias.",
+    "paragrafo3": "Esta vitória é de todos os que acreditaram no projecto: as famílias, os voluntários, os parceiros e os mentores do programa. Obrigado. O trabalho continua, agora com mais força.",
     "local": "Centro de Ciências de Luanda",
-    "dataHora": "13 de Novembro | 15h00",
-    "inscrever": "Faça a sua inscrição",
+    "data": "13 de Novembro de 2026",
+    "videoPremio": "A entrega das medalhas e do cheque do prémio.",
+    "videoCelebracao": "A festa da equipa e dos amigos à saída da sala.",
+    "videoApresentacao": "O vídeo com que nos apresentámos na Feira de Inovação.",
+    "fotoCertificadoAlt": "Um membro da equipa a sorrir, com a medalha e o certificado do Desafio Genial nas mãos",
+    "fotoCertificadoLegenda": "A medalha e o certificado do Desafio Genial Geração Digital.",
     "lema": "Janelas para Alma — Um Olhar Alinhado, Uma Vida Transformada."
   },
   "FirmaOlharAlinhadoModal": {

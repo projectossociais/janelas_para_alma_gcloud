@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Gamepad2, Newspaper } from "lucide-react";
 import FirmaOlharAlinhadoModal from "@/components/FirmaOlharAlinhadoModal";
-import FeiraInovacaoModal, { VIDEO_FEIRA_INOVACAO } from "@/components/FeiraInovacaoModal";
+import VitoriaDesafioGenialModal, { FOTO_VITORIA_DESAFIO_GENIAL } from "@/components/VitoriaDesafioGenialModal";
 import teamGroupPhoto from "@/assets/team-group-stairs.jpg";
 import logoOlharAlinhado from "@/assets/logo-olhar-alinhado.png";
 import saudeMundialPhoto from "@/assets/novidade-saude-mundial.jpg";
@@ -33,24 +33,23 @@ type Novidade = {
   icon?: typeof Gamepad2;
   readonly tag?: string;
   readonly resumo?: string;
-  modal?: "firma" | "feira";
+  modal?: "firma" | "vitoria";
 };
 
 const novidades: Novidade[] = [
   {
     get title() {
-      return i18n.t("NovidadesSection.feiraInovacao");
+      return i18n.t("NovidadesSection.vitoriaDesafioGenial");
     },
     get tag() {
-      return i18n.t("NovidadesSection.tagEvento");
+      return i18n.t("NovidadesSection.tagConquista");
     },
     get resumo() {
-      return i18n.t("NovidadesSection.feiraInovacaoResumo");
+      return i18n.t("NovidadesSection.vitoriaDesafioGenialResumo");
     },
     external: false,
-    image: null,
-    video: VIDEO_FEIRA_INOVACAO,
-    modal: "feira",
+    image: FOTO_VITORIA_DESAFIO_GENIAL,
+    modal: "vitoria",
   },
   {
     get title() {
@@ -246,9 +245,9 @@ const NovidadesSection = () => {
         </Carousel>
       </div>
 
-      <FeiraInovacaoModal
-        open={modalAberto === "feira"}
-        onOpenChange={(aberto) => setModalAberto(aberto ? "feira" : null)}
+      <VitoriaDesafioGenialModal
+        open={modalAberto === "vitoria"}
+        onOpenChange={(aberto) => setModalAberto(aberto ? "vitoria" : null)}
       />
       <FirmaOlharAlinhadoModal
         open={modalAberto === "firma"}
