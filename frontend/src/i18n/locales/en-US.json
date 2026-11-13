@@ -1036,9 +1036,9 @@
     "notificacoesPorLer": "Notifications ({{contagem}} unread)"
   },
   "NovidadesSection": {
-    "tagEvento": "Event",
-    "feiraInovacao": "Janelas Para a Alma at the Desafio Genial Innovation Fair",
-    "feiraInovacaoResumo": "As finalists of the Desafio Genial Geração Digital, we present our solution on November 13 at 3:00 p.m. at the Luanda Science Center.",
+    "tagConquista": "Achievement",
+    "vitoriaDesafioGenial": "We won the Desafio Genial Geração Digital",
+    "vitoriaDesafioGenialResumo": "On November 13, at the Luanda Science Center, Janelas Para a Alma won the 3rd edition of the Desafio Genial, the UNICEF Angola initiative for young people with innovative solutions.",
     "tagPublicacao": "Post",
     "fiquePorDentro": "Stay informed",
     "novidades": "News",
@@ -1051,15 +1051,20 @@
     "oficializacaoDaFirma": "Our Company Is Now Official: Olhar Alinhado",
     "oficializacaoDaFirmaResumo": "The project takes another decisive step toward a formal structure and legal compliance with the incorporation of Olhar Alinhado - Comércio & Prestação de Serviços, Lda."
   },
-  "FeiraInovacaoModal": {
-    "titulo": "Janelas Para a Alma at the Innovation Fair",
-    "subtitulo": "One of the 5 finalist startups of the Desafio Genial Geração Digital.",
-    "paragrafo1": "Technology serving humanity, especially our children.",
-    "paragrafo2": "As one of the 5 finalist startups of the Desafio Genial Geração Digital, on November 13 Janelas Para a Alma will be at the Innovation Fair to present the solution developed during the incubation period, reaffirming our commitment to the visual inclusion of children with strabismus.",
-    "paragrafo3": "We believe technology gains real meaning when we put it at the service of people and when it helps transform lives.",
+  "VitoriaDesafioGenialModal": {
+    "titulo": "We won the Desafio Genial Geração Digital",
+    "subtitulo": "Janelas Para a Alma won the 3rd edition of the Desafio Genial, run by UNICEF Angola.",
+    "fotoPalcoAlt": "The Janelas Para a Alma team on stage, wearing their medals and holding the prize cheque",
+    "paragrafo1": "On November 13, 2026, at the Luanda Science Center, Janelas Para a Alma was announced as a winner of the Desafio Genial Geração Digital. The team went on stage to receive the medals and the prize cheque.",
+    "paragrafo2": "We reached the final as one of the 5 finalist startups, after the incubation period, and at the Innovation Fair we presented the solution we built for children with strabismus and their families.",
+    "paragrafo3": "This win belongs to everyone who believed in the project: the families, the volunteers, the partners and the program mentors. Thank you. The work goes on, now with more strength.",
     "local": "Luanda Science Center",
-    "dataHora": "November 13 | 3:00 p.m.",
-    "inscrever": "Register",
+    "data": "November 13, 2026",
+    "videoPremio": "The medals and the prize cheque being handed over.",
+    "videoCelebracao": "The team and friends celebrating outside the hall.",
+    "videoApresentacao": "The video we presented at the Innovation Fair.",
+    "fotoCertificadoAlt": "A smiling team member holding the Desafio Genial medal and certificate",
+    "fotoCertificadoLegenda": "The medal and certificate of the Desafio Genial Geração Digital.",
     "lema": "Janelas Para a Alma — An Aligned Gaze, A Transformed Life."
   },
   "FirmaOlharAlinhadoModal": {

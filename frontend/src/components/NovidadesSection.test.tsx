@@ -126,8 +126,8 @@ describe("NovidadesSection -- publicações do blog", () => {
   });
 });
 
-describe("NovidadesSection -- Feira de Inovação", () => {
-  it("é o primeiro cartão fixo e abre o vídeo com o link de inscrição", async () => {
+describe("NovidadesSection -- vitória no Desafio Genial", () => {
+  it("é o primeiro cartão fixo e abre a notícia com a fotografia e os vídeos", async () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter>
@@ -135,19 +135,31 @@ describe("NovidadesSection -- Feira de Inovação", () => {
       </MemoryRouter>,
     );
 
-    const cartao = screen.getByRole("button", { name: /Feira de Inovação do Desafio Genial/i });
-    expect(within(cartao).getByText("Evento")).toBeInTheDocument();
+    const cartao = screen.getByRole("button", { name: /Vencemos o Desafio Genial/i });
+    expect(within(cartao).getByText("Conquista")).toBeInTheDocument();
+    expect(within(cartao).getByRole("img")).toHaveAttribute(
+      "src",
+      expect.stringContaining("novidade-vitoria-desafio-genial"),
+    );
     expect(screen.getAllByRole("button")[0]).toBe(cartao);
 
     await user.click(cartao);
 
     const modal = await screen.findByRole("dialog");
-    expect(modal.querySelector("video")).toHaveAttribute("src", "/videos/feira-inovacao-desafio-genial.mp4");
-    expect(modal.querySelector("video")).toHaveAttribute("controls");
+    expect(within(modal).getByRole("heading", { name: /Vencemos o Desafio Genial/i })).toBeInTheDocument();
     expect(within(modal).getByText("Centro de Ciências de Luanda")).toBeInTheDocument();
-    expect(within(modal).getByRole("link", { name: /Faça a sua inscrição/i })).toHaveAttribute(
-      "href",
-      expect.stringContaining("docs.google.com/forms"),
-    );
+    expect(within(modal).getByText("13 de Novembro de 2026")).toBeInTheDocument();
+    const videos = [...modal.querySelectorAll("video")];
+    expect(videos.map((v) => v.getAttribute("src"))).toEqual([
+      "/videos/vitoria-desafio-genial-premio.mp4",
+      "/videos/vitoria-desafio-genial-celebracao.mp4",
+      "/videos/feira-inovacao-desafio-genial.mp4",
+    ]);
+    // Nada toca sozinho, e o convite para a feira (já passada) saiu.
+    videos.forEach((v) => {
+      expect(v).toHaveAttribute("controls");
+      expect(v).not.toHaveAttribute("autoplay");
+    });
+    expect(within(modal).queryByRole("link", { name: /inscrição/i })).not.toBeInTheDocument();
   });
 });
