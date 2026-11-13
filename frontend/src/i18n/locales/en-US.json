@@ -148,6 +148,7 @@
   "UpcomingActivities": {
     "proximasAccoes": "Upcoming Activities",
     "junteSeANos": "Join us",
+    "vagasRestantes_one": "{{count}} spot available",
     "vagasRestantes": "{{count}} spots available",
     "semVagas": "No spots left"
   },
@@ -1881,7 +1882,7 @@
     "nomeCompleto": "Full name",
     "email": "Email",
     "telefone": "Phone (optional)",
-    "breveMotivacao": "Why You Want to Join",
+    "breveMotivacao": "Why you want to join",
     "nomeEObrigatorio": "Name is required",
     "maximo100Caracteres": "Maximum 100 characters",
     "motivacaoEObrigatoria": "Please tell us why you want to join",
