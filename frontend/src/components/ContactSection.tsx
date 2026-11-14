@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { Heart, Mail, MapPin, Send, CheckCircle, Star, Users, Award, BookOpen } from "lucide-react";
@@ -64,6 +64,9 @@ const ContactSection = () => {
   const [programOpen, setProgramOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  // Liga cada etiqueta ao seu campo (leitores de ecrã, e tocar na etiqueta
+  // leva ao campo). `useId` evita ids repetidos com outros formulários.
+  const idBase = useId();
 
   const openContactModal = () => {
     setContactOpen(true);
@@ -266,19 +269,42 @@ const ContactSection = () => {
 
           <form onSubmit={handleSubmit} className="space-y-5 pt-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium">{t("ContactSection.nome")}</label>
-              <Input name="name" placeholder={t("ContactSection.oSeuNome")} maxLength={100} />
-              {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
+              <label htmlFor={`${idBase}-name`} className="text-sm font-medium">{t("ContactSection.nome")}</label>
+              <Input
+                id={`${idBase}-name`}
+                name="name"
+                aria-invalid={errors.name ? true : undefined}
+                aria-describedby={errors.name ? `${idBase}-name-erro` : undefined}
+                placeholder={t("ContactSection.oSeuNome")}
+                maxLength={100}
+              />
+              {errors.name && <p id={`${idBase}-name-erro`} className="text-sm text-destructive">{errors.name}</p>}
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">{t("ContactSection.email")}</label>
-              <Input name="email" type="email" placeholder={t("ContactSection.exemploEmail")} maxLength={255} />
-              {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+              <label htmlFor={`${idBase}-email`} className="text-sm font-medium">{t("ContactSection.email")}</label>
+              <Input
+                id={`${idBase}-email`}
+                name="email"
+                aria-invalid={errors.email ? true : undefined}
+                aria-describedby={errors.email ? `${idBase}-email-erro` : undefined}
+                type="email"
+                placeholder={t("ContactSection.exemploEmail")}
+                maxLength={255}
+              />
+              {errors.email && <p id={`${idBase}-email-erro`} className="text-sm text-destructive">{errors.email}</p>}
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">{t("ContactSection.mensagem")}</label>
-              <Textarea name="message" placeholder={t("ContactSection.comoPodemosAjudar")} maxLength={1000} rows={4} />
-              {errors.message && <p className="text-sm text-destructive">{errors.message}</p>}
+              <label htmlFor={`${idBase}-message`} className="text-sm font-medium">{t("ContactSection.mensagem")}</label>
+              <Textarea
+                id={`${idBase}-message`}
+                name="message"
+                aria-invalid={errors.message ? true : undefined}
+                aria-describedby={errors.message ? `${idBase}-message-erro` : undefined}
+                placeholder={t("ContactSection.comoPodemosAjudar")}
+                maxLength={1000}
+                rows={4}
+              />
+              {errors.message && <p id={`${idBase}-message-erro`} className="text-sm text-destructive">{errors.message}</p>}
             </div>
             <button
               type="submit"
@@ -367,14 +393,29 @@ const ContactSection = () => {
           </DialogHeader>
           <form onSubmit={handleSignup} className="space-y-5 pt-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium">{t("ContactSection.telefone")}</label>
-              <Input name="phone" placeholder={t("ContactSection.n2449xxXxxXxx")} maxLength={20} />
-              {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
+              <label htmlFor={`${idBase}-phone`} className="text-sm font-medium">{t("ContactSection.telefone")}</label>
+              <Input
+                id={`${idBase}-phone`}
+                name="phone"
+                aria-invalid={errors.phone ? true : undefined}
+                aria-describedby={errors.phone ? `${idBase}-phone-erro` : undefined}
+                placeholder={t("ContactSection.n2449xxXxxXxx")}
+                maxLength={20}
+              />
+              {errors.phone && <p id={`${idBase}-phone-erro`} className="text-sm text-destructive">{errors.phone}</p>}
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">{t("ContactSection.breveMotivacao")}</label>
-              <Textarea name="motivation" placeholder={t("ContactSection.porqueQueresSerUm")} maxLength={1000} rows={4} />
-              {errors.motivation && <p className="text-sm text-destructive">{errors.motivation}</p>}
+              <label htmlFor={`${idBase}-motivation`} className="text-sm font-medium">{t("ContactSection.breveMotivacao")}</label>
+              <Textarea
+                id={`${idBase}-motivation`}
+                name="motivation"
+                aria-invalid={errors.motivation ? true : undefined}
+                aria-describedby={errors.motivation ? `${idBase}-motivation-erro` : undefined}
+                placeholder={t("ContactSection.porqueQueresSerUm")}
+                maxLength={1000}
+                rows={4}
+              />
+              {errors.motivation && <p id={`${idBase}-motivation-erro`} className="text-sm text-destructive">{errors.motivation}</p>}
             </div>
             <button
               type="submit"
