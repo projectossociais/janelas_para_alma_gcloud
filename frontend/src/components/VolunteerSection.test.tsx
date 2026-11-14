@@ -123,3 +123,20 @@ describe("VolunteerSection — candidatura a voluntário", () => {
     await waitFor(() => expect(candidatar).toHaveBeenCalledWith("Quero ajudar.", undefined));
   });
 });
+
+describe("VolunteerSection — etiquetas ligadas aos campos", () => {
+  beforeEach(() => {
+    navigateMock.mockReset();
+    mockIsLoggedIn = true;
+  });
+
+  it("os campos encontram-se pela etiqueta", async () => {
+    const user = userEvent.setup();
+    render(<VolunteerSection />, { wrapper: MemoryRouter });
+
+    await user.click(screen.getByRole("button", { name: /Quero ser um Kamba/i }));
+
+    expect(await screen.findByLabelText("Telefone (opcional)")).toHaveAttribute("name", "phone");
+    expect(screen.getByLabelText("Breve Motivação")).toHaveAttribute("name", "motivation");
+  });
+});

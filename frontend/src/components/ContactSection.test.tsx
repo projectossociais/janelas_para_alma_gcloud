@@ -163,3 +163,45 @@ describe("ContactSection — candidatura a voluntário (\"Quero ser um Kamba\")"
     );
   });
 });
+
+describe("ContactSection — etiquetas ligadas aos campos", () => {
+  beforeEach(() => {
+    navigateMock.mockReset();
+    mockIsLoggedIn = true;
+  });
+
+  // Bug: os <label> não tinham htmlFor nem os campos id. Um leitor de ecrã
+  // não dizia o nome do campo, e tocar na etiqueta não levava ao campo.
+  it("os campos do formulário de contacto encontram-se pela etiqueta", async () => {
+    const user = userEvent.setup();
+    render(<ContactSection />, { wrapper: MemoryRouter });
+
+    await user.click(screen.getByRole("button", { name: /Envie-nos uma mensagem/i }));
+
+    expect(await screen.findByLabelText("Nome")).toHaveAttribute("name", "name");
+    expect(screen.getByLabelText("Email")).toHaveAttribute("name", "email");
+    expect(screen.getByLabelText("Mensagem")).toHaveAttribute("name", "message");
+  });
+
+  it("os campos da inscrição de voluntário encontram-se pela etiqueta", async () => {
+    const user = userEvent.setup();
+    render(<ContactSection />, { wrapper: MemoryRouter });
+
+    await abrirBeneficios(user);
+
+    expect(await screen.findByLabelText("Telefone (opcional)")).toHaveAttribute("name", "phone");
+    expect(screen.getByLabelText("Breve Motivação")).toHaveAttribute("name", "motivation");
+  });
+
+  it("um erro de validação fica ligado ao campo a que pertence", async () => {
+    const user = userEvent.setup();
+    render(<ContactSection />, { wrapper: MemoryRouter });
+
+    await user.click(screen.getByRole("button", { name: /Envie-nos uma mensagem/i }));
+    await user.click(await screen.findByRole("button", { name: /Enviar Mensagem/i }));
+
+    const nome = await screen.findByLabelText("Nome");
+    await waitFor(() => expect(nome).toHaveAttribute("aria-invalid", "true"));
+    expect(nome).toHaveAccessibleDescription();
+  });
+});

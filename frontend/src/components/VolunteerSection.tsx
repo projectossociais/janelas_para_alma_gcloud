@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { HeartHandshake } from "lucide-react";
@@ -33,6 +33,9 @@ const VolunteerSection = () => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  // Liga cada etiqueta ao seu campo (leitores de ecrã, e tocar na etiqueta
+  // leva ao campo). `useId` evita ids repetidos com outros formulários.
+  const idBase = useId();
 
   const abrirFormulario = () => {
     if (!isLoggedIn) {
@@ -104,14 +107,29 @@ const VolunteerSection = () => {
 
           <form onSubmit={handleSubmit} className="space-y-5 pt-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium">{t("VolunteerSection.telefone")}</label>
-              <Input name="phone" placeholder={t("VolunteerSection.n2449xxXxxXxx")} maxLength={20} />
-              {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
+              <label htmlFor={`${idBase}-phone`} className="text-sm font-medium">{t("VolunteerSection.telefone")}</label>
+              <Input
+                id={`${idBase}-phone`}
+                name="phone"
+                aria-invalid={errors.phone ? true : undefined}
+                aria-describedby={errors.phone ? `${idBase}-phone-erro` : undefined}
+                placeholder={t("VolunteerSection.n2449xxXxxXxx")}
+                maxLength={20}
+              />
+              {errors.phone && <p id={`${idBase}-phone-erro`} className="text-sm text-destructive">{errors.phone}</p>}
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">{t("VolunteerSection.breveMotivacao")}</label>
-              <Textarea name="motivation" placeholder={t("VolunteerSection.porqueQueresSerUm")} maxLength={1000} rows={4} />
-              {errors.motivation && <p className="text-sm text-destructive">{errors.motivation}</p>}
+              <label htmlFor={`${idBase}-motivation`} className="text-sm font-medium">{t("VolunteerSection.breveMotivacao")}</label>
+              <Textarea
+                id={`${idBase}-motivation`}
+                name="motivation"
+                aria-invalid={errors.motivation ? true : undefined}
+                aria-describedby={errors.motivation ? `${idBase}-motivation-erro` : undefined}
+                placeholder={t("VolunteerSection.porqueQueresSerUm")}
+                maxLength={1000}
+                rows={4}
+              />
+              {errors.motivation && <p id={`${idBase}-motivation-erro`} className="text-sm text-destructive">{errors.motivation}</p>}
             </div>
             <button
               type="submit"
