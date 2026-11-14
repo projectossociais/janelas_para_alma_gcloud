@@ -67,6 +67,7 @@ const AdminAdmins = () => {
         </CardHeader>
         <CardContent className="flex flex-col sm:flex-row gap-3">
           <Input
+            aria-label="Email do novo administrador"
             placeholder="email@exemplo.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -103,8 +104,13 @@ const AdminAdmins = () => {
                       {new Date(r.criado_em).toLocaleDateString("pt-PT")}
                     </TableCell>
                     <TableCell>
-                      <Button size="icon" variant="ghost" onClick={() => removeAdmin(r)}>
-                        <Trash2 className="w-4 h-4 text-destructive" />
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        aria-label={`Remover o acesso de administrador de ${r.nome_completo || r.email}`}
+                        onClick={() => removeAdmin(r)}
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" aria-hidden="true" />
                       </Button>
                     </TableCell>
                   </TableRow>

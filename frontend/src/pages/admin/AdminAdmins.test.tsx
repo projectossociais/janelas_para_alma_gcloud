@@ -76,4 +76,15 @@ describe("AdminAdmins", () => {
     );
     expect(toastSuccess).not.toHaveBeenCalled();
   });
+
+  it("o campo do email e o botão de remover têm nome para leitores de ecrã", async () => {
+    // Bug: o campo só tinha o exemplo "email@exemplo.com" e o botão era só
+    // o ícone do caixote.
+    render(<AdminAdmins />);
+
+    expect(screen.getByLabelText("Email do novo administrador")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: "Remover o acesso de administrador de Chefe" }),
+    ).toBeInTheDocument();
+  });
 });

@@ -333,9 +333,10 @@ const AdminClinicas = () => {
                         size="sm"
                         variant="ghost"
                         disabled={ocupado === clinica.id}
+                        aria-label={`Desligar ${membro.utilizador_nome || membro.utilizador_email} desta clínica`}
                         onClick={() => removerMembro(clinica.id, membro.utilizador_id)}
                       >
-                        <Trash2 className="w-3 h-3 text-destructive" />
+                        <Trash2 className="w-3 h-3 text-destructive" aria-hidden="true" />
                       </Button>
                     </div>
                   ))}
@@ -345,6 +346,7 @@ const AdminClinicas = () => {
                 </div>
                 <div className="flex gap-2">
                   <Input
+                    aria-label={`Email da conta a ligar a ${clinica.nome}`}
                     placeholder="email@daclinica.com"
                     value={novoEmail[clinica.id] || ""}
                     onChange={(e) => setNovoEmail((prev) => ({ ...prev, [clinica.id]: e.target.value }))}

@@ -114,6 +114,25 @@ describe("DashboardPro", () => {
     await waitFor(() => expect(adicionarDisponibilidade).toHaveBeenCalled());
   });
 
+  it("o botão de remover um horário tem nome e remove esse horário", async () => {
+    // Bug: o botão era só o ícone do caixote, sem nome para leitores de ecrã.
+    aMinhaClinica.mockResolvedValue({ id: "clinica-1", nome: "Óptica Optioptika" });
+    meusAgendamentos.mockResolvedValue([]);
+    minhaDisponibilidade.mockResolvedValue([
+      { id: "disp-1", clinica_id: "clinica-1", dia_semana: 0, hora_inicio: "08:00:00", hora_fim: "12:00:00", modalidade: "presencial" },
+    ]);
+    removerDisponibilidade.mockResolvedValue(undefined);
+    const user = userEvent.setup();
+
+    render(<DashboardPro />, { wrapper: MemoryRouter });
+
+    await user.click(
+      await screen.findByRole("button", { name: "Remover o horário de Segunda-feira, 08:00 — 12:00" }),
+    );
+
+    await waitFor(() => expect(removerDisponibilidade).toHaveBeenCalledWith("disp-1"));
+  });
+
   it("consulta online confirmada mostra o link da sala e permite iniciar/concluir", async () => {
     aMinhaClinica.mockResolvedValue({ id: "clinica-1", nome: "Óptica Optioptika" });
     meusAgendamentos.mockResolvedValue([
