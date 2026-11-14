@@ -555,6 +555,7 @@
     "presencial": "Presencial",
     "online": "Online",
     "adicionarHorario": "Adicionar horário",
+    "removerHorario": "Remover o horário de {{dia}}, {{inicio}} — {{fim}}",
     "segunda": "Segunda-feira",
     "terca": "Terça-feira",
     "quarta": "Quarta-feira",

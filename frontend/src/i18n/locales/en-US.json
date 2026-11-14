@@ -555,6 +555,7 @@
     "presencial": "In person",
     "online": "Online",
     "adicionarHorario": "Add time slot",
+    "removerHorario": "Remove the {{dia}} time slot, {{inicio}}–{{fim}}",
     "segunda": "Monday",
     "terca": "Tuesday",
     "quarta": "Wednesday",
