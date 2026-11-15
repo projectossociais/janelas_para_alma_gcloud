@@ -36,4 +36,12 @@ describe("Footer", () => {
       expect(l).toHaveAttribute("rel", "noopener noreferrer");
     }
   });
+
+  it("o Instagram leva ao perfil, sem o código de partilha (igsh)", () => {
+    renderRodape();
+    expect(screen.getByRole("link", { name: "Instagram" })).toHaveAttribute(
+      "href",
+      "https://www.instagram.com/janelas_para_alma/",
+    );
+  });
 });

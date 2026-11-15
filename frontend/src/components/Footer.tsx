@@ -17,7 +17,7 @@ const IconeWhatsApp = ({ className }: { className?: string }) => (
 
 /** Redes sociais do rodapé (YouTube e canal do WhatsApp pedidos pela coordenação, 2026-11-10). */
 const REDES_SOCIAIS: readonly { nome: string; href: string; Icone: ComponentType<{ className?: string }> }[] = [
-  { nome: "Instagram", href: "https://www.instagram.com/janelas_para_alma?igsh=MTI5eXFxa3M0a3FpbA==", Icone: Instagram },
+  { nome: "Instagram", href: "https://www.instagram.com/janelas_para_alma/", Icone: Instagram },
   { nome: "Facebook", href: "https://www.facebook.com", Icone: Facebook },
   { nome: "LinkedIn", href: "https://www.linkedin.com", Icone: Linkedin },
   { nome: "YouTube", href: "https://www.youtube.com/@JanelasParaaAlma", Icone: Youtube },
