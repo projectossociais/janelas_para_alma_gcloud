@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 const listarAdmin = vi.fn();
@@ -109,7 +109,7 @@ describe("AdminClinicas", () => {
     render(<AdminClinicas />);
 
     await screen.findByText("Óptica Optioptika");
-    await user.type(screen.getByPlaceholderText("email@daclinica.com"), "novo@optioptika.com");
+    await user.type(screen.getByLabelText("Email da conta a ligar a Óptica Optioptika"), "novo@optioptika.com");
     await user.click(screen.getByRole("button", { name: /Ligar conta/i }));
 
     await waitFor(() => expect(adicionarEquipa).toHaveBeenCalledWith("clinica-1", "novo@optioptika.com"));
@@ -134,9 +134,8 @@ describe("AdminClinicas", () => {
     const user = userEvent.setup();
     render(<AdminClinicas />);
 
-    const nomeMembro = await screen.findByText("Dr.ª Ana");
-    const linha = nomeMembro.closest("div.flex")!.parentElement!;
-    await user.click(within(linha).getByRole("button"));
+    // O botão é só um ícone: tem de ter nome para leitores de ecrã.
+    await user.click(await screen.findByRole("button", { name: "Desligar Dr.ª Ana desta clínica" }));
 
     await waitFor(() => expect(removerEquipa).toHaveBeenCalledWith("clinica-1", "u-1"));
   });

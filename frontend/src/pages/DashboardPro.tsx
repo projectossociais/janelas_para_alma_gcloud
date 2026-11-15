@@ -253,8 +253,17 @@ const ConteudoDashboardPro = ({ clinica }: { clinica: ClinicaParceiraAdmin }) =>
                     <span>{j.hora_inicio.slice(0, 5)} — {j.hora_fim.slice(0, 5)}</span>
                     <Badge variant="outline">{j.modalidade}</Badge>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => removerJanela(j.id)}>
-                    <Trash2 className="w-4 h-4 text-destructive" />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={t("DashboardPro.removerHorario", {
+                      dia: t(DIAS_SEMANA_CHAVES[j.dia_semana]),
+                      inicio: j.hora_inicio.slice(0, 5),
+                      fim: j.hora_fim.slice(0, 5),
+                    })}
+                    onClick={() => removerJanela(j.id)}
+                  >
+                    <Trash2 className="w-4 h-4 text-destructive" aria-hidden="true" />
                   </Button>
                 </div>
               ))}
