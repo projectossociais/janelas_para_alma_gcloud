@@ -161,7 +161,7 @@ describe("NovidadesSection -- vitória no Desafio Genial", () => {
       expect(v).not.toHaveAttribute("autoplay");
     });
     expect(within(modal).queryByRole("link", { name: /inscrição/i })).not.toBeInTheDocument();
-    expect(within(modal).getByRole("img", { name: /Manuel António Francisco/ })).toHaveAttribute(
+    expect(within(modal).getByRole("img", { name: /Manuel Francisco, cofundador/ })).toHaveAttribute(
       "src",
       expect.stringContaining("novidade-vitoria-manuel"),
     );

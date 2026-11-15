@@ -80,7 +80,7 @@ describe("tradução en-US (Fase 3)", () => {
     /Meu Kamba Estrábico/gi,
     /[\w.+-]+@[\w-]+\.[\w.]+/g, // endereços de email
     /Visão da Banda!?/g,
-    /Kássia Nunda|Dalva Etelvina Benguela Filipe|Manuel António Francisco/g,
+    /Kássia Nunda|Dalva Etelvina Benguela Filipe/g,
     /Urbanização Nova Vida, Rua 54( \(rua do tribunal provincial\))?, Centro Empresarial Living-Luanda(, Lote 9, Luanda, Angola\.)?/g,
     /Rua do assalto ao quartel da Moncada/g,
     /Benfica \/ Zona Verde \/ Condomínio Villa Israel/g,
