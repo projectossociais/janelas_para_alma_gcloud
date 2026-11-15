@@ -110,14 +110,14 @@ Afirmações médicas ou de saúde. Validar com um profissional antes de publica
 | Chave | Português | Inglês | Nota |
 |---|---|---|---|
 | `canalDedicadoARecolha` | Canal dedicado à recolha e reutilização de armações. Transformamos resíduos em materiais terapêuticos, reduzindo os custos para os pacientes e o impacto ambiental. | A dedicated channel for collecting and reusing frames. We turn waste into therapeutic materials, lowering costs for patients and reducing environmental impact. |  |
-| `sistemaQueConectaPacientes` | Sistema que conecta pacientes a parceiros de saúde visual, facilitando o acesso a rastreios e consultas através de preços ajustados à realidade do utilizador. | A system that connects patients with vision care partners, making screenings and appointments easier to access through prices adjusted to each user's circumstances. |  |
+| `sistemaQueConectaPacientes` | Sistema que liga pacientes a parceiros de saúde visual, facilitando o acesso a rastreios e consultas através de preços ajustados à realidade do utilizador. | A system that connects patients with vision care partners, making screenings and appointments easier to access through prices adjusted to each user's circumstances. |  |
 
 ### ImpactSection
 
 | Chave | Português | Inglês | Nota |
 |---|---|---|---|
 | `inclusaoVisualComOculos` | Inclusão visual com óculos acessíveis e métodos de tratamento para maior auto-estima e qualidade de vida. | Visual inclusion through affordable glasses and treatment methods, for greater self-esteem and quality of life. |  |
-| `oJanelasParaA` | O Janelas para a Alma promove a inclusão visual através da distribuição de óculos acessíveis e métodos de tratamento adaptados à realidade angolana. Ao devolver a capacidade de ver correctamente, restauramos a auto-estima e qualidade de vida de crianças, jovens e adultos que vivem com estrabismo. O impacto estende-se às famílias e comunidades, quebrando o ciclo de exclusão social associado às condições visuais não tratadas. | Janelas para a Alma promotes visual inclusion by distributing affordable glasses and treatment methods adapted to the Angolan context. By restoring the ability to see properly, we restore the self-esteem and quality of life of children, young people and adults living with strabismus. The impact reaches families and communities, breaking the cycle of social exclusion associated with untreated vision conditions. |  |
+| `oJanelasParaA` | O Janelas para a Alma promove a inclusão visual através da distribuição de óculos acessíveis e métodos de tratamento adaptados à realidade angolana. Ao devolver a capacidade de ver correctamente, restauramos a auto-estima e a qualidade de vida de crianças, jovens e adultos que vivem com estrabismo. O impacto estende-se às famílias e comunidades, quebrando o ciclo de exclusão social associado às condições visuais não tratadas. | Janelas para a Alma promotes visual inclusion by distributing affordable glasses and treatment methods adapted to the Angolan context. By restoring the ability to see properly, we restore the self-esteem and quality of life of children, young people and adults living with strabismus. The impact reaches families and communities, breaking the cycle of social exclusion associated with untreated vision conditions. |  |
 
 ### KambaHeroCarousel
 
@@ -564,13 +564,13 @@ Escolhas de tradução ambíguas ou problemas já existentes no português.
 
 | Chave | Português | Inglês | Nota |
 |---|---|---|---|
-| `aNossaPropostaDe` | A Nossa Proposta de Valor: Unindo Saúde, Ecologia e Inclusão | What We Offer: Bringing Together Health, Ecology and Inclusion | 'Proposta de Valor' é jargão de negócio; em inglês de página pública usei 'What We Offer'. Alternativa literal: 'Our Value Proposition'. |
+| `aNossaPropostaDe` | A Nossa Proposta de Valor: Unir Saúde, Ecologia e Inclusão | What We Offer: Bringing Together Health, Ecology and Inclusion | 'Proposta de Valor' é jargão de negócio; em inglês de página pública usei 'What We Offer'. Alternativa literal: 'Our Value Proposition'. |
 
 ### ImpactSection
 
 | Chave | Português | Inglês | Nota |
 |---|---|---|---|
-| `aoReduzirANecessidade` | Ao reduzir a necessidade de fabricação de novos óculos e promover práticas sustentáveis, o Janelas para a Alma contribui para a diminuição da pegada de carbono. O menor consumo industrial significa menos emissões de gases de efeito estufa, menos energia consumida e menos recursos naturais extraídos. Cada acção local tem um efeito positivo no combate às alterações climáticas globais. | By reducing the need to manufacture new glasses and promoting sustainable practices, Janelas para a Alma helps shrink the carbon footprint. Lower industrial consumption means fewer greenhouse gas emissions, less energy used and fewer natural resources extracted. Every local action has a positive effect in the fight against global climate change. | Afirmações ambientais ('menos emissões', 'efeito positivo') sem números: traduzidas à letra, sem acrescentar dados. |
+| `aoReduzirANecessidade` | Ao reduzir a necessidade de fabricação de novos óculos e promover práticas sustentáveis, o Janelas para a Alma contribui para a diminuição da pegada de carbono. O menor consumo industrial significa menos emissões de gases de efeito de estufa, menos energia consumida e menos recursos naturais extraídos. Cada acção local tem um efeito positivo no combate às alterações climáticas globais. | By reducing the need to manufacture new glasses and promoting sustainable practices, Janelas para a Alma helps shrink the carbon footprint. Lower industrial consumption means fewer greenhouse gas emissions, less energy used and fewer natural resources extracted. Every local action has a positive effect in the fight against global climate change. | Afirmações ambientais ('menos emissões', 'efeito positivo') sem números: traduzidas à letra, sem acrescentar dados. |
 
 ### JogoCuriosidades
 
