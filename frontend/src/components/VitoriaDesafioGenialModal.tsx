@@ -4,6 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTranslation } from "react-i18next";
 import fotoPalco from "@/assets/novidade-vitoria-desafio-genial.jpg";
 import fotoCertificado from "@/assets/novidade-vitoria-certificado.jpg";
+import fotoManuel from "@/assets/novidade-vitoria-manuel.jpg";
 
 /** Fotografia da entrega do prémio, usada também na miniatura do cartão. */
 export const FOTO_VITORIA_DESAFIO_GENIAL = fotoPalco;
@@ -81,6 +82,16 @@ const VitoriaDesafioGenialModal = ({ open, onOpenChange }: VitoriaDesafioGenialM
                 className="w-full max-h-[70vh] object-contain rounded-xl"
               />
               <figcaption className="text-sm">{t("VitoriaDesafioGenialModal.fotoCertificadoLegenda")}</figcaption>
+            </figure>
+
+            <figure className="space-y-2">
+              <img
+                src={fotoManuel}
+                alt={t("VitoriaDesafioGenialModal.fotoManuelAlt")}
+                loading="lazy"
+                className="w-full max-h-[70vh] object-contain rounded-xl"
+              />
+              <figcaption className="text-sm">{t("VitoriaDesafioGenialModal.fotoManuelLegenda")}</figcaption>
             </figure>
 
             <p className="pt-2 text-sm italic">{t("VitoriaDesafioGenialModal.lema")}</p>
