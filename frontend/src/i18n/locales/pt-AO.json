@@ -289,6 +289,12 @@
   "BackButton": {
     "voltar": "Voltar"
   },
+  "Interface": {
+    "fechar": "Fechar",
+    "anterior": "Anterior",
+    "seguinte": "Seguinte",
+    "menuLateral": "Mostrar ou esconder o menu lateral"
+  },
   "BannerHomepageSection": {
     "saberMais": "Saber mais"
   },
