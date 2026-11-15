@@ -288,7 +288,7 @@ const AdminVoluntariado = () => {
                 </div>
               </div>
               <Button onClick={publicarAtividade} disabled={aPublicar}>
-                <Plus className="w-4 h-4" /> {aPublicar ? "A publicar..." : "Publicar actividade"}
+                <Plus className="w-4 h-4" /> {aPublicar ? "A publicar…" : "Publicar actividade"}
               </Button>
             </CardContent>
           </Card>
