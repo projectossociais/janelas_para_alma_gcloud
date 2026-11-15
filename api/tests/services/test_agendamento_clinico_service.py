@@ -397,14 +397,22 @@ class TestHorariosDisponiveis:
         assert ocupado not in {h.inicio for h in resultado}
         assert len(resultado) == len(livres) - 1
 
-    def test_chega_cerca_de_tres_meses_a_frente(self) -> None:
+    def test_chega_cerca_de_tres_meses_a_frente(self, monkeypatch) -> None:
         # Pedido do dono do projecto (2026-11-07): marcações até Janeiro.
+        # Janela em todos os dias da semana e sem feriados: com uma janela só à
+        # segunda-feira, o resultado dependia do dia em que o teste corria (a
+        # última segunda pode ficar até 6 dias antes do fim, e ser feriado) --
+        # falhou no CI a 2026-11-13 com 79 dias.
+        monkeypatch.setattr("app.services.agendamento_clinico_service.e_feriado", lambda dia: False)
         disponibilidades = RepositorioDisponibilidadesFalso(
-            janelas=[_disponibilidade(dia_semana=0, hora_inicio=time(8, 0), hora_fim=time(9, 0))]
+            janelas=[
+                _disponibilidade(id=f"disp-{dia}", dia_semana=dia, hora_inicio=time(8, 0), hora_fim=time(9, 0))
+                for dia in range(7)
+            ]
         )
         resultado = _servico(disponibilidades=disponibilidades).horarios_disponiveis("clinica-1", "presencial")
         ultimo = resultado[-1].inicio - datetime.now(UTC)
-        assert 80 <= ultimo.days < 90
+        assert 88 <= ultimo.days < 90
 
     def test_salta_feriados_nacionais(self, monkeypatch) -> None:
         monkeypatch.setattr(
