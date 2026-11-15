@@ -114,7 +114,7 @@ describe("ContactSection — candidatura a voluntário (\"Quero ser um Kamba\")"
     await abrirBeneficios(user);
 
     expect(navigateMock).toHaveBeenCalledWith("/auth?next=/junte-se");
-    expect(screen.queryByText("Formulário de Inscrição")).not.toBeInTheDocument();
+    expect(screen.queryByText("Formulário de inscrição")).not.toBeInTheDocument();
     expect(candidatar).not.toHaveBeenCalled();
   });
 
