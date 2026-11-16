@@ -29,7 +29,7 @@ HORARIO_VALIDO = datetime(2027, 1, 4, 9, 0, tzinfo=UTC)
 # pedem HORARIO_VALIDO começavam a falhar a 2027-01-04 (e o da ponte do
 # Carnaval passava a recusar por ser passado, não por ser feriado). O "agora"
 # do serviço fica preso aqui, antes de todas as datas usadas nestes testes.
-AGORA_FIXO = datetime(2027, 1, 5, 9, 0, tzinfo=UTC)
+AGORA_FIXO = datetime(2026, 12, 1, 9, 0, tzinfo=UTC)
 
 
 class _DatetimeFixo(datetime):
@@ -344,6 +344,15 @@ def test_pedir_num_feriado_e_recusado() -> None:
     ponte_do_carnaval = datetime(2027, 2, 8, 9, 0, tzinfo=UTC)
     with pytest.raises(HorarioIndisponivelError):
         _servico().pedir(**{**DADOS_PEDIDO, "horario_inicio": ponte_do_carnaval})
+
+
+@pytest.mark.usefixtures("relogio_fixo")
+def test_a_segunda_antes_do_carnaval_e_aceite() -> None:
+    # Controlo do teste anterior: a segunda-feira de antes (1/2/2027) não é
+    # feriado e é aceite -- a ponte é recusada por ser feriado, não por a data
+    # já ter passado.
+    segunda_normal = datetime(2027, 2, 1, 9, 0, tzinfo=UTC)
+    assert _servico().pedir(**{**DADOS_PEDIDO, "horario_inicio": segunda_normal}).estado == "pendente"
 
 
 @pytest.mark.usefixtures("relogio_fixo")
