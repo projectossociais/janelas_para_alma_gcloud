@@ -19,7 +19,7 @@ from typing import Protocol
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.repositories.orm_models import AgendamentoClinico, Utilizador
+from app.repositories.orm_models import AgendamentoClinico, ClinicaParceira, Utilizador
 
 
 @dataclass(frozen=True)
@@ -55,7 +55,7 @@ class AgendamentoClinicoRepository(Protocol):
         modalidade: str,
         horario_inicio: datetime | None,
         motivo: str | None,
-    ) -> AgendamentoClinicoRegisto: ...
+    ) -> AgendamentoClinicoRegisto | None: ...
     def obter(self, agendamento_id: str) -> AgendamentoClinicoRegisto | None: ...
     def listar(self) -> list[AgendamentoClinicoRegisto]: ...
     def proxima_confirmada_por_utilizador(
@@ -110,7 +110,19 @@ class SQLAlchemyAgendamentoClinicoRepository:
         modalidade: str,
         horario_inicio: datetime | None,
         motivo: str | None,
-    ) -> AgendamentoClinicoRegisto:
+    ) -> AgendamentoClinicoRegisto | None:
+        # Serializa a gravação do pedido com a remoção/desactivação da clínica.
+        # Revalida aqui porque a primeira verificação do service pode ficar
+        # desactualizada enquanto espera por este bloqueio.
+        clinica = self._sessao.scalar(
+            select(ClinicaParceira)
+            .where(ClinicaParceira.id == uuid.UUID(clinica_id))
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
+        if clinica is None or not clinica.ativa:
+            return None
+
         row = AgendamentoClinico(
             clinica_id=uuid.UUID(clinica_id),
             utilizador_id=uuid.UUID(utilizador_id) if utilizador_id else None,

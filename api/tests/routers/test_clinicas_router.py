@@ -50,6 +50,9 @@ class RepositorioClinicasFalso:
     def obter(self, clinica_id: str):
         return self._clinicas.get(clinica_id)
 
+    def obter_para_remocao(self, clinica_id: str):
+        return self.obter(clinica_id)
+
     def atualizar_perfil(self, clinica_id, especialidades, cidade, modalidades_suportadas, preco_indicativo):
         atual = self._clinicas.get(clinica_id)
         if atual is None:

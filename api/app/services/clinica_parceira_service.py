@@ -29,7 +29,9 @@ class ClinicaParceiraService:
         self._repo = repositorio
 
     def remover(self, clinica_id: str) -> ResultadoRemocao:
-        if self._repo.obter(clinica_id) is None:
+        # Mantém o bloqueio da linha até apagar/desactivar. A criação de um
+        # pedido usa o mesmo bloqueio, para as duas operações ficarem ordenadas.
+        if self._repo.obter_para_remocao(clinica_id) is None:
             raise ClinicaNaoEncontradaError(clinica_id)
         if self._repo.tem_agendamentos(clinica_id):
             return self._desativar(clinica_id)
