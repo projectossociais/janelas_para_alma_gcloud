@@ -8,6 +8,11 @@
 export interface NumeroCapa {
   /** O número já escrito como se mostra (ex.: "195+", "293 mil"). */
   valor: string;
+  /**
+   * O mesmo número escrito à inglesa, só quando muda (ex.: "293 mil" → "293,000",
+   * vírgula nos milhares, como no glossário). Sem isto, o inglês mostra `valor`.
+   */
+  valorEn?: string;
   /** Chave de tradução da legenda, em `Inicio.numeros`. */
   legenda: string;
 }
@@ -18,7 +23,7 @@ export const NUMEROS_CAPA: readonly NumeroCapa[] = [
   // sistemática e meta-análise, Strabismus 2023;31(1):31-44) = 292.837. Não há contagem
   // oficial para Angola (o INE não desagrega o estrabismo), por isso a legenda começa por
   // "Estimativa"; sem o sinal "≈" na capa, a pedido da coordenação.
-  { valor: "293 mil", legenda: "Inicio.numeros.estrabismoAngola" },
+  { valor: "293 mil", valorEn: "293,000", legenda: "Inicio.numeros.estrabismoAngola" },
   // IONA (Instituto Oftalmológico Nacional de Angola), Julho a Dezembro de 2024: 702 casos de
   // estrabismo entre as crianças atendidas (8.170 casos pediátricos no total). Dados da
   // Dra. Solange Sinadinse, oftalmologista pediátrica do IONA, em "Problemas oftalmológicos

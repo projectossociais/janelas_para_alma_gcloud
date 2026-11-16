@@ -4,6 +4,7 @@ import { Eye, Heart, LogIn } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { localizar } from "@/i18n/rotas";
+import { IDIOMA_EN } from "@/i18n/idiomas";
 import { NUMEROS_CAPA } from "./numerosCapa";
 
 /**
@@ -27,7 +28,8 @@ export const INTERVALO_CAPA_MS = 5000;
  * "Entrar" (só sem sessão) e os números do projecto.
  */
 const HeroInicio = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const emIngles = i18n.language === IDIOMA_EN;
   const { isLoggedIn } = useAuth();
   const [actual, setActual] = useState(0);
 
@@ -76,7 +78,7 @@ const HeroInicio = () => {
         <ul className="mb-6 grid max-w-xl grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 md:mb-8 md:gap-y-6">
           {NUMEROS_CAPA.map((n) => (
             <li key={n.legenda}>
-              <span className="block text-2xl font-bold leading-none text-white md:text-4xl">{n.valor}</span>
+              <span className="block text-2xl font-bold leading-none text-white md:text-4xl">{emIngles ? (n.valorEn ?? n.valor) : n.valor}</span>
               <span className="mt-1 block text-xs leading-snug text-white/85 md:mt-1.5 md:text-sm">{t(n.legenda)}</span>
             </li>
           ))}
