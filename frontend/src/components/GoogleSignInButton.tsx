@@ -1,5 +1,7 @@
 import { useEffect, useId, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { estaNaAppNativa } from "@/lib/appNativa";
+import { IDIOMA_EN } from "@/i18n/idiomas";
 
 // Formas mínimas do Google Identity Services que usamos -- a biblioteca
 // carrega globalmente via <script> em index.html, não como módulo importável.
@@ -18,6 +20,10 @@ declare global {
   }
 }
 
+// O Google não tem pt-AO; pt-PT segue a mesma norma que o site. Sem `locale`,
+// o botão sai na língua do browser e não na da página.
+const LOCALE_GOOGLE = { pt: "pt-PT", en: "en" };
+
 interface GoogleSignInButtonProps {
   onCredential: (idToken: string) => void;
 }
@@ -34,6 +40,8 @@ const GoogleSignInButton = ({ onCredential }: GoogleSignInButtonProps) => {
   const elementId = useId();
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
   const naApp = estaNaAppNativa();
+  const { i18n } = useTranslation();
+  const locale = i18n.language === IDIOMA_EN ? LOCALE_GOOGLE.en : LOCALE_GOOGLE.pt;
 
   useEffect(() => {
     if (!clientId || naApp || !containerRef.current) return;
@@ -58,6 +66,7 @@ const GoogleSignInButton = ({ onCredential }: GoogleSignInButtonProps) => {
         size: "large",
         width: "336",
         text: "continue_with",
+        locale,
       });
     };
     tentarInicializar();
@@ -66,7 +75,7 @@ const GoogleSignInButton = ({ onCredential }: GoogleSignInButtonProps) => {
       cancelado = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clientId]);
+  }, [clientId, locale]);
 
   if (!clientId || naApp) return null;
 

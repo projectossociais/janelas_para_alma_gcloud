@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, waitFor } from "@testing-library/react";
 import GoogleSignInButton from "./GoogleSignInButton";
+import i18n from "@/i18n";
 
 const ORIGINAL_ENV = { ...import.meta.env };
 
@@ -63,5 +64,23 @@ describe("GoogleSignInButton", () => {
 
     window.google = { accounts: { id: { initialize, renderButton: vi.fn() } } };
     await waitFor(() => expect(initialize).toHaveBeenCalled(), { timeout: 1000 });
+  });
+
+  // O Google desenha o botão na língua do browser se não lhe dissermos qual --
+  // num telemóvel em inglês, /login mostrava "Sign in with Google".
+  it.each([
+    ["pt-AO", "pt-PT"],
+    ["en-US", "en"],
+  ])("desenha o botão no idioma do site (%s → %s)", async (idioma, localeGoogle) => {
+    (import.meta.env as Record<string, string>).VITE_GOOGLE_CLIENT_ID = "client-id-de-teste";
+    const renderButton = vi.fn();
+    window.google = { accounts: { id: { initialize: vi.fn(), renderButton } } };
+    await i18n.changeLanguage(idioma);
+
+    render(<GoogleSignInButton onCredential={vi.fn()} />);
+
+    await waitFor(() => expect(renderButton).toHaveBeenCalled());
+    expect(renderButton.mock.calls[0][1]).toMatchObject({ locale: localeGoogle });
+    await i18n.changeLanguage("pt-AO");
   });
 });
