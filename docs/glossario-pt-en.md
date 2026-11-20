@@ -47,6 +47,7 @@ Convenções fixas: *color, behavior, organize, center, meter, license, canceled
 | hipermetropia | farsightedness (hyperopia) | Termo leigo primeiro. |
 | teste do olhinho | red reflex test | |
 | penso ocular / oclusão | eye patch / patching (occlusion) | |
+| dioptria prismática (Δ) | prism diopter (Δ) | Merriam-Webster: *diopter* em en-US, nunca *dioptre*. |
 | profissional de saúde | health care professional | AMA e AP: *health care* em duas palavras. |
 
 ## Organização e interface (AP)
